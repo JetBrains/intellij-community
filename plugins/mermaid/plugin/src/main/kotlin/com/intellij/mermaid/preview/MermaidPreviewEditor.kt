@@ -1,10 +1,8 @@
 package com.intellij.mermaid.preview
 
+import com.intellij.mermaid.util.MermaidPluginScopeManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.services
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -15,8 +13,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,8 +27,7 @@ internal class MermaidPreviewEditor(
   private val project: Project,
   private val file: VirtualFile
 ): FileEditor, UserDataHolder by UserDataHolderBase() {
-  // TODO: Replace with service constructor injection after 231
-  private val coroutineScope = project.coroutineScope.childScope()
+  private val coroutineScope = service<MermaidPluginScopeManager>().coroutineScope
   private val updateViewRequests = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val document = FileDocumentManager.getInstance().getDocument(file)!!
