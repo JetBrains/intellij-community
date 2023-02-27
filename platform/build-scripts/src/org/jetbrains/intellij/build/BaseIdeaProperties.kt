@@ -17,8 +17,6 @@ private val BASE_CLASS_VERSIONS = persistentHashMapOf(
   "lib/idea_rt.jar" to "1.7",
   "lib/forms_rt.jar" to "1.7",
   "lib/annotations.jar" to "1.7",
-  // JAR contains class files for Java 1.8 and 11 (several modules packed into it)
-  "lib/util.jar!/com/intellij/serialization/" to "1.8",
   "lib/util_rt.jar" to "1.7",
   "lib/util-8.jar" to "1.8",
   "lib/external-system-rt.jar" to "1.7",
