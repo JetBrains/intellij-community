@@ -125,7 +125,7 @@ object InplaceExtractUtils {
     val name = editor.document.getText(variableRange)
     val containingClass = PsiTreeUtil.findElementOfClassAtOffset(file, variableRange.startOffset, PsiClass::class.java, false)
     val conflictsInParentClasses = generateSequence(containingClass?.containingClass) { parentClass -> parentClass.containingClass }
-      .map { parentClass -> parentClass.findInnerClassByName(name, false) }
+      .mapNotNull { parentClass -> parentClass.findInnerClassByName(name, false) }
       .toList()
     val conflictsInSameClass = PsiTreeUtil.findChildrenOfType(file, PsiClass::class.java).filter { psiClass -> psiClass.name == name }
     if (conflictsInSameClass.size + conflictsInParentClasses.size > 1) {

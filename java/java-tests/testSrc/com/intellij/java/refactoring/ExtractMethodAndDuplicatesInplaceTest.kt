@@ -335,6 +335,20 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testIntroduceObjectInsideNestedClass(){
+    doTest()
+  }
+
+  fun testIntroduceObjectConflictInsideNestedClass(){
+    doTest {
+      renameTemplate("Result")
+      nextTemplateVariable()
+      nextTemplateVariable()
+      nextTemplateVariable()
+    }
+    require(getActiveTemplate() != null)
+  }
+
   fun testIntroduceObjectWithRename(){
     doTest {
       renameTemplate("MyResult")
