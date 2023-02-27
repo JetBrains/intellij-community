@@ -593,6 +593,8 @@ public final class MavenProjectsTree {
         }
       }
 
+      var modulesFilesToAdd = new ArrayList<VirtualFile>();
+      var modulesFilesToReconnect = new ArrayList<VirtualFile>();
       for (VirtualFile each : existingModuleFiles) {
         MavenProject foundModule = tree.findProject(each);
         boolean isNewModule = foundModule == null;
@@ -604,16 +606,29 @@ public final class MavenProjectsTree {
           }
         }
 
+        if (isNewModule) {
+          modulesFilesToAdd.add(each);
+        }
+        else {
+          modulesFilesToReconnect.add(each);
+        }
+
         if (readProject || isNewModule || recursive) {
           // do not force update modules if only this project was requested to be updated
           update(each, recursive, recursive && forceReading);
         }
+      }
 
-        MavenProject module = tree.findProject(each);
-        if (isNewModule) {
+      for (var file : modulesFilesToAdd) {
+        MavenProject module = tree.findProject(file);
+        if (null != module) {
           tree.addModule(mavenProject, module);
         }
-        else {
+      }
+
+      for (var file : modulesFilesToReconnect) {
+        MavenProject module = tree.findProject(file);
+        if (null != module) {
           if (tree.reconnect(mavenProject, module)) {
             updateContext.update(module, MavenProjectChanges.NONE);
           }
