@@ -31,7 +31,7 @@ abstract class FileReportGenerator(
     val (resourcePath, reportPath) = dirs.getPaths(fileName)
     val sessionsJson = sessionSerializer.serialize(sessions.map { it.sessionsInfo.sessions }.flatten())
     val resourceFile = File(resourcePath.toString())
-    resourceFile.writeText("var sessions = {};\nvar features={};\nvar fullLineLog={};\nsessions = ${parseJsonInJs(sessionsJson)};\n")
+    resourceFile.writeText("var sessions = {};\nvar features={};\nvar fullLineLog=[];\nsessions = ${parseJsonInJs(sessionsJson)};\n")
     processStorages(sessions, resourceFile)
     val reportTitle = "Code Completion Report for file $fileName ($filterName and $comparisonFilterName filter)"
     createHTML().html {

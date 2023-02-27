@@ -110,18 +110,19 @@ class CompletionGolfFileReportGenerator(
 
   override fun processStorages(fileInfos: List<FileEvaluationInfo>, resourceFile: File) {
     super.processStorages(fileInfos, resourceFile)
-    for ((storage, fileInfo) in fullLineStorages.zip(fileInfos)) {
-      val log = storage.getLog(fileInfo.sessionsInfo.filePath) ?: continue
+    for ((storageIndex, storage2info) in fullLineStorages.zip(fileInfos).withIndex()) {
+      resourceFile.appendText("fullLineLog.push({});\n")
+      val log = storage2info.first.getLog(storage2info.second.sessionsInfo.filePath) ?: continue
       val offset2json = mutableMapOf<Int, String>()
       for (line in log.lines()) {
         val offset = offsetRegex.find(line)?.destructured?.component1()?.toIntOrNull() ?: continue
         offset2json[offset] = line
       }
-      for (session in fileInfo.sessionsInfo.sessions) {
+      for (session in storage2info.second.sessionsInfo.sessions) {
         for (lookup in session.lookups) {
           val offset = session.offset + lookup.offset
           val json = offset2json[offset] ?: continue
-          resourceFile.appendText("fullLineLog[(\"$offset\")] = `${zipJson(json)}`;\n")
+          resourceFile.appendText("fullLineLog[$storageIndex][$offset] = `${zipJson(json)}`;\n")
         }
       }
     }
@@ -161,8 +162,8 @@ class CompletionGolfFileReportGenerator(
 
         val curSessions = infos.map { it.sessionsInfo.sessions[sessionIndex] }
         val movesNormalizedAll = curSessions.map { MovesCountNormalised().evaluate(listOf(it)) }
-        for ((curSession, movesNormalised) in curSessions.zip(movesNormalizedAll)) {
-          var rowClasses = Threshold.getClass(movesNormalised)
+        for ((evaluationIndex, session2moves) in curSessions.zip(movesNormalizedAll).withIndex()) {
+          var rowClasses = Threshold.getClass(session2moves.second)
           if (curSessions.size > 1 && movesNormalizedAll.distinct().size == 1) {
             rowClasses = "$rowClasses duplicate"
           }
@@ -171,7 +172,7 @@ class CompletionGolfFileReportGenerator(
               attributes["data-line-numbers"] = lineNumbers.toString()
             }
             td("code-line") {
-              prepareLine(curSession, movesNormalised, maxLineLength)
+              prepareLine(session2moves.first, session2moves.second, evaluationIndex, maxLineLength)
             }
           }
         }
@@ -192,7 +193,7 @@ class CompletionGolfFileReportGenerator(
     }
   }
 
-  private fun FlowContent.prepareLine(session: Session, movesNormalised: Double, maxLineLength: Int) {
+  private fun FlowContent.prepareLine(session: Session, movesNormalised: Double, evaluationIndex: Int, maxLineLength: Int) {
     val expectedText = session.expectedText
     val lookups = session.lookups
     var offset = 0
@@ -209,7 +210,7 @@ class CompletionGolfFileReportGenerator(
             add("delimiter")
           }
         }.joinToString(" ")
-        offset = prepareSpan(expectedText, lookup, session.id, i, offset, session.offset + lookup.offset, delimiter)
+        offset = prepareSpan(expectedText, lookup, session.id, i, offset, session.offset + lookup.offset, evaluationIndex, delimiter)
       }
       if (expectedText.length != offset) {
         span("code-span") { +expectedText.substring(offset) }
@@ -246,6 +247,7 @@ class CompletionGolfFileReportGenerator(
     columnId: Int,
     offset: Int,
     offsetInFile: Int,
+    evaluationIndex: Int,
     delimiter: String = "",
   ): Int {
     val kinds = lookup.suggestions.map { suggestion -> suggestion.kind }
@@ -261,6 +263,7 @@ class CompletionGolfFileReportGenerator(
       attributes["data-cl"] = "$columnId"
       attributes["data-id"] = uuid
       attributes["data-offset"] = offsetInFile.toString()
+      attributes["data-evaluation-id"] = evaluationIndex.toString()
       +text
     }
     return offset + text.length
