@@ -68,7 +68,7 @@ class SmartModeScheduler(private val project: Project) : Disposable {
     })
   }
 
-  fun addLast(runnable: Runnable) {
+  private fun addLast(runnable: Runnable) {
     val executor = ClientId.decorateRunnable(runnable)
     myRunWhenSmartQueue.addLast(if (executor === runnable) runnable else RunnableDelegate(runnable) { executor.run() })
   }
