@@ -252,22 +252,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void unsafeRunWhenSmart(@NotNull @Async.Schedule Runnable runnable) {
-    if (!ALWAYS_SMART) {
-      synchronized (myDumbSmartTransitionLock) {
-        if (isDumb()) {
-          myProject.getService(SmartModeScheduler.class).addLast(runnable);
-          return;
-        }
-      }
-    }
-
-    Application app = ApplicationManager.getApplication();
-    if (app.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      app.invokeLater(() -> unsafeRunWhenSmart(runnable), myProject.getDisposed());
-    }
+    // we probably don't need unsafeRunWhenSmart anymore
+    runWhenSmart(runnable);
   }
 
   @Override
