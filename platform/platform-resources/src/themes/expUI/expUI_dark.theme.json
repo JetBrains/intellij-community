@@ -606,27 +606,27 @@
     "CodeWithMe.Users": {
       "1": {
         "Background": "Green6",
-        "Foreground": "Grey13"
+        "Foreground": "Grey14"
       },
       "2": {
-        "Background": "#15A0B2",
-        "Foreground": "Grey13"
+        "Background": "Red6",
+        "Foreground": "Grey14"
       },
       "3": {
-        "Background": "Red6",
-        "Foreground": "Grey13"
+        "Background": "Purple6",
+        "Foreground": "Grey14"
       },
       "4": {
-        "Background": "Purple6",
-        "Foreground": "Grey13"
+        "Background": "Orange6",
+        "Foreground": "Grey14"
       },
       "5": {
-        "Background": "Yellow6",
-        "Foreground": "Grey13"
+        "Background": "Teal6",
+        "Foreground": "Grey14"
       },
       "6": {
-        "Background": "Orange6",
-        "Foreground": "Grey13"
+        "Background": "Yellow6",
+        "Foreground": "Grey14"
       }
     },
 

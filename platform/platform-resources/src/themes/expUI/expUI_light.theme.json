@@ -656,23 +656,23 @@
         "Foreground": "Grey14"
       },
       "2": {
-        "Background": "Teal4",
-        "Foreground": "Grey14"
-      },
-      "3": {
         "Background": "Red5",
         "Foreground": "Grey14"
       },
-      "4": {
+      "3": {
         "Background": "Purple4",
         "Foreground": "Grey14"
       },
+      "4": {
+        "Background": "Orange4",
+        "Foreground": "Grey14"
+      },
       "5": {
-        "Background": "Yellow4",
+        "Background": "Teal4",
         "Foreground": "Grey14"
       },
       "6": {
-        "Background": "Orange4",
+        "Background": "Yellow4",
         "Foreground": "Grey14"
       }
     },
