@@ -14,9 +14,11 @@ import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
+import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -89,12 +91,18 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
   ) : KtTreeVisitorVoid() {
     override fun visitCallExpression(expression: KtCallExpression) {
       analyze(expression) {
-        val calledSymbol = expression.resolveCall().singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol
+        val functionCall = expression.resolveCall().singleFunctionCallOrNull()
+        val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
 
         if (calledSymbol !is KtNamedSymbol) return
         val hasAnnotation = calledSymbol.hasAnnotation(ClassId.topLevel(FqName(REQUIRES_SUSPEND_CONTEXT_ANNOTATION)))
 
-        if (!hasAnnotation) return
+        if (!hasAnnotation) {
+          if (calledSymbol is KtFunctionSymbol && calledSymbol.isInline) {
+            checkInlineLambdaArguments(functionCall)
+          }
+          return
+        }
 
         when (calledSymbol.callableIdIfNonLocal?.asSingleFqName()) {
           progressManagerCheckedCanceledName -> {
@@ -125,6 +133,19 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
     }
 
     private fun extractElementToHighlight(expression: KtCallExpression) = expression.getCallNameExpression() ?: expression
+
+    private fun checkInlineLambdaArguments(call: KtFunctionCall<*>) {
+      for ((psi, descriptor) in call.argumentMapping) {
+        if (
+          descriptor.returnType is KtFunctionalType &&
+          !descriptor.symbol.isCrossinline &&
+          !descriptor.symbol.isNoinline &&
+          psi is KtLambdaExpression
+        ) {
+          psi.bodyExpression?.accept(this)
+        }
+      }
+    }
 
     override fun visitDeclaration(dcl: KtDeclaration): Unit = Unit
   }

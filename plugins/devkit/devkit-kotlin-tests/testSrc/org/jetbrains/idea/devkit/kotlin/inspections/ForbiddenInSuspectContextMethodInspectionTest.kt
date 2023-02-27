@@ -388,6 +388,59 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
   }
 
   @Test
+  fun `progress manager checkCanceled inside inline lambda`() {
+    addCheckCanceledFunctions()
+
+    myFixture.configureByText("file.kt", """
+      import com.intellij.openapi.progress.*
+      
+      suspend fun process(items: List<Int>) {
+        items.map {
+          ProgressManager.<warning descr="$progressManagerDescr">checkC<caret>anceled</warning>()
+          it + 1
+        }
+      }
+    """.trimIndent())
+    myFixture.testHighlighting()
+
+    val intention = myFixture.getAvailableIntention(progressManagerFix)
+    assertNotNullK(intention)
+    myFixture.checkPreviewAndLaunchAction(intention)
+
+    myFixture.configureByText("file.kt", """
+      import com.intellij.openapi.progress.*
+      
+      suspend fun process(items: List<Int>) {
+        items.map {
+          checkCancelled()
+          it + 1
+        }
+      }
+    """.trimIndent())
+  }
+
+  @Test
+  fun `progress manager checkCanceled inside crossinline lambda`() {
+    addCheckCanceledFunctions()
+
+    myFixture.configureByText("file.kt", """
+      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
+      import com.intellij.openapi.progress.*
+      
+      inline fun a(crossinline l: () -> Unit) {
+        
+      }
+      
+      suspend fun process() {
+        a {
+          ProgressManager.checkC<caret>anceled()
+        }
+      }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
+  @Test
   fun `invokeAndWait with lambda argument`() {
     addApplicationAndEtc()
 
