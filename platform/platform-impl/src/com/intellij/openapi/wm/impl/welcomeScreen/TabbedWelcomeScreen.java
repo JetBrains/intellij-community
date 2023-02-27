@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.WelcomeScreenCustomization;
 import com.intellij.openapi.wm.WelcomeScreenLeftPanel;
@@ -12,6 +13,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -59,7 +61,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
     if (addQuickAccessPanel) {
       JComponent quickAccessPanel = createQuickAccessPanel(this);
-      quickAccessPanel.setBorder(JBUI.Borders.empty(5, 10));
       leftSidebarHolder.add(quickAccessPanel, BorderLayout.SOUTH);
     }
 
@@ -145,12 +146,39 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   }
 
   private static JComponent createQuickAccessPanel(@NotNull Disposable parentDisposable) {
-    JPanel quickAccessPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    WelcomeScreenCustomization.WELCOME_SCREEN_CUSTOMIZATION.getExtensionsIfPointIsRegistered().stream()
+    JPanel result = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+
+    List<WelcomeScreenCustomization> customizations =
+      WelcomeScreenCustomization.WELCOME_SCREEN_CUSTOMIZATION.getExtensionsIfPointIsRegistered();
+
+    List<AnAction> actions = customizations.stream().map(c -> c.createQuickAccessActions(parentDisposable))
+      .filter(Objects::nonNull)
+      .flatMap(l -> l.stream())
+      .toList();
+
+    if (!actions.isEmpty()) {
+      DefaultActionGroup group = new DefaultActionGroup(actions);
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.WELCOME_SCREEN_QUICK_PANEL, group, true);
+      toolbar.setMinimumButtonSize(new JBDimension(26, 26));
+      JComponent toolbarComponent = toolbar.getComponent();
+
+      toolbarComponent.setBorder(null);
+      result.add(toolbarComponent);
+    }
+
+    // Remove this together with createQuickAccessComponent method
+    customizations.stream()
       .map(c -> c.createQuickAccessComponent(parentDisposable))
       .filter(Objects::nonNull)
-      .forEach(quickAccessPanel::add);
-    return quickAccessPanel;
+      .forEach(result::add);
+
+    if (ExperimentalUI.isNewUI()) {
+      // ActionButtons have own empty insets(1, 2)
+      result.setBorder(JBUI.Borders.empty(15, 14));
+    } else {
+      result.setBorder(JBUI.Borders.empty(5, 10));
+    }
+    return result;
   }
 
   @Nullable
