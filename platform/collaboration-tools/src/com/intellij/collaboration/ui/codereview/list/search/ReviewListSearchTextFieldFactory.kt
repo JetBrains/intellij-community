@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldProperties
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.awt.RelativePoint
@@ -24,6 +25,7 @@ class ReviewListSearchTextFieldFactory(private val searchState: MutableStateFlow
 
   fun create(viewScope: CoroutineScope, chooseFromHistory: suspend (RelativePoint) -> Unit): JTextField {
     val searchField = ExtendableTextField()
+    DarculaTextFieldProperties.makeTextFiledRounded(searchField)
     searchField.addActionListener {
       val text = searchField.text.nullize()
       searchState.update { text }
