@@ -8,9 +8,17 @@ import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.lang.Language
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 
 abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
-  fun doTestProvider(fileName: String, expectedText: String, provider: InlayHintsProvider, enabledOptions: Map<String, Boolean> = emptyMap()) {
+  fun doTestProvider(fileName: String,
+                     expectedText: String,
+                     provider: InlayHintsProvider,
+                     enabledOptions: Map<String, Boolean> = emptyMap(),
+                     verifyHintsPresence: Boolean = false) {
+    if (verifyHintsPresence) {
+      InlayHintsProviderTestCase.verifyHintsPresence(expectedText)
+    }
     val sourceText = InlayDumpUtil.removeHints(expectedText)
     myFixture.configureByText(fileName, sourceText)
     val file = myFixture.file!!
