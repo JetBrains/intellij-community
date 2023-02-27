@@ -44,6 +44,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFirstParamType("x", PsiTypes.longType());
   }
 
+  public void testForeachProblem() {
+    doTestFirstParamType("x", PsiTypes.longType());
+  }
+
   public void testT07() {
     doTestFieldType("f",
                     myFactory.createTypeFromText("java.lang.Integer", null).createArrayType());

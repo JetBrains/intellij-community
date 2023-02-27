@@ -284,6 +284,7 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         }
       }
       else {
+        myLabeler.markFailedConversion(typeView.getTypePair(), value);
         return;
       }
       final TypeView left = new TypeView(psiParameter, null, null);
