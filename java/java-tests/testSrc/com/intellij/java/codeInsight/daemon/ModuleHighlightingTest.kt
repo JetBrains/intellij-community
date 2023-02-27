@@ -10,6 +10,7 @@ import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.JavaCompilerConfigurationProxy
@@ -26,6 +27,15 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
     addFile("module-info.java", "module M2 { }", M2)
     addFile("module-info.java", "module M3 { }", M3)
+  }
+
+  private fun withCompileArguments(module: Module = getModule(), vararg arguments: String, test: () -> Unit) {
+    try {
+      JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, arguments.toList())
+      test()
+    } finally {
+      JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, emptyList())
+    }
   }
 
   fun testPackageStatement() {
@@ -351,15 +361,43 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
       package <error descr="Package 'lang' exists in another module: java.base">java.lang</error>;
       public class Main {}
     """.trimIndent())
-    try {
-      JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, listOf("--patch-module=java.base=/src"))
+    withCompileArguments(module, "--patch-module=java.base=/src") {
       highlight("Main.java", """
        package java.lang;
        public class Main {}
      """.trimIndent())
     }
-    finally {
-      JavaCompilerConfigurationProxy.setAdditionalOptions(project, module, listOf())
+  }
+
+  fun testAddReadsDependingOnSourceModule() {
+    addFile("pkg/m4/C4.java", """
+      package pkg.m4;     
+      public class C4 { }
+    """.trimIndent(), M4)
+    myFixture.addFileToProject("module-info.java", "module M { }")
+    highlight("TestFoo.java", """
+      import <error descr="Package 'pkg.m4' is declared in the unnamed module, but module 'M' does not read it">pkg.m4</error>.C4;
+      public class TestFoo { }
+    """.trimIndent())
+    withCompileArguments(module, "--add-reads", "M=ALL-UNNAMED") {
+      highlight("TestBar.java", """
+        import pkg.m4.C4;
+        public class TestBar { }
+    """.trimIndent())
+    }
+  }
+
+  fun testAddReadsDependingOnLibrary() {
+    myFixture.addFileToProject("module-info.java", "module M { }")
+    highlight("TestFoo.java", """
+      import <error descr="Package 'pkg.lib2' is declared in module 'lib.auto', but module 'M' does not read it">pkg.lib2</error>.LC2;
+      public class TestFoo { }
+    """.trimIndent())
+    withCompileArguments(module, "--add-reads", "M=ALL-UNNAMED") {
+      highlight("TestBar.java", """
+        import pkg.lib2.LC2; 
+        public class TestBar { }
+    """.trimIndent())
     }
   }
   
