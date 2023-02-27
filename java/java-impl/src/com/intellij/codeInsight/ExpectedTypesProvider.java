@@ -624,15 +624,18 @@ public final class ExpectedTypesProvider {
     }
 
 
+    @NotNull
     private static List<ExpectedTypeInfo> findExpectedTypesForPatterns(@NotNull List<PsiType> expectedTypes,
                                                                        @NotNull PsiSwitchBlock statement) {
       PsiManager manager = statement.getManager();
+      if(manager == null) return Collections.emptyList();
       PsiType lub = getLeastUpperBound(expectedTypes, manager);
       if (lub == null) return Collections.emptyList();
       return Collections.singletonList(createInfo(lub, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, lub, TailType.NONE));
     }
 
-    private static PsiType getLeastUpperBound(List<PsiType> types, PsiManager manager) {
+    @Nullable
+    private static PsiType getLeastUpperBound(@NotNull List<PsiType> types, @NotNull PsiManager manager) {
       if (types.isEmpty()) return null;
       Iterator<PsiType> iterator = types.iterator();
       PsiType accumulator = iterator.next();
