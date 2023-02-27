@@ -43,7 +43,7 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
     newValue = newUI
 
     if (newValue != isNewUI() && suggestRestart) {
-      ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.NON_MODAL)
+      ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.current())
     }
   }
 
