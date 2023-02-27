@@ -650,32 +650,39 @@
       "dangerBackground": "Red5"
     },
 
-    "CodeWithMe.Users": {
-      "1": {
-        "Background": "Green5",
-        "Foreground": "Grey14"
+    "CodeWithMe": {
+      "MainToolbar": {
+        "NoConnectionLabelForeground": "Grey8"
       },
-      "2": {
-        "Background": "Red5",
-        "Foreground": "Grey14"
-      },
-      "3": {
-        "Background": "Purple4",
-        "Foreground": "Grey14"
-      },
-      "4": {
-        "Background": "Orange4",
-        "Foreground": "Grey14"
-      },
-      "5": {
-        "Background": "Teal4",
-        "Foreground": "Grey14"
-      },
-      "6": {
-        "Background": "Yellow4",
-        "Foreground": "Grey14"
+      "Users": {
+        "1": {
+          "Background": "Green5",
+          "Foreground": "Grey14"
+        },
+        "2": {
+          "Background": "Red5",
+          "Foreground": "Grey14"
+        },
+        "3": {
+          "Background": "Purple4",
+          "Foreground": "Grey14"
+        },
+        "4": {
+          "Background": "Orange4",
+          "Foreground": "Grey14"
+        },
+        "5": {
+          "Background": "Teal4",
+          "Foreground": "Grey14"
+        },
+        "6": {
+          "Background": "Yellow4",
+          "Foreground": "Grey14"
+        }
       }
     },
+
+
 
     "RunWidget" : {
       "foreground": "Grey12",

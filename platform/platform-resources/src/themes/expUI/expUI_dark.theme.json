@@ -603,32 +603,39 @@
       "dangerBackground": "Red6"
     },
 
-    "CodeWithMe.Users": {
-      "1": {
-        "Background": "Green6",
-        "Foreground": "Grey14"
+    "CodeWithMe": {
+      "MainToolbar": {
+        "NoConnectionLabelForeground": "Grey8"
       },
-      "2": {
-        "Background": "Red6",
-        "Foreground": "Grey14"
-      },
-      "3": {
-        "Background": "Purple6",
-        "Foreground": "Grey14"
-      },
-      "4": {
-        "Background": "Orange6",
-        "Foreground": "Grey14"
-      },
-      "5": {
-        "Background": "Teal6",
-        "Foreground": "Grey14"
-      },
-      "6": {
-        "Background": "Yellow6",
-        "Foreground": "Grey14"
+      "Users": {
+        "1": {
+          "Background": "Green6",
+          "Foreground": "Grey14"
+        },
+        "2": {
+          "Background": "Red6",
+          "Foreground": "Grey14"
+        },
+        "3": {
+          "Background": "Purple6",
+          "Foreground": "Grey14"
+        },
+        "4": {
+          "Background": "Orange6",
+          "Foreground": "Grey14"
+        },
+        "5": {
+          "Background": "Teal6",
+          "Foreground": "Grey14"
+        },
+        "6": {
+          "Background": "Yellow6",
+          "Foreground": "Grey14"
+        }
       }
     },
+
+
 
     "PackageSearch": {
       "SearchResult": {
