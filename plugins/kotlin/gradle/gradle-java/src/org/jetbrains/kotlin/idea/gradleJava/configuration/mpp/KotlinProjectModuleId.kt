@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.tooling.core.UnsafeApi
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
-import org.jetbrains.plugins.gradle.util.gradleIdentityPathOrNull
 
 @JvmInline
 value class KotlinProjectModuleId @UnsafeApi constructor(private val id: String) {
@@ -29,29 +28,40 @@ fun KotlinProjectModuleId(resolverContext: ProjectResolverContext, gradleIdeaMod
     KotlinProjectModuleId(GradleProjectResolverUtil.getModuleId(resolverContext, gradleIdeaModule))
 
 fun KotlinProjectModuleId(coordinates: IdeaKotlinProjectCoordinates): KotlinProjectModuleId {
-    /* Only include buildId as prefix if the coordinates point to an included build (root is ':') */
-    val buildIdPrefix = if (coordinates.buildId != ":") ":" + coordinates.buildId else ""
-
-    /*
-    Only include project for root build or subprojects in composite builds.
-    The root project of an included build is just identified by the buildId alone!
-     */
-    val projectPart = if (coordinates.buildId == ":" || coordinates.projectPath != ":")
-        coordinates.projectPath else ""
-
-    return KotlinProjectModuleId(buildIdPrefix + projectPart)
+    /* Own build */
+    return if (coordinates.buildId == ":") {
+        /* Root project */
+        if (coordinates.projectPath == ":") {
+            KotlinProjectModuleId(coordinates.projectName)
+        }
+        /* Subproject */
+        else {
+            KotlinProjectModuleId(coordinates.projectPath)
+        }
+    }
+    /* Included build */
+    else {
+        /* Root project in included build */
+        if (coordinates.projectPath == ":") {
+            KotlinProjectModuleId(":${coordinates.buildId}")
+        }
+        /* Subproject in included build */
+        else {
+            KotlinProjectModuleId(":${coordinates.buildId}${coordinates.projectPath}")
+        }
+    }
 }
 
 @OptIn(UnsafeApi::class)
-val ModuleData.kotlinProjectModuleId: KotlinProjectModuleId? get() = gradleIdentityPathOrNull?.let(::KotlinProjectModuleId)
+val ModuleData.kotlinProjectModuleId: KotlinProjectModuleId get() = KotlinProjectModuleId(id)
 
 @Deprecated(
     message = "This is a SourceSet module! Use '.kotlinSourceSetModuleId' instead!",
     replaceWith = ReplaceWith("kotlinSourceSetModuleId")
 )
-@Suppress("unused") /* This is a helper to provide guidance */
-val GradleSourceSetData.kotlinProjectModuleId: KotlinSourceSetModuleId get() = KotlinSourceSetModuleId(id)
-
+@Suppress("unused", "UnusedReceiverParameter") /* This is a helper to provide guidance */
+val GradleSourceSetData.kotlinProjectModuleId: KotlinSourceSetModuleId
+    get() = throw UnsupportedOperationException("Calling 'kotlinProjectModuleId' on GradleSourceSetData is not supported")
 
 fun DataNode<*>.findProjectModuleNode(id: KotlinProjectModuleId): DataNode<ModuleData>? {
     @Suppress("unchecked_cast")
