@@ -5,12 +5,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.ConcurrencyUtil;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
+import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledExecutorService;
@@ -21,6 +25,8 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
   public static final String PREFIX = CMD_PREFIX + "delayType";
   public static final char END_CHAR = '#';
   public static final String SPAN_NAME = "typing";
+  public static final String CODE_ANALYSIS_SPAN_NAME = "typingCodeAnalyzing";
+
   private final ScheduledExecutorService myExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor("Performance plugin delayed type");
 
   public DelayTypeCommand(@NotNull String text, int line) {
@@ -35,6 +41,11 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
     String[] delayText = input.split("\\|");
     final long delay = Integer.parseInt(delayText[0]);
     final String text = delayText[1] + END_CHAR;
+    final boolean calculateAnalyzesTime = delayText.length > 2 && Boolean.parseBoolean(delayText[2]);
+    Ref<Span> spanRef = new Ref<>();
+    Ref<Scope> scopeRef = new Ref<>();
+    var connection = context.getProject().getMessageBus().simpleConnect();
+    var job = DaemonCodeAnalyzerListener.INSTANCE.listen(connection, spanRef, scopeRef, 0);
     ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap(() -> {
       TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, SPAN_NAME, span -> {
         span.addEvent("Finding typing target");
@@ -74,7 +85,14 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
           result.setError(e);
         }
       });
-      result.setResult(null);
+
+      if (calculateAnalyzesTime) {
+        var span = PerformanceTestSpan.TRACER.spanBuilder(CODE_ANALYSIS_SPAN_NAME).setParent(
+          PerformanceTestSpan.getContext());
+        spanRef.set(span.startSpan());
+        scopeRef.set(spanRef.get().makeCurrent());
+        job.waitForComplete();
+      }
     }));
 
     return result;
