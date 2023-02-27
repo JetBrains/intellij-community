@@ -20,7 +20,7 @@ The plugin supports Kotlin 1.8 and lower.
 
   <!--suppress PluginXmlValidity -->
   <change-notes><![CDATA[
-    <h3>1.8.20-Beta</h3>
+    <h3>1.8.20-RC</h3>
     <ul>
       <li>Language: experimental replacement of the Enum class `values()` function with the `entries` property, experimental lifting restrictions on secondary constructor bodies in value (inline) classes, experimental data objects</li>
       <li>Kotlin/JVM: JVM IR for the kapt stub generation enabled by default</li>
@@ -33,7 +33,7 @@ The plugin supports Kotlin 1.8 and lower.
       <li>Maven: new `components.xml` to automatically compile Kotlin Maven projects, ability to set up kapt’s `aptMode`</li>
       <li>Serialization: prototype of serialization plugin that works with the K2 compiler, prohibited implicit serializer customization via companion object</li>
     </ul>
-    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.8.20-Beta">changelog</a>.
+    Learn more in the <a href="https://github.com/JetBrains/kotlin/releases/tag/v1.8.20-RC">changelog</a>.
     <br><br>
     <h3>1.8.0</h3>
     <ul>
