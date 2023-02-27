@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.*
+import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex
 import com.intellij.psi.impl.light.LightJavaModule
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
@@ -138,7 +139,9 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         }
       }
 
-      if (useModule != null && !(targetName == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule))) {
+      if (useModule != null && module != null &&
+          !(targetName == PsiJavaModule.JAVA_BASE || JavaModuleGraphUtil.reads(useModule, targetModule)) &&
+          !inAddedReads(useModule, targetName)) {
         return when {
           quick -> ERR
           PsiNameHelper.isValidModuleName(targetName, useModule) -> ErrorWithFixes(
@@ -150,7 +153,9 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     }
     else if (useModule != null) {
       val autoModule = detectAutomaticModule(target)
-      if (autoModule == null || !JavaModuleGraphUtil.reads(useModule, autoModule) && !inSameMultiReleaseModule(place, target)) {
+      if ((autoModule == null) || ((!JavaModuleGraphUtil.reads(useModule, autoModule) && !inAddedReads(useModule, null)) &&
+                                   !inSameMultiReleaseModule(place, target))
+        ) {
         return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("module.access.to.unnamed", packageName, useModule.name))
       }
     }
@@ -212,6 +217,23 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     return JavaCompilerConfigurationProxy.optionValues(options, "--add-modules")
       .flatMap { it.splitToSequence(",") }
       .any { it == moduleName || it == "ALL-SYSTEM" || it == "ALL-MODULE-PATH" }
+  }
+
+  private fun inAddedReads(fromJavaModule: PsiJavaModule, toModuleName: String?): Boolean {
+    val fromModule = ModuleUtilCore.findModuleForPsiElement(fromJavaModule) ?: return false
+    val options = JavaCompilerConfigurationProxy.getAdditionalOptions(fromModule.project, fromModule)
+    return JavaCompilerConfigurationProxy.optionValues(options, "--add-reads")
+      .flatMap { it.splitToSequence(",") }
+      .any {
+        val (optFromModuleName, optToModuleName) = it.split("=").apply { it.first() to it.last() }
+        fromJavaModule.name == optFromModuleName &&
+        (toModuleName == optToModuleName || (optToModuleName == "ALL-UNNAMED" && isUnnamedModule(fromModule.project, toModuleName)))
+      }
+  }
+
+  private fun isUnnamedModule(project: Project, moduleName: String?): Boolean {
+    if (moduleName == null) return true
+    return JavaAutoModuleNameIndex.getAllKeys(project).contains(moduleName)
   }
 
   private abstract class CompilerOptionFix(private val module: Module) : IntentionAction {
