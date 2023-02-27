@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.quickfix
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.inspections.suppress
 
-import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
+import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.SuppressIntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -9,78 +9,77 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.KotlinBaseFe10CodeInsightBundle
-import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.highlighter.AnnotationHostKind
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinBaseCodeInsightBundle
 import org.jetbrains.kotlin.idea.util.addAnnotation
+import org.jetbrains.kotlin.idea.util.findAnnotation
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.replaceFileAnnotationList
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinSuppressIntentionAction(
-    suppressAt: KtElement,
-    private val suppressionKey: String,
-    @SafeFieldForPreview private val kind: AnnotationHostKind
+  suppressAt: KtElement,
+  private val suppressionKey: String,
+  @FileModifier.SafeFieldForPreview private val kind: AnnotationHostKind
 ) : SuppressIntentionAction() {
     private val pointer = suppressAt.createSmartPointer()
 
-    @SafeFieldForPreview
+    @FileModifier.SafeFieldForPreview
     private val project = suppressAt.project
 
-    override fun getFamilyName() = KotlinBaseFe10CodeInsightBundle.message("intention.suppress.family")
-    override fun getText() = KotlinBaseFe10CodeInsightBundle.message("intention.suppress.text", suppressionKey, kind.kind, kind.name ?: "")
+    private val suppressionKeyString = "\"$suppressionKey\""
+
+    override fun getFamilyName() = KotlinBaseCodeInsightBundle.message("intention.suppress.family")
+
+    override fun getText() = KotlinBaseCodeInsightBundle.message("intention.suppress.text", suppressionKey, kind.kind, kind.name ?: "")
 
     override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
         if (isLambdaParameter(element)) {
             // Lambda parameters can't be annotated: KT-13900
             return false
         }
+
         return element.isValid
     }
 
     private fun isLambdaParameter(element: PsiElement): Boolean {
-        if (kind.kind != KotlinBaseFe10HighlightingBundle.message("declaration.kind.parameter")) return false
-        val parentParameter = element.parent.safeAs<KtParameter>()
-            ?: element.parent.safeAs<KtDestructuringDeclarationEntry>()?.parent?.parent.safeAs<KtParameter>()
+        if (kind.kind != KotlinBaseCodeInsightBundle.message("declaration.kind.parameter")) return false
+        val parentParameter = element.parent as? KtParameter
+            ?: (element.parent as? KtDestructuringDeclarationEntry)?.parent?.parent as? KtParameter
         return parentParameter?.isLambdaParameter == true
     }
 
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         if (!element.isValid) return
         val suppressAt = pointer.element ?: return
-
-        val id = "\"$suppressionKey\""
         when (suppressAt) {
             is KtModifierListOwner -> suppressAt.addAnnotation(
-                StandardNames.FqNames.suppress,
-                id,
+                StandardClassIds.Annotations.Suppress,
+                suppressionKeyString,
                 whiteSpaceText = if (kind.newLineNeeded) "\n" else " ",
                 addToExistingAnnotation = { entry ->
                     addArgumentToSuppressAnnotation(
                         entry,
-                        id
+                        suppressionKeyString
                     ); true
                 })
 
             is KtAnnotatedExpression ->
-                suppressAtAnnotatedExpression(CaretBox(suppressAt, editor), id)
+                suppressAtAnnotatedExpression(CaretBox(suppressAt, editor), suppressionKeyString)
 
             is KtExpression ->
-                suppressAtExpression(CaretBox(suppressAt, editor), id)
+                suppressAtExpression(CaretBox(suppressAt, editor), suppressionKeyString)
 
             is KtFile ->
-                suppressAtFile(suppressAt, id)
+                suppressAtFile(suppressAt, suppressionKeyString)
         }
     }
 
     override fun getFileModifierForPreview(target: PsiFile): KotlinSuppressIntentionAction {
         return KotlinSuppressIntentionAction(
-            PsiTreeUtil.findSameElementInCopy(pointer.element, target),
-            suppressionKey,
-            kind
+          PsiTreeUtil.findSameElementInCopy(pointer.element, target),
+          suppressionKey,
+          kind
         )
     }
 
@@ -91,12 +90,13 @@ class KotlinSuppressIntentionAction(
         if (fileAnnotationList == null) {
             val newAnnotationList = psiFactory.createFileAnnotationListWithAnnotation(suppressAnnotationText(id, false))
             val packageDirective = ktFile.packageDirective
-            val createAnnotationList = if (packageDirective != null && PsiTreeUtil.skipWhitespacesForward(packageDirective) == ktFile.importList) {
-                // packageDirective could be empty but suppression still should be added before it to generate consistent PSI
-                ktFile.addBefore(newAnnotationList, packageDirective) as KtFileAnnotationList
-            } else {
-                replaceFileAnnotationList(ktFile, newAnnotationList)
-            }
+            val createAnnotationList =
+                if (packageDirective != null && PsiTreeUtil.skipWhitespacesForward(packageDirective) == ktFile.importList) {
+                    // packageDirective could be empty but suppression still should be added before it to generate consistent PSI
+                    ktFile.addBefore(newAnnotationList, packageDirective) as KtFileAnnotationList
+                } else {
+                  replaceFileAnnotationList(ktFile, newAnnotationList)
+                }
             ktFile.addAfter(psiFactory.createWhiteSpace(kind), createAnnotationList)
 
             return
@@ -107,7 +107,6 @@ class KotlinSuppressIntentionAction(
             val newSuppressAnnotation = psiFactory.createFileAnnotation(suppressAnnotationText(id, false))
             fileAnnotationList.add(psiFactory.createWhiteSpace(kind))
             fileAnnotationList.add(newSuppressAnnotation) as KtAnnotationEntry
-
             return
         }
 
@@ -149,8 +148,10 @@ class KotlinSuppressIntentionAction(
         when {
             args == null -> // new argument list
                 entry.addAfter(newArgList, entry.lastChild)
+
             args.arguments.isEmpty() -> // replace '()' with a new argument list
                 args.replace(newArgList)
+
             else -> args.addArgument(newArgList.arguments[0])
         }
     }
@@ -160,19 +161,11 @@ class KotlinSuppressIntentionAction(
     }
 
     private fun findSuppressAnnotation(annotated: KtAnnotated): KtAnnotationEntry? {
-        val context = annotated.analyze()
-        return findSuppressAnnotation(context, annotated.annotationEntries)
+        return annotated.findAnnotation(StandardClassIds.Annotations.Suppress)
     }
 
     private fun findSuppressAnnotation(annotationList: KtFileAnnotationList): KtAnnotationEntry? {
-        val context = annotationList.analyze()
-        return findSuppressAnnotation(context, annotationList.annotationEntries)
-    }
-
-    private fun findSuppressAnnotation(context: BindingContext, annotationEntries: List<KtAnnotationEntry>): KtAnnotationEntry? {
-        return annotationEntries.firstOrNull { entry ->
-            context.get(BindingContext.ANNOTATION, entry)?.fqName == StandardNames.FqNames.suppress
-        }
+        return annotationList.findAnnotation(StandardClassIds.Annotations.Suppress)
     }
 }
 

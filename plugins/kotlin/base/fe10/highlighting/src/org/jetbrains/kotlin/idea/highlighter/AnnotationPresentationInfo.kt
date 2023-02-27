@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
+import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressableWarningProblemGroup
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
@@ -45,7 +46,7 @@ class AnnotationPresentationInfo(
         for (range in ranges) {
             for (diagnostic in diagnostics) {
                 val group = if (diagnostic.severity == Severity.WARNING) {
-                    KotlinSuppressableWarningProblemGroup(diagnostic.factory)
+                    KotlinSuppressableWarningProblemGroup(diagnostic.factory.name)
                 } else {
                     null
                 }

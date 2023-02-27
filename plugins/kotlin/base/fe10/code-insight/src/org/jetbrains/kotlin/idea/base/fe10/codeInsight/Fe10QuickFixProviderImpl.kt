@@ -10,11 +10,11 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedReferenceQuickFixFactory
-import org.jetbrains.kotlin.idea.highlighter.AnnotationHostKind
 import org.jetbrains.kotlin.idea.highlighter.Fe10QuickFixProvider
 import org.jetbrains.kotlin.idea.highlighter.RegisterQuickFixesLaterIntentionAction
+import org.jetbrains.kotlin.idea.inspections.suppress.AnnotationHostKind
+import org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressIntentionAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionsFactory
-import org.jetbrains.kotlin.idea.quickfix.KotlinSuppressIntentionAction
 import org.jetbrains.kotlin.idea.quickfix.QuickFixes
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.types.KotlinType

@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.inspections
+package org.jetbrains.kotlin.idea.inspections.suppress
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInspection.*
@@ -10,13 +10,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.isAncestor
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.psi.findSingleLiteralStringTemplateText
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
-import org.jetbrains.kotlin.idea.highlighter.createSuppressWarningActions
-import org.jetbrains.kotlin.idea.util.findSingleLiteralStringTemplateText
 import org.jetbrains.kotlin.psi.KtAnnotated
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
@@ -41,9 +38,8 @@ class KotlinInspectionSuppressor : InspectionSuppressor, RedundantSuppressionDet
         }.toTypedArray()
     }
 
-    override fun isSuppressedFor(element: PsiElement, toolId: String): Boolean = KotlinCacheService.getInstance(element.project)
-        .getSuppressionCache()
-        .isSuppressed(element, element.containingFile, toolId, Severity.WARNING)
+    override fun isSuppressedFor(element: PsiElement, toolId: String): Boolean =
+        KotlinSuppressionChecker.getInstance().isSuppressedFor(element, toolId)
 
     override fun getSuppressionIds(element: PsiElement): String? = suppressionIds(element).ifNotEmpty { joinToString(separator = ",") }
 
