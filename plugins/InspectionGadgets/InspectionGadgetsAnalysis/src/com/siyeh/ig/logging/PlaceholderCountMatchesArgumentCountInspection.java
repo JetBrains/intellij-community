@@ -220,7 +220,7 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
 
       ResultType resultType = switch (loggerType) {
         case SLF4J -> {
-          //according to the reference an exception should not have a placeholder
+          //according to the reference, an exception should not have a placeholder
           argumentCount = lastArgumentIsException ? argumentCount - 1 : argumentCount;
           if (placeholderCountHolder.status == PlaceholdersStatus.PARTIAL) {
             yield (placeholderCountHolder.count <= argumentCount) ? ResultType.SUCCESS : ResultType.PARTIAL_PLACE_HOLDER_MISMATCH;
@@ -353,10 +353,12 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       }
       if (lastArgument instanceof PsiMethodReferenceExpression referenceExpression) {
         PsiType psiType = PsiMethodReferenceUtil.getMethodReferenceReturnType(referenceExpression);
+        if (psiType == null) return false;
         return throwable.isConvertibleFrom(psiType);
       }
 
       PsiType type = lastArgument.getType();
+      if (type == null) return false;
       PsiType functionalReturnType = LambdaUtil.getFunctionalInterfaceReturnType(type);
       if (functionalReturnType == null) return false;
       return throwable.isConvertibleFrom(functionalReturnType);
