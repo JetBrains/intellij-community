@@ -1107,6 +1107,9 @@ open class FileEditorManagerImpl(
       IdeDocumentHistory.getInstance(project).onSelectionChanged()
     }
 
+    // update frame and tab title
+    updateFileName(file)
+
     if (options.pin) {
       window.setFilePinned(composite, pinned = true)
     }
