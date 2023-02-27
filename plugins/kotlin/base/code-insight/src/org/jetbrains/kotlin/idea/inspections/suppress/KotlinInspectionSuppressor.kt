@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinInspectionSuppressor : InspectionSuppressor, RedundantSuppressionDetector {
     override fun getSuppressActions(element: PsiElement?, toolId: String): Array<SuppressQuickFix> {
-        element ?: return emptyArray()
+        element ?: return SuppressQuickFix.EMPTY_ARRAY
         return createSuppressWarningActions(element, Severity.WARNING, toolId).map {
             object : SuppressQuickFix {
                 override fun getFamilyName() = it.familyName
