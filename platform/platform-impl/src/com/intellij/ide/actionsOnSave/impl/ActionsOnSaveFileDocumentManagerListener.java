@@ -105,6 +105,8 @@ public final class ActionsOnSaveFileDocumentManagerListener implements FileDocum
 
     List<Document> processedDocuments = new ArrayList<>();
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      if (project.isDisposed()) continue;
+
       ProjectFileIndex index = ProjectFileIndex.getInstance(project);
       List<Document> projectDocuments = ContainerUtil.filter(documents, document -> {
         VirtualFile file = manager.getFile(document);
