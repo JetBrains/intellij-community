@@ -104,8 +104,8 @@ internal class VcsLogNewUiTableCellRenderer(
   }
 
   override fun getCellController(): VcsLogCellController? {
-    if (cachedRenderer != null && cachedRenderer is VcsLogCellRenderer) {
-      return (cachedRenderer as VcsLogCellRenderer).getCellController()
+    if (delegate is VcsLogCellRenderer) {
+      return (delegate as VcsLogCellRenderer).getCellController()
     }
     return null
   }
