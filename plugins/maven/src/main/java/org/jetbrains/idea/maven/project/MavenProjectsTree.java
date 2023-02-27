@@ -498,14 +498,16 @@ public final class MavenProjectsTree {
     updateContext.fireUpdatedIfNecessary();
   }
 
-  private record UpdateSpec(VirtualFile mavenProjectFile, boolean recursive, boolean forceReading) {
+  private record UpdateSpec(Stack<VirtualFile> updateStack, VirtualFile mavenProjectFile, boolean recursive, boolean forceReading) {
+    UpdateSpec(VirtualFile mavenProjectFile, boolean recursive, boolean forceReading){
+      this(new Stack<>(), mavenProjectFile, recursive, forceReading);
+    }
   }
 
   private static class MavenProjectsTreeUpdater {
     private final MavenProjectsTree tree;
     private final MavenExplicitProfiles explicitProfiles;
     private final UpdateContext updateContext;
-    private final Stack<VirtualFile> updateStack = new Stack<>();
     private final MavenProjectReader reader;
     private final MavenGeneralSettings generalSettings;
     private final MavenProgressIndicator process;
@@ -528,11 +530,14 @@ public final class MavenProjectsTree {
       if (specs.isEmpty()) return;
 
       ParallelRunner.runSequentially(specs, spec -> {
-        update(spec.mavenProjectFile(), spec.recursive(), spec.forceReading());
+        update(spec.updateStack(), spec.mavenProjectFile(), spec.recursive(), spec.forceReading());
       });
     }
 
-    private void update(final VirtualFile mavenProjectFile, final boolean recursive, final boolean forceReading) {
+    private void update(final Stack<VirtualFile> updateStack,
+                        final VirtualFile mavenProjectFile,
+                        final boolean recursive,
+                        final boolean forceReading) {
       if (updateStack.contains(mavenProjectFile)) {
         MavenLog.LOG.info("Recursion detected in " + mavenProjectFile);
         return;
@@ -621,7 +626,7 @@ public final class MavenProjectsTree {
 
         if (readProject || isNewModule || recursive) {
           // do not force update modules if only this project was requested to be updated
-          moduleUpdateSpecs.add(new UpdateSpec(each, recursive, recursive && forceReading));
+          moduleUpdateSpecs.add(new UpdateSpec(new Stack<>(updateStack), each, recursive, recursive && forceReading));
         }
       }
       updateProjects(moduleUpdateSpecs);
@@ -640,7 +645,7 @@ public final class MavenProjectsTree {
       var inheritorUpdateSpecs = new ArrayList<UpdateSpec>();
       for (MavenProject each : prevInheritors) {
         // no need to go recursively in case of inheritance, only when updating modules
-        inheritorUpdateSpecs.add(new UpdateSpec(each.getFile(), false, false));
+        inheritorUpdateSpecs.add(new UpdateSpec(new Stack<>(updateStack), each.getFile(), false, false));
       }
       updateProjects(inheritorUpdateSpecs);
 
