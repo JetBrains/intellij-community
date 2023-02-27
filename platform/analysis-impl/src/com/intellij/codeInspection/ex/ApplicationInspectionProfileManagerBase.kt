@@ -22,7 +22,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.serviceContainer.NonInjectable
 import org.jdom.JDOMException
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -30,8 +30,10 @@ import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Function
 
-open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) :
+open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) :
   BaseInspectionProfileManager(ApplicationManager.getApplication().messageBus) {
+
+  constructor() : this(SchemeManagerFactory.getInstance())
 
   init {
     val app = ApplicationManager.getApplication()
