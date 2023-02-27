@@ -114,7 +114,6 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
 
         afterAnalysisVisitor = getAfterAnalysisVisitor(holder, bindingContext)
 
-        //cleanUpCalculatingAnnotations(highlightInfoByTextRange)
         if (!shouldHighlightErrors) return
 
         for (diagnostic in bindingContext.diagnostics) {
