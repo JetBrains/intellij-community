@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.light;
 
 import com.intellij.model.BranchableSyntheticPsiElement;
@@ -167,10 +167,15 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
     public int hashCode() {
       return getPrototype().hashCode();
     }
+
+    @Override
+    public String toString() {
+      return "LightRecordConstructorParameter(" + super.toString() + ")";
+    }
   }
 
   @Override
   public String toString() {
-    return "LightRecordConstructorParameter(" + super.toString() + ")";
+    return "LightRecordCanonicalConstructor(" + super.toString() + ")";
   }
 }
