@@ -1,21 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table
 
+import com.intellij.ui.components.JBPanel
 import com.intellij.ui.dualView.TableCellRendererWrapper
 import com.intellij.ui.hover.TableHoverListener
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.ui.popup.list.SelectablePanel.Companion.wrap
 import com.intellij.ui.popup.list.SelectablePanel.SelectionArcCorners
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
-import java.awt.Dimension
 import javax.swing.JComponent
-import javax.swing.JPanel
 import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
 
@@ -154,13 +152,7 @@ internal class VcsLogNewUiTableCellRenderer(
       return 0
     }
 
-    private fun createEmptyPanel(): JPanel = object : JPanel(null) {
-      init {
-        isOpaque = false
-      }
-
-      override fun getPreferredSize(): Dimension = JBDimension(additionalGap, 0)
-    }
+    private fun createEmptyPanel() = JBPanel<JBPanel<*>>(null).andTransparent().withPreferredSize(additionalGap, 0)
 
     private const val ROOT_COLUMN_INDEX = 0
   }
