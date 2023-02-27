@@ -47,10 +47,9 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
         module: KtSourceModule,
         includeTests: Boolean
     ): GlobalSearchScope {
-        val ignored = moduleInfo.collectDependencies(
-            project.getService(ProjectStructureProvider::class.java),
-            ModuleDependencyCollector.CollectionMode.COLLECT_IGNORED
-        ).map { it.contentScope }
+        val ignored = moduleInfo
+            .collectDependencies(ModuleDependencyCollector.CollectionMode.COLLECT_IGNORED)
+            .map { it.contentScope }
 
         val searchScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module.ideaModule, includeTests)
         if (ignored.isEmpty()) return searchScope

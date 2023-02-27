@@ -12,6 +12,7 @@ import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.KotlinSourceRootType
@@ -25,24 +26,22 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import java.nio.file.Path
 import java.nio.file.Paths
 
-internal abstract class KtModuleByModuleInfoBase(
-    moduleInfo: ModuleInfo,
-    protected val provider: ProjectStructureProviderIdeImpl
-) {
+@ApiStatus.Internal
+abstract class KtModuleByModuleInfoBase(moduleInfo: ModuleInfo) {
     val ideaModuleInfo = moduleInfo as IdeaModuleInfo
 
     open val directRegularDependencies: List<KtModule>
-        get() = ideaModuleInfo.dependenciesWithoutSelf().map(provider::getKtModuleByModuleInfo).toList()
+        get() = ideaModuleInfo.dependenciesWithoutSelf().map { it.toKtModule() }.toList()
 
     open val directDependsOnDependencies: List<KtModule>
-        get() = ideaModuleInfo.expectedBy.map(provider::getKtModuleByModuleInfo)
+        get() = ideaModuleInfo.expectedBy.mapNotNull { (it as? IdeaModuleInfo)?.toKtModule() }
 
     // TODO: Implement some form of caching. Also see `ProjectStructureProviderIdeImpl.getKtModuleByModuleInfo`.
     val transitiveDependsOnDependencies: List<KtModule>
         get() = computeTransitiveDependsOnDependencies(directDependsOnDependencies)
 
     open val directFriendDependencies: List<KtModule>
-        get() = ideaModuleInfo.modulesWhoseInternalsAreVisible().map(provider::getKtModuleByModuleInfo)
+        get() = ideaModuleInfo.modulesWhoseInternalsAreVisible().mapNotNull { (it as? IdeaModuleInfo)?.toKtModule() }
 
     val platform: TargetPlatform get() = ideaModuleInfo.platform
     val analyzerServices: PlatformDependentAnalyzerServices get() = ideaModuleInfo.analyzerServices
@@ -62,17 +61,13 @@ internal abstract class KtModuleByModuleInfoBase(
     }
 }
 
-internal class KtSourceModuleByModuleInfo(
-    private val moduleInfo: ModuleSourceInfo,
-    provider: ProjectStructureProviderIdeImpl,
-) : KtModuleByModuleInfoBase(moduleInfo, provider), KtSourceModule {
-
+internal class KtSourceModuleByModuleInfo(private val moduleInfo: ModuleSourceInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSourceModule {
     val ideaModule: Module get() = moduleInfo.module
 
     override val moduleName: String get() = ideaModule.name
 
     override val directRegularDependencies: List<KtModule>
-        get() = moduleInfo.collectDependencies(provider, ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED)
+        get() = moduleInfo.collectDependencies(ModuleDependencyCollector.CollectionMode.COLLECT_NON_IGNORED)
 
     override val contentScope: GlobalSearchScope
         get() = if (moduleInfo is ModuleTestSourceInfo) {
@@ -86,10 +81,7 @@ internal class KtSourceModuleByModuleInfo(
     override val project: Project get() = ideaModule.project
 }
 
-fun ModuleSourceInfo.collectDependencies(
-    provider: ProjectStructureProvider,
-    collectionMode: ModuleDependencyCollector.CollectionMode
-): List<KtModule> {
+fun ModuleSourceInfo.collectDependencies(collectionMode: ModuleDependencyCollector.CollectionMode): List<KtModule> {
     val sourceRootType = when (this) {
         is ModuleProductionSourceInfo -> SourceKotlinRootType
         is ModuleTestSourceInfo -> TestSourceKotlinRootType
@@ -110,7 +102,7 @@ fun ModuleSourceInfo.collectDependencies(
         module,
         key,
         {
-            val dependencies = calculateModuleDependencies(sourceRootType, provider, collectionMode)
+            val dependencies = calculateModuleDependencies(sourceRootType, collectionMode)
             CachedValueProvider.Result.create(dependencies, ProjectRootModificationTracker.getInstance(project))
         },
         false
@@ -119,15 +111,13 @@ fun ModuleSourceInfo.collectDependencies(
 
 private fun ModuleSourceInfo.calculateModuleDependencies(
     sourceRootType: KotlinSourceRootType,
-    provider: ProjectStructureProvider,
     collectionMode: ModuleDependencyCollector.CollectionMode,
 ): List<KtModule> {
-    require(provider is ProjectStructureProviderIdeImpl)
     return ModuleDependencyCollector.getInstance(project)
         .collectModuleDependencies(module, platform, sourceRootType, includeExportedDependencies = true, collectionMode)
         .asSequence()
         .filterNot { it == this }
-        .map(provider::getKtModuleByModuleInfo)
+        .map { it.toKtModule() }
         .toList()
 }
 
@@ -139,15 +129,12 @@ private object DependencyKeys {
     val TEST_MODULE_DEPENDENCIES_IGNORED = Key.create<CachedValue<List<KtModule>>>("TEST_MODULE_DEPENDENCIES_IGNORED")
 }
 
-internal class KtLibraryModuleByModuleInfo(
-    private val moduleInfo: LibraryInfo,
-    provider: ProjectStructureProviderIdeImpl
-) : KtModuleByModuleInfoBase(moduleInfo, provider), KtLibraryModule {
+internal class KtLibraryModuleByModuleInfo(private val moduleInfo: LibraryInfo) : KtModuleByModuleInfoBase(moduleInfo), KtLibraryModule {
     override val libraryName: String
         get() = moduleInfo.library.name ?: "Unnamed library"
 
     override val librarySources: KtLibrarySourceModule
-        get() = moduleInfo.sourcesModuleInfo.let { provider.getKtModuleByModuleInfo(it) as KtLibrarySourceModule }
+        get() = moduleInfo.sourcesModuleInfo.toKtModuleOfType<KtLibrarySourceModule>()
 
     override fun getBinaryRoots(): Collection<Path> {
         return moduleInfo.getLibraryRoots().map(Paths::get)
@@ -158,10 +145,7 @@ internal class KtLibraryModuleByModuleInfo(
     override val project: Project get() = moduleInfo.project
 }
 
-internal class SdkKtModuleByModuleInfo(
-    private val moduleInfo: SdkInfo,
-    provider: ProjectStructureProviderIdeImpl
-) : KtModuleByModuleInfoBase(moduleInfo, provider), KtSdkModule {
+internal class SdkKtModuleByModuleInfo(private val moduleInfo: SdkInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSdkModule {
     override val sdkName: String
         get() = moduleInfo.sdk.name
 
@@ -177,9 +161,8 @@ internal class SdkKtModuleByModuleInfo(
 }
 
 internal class KtLibrarySourceModuleByModuleInfo(
-    private val moduleInfo: LibrarySourceInfo,
-    provider: ProjectStructureProviderIdeImpl
-) : KtModuleByModuleInfoBase(moduleInfo, provider), KtLibrarySourceModule {
+    private val moduleInfo: LibrarySourceInfo
+) : KtModuleByModuleInfoBase(moduleInfo), KtLibrarySourceModule {
     override val libraryName: String
         get() = moduleInfo.library.name ?: "Unnamed library"
 
@@ -196,16 +179,15 @@ internal class KtLibrarySourceModuleByModuleInfo(
         get() = LibrarySourcesScope(moduleInfo.project, moduleInfo.library)
 
     override val binaryLibrary: KtLibraryModule
-        get() = provider.getKtModuleByModuleInfo(moduleInfo.binariesModuleInfo) as KtLibraryModule
+        get() = moduleInfo.binariesModuleInfo.toKtModuleOfType<KtLibraryModule>()
 
     override val project: Project get() = moduleInfo.project
 }
 
 
 internal class NotUnderContentRootModuleByModuleInfo(
-    private val moduleInfo: IdeaModuleInfo,
-    provider: ProjectStructureProviderIdeImpl
-) : KtModuleByModuleInfoBase(moduleInfo, provider), KtNotUnderContentRootModule {
+    private val moduleInfo: IdeaModuleInfo
+) : KtModuleByModuleInfoBase(moduleInfo), KtNotUnderContentRootModule {
     override val name: String get() = moduleInfo.name.asString()
     override val file: PsiFile? get() = (moduleInfo as? NotUnderContentRootModuleInfo)?.file
     override val moduleDescription: String get() = "Non under content root module"
