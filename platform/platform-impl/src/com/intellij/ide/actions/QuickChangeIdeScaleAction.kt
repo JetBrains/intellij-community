@@ -23,7 +23,6 @@ import javax.swing.event.ListSelectionEvent
 class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   private val switchAlarm = Alarm()
   private var initialScale = UISettingsUtils.instance.currentIdeScale
-  private var listPopup: ListPopup? = null
 
   override fun fillActions(project: Project?, group: DefaultActionGroup, dataContext: DataContext) {
     initialScale = UISettingsUtils.instance.currentIdeScale
@@ -46,7 +45,6 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
   }
 
   override fun showPopup(e: AnActionEvent?, popup: ListPopup) {
-    listPopup = popup
     switchAlarm.cancelAllRequests()
 
     popup.addListSelectionListener { event: ListSelectionEvent ->
@@ -56,7 +54,7 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
         if (anAction is ChangeScaleAction) {
           switchAlarm.cancelAllRequests()
           switchAlarm.addRequest(Runnable {
-            applyScale(anAction.scale)
+            applyScale(anAction.scale, popup, true)
           }, SELECTION_THROTTLING_MS)
         }
       }
@@ -65,9 +63,8 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
     popup.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
         switchAlarm.cancelAllRequests()
-        listPopup = null
         if (!event.isOk) {
-          applyScale(initialScale, false)
+          applyScale(initialScale, popup, false)
           logSwitcherClosed(false)
         }
       }
@@ -80,15 +77,15 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction() {
     return Condition { a: AnAction? -> a is ChangeScaleAction && a.scale.percentValue == initialScale.percentValue }
   }
 
-  private fun applyScale(scale: Float, shouldLog: Boolean = true) {
+  private fun applyScale(scale: Float, popup: ListPopup, shouldLog: Boolean) {
     if (UISettingsUtils.instance.currentIdeScale.percentValue == scale.percentValue) return
     if (shouldLog) logIdeZoomChanged(scale)
 
     UISettingsUtils.instance.setCurrentIdeScale(scale)
     UISettings.getInstance().fireUISettingsChanged()
 
-    if (listPopup?.isDisposed == false) {
-      listPopup?.pack(true, true)
+    if (!popup.isDisposed) {
+      popup.pack(true, true)
     }
   }
 
