@@ -1069,7 +1069,8 @@
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
-    <lang.inspectionSuppressor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinInspectionSuppressor"/>
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressionChecker"
+                        serviceImplementation="org.jetbrains.kotlin.idea.inspections.KotlinK1SuppressionChecker"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.ObjectLiteralToLambdaInspection"
                      groupPath="Kotlin"
