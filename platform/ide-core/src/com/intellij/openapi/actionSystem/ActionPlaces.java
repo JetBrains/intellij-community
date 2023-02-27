@@ -122,6 +122,7 @@ public abstract class ActionPlaces {
   public static final String RUN_ANYTHING_POPUP = "RunAnythingPopup";
 
   public static final String WELCOME_SCREEN = "WelcomeScreen";
+  public static final String WELCOME_SCREEN_QUICK_PANEL = "WelcomeScreen.QuickPanel";
 
   public static final String CHANGES_VIEW_TOOLBAR = "ChangesViewToolbar";
   public static final String CHANGES_VIEW_POPUP = "ChangesViewPopup";
