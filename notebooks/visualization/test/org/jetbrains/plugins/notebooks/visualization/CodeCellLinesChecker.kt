@@ -32,7 +32,7 @@ class CodeCellLinesChecker(private val description: String,
 
   class IntervalsSetter(private val list: MutableList<NotebookCellLines.Interval>, private val startOrdinal: Int) {
     fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, markers: NotebookCellLines.MarkersAtLines) {
-      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers)
+      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers, null)
     }
   }
 

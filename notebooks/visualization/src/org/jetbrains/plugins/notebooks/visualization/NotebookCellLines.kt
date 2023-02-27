@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -44,6 +45,7 @@ interface NotebookCellLines {
     val type: CellType,
     val lines: IntRange,
     val markers: MarkersAtLines,
+    val language: Language?,
   ) : Comparable<Interval> {
     override fun compareTo(other: Interval): Int = lines.first - other.lines.first
   }

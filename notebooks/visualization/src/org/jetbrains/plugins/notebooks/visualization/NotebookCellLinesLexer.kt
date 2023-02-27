@@ -40,7 +40,7 @@ interface NotebookCellLinesLexer {
       val result = mutableListOf<NotebookCellLines.Interval>()
       for (i in 0 until (intervals.size - 1)) {
         result += NotebookCellLines.Interval(ordinal = i, type = intervals[i].second,
-                                             lines = intervals[i].first until intervals[i + 1].first, markers = intervals[i].third)
+                                             lines = intervals[i].first until intervals[i + 1].first, markers = intervals[i].third, null)
       }
       return result
     }
