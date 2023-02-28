@@ -24,6 +24,12 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    if (!DevKitInspectionUtil.isAllowed(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+
+    if (!hasJavaPsiApi(holder)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
+
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
@@ -91,6 +97,11 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
         }
       }
     };
+  }
+
+  private static boolean hasJavaPsiApi(@NotNull ProblemsHolder holder) {
+    return JavaPsiFacade.getInstance(holder.getProject())
+             .findClass(PsiElementFactory.class.getName(), holder.getFile().getResolveScope()) != null;
   }
 
   private static final class AddGetTextFix implements LocalQuickFix {
