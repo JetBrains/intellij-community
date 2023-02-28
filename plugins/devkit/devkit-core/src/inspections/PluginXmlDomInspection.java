@@ -652,8 +652,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
     @NonNls String name = nameAttrValue.getValue();
 
+    // skip some known offenders in IJ project
     if (name != null
-        && StringUtil.startsWith(name, "Pythonid.") // NON-NLS
+        && (StringUtil.startsWith(name, "Pythonid.") ||
+            StringUtil.startsWith(name, "DevKit.")) // NON-NLS
         && PsiUtil.isIdeaProject(nameAttrValue.getManager().getProject())) {
       return true;
     }
