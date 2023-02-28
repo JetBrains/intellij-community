@@ -33,6 +33,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -80,7 +81,7 @@ final class DoNotShowInspectionIntentionMenuContributor implements IntentionMenu
                                                                        @NotNull PsiElement psiElement,
                                                                        int offset,
                                                                        @NotNull ShowIntentionsPass.IntentionsInfo outIntentions) {
-    if (!psiElement.isPhysical()) {
+    if (!psiElement.isPhysical() && !PlatformUtils.isFleetBackend()) {
       VirtualFile virtualFile = hostFile.getVirtualFile();
       String text = hostFile.getText();
       LOG.error("not physical: '" + psiElement.getText() + "' @" + offset + " " +psiElement.getTextRange() +
