@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.UIBundle;
@@ -90,6 +91,8 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     if (ScreenReader.isActive()) {
       myBrowseButton.setFocusable(true);
       myBrowseButton.getAccessibleContext().setAccessibleName(UIBundle.message("component.with.browse.button.accessible.name"));
+    } else if (Registry.is("ide.browse.button.always.focusable", false)) {
+      myBrowseButton.setFocusable(true);
     }
     new LazyDisposable(this);
 
