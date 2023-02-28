@@ -248,7 +248,10 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
         }
       }
     }
-    if (window.isShowing) {
+    // GTW-1384 - If the parent window is JOptionPane.getRootFrame() then invoke DialogWrapper(Component) instead of DialogWrapper(Project)
+    // because otherwise the ToolbarUtil.setTransparentTitleBar(...) is invoked.
+    // AFAIU: It should only affect progresses that are shown without any parent window (like the Gateway started from IDE)
+    if (window.isShowing || window == JOptionPane.getRootFrame()) {
       return MyDialogWrapper(window)
     }
     return MyDialogWrapper(myProgressWindow.myProject)
