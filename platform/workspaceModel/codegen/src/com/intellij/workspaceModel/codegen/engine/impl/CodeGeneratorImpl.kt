@@ -21,10 +21,10 @@ class CodeGeneratorImpl : CodeGenerator {
       return GenerationResult(emptyList(), problems)
     }
 
-    val code = module.types.map { objClass ->
+    val code = objClassToBuilderInterface.map { (objClass, builderInterface) ->
       GeneratedCode(
         target = objClass,
-        builderInterface = objClassToBuilderInterface[objClass]!!,
+        builderInterface = builderInterface,
         companionObject = objClass.generateCompanionObject(),
         topLevelCode = objClass.generateExtensionCode(),
         implementationClass = objClass.implWsCode()
