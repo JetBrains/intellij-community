@@ -465,6 +465,9 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       if (myMostCommonUsagePatternsComponent == null) {
         myMostCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
         Disposer.register(this, myMostCommonUsagePatternsComponent);
+      } else {
+        Disposer.dispose(myMostCommonUsagePatternsComponent);
+        myMostCommonUsagePatternsComponent = new MostCommonUsagePatternsComponent(usageViewImpl, session);
       }
       add(myMostCommonUsagePatternsComponent);
       myMostCommonUsagePatternsComponent.loadSnippets();
