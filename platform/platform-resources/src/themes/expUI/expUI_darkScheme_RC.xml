@@ -249,7 +249,7 @@
     </option>
     <option name="DEFAULT_HIGHLIGHTED_REFERENCE">
       <value>
-        <option name="EFFECT_COLOR" value="81858c" />
+        <option name="EFFECT_COLOR" value="6b6c73" />
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
@@ -429,15 +429,14 @@
     </option>
     <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="9B84F0" />
-        <option name="EFFECT_COLOR" value="715DC2" />
+        <option name="FOREGROUND" value="c77dbb" />
+        <option name="EFFECT_COLOR" value="9e6294" />
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
     <option name="INACTIVE_HYPERLINK_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="7a7e85" />
-        <option name="EFFECT_COLOR" value="5f6066" />
+        <option name="EFFECT_COLOR" value="6b6c73" />
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
