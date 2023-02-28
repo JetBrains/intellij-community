@@ -1158,7 +1158,12 @@ public final class JBUI {
 
       @NotNull
       public static Insets headerInsets() {
-        return insets("Popup.Header.insets", insets(12, 10, 10, 10));
+        return insets(headerInsetsKey(), insets(12, 10, 10, 10));
+      }
+
+      @NotNull
+      public static String headerInsetsKey() {
+        return "Popup.Header.insets";
       }
 
       public static int headerHeight(boolean hasControls) {
