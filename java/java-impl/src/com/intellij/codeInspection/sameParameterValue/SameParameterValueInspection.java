@@ -88,7 +88,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
       RefParameter[] parameters = refMethod.getParameters();
       for (RefParameter refParameter : parameters) {
         Object value = refParameter.getActualConstValue();
-        if (value != VALUE_IS_NOT_CONST && value != VALUE_UNDEFINED) {
+        if (value == null || ContainerUtil.all(valueToList(value), v -> v != VALUE_UNDEFINED && v != VALUE_IS_NOT_CONST)) {
           if (minimalUsageCount != 0 && refParameter.getUsageCount() < minimalUsageCount) continue;
           if (!globalContext.shouldCheck(refParameter, this)) continue;
           if (problems == null) problems = new ArrayList<>(1);
@@ -102,6 +102,16 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     }
 
     return problems == null ? null : problems.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
+  }
+
+  @NotNull
+  private static List<Object> valueToList(@NotNull Object rootValue) {
+    if (rootValue instanceof List<?>) {
+      //noinspection unchecked
+      return (List<Object>)rootValue;
+    } else {
+      return List.of(rootValue);
+    }
   }
 
   @Override
@@ -452,7 +462,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
             if (myGlobal.minimalUsageCount != 0 && usageCount[0] < myGlobal.minimalUsageCount) return true;
             for (int i = 0, length = paramValues.length; i < length; i++) {
               Object value = paramValues[i];
-              if (value != VALUE_UNDEFINED && value != VALUE_IS_NOT_CONST) {
+              if (value == null || ContainerUtil.all(valueToList(paramValues[i]), v -> v != VALUE_UNDEFINED && v != VALUE_IS_NOT_CONST)) {
                 final UParameter parameter = parameters.get(i);
                 Boolean isFixAvailable = isFixAvailable(parameter, value, false);
                 if (Boolean.FALSE.equals(isFixAvailable) && myGlobal.ignoreWhenRefactoringIsComplicated) return true;
