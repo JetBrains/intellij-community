@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.stubindex.resolve
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
@@ -61,12 +62,13 @@ class PluginDeclarationProviderFactory(
     }
 
     private fun diagnoseMissingPackageFragmentPartialPackageIndexCorruption(message: String): Nothing {
-        throw IllegalStateException("KotlinPartialPackageNamesIndex seems corrupted.\n$message")
+        PerModulePackageCacheService.getInstance(project).onTooComplexChange() // force cache clean up
+        throw InconsistencyIndexException("KotlinPartialPackageNamesIndex inconsistency.\n$message")
     }
 
     private fun diagnoseMissingPackageFragmentPerModulePackageCacheMiss(message: String): Nothing {
         PerModulePackageCacheService.getInstance(project).onTooComplexChange() // Postpone cache rebuild
-        throw IllegalStateException("PerModulePackageCache miss.\n$message")
+        throw InconsistencyIndexException("PerModulePackageCache miss.\n$message")
     }
 
     private fun diagnoseMissingPackageFragmentUnknownReason(message: String): Nothing {
@@ -148,3 +150,5 @@ class PluginDeclarationProviderFactory(
         }
     }
 }
+
+private class InconsistencyIndexException(message: String): ProcessCanceledException(message)
