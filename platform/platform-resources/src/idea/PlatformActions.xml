@@ -1575,11 +1575,11 @@
       <reference id="ShowSettings"/>
       <reference id="WelcomeScreen.Plugins"/>
       <separator/>
-      <reference id="EnableNewUi"/>
       <reference id="ChangeLaf"/>
       <reference id="ChangeKeymap"/>
       <reference id="ChangeView"/>
       <separator/>
+      <reference id="EnableNewUi"/>
       <reference id="DisableNewUi"/>
     </group>
 
