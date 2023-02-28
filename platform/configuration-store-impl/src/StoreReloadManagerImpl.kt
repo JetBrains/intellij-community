@@ -4,7 +4,6 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManager
@@ -44,23 +43,23 @@ private val CHANGED_FILES_KEY = Key<MutableMap<ComponentStoreImpl, MutableSet<St
 private val CHANGED_SCHEMES_KEY = Key<MutableMap<SchemeChangeApplicator<*,*>, MutableSet<SchemeChangeEvent<*,*>>>>("CHANGED_SCHEMES_KEY")
 
 @ApiStatus.Internal
-internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
+internal class StoreReloadManagerImpl(cs: CoroutineScope) : StoreReloadManager {
   private val reloadBlockCount = AtomicInteger()
   private val blockStackTrace = AtomicReference<Throwable?>()
   private val changedApplicationFiles = LinkedHashSet<StateStorage>()
 
   private val changedFilesRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  @Suppress("DEPRECATION")
-  @OptIn(FlowPreview::class)
-  private val job = ApplicationManager.getApplication().coroutineScope
-    .launch(CoroutineName("configuration store reload request flow processing")) {
+  init {
+    @OptIn(FlowPreview::class)
+    cs.launch(CoroutineName("configuration store reload request flow processing")) {
       changedFilesRequests
         .debounce(300.milliseconds)
         .collect {
           doReload()
         }
     }
+  }
 
   private suspend fun doReload() {
     if (isReloadBlocked() || !tryToReloadApplication()) {
@@ -261,10 +260,6 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
     changedApplicationFiles.clear()
 
     return reloadAppStore(changes)
-  }
-
-  override fun dispose() {
-    job.cancel()
   }
 }
 
