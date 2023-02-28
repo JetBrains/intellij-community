@@ -4,11 +4,8 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 import com.intellij.codeInspection.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.*
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
@@ -62,6 +59,11 @@ private const val KOTLIN_TODO = "kotlin.TODO"
 internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (!DevKitInspectionUtil.isAllowed(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
+
+    val facade = JavaPsiFacade.getInstance(holder.project)
+    val scope = GlobalSearchScope.allScope(holder.project)
+    if (facade.findClass(REQUIRES_SUSPEND_CONTEXT_ANNOTATION, scope) == null) return PsiElementVisitor.EMPTY_VISITOR
+
     return createFileVisitor(holder)
   }
 
