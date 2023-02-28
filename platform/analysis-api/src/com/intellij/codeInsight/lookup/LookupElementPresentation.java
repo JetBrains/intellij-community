@@ -64,11 +64,15 @@ public class LookupElementPresentation {
   }
 
   public void appendTailText(@NotNull String text, boolean grayed) {
-    appendTailText(new TextFragment(text, grayed, false, null));
+    appendTailText(new TextFragment(text, grayed, false, false, null));
+  }
+
+  public void appendTailText(@NotNull String text, boolean grayed, boolean highlight) {
+    appendTailText(new TextFragment(text, grayed, false, highlight, null));
   }
 
   public void appendTailTextItalic(@NotNull String text, boolean grayed) {
-    appendTailText(new TextFragment(text, grayed, true, null));
+    appendTailText(new TextFragment(text, grayed, true, false, null));
   }
 
   private void appendTailText(@NotNull TextFragment fragment) {
@@ -84,14 +88,14 @@ public class LookupElementPresentation {
   public void setTailText(@Nullable String text, boolean grayed) {
     clearTail();
     if (text != null) {
-      appendTailText(new TextFragment(text, grayed, false, null));
+      appendTailText(new TextFragment(text, grayed, false, false, null));
     }
   }
 
   public void setTailText(@Nullable String text, @Nullable Color foreground) {
     clearTail();
     if (text != null) {
-      appendTailText(new TextFragment(text, false, false, foreground));
+      appendTailText(new TextFragment(text, false, false, false, foreground));
     }
   }
 
@@ -242,13 +246,16 @@ public class LookupElementPresentation {
     public final String text;
     private final boolean myGrayed;
     private final boolean myItalic;
+
+    private final boolean myHighlighted;
     @Nullable private final Color myFgColor;
 
-    private TextFragment(String text, boolean grayed, boolean italic, @Nullable Color fgColor) {
+    private TextFragment(String text, boolean grayed, boolean italic, boolean highlight, @Nullable Color fgColor) {
       this.text = text;
       myGrayed = grayed;
       myItalic = italic;
       myFgColor = fgColor;
+      myHighlighted = highlight;
     }
 
     @Override
@@ -267,6 +274,10 @@ public class LookupElementPresentation {
 
     public boolean isItalic() {
       return myItalic;
+    }
+
+    public boolean isHighlighted() {
+      return myHighlighted;
     }
 
     @Nullable

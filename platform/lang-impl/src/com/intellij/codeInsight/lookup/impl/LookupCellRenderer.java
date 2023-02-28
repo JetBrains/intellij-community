@@ -205,7 +205,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
     myTailComponent.clear();
     if (isSelected || allowedWidth >= 0) {
-      setTailTextLabel(isSelected, presentation, grayedForeground, isSelected ? getMaxWidth() : allowedWidth, nonFocusedSelection,
+      setTailTextLabel(item, isSelected, presentation, grayedForeground, isSelected ? getMaxWidth() : allowedWidth, nonFocusedSelection,
               getRealFontMetrics(item, false, CUSTOM_TAIL_FONT));
     }
 
@@ -277,7 +277,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     return myMaxWidth;
   }
 
-  private void setTailTextLabel(boolean isSelected,
+  private void setTailTextLabel(LookupElement item, boolean isSelected,
                                 LookupElementPresentation presentation,
                                 Color foreground,
                                 int allowedWidth,
@@ -291,7 +291,12 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
       String trimmed = trimLabelText(fragment.text, allowedWidth, fontMetrics);
       int fragmentStyle = fragment.isItalic() ? style | SimpleTextAttributes.STYLE_ITALIC : style;
-      myTailComponent.append(trimmed, new SimpleTextAttributes(fragmentStyle, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection)));
+      if (fragment.isHighlighted()) {
+        renderItemName(item, foreground, fragmentStyle, trimmed, myTailComponent);
+      }
+      else {
+        myTailComponent.append(trimmed, new SimpleTextAttributes(fragmentStyle, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection)));
+      }
       allowedWidth -= getStringWidth(trimmed, fontMetrics);
     }
   }

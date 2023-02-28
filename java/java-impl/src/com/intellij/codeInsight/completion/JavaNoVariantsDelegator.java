@@ -20,11 +20,12 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.JavaCompletionUtil.JavaLookupElementHighlighter;
 import com.intellij.codeInsight.completion.impl.BetterPrefixMatcher;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.MethodTags;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
@@ -108,13 +110,53 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
         suggestNonImportedClasses(parameters, result, session);
         return;
       }
-
+      suggestTagCalls(parameters, result, position);
       suggestChainedCalls(parameters, result, position);
     }
 
     if (parameters.getCompletionType() == CompletionType.SMART && parameters.getInvocationCount() == 2) {
       result.runRemainingContributors(parameters.withInvocationCount(3), true);
     }
+  }
+
+  private static void suggestTagCalls(CompletionParameters parameters, CompletionResultSet result, PsiElement position) {
+    if (!Registry.is("java.completion.methods.use.tags")) {
+      return;
+    }
+    PsiElement parent = position.getParent();
+    if (!(parent instanceof PsiReferenceExpression)) {
+      return;
+    }
+    PrefixMatcher prefixMatcher = result.getPrefixMatcher();
+    TagMatcher tagMatcher = new TagMatcher(prefixMatcher);
+    CompletionResultSet tagResultSet = result.withPrefixMatcher(tagMatcher);
+    tagResultSet.runRemainingContributors(parameters, new Consumer<>() {
+      @Override
+      public void consume(CompletionResult result) {
+        LookupElement element = result.getLookupElement();
+        if (element != null && !prefixMatcher.prefixMatches(element) && tagMatcher.prefixMatches(element)) {
+          LookupElement lookupElement = wrapLookup(element, prefixMatcher);
+          if (lookupElement == null) {
+            return;
+          }
+          CompletionResult wrapped = CompletionResult.wrap(lookupElement, result.getPrefixMatcher(),
+                                                           result.getSorter());
+          if (wrapped != null) {
+            tagResultSet.passResult(wrapped);
+          }
+        }
+      }
+
+      @Nullable
+      private static LookupElement wrapLookup(@NotNull LookupElement element, @NotNull PrefixMatcher matcher) {
+        String lookupString = element.getLookupString();
+        Set<String> tags = MethodTags.tags(lookupString).stream().filter(t -> matcher.prefixMatches(t)).collect(Collectors.toSet());
+        if (tags.isEmpty()) {
+          return null;
+        }
+        return new TagLookupElementDecorator(element, tags);
+      }
+    });
   }
 
   private static void suggestCollectionUtilities(CompletionParameters parameters, final CompletionResultSet result, PsiElement position) {
@@ -257,6 +299,66 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
       session.registerClassFrom(element);
 
       betterMatcher = betterMatcher.improve(plainResult);
+    }
+  }
+
+  private static class TagMatcher extends PrefixMatcher {
+    @NotNull
+    private final PrefixMatcher myMatcher;
+
+    protected TagMatcher(@NotNull PrefixMatcher matcher) {
+      super(matcher.getPrefix());
+      myMatcher = matcher;
+    }
+
+    @Override
+    public boolean prefixMatches(@NotNull String name) {
+      if (myMatcher.prefixMatches(name)) {
+        return true;
+      }
+      Set<String> tags = MethodTags.tags(name);
+      for (String tag : tags) {
+        if (myMatcher.prefixMatches(tag)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
+      PrefixMatcher matcher = myMatcher.cloneWithPrefix(prefix);
+      return new TagMatcher(matcher);
+    }
+  }
+
+  static class TagLookupElementDecorator extends LookupElementDecorator<LookupElement> {
+
+    private final Set<String> myTags;
+
+    protected TagLookupElementDecorator(@NotNull LookupElement delegate, @NotNull Set<String> tags) {
+      super(delegate);
+      myTags = tags;
+    }
+
+    public Set<String> getTags() {
+      return myTags;
+    }
+
+    @Override
+    public Set<String> getAllLookupStrings() {
+      Set<String> all = new HashSet<>(super.getAllLookupStrings());
+      all.addAll(myTags);
+      return all;
+    }
+
+    @Override
+    public void renderElement(@NotNull LookupElementPresentation presentation) {
+      super.renderElement(presentation);
+      if (!myTags.isEmpty()) {
+        presentation.appendTailText(" " + JavaBundle.message("java.completion.tag") + " ", true);
+        presentation.appendTailText(myTags.iterator().next(), true, true);
+      }
     }
   }
 }
