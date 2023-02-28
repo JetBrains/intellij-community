@@ -11,6 +11,7 @@ public class Test {
      new Test().bar();
    }
 }
+
 class AnotherDiiferentVarargs {
     private static final String TEXT = "text";
     private static final String ANOTHER_TEXT = "another text";
@@ -26,4 +27,14 @@ class AnotherDiiferentVarargs {
             System.out.println(string);
         }
     }
+}
+
+class MixedConstantNonConstantArg {
+  static int x() { return 1; }
+
+  void foo(int... bar) { }
+
+  public static void main(String[] args) {
+    new MixedConstantNonConstantArg().log(1, x());
+  }
 }
