@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
@@ -809,7 +810,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
         @Override
         protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           setOpaque(selected);
-          if (value instanceof String message) {
+          if (value instanceof @NlsSafe String message) {
             myIssueLinkRenderer.appendTextWithLinks(message, getDefaultAttributes());
             SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
           }
