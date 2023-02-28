@@ -35,10 +35,6 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         operationNotSupportedInK2Error()
     }
 
-    override fun KDocReference.renameTo(newElementName: String): PsiElement? {
-        operationNotSupportedInK2Error()
-    }
-
     override fun SyntheticPropertyAccessorReference.renameTo(newElementName: String): KtElement? {
         operationNotSupportedInK2Error()
     }

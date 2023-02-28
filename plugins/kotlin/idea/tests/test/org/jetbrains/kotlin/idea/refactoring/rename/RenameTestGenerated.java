@@ -1133,6 +1133,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameKotlinValPropertyInObject/renameKotlinValPropertyInObject.test");
     }
 
+    @TestMetadata("renameKotlinValPropertyWithKDoc/renameKotlinValPropertyWithKDoc.test")
+    public void testRenameKotlinValPropertyWithKDoc_RenameKotlinValPropertyWithKDoc() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinValPropertyWithKDoc/renameKotlinValPropertyWithKDoc.test");
+    }
+
     @TestMetadata("renameKotlinValProperty/renameAsJavaGetterForExplicitGetter.test")
     public void testRenameKotlinValProperty_RenameAsJavaGetterForExplicitGetter() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinValProperty/renameAsJavaGetterForExplicitGetter.test");
