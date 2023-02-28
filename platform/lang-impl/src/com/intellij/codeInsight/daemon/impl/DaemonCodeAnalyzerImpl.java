@@ -1176,46 +1176,18 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
     else {
       TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
-      activeTextEditors = new HashSet<>(editors.size());
-      for (Editor editor : editors) {
-        if (editor.isDisposed()) {
-          continue;
-        }
-
-        TextEditor textEditor = textEditorProvider.getTextEditor(editor);
-        activeTextEditors.add(textEditor);
-      }
+      activeTextEditors = ContainerUtil.map2SetNotNull(editors,
+                                                       editor -> editor.isDisposed() ? null: textEditorProvider.getTextEditor(editor));
     }
 
     if (application.getCurrentModalityState() != ModalityState.NON_MODAL) {
       return activeTextEditors;
     }
 
-    Collection<FileEditor> result = new HashSet<>(activeTextEditors.size());
-    Set<VirtualFile> files = new HashSet<>(activeTextEditors.size());
-    if (!application.isUnitTestMode()) {
-      // editors in tabs
-      for (FileEditor tabEditor : getFileEditorManager().getSelectedEditorWithRemotes()) {
-        if (!tabEditor.isValid()) continue;
-        VirtualFile file = tabEditor.getFile();
-        if (file != null) {
-          files.add(file);
-        }
-        result.add(tabEditor);
-      }
-    }
-
-    // do not duplicate documents
-    if (!activeTextEditors.isEmpty()) {
-      for (FileEditor fileEditor : activeTextEditors) {
-        VirtualFile file = fileEditor.getFile();
-        if (file != null && (files.contains(file) || !file.isValid())) {
-          continue;
-        }
-        result.add(fileEditor);
-      }
-    }
-    return result;
+    // tests usually care about just one explicitly configured editor
+    List<FileEditor> tabEditors = application.isUnitTestMode() ? Collections.emptyList() : Arrays.asList(getFileEditorManager().getSelectedEditorWithRemotes());
+    return ContainerUtil.filter(ContainerUtil.union(activeTextEditors, tabEditors),
+                         fileEditor -> fileEditor.isValid() && fileEditor.getFile() != null && fileEditor.getFile().isValid());
   }
 
   /**
