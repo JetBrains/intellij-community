@@ -79,15 +79,6 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
   }
 
   @Override
-  public Rectangle layout(JComponent c, Rectangle bounds) {
-    if (c instanceof Toolbar) {
-      bounds.height -= getSeparatorWidth();
-      return super.layout(c, bounds);
-    }
-    return super.layout(c, bounds);
-  }
-
-  @Override
   public void processDropOver(TabInfo over, RelativePoint relativePoint) {
     final Point point = relativePoint.getPoint(getComponent());
     myShowDropLocation = shouldAddToGlobal(point);
