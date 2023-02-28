@@ -20,6 +20,8 @@ private const val APPLICATION_SERVICE_FQN = "com.intellij.applicationService"
 class ApplicationServiceAsStaticFinalFieldInspection : AbstractBaseJavaLocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    if (!DevKitInspectionUtil.isAllowed(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
+
     return object : JavaElementVisitor() {
 
       override fun visitField(field: PsiField) {
