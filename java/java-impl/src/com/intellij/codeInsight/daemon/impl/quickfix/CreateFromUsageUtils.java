@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.*;
@@ -26,7 +26,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -58,7 +58,10 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -94,17 +97,6 @@ public final class CreateFromUsageUtils {
     catch (ClassCastException cce) {
       // rear case
       return false;
-    }
-  }
-
-  static boolean shouldCreateConstructor(PsiClass targetClass, PsiExpressionList argList, PsiMethod candidate) {
-    if (argList == null) return false;
-    if (candidate == null) {
-      return targetClass != null && !targetClass.isInterface() && !(targetClass instanceof PsiTypeParameter) &&
-             !(argList.isEmpty() && targetClass.getConstructors().length == 0);
-    }
-    else {
-      return !PsiUtil.isApplicable(candidate, PsiSubstitutor.EMPTY, argList);
     }
   }
 
@@ -207,8 +199,8 @@ public final class CreateFromUsageUtils {
         final String lineIndent = styleManager.getLineIndent(containingFile, end);
         PsiDocumentManager manager = PsiDocumentManager.getInstance(body.getProject());
         manager.doPostponedOperationsAndUnblockDocument(newEditor.getDocument());
-        EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
-        EditorModificationUtil.insertStringAtCaret(newEditor, "\n", false, false);
+        EditorModificationUtilEx.insertStringAtCaret(newEditor, lineIndent);
+        EditorModificationUtilEx.insertStringAtCaret(newEditor, "\n", false, false);
       }
       else {
         //correct position caret for groovy and java methods
