@@ -23,6 +23,7 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +35,6 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
@@ -725,31 +725,48 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         if (TRACE_SKIPPED_EVENT) _trace("skipped fill-event for item '%s', use cached (too frequent fill-events)", String.valueOf(mi.txt));
       }
       else {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          // ETD-start
-          final JMenuItem jmi = mi.jitem;
-          if (jmi == null) {
-            if (TRACE_HIERARCHY_MISMATCHES) {
-              _trace(
-                "corresponding (opening) swing item is null, event source: " + mi + ", swing menu hierarchy:\n" + _dumpSwingHierarchy());
-            }
-            return;
-          }
-          if (!(jmi instanceof ActionMenu am)) {
-            LOG.debug("corresponding (opening) swing item isn't instance of ActionMenu, class=" +
-                      jmi.getClass().getName() +
-                      ", event source: " +
-                      mi);
-            return;
-          }
+        final int retriesCount = 3;
+        int tryNumer = 0;
+        for (; tryNumer < retriesCount; ++tryNumer) {
+          try {
+            ApplicationManager.getApplication().invokeAndWait(() -> {
+              // ETD-start
+              final JMenuItem jmi = mi.jitem;
+              if (jmi == null) {
+                if (TRACE_HIERARCHY_MISMATCHES) {
+                  _trace(
+                    "corresponding (opening) swing item is null, event source: " +
+                    mi +
+                    ", swing menu hierarchy:\n" +
+                    _dumpSwingHierarchy());
+                }
+                return;
+              }
+              if (!(jmi instanceof ActionMenu am)) {
+                LOG.debug("corresponding (opening) swing item isn't instance of ActionMenu, class=" +
+                          jmi.getClass().getName() +
+                          ", event source: " +
+                          mi);
+                return;
+              }
 
-          mi.lastFilledMs = timeMs;
+              mi.lastFilledMs = timeMs;
 
-          am.removeAll();
-          am.fillMenu();
-          _syncChildren(mi, am, DONT_FILL_SUBMENU ? 1 : 2,
-                        stats); // NOTE: fill next submenus level to avoid empty submenu showing (intermittent behaviour of menu-applet)
-        });
+              am.removeAll();
+              am.fillMenu();
+              _syncChildren(mi, am, DONT_FILL_SUBMENU ? 1 : 2,
+                            stats); // NOTE: fill next submenus level to avoid empty submenu showing (intermittent behaviour of menu-applet)
+            });
+            break;
+          } catch (ProcessCanceledException e) {
+          }
+        }
+        if (tryNumer >= retriesCount) {
+          // clear cached children of menuitem (just for insurance)
+          mi.clearChildrenSwingRefs();
+          mi.children.forEach(k -> k.position = -1);
+          LOG.debug("Menu group wasn't expanded in 3 attempts, will do nothing..");
+        }
 
         // glib main-loop thread
         final long elapsedMs = System.currentTimeMillis() - timeMs;
