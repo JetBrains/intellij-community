@@ -13,9 +13,9 @@ class TomlVersionCatalogCompletionTest : GradleCodeInsightTestCase() {
   private fun testSuggestion(version: GradleVersion, versionCatalogText: String, vararg completionCandidates: String) {
     checkCaret(versionCatalogText)
     testEmptyProject(version) {
-      val versionCatalog = findOrCreateFile("gradle/libs.versions.toml", versionCatalogText)
+      writeTextAndCommit("gradle/libs.versions.toml", versionCatalogText)
       runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(versionCatalog)
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
         val suggestions = codeInsightFixture.completeBasic().map { it.lookupString }
         Assertions.assertArrayEquals(suggestions.toTypedArray(), completionCandidates)
       }

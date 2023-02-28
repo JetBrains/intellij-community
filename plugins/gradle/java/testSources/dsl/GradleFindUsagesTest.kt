@@ -17,7 +17,7 @@ class GradleFindUsagesTest: GradleCodeInsightTestCase() {
   @BaseGradleVersionSource
   fun testCompletionForVersionCatalogProperty(gradleVersion: GradleVersion) {
     test(gradleVersion, VERSION_CATALOG_FIXTURE) {
-      val file = findOrCreateFile("build.gradle", """
+      writeTextAndCommit("build.gradle", """
         plugins {
           id 'java'
         }
@@ -27,7 +27,7 @@ class GradleFindUsagesTest: GradleCodeInsightTestCase() {
         }
       """.trimIndent())
       runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(file)
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle"))
         val method = fixture.elementAtCaret // what
         val usages = ReferencesSearch.search(method).findAll()
         Assertions.assertTrue(usages.size == 1)

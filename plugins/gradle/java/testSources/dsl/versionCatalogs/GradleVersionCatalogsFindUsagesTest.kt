@@ -18,10 +18,10 @@ class GradleVersionCatalogsFindUsagesTest : GradleCodeInsightTestCase() {
                                    checker: (Collection<PsiReference>) -> Unit) {
     checkCaret(versionCatalogText)
     testEmptyProject(version) {
-      val versionCatalog = findOrCreateFile("gradle/libs.versions.toml", versionCatalogText)
-      findOrCreateFile("build.gradle", buildGradleText)
+      writeTextAndCommit("gradle/libs.versions.toml", versionCatalogText)
+      writeTextAndCommit("build.gradle", buildGradleText)
       runInEdtAndWait {
-        codeInsightFixture.configureFromExistingVirtualFile(versionCatalog)
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("gradle/libs.versions.toml"))
         val elementAtCaret = codeInsightFixture.elementAtCaret
         assertNotNull(elementAtCaret)
         val usages = ReferencesSearch.search(elementAtCaret).findAll()

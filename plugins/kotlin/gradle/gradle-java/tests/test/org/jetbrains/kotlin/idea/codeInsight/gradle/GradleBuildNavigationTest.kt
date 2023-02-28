@@ -3,9 +3,8 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.openapi.externalSystem.util.runReadAction
-import com.intellij.openapi.vfs.findOrCreateFile
-import com.intellij.testFramework.utils.vfs.getPsiFile
 import com.intellij.testFramework.findReferenceByText
+import com.intellij.testFramework.utils.vfs.getPsiFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
@@ -21,9 +20,8 @@ class GradleBuildNavigationTest: GradleCodeInsightTestCase() {
     @BaseGradleVersionSource
     fun testBuildGradleWithMppPlugin(gradleVersion: GradleVersion) {
         test(gradleVersion, KOTLIN_PLUGIN_FIXTURE) {
-            val file = projectRoot.findOrCreateFile("build.gradle")
             runReadAction {
-                val buildGradle = file.getPsiFile(project)
+                val buildGradle = getFile("build.gradle").getPsiFile(project)
                 val jvmElement = buildGradle.findReferenceByText("jvm").element
                 val documentationProvider = DocumentationManager.getProviderFromElement(jvmElement)
                 val doc = documentationProvider.generateDoc(jvmElement, jvmElement)

@@ -12,7 +12,7 @@ class GradleUnusedVersionCatalogInspectionTest : GradleCodeInsightTestCase() {
   private fun runTest(gradleVersion: GradleVersion, buildGradleText: String, versionCatalogText: String) {
     testEmptyProject(gradleVersion) {
       codeInsightFixture.enableInspections(UnusedVersionCatalogEntryInspection::class.java)
-      findOrCreateFile("build.gradle", buildGradleText)
+      writeTextAndCommit("build.gradle", buildGradleText)
       testHighlighting("gradle/libs.versions.toml", versionCatalogText)
     }
   }

@@ -1,11 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.testFramework
 
-import com.intellij.openapi.externalSystem.util.*
+import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
+import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.*
-import com.intellij.testFramework.utils.editor.commitToPsi
-import com.intellij.testFramework.utils.editor.reloadFromDisk
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.findOrCreateFile
+import com.intellij.openapi.vfs.readText
+import com.intellij.openapi.vfs.writeText
+import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.testFramework.utils.vfs.getFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
@@ -33,19 +36,44 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
   fun testGroovyProject(gradleVersion: GradleVersion, test: () -> Unit) =
     test(gradleVersion, GROOVY_PROJECT, test)
 
-  fun findOrCreateFile(relativePath: String, text: String): VirtualFile {
+  fun getFile(relativePath: String): VirtualFile {
+    gradleFixture.fileFixture.snapshot(relativePath)
+    return projectRoot.getFile(relativePath)
+  }
+
+  fun createFile(relativePath: String): VirtualFile {
     gradleFixture.fileFixture.snapshot(relativePath)
     return runWriteActionAndGet {
-      val file = projectRoot.findOrCreateFile(relativePath)
-      file.findDocument()?.reloadFromDisk()
-      file.writeText(text)
-      file.findDocument()?.commitToPsi(project)
-      file
+      projectRoot.createFile(relativePath)
     }
   }
 
-  fun getFile(relativePath: String): VirtualFile {
-    return projectRoot.getFile(relativePath)
+  fun findOrCreateFile(relativePath: String): VirtualFile {
+    gradleFixture.fileFixture.snapshot(relativePath)
+    return runWriteActionAndGet {
+      projectRoot.findOrCreateFile(relativePath)
+    }
+  }
+
+  fun writeText(relativePath: String, text: String) {
+    val file = findOrCreateFile(relativePath)
+    runWriteActionAndWait {
+      file.writeText(text)
+    }
+  }
+
+  fun appendText(relativePath: String, text: String) {
+    val file = getFile(relativePath)
+    runWriteActionAndWait {
+      file.writeText(file.readText() + "\n" + text)
+    }
+  }
+
+  fun prependText(relativePath: String, text: String) {
+    val file = getFile(relativePath)
+    runWriteActionAndWait {
+      file.writeText(text + "\n" + file.readText())
+    }
   }
 
   companion object {

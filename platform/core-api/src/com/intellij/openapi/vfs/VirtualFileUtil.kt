@@ -25,6 +25,7 @@ fun VirtualFile.readText(): String {
   return VfsUtilCore.loadText(this)
 }
 
+@RequiresWriteLock
 fun VirtualFile.writeText(content: String) {
   VfsUtilCore.saveText(this, content)
 }
@@ -33,6 +34,7 @@ fun VirtualFile.readBytes(): ByteArray {
   return inputStream.use { it.readBytes() }
 }
 
+@RequiresWriteLock
 fun VirtualFile.writeBytes(content: ByteArray) {
   setBinaryContent(content)
 }
