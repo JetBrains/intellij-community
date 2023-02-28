@@ -35,7 +35,7 @@ abstract class LessonContext : LearningDslBase {
   }
 
   /** Describe a simple task: just one action required */
-  fun actionTask(action: String, @Nls getText: TaskContext.(action: String) -> String) {
+  fun actionTask(action: String, getText: TaskContext.(action: String) -> @Nls String) {
     task {
       text(getText(action))
       trigger(action)

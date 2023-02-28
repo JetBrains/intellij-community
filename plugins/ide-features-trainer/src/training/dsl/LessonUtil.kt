@@ -256,7 +256,7 @@ object LessonUtil {
     }
   }
 
-  fun rawShift() = LessonUtil.rawKeyStroke(KeyStroke.getKeyStroke("SHIFT"))
+  fun rawShift() = rawKeyStroke(KeyStroke.getKeyStroke("SHIFT"))
 
   fun checkToolbarIsShowing(ui: ActionButton): Boolean {
     // Some buttons are duplicated to several tab-panels. It is a way to find an active one.
@@ -371,18 +371,6 @@ object LessonUtil {
       popupWindow.location = Point(leftBorder.x, popupBounds.y)
     }
     return true
-  }
-
-  inline fun<reified T: Component> findUiParent(start: Component, predicate: (Component) -> Boolean): T? {
-    if (start is T && predicate(start)) return start
-    var ui: Container? = start.parent
-    while (ui != null) {
-      if (ui is T && predicate(ui)) {
-        return ui
-      }
-      ui = ui.parent
-    }
-    return null
   }
 
   fun returnToWelcomeScreenRemark(): String {

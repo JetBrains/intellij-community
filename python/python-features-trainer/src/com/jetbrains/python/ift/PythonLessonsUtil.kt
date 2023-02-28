@@ -64,6 +64,7 @@ object PythonLessonsUtil {
     }
 
     val usedInterpreter = project.pythonSdk?.versionString ?: "none"
+    @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization") // a very strange warning report here
     val startInterpreter = if (usedInterpreterAtStart == usedInterpreter) "same" else usedInterpreterAtStart
 
     primaryLanguage.onboardingFeedbackData = object : OnboardingFeedbackData(reportTitle, lessonEndInfo) {
