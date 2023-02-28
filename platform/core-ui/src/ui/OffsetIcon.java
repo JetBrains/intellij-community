@@ -65,6 +65,10 @@ public final class OffsetIcon extends JBCachingScalableIcon<OffsetIcon> {
     return myIcon;
   }
 
+  public int getOffset() {
+    return myOffset;
+  }
+
   public int hashCode() {
     return myOffset + myIcon.hashCode();
   }
