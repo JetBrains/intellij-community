@@ -13,12 +13,15 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,9 +56,17 @@ abstract class StaticImportMemberFix<T extends PsiMember, R extends PsiElement> 
       // search for suitable candidates here, in the background thread
       List<T> applicableCandidates = getMembersToImport(true, 100);
       List<T> candidatesToImport = applicableCandidates.isEmpty() ? getMembersToImport(false, 2) : applicableCandidates;
-      candidates = ContainerUtil.filter(candidatesToImport, PsiElement::isValid);
+      candidates = ContainerUtil.filter(candidatesToImport, candidate -> isValidCandidate(file, candidate));
     }
     myPsiModificationCount = PsiModificationTracker.getInstance(project).getModificationCount();
+  }
+
+  private static boolean isValidCandidate(PsiFile file, PsiMember candidate){
+    if (!candidate.isValid()) return false;
+    if (PsiUtil.isMemberAccessibleAt(candidate, file)) return true;
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(candidate);
+    if (virtualFile == null) return false;
+    return ProjectFileIndex.getInstance(file.getProject()).isInContent(virtualFile);
   }
 
   @NotNull
