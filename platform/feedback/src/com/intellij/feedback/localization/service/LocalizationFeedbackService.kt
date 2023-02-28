@@ -2,17 +2,15 @@
 package com.intellij.feedback.localization.service
 
 import com.intellij.DynamicBundle
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.PlatformUtils
 import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.time.Duration
+import java.time.*
 
 @Service(Service.Level.APP)
 @State(name = "LocalizationFeedbackState", storages = [Storage("LocalizationFeedbackState.xml")])
@@ -22,20 +20,20 @@ class LocalizationFeedbackService(private val coroutineScope: CoroutineScope) : 
 
     fun isTesting() = System.getProperty("ide.feedback.localization.test")?.toBoolean() == true
 
-    private val TIME_TO_WAIT_FOR_NOTIFICATION_MS = if (isTesting()) Duration.ofMinutes(3).toMillis() else Duration.ofDays(3).toMillis()
-    private val REFRESH_TIME_MS = if (isTesting()) Duration.ofMinutes(1).toMillis() else Duration.ofMinutes(30).toMillis()
+    private const val DAYS_TO_WAIT = 3
+    private val REFRESH_TIME_MS = if (isTesting()) Duration.ofSeconds(10).toMillis() else Duration.ofMinutes(30).toMillis()
   }
 
   private var myState = State()
-  private var initialTimeSincePluginInstallation = -1L
+
+  val logger  = logger<LocalizationFeedbackService>()
 
 
   class State : BaseState() {
-    var timeSincePluginInstallation by property(-1L)
+    var daysUsedSincePluginInstallation by property(-1)
+    var lastUpdateTime by property(-1L)
     var balloonWasInteractedWith by property(false)
   }
-
-  private fun getCurrentSessionTime() = (System.currentTimeMillis() - application.startTime - application.idleTime).coerceAtLeast(0)
 
   fun getLanguagePack() =
     DynamicBundle.findLanguageBundle()?.pluginDescriptor?.let { it.pluginId.idString to it.version } ?: ("none" to "none")
@@ -47,9 +45,9 @@ class LocalizationFeedbackService(private val coroutineScope: CoroutineScope) : 
   fun tryRecordInstallation(): Boolean {
     if (!hasLanguagePack()) return false
     val state = myState
-    if (state.timeSincePluginInstallation != -1L) return false
-    state.timeSincePluginInstallation = 0L
-    initialTimeSincePluginInstallation = 0L
+    if (state.daysUsedSincePluginInstallation != -1) return false
+    state.daysUsedSincePluginInstallation = 1
+    state.lastUpdateTime = System.currentTimeMillis()
 
     return true
   }
@@ -60,25 +58,38 @@ class LocalizationFeedbackService(private val coroutineScope: CoroutineScope) : 
 
   private fun isTimeForNotification(): Boolean {
     val state = myState
+    if (state.daysUsedSincePluginInstallation == -1) return false
+    if (state.daysUsedSincePluginInstallation >= DAYS_TO_WAIT) return true
 
-    val time = initialTimeSincePluginInstallation + getCurrentSessionTime()
-    state.timeSincePluginInstallation = time
+    val now = LocalDate.now(ZoneOffset.UTC)
+    val lastUpdate = Instant.ofEpochMilli(state.lastUpdateTime).atOffset(ZoneOffset.UTC).toLocalDate()
 
-    return time >= TIME_TO_WAIT_FOR_NOTIFICATION_MS
+    if (lastUpdate == now) {
+      return state.daysUsedSincePluginInstallation >= DAYS_TO_WAIT
+    }
+
+    val lastIdeActionDate = Instant.ofEpochMilli(System.currentTimeMillis() - application.idleTime).atOffset(ZoneOffset.UTC).toLocalDate()
+
+    if (lastIdeActionDate == now) {
+      ++state.daysUsedSincePluginInstallation
+      state.lastUpdateTime = System.currentTimeMillis()
+    }
+
+    return state.daysUsedSincePluginInstallation >= DAYS_TO_WAIT
   }
 
   fun runWatcher() {
     val state = myState
-    if (state.timeSincePluginInstallation == -1L) return
+    if (state.daysUsedSincePluginInstallation == -1) return
     if (wasInteracted()) return
 
     coroutineScope.launch {
       while (!isTimeForNotification() || ProjectManager.getInstance().openProjects.isEmpty()) {
         delay(REFRESH_TIME_MS)
-        thisLogger().debug("Not time for notification, current: ${state.timeSincePluginInstallation}")
+        logger.info("Not time for notification, current: ${state.daysUsedSincePluginInstallation}/$DAYS_TO_WAIT, opened projects: ${ProjectManager.getInstance().openProjects.isEmpty()}")
       }
 
-      thisLogger().info("Starting notification flow")
+      logger.info("Starting notification flow")
 
       delay(10000)
 
@@ -90,6 +101,5 @@ class LocalizationFeedbackService(private val coroutineScope: CoroutineScope) : 
 
   override fun loadState(state: State) {
     myState = state
-    initialTimeSincePluginInstallation = state.timeSincePluginInstallation
   }
 }
