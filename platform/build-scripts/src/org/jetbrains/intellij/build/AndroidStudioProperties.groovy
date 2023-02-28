@@ -90,6 +90,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
 
     allLibraryLicenses += AndroidStudioLibraryLicenses.LICENSES_LIST
     includeIntoSourcesArchiveFilter = { JpsModule module, BuildContext buildContext -> true }
+    customJvmMemoryOptions = customJvmMemoryOptions.putAll(["-Xms": "256m", "-Xmx": "1280m"])
     additionalIdeJvmArguments = ["-XX:FlightRecorderOptions=stackdepth=256"]
 
     productLayout.productApiModules = BaseIdeaPropertiesKt.JAVA_IDE_API_MODULES
