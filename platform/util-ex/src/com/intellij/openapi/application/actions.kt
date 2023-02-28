@@ -3,6 +3,7 @@ package com.intellij.openapi.application
 
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.util.Computable
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 fun <T> runWriteAction(runnable: () -> T): T {
@@ -31,6 +32,7 @@ fun assertWriteAccessAllowed() {
  * @suppress Internal use only
  */
 @Internal
+@RequiresBlockingContext
 fun <T> invokeAndWaitIfNeeded(modalityState: ModalityState? = null, runnable: () -> T): T {
   val app = ApplicationManager.getApplication()
   if (app.isDispatchThread) {

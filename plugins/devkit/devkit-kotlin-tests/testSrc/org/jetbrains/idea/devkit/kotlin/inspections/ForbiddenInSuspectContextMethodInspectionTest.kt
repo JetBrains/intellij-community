@@ -542,6 +542,38 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
   }
 
   @Test
+  fun `invokeAndWaitIfNeeded with modality parameter`() {
+    addApplicationAndEtc()
+
+    myFixture.configureByText("file.kt", """
+      import com.intellij.openapi.application.*
+      
+      suspend fun a() {
+        <warning descr="$invokeAndWaitDescr">invokeAn<caret>dWaitIfNeeded</warning>(ModalityState.any()) {
+          println()
+        }
+      }
+    """.trimIndent())
+    myFixture.testHighlighting()
+
+    val intention = myFixture.getAvailableIntention(invokeAndWaitFix)
+    assertNotNullK(intention)
+    myFixture.checkPreviewAndLaunchAction(intention)
+
+    myFixture.checkResult(""" 
+      import com.intellij.openapi.application.*
+      import kotlinx.coroutines.Dispatchers
+      import kotlinx.coroutines.withContext
+      
+      suspend fun a() {
+        withContext(Dispatchers.EDT) {
+          println()
+        }
+      }
+    """.trimIndent())
+  }
+
+  @Test
   fun `defaultModalityState in suspend context`() {
     addApplicationAndEtc()
 
@@ -718,8 +750,22 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
           public static ModalityState defaultModalityState() {
             return null;
           }
+          
+          public static ModalityState any() {
+            return null;
+          }
         }
       """.trimIndent())
+
+    myFixture.configureByText("utils.kt", """
+      package com.intellij.openapi.application
+      
+      import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+      
+      @RequiresBlockingContext
+      fun <T> invokeAndWaitIfNeeded(modalityState: ModalityState? = null, runnable: () -> T): T {
+      }
+    """.trimIndent())
   }
 
   private fun addCheckCanceledFunctions() {
