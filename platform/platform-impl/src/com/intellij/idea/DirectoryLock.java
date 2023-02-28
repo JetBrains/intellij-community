@@ -75,7 +75,7 @@ final class DirectoryLock {
     myPortFile = systemPath.resolve(SpecialConfigFiles.PORT_FILE);
     myLockFile = configPath.resolve(SpecialConfigFiles.LOCK_FILE);
 
-    myFallbackMode = myPortFile.getFileSystem().getClass().getModule() != Object.class.getModule();
+    myFallbackMode = !areUdsSupported(myPortFile);
 
     if (!myFallbackMode && myPortFile.toString().length() > UDS_PATH_LENGTH_LIMIT) {
       var baseDir = SystemInfoRt.isWindows ? Path.of(System.getenv("SystemRoot"), "Temp") : Path.of("/tmp");
@@ -86,6 +86,20 @@ final class DirectoryLock {
     }
 
     myProcessor = processor;
+  }
+
+  private static boolean areUdsSupported(Path file) {
+    if (!SystemInfoRt.isUnix) {
+      try {
+        SocketChannel.open(StandardProtocolFamily.UNIX).close();
+      }
+      catch (UnsupportedOperationException e) {
+        return false;
+      }
+      catch (IOException ignored) { }
+    }
+
+    return file.getFileSystem().getClass().getModule() == Object.class.getModule();
   }
 
   /**
