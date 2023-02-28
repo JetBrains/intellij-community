@@ -32,8 +32,10 @@ import com.intellij.openapi.wm.impl.welcomeScreen.statistics.WelcomeScreenCounte
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.border.CustomLineBorder
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.launch
@@ -63,7 +65,7 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
   private val projectsPanelWrapper: Wrapper = Wrapper()
   private val recentProjectsPanel: JComponent = createRecentProjectsPanel()
   private val emptyStatePanel: JComponent = createEmptyStatePanel()
-  private val notificationPanel: JComponent = createNotificationPanel()
+  private val notificationPanel: JComponent = WelcomeScreenComponentFactory.createNotificationToolbar(parentDisposable)
   private var panelState: PanelState
 
   init {
@@ -90,26 +92,37 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
   }
 
   override fun buildComponent(): JComponent {
-    val bottomPanel = JBUI.Panels.simplePanel().andTransparent().apply {
-      layout = VerticalLayout(0)
-      add(notificationPanel)
+    val recentPaths = RecentProjectsManagerBase.getInstanceEx().getRecentPaths()
+    WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentPaths.size)
+    val promo = WelcomeScreenComponentFactory.getSinglePromotion(recentPaths.isEmpty())
 
-      val recentPaths = RecentProjectsManagerBase.getInstanceEx().getRecentPaths()
-      WelcomeScreenCounterUsageCollector.reportWelcomeScreenShowed(recentPaths.size)
-      val promo = WelcomeScreenComponentFactory.getSinglePromotion(recentPaths.isEmpty())
-      if (promo != null) {
-        val borderPanel = JBUI.Panels.simplePanel(promo).andTransparent().apply {
-          border = JBUI.Borders.empty(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET)
+    return panel {
+      customizeSpacingConfiguration(EmptySpacingConfiguration()) {
+        row {
+          cell(projectsPanelWrapper)
+            .align(Align.FILL)
+        }.resizableRow()
+        row {
+          cell(notificationPanel)
+            .align(AlignX.RIGHT)
+            .applyToComponent {
+              putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+            }
         }
-
-        add(borderPanel)
+        if (promo != null) {
+          row {
+            cell(promo)
+              .customize(JBGaps(0, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET, PROMO_BORDER_OFFSET))
+              .align(AlignX.FILL)
+              .applyToComponent {
+                putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+              }
+          }
+        }
       }
+    }.apply {
+      background = WelcomeScreenUIManager.getProjectsBackground()
     }
-
-    return JBUI.Panels.simplePanel()
-      .withBackground(WelcomeScreenUIManager.getProjectsBackground())
-      .addToCenter(projectsPanelWrapper)
-      .addToBottom(bottomPanel)
   }
 
   private fun checkState() {
@@ -176,10 +189,6 @@ class ProjectsTab(private val parentDisposable: Disposable) : DefaultWelcomeScre
     val emptyStateProjectsPanel = EmptyStateProjectsPanel(parentDisposable)
     initDnD(emptyStateProjectsPanel)
     return emptyStateProjectsPanel
-  }
-
-  private fun createNotificationPanel(): JComponent {
-    return WelcomeScreenComponentFactory.createNotificationPanel(parentDisposable)
   }
 
   private fun initDnD(component: JComponent) {
