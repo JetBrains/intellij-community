@@ -46,6 +46,8 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
   private val defaultModalityDescr = "'defaultModalityState()' does not work in suspend context. If it is really necessary, use 'contextModality()'"
   private val defaultModalityFix = "Replace with 'contextModality()'"
 
+  private val navigateToSuspendContextFix = "Navigate to suspend context"
+
   @Test
   fun `progress manager checkCanceled in suspend function`() {
     addCheckCanceledFunctions()
@@ -607,6 +609,64 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
         suspend fun fn() {
           val state: ModalityState = currentCoroutineContext().contextModality() ?: TODO("Handle absence of ModalityState")
         } 
+      }
+    """.trimIndent())
+  }
+
+  @Test
+  fun `check in called non-suspend function`() {
+    addCheckCanceledFunctions()
+
+    myFixture.configureByText("file.kt", """
+      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
+      
+      import com.intellij.openapi.progress.*
+      
+      class MyClass {
+        suspend fun a() {
+          b()
+          b()
+          b()
+          b()
+          b()
+        }
+         
+        fun b() {
+          ProgressManager.<warning descr="$progressManagerDescr">check<caret>Canceled</warning>()
+        }
+      }
+      
+      fun b() {
+        ProgressManager.checkCanceled()
+      }
+    """.trimIndent())
+    myFixture.testHighlighting()
+
+    val intention = myFixture.getAvailableIntention(navigateToSuspendContextFix)
+    assertNotNullK(intention)
+    myFixture.launchAction(intention)
+
+    myFixture.checkResult("""
+      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
+      
+      import com.intellij.openapi.progress.*
+      
+      class MyClass {
+        suspend fun a() {
+          <caret>b()
+          b()
+          b()
+          b()
+          b()
+        }
+         
+        fun b() {
+          ProgressManager.checkCanceled()
+        }
+      }
+      
+      fun b() {
+        ProgressManager.checkCanceled()
       }
     """.trimIndent())
   }
