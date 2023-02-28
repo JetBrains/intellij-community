@@ -14,17 +14,22 @@ import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.View;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes.*;
 
-public class ToolbarComboWidgetUI extends ComponentUI {
+public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeListener {
   private static final Icon EXPAND_ICON = AllIcons.General.ChevronDown;
   private static final int SEPARATOR_WIDTH = 1;
   private static final int DEFAULT_MAX_WIDTH = 350;
@@ -48,6 +53,8 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   public void installUI(JComponent c) {
     ToolbarComboWidget widget = (ToolbarComboWidget)c;
     setUIDefaults(widget);
+    widget.addPropertyChangeListener(this);
+    tryUpdateHtmlRenderer(widget, widget.getText());
     hoverTracker.installTo(widget);
     clickListener.installOn(widget);
   }
@@ -55,8 +62,24 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   @Override
   public void uninstallUI(JComponent c) {
     ToolbarComboWidget widget = (ToolbarComboWidget)c;
+    widget.removePropertyChangeListener(this);
+    tryUpdateHtmlRenderer(widget, "");
     hoverTracker.uninstall();
     clickListener.uninstall(widget);
+  }
+
+  @Override
+  public void propertyChange(PropertyChangeEvent evt) {
+    if (Objects.equals(evt.getPropertyName(), "text") || Objects.equals(evt.getPropertyName(), "font")) {
+      ToolbarComboWidget widget = (ToolbarComboWidget)evt.getSource();
+      tryUpdateHtmlRenderer(widget, widget.getText());
+    }
+  }
+
+  private void tryUpdateHtmlRenderer(ToolbarComboWidget widget, String text) {
+    if (widget.getFont() == null && BasicHTML.isHTMLString(text))
+      return;
+    BasicHTML.updateRenderer(widget, text);
   }
 
   private static void setUIDefaults(ToolbarComboWidget c) {
@@ -88,7 +111,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
         doClip(paintRect, iconsRect.width + getGapAfterLeftIcons());
       }
 
-      String text = combo.getText();
+      String text = getText(combo);
       if (!StringUtil.isEmpty(text) && maxTextWidth > 0) {
         g2.setColor(c.getForeground());
         Rectangle textRect = new Rectangle(paintRect.x, paintRect.y, maxTextWidth, paintRect.height);
@@ -125,7 +148,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     ToolbarComboWidget widget = (ToolbarComboWidget)c;
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
-    SwingUtilities.layoutCompoundLabel(c, c.getFontMetrics(c.getFont()), widget.getText(), null,
+    SwingUtilities.layoutCompoundLabel(c, c.getFontMetrics(c.getFont()), getText(widget), null,
                                        SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
                                        new Rectangle(width, height), iconRect, textRect, 0);
     FontMetrics fm = c.getFontMetrics(c.getFont());
@@ -168,7 +191,15 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     String text = textCutStrategy.calcShownText(fullText, metrics, textBounds.width);
     Rectangle strBounds = metrics.getStringBounds(text, g).getBounds();
     strBounds.setLocation(Math.max(0, (int)(textBounds.getCenterX() - strBounds.getCenterX())), baseline);
-    SwingUtilities2.drawString(c, g, text, strBounds.x, strBounds.y);
+
+    View v = (View)c.getClientProperty(BasicHTML.propertyKey);
+    if (v != null) {
+      strBounds.y -= metrics.getAscent();
+      v.paint(g, strBounds);
+    }
+    else {
+      SwingUtilities2.drawString(c, g, text, strBounds.x, strBounds.y);
+    }
   }
 
   private static int calcMaxTextWidth(ToolbarComboWidget c, Rectangle paintRect) {
@@ -230,7 +261,8 @@ public class ToolbarComboWidgetUI extends ComponentUI {
 
     if (!StringUtil.isEmpty(combo.getText())) {
       FontMetrics metrics = c.getFontMetrics(c.getFont());
-      res.width += metrics.stringWidth(combo.getText());
+      String text = getText(combo);
+      res.width += metrics.stringWidth(text);
       res.height = Math.max(res.height, metrics.getHeight());
     }
 
@@ -258,6 +290,19 @@ public class ToolbarComboWidgetUI extends ComponentUI {
 
     res.width = Integer.min(maxWidth, res.width);
     return res;
+  }
+
+  private String getText(ToolbarComboWidget widget) {
+    View v = (View)widget.getClientProperty(BasicHTML.propertyKey);
+    if (v != null) {
+      try {
+        return (v.getDocument().getText(0, v.getDocument().getLength())).strip();
+      }
+      catch (BadLocationException ignored) {
+      }
+    }
+
+    return widget.getText();
   }
 
   private static boolean isSeparatorShown(ToolbarComboWidget widget) {
