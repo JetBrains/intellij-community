@@ -115,7 +115,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                  new JavaClassValidator().withTitle(DevKitBundle.message("inspections.plugin.xml.add.ignored.class.title")));
     if (ApplicationManager.getApplication().isInternal()) {
       return pane(ignoreClassList,
-                  OptPane.stringList("PLUGINS_MODULES", DevKitBundle.message("inspections.plugin.xml.plugin.modules.label"))
+                  stringList("PLUGINS_MODULES", DevKitBundle.message("inspections.plugin.xml.plugin.modules.label"))
                     .description(DevKitBundle.message("inspections.plugin.xml.plugin.modules.description"))
       );
     }
@@ -213,7 +213,8 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         annotateProjectComponent((Component.Project)element, holder);
       }
     }
-    else if (element instanceof Helpset) {
+    else //noinspection deprecation
+      if (element instanceof Helpset) {
       highlightRedundant(element, DevKitBundle.message("inspections.plugin.xml.deprecated.helpset"), holder);
     }
     else if (element instanceof Listeners) {
@@ -345,9 +346,12 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
     if (resolveStatus == PluginPlatformInfo.PlatformResolveStatus.DEVKIT_NO_SINCE_BUILD) {
       final boolean noSinceBuildXml = !DomUtil.hasXml(platformInfo.getMainIdeaPlugin().getIdeaVersion().getSinceBuild());
+      LocalQuickFix[] fixes =
+        noSinceBuildXml ? new LocalQuickFix[]{new AddDomElementQuickFix<>(platformInfo.getMainIdeaPlugin().getIdeaVersion())} :
+        LocalQuickFix.EMPTY_ARRAY;
       holder.createProblem(listeners, ProblemHighlightType.ERROR,
                            DevKitBundle.message("inspections.plugin.xml.since.build.must.be.specified"), null,
-                           noSinceBuildXml ? new AddDomElementQuickFix<>(platformInfo.getMainIdeaPlugin().getIdeaVersion()) : null)
+                           fixes)
         .highlightWholeElement();
       return;
     }
