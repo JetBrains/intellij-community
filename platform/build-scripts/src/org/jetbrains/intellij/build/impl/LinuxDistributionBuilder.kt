@@ -274,7 +274,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
           timeout = context.options.snapDockerBuildTimeoutMin.minutes,
         )
         moveFileToDir(resultDir.resolve(snapArtifact), context.paths.artifactDir)
-        context.notifyArtifactWasBuilt(context.paths.artifactDir.resolve(snapArtifact))
+        context.notifyArtifactBuilt(context.paths.artifactDir.resolve(snapArtifact))
       }
   }
 

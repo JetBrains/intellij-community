@@ -379,7 +379,7 @@ private fun copyDependenciesFile(context: BuildContext): Path {
   val outputFile = context.paths.artifactDir.resolve("dependencies.txt")
   Files.createDirectories(outputFile.parent)
   context.dependenciesProperties.copy(outputFile)
-  context.notifyArtifactWasBuilt(outputFile)
+  context.notifyArtifactBuilt(outputFile)
   return outputFile
 }
 
@@ -483,7 +483,7 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
         zipWithCompression(targetFile, zipFileMap)
       }
 
-    context.notifyArtifactWasBuilt(targetFile)
+    context.notifyArtifactBuilt(targetFile)
   }
 }
 
@@ -562,7 +562,7 @@ private suspend fun compileModulesForDistribution(context: BuildContext): Distri
         }
       }
 
-      context.notifyArtifactWasBuilt(artifactPath = providedModuleFile)
+      context.notifyArtifactBuilt(artifactPath = providedModuleFile)
       if (!productProperties.productLayout.buildAllCompatiblePlugins) {
         val distState = DistributionBuilderState(platform = platform, pluginsToPublish = pluginsToPublish, context = context)
         buildProjectArtifacts(platform = distState.platform,

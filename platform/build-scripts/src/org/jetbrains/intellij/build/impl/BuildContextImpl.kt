@@ -157,7 +157,7 @@ class BuildContextImpl(
   }
 
   override fun notifyArtifactBuilt(artifactPath: Path) {
-    compilationContext.notifyArtifactWasBuilt(artifactPath)
+    compilationContext.notifyArtifactBuilt(artifactPath)
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String): Path? {

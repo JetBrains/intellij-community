@@ -116,7 +116,7 @@ private fun notarizeAndBuildDmgViaMacBuilderHost(sitFile: Path,
     communityHome = context.paths.communityHomeDirRoot,
     artifactDir = Path.of(context.paths.artifacts),
     dmgImage = dmgImage,
-    artifactBuilt = context::notifyArtifactWasBuilt,
+    artifactBuilt = context::notifyArtifactBuilt,
     publishAppArchive = context.publishSitArchive,
     staple = staple
   )

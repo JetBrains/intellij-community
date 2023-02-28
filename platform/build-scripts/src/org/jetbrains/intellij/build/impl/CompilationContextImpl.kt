@@ -291,7 +291,7 @@ class CompilationContextImpl private constructor(
     return enumerator.classes().roots.map { it.absolutePath }
   }
 
-  override fun notifyArtifactWasBuilt(artifactPath: Path) {
+  override fun notifyArtifactBuilt(artifactPath: Path) {
     if (options.buildStepsToSkip.contains(BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP)) {
       return
     }

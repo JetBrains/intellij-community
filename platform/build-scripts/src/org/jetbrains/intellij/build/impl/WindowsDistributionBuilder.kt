@@ -397,7 +397,7 @@ private fun CoroutineScope.createBuildWinZipTask(runtimeDir: Path?,
           zip(targetFile = targetFile, dirs = dirMap, addDirEntriesMode = AddDirEntriesMode.NONE)
         }
         checkInArchive(archiveFile = targetFile, pathInArchive = zipPrefix, context = context)
-        context.notifyArtifactWasBuilt(targetFile)
+        context.notifyArtifactBuilt(targetFile)
         targetFile
       }
   }

@@ -389,7 +389,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val option = "-XX:HeapDumpPath="
     val file = Path.of(jvmArgs.first { it.startsWith(option) }.substring(option.length))
     if (Files.exists(file)) {
-      context.notifyArtifactWasBuilt(file)
+      context.notifyArtifactBuilt(file)
     }
   }
 

@@ -110,7 +110,7 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
       zipWithCompression(targetFile = targetFile, dirs = mapOf(tempDir to ""))
     }
 
-    context.notifyArtifactWasBuilt(targetFile)
+    context.notifyArtifactBuilt(targetFile)
   }
   finally {
     withContext(Dispatchers.IO + NonCancellable) {

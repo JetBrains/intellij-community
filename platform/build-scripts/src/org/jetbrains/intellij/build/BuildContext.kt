@@ -81,8 +81,6 @@ interface BuildContext : CompilationContext {
                                 isScript: Boolean = false,
                                 isPortableDist: Boolean = false): List<String>
 
-  fun notifyArtifactBuilt(artifactPath: Path)
-
   fun findApplicationInfoModule(): JpsModule
 
   fun findFileInModuleSources(moduleName: String, relativePath: String): Path?
