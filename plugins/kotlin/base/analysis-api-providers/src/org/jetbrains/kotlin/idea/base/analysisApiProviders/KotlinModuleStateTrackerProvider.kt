@@ -27,12 +27,11 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 @OptIn(Frontend10ApiUsage::class)
-class KotlinModuleStateTrackerProvider(private val project: Project) : Disposable {
+class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
     init {
         val busConnection = project.messageBus.connect(this)
         busConnection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
@@ -74,7 +73,7 @@ class KotlinModuleStateTrackerProvider(private val project: Project) : Disposabl
             is KtScriptModule -> {
                 val virtualFile = module.file.virtualFile ?: error("Script ${module.file} does not have a backing 'VirtualFile'")
                 val pointerManager = VirtualFilePointerManager.getInstance()
-                val pointer = pointerManager.create(virtualFile, KotlinPluginDisposable.getInstance(project), scriptFileListener)
+                val pointer = pointerManager.create(virtualFile, this, scriptFileListener)
                 scriptCache.computeIfAbsent(pointer) { ModuleStateTrackerImpl() }
             }
 
