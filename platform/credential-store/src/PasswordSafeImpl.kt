@@ -27,26 +27,9 @@ import java.io.Closeable
 import java.nio.file.Path
 import java.nio.file.Paths
 
-open class BasePasswordSafe @NonInjectable private constructor(
-  val cs: CoroutineScope,
-  val settings: PasswordSafeSettings,
-) : PasswordSafe() {
+abstract class BasePasswordSafe(private val cs: CoroutineScope) : PasswordSafe() {
 
-  constructor(cs: CoroutineScope) : this(cs, service<PasswordSafeSettings>())
-
-  @TestOnly
-  constructor() : this(
-    cs = ApplicationManager.getApplication().coroutineScope
-  )
-
-  @TestOnly
-  @NonInjectable
-  constructor(settings: PasswordSafeSettings, provider: CredentialStore) : this(
-    cs = ApplicationManager.getApplication().coroutineScope,
-    settings,
-  ) {
-    currentProvider = provider
-  }
+  protected abstract val settings: PasswordSafeSettings
 
   override var isRememberPasswordByDefault: Boolean
     get() = settings.state.isRememberPasswordByDefault
@@ -160,7 +143,27 @@ open class BasePasswordSafe @NonInjectable private constructor(
   }
 }
 
+class TestPasswordSafeImpl @NonInjectable constructor(
+  override val settings: PasswordSafeSettings
+) : BasePasswordSafe(
+  ApplicationManager.getApplication().coroutineScope
+) {
+
+  @TestOnly
+  constructor() : this(service<PasswordSafeSettings>())
+
+  @TestOnly
+  @NonInjectable
+  constructor(settings: PasswordSafeSettings, provider: CredentialStore) : this(settings) {
+    currentProvider = provider
+  }
+}
+
 class PasswordSafeImpl(cs: CoroutineScope) : BasePasswordSafe(cs), SettingsSavingComponent {
+
+  override val settings: PasswordSafeSettings
+    get() = service<PasswordSafeSettings>()
+
   // SecureRandom (used to generate master password on first save) can be blocking on Linux
   private val saveAlarm = SingleAlarm.pooledThreadSingleAlarm(delay = 0, ApplicationManager.getApplication()) {
     val currentThread = Thread.currentThread()
@@ -257,7 +260,7 @@ fun createKeePassStore(dbFile: Path, masterPasswordFile: Path): PasswordSafe {
     provider = ProviderType.KEEPASS
     keepassDb = store.dbFile.toString()
   })
-  return BasePasswordSafe(settings, store)
+  return TestPasswordSafeImpl(settings, store)
 }
 
 private fun CredentialAttributes.toPasswordStoreable() = if (isPasswordMemoryOnly) CredentialAttributes(serviceName, userName, requestor) else this

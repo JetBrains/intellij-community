@@ -375,7 +375,7 @@
 
     <applicationService serviceInterface="com.intellij.ide.passwordSafe.PasswordSafe"
                         serviceImplementation="com.intellij.ide.passwordSafe.impl.PasswordSafeImpl"
-                        testServiceImplementation="com.intellij.ide.passwordSafe.impl.BasePasswordSafe"/>
+                        testServiceImplementation="com.intellij.ide.passwordSafe.impl.TestPasswordSafeImpl"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.credentialStore.PasswordSafeConfigurable"
                              bundle="messages.CredentialStoreBundle"
