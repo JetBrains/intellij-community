@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -1311,6 +1312,9 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     private MarkupUpdater(@NotNull List<? extends DocumentContent> contents) {
       Disposer.register(UnifiedDiffViewer.this, this);
 
+      ApplicationManager.getApplication().getMessageBus().connect(this)
+        .subscribe(EditorColorsManager.TOPIC, scheme -> resetMarkup());
+
       MyMarkupModelListener markupListener = new MyMarkupModelListener();
       for (DocumentContent content : contents) {
         Document document = content.getDocument();
@@ -1335,6 +1339,19 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     public void resumeUpdate() {
       mySuspended = false;
       scheduleUpdate();
+    }
+
+    public void resetMarkup() {
+      // erase old highlighting to make sure text is readable if markup update is slow
+      myEditor.setHighlighter(DiffUtil.createEmptyEditorHighlighter());
+      UnifiedEditorRangeHighlighter.erase(myProject, myEditor.getDocument());
+
+      scheduleUpdate();
+
+      // NB: flush request might be overwritten by another 'scheduleUpdate()'
+      // Ex: if XLineBreakpointImpl is updating its markers after us, triggering our MarkupModelListener
+      // This will delay re-highlighting by 300ms causing blinking
+      myUpdateQueue.sendFlush();
     }
 
     @RequiresEdt
