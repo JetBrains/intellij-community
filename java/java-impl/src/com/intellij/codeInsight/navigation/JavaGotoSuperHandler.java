@@ -2,11 +2,9 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.impl.PsiElementListNavigator;
 import com.intellij.codeInsight.generation.actions.PresentableCodeInsightActionHandler;
 import com.intellij.codeInsight.navigation.actions.GotoSuperAction;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.java.JavaBundle;
@@ -44,11 +42,11 @@ public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler
     }
     else if (superElements[0] instanceof PsiMethod) {
       boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature((PsiMethod[])superElements);
-      PsiElementListNavigator.openTargets(editor, (PsiMethod[])superElements,
-                                          CodeInsightBundle.message("goto.super.method.chooser.title"),
-                                          CodeInsightBundle
-                                            .message("goto.super.method.findUsages.title", ((PsiMethod)superElements[0]).getName()),
-                                          new MethodCellRenderer(showMethodNames));
+      PsiTargetNavigator<PsiElement> navigator = new PsiTargetNavigator<>(superElements);
+      navigator
+        .presentationProvider(element -> GotoTargetHandler.computePresentation(element, showMethodNames))
+        .createPopup(project, CodeInsightBundle.message("goto.super.method.chooser.title"))
+        .showInBestPositionFor(editor);
     }
     else {
       new PsiTargetNavigator<>(superElements).createPopup(project, JavaBundle.message("goto.super.class.chooser.title"))

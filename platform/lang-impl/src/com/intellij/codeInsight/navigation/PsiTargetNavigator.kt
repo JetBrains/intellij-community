@@ -3,14 +3,17 @@ package com.intellij.codeInsight.navigation
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.ide.util.EditSourceUtil
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.ui.list.buildTargetPopupWithMultiSelect
+import java.util.function.Consumer
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -20,8 +23,12 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<List<T>>) {
   constructor(elements: Array<T>) : this(Supplier { elements.toList() })
 
   private var selection: PsiElement? = null
+  private var presentationProvider: Function<T, TargetPresentation> = Function { targetPresentation(it) }
+  private var elementsConsumer: Consumer<List<T>>? = null
 
   fun selection(selection: PsiElement?): PsiTargetNavigator<T> = apply { this.selection = selection }
+  fun presentationProvider(provider: Function<T, TargetPresentation>): PsiTargetNavigator<T> = apply { this.presentationProvider = provider }
+  fun elementsConsumer(consumer: Consumer<List<T>>): PsiTargetNavigator<T> = apply { elementsConsumer = consumer }
 
   fun createPopup(project: Project, @PopupTitle title: String?): JBPopup {
     return createPopup(project, title) { element -> EditSourceUtil.navigateToPsiElement(element) }
@@ -32,7 +39,8 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<List<T>>) {
     var selected: ItemWithPresentation? = null
     val targets: List<ItemWithPresentation> = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.result"), Computable {
       val elements = supplier.get()
-      val list = elements.map { ItemWithPresentation(it) }
+      elementsConsumer?.accept(elements)
+      val list = elements.map { ItemWithPresentation(SmartPointerManager.createPointer(it), presentationProvider.apply(it)) }
       selected = if (selection == null) null else list[elements.indexOf(selection)]
       list
     })
