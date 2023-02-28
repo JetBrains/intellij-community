@@ -6,7 +6,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -15,7 +14,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.sun.management.OperatingSystemMXBean
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
@@ -32,11 +33,20 @@ internal class IdeHeartbeatEventReporter : ProjectActivity {
     }
   }
 
+  /**
+   * This is an app service because the routine should be shared between projects.
+   * It's not requires on startup, so it's initialized on the first open project in [ProjectActivity].
+   */
   @Service(Service.Level.APP)
-  private class MyService : Disposable {
-    @Suppress("DEPRECATION")
-    private val job: Job = ApplicationManager.getApplication().coroutineScope.launch {
-      //  don't execute during start-up
+  private class MyService(cs: CoroutineScope) {
+
+    init {
+      cs.launch {
+        heartBeatRoutine()
+      }
+    }
+
+    private suspend fun heartBeatRoutine() {
       delay(Registry.intValue("ide.heartbeat.delay").toLong())
 
       var lastCpuTime: Long = 0
@@ -70,10 +80,6 @@ internal class IdeHeartbeatEventReporter : ProjectActivity {
 
         delay(100.seconds)
       }
-    }
-
-    override fun dispose() {
-      job.cancel()
     }
   }
 
