@@ -2739,16 +2739,8 @@ public final class HighlightUtil {
 
   private static boolean isThisOrSuperReference(@Nullable PsiExpression qualifierExpression, @NotNull PsiClass aClass) {
     if (qualifierExpression == null) return true;
-    PsiJavaCodeReferenceElement qualifier;
-    if (qualifierExpression instanceof PsiThisExpression) {
-      qualifier = ((PsiThisExpression)qualifierExpression).getQualifier();
-    }
-    else if (qualifierExpression instanceof PsiSuperExpression) {
-      qualifier = ((PsiSuperExpression)qualifierExpression).getQualifier();
-    }
-    else {
-      return false;
-    }
+    if (!(qualifierExpression instanceof PsiQualifiedExpression expression)) return false;
+    PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
     if (qualifier == null) return true;
     PsiElement resolved = qualifier.resolve();
     return resolved instanceof PsiClass && InheritanceUtil.isInheritorOrSelf(aClass, (PsiClass)resolved, true);
