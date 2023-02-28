@@ -35,6 +35,6 @@ class MixedConstantNonConstantArg {
   void foo(int... bar) { }
 
   public static void main(String[] args) {
-    new MixedConstantNonConstantArg().log(1, x());
+    new MixedConstantNonConstantArg().foo(1, x());
   }
 }
