@@ -106,6 +106,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Executor myTreeUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Tree-Updater");
+  private final Executor myRightPanelUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Right-Panel-Updater");
   private volatile boolean myUpdating;
   private volatile boolean myFixesAvailable;
   private ToolWindow myToolWindow;
@@ -397,7 +398,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                      node instanceof InspectionModuleNode ||
                      node instanceof RefElementNode ||
                      (isSingleInspectionRun() && node instanceof InspectionSeverityGroupNode)) {
-              showInRightPanel(node.getContainingFileLocalEntity());
+              myRightPanelUpdater.execute(() -> {
+                final var entity = node.getContainingFileLocalEntity();
+                SwingUtilities.invokeLater(() -> {
+                  TreePath newPath = myTree.getSelectionModel().getLeadSelectionPath();
+                  if (newPath == pathSelected) showInRightPanel(entity);
+                });
+              });
             }
             else if (node instanceof InspectionNode) {
               if (myGlobalInspectionContext.getPresentation(((InspectionNode)node).getToolWrapper()).isDummy()) {
