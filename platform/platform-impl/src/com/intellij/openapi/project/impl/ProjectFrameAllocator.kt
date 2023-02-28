@@ -211,8 +211,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
         ProjectFrameHelper(frame = frame, loadingState = loadingState)
       }
 
-      updateFullScreenState(frameHelper, getFrameInfo())
-
       watcher(frameHelper, loadingState)
 
       // in a separate EDT task, as EDT is used for write actions and frame initialization, should not slow down project opening
