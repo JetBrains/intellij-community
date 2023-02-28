@@ -281,13 +281,16 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
                                                        PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
                                                        PsiFormatUtilBase.SHOW_TYPE);
         return JavaRefactoringBundle.message("type.migration.return.type.of.method.label", type, methodText);
-      } else if (element instanceof PsiField field) {
+      }
+      else if (element instanceof PsiField field) {
         String variableText = PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
         return JavaRefactoringBundle.message("type.migration.type.of.field.label", type, variableText);
-      } else if (element instanceof PsiLocalVariable variable) {
+      }
+      else if (element instanceof PsiLocalVariable variable) {
         String variableText = PsiFormatUtil.formatVariable(variable, PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
         return JavaRefactoringBundle.message("type.migration.type.of.variable.label", type, variableText);
-      } else if (element instanceof PsiParameter parameter) {
+      }
+      else if (element instanceof PsiParameter parameter) {
         PsiElement scope = parameter.getDeclarationScope();
         boolean realParameter = scope instanceof PsiMethod || scope instanceof PsiLambdaExpression;
         String variableText = PsiFormatUtil.formatVariable(parameter, PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
@@ -295,10 +298,15 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
                                              ? "type.migration.type.of.parameter.label"
                                              : "type.migration.type.of.variable.label",
                                              type, variableText);
-      } else if (element instanceof PsiReferenceParameterList) {
+      }
+      else if (element instanceof PsiReferenceParameterList) {
         return JavaRefactoringBundle.message("type.migration.class.type.argument.label", type);
       }
-      throw new AssertionError("unknown element");
+      else if (element instanceof PsiRecordComponent component) {
+        String variableText = PsiFormatUtil.formatVariable(component, PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
+        return JavaRefactoringBundle.message("type.migration.type.of.record.component.label", type, variableText);
+      }
+      throw new AssertionError("unknown element: " + element);
     }
 
     private boolean isIllegalVoidMigration() {
