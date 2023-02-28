@@ -137,7 +137,10 @@ private class KotlinIdeaResolutionException(
     cause: Throwable,
     resolvingWhat: ResolvingWhat,
     creationPlace: CreationPlace
-) : KotlinExceptionWithAttachments("Kotlin resolution encountered a problem while ${resolvingWhat.shortDescription()}", cause) {
+) : KotlinExceptionWithAttachments(
+    "Kotlin resolution encountered a problem while ${resolvingWhat.shortDescription()}${cause.message?.let { ":\n$it" } ?: ""}",
+    cause
+) {
     init {
         withAttachment("info.txt", buildString {
             append(resolvingWhat.description())
