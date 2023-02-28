@@ -93,6 +93,7 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
         scopeRef.set(spanRef.get().makeCurrent());
         job.waitForComplete();
       }
+      result.setResult(null);
     }));
 
     return result;
