@@ -15,7 +15,7 @@ public final class StoreDefaultLayoutAction extends StoreNamedLayoutAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setDescription(ActionsBundle.message("action.StoreDefaultLayout.description", getLayoutNameSupplier().invoke()));
+    e.getPresentation().setDescription(ActionsBundle.message("action.StoreDefaultLayout.named.description", getLayoutNameSupplier().invoke()));
   }
 
 }
