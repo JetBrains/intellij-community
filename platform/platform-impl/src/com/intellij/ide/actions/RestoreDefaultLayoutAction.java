@@ -20,7 +20,7 @@ public final class RestoreDefaultLayoutAction extends RestoreNamedLayoutAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setDescription(ActionsBundle.message("action.RestoreDefaultLayout.description", getLayoutNameSupplier().invoke()));
+    e.getPresentation().setDescription(ActionsBundle.message("action.RestoreDefaultLayout.named.description", getLayoutNameSupplier().invoke()));
   }
 
 }
