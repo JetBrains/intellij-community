@@ -311,16 +311,11 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
     }
 
     override fun testDropAnnotations() {
-        // KTIJ-23517
-        //super.testDropAnnotations()
+        super.testDropAnnotations()
     }
 
     override fun testCopyAnnotationsAllowedByExtension() {
-        // KTIJ-23517
-        // Override Members with FIR currently copies all annotations in generated code, which is different than the k1 version. It's
-        // unclear whether that's intended behavior or not. But for now, this test will fail with FIR since it will not remove one of the
-        // annotations in the test data.
-        //super.testCopyAnnotationsAllowedByExtension()
+        super.testCopyAnnotationsAllowedByExtension()
     }
 
     override fun testUnresolvedType() {

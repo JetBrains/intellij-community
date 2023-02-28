@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -305,9 +306,12 @@ abstract class KtGenerateMembersHandler(
 
     companion object {
         val renderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
-         modifiersRenderer = modifiersRenderer.with {
-             modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD)
-         }
+            annotationRenderer = annotationRenderer.with {
+                annotationFilter = KtRendererAnnotationsFilter.NONE
+            }
+            modifiersRenderer = modifiersRenderer.with {
+                modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD)
+            }
         }
     }
 
