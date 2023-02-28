@@ -30,6 +30,7 @@ val SKIPPED_TYPES: Set<String> = setOfNotNull(WorkspaceEntity::class.simpleName,
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   checkSuperTypes(this@generateBuilderCode, reporter)
+  checkSymbolicId(this@generateBuilderCode, reporter)
   line("@${GeneratedCodeApiVersion::class.fqn}(${CodeGeneratorVersions.API_VERSION})")
   val (typeParameter, typeDeclaration) = 
     if (openness.extendable) "T" to "<T: $javaFullName>" else javaFullName to ""
@@ -56,6 +57,15 @@ fun checkSuperTypes(objClass: ObjClass<*>, reporter: ProblemReporter) {
       reporter.reportProblem(GenerationProblem("Class '${superClass.name}' cannot be extended from other modules", 
                                                GenerationProblem.Level.ERROR, ProblemLocation.Class(objClass)))
     }
+  }
+}
+
+private fun checkSymbolicId(objClass: ObjClass<*>, reporter: ProblemReporter) {
+  if (!objClass.isEntityWithSymbolicId) return
+  if (objClass.fields.none { it.name == "symbolicId" }) {
+    reporter.reportProblem(GenerationProblem("Class extends '${WorkspaceEntityWithSymbolicId::class.simpleName}' but " +
+                                             "doesn't override 'WorkspaceEntityWithSymbolicId.getSymbolicId' property",
+                                             GenerationProblem.Level.ERROR, ProblemLocation.Class(objClass)))
   }
 }
 

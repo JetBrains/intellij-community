@@ -12,10 +12,19 @@ class CodeGeneratorImpl : CodeGenerator {
   override fun generate(module: CompiledObjModule): GenerationResult {
     val problems = ArrayList<GenerationProblem>()
     val reporter = ProblemReporter { problems.add(it) }
+    val objClassToBuilderInterface = module.types.associateWith {
+      val builderInterface = it.generateBuilderCode(reporter)
+      builderInterface
+    }
+    // If there is at least one error, report them and stop any further calculations and
+    if (problems.any { it.level == GenerationProblem.Level.ERROR }) {
+      return GenerationResult(emptyList(), problems)
+    }
+
     val code = module.types.map { objClass ->
       GeneratedCode(
         target = objClass,
-        builderInterface = objClass.generateBuilderCode(reporter),
+        builderInterface = objClassToBuilderInterface[objClass]!!,
         companionObject = objClass.generateCompanionObject(),
         topLevelCode = objClass.generateExtensionCode(),
         implementationClass = objClass.implWsCode()
