@@ -70,8 +70,9 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
 
   @NotNull
   private MultiMap<FacetTypeId<?>, Module> getIndex() {
-    MultiMap<FacetTypeId<?>, Module> index = myIndex.get();
-    return index == null ? createAndCacheIndex() : index;
+    var index = myIndex.get();
+    if (index != null) return index;
+    return myIndex.updateAndGet(value -> value == null ? createAndCacheIndex() : value);
   }
 
   @NotNull
