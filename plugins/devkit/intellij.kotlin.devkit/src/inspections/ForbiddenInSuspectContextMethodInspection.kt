@@ -5,7 +5,6 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.toArray
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
@@ -70,8 +69,7 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
     if (!DevKitInspectionUtil.isAllowed(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
 
     val facade = JavaPsiFacade.getInstance(holder.project)
-    val scope = GlobalSearchScope.allScope(holder.project)
-    if (facade.findClass(REQUIRES_SUSPEND_CONTEXT_ANNOTATION, scope) == null) return PsiElementVisitor.EMPTY_VISITOR
+    if (facade.findClass(REQUIRES_SUSPEND_CONTEXT_ANNOTATION, holder.file.resolveScope) == null) return PsiElementVisitor.EMPTY_VISITOR
 
     return createFileVisitor(holder)
   }
