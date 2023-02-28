@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,7 +63,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   static final int VERSION = 18;
   public static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
-  private static final boolean useSqlite = SystemProperties.getBooleanProperty("vcs.log.sqlite", false);
+  private static final boolean useSqlite = Registry.is("vcs.log.index.sqlite.storage", false);
 
   private final @NotNull Project myProject;
   private final @NotNull VcsLogErrorHandler myErrorHandler;
