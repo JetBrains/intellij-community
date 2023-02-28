@@ -27,8 +27,6 @@ class KotlinSuppressIntentionAction(
     @FileModifier.SafeFieldForPreview
     private val project = suppressAt.project
 
-    private val suppressionKeyString = "\"$suppressionKey\""
-
     override fun getFamilyName() = KotlinBaseCodeInsightBundle.message("intention.suppress.family")
 
     override fun getText() = KotlinBaseCodeInsightBundle.message("intention.suppress.text", suppressionKey, kind.kind, kind.name ?: "")
@@ -52,6 +50,7 @@ class KotlinSuppressIntentionAction(
     override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
         if (!element.isValid) return
         val suppressAt = pointer.element ?: return
+        val suppressionKeyString = "\"$suppressionKey\""
         when (suppressAt) {
             is KtModifierListOwner -> suppressAt.addAnnotation(
                 StandardClassIds.Annotations.Suppress,
