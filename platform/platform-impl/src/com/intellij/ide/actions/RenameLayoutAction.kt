@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import javax.swing.Action
 
@@ -35,7 +36,7 @@ class RenameLayoutAction(private val layoutName: String) : DumbAwareAction() {
       IdeBundle.message("dialog.rename.window.layout.title"),
       null,
       layoutName,
-      NonExistingLayoutValidator(),
+      LayoutNameValidator(),
       arrayOf(IdeBundle.message("button.rename"), IdeBundle.message("button.cancel")),
       1,
     ) {
@@ -53,9 +54,15 @@ class RenameLayoutAction(private val layoutName: String) : DumbAwareAction() {
 
 }
 
-internal class NonExistingLayoutValidator : InputValidator {
-  override fun checkInput(inputString: String?): Boolean = !inputString.isNullOrBlank() && inputString !in manager.getLayoutNames()
+internal class LayoutNameValidator : InputValidator {
+
+  override fun checkInput(inputString: String?): Boolean =
+    !inputString.isNullOrBlank() &&
+    inputString.length <= Registry.intValue("ide.max.tool.window.layout.name.length", 50) &&
+    inputString !in manager.getLayoutNames()
+
   override fun canClose(inputString: String?): Boolean = checkInput(inputString)
+
 }
 
 private val manager get() = ToolWindowDefaultLayoutManager.getInstance()
