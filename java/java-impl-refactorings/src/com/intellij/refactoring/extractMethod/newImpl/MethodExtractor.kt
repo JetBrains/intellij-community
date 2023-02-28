@@ -76,7 +76,7 @@ class MethodExtractor {
       val allOptionsToExtract: List<ExtractOptions> = computeWithAnalyzeProgress<List<ExtractOptions>, ExtractException>(file.project) {
         findAllOptionsToExtract(elements)
       }
-      return selectOptionWithTargetClass(editor, allOptionsToExtract)
+      return selectOptionWithTargetClass(editor, file.project, allOptionsToExtract)
     }
     catch (exception: ExtractException) {
       if (exception is ExtractMultipleVariablesException && Registry.`is`("refactorings.extract.method.introduce.object")){

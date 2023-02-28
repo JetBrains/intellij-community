@@ -101,7 +101,7 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
           assert returnType != null;
           final String title =
             JavaBundle.message("introduce.functional.variable.interface.chooser.title", methodSignature, returnType.getPresentableText());
-          new PsiTargetNavigator().createPopup(psiClasses, title,
+          new PsiTargetNavigator<>(psiClasses).createPopup(project, title,
                                                psiClass -> {
                                                  functionalInterfaceSelected(classes.get(psiClass), project, editor, processor, elements);
                                                  return true;

@@ -108,9 +108,9 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
         pullUp(method, containingClass, classesToPullUp.iterator().next());
       }
       else if (editor != null) {
-        new PsiTargetNavigator()
+        new PsiTargetNavigator<>(classesToPullUp.toArray(PsiClass.EMPTY_ARRAY))
           .selection(classesToPullUp.iterator().next())
-          .createPopup(classesToPullUp.toArray(PsiClass.EMPTY_ARRAY), JavaBundle.message("choose.super.class.popup.title"),
+          .createPopup(project, JavaBundle.message("choose.super.class.popup.title"),
                        new PsiElementProcessor<>() {
                          @Override
                          public boolean execute(@NotNull PsiClass aClass) {

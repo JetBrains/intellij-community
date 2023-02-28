@@ -63,7 +63,7 @@ public final class NavigationUtil {
 
   @NotNull
   public static JBPopup getPsiElementPopup(PsiElement @NotNull [] elements, @PopupTitle String title) {
-    return new PsiTargetNavigator().createPopup(elements, title);
+    return new PsiTargetNavigator<>(elements).createPopup(elements[0].getProject(), title);
   }
 
   @NotNull

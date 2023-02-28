@@ -68,7 +68,8 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     selectAndPass(project, editor, file, callback);
   }
 
-  public static void selectAndPass(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final Pass<PsiElement[]> callback) {
+  public static void
+  selectAndPass(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final Pass<PsiElement[]> callback) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (!editor.getSelectionModel().hasSelection()) {
       final int offset = editor.getCaretModel().getOffset();

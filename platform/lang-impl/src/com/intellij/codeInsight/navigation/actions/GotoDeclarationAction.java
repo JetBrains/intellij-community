@@ -5,12 +5,10 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
-import com.intellij.codeInsight.navigation.CtrlMouseAction;
-import com.intellij.codeInsight.navigation.CtrlMouseData;
-import com.intellij.codeInsight.navigation.CtrlMouseInfo;
-import com.intellij.codeInsight.navigation.PsiTargetNavigator;
+import com.intellij.codeInsight.navigation.*;
 import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil;
 import com.intellij.find.actions.ShowUsagesAction;
+import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -178,7 +176,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
         title = MessageFormat.format(titlePattern, refText);
       }
 
-      new PsiTargetNavigator().createPopup(elements, title, processor).showInBestPositionFor(editor);
+      NavigationUtil.getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title, processor).showInBestPositionFor(editor);
       return true;
     }
     return false;

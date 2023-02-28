@@ -51,7 +51,7 @@ public class JavaGotoSuperHandler implements PresentableCodeInsightActionHandler
                                           new MethodCellRenderer(showMethodNames));
     }
     else {
-      NavigationUtil.getPsiElementPopup(superElements, JavaBundle.message("goto.super.class.chooser.title"))
+      new PsiTargetNavigator<>(superElements).createPopup(project, JavaBundle.message("goto.super.class.chooser.title"))
         .showInBestPositionFor(editor);
     }
   }

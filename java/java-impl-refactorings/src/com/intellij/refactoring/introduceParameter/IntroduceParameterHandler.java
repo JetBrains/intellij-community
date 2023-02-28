@@ -528,7 +528,7 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
           LOG.assertTrue(returnType != null);
           final String title = RefactoringBundle.message("refactoring.introduce.parameter.interface.chooser.popup.title",
                                                              methodSignature, returnType.getPresentableText());
-          new PsiTargetNavigator().createPopup(psiClasses, title,
+          new PsiTargetNavigator<>(psiClasses).createPopup(project, title,
                                                new PsiElementProcessor<>() {
                                                  @Override
                                                  public boolean execute(@NotNull PsiClass psiClass) {

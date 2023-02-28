@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil
 import com.intellij.codeInsight.navigation.PsiTargetNavigator
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
@@ -147,7 +148,7 @@ object ExtractMethodPipeline {
       .toList()
   }
 
-  fun selectOptionWithTargetClass(editor: Editor, options: List<ExtractOptions>): CompletableFuture<ExtractOptions> {
+  fun selectOptionWithTargetClass(editor: Editor, project: Project, options: List<ExtractOptions>): CompletableFuture<ExtractOptions> {
     require(options.isNotEmpty())
     if (options.size == 1) {
       return CompletableFuture.completedFuture(options.first())
@@ -164,8 +165,8 @@ object ExtractMethodPipeline {
     }
 
     val preselection = findDefaultTargetCandidate(classToOptionMap.keys.toList())
-    PsiTargetNavigator().selection(preselection)
-      .createPopup(classToOptionMap.keys.toTypedArray(),
+    PsiTargetNavigator(classToOptionMap.keys.toTypedArray()).selection(preselection)
+      .createPopup(project,
                           RefactoringBundle.message("choose.destination.class"), processor)
       .showInBestPositionFor(editor)
 
