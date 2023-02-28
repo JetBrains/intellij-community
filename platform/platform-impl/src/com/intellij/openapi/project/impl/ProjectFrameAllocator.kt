@@ -217,6 +217,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
       withContext(Dispatchers.EDT) {
         frameHelper.init()
       }
+      frameHelper.setInitBounds(getFrameInfo()?.bounds)
       deferredProjectFrameHelper.complete(frameHelper)
       return
     }
@@ -261,7 +262,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
   }
 
   private fun updateFullScreenState(frameHelper: ProjectFrameHelper, frameInfo: FrameInfo?) {
-    if (frameInfo != null && frameInfo.fullScreen && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
+    if (frameInfo?.fullScreen == true && FrameInfoHelper.isFullScreenSupportedInCurrentOs()) {
       frameHelper.toggleFullScreen(true)
     }
   }
