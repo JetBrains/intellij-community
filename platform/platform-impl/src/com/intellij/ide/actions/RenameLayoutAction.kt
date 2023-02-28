@@ -51,11 +51,11 @@ class RenameLayoutAction(private val layoutName: String) : DumbAwareAction() {
     manager.renameLayout(layoutName, newName)
   }
 
-  private class NonExistingLayoutValidator : InputValidator {
-    override fun checkInput(inputString: String?): Boolean = !inputString.isNullOrBlank() && inputString !in manager.getLayoutNames()
-    override fun canClose(inputString: String?): Boolean = checkInput(inputString)
-  }
+}
 
+internal class NonExistingLayoutValidator : InputValidator {
+  override fun checkInput(inputString: String?): Boolean = !inputString.isNullOrBlank() && inputString !in manager.getLayoutNames()
+  override fun canClose(inputString: String?): Boolean = checkInput(inputString)
 }
 
 private val manager get() = ToolWindowDefaultLayoutManager.getInstance()

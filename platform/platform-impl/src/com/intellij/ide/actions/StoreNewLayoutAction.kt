@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages.InputDialog
-import com.intellij.openapi.ui.NonEmptyInputValidator
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import javax.swing.Action
@@ -21,7 +20,7 @@ class StoreNewLayoutAction : DumbAwareAction() {
       IdeBundle.message("dialog.new.window.layout.title"),
       null,
       "",
-      NonEmptyInputValidator(),
+      NonExistingLayoutValidator(),
       arrayOf(IdeBundle.message("button.save"), IdeBundle.message("button.cancel")),
       1,
     ) {
