@@ -792,9 +792,8 @@ public class JBTabsImpl extends JComponent
     JComponent vToolbar = data.vToolbar.get();
     if (hToolbar != null) {
       final int toolbarHeight = hToolbar.getPreferredSize().height;
-      final int hSeparatorHeight = toolbarHeight > 0 ? 1 : 0;
-      final Rectangle compRect = layoutComp(deltaX, toolbarHeight + hSeparatorHeight + deltaY, data.comp.get(), deltaWidth, deltaHeight);
-      layout(hToolbar, compRect.x, compRect.y - toolbarHeight - hSeparatorHeight, compRect.width, toolbarHeight);
+      final Rectangle compRect = layoutComp(deltaX, toolbarHeight + deltaY, data.comp.get(), deltaWidth, deltaHeight);
+      layout(hToolbar, compRect.x, compRect.y - toolbarHeight, compRect.width, toolbarHeight);
     }
     else if (vToolbar != null) {
       final int toolbarWidth = vToolbar.getPreferredSize().width;
@@ -2058,7 +2057,13 @@ public class JBTabsImpl extends JComponent
   }
 
   public static class Toolbar extends NonOpaquePanel {
+    private final JBTabsImpl tabs;
+    private final TabInfo info;
+
     public Toolbar(JBTabsImpl tabs, TabInfo info) {
+      this.tabs = tabs;
+      this.info = info;
+
       setLayout(new BorderLayout());
 
       final ActionGroup group = info.getGroup();
@@ -2082,6 +2087,16 @@ public class JBTabsImpl extends JComponent
         }
       }
       UIUtil.uiTraverser(this).filter(c -> !UIUtil.canDisplayFocusedState(c)).forEach(c -> c.setFocusable(false));
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      Dimension base = super.getPreferredSize();
+      TabLabel label = tabs.myInfo2Label.get(info);
+      if (tabs.myHorizontalSide && tabs.mySideComponentOnTabs && label != null && base.height > 0) {
+        return new Dimension(base.width, label.getPreferredSize().height - tabs.getBorderThickness());
+      }
+      return base;
     }
 
     public boolean isEmpty() {
