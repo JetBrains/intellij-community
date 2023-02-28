@@ -163,6 +163,19 @@ class IntersectionScopeTest {
   }
 
   @Test
+  fun `attach to cancelled parent cancels child`() {
+    val parentJob: CompletableJob = SupervisorJob()
+    parentJob.cancel()
+    Assertions.assertTrue(parentJob.isCancelled)
+
+    val childJob: CompletableJob = SupervisorJob()
+    Assertions.assertFalse(childJob.isCancelled)
+
+    CoroutineScope(childJob).attachAsChildTo(CoroutineScope(parentJob))
+    Assertions.assertTrue(childJob.isCancelled)
+  }
+
+  @Test
   fun `completed child does not leak through parent`(): Unit = timeoutRunBlocking {
     val parentJob = Job()
     val childJob = Job()
