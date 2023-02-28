@@ -39,10 +39,11 @@ object FUSGroupIds {
     const val PREFERENCES_DEFAULT_GRADLE_SCOPE_CHANGED = "preferences_default_gradle_scope_changed"
     const val PREFERENCES_DEFAULT_MAVEN_SCOPE_CHANGED = "preferences_default_maven_scope_changed"
     const val PREFERENCES_AUTO_ADD_REPOSITORIES = "preferences_auto_add_repositories"
-    const val FILE_TYPE = "file_type"
     const val DETAILS_LINK_LABEL = "details_link_label"
-    const val DETAILS_VISIBLE = "details_visible"
+    const val CHECKBOX_NAME = "checkbox_name"
+    const val CHECKBOX_STATE = "checkbox_state"
     const val SEARCH_QUERY_LENGTH = "search_query_length"
+    const val SORT_METRIC = "sort_metric"
 
     // ENUMS
     enum class TargetModulesType {
@@ -123,6 +124,7 @@ object FUSGroupIds {
     const val TARGET_MODULES_SELECTED = "target_modules_selected"
     const val DETAILS_LINK_CLICK = "details_link_click"
     const val TOGGLE = "toggle"
+    const val SORT_METRIC_CHANGED = "sort_metric_changed"
     const val SEARCH_REQUEST = "search_request"
     const val SEARCH_QUERY_CLEAR = "search_query_clear"
     const val UPGRADE_ALL = "upgrade_all_event"

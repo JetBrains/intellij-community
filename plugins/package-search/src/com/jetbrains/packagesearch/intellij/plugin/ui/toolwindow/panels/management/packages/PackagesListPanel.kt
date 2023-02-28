@@ -489,7 +489,7 @@ internal class PackagesListPanel(
                     project.lifecycleScope.launch {
                         project.service<PackageManagementPanel.UIState>().packagesListPanel.sortMetricStateFlow.emit(selected)
                     }
-                    // TODO PackageSearchEventsLogger.logToggle(FUSGroupIds.ToggleTypes.OnlyKotlinMp, selected)
+                    PackageSearchEventsLogger.logSortMetric(selected)
                 }
             }
         }
