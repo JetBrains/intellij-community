@@ -6,13 +6,12 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.InputValidator
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
-import javax.swing.Action
 
 class RenameLayoutAction(private val layoutName: String) : DumbAwareAction() {
+
+  private val manager: ToolWindowDefaultLayoutManager
+    get() = ToolWindowDefaultLayoutManager.getInstance()
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
@@ -30,20 +29,13 @@ class RenameLayoutAction(private val layoutName: String) : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val dialog = object : Messages.InputDialog(
+    val dialog = LayoutNameInputDialog(
       project,
       IdeBundle.message("dialog.rename.window.layout.prompt"),
       IdeBundle.message("dialog.rename.window.layout.title"),
-      null,
+      IdeBundle.message("button.rename"),
       layoutName,
-      LayoutNameValidator(),
-      arrayOf(IdeBundle.message("button.rename"), IdeBundle.message("button.cancel")),
-      1,
-    ) {
-      init {
-        okAction.putValue(Action.NAME, IdeBundle.message("button.rename"))
-      }
-    }
+    )
     dialog.show()
     val newName = dialog.inputString
     if (newName.isNullOrBlank()) {
@@ -53,16 +45,3 @@ class RenameLayoutAction(private val layoutName: String) : DumbAwareAction() {
   }
 
 }
-
-internal class LayoutNameValidator : InputValidator {
-
-  override fun checkInput(inputString: String?): Boolean =
-    !inputString.isNullOrBlank() &&
-    inputString.length <= Registry.intValue("ide.max.tool.window.layout.name.length", 50) &&
-    inputString !in manager.getLayoutNames()
-
-  override fun canClose(inputString: String?): Boolean = checkInput(inputString)
-
-}
-
-private val manager get() = ToolWindowDefaultLayoutManager.getInstance()
