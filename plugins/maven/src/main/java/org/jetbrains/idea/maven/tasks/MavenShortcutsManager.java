@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class MavenShortcutsManager implements Disposable {
   private final Project myProject;
 
-  private static final String ACTION_ID_PREFIX = "Maven_";
+  static final String ACTION_ID_PREFIX = "Maven_";
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
@@ -118,6 +118,11 @@ public final class MavenShortcutsManager implements Disposable {
     Shortcut[] shortcuts = getShortcuts(project, goal);
     if (shortcuts.length == 0) return "";
     return KeymapUtil.getShortcutsText(shortcuts);
+  }
+
+  boolean hasShortcuts() {
+    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
+    return ContainerUtil.exists(activeKeymap.getActionIds(), id -> id.startsWith(ACTION_ID_PREFIX));
   }
 
   boolean hasShortcuts(MavenProject project, String goal) {
