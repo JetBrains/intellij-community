@@ -117,6 +117,9 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     if (locale != null) {
       parameters.put("lang", locale.toLanguageTag().toLowerCase(Locale.ENGLISH));
     }
+    if (!ExperimentalUI.isNewUI()) {
+      parameters.put("ui", "classic");
+    }
     var request = HTMLEditorProvider.Request.url(Urls.newFromEncoded(url).addParameters(parameters).toExternalForm());
 
     try (var stream = WhatsNewAction.class.getResourceAsStream("whatsNewTimeoutText.html")) {
