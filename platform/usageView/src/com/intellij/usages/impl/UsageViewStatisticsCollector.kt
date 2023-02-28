@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -76,14 +77,18 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
       if (psiElement == null) return null
       val containingFile = psiElement.containingFile
       val virtualFile = containingFile?.virtualFile
+      val isInTestSources = ReadAction.compute<Boolean, Nothing> {
+        return@compute (virtualFile == null) || ProjectRootManager.getInstance(psiElement.project).fileIndex.isInTestSourceContent(
+          virtualFile)
+      }
+
       return ObjectEventData(
         REFERENCE_CLASS.with(psiElement.javaClass),
         EventFields.Language.with(psiElement.language),
         IS_IN_INJECTED_FILE.with(
           if (containingFile != null) InjectedLanguageManager.getInstance(psiElement.project).isInjectedFragment(containingFile)
           else false),
-        IS_IN_TEST_SOURCES.with(
-          virtualFile == null || ProjectRootManager.getInstance(psiElement.project).fileIndex.isInTestSourceContent(virtualFile)),
+        IS_IN_TEST_SOURCES.with(isInTestSources)
       )
     }
 
