@@ -42,6 +42,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -512,6 +513,10 @@ public final class MavenProjectsTree {
     private final MavenProjectReader reader;
     private final MavenGeneralSettings generalSettings;
     private final MavenProgressIndicator process;
+    private ConcurrentHashMap<VirtualFile, CopyOnWriteArrayList<UpdateSettings>> updateHistory = new ConcurrentHashMap<>();
+
+    private record UpdateSettings(boolean recursive, boolean forceReading) {
+    }
 
     MavenProjectsTreeUpdater(MavenProjectsTree tree,
                              MavenExplicitProfiles profiles,
@@ -543,6 +548,17 @@ public final class MavenProjectsTree {
         MavenLog.LOG.info("Recursion detected in " + mavenProjectFile);
         return;
       }
+
+      updateHistory.putIfAbsent(mavenProjectFile, new CopyOnWriteArrayList<>());
+      var fileHistory = updateHistory.get(mavenProjectFile);
+      for (var settings : fileHistory) {
+        if (settings.recursive() && settings.forceReading()) {
+          // we already updated this file with recursion and forced reading, no need to update it again
+          MavenLog.LOG.debug("Has already been updated: " + mavenProjectFile);
+          return;
+        }
+      }
+      fileHistory.add(new UpdateSettings(recursive, forceReading));
 
       updateStack.push(mavenProjectFile);
       process.setText(MavenProjectBundle.message("maven.reading.pom", mavenProjectFile.getPath()));
