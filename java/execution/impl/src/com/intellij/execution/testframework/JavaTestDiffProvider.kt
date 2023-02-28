@@ -45,12 +45,11 @@ class JavaTestDiffProvider : JvmTestDiffProvider() {
     //if (expr is PsiPolyadicExpression && expr.operands.all { it is PsiLiteralExpression }) return expr
     if (expr is PsiReference) {
       val resolved = expr.resolve()
-      if (resolved is PsiVariable) {
-        if (resolved is PsiLocalVariable || resolved is PsiField) {
-          return resolved.initializer
-        }
-        return resolved
+      if (resolved is PsiParameter) return resolved
+      if (resolved is PsiLocalVariable || resolved is PsiField) {
+        return resolved.asSafely<PsiVariable>()?.initializer.asSafely<PsiLiteralExpression>()
       }
+      return null
     }
     return null
   }
