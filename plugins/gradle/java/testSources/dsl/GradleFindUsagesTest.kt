@@ -37,18 +37,18 @@ class GradleFindUsagesTest: GradleCodeInsightTestCase() {
   }
 
   companion object {
-    private val VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
-      .create("GradleVersionCatalogs-findUsages") {
-        withSettingsFile {
-          setProjectName("GradleVersionCatalogs-findUsages")
-        }
-        withFile("gradle/libs.versions.toml", /* language=TOML */ """
-      [versions]
-      groovy = "3.0.5"
- 
-      [libraries]
-      groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
-      """.trimIndent())
+
+    private val VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-findUsages") {
+      withSettingsFile {
+        setProjectName("GradleVersionCatalogs-findUsages")
       }
+      withFile("gradle/libs.versions.toml", /* language=TOML */ """
+        [versions]
+        groovy = "3.0.5"
+        
+        [libraries]
+        groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
+      """.trimIndent())
+    }
   }
 }

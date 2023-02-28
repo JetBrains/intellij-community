@@ -85,54 +85,51 @@ class GradleVersionCatalogsCompletionTest : GradleCodeInsightTestCase() {
   }
 
   companion object {
-    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
-      .create("GradleVersionCatalogs-completion") {
-        withSettingsFile {
-          setProjectName("GradleVersionCatalogs-completion")
-        }
-        withFile("gradle/libs.versions.toml", /* language=TOML */ """
-      [versions]
-      groovy = "3.0.5"
-      checkstyle = "8.37"
 
-      [libraries]
-      groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
-      groovy-json = { module = "org.codehaus.groovy:groovy-json", version.ref = "groovy" }
-      groovy-nio = { module = "org.codehaus.groovy:groovy-nio", version.ref = "groovy" }
-      commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version = { strictly = "[3.8, 4.0[", prefer="3.9" } }
-
-      [bundles]
-      groovy = ["groovy-core", "groovy-json", "groovy-nio"]
-
-      [plugins]
-      jmh = { id = "me.champeau.jmh", version = "0.6.5" }
-      """.trimIndent())
+    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion") {
+      withSettingsFile {
+        setProjectName("GradleVersionCatalogs-completion")
       }
-
-    private val JAVA_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
-      .create("GradleVersionCatalogs-completion-java") { gradleVersion ->
-        withSettingsFile {
-          setProjectName("GradleVersionCatalogs-completion-java")
-        }
-        withBuildFile(gradleVersion) {
-          withJavaPlugin()
-        }
-        withFile("gradle/libs.versions.toml", /* language=TOML */ """
-      [versions]
-      groovy = "3.0.5"
-
-      [libraries]
-      groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
-      groovy-json-foo = { module = "org.codehaus.groovy:groovy-json", version.ref = "groovy" }
-
-      [bundles]
-      groovy-aa-bb = ["groovy-core", "groovy-json-foo"]
-
-      [plugins]
-      jmh-aa-bb = { id = "me.champeau.jmh", version = "0.6.5" }
+      withFile("gradle/libs.versions.toml", /* language=TOML */ """
+        [versions]
+        groovy = "3.0.5"
+        checkstyle = "8.37"
+  
+        [libraries]
+        groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
+        groovy-json = { module = "org.codehaus.groovy:groovy-json", version.ref = "groovy" }
+        groovy-nio = { module = "org.codehaus.groovy:groovy-nio", version.ref = "groovy" }
+        commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version = { strictly = "[3.8, 4.0[", prefer="3.9" } }
+  
+        [bundles]
+        groovy = ["groovy-core", "groovy-json", "groovy-nio"]
+  
+        [plugins]
+        jmh = { id = "me.champeau.jmh", version = "0.6.5" }
       """.trimIndent())
-      }
+    }
 
+    private val JAVA_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion-java") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("GradleVersionCatalogs-completion-java")
+      }
+      withBuildFile(gradleVersion) {
+        withJavaPlugin()
+      }
+      withFile("gradle/libs.versions.toml", /* language=TOML */ """
+        [versions]
+        groovy = "3.0.5"
+  
+        [libraries]
+        groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
+        groovy-json-foo = { module = "org.codehaus.groovy:groovy-json", version.ref = "groovy" }
+  
+        [bundles]
+        groovy-aa-bb = ["groovy-core", "groovy-json-foo"]
+  
+        [plugins]
+        jmh-aa-bb = { id = "me.champeau.jmh", version = "0.6.5" }
+      """.trimIndent())
+    }
   }
-
 }

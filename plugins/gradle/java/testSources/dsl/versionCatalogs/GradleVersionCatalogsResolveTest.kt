@@ -118,47 +118,47 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
   }
 
   companion object {
-    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
-      .create("GradleVersionCatalogs-completion") {
-        withSettingsFile {
-          setProjectName("GradleVersionCatalogs-completion")
-          addCode("""
-            dependencyResolutionManagement {
-                versionCatalogs {
-                    libs2 {
-                        from(files("gradle/my.toml"))
-                    }
-                    libs3 {
-                        library("foo.bar.baz", "org.apache.groovy:groovy:4.0.0")
-                        library("foo-nn-mm", "org.apache.groovy:groovy:4.0.0")
-                    }
-                }
-            }
-          """.trimIndent())
-        }
-        withFile("gradle/libs.versions.toml", /* language=TOML */ """
-      [versions]
-      groovy = "3.0.5"
-      checkstyle = "8.37"
 
-      [libraries]
-      groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
-      groovy-json = { module = "org.codehaus.groovy:groovy-json", version.ref = "groovy" }
-      groovy-nio = { module = "org.codehaus.groovy:groovy-nio", version.ref = "groovy" }
-      commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version = { strictly = "[3.8, 4.0[", prefer="3.9" } }
-
-      [bundles]
-      groovy = ["groovy-core", "groovy-json", "groovy-nio"]
-
-      [plugins]
-      jmh = { id = "me.champeau.jmh", version = "0.6.5" }
-      """.trimIndent())
-        withFile("gradle/my.toml", /* language=TOML */ """
-      [libraries]
-      aa-bb-cc = { module = "org.apache.groovy:groovy", version = "4.0.0" }
-      check-Capital-Letter = { module = "org.apache.groovy:groovy", version = "4.0.0" }
-      """.trimIndent())
+    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder.create("GradleVersionCatalogs-completion") {
+      withSettingsFile {
+        setProjectName("GradleVersionCatalogs-completion")
+        addCode("""
+          dependencyResolutionManagement {
+              versionCatalogs {
+                  libs2 {
+                      from(files("gradle/my.toml"))
+                  }
+                  libs3 {
+                      library("foo.bar.baz", "org.apache.groovy:groovy:4.0.0")
+                      library("foo-nn-mm", "org.apache.groovy:groovy:4.0.0")
+                  }
+              }
+          }
+        """.trimIndent())
       }
+      withFile("gradle/libs.versions.toml", /* language=TOML */ """
+        [versions]
+        groovy = "3.0.5"
+        checkstyle = "8.37"
+
+        [libraries]
+        groovy-core = { module = "org.codehaus.groovy:groovy", version.ref = "groovy" }
+        groovy-json = { module = "org.codehaus.groovy:groovy-json", version.ref = "groovy" }
+        groovy-nio = { module = "org.codehaus.groovy:groovy-nio", version.ref = "groovy" }
+        commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version = { strictly = "[3.8, 4.0[", prefer="3.9" } }
+
+        [bundles]
+        groovy = ["groovy-core", "groovy-json", "groovy-nio"]
+
+        [plugins]
+        jmh = { id = "me.champeau.jmh", version = "0.6.5" }
+      """.trimIndent())
+      withFile("gradle/my.toml", /* language=TOML */ """
+        [libraries]
+        aa-bb-cc = { module = "org.apache.groovy:groovy", version = "4.0.0" }
+        check-Capital-Letter = { module = "org.apache.groovy:groovy", version = "4.0.0" }
+      """.trimIndent())
+    }
   }
 
 }

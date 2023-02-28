@@ -10,6 +10,8 @@ import com.intellij.testFramework.utils.vfs.getFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleAtLeast
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 
 abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
 
@@ -21,6 +23,15 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
 
   fun isGradleAtLeast(version: String): Boolean = gradleVersion.isGradleAtLeast(version)
   fun isGradleOlderThan(version: String): Boolean = gradleVersion.isGradleOlderThan(version)
+
+  fun testEmptyProject(gradleVersion: GradleVersion, test: () -> Unit) =
+    test(gradleVersion, EMPTY_PROJECT, test)
+
+  fun testJavaProject(gradleVersion: GradleVersion, test: () -> Unit) =
+    test(gradleVersion, JAVA_PROJECT, test)
+
+  fun testGroovyProject(gradleVersion: GradleVersion, test: () -> Unit) =
+    test(gradleVersion, GROOVY_PROJECT, test)
 
   fun findOrCreateFile(relativePath: String, text: String): VirtualFile {
     gradleFixture.fileFixture.snapshot(relativePath)
@@ -35,5 +46,37 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
 
   fun getFile(relativePath: String): VirtualFile {
     return projectRoot.getFile(relativePath)
+  }
+
+  companion object {
+
+    private val EMPTY_PROJECT = GradleTestFixtureBuilder.create("empty-project") {
+      withSettingsFile {
+        setProjectName("empty-project")
+      }
+    }
+
+    private val JAVA_PROJECT = GradleTestFixtureBuilder.create("java-plugin-project") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("java-plugin-project")
+      }
+      withBuildFile(gradleVersion) {
+        withJavaPlugin()
+        withJUnit()
+      }
+      withDirectory("src/main/java")
+      withDirectory("src/test/java")
+    }
+
+    private val GROOVY_PROJECT = GradleTestFixtureBuilder.create("groovy-plugin-project") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("groovy-plugin-project")
+      }
+      withBuildFile(gradleVersion) {
+        withGroovyPlugin()
+      }
+      withDirectory("src/main/java")
+      withDirectory("src/main/groovy")
+    }
   }
 }

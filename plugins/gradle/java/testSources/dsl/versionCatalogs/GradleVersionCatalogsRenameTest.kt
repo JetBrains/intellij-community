@@ -7,9 +7,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -18,7 +16,7 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @BaseGradleVersionSource
   fun testRenameLibrary(gradleVersion: GradleVersion) {
-    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+    testEmptyProject(gradleVersion) {
       val buildGradle = findOrCreateFile("build.gradle", "libs.aaa.bbb.ccc")
       val libsVersionsToml = findOrCreateFile("gradle/libs.versions.toml", """
         [libraries]
@@ -37,7 +35,7 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @BaseGradleVersionSource
   fun testRenameVersionRef(gradleVersion: GradleVersion) {
-    test(gradleVersion, BASE_VERSION_CATALOG_FIXTURE) {
+    testEmptyProject(gradleVersion) {
       findOrCreateFile("build.gradle", "")
       val libsVersionsToml = findOrCreateFile("gradle/libs.versions.toml", """
         [versions]
@@ -59,10 +57,3 @@ class GradleVersionCatalogsRenameTest : GradleCodeInsightTestCase() {
     }
   }
 }
-
-private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
-  .create("GradleVersionCatalogs-refactoring") {
-    withSettingsFile {
-      setProjectName("GradleVersionCatalogs-refactoring")
-    }
-  }

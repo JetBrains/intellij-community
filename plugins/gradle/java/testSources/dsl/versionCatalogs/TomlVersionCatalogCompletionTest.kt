@@ -4,9 +4,7 @@ package org.jetbrains.plugins.gradle.dsl.versionCatalogs
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.params.ParameterizedTest
 
@@ -14,7 +12,7 @@ class TomlVersionCatalogCompletionTest : GradleCodeInsightTestCase() {
 
   private fun testSuggestion(version: GradleVersion, versionCatalogText: String, vararg completionCandidates: String) {
     checkCaret(versionCatalogText)
-    test(version, BASE_VERSION_CATALOG_FIXTURE) {
+    testEmptyProject(version) {
       val versionCatalog = findOrCreateFile("gradle/libs.versions.toml", versionCatalogText)
       runInEdtAndWait {
         codeInsightFixture.configureFromExistingVirtualFile(versionCatalog)
@@ -159,14 +157,5 @@ class TomlVersionCatalogCompletionTest : GradleCodeInsightTestCase() {
 
         [<caret>]
       """.trimIndent(), "bundles", "libraries", "versions")
-  }
-
-  companion object {
-    private val BASE_VERSION_CATALOG_FIXTURE = GradleTestFixtureBuilder
-      .create("GradleVersionCatalogs-suggestions") {
-        withSettingsFile {
-          setProjectName("GradleVersionCatalogs-suggestions")
-        }
-      }
   }
 }
