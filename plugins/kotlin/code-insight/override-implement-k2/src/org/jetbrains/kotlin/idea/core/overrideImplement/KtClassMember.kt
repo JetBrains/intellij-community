@@ -293,6 +293,9 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
 
 private object RenderOptions {
     val overrideRenderOptions = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
+        annotationRenderer = annotationRenderer.with {
+            annotationFilter = KtRendererAnnotationsFilter.NONE
+        }
         modifiersRenderer = modifiersRenderer.with {
             modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD)
         }
