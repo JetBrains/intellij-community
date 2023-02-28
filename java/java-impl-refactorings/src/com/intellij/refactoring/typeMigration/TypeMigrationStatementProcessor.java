@@ -546,14 +546,17 @@ class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
         PsiType psiType = migrationType != null ? migrationType : right.getType();
         if (psiType != null) {
           if (canBeVariableType(psiType)) {
-            if (declarationType != null &&
-                !myLabeler.addMigrationRoot(variable, psiType, myStatement, TypeConversionUtil.isAssignable(declarationType, psiType), true) &&
-                !TypeConversionUtil.isAssignable(left.getType(), psiType)) {
-              PsiType initialType = left.getType();
-              if (initialType instanceof PsiEllipsisType) {
-                initialType = ((PsiEllipsisType)initialType).getComponentType();
+            if (declarationType != null) {
+              boolean assignable = left.isVarArgs()
+                                  ? isVarargAssignable(left, right)
+                                  : TypeConversionUtil.isAssignable(declarationType, psiType);
+              PsiType newType = left.isVarArgs() && !right.isVarArgs() ? new PsiEllipsisType(psiType) : psiType;
+              if (!myLabeler.addMigrationRoot(variable, newType, myStatement, assignable, true) && !assignable) {
+                if (declarationType instanceof PsiEllipsisType) {
+                  declarationType = ((PsiEllipsisType)declarationType).getComponentType();
+                }
+                myLabeler.convertExpression(value, psiType, declarationType, isCovariantPosition);
               }
-              myLabeler.convertExpression(value, psiType, initialType, isCovariantPosition);
             }
           }
           else {
