@@ -181,7 +181,7 @@ public class CompletionCommand extends PerformanceCommand {
     private final String name;
 
     @JsonCreator
-    private CompletionVariant(String name) { this.name = name; }
+    private CompletionVariant(@JsonProperty("name") String name) { this.name = name; }
 
     private String getName() {
       return name;
