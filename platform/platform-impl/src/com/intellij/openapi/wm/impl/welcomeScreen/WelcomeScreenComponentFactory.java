@@ -11,6 +11,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -32,10 +33,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MouseEventAdapter;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -276,6 +274,11 @@ public final class WelcomeScreenComponentFactory {
     return panel.getComponent();
   }
 
+  /**
+   *
+   * @deprecated use {@link NotificationEventAction} instead
+   */
+  @Deprecated
   public static @NotNull JComponent createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
     SelectablePanel selectablePanel = new SelectablePanel();
     ActionLink actionLink = new ActionLink(linkText, getNotificationIcon(Collections.emptyList(), null), new DumbAwareAction() {
@@ -322,7 +325,7 @@ public final class WelcomeScreenComponentFactory {
 
   private static final BadgeIconSupplier NOTIFICATION_ICON = new BadgeIconSupplier(AllIcons.Toolwindows.Notifications);
 
-  private static Icon getNotificationIcon(List<NotificationType> notificationTypes, JComponent panel) {
+  static Icon getNotificationIcon(List<NotificationType> notificationTypes, JComponent panel) {
     if (ExperimentalUI.isNewUI()) {
       return IconUtil.resizeSquared(NOTIFICATION_ICON.getInfoIcon(!notificationTypes.isEmpty()), JBUIScale.scale(16));
     }
@@ -350,6 +353,35 @@ public final class WelcomeScreenComponentFactory {
     return title;
   }
 
+  public static @NotNull JComponent createNotificationToolbar(@NotNull Disposable parentDisposable) {
+    var horizontalGap = 4;
+
+    IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance());
+    Disposer.register(parentDisposable, panel);
+
+    DefaultActionGroup group = new DefaultActionGroup(panel.getAction(), new NotificationEventAction(parentDisposable));
+    ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(
+      "WelcomeScreen.NotificationPanel", group, true);
+    toolbar.setMinimumButtonSize(new JBDimension(26, 26));
+    toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.setActionButtonBorder(horizontalGap, 1);
+
+    JComponent result = toolbar.getComponent();
+    toolbar.setTargetComponent(result);
+    result.setOpaque(false);
+    if (ExperimentalUI.isNewUI()) {
+      result.setBorder(JBUI.Borders.empty(9, 0, 15, 24 - horizontalGap));
+    }
+    else {
+      result.setBorder(JBUI.Borders.empty(10, 0, 5, 8));
+    }
+    return result;
+  }
+
+  /**
+   * @deprecated Use {@link #createNotificationToolbar(Disposable)} instead
+   */
+  @Deprecated
   public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
     JComponent errorsLink = createErrorsLink(parentDisposable);
     JComponent eventLink = createEventLink("", parentDisposable);

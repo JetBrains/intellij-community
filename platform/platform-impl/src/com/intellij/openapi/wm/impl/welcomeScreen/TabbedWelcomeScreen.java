@@ -159,6 +159,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     if (!actions.isEmpty()) {
       DefaultActionGroup group = new DefaultActionGroup(actions);
       ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.WELCOME_SCREEN_QUICK_PANEL, group, true);
+      toolbar.setTargetComponent(result);
       toolbar.setMinimumButtonSize(new JBDimension(26, 26));
       JComponent toolbarComponent = toolbar.getComponent();
 
