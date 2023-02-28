@@ -527,6 +527,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
 
   void updateParameterValues(@NotNull UCallExpression call, @Nullable PsiElement elementPlace) {
     LOG.assertTrue(isInitialized());
+    if (call.getValueArguments().isEmpty()) return;
     if (isExternalOverride()) return;
 
     if (!getSuperMethods().isEmpty()) {
