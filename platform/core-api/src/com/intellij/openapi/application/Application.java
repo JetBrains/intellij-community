@@ -289,6 +289,7 @@ public interface Application extends ComponentManager {
    *
    * @param runnable the runnable to execute.
    */
+  @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable);
 
   /**
@@ -316,6 +317,7 @@ public interface Application extends ComponentManager {
    * @param runnable the runnable to execute.
    * @param state    the state in which the runnable will be executed.
    */
+  @RequiresBlockingContext
   void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state);
 
   /**

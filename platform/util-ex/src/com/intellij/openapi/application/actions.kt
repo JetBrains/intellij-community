@@ -56,6 +56,7 @@ fun runInEdt(modalityState: ModalityState? = null, runnable: () -> Unit) {
   }
 }
 
+@RequiresBlockingContext
 fun invokeLater(modalityState: ModalityState? = null, runnable: () -> Unit) {
   ApplicationManager.getApplication().invokeLater({ runnable() }, modalityState ?: ModalityState.defaultModalityState())
 }

@@ -48,6 +48,10 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
 
   private val navigateToSuspendContextFix = "Navigate to suspend context"
 
+  private val invokeLaterDescr = "'invokeLater' is not idiomatic in suspend context. Use 'Dispatchers.EDT' instead"
+  private val invokeLaterFixWithContext = "(May change semantics) Replace 'invokeLater' call with 'withContext(Dispatchers.EDT) {}'"
+  private val invokeLaterFixLaunch = "Replace 'invokeLater' with 'launch(Dispatchers.EDT)'"
+
   @Test
   fun `progress manager checkCanceled in suspend function`() {
     addCheckCanceledFunctions()
@@ -703,6 +707,70 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
     """.trimIndent())
   }
 
+  @Test
+  fun `invokeLater replace withContext`() {
+    addApplicationAndEtc()
+
+    myFixture.configureByText("file.kt", """
+      import com.intellij.openapi.application.*
+      
+      suspend fun a() {
+        ApplicationManager.getApplication().<warning descr="$invokeLaterDescr">inv<caret>okeLater</warning> {
+          println()
+        }
+      }
+    """.trimIndent())
+    myFixture.testHighlighting()
+
+    val intention = myFixture.getAvailableIntention(invokeLaterFixWithContext)
+    assertNotNullK(intention)
+    myFixture.checkPreviewAndLaunchAction(intention)
+
+    myFixture.checkResult("""
+      import com.intellij.openapi.application.*
+      import kotlinx.coroutines.Dispatchers
+      import kotlinx.coroutines.withContext
+      
+      suspend fun a() {
+        withContext(Dispatchers.EDT) {
+          println()
+        }
+      }
+    """.trimIndent())
+  }
+
+  @Test
+  fun `invokeLater with launch`() {
+    addApplicationAndEtc()
+
+    myFixture.configureByText("file.kt", """
+      import com.intellij.openapi.application.*
+      import kotlinx.coroutines.*
+      
+      suspend fun CoroutineScope.a() {
+        ApplicationManager.getApplication().<warning descr="$invokeLaterDescr">inv<caret>okeLater</warning> {
+          println()
+        }
+      }
+    """.trimIndent())
+    myFixture.testHighlighting()
+
+    val intention = myFixture.getAvailableIntention(invokeLaterFixLaunch)
+    assertNotNullK(intention)
+    myFixture.checkPreviewAndLaunchAction(intention)
+
+    myFixture.checkResult("""
+      import com.intellij.openapi.application.*
+      import kotlinx.coroutines.*
+      
+      suspend fun CoroutineScope.a() {
+          launch(Dispatchers.EDT) {
+            println()
+          }
+      }
+    """.trimIndent())
+  }
+
   private fun addApplicationAndEtc() {
     myFixture.addClass("""
         package com.intellij.openapi.progress;
@@ -727,6 +795,9 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
             
             @RequiresBlockingContext
             ModalityState getDefaultModalityState();
+            
+            @RequiresBlockingContext
+            void invokeLater(Runnable runnable);
         }
       """.trimIndent())
 
