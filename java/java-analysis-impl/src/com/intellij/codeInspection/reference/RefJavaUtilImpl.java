@@ -453,9 +453,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
       call = ObjectUtils.tryCast(qualifiedReference.getSelector(), UCallExpression.class);
     }
     if (call != null) {
-      if (!call.getValueArguments().isEmpty()) {
-        refMethod.updateParameterValues(call, psiResolved);
-      }
+      refMethod.updateParameterValues(call, psiResolved);
 
       final PsiType usedType = call.getReceiverType();
       if (usedType != null) {
