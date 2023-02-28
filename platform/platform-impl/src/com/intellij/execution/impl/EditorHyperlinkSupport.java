@@ -111,7 +111,6 @@ public class EditorHyperlinkSupport {
     }
   }
 
-  @SuppressWarnings("SameParameterValue")
   public void waitForPendingFilters(long timeoutMs) {
     myFilterRunner.waitForPendingFilters(timeoutMs);
   }
@@ -163,7 +162,7 @@ public class EditorHyperlinkSupport {
   @Nullable
   public static HyperlinkInfo getHyperlinkInfo(@NotNull RangeHighlighter range) {
     HyperlinkInfoTextAttributes attributes = range.getUserData(HYPERLINK);
-    return attributes != null ? attributes.getHyperlinkInfo() : null;
+    return attributes != null ? attributes.hyperlinkInfo() : null;
   }
 
   @Nullable
@@ -261,16 +260,6 @@ public class EditorHyperlinkSupport {
   }
 
   @Nullable
-  public HyperlinkInfo getHyperlinkInfoByPoint(Point p) {
-    LogicalPosition pos = myEditor.xyToLogicalPosition(new Point(p.x, p.y));
-    if (EditorCoreUtil.inVirtualSpace(myEditor, pos)) {
-      return null;
-    }
-
-    return getHyperlinkInfoByLineAndCol(pos.line, pos.column);
-  }
-
-  @Nullable
   public HyperlinkInfo getHyperlinkInfoByEvent(@NotNull EditorMouseEvent event) {
     return event.isOverText() ? getHyperlinkAt(event.getOffset()) : null;
   }
@@ -323,8 +312,8 @@ public class EditorHyperlinkSupport {
 
   @NotNull
   private static TextAttributes getFollowedHyperlinkAttributes(@NotNull RangeHighlighter range) {
-    HyperlinkInfoTextAttributes attrs = HYPERLINK.get(range);
-    TextAttributes result = attrs != null ? attrs.getFollowedHyperlinkAttributes() : null;
+    HyperlinkInfoTextAttributes attrs = range.getUserData(HYPERLINK);
+    TextAttributes result = attrs == null ? null : attrs.followedHyperlinkAttributes();
     if (result == null) {
       result = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
     }
@@ -368,7 +357,6 @@ public class EditorHyperlinkSupport {
     return null;
   }
 
-  // todo fix link followed here!
   private static void linkFollowed(@NotNull Editor editor, @NotNull Collection<? extends RangeHighlighter> ranges, @NotNull RangeHighlighter link) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
     for (RangeHighlighter range : ranges) {
@@ -401,23 +389,6 @@ public class EditorHyperlinkSupport {
     return document.getImmutableCharSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset);
   }
 
-  private static class HyperlinkInfoTextAttributes extends TextAttributes {
-    private final HyperlinkInfo myHyperlinkInfo;
-    private final TextAttributes myFollowedHyperlinkAttributes;
-
-    HyperlinkInfoTextAttributes(@NotNull HyperlinkInfo hyperlinkInfo, @Nullable TextAttributes followedHyperlinkAttributes) {
-      myHyperlinkInfo = hyperlinkInfo;
-      myFollowedHyperlinkAttributes = followedHyperlinkAttributes;
-    }
-
-    @NotNull
-    HyperlinkInfo getHyperlinkInfo() {
-      return myHyperlinkInfo;
-    }
-
-    @Nullable
-    TextAttributes getFollowedHyperlinkAttributes() {
-      return myFollowedHyperlinkAttributes;
-    }
+  private record HyperlinkInfoTextAttributes(@NotNull HyperlinkInfo hyperlinkInfo, @Nullable TextAttributes followedHyperlinkAttributes) {
   }
 }

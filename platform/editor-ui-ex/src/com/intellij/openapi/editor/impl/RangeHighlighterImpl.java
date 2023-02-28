@@ -29,7 +29,7 @@ import java.awt.*;
  */
 class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx {
   @SuppressWarnings({"InspectionUsingGrayColors", "UseJBColor"})
-  private static final Color NULL_COLOR = new Color(0, 0, 0); // must be new instance to work as a sentinel
+  private static final Color NULL_COLOR = new Color(0, 0, 0); // must be a new instance to work as a sentinel
   private static final Key<Boolean> VISIBLE_IF_FOLDED = Key.create("visible.folded");
 
   private final MarkupModelImpl myModel;
@@ -48,12 +48,12 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   private byte myFlags;
 
   private static final byte AFTER_END_OF_LINE_MASK = 1;
-  private static final byte ERROR_STRIPE_IS_THIN_MASK = 2;
-  private static final byte TARGET_AREA_IS_EXACT_MASK = 4;
-  private static final byte IN_BATCH_CHANGE_MASK = 8;
-  static final byte CHANGED_MASK = 16;
-  static final byte RENDERERS_CHANGED_MASK = 32;
-  static final byte FONT_STYLE_CHANGED_MASK = 64;
+  private static final byte ERROR_STRIPE_IS_THIN_MASK = 1<<1;
+  private static final byte TARGET_AREA_IS_EXACT_MASK = 1<<2;
+  private static final byte IN_BATCH_CHANGE_MASK = 1<<3;
+  static final byte CHANGED_MASK = 1<<4;
+  static final byte RENDERERS_CHANGED_MASK = 1<<5;
+  static final byte FONT_STYLE_CHANGED_MASK = 1<<6;
   static final byte FOREGROUND_COLOR_CHANGED_MASK = -128;
 
   @MagicConstant(intValues = {AFTER_END_OF_LINE_MASK, ERROR_STRIPE_IS_THIN_MASK, TARGET_AREA_IS_EXACT_MASK, IN_BATCH_CHANGE_MASK,
@@ -156,7 +156,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     fireChanged(false, false, false);
   }
 
-  private static int getFontStyle(TextAttributes textAttributes) {
+  private static int getFontStyle(@Nullable TextAttributes textAttributes) {
     return textAttributes == null ? Font.PLAIN : textAttributes.getFontType();
   }
 
@@ -418,6 +418,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     return result;
   }
 
+  @NotNull
   private MarkupModel getMarkupModel() {
     return myModel;
   }
