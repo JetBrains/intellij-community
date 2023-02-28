@@ -79,8 +79,8 @@ class BatchSpanProcessor(
       .ofLongs()
       .setDescription("The number of spans queued")
       .setUnit("1")
-      .buildWithCallback { result ->
-        result.record(queueSize.sum(), Attributes.of(SPAN_PROCESSOR_TYPE_LABEL, SPAN_PROCESSOR_TYPE_VALUE))
+      .buildWithCallback {
+        it.record(queueSize.sum(), Attributes.of(SPAN_PROCESSOR_TYPE_LABEL, SPAN_PROCESSOR_TYPE_VALUE))
       }
     processedSpanCounter = meter
       .counterBuilder("processedSpans")
