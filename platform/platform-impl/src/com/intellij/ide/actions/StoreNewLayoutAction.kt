@@ -20,7 +20,7 @@ class StoreNewLayoutAction : DumbAwareAction() {
       IdeBundle.message("dialog.new.window.layout.title"),
       null,
       "",
-      NonExistingLayoutValidator(),
+      LayoutNameValidator(),
       arrayOf(IdeBundle.message("button.save"), IdeBundle.message("button.cancel")),
       1,
     ) {
