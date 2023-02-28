@@ -5,7 +5,6 @@
   <category>Languages</category>
   <description><![CDATA[
 The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
-The plugin supports Kotlin 1.8 and lower.
 <br>
 <a href="https://kotlinlang.org/docs/tutorials/getting-started.html">Getting Started in IntelliJ IDEA</a><br>
 <a href="https://kotlinlang.org/docs/tutorials/kotlin-android.html">Getting Started in Android Studio</a><br>
