@@ -141,7 +141,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     fun withRenamedLayout(oldName: String, newName: String): ToolWindowLayoutStorageManagerState =
       copy(
         activeLayoutName = if (oldName == activeLayoutName) newName else activeLayoutName,
-        layouts = layouts + (newName to layouts.getValue(oldName)) - oldName
+        layouts = layouts - oldName + (newName to layouts.getValue(oldName))
       )
 
     fun withUpdatedLayout(
