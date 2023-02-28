@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "RAW_RUN_BLOCKING")
 
 package com.intellij.testFramework.common
 
@@ -25,6 +25,7 @@ import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.DocumentReferenceManager
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -126,11 +127,12 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
     rwLockHolder.initialize(Thread.currentThread())
   }
 
-  val app = ApplicationImpl(true, isHeadless, true, true, rwLockHolder)
-  BundleBase.assertOnMissedKeys(true);
+  val app = ApplicationImpl(isHeadless, rwLockHolder)
+  BundleBase.assertOnMissedKeys(true)
   // do not crash AWT on exceptions
-  AWTExceptionHandler.register();
-  Disposer.setDebugMode(true);
+  AWTExceptionHandler.register()
+  Disposer.setDebugMode(true)
+  Logger.setUnitTestMode()
 
   Disposer.register(app) {
     AWTAutoShutdown.getInstance().notifyThreadFree(awtBusyThread)

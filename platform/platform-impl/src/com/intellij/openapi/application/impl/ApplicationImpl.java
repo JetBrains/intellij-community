@@ -97,7 +97,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private boolean mySaveAllowed;
   private volatile boolean myExitInProgress;
 
-  private final Disposable myLastDisposable = Disposer.newDisposable();  // the last to be disposed
+  private final @Nullable Disposable myLastDisposable;  // the last to be disposed
 
   // defer reading isUnitTest flag until it's initialized
   private static class Holder {
@@ -108,35 +108,73 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private final ExecutorService ourThreadExecutorsService = AppExecutorUtil.getAppExecutorService();
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  public ApplicationImpl(boolean isInternal, boolean isHeadless, boolean isCommandLine, boolean isTestMode, @NotNull RwLockHolder lockHolder) {
+  @TestOnly
+  public ApplicationImpl(boolean isHeadless, RwLockHolder lockHolder) {
     super(null, true);
 
     myLock = lockHolder.getLock$intellij_platform_ide_impl();
 
-    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
-    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
-    registerServiceInstance(Application.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
-    registerServiceInstance(ReadActionCache.class, myReadActionCacheIml, ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerFakeServices(this);
 
-    myIsInternal = isInternal;
-    myTestModeFlag = isTestMode;
+    myIsInternal = true;
+    myTestModeFlag = true;
     myHeadlessMode = isHeadless;
-    myCommandLineMode = isCommandLine;
-    mySaveAllowed = !isHeadless;
+    myCommandLineMode = true;
+    mySaveAllowed = false;
 
-    Activity activity = StartUpMeasurer.isEnabled() ? StartUpMeasurer.startActivity("AppDelayQueue instantiation") : null;
-    // Acquire IW lock on EDT indefinitely in legacy mode
+    // acquire IW lock on EDT indefinitely in legacy mode
     if (!IMPLICIT_READ_ON_EDT_DISABLED) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
     }
-    if (activity != null) {
-      activity.end();
-    }
 
-    NoSwingUnderWriteAction.watchForEvents(this);
+    postInit(this);
 
+    myLastDisposable = Disposer.newDisposable();
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
+  }
+
+  public ApplicationImpl(boolean isInternal, boolean isHeadless, boolean isCommandLine, RwLockHolder lockHolder) {
+    super(null, true);
+
+    myLock = lockHolder.getLock$intellij_platform_ide_impl();
+
+    registerFakeServices(this);
+
+    myIsInternal = isInternal;
+    myTestModeFlag = false;
+    myHeadlessMode = isHeadless;
+    myCommandLineMode = isCommandLine;
+    if (!isHeadless) {
+      mySaveAllowed = true;
+    }
+
+    myLastDisposable = null;
+  }
+
+  private static void registerFakeServices(ApplicationImpl app) {
+    app.registerServiceInstance(TransactionGuard.class, app.myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
+    app.registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
+    app.registerServiceInstance(Application.class, app, ComponentManagerImpl.fakeCorePluginDescriptor);
+    app.registerServiceInstance(ReadActionCache.class, app.myReadActionCacheIml, ComponentManagerImpl.fakeCorePluginDescriptor);
+  }
+
+  @ApiStatus.Internal
+  public static void postInit(@NotNull ApplicationImpl app) {
+    AtomicBoolean reported = new AtomicBoolean();
+    IdeEventQueue.getInstance().addPostprocessor(e -> {
+      if (app.isWriteAccessAllowed() && reported.compareAndSet(false, true)) {
+        LOG.error("AWT events are not allowed inside write action: " + e);
+      }
+      return true;
+    }, app);
+
+    app.addApplicationListener(new ApplicationListener() {
+      @Override
+      public void afterWriteActionFinished(@NotNull Object action) {
+        reported.set(false);
+      }
+    }, app);
   }
 
   /**
@@ -328,7 +366,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     // FileBasedIndexImpl can schedule some more activities to execute, so, shutdown executor only after service disposing
     AppExecutorUtil.shutdownApplicationScheduledExecutorService();
 
-    Disposer.dispose(myLastDisposable);
+    if (myLastDisposable == null) {
+      ApplicationManager.setApplication(null);
+    }
+    else {
+      Disposer.dispose(myLastDisposable);
+    }
   }
 
   @Override
@@ -868,9 +911,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   @Override
-  public boolean acquireWriteIntentLock(@NotNull String invokedClassFqn) {
-    if (myLock.isWriteThread() && (myLock.isWriteIntentLocked() || myLock.isWriteAcquired()))
+  public boolean acquireWriteIntentLock(@Nullable String ignored) {
+    if (myLock.isWriteThread() && (myLock.isWriteIntentLocked() || myLock.isWriteAcquired())) {
       return false;
+    }
     myLock.writeIntentLock();
     return true;
   }

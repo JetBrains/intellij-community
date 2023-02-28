@@ -4,7 +4,9 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -18,7 +20,8 @@ public class ApplicationManager {
     return ourApplication;
   }
 
-  private static void setApplication(@NotNull Application instance) {
+  @ApiStatus.Internal
+  public static void setApplication(@Nullable Application instance) {
     ourApplication = instance;
     CachedSingletonsRegistry.cleanupCachedFields();
   }
