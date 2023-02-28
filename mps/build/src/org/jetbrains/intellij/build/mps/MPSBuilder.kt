@@ -5,6 +5,7 @@ import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.ProprietaryBuildTools
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
+import org.jetbrains.intellij.build.fus.FeatureUsageStatisticsProperties
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import java.nio.file.Path
 
@@ -20,8 +21,11 @@ class MPSBuilder {
             options.useCompiledClassesFromProjectOutput = false
             options.targetOs = OsFamily.ALL
 
-            // FeatureUsageStatisticsProperties("FUS", "https://resources.jetbrains.com/storage/fus/config/v4/FUS/")
-            val buildTools = ProprietaryBuildTools.DUMMY
+            val fusp = FeatureUsageStatisticsProperties("FUS", "https://resources.jetbrains.com/storage/fus/config/v4/FUS/")
+            val buildTools = ProprietaryBuildTools(ProprietaryBuildTools.DUMMY.signTool,
+                scrambleTool = null, macHostProperties = null, artifactsServer = null,
+                featureUsageStatisticsProperties = fusp, licenseServerHost = null
+            )
 
             val buildContext = BuildContextImpl.createContextBlocking(
                 BuildDependenciesCommunityRoot(Path.of("$home/community")),
