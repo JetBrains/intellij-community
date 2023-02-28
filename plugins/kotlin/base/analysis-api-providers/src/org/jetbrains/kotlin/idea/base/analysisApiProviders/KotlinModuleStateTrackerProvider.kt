@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
@@ -25,11 +27,12 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
 @OptIn(Frontend10ApiUsage::class)
-class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
+class KotlinModuleStateTrackerProvider(private val project: Project) : Disposable {
     init {
         val busConnection = project.messageBus.connect(this)
         busConnection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
@@ -39,7 +42,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
     private val libraryCache = ConcurrentHashMap<Library, ModuleStateTrackerImpl>()
     private val sourceModuleCache = ConcurrentHashMap<Module, ModuleStateTrackerImpl>()
     private val sdkCache = ConcurrentHashMap<Sdk, ModuleStateTrackerImpl>()
-    private val scriptCache = ConcurrentHashMap<VirtualFile, ModuleStateTrackerImpl>()
+    private val scriptCache = ConcurrentHashMap<VirtualFilePointer, ModuleStateTrackerImpl>()
 
     fun getModuleStateTrackerFor(module: KtModule): KtModuleStateTracker {
         return when (module) {
@@ -70,10 +73,22 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
 
             is KtScriptModule -> {
                 val virtualFile = module.file.virtualFile ?: error("Script ${module.file} does not have a backing 'VirtualFile'")
-                scriptCache.computeIfAbsent(virtualFile) { ModuleStateTrackerImpl() }
+                val pointerManager = VirtualFilePointerManager.getInstance()
+                val pointer = pointerManager.create(virtualFile, KotlinPluginDisposable.getInstance(project), scriptFileListener)
+                scriptCache.computeIfAbsent(pointer) { ModuleStateTrackerImpl() }
             }
 
             is KtNotUnderContentRootModule -> ModuleStateTrackerImpl() // TODO need proper cache?
+        }
+    }
+
+    private val scriptFileListener = object : VirtualFilePointerListener {
+        override fun validityChanged(pointers: Array<out VirtualFilePointer>) {
+            for (pointer in pointers) {
+                if (!pointer.isValid) {
+                    scriptCache.remove(pointer)
+                }
+            }
         }
     }
 
