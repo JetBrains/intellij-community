@@ -2,5 +2,6 @@
   "type": "KOTLIN_PROPERTY",
   "classId": "testing/rename/Foo.Companion",
   "oldName": "FIRST",
-  "newName": "SECOND"
+  "newName": "SECOND",
+  "enabledInK2": true
 }
