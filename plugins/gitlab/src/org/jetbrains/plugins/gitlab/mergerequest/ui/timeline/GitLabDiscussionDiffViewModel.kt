@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 
 interface GitLabDiscussionDiffViewModel {
   val position: GitLabNoteDTO.Position
@@ -42,39 +43,7 @@ class GitLabDiscussionDiffViewModelImpl(
   override val patchHunk: Flow<GitLabDiscussionDiffViewModel.PatchHunkLoadingState> = channelFlow {
     send(GitLabDiscussionDiffViewModel.PatchHunkLoadingState.Loading)
     try {
-      mr.changes.map { changes ->
-        val parsedChanges = changes.getParsedChanges()
-        val patchWithHistory = parsedChanges.patchesByChange.values.find {
-          it.patch.beforeVersionId == position.diffRefs.startSha
-          && it.patch.afterVersionId == position.diffRefs.headSha
-          && it.patch.filePath == position.filePath
-        }
-        if (patchWithHistory == null) {
-          LOG.debug("Unable to find patch for position $position")
-        }
-        patchWithHistory?.patch
-      }.map { patch ->
-        if (patch == null) return@map null
-        val location = when {
-          position.oldLine != null -> {
-            val index = position.oldLine - 1
-            patch.hunks.find {
-              index >= it.startLineBefore && index < it.endLineBefore
-            }?.let { it to DiffLineLocation(Side.LEFT, index) }
-          }
-          position.newLine != null -> {
-            val index = position.newLine - 1
-            patch.hunks.find {
-              index >= it.startLineAfter && index < it.endLineAfter
-            }?.let { it to DiffLineLocation(Side.RIGHT, index) }
-          }
-          else -> null
-        }
-        if (location == null) {
-          LOG.debug("Unable to map location for position $position in patch\n$patch")
-        }
-        location
-      }.collectLatest { hunkAndAnchor ->
+      mr.changes.mapToHunkAndAnchor().collectLatest { hunkAndAnchor ->
         if (hunkAndAnchor == null) {
           send(GitLabDiscussionDiffViewModel.PatchHunkLoadingState.NotAvailable)
         }
@@ -87,4 +56,39 @@ class GitLabDiscussionDiffViewModelImpl(
       send(GitLabDiscussionDiffViewModel.PatchHunkLoadingState.LoadingError(e))
     }
   }.modelFlow(cs, LOG)
+
+  private fun Flow<GitLabMergeRequestChanges>.mapToHunkAndAnchor(): Flow<Pair<PatchHunk, DiffLineLocation>?> =
+    map { changes ->
+      val parsedChanges = changes.getParsedChanges()
+      val patchWithHistory = parsedChanges.patchesByChange.values.find {
+        it.patch.beforeVersionId == position.diffRefs.startSha
+        && it.patch.afterVersionId == position.diffRefs.headSha
+        && it.patch.filePath == position.filePath
+      }
+      if (patchWithHistory == null) {
+        LOG.debug("Unable to find patch for position $position")
+      }
+      patchWithHistory?.patch
+    }.map { patch ->
+      if (patch == null) return@map null
+      val location = when {
+        position.oldLine != null -> {
+          val index = position.oldLine - 1
+          patch.hunks.find {
+            index >= it.startLineBefore && index < it.endLineBefore
+          }?.let { it to DiffLineLocation(Side.LEFT, index) }
+        }
+        position.newLine != null -> {
+          val index = position.newLine - 1
+          patch.hunks.find {
+            index >= it.startLineAfter && index < it.endLineAfter
+          }?.let { it to DiffLineLocation(Side.RIGHT, index) }
+        }
+        else -> null
+      }
+      if (location == null) {
+        LOG.debug("Unable to map location for position $position in patch\n$patch")
+      }
+      location
+    }
 }
