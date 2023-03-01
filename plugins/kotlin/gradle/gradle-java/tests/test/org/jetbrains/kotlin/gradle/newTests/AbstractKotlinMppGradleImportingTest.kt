@@ -70,7 +70,7 @@ import kotlin.Comparator
 @TestDataPath("\$PROJECT_ROOT/community/plugins/kotlin/idea/tests/testData/gradle")
 abstract class AbstractKotlinMppGradleImportingTest :
     GradleImportingTestCase(), WorkspaceChecksDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl, HighlightingCheckDsl,
-    TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl {
+    TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl, AllFilesUnderContentRootConfigurationDsl {
 
     internal val installedFeatures = listOf<TestFeature<*>>(
         GradleProjectsPublishingTestsFeature,
@@ -83,6 +83,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
         OrderEntriesChecker,
         TestTasksChecker,
         HighlightingChecker,
+        AllFilesAreUnderContentRootChecker,
     )
 
     private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl()
