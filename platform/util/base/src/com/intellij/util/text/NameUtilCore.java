@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -35,8 +35,16 @@ public final class NameUtilCore {
   }
 
   public static int nextWord(@NotNull String text, int start) {
-    if (!Character.isLetterOrDigit(text.charAt(start))) {
+    char ch = text.charAt(start);
+    if (!Character.isLetterOrDigit(ch)) {
       return start + 1;
+    }
+    if (Character.getType(ch) == Character.OTHER_LETTER) {
+      String name = Character.getName(ch);
+      if (name != null && name.startsWith("CJK UNIFIED IDEOGRAPHS")) {
+        // Consider every ideograph as a separate word
+        return start + 1;
+      }
     }
 
     int i = start;
