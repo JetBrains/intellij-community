@@ -31,6 +31,7 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.refactoring.util.VariableData
+import com.siyeh.ig.psiutils.ClassUtils
 import java.util.concurrent.CompletableFuture
 
 object ExtractMethodPipeline {
@@ -223,12 +224,16 @@ object ExtractMethodPipeline {
     val targetClass = PsiTreeUtil.getParentOfType(extractOptions.anchor, PsiClass::class.java)!!
     if (PsiUtil.isLocalOrAnonymousClass(targetClass) || PsiUtil.isInnerClass(targetClass)) return null
     val memberUsages = analyzer.findInstanceMemberUsages(targetClass, extractOptions.elements)
-    if (memberUsages.any { usage -> PsiUtil.isAccessedForWriting(usage.reference)}) return null
+    if (memberUsages.any(::isNotExtractableUsage)) return null
     val addedParameters = memberUsages.groupBy(MemberUsage::member).entries
       .map { (member: PsiMember, usages: List<MemberUsage>) ->
         createInputParameter(member, usages.map(MemberUsage::reference)) ?: return null
       }
     return extractOptions.copy(inputParameters = extractOptions.inputParameters + addedParameters, isStatic = true)
+  }
+
+  private fun isNotExtractableUsage(usage: MemberUsage): Boolean {
+    return PsiUtil.isAccessedForWriting(usage.reference) || (usage.member is PsiClass && ClassUtils.isNonStaticClass(usage.member))
   }
 
   private fun createInputParameter(member: PsiMember, usages: List<PsiExpression>): InputParameter? {

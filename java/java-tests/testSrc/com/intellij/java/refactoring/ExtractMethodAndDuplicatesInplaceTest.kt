@@ -339,6 +339,20 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testMakeStaticFailsWithClassUsage(){
+    runAndRevertSettings {
+      JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+      doTest()
+    }
+  }
+
+  fun testMakeStaticWithClassUsage(){
+    runAndRevertSettings {
+      JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+      doTest()
+    }
+  }
+
   fun testIntroduceObjectConflictInsideNestedClass(){
     doTest {
       renameTemplate("Result")

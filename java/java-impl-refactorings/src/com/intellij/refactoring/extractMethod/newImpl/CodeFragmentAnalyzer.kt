@@ -124,7 +124,7 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     val usedFields = ArrayList<MemberUsage>()
     val visitor = object : ClassMemberReferencesVisitor(targetClass) {
       override fun visitClassMemberReferenceElement(classMember: PsiMember, classMemberReference: PsiJavaCodeReferenceElement) {
-        val expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiReferenceExpression::class.java, false)
+        val expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiExpression::class.java, false)
         if (expression != null && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
           usedFields += MemberUsage(classMember, expression)
         }
@@ -164,19 +164,15 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
   private fun findDefaultExits(): List<Int> {
     val lastInstruction = flow.instructions[flowRange.last - 1]
-    if (isInstructionReachable(flowRange.last - 1)) {
-      val defaultExits = when (lastInstruction) {
-        is ThrowToInstruction -> emptyList()
-        is GoToInstruction -> listOf(lastInstruction.offset)
-        is ConditionalThrowToInstruction -> listOf(flowRange.last)
-        is BranchingInstruction -> listOf(lastInstruction.offset, flowRange.last)
-        else -> listOf(flowRange.last)
-      }
-      return defaultExits.filterNot { it in flowRange.first until flowRange.last }
+    if (!isInstructionReachable(flowRange.last - 1)) return emptyList()
+    val defaultExits = when (lastInstruction) {
+      is ThrowToInstruction -> emptyList()
+      is GoToInstruction -> listOf(lastInstruction.offset)
+      is ConditionalThrowToInstruction -> listOf(flowRange.last)
+      is BranchingInstruction -> listOf(lastInstruction.offset, flowRange.last)
+      else -> listOf(flowRange.last)
     }
-    else {
-      return emptyList()
-    }
+    return defaultExits.filterNot { it in flowRange.first until flowRange.last }
   }
 
   private fun findExitPoints(): List<Int> {
