@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Main")
+@file:Suppress("RAW_RUN_BLOCKING")
 
 package com.intellij.idea
 
@@ -21,25 +22,24 @@ import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
 
 fun main(rawArgs: Array<String>) {
-  val startupTimings = ArrayList<Pair<String, Long>>(6)
-  startupTimings.add("startup begin" to System.nanoTime())
+  val startupTimings = ArrayList<Any>(12)
+  addBootstrapTiming("startup begin", startupTimings)
 
-  val args: List<String> = preprocessArgs(rawArgs)
+  val args = preprocessArgs(rawArgs)
   AppMode.setFlags(args)
 
   try {
     bootstrap(startupTimings)
-    startupTimings.add("main scope creating" to System.nanoTime())
-    @Suppress("RAW_RUN_BLOCKING")
+    addBootstrapTiming("main scope creating", startupTimings)
     runBlocking(rootTask()) {
       StartUpMeasurer.addTimings(startupTimings, "bootstrap")
       val appInitPreparationActivity = StartUpMeasurer.startActivity("app initialization preparation")
-      val busyThread = Thread.currentThread()
 
       launch(CoroutineName("ForkJoin CommonPool configuration") + Dispatchers.Default) {
         IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
@@ -51,13 +51,16 @@ fun main(rawArgs: Array<String>) {
         MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
       }
 
-      initProjectorIfNeeded(args)
-      // Must be called after projector init
-      initLuxIfNeeded(args)
+      if (!args.isEmpty()) {
+        initProjectorIfNeeded(args)
+        // must be called after projector init
+        initLuxIfNeeded(args)
+      }
 
+      val busyThread = Thread.currentThread()
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler()) {
         StartUpMeasurer.appInitPreparationActivity = appInitPreparationActivity
-        startApplication(args, appStarterDeferred, this@runBlocking, busyThread)
+        startApplication(args = args, appStarterDeferred = appStarterDeferred, mainScope = this@runBlocking, busyThread = busyThread)
       }
 
       awaitCancellation()
@@ -106,11 +109,11 @@ private fun initLuxIfNeeded(args: List<String>) {
   System.setProperty("swing.bufferPerWindow", true.toString())
 }
 
-private fun bootstrap(startupTimings: ArrayList<Pair<String, Long>>) {
-  startupTimings.add("properties loading" to System.nanoTime())
+private fun bootstrap(startupTimings: MutableList<Any>) {
+  addBootstrapTiming("properties loading", startupTimings)
   PathManager.loadProperties()
 
-  startupTimings.add("plugin updates install" to System.nanoTime())
+  addBootstrapTiming("plugin updates install", startupTimings)
   // this check must be performed before system directories are locked
   if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
     val configImportNeeded = !AppMode.isHeadless() && !Files.exists(Path.of(PathManager.getConfigPath()))
@@ -125,12 +128,24 @@ private fun bootstrap(startupTimings: ArrayList<Pair<String, Long>>) {
     }
   }
 
-  startupTimings.add("classloader init" to System.nanoTime())
+  addBootstrapTiming("classloader init", startupTimings)
   BootstrapClassLoaderUtil.initClassLoader(AppMode.isRemoteDevHost())
 }
 
+private fun addBootstrapTiming(name: String, startupTimings: MutableList<Any>) {
+  startupTimings.add(name)
+  startupTimings.add(System.nanoTime())
+}
+
 private fun preprocessArgs(args: Array<String>): List<String> {
-  if (args.size == 1 && args[0] == "%f") return emptyList()  // a buggy DE may fail to strip an unused parameter from a .desktop file
+  if (args.isEmpty()) {
+    return Collections.emptyList()
+  }
+
+  // a buggy DE may fail to strip an unused parameter from a .desktop file
+  if (args.size == 1 && args[0] == "%f") {
+    return Collections.emptyList()
+  }
 
   @Suppress("SuspiciousPackagePrivateAccess")
   if (AppMode.HELP_OPTION in args) {
@@ -159,9 +174,9 @@ private fun preprocessArgs(args: Array<String>): List<String> {
     exitProcess(0)
   }
 
-  val (propertyArgs, otherArgs) = args.partition { it.startsWith("-D") && it.contains("=") }
+  val (propertyArgs, otherArgs) = args.partition { it.startsWith("-D") && it.contains('=') }
   propertyArgs.forEach { arg ->
-    val (option, value) = arg.removePrefix("-D").split("=", limit = 2)
+    val (option, value) = arg.removePrefix("-D").split('=', limit = 2)
     System.setProperty(option, value)
   }
   return otherArgs
