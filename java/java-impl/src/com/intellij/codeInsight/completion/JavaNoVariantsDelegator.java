@@ -25,7 +25,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.MethodTags;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -150,7 +149,15 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
       @Nullable
       private static LookupElement wrapLookup(@NotNull LookupElement element, @NotNull PrefixMatcher matcher) {
         String lookupString = element.getLookupString();
-        Set<String> tags = MethodTags.tags(lookupString).stream().filter(t -> matcher.prefixMatches(t)).collect(Collectors.toSet());
+        PsiElement psiElement = element.getPsiElement();
+        if (!(psiElement instanceof PsiMember psiMember)) {
+          return null;
+        }
+        PsiClass psiClass = psiMember.getContainingClass();
+        Set<String> tags = MethodTags.tags(lookupString).stream()
+          .filter(t -> matcher.prefixMatches(t.getName()) && t.getMatcher().test(psiClass))
+          .map(t->t.getName())
+          .collect(Collectors.toSet());
         if (tags.isEmpty()) {
           return null;
         }
@@ -316,9 +323,9 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
       if (myMatcher.prefixMatches(name)) {
         return true;
       }
-      Set<String> tags = MethodTags.tags(name);
-      for (String tag : tags) {
-        if (myMatcher.prefixMatches(tag)) {
+      Set<MethodTags.Tag> tags = MethodTags.tags(name);
+      for (MethodTags.Tag tag : tags) {
+        if (myMatcher.prefixMatches(tag.getName())) {
           return true;
         }
       }
@@ -334,6 +341,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
 
   static class TagLookupElementDecorator extends LookupElementDecorator<LookupElement> {
 
+    @NotNull
     private final Set<String> myTags;
 
     protected TagLookupElementDecorator(@NotNull LookupElement delegate, @NotNull Set<String> tags) {
@@ -341,6 +349,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
       myTags = tags;
     }
 
+    @NotNull
     public Set<String> getTags() {
       return myTags;
     }
@@ -355,9 +364,19 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
     @Override
     public void renderElement(@NotNull LookupElementPresentation presentation) {
       super.renderElement(presentation);
-      if (!myTags.isEmpty()) {
+      if (myTags.size()==1) {
         presentation.appendTailText(" " + JavaBundle.message("java.completion.tag") + " ", true);
         presentation.appendTailText(myTags.iterator().next(), true, true);
+      }
+      else if (myTags.size() > 1) {
+        presentation.appendTailText(" " + JavaBundle.message("java.completion.tags") + " ", true);
+        Iterator<String> iterator = myTags.iterator();
+        String firstTag = iterator.next();
+        presentation.appendTailText(firstTag, true, true);
+        while (iterator.hasNext()) {
+          presentation.appendTailText(", ", true);
+          presentation.appendTailText(iterator.next(), true, true);
+        }
       }
     }
   }
