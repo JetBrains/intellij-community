@@ -103,7 +103,6 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.io.File", ".*")
       .add("java.io.InputStream","read|skip|available|markSupported")
       .add("java.io.Reader","read|skip|ready|markSupported")
-      .add("java.io.BufferedReader","readLine")
       .add("java.lang.AbstractStringBuilder", "capacity|codePointAt|codePointBefore|codePointCount|indexOf|lastIndexOf|offsetByCodePoints|substring|subSequence")
       .add("java.lang.Boolean",".*")
       .add("java.lang.Byte",".*")
