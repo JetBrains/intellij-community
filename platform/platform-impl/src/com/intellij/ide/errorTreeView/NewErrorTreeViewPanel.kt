@@ -84,7 +84,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
   val errorViewStructure: ErrorViewStructure
 
   private val structureModel: StructureTreeModel<ErrorViewStructure>
-  private val progressFlow = MutableStateFlow<String?>(null)
+  private val progressFlow = MutableStateFlow<@NlsContexts.ProgressText String?>(null)
 
   @Volatile
   private var isDisposed = false
