@@ -701,9 +701,8 @@ object CommunityLibraryLicenses {
       .newBsd("https://github.com/google/protobuf/blob/master/LICENSE"),
     LibraryLicense(name = "Protocol Buffers", libraryName = "protobuf-java6", url = "https://developers.google.com/protocol-buffers")
       .newBsd("https://github.com/protocolbuffers/protobuf/blob/v3.5.1/LICENSE"),
-    LibraryLicense(name = "Proxy Vole (JetBrains's fork)", libraryName = "proxy-vole",
-                   url = "https://github.com/JetBrains/intellij-deps-proxy-vole")
-      .apache("https://github.com/MarkusBernhardt/proxy-vole/blob/master/LICENSE.md"),
+    LibraryLicense(name = "Proxy Vole", libraryName = "proxy-vole", url = "https://github.com/akuhtz/proxy-vole")
+      .apache("https://github.com/akuhtz/proxy-vole/blob/master/LICENSE.md"),
     LibraryLicense(name = "pty4j", libraryName = "pty4j",
                    url = "https://github.com/JetBrains/pty4j")
       .eplV1("https://github.com/JetBrains/pty4j/blob/master/LICENSE"),
