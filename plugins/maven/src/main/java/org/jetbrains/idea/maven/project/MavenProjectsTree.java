@@ -451,7 +451,7 @@ public final class MavenProjectsTree {
   }
 
   private void update(final Collection<VirtualFile> files,
-                      final boolean recursive,
+                      final boolean updateModules,
                       final boolean forceUpdate,
                       final MavenExplicitProfiles explicitProfiles,
                       final MavenProjectReader projectReader,
@@ -471,7 +471,7 @@ public final class MavenProjectsTree {
         filesToAddModules.add(file);
       }
 
-      updateSpecs.add(new UpdateSpec(file, recursive, force));
+      updateSpecs.add(new UpdateSpec(file, updateModules, force));
     }
     updater.updateProjects(updateSpecs);
 
@@ -500,9 +500,9 @@ public final class MavenProjectsTree {
     updateContext.fireUpdatedIfNecessary();
   }
 
-  private record UpdateSpec(Stack<VirtualFile> updateStack, VirtualFile mavenProjectFile, boolean recursive, boolean forceReading) {
-    UpdateSpec(VirtualFile mavenProjectFile, boolean recursive, boolean forceReading){
-      this(new Stack<>(), mavenProjectFile, recursive, forceReading);
+  private record UpdateSpec(Stack<VirtualFile> updateStack, VirtualFile mavenProjectFile, boolean updateModules, boolean forceReading) {
+    UpdateSpec(VirtualFile mavenProjectFile, boolean updateModules, boolean forceReading){
+      this(new Stack<>(), mavenProjectFile, updateModules, forceReading);
     }
   }
 
@@ -513,9 +513,9 @@ public final class MavenProjectsTree {
     private final MavenProjectReader reader;
     private final MavenGeneralSettings generalSettings;
     private final MavenProgressIndicator process;
-    private ConcurrentHashMap<VirtualFile, CopyOnWriteArrayList<UpdateSettings>> updateHistory = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<VirtualFile, CopyOnWriteArrayList<UpdateSettings>> updateHistory = new ConcurrentHashMap<>();
 
-    private record UpdateSettings(boolean recursive, boolean forceReading) {
+    private record UpdateSettings(boolean updateModules, boolean forceReading) {
     }
 
     MavenProjectsTreeUpdater(MavenProjectsTree tree,
@@ -536,13 +536,13 @@ public final class MavenProjectsTree {
       if (specs.isEmpty()) return;
 
       ParallelRunner.runSequentially(specs, spec -> {
-        update(spec.updateStack(), spec.mavenProjectFile(), spec.recursive(), spec.forceReading());
+        update(spec.updateStack(), spec.mavenProjectFile(), spec.updateModules(), spec.forceReading());
       });
     }
 
     private void update(final Stack<VirtualFile> updateStack,
                         final VirtualFile mavenProjectFile,
-                        final boolean recursive,
+                        final boolean updateModules,
                         final boolean forceReading) {
       if (updateStack.contains(mavenProjectFile)) {
         MavenLog.LOG.info("Recursion detected in " + mavenProjectFile);
@@ -557,25 +557,25 @@ public final class MavenProjectsTree {
 
       var fileHistory = updateHistory.get(mavenProjectFile);
       if (!timeStampChanged) {
-        if (!fileHistory.isEmpty() && !recursive && !forceReading) {
+        if (!fileHistory.isEmpty() && !updateModules && !forceReading) {
           // we already updated this file with the same or stricter settings
           MavenLog.LOG.debug("Has already been updated (same/stricter): " + mavenProjectFile);
           return;
         }
         for (var settings : fileHistory) {
-          if (settings.recursive() && settings.forceReading()) {
+          if (settings.updateModules() && settings.forceReading()) {
             // we already updated this file with recursion and forced reading
-            MavenLog.LOG.debug("Has already been updated (recursive, forced): " + mavenProjectFile);
+            MavenLog.LOG.debug("Has already been updated (modules update, forced reading): " + mavenProjectFile);
             return;
           }
           // we already updated this file with the same settings
-          if (settings.recursive() == recursive && settings.forceReading() == forceReading) {
+          if (settings.updateModules() == updateModules && settings.forceReading() == forceReading) {
             MavenLog.LOG.debug("Has already been updated (same): " + mavenProjectFile);
             return;
           }
         }
       }
-      fileHistory.add(new UpdateSettings(recursive, forceReading));
+      fileHistory.add(new UpdateSettings(updateModules, forceReading));
 
       updateStack.push(mavenProjectFile);
       process.setText(MavenProjectBundle.message("maven.reading.pom", mavenProjectFile.getPath()));
@@ -642,9 +642,9 @@ public final class MavenProjectsTree {
 
         modulesFilesToReconnect.add(each);
 
-        if (readProject || isNewModule || recursive) {
+        if (readProject || isNewModule || updateModules) {
           // do not force update modules if only this project was requested to be updated
-          moduleUpdateSpecs.add(new UpdateSpec(new Stack<>(updateStack), each, recursive, recursive && forceReading));
+          moduleUpdateSpecs.add(new UpdateSpec(new Stack<>(updateStack), each, updateModules, updateModules && forceReading));
         }
       }
       updateProjects(moduleUpdateSpecs);
