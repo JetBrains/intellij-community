@@ -4,7 +4,9 @@ package com.intellij.ide.actions
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
 class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
@@ -42,16 +44,24 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> = children
 
-    private class Apply(layoutName: String) : RestoreNamedLayoutAction(layoutName) {
+    private class Apply(private val layoutName: String) : DumbAwareAction() {
       init {
         templatePresentation.text = ActionsBundle.message("action.CustomLayoutActionsGroup.Apply.text")
       }
 
-      override fun isSelected(e: AnActionEvent): Boolean = false // no check mark needed in this submenu
+      override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+      override fun actionPerformed(e: AnActionEvent) {
+        val project = e.project ?: return
+        val layoutManager = ToolWindowDefaultLayoutManager.getInstance()
+        layoutManager.activeLayoutName = layoutName
+        ToolWindowManagerEx.getInstanceEx(project).setLayout(layoutManager.getLayoutCopy())
+      }
 
       override fun update(e: AnActionEvent) {
         super.update(e)
-        e.presentation.isEnabled = manager.activeLayoutName != layoutNameSupplier()
+        e.presentation.isEnabled = manager.activeLayoutName != layoutName
+        e.presentation.description = ActionsBundle.message("action.RestoreNamedLayout.description", layoutName)
       }
 
     }
