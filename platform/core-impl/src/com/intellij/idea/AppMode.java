@@ -65,14 +65,20 @@ public final class AppMode {
 
   public static void setFlags(@NotNull List<String> args) {
     isHeadless = isHeadless(args);
-    isCommandLine = isHeadless || (args.size() > 0 && isGuiCommand(args.get(0)));
+    isCommandLine = isHeadless || (!args.isEmpty() && isGuiCommand(args.get(0)));
     isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || (!isCommandLine && isFileAfterOptions(args));
 
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
 
-    isRemoteDevHost = args.size() > 0 && (CWM_HOST_COMMAND.equals(args.get(0)) || CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) || REMOTE_DEV_HOST_COMMAND.equals(args.get(0)));
+    if (args.isEmpty()) {
+      return;
+    }
+
+    isRemoteDevHost = CWM_HOST_COMMAND.equals(args.get(0)) ||
+                      CWM_HOST_NO_LOBBY_COMMAND.equals(args.get(0)) ||
+                      REMOTE_DEV_HOST_COMMAND.equals(args.get(0));
 
     for (String arg : args) {
       if (DISABLE_NON_BUNDLED_PLUGINS.equalsIgnoreCase(arg)) {
@@ -119,7 +125,7 @@ public final class AppMode {
       return true;
     }
 
-    if (args.size() == 0) {
+    if (args.isEmpty()) {
       return false;
     }
 
