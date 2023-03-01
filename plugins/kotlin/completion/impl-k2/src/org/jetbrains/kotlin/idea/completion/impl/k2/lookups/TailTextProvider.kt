@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion.lookups
 
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParametersRenderer
@@ -74,6 +75,7 @@ internal object TailTextProvider {
     }
 
     private val typeParameterRenderer = KtDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+        annotationRenderer = annotationRenderer.with { annotationFilter = KtRendererAnnotationsFilter.NONE }
         modifiersRenderer = modifiersRenderer.with { modifierFilter = KtRendererModifierFilter.NONE }
         typeParametersRenderer = KtTypeParametersRenderer.WIHTOUT_BOUNDS
     }
