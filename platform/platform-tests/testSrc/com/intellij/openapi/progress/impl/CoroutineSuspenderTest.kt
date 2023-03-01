@@ -13,6 +13,7 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
     val count = 10
     val started = Semaphore(count, count)
     val suspender = coroutineSuspender(false)
+    assertTrue(suspender.isPaused())
     val job = launch(Dispatchers.Default + suspender) {
       repeat(count) {
         launch {
@@ -33,6 +34,7 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
     val started = Semaphore(count, count)
     val paused = Semaphore(count, count)
     val suspender = coroutineSuspender()
+    assertFalse(suspender.isPaused())
     val result = async(Dispatchers.Default + suspender) {
       (1..count).map {
         async { // coroutine context (including CoroutineSuspender) is inherited
@@ -46,6 +48,7 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
     }
     started.timeoutAcquire() // all coroutines are started
     suspender.pause() // pause suspender before next checkCanceled
+    assertTrue(suspender.isPaused())
     repeat(count) {
       paused.release() // let coroutines pause in next checkCanceled
     }
