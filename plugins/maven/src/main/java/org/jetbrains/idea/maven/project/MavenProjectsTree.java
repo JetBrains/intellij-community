@@ -549,9 +549,7 @@ public final class MavenProjectsTree {
         return;
       }
 
-      var existingMavenProject = tree.findProject(mavenProjectFile);
-      boolean isNew = existingMavenProject == null;
-      var mavenProject = isNew ? new MavenProject(mavenProjectFile) : existingMavenProject;
+      var mavenProject = tree.findOrCreateProject(mavenProjectFile);
       MavenProjectTimestamp timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
       boolean timeStampChanged = !timestamp.equals(tree.myTimestamps.get(mavenProject));
 
@@ -1019,6 +1017,12 @@ public final class MavenProjectsTree {
 
   public List<VirtualFile> getProjectsFiles() {
     return withReadLock(() -> new ArrayList<>(myVirtualFileToProjectMapping.keySet()));
+  }
+
+  @NotNull
+  private MavenProject findOrCreateProject(VirtualFile f) {
+    var mavenProject = findProject(f);
+    return null == mavenProject ? new MavenProject(f) : mavenProject;
   }
 
   @Nullable
