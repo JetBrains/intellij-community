@@ -613,28 +613,19 @@ public final class MavenProjectsTree {
       }
 
       List<VirtualFile> existingModuleFiles = mavenProject.getExistingModuleFiles();
-      List<MavenProject> modulesToRemove = new ArrayList<>();
-      List<MavenProject> modulesToBecomeRoots = new ArrayList<>();
 
       for (MavenProject each : prevModules) {
         VirtualFile moduleFile = each.getFile();
         if (!existingModuleFiles.contains(moduleFile)) {
           if (tree.isManagedFile(moduleFile)) {
-            modulesToBecomeRoots.add(each);
+            if (tree.reconnectRoot(each)) {
+              updateContext.update(each, MavenProjectChanges.NONE);
+            }
           }
           else {
-            modulesToRemove.add(each);
+            tree.removeModule(mavenProject, each);
+            tree.doDelete(mavenProject, each, updateContext);
           }
-        }
-      }
-      for (MavenProject each : modulesToRemove) {
-        tree.removeModule(mavenProject, each);
-        tree.doDelete(mavenProject, each, updateContext);
-      }
-
-      for (MavenProject each : modulesToBecomeRoots) {
-        if (tree.reconnectRoot(each)) {
-          updateContext.update(each, MavenProjectChanges.NONE);
         }
       }
 
