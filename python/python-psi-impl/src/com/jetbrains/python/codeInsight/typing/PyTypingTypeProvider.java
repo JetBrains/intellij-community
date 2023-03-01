@@ -1549,7 +1549,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
             final PyExpression firstArgument = arguments[0];
             if (firstArgument instanceof PyStringLiteralExpression) {
               final String name = ((PyStringLiteralExpression)firstArgument).getStringValue();
-              return new PyGenericType(name, getGenericTypeBound(arguments, context));
+              return new PyTypeVarTypeImpl(name, getGenericTypeBound(arguments, context));
             }
           }
         }
