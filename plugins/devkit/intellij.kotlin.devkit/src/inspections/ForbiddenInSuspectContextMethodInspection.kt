@@ -41,7 +41,6 @@ private const val MODALITY_STATE_DEFAULT_MODALITY_STATE = "com.intellij.openapi.
 private const val APPLICATION_GET_DEFAULT_MODALITY_STATE = "com.intellij.openapi.application.Application.getDefaultModalityState"
 private const val RESTRICTS_SUSPENSION = "kotlin.coroutines.RestrictsSuspension"
 private const val INTELLIJ_EDT_DISPATCHER = "com.intellij.openapi.application.EDT"
-private const val CONTEXT_MODALITY_EXT = "com.intellij.openapi.application.contextModality"
 private const val LAUNCH = "kotlinx.coroutines.launch"
 
 private val requiresSuspendContextAnnotation = FqName(REQUIRES_SUSPEND_CONTEXT_ANNOTATION)
@@ -54,14 +53,11 @@ private val modalityStateDefaultModalityState = FqName(MODALITY_STATE_DEFAULT_MO
 private val applicationGetDefaultModalityState = FqName(APPLICATION_GET_DEFAULT_MODALITY_STATE)
 private val restrictsSuspensionName = FqName(RESTRICTS_SUSPENSION)
 private val intelliJEdtDispatcher = FqName(INTELLIJ_EDT_DISPATCHER)
-private val contextModalityExt = FqName(CONTEXT_MODALITY_EXT)
 private val coroutinesLaunch = FqName(LAUNCH)
 
 private const val COROUTINE_CHECK_CANCELED_FIX = "com.intellij.openapi.progress.checkCancelled"
 private const val WITH_CONTEXT = "kotlinx.coroutines.withContext"
 private const val DISPATCHERS = "kotlinx.coroutines.Dispatchers"
-private const val CURRENT_COROUTINE_CONTEXT = "kotlinx.coroutines.currentCoroutineContext"
-private const val KOTLIN_TODO = "kotlin.TODO"
 private const val COROUTINE_SCOPE = "kotlinx.coroutines.CoroutineScope"
 
 internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool() {
@@ -150,7 +146,6 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
               extractElementToHighlight(expression),
               DevKitKotlinBundle.message("inspections.forbidden.method.in.suspend.context.default.modality.state.text"),
               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-              ifInSuspend { ReplaceDefaultModalityStateWithCurrentModalityQuickFix(expression) }
             )
           }
           applicationInvokeLater, invokeLaterKt -> {
@@ -313,36 +308,6 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
 
         replaceMethodInCallWithLambda(callExpression,
                                       "${coroutinesLaunch.shortName()}($DISPATCHERS.${intelliJEdtDispatcher.shortName()}) {}")
-      }
-    }
-
-    private class ReplaceDefaultModalityStateWithCurrentModalityQuickFix(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(
-      element
-    ) {
-      override fun getFamilyName(): String = DevKitKotlinBundle.message(
-        "inspections.forbidden.method.in.suspend.context.default.modality.state.fix.text")
-
-      override fun getText(): String = familyName
-
-      override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean =
-        getCallExpression(startElement) != null
-
-      override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        val callExpression = getCallExpression(startElement)!!
-        val factory = KtPsiFactory(project)
-
-        if (!isImported(contextModalityExt, callExpression.containingKtFile)) {
-          ImportInsertHelperImpl.addImport(project, callExpression.containingKtFile, contextModalityExt)
-        }
-
-        // ?: because defaultModalityState is @NotNull, so it can be unexpected to replace with something nullable
-        val contextModalityCall = factory.createExpression(
-          "$CURRENT_COROUTINE_CONTEXT().${contextModalityExt.shortName()}() ?: $KOTLIN_TODO(\"Handle absence of ModalityState\")"
-        )
-        val qualifiedExpression = callExpression.getQualifiedExpressionForSelector()
-        val expressionToReplace = qualifiedExpression ?: callExpression
-        val resultExpression = expressionToReplace.replace(contextModalityCall)
-        ShortenReferencesFacility.getInstance().shorten(resultExpression as KtElement)
       }
     }
 

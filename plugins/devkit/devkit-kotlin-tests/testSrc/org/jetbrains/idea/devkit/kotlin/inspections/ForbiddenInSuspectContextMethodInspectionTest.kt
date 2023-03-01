@@ -44,7 +44,6 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
   private val invokeAndWaitFix = "Replace 'invokeAndWait' call with 'withContext(Dispatchers.EDT) {}'"
 
   private val defaultModalityDescr = "'defaultModalityState()' does not work in suspend context. If it is really necessary, use 'contextModality()'"
-  private val defaultModalityFix = "Replace with 'contextModality()'"
 
   private val navigateToSuspendContextFix = "Navigate to suspend context"
 
@@ -594,23 +593,6 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
       }
     """.trimIndent())
     myFixture.testHighlighting()
-
-    val intention = myFixture.getAvailableIntention(defaultModalityFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
-
-    myFixture.checkResult("""
-      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
-      
-      import com.intellij.openapi.application.*
-      import kotlinx.coroutines.*
-      
-      class MyService {
-        suspend fun fn() {
-          val state: ModalityState = currentCoroutineContext().contextModality() ?: TODO("Handle absence of ModalityState")
-        } 
-      }
-    """.trimIndent())
   }
 
   @Test
@@ -630,23 +612,6 @@ class ForbiddenInSuspectContextMethodInspectionTest : LightJavaCodeInsightFixtur
       }
     """.trimIndent())
     myFixture.testHighlighting()
-
-    val intention = myFixture.getAvailableIntention(defaultModalityFix)
-    assertNotNullK(intention)
-    myFixture.checkPreviewAndLaunchAction(intention)
-
-    myFixture.checkResult("""
-      @file:Suppress("UNUSED_VARIABLE", "UNUSED_PARAMETER")
-      
-      import com.intellij.openapi.application.*
-      import kotlinx.coroutines.*
-      
-      class MyService {
-        suspend fun fn() {
-          val state: ModalityState = currentCoroutineContext().contextModality() ?: TODO("Handle absence of ModalityState")
-        } 
-      }
-    """.trimIndent())
   }
 
   @Test
