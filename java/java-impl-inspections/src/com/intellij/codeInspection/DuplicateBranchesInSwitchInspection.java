@@ -385,19 +385,19 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
              case R():
              case null:
              case S():
-               <caret>System.out.println(42); // Branch in 'switch' is a duplicate of the default branch
-               break;
+               <caret>return 42; // Branch in 'switch' is a duplicate of the default branch
              case String s:
-               System.out.println(0);
-               break;
+               return 0;
              default:
-               System.out.println(42);
+               return 42;
            }
 
            The 'case R():' and 'case S():' statements can be removed as redundant,
            because the corresponding branch is a duplicate of the default branch.
            But the 'default' case does not handle null values, so we cannot delete
            the 'case null:' and the 'return 42;' statement.
+
+           See com.intellij.java.codeInspection.DuplicateBranchesInSwitchFixTest [DeleteRedundantBranch7.java]
           */
           context.deleteStatements();
         }
