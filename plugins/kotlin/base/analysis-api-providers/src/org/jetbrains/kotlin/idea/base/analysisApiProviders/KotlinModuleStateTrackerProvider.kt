@@ -7,9 +7,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
@@ -27,6 +30,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
+import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 
@@ -36,12 +40,13 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
         val busConnection = project.messageBus.connect(this)
         busConnection.subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener())
         busConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, JdkListener())
+        busConnection.subscribe(VirtualFileManager.VFS_CHANGES, ScriptFileListener())
     }
 
     private val libraryCache = ConcurrentHashMap<Library, ModuleStateTrackerImpl>()
     private val sourceModuleCache = ConcurrentHashMap<Module, ModuleStateTrackerImpl>()
     private val sdkCache = ConcurrentHashMap<Sdk, ModuleStateTrackerImpl>()
-    private val scriptCache = ConcurrentHashMap<VirtualFilePointer, ModuleStateTrackerImpl>()
+    private val scriptCache = ConcurrentHashMap<VirtualFile, ModuleStateTrackerImpl>()
 
     fun getModuleStateTrackerFor(module: KtModule): KtModuleStateTracker {
         return when (module) {
@@ -72,20 +77,24 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
 
             is KtScriptModule -> {
                 val virtualFile = module.file.virtualFile ?: error("Script ${module.file} does not have a backing 'VirtualFile'")
-                val pointerManager = VirtualFilePointerManager.getInstance()
-                val pointer = pointerManager.create(virtualFile, this, scriptFileListener)
-                scriptCache.computeIfAbsent(pointer) { ModuleStateTrackerImpl() }
+                scriptCache.computeIfAbsent(virtualFile) { ModuleStateTrackerImpl() }
             }
 
             is KtNotUnderContentRootModule -> ModuleStateTrackerImpl() // TODO need proper cache?
         }
     }
 
-    private val scriptFileListener = object : VirtualFilePointerListener {
-        override fun validityChanged(pointers: Array<out VirtualFilePointer>) {
-            for (pointer in pointers) {
-                if (!pointer.isValid) {
-                    scriptCache.remove(pointer)
+    private inner class ScriptFileListener : BulkFileListener {
+        override fun after(events: List<VFileEvent>) {
+            for (event in events) {
+                val file = when (event) {
+                    is VFileDeleteEvent -> event.file
+                    is VFileMoveEvent -> event.file
+                    else -> continue
+                }
+
+                if (file.extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX) {
+                    scriptCache.remove(file)
                 }
             }
         }
