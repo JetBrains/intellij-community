@@ -549,13 +549,32 @@ public final class MavenProjectsTree {
         return;
       }
 
+      var existingMavenProject = tree.findProject(mavenProjectFile);
+      boolean isNew = existingMavenProject == null;
+      var mavenProject = isNew ? new MavenProject(mavenProjectFile) : existingMavenProject;
+      MavenProjectTimestamp timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
+      boolean timeStampChanged = !timestamp.equals(tree.myTimestamps.get(mavenProject));
+
       updateHistory.putIfAbsent(mavenProjectFile, new CopyOnWriteArrayList<>());
+
       var fileHistory = updateHistory.get(mavenProjectFile);
-      for (var settings : fileHistory) {
-        if (settings.recursive() && settings.forceReading()) {
-          // we already updated this file with recursion and forced reading, no need to update it again
-          MavenLog.LOG.debug("Has already been updated: " + mavenProjectFile);
+      if (!timeStampChanged) {
+        if (!fileHistory.isEmpty() && !recursive && !forceReading) {
+          // we already updated this file with the same or stricter settings
+          MavenLog.LOG.debug("Has already been updated (same/stricter): " + mavenProjectFile);
           return;
+        }
+        for (var settings : fileHistory) {
+          if (settings.recursive() && settings.forceReading()) {
+            // we already updated this file with recursion and forced reading
+            MavenLog.LOG.debug("Has already been updated (recursive, forced): " + mavenProjectFile);
+            return;
+          }
+          // we already updated this file with the same settings
+          if (settings.recursive() == recursive && settings.forceReading() == forceReading) {
+            MavenLog.LOG.debug("Has already been updated (same): " + mavenProjectFile);
+            return;
+          }
         }
       }
       fileHistory.add(new UpdateSettings(recursive, forceReading));
@@ -564,10 +583,6 @@ public final class MavenProjectsTree {
       process.setText(MavenProjectBundle.message("maven.reading.pom", mavenProjectFile.getPath()));
       process.setText2("");
 
-      var existingMavenProject = tree.findProject(mavenProjectFile);
-      boolean isNew = existingMavenProject == null;
-      var mavenProject = isNew ? new MavenProject(mavenProjectFile) : existingMavenProject;
-
       List<MavenProject> prevModules = tree.getModules(mavenProject);
 
       Set<MavenProject> prevInheritors = new HashSet<>();
@@ -575,8 +590,6 @@ public final class MavenProjectsTree {
         prevInheritors.addAll(tree.findInheritors(mavenProject));
       }
 
-      MavenProjectTimestamp timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
-      boolean timeStampChanged = !timestamp.equals(tree.myTimestamps.get(mavenProject));
       boolean readProject = forceReading || timeStampChanged;
 
       if (readProject) {
