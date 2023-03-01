@@ -244,13 +244,10 @@ class NotebookOutputInlayController private constructor(
       val interval = intervalIterator.next()
       if (interval.type != NotebookCellLines.CellType.CODE) return null
 
-      val orderedExtractorsList = NotebookOutputDataKeyExtractor
+      val outputDataKeys = NotebookOutputDataKeyExtractor
         .EP_NAME
         .extensionList
-        .sortedByDescending { it.isTargetedForSpecificData }
-
-      val outputDataKeys =
-        orderedExtractorsList.asSequence()
+        .asSequence()
           .mapNotNull {
             it.extract(editor, interval)
           }
