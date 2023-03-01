@@ -1,11 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("unused") // API
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.module.Module
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 
 @ApiStatus.Experimental
 class GradleModuleData(private val dataNode: DataNode<out ModuleData>) {
@@ -29,10 +32,6 @@ class GradleModuleData(private val dataNode: DataNode<out ModuleData>) {
 
   val gradleIdentityPath: String
     get() = moduleData.gradleIdentityPath
-
-  @Deprecated("Use gradleIdentityPath instead")
-  val compositeBuildGradlePath: String
-    get() = moduleData.getCompositeBuildGradlePath()
 
   @Deprecated("Use gradleIdentityPath instead")
   val fullGradlePath: String
@@ -93,13 +92,6 @@ var ModuleData.gradleIdentityPath: String
 val ModuleData.gradleIdentityPathOrNull: String?
   get() = getProperty("gradleIdentityPath")
 
-@Deprecated("Use .getGradlePath or .isIncludedBuild instead")
-fun ModuleData.getCompositeBuildGradlePath() = gradleIdentityPathOrNull ?: ""
-
-@Deprecated(".getGradlePath will return the proper composite build path")
-fun ModuleData.setCompositeBuildGradlePath(compositeBuildGradlePath: String) =
-  setProperty("compositeBuildGradlePath", compositeBuildGradlePath)
-
 var ModuleData.isIncludedBuild: Boolean
   get() = getProperty("isIncludedBuild")?.toBooleanStrictOrNull() ?: false
   set(value) = setProperty("isIncludedBuild", value.toString())
@@ -108,3 +100,6 @@ fun ModuleData.isBuildSrcModule() = getProperty("buildSrcModule")?.toBoolean() ?
 
 fun ModuleData.setBuildSrcModule() = setProperty("buildSrcModule", true.toString())
 
+private fun Module.findMainModuleDataNode(): DataNode<out ModuleData>? {
+  return CachedModuleDataFinder.getInstance(project).findMainModuleData(this)
+}
