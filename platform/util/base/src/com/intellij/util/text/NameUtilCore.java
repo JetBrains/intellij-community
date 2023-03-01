@@ -84,6 +84,13 @@ public final class NameUtilCore {
     if (!Character.isLetter(c)) {
       return false;
     }
+    if (Character.getType(c) == Character.OTHER_LETTER) {
+      String name = Character.getName(c);
+      if (name != null && name.startsWith("CJK UNIFIED IDEOGRAPHS")) {
+        // Consider every ideograph as a separate word
+        return true;
+      }
+    }
     return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1)) || isHardCodedWordStart(text, i);
   }
 
