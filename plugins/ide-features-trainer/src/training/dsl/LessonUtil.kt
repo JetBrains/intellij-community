@@ -9,7 +9,6 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
-import com.intellij.execution.ui.layout.impl.JBRunnerTabs
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.DataManagerImpl
@@ -54,6 +53,8 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XExpression
+import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import org.assertj.swing.timing.Timeout
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
@@ -66,7 +67,6 @@ import training.learn.lesson.LessonManager
 import training.ui.*
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.getActionById
-import training.util.isToStringContains
 import training.util.learningToolWindow
 import training.util.surroundWithNonBreakSpaces
 import java.awt.*
@@ -414,12 +414,12 @@ fun LessonContext.highlightRunToolbar(highlightInside: Boolean = true, usePulsat
 
 fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = true, usePulsation: Boolean = true) {
   task {
-    // wait for the treads & variables tab to be become selected
+    // wait for the treads & variables tab to become selected
     // otherwise the incorrect toolbar can be highlighted in the next task
-    triggerUI().component { tabs: JBRunnerTabs ->
-      tabs.selectedInfo?.text.isToStringContains(XDebuggerBundle.message("xdebugger.threads.vars.tab.title"))
-    }
+    triggerUI().component { ui: XDebuggerEmbeddedComboBox<XExpression> -> ui.isEditable }
   }
+
+  waitBeforeContinue(500)
 
   task {
     highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", highlightInside, usePulsation)
