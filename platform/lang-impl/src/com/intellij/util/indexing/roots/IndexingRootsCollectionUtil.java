@@ -197,12 +197,6 @@ public class IndexingRootsCollectionUtil {
     return builders;
   }
 
-  @NotNull
-  public static Collection<? extends IndexableIteratorBuilder> createBuilderForFile(@NotNull IndexingRootsDescriptions roots,
-                                                                                    @NotNull VirtualFile file) {
-    return doCreateBuilders(roots, file);
-  }
-
   public static List<VirtualFile> optimizeRoots(@NotNull Collection<VirtualFile> roots) {
     int size = roots.size();
     if (size == 0) {
@@ -247,95 +241,11 @@ public class IndexingRootsCollectionUtil {
     private final MultiMap<LibraryEntity, VirtualFile> myLibrarySourceRoots = MultiMap.createSet();
     private final MultiMap<WorkspaceEntity, VirtualFile> myExternalRoots = MultiMap.createSet();
     private final MultiMap<WorkspaceEntity, VirtualFile> myExternalSourceRoots = MultiMap.createSet();
+    private final List<VirtualFile> myReincludedRoots = new ArrayList<>();
+
     @Nullable
     private WorkspaceFileIndexContributor<?> myCurrentContributor;
-    private final WorkspaceFileSetRegistrar myRegistrar = new WorkspaceFileSetRegistrar() {
-
-      @Override
-      public void registerFileSet(@NotNull VirtualFileUrl root,
-                                  @NotNull WorkspaceFileKind kind,
-                                  @NotNull WorkspaceEntity entity,
-                                  @Nullable WorkspaceFileSetData customData) {
-        if (shouldIgnore(kind, customData)) return;
-        VirtualFile file = VirtualFileUrls.getVirtualFile(root);
-        if (file != null) {
-          doRegisterFileSet(file, kind, entity, customData);
-        }
-      }
-
-      @Override
-      public void registerFileSet(@NotNull VirtualFile root,
-                                  @NotNull WorkspaceFileKind kind,
-                                  @NotNull WorkspaceEntity entity,
-                                  @Nullable WorkspaceFileSetData customData) {
-        if (shouldIgnore(kind, customData)) return;
-        doRegisterFileSet(root, kind, entity, customData);
-      }
-
-      private void doRegisterFileSet(@NotNull VirtualFile root,
-                                     @NotNull WorkspaceFileKind kind,
-                                     @NotNull WorkspaceEntity entity,
-                                     @Nullable WorkspaceFileSetData customData) {
-        if (customData instanceof ModuleContentOrSourceRootData) {
-          myContents.putValue(((ModuleContentOrSourceRootData)customData).getModule(), root);
-        }
-        else if (kind.isContent()) {
-          myContentRoots.putValue(entity, root);
-        }
-        else if (kind == WorkspaceFileKind.EXTERNAL) {
-          if (myCurrentContributor instanceof LibraryRootFileIndexContributor) {
-            myLibraryRoots.putValue((LibraryEntity)entity, root);
-          }
-          else {
-            myExternalRoots.putValue(entity, root);
-          }
-        }
-        else {
-          if (myCurrentContributor instanceof LibraryRootFileIndexContributor) {
-            myLibrarySourceRoots.putValue((LibraryEntity)entity, root);
-          }
-          else {
-            myExternalSourceRoots.putValue(entity, root);
-          }
-        }
-      }
-
-      @Override
-      public void registerExcludedRoot(@NotNull VirtualFileUrl excludedRoot, @NotNull WorkspaceEntity entity) {
-
-      }
-
-      @Override
-    public void registerExcludedRoot(@NotNull VirtualFileUrl excludedRoot,
-                                     @NotNull WorkspaceFileKind excludedFrom,
-                                     @NotNull WorkspaceEntity entity) {
-    }
-
-    @Override
-      public void registerExcludedRoot(@NotNull VirtualFile excludedRoot,
-                                       @NotNull WorkspaceFileKind excludedFrom,
-                                       @NotNull WorkspaceEntity entity) {
-
-      }
-
-      @Override
-      public void registerExclusionPatterns(@NotNull VirtualFileUrl root, @NotNull List<String> patterns, @NotNull WorkspaceEntity entity) {
-
-      }
-
-      @Override
-      public void registerExclusionCondition(@NotNull VirtualFile root,
-                                             @NotNull Function1<? super VirtualFile, Boolean> condition,
-                                             @NotNull WorkspaceEntity entity) {
-
-      }
-
-      @Override
-      public void registerExclusionCondition(@NotNull VirtualFileUrl root,
-                                             @NotNull Function1<? super VirtualFile, Boolean> condition,
-                                             @NotNull WorkspaceEntity entity) {
-      }
-    };
+    private final MyWorkspaceFileSetRegistrar myRegistrar = new MyWorkspaceFileSetRegistrar();
 
     public RootsCollector(@Nullable IndexingRootsCollectionSettings settings) {
       mySettings = ObjectUtils.notNull(settings, new IndexingRootsCollectionSettings());
@@ -444,6 +354,136 @@ public class IndexingRootsCollectionUtil {
         }
       }
       myContents.clear();
+    }
+
+    public <E extends WorkspaceEntity> void registerExcludedRoots(@NotNull E entity,
+                                                                  @NotNull WorkspaceFileIndexContributor<E> contributor,
+                                                                  @NotNull EntityStorage storage) {
+      myRegistrar.setRootsToCollect(MyWorkspaceFileSetRegistrar.RootType.Excluded);
+      try {
+        contributor.registerFileSets(entity, myRegistrar, storage);
+      }
+      finally {
+        myRegistrar.setRootsToCollect(MyWorkspaceFileSetRegistrar.RootType.Included);
+      }
+    }
+
+    public Collection<VirtualFile> removeReincludedRoots() {
+      List<VirtualFile> result = new ArrayList<>(myReincludedRoots);
+      myReincludedRoots.clear();
+      return result;
+    }
+
+    private class MyWorkspaceFileSetRegistrar implements WorkspaceFileSetRegistrar {
+      enum RootType {Included, Excluded}
+
+      private RootType rootsToCollect = RootType.Included;
+
+      private void setRootsToCollect(@NotNull RootType rootType) {
+        rootsToCollect = rootType;
+      }
+
+      @Override
+      public void registerFileSet(@NotNull VirtualFileUrl root,
+                                  @NotNull WorkspaceFileKind kind,
+                                  @NotNull WorkspaceEntity entity,
+                                  @Nullable WorkspaceFileSetData customData) {
+        if (rootsToCollect != RootType.Included) return;
+        if (shouldIgnore(kind, customData)) return;
+        VirtualFile file = VirtualFileUrls.getVirtualFile(root);
+        if (file != null) {
+          doRegisterFileSet(file, kind, entity, customData);
+        }
+      }
+
+      @Override
+      public void registerFileSet(@NotNull VirtualFile root,
+                                  @NotNull WorkspaceFileKind kind,
+                                  @NotNull WorkspaceEntity entity,
+                                  @Nullable WorkspaceFileSetData customData) {
+        if (rootsToCollect != RootType.Included) return;
+        if (shouldIgnore(kind, customData)) return;
+        doRegisterFileSet(root, kind, entity, customData);
+      }
+
+      private void doRegisterFileSet(@NotNull VirtualFile root,
+                                     @NotNull WorkspaceFileKind kind,
+                                     @NotNull WorkspaceEntity entity,
+                                     @Nullable WorkspaceFileSetData customData) {
+        if (customData instanceof ModuleContentOrSourceRootData) {
+          myContents.putValue(((ModuleContentOrSourceRootData)customData).getModule(), root);
+        }
+        else if (kind.isContent()) {
+          myContentRoots.putValue(entity, root);
+        }
+        else if (kind == WorkspaceFileKind.EXTERNAL) {
+          if (myCurrentContributor instanceof LibraryRootFileIndexContributor) {
+            myLibraryRoots.putValue((LibraryEntity)entity, root);
+          }
+          else {
+            myExternalRoots.putValue(entity, root);
+          }
+        }
+        else {
+          if (myCurrentContributor instanceof LibraryRootFileIndexContributor) {
+            myLibrarySourceRoots.putValue((LibraryEntity)entity, root);
+          }
+          else {
+            myExternalSourceRoots.putValue(entity, root);
+          }
+        }
+      }
+
+      @Override
+      public void registerExcludedRoot(@NotNull VirtualFileUrl excludedRoot, @NotNull WorkspaceEntity entity) {
+        if (rootsToCollect != RootType.Excluded) return;
+        addReincludedRoot(excludedRoot);
+      }
+
+      private void addReincludedRoot(VirtualFileUrl root) {
+        VirtualFile file = VirtualFileUrls.getVirtualFile(root);
+        if (file != null) {
+          myReincludedRoots.add(file);
+        }
+      }
+
+      @Override
+      public void registerExcludedRoot(@NotNull VirtualFileUrl excludedRoot,
+                                       @NotNull WorkspaceFileKind excludedFrom,
+                                       @NotNull WorkspaceEntity entity) {
+        if (rootsToCollect != RootType.Excluded) return;
+        addReincludedRoot(excludedRoot);
+      }
+
+      @Override
+      public void registerExcludedRoot(@NotNull VirtualFile excludedRoot,
+                                       @NotNull WorkspaceFileKind excludedFrom,
+                                       @NotNull WorkspaceEntity entity) {
+        if (rootsToCollect != RootType.Excluded) return;
+        myReincludedRoots.add(excludedRoot);
+      }
+
+      @Override
+      public void registerExclusionPatterns(@NotNull VirtualFileUrl root, @NotNull List<String> patterns, @NotNull WorkspaceEntity entity) {
+        if (rootsToCollect != RootType.Excluded) return;
+        addReincludedRoot(root);
+      }
+
+      @Override
+      public void registerExclusionCondition(@NotNull VirtualFile root,
+                                             @NotNull Function1<? super VirtualFile, Boolean> condition,
+                                             @NotNull WorkspaceEntity entity) {
+        if (rootsToCollect != RootType.Excluded) return;
+        myReincludedRoots.add(root);
+      }
+
+      @Override
+      public void registerExclusionCondition(@NotNull VirtualFileUrl root,
+                                             @NotNull Function1<? super VirtualFile, Boolean> condition,
+                                             @NotNull WorkspaceEntity entity) {
+        if (rootsToCollect != RootType.Excluded) return;
+        addReincludedRoot(root);
+      }
     }
   }
 }
