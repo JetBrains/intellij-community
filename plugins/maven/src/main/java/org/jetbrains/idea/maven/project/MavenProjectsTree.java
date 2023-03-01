@@ -553,23 +553,21 @@ public final class MavenProjectsTree {
       updateHistory.putIfAbsent(mavenProjectFile, new CopyOnWriteArrayList<>());
 
       var fileHistory = updateHistory.get(mavenProjectFile);
-      if (!timeStampChanged) {
-        if (!fileHistory.isEmpty() && !updateModules && !forceReading) {
-          // we already updated this file with the same or stricter settings
-          MavenLog.LOG.debug("Has already been updated (same/stricter): " + mavenProjectFile);
+      if (!fileHistory.isEmpty() && !updateModules && !forceReading) {
+        // we already updated this file with the same or stricter settings
+        MavenLog.LOG.debug("Has already been updated (same/stricter): " + mavenProjectFile);
+        return;
+      }
+      for (var settings : fileHistory) {
+        if (settings.updateModules() && settings.forceReading()) {
+          // we already updated this file with recursion and forced reading
+          MavenLog.LOG.debug("Has already been updated (modules update, forced reading): " + mavenProjectFile);
           return;
         }
-        for (var settings : fileHistory) {
-          if (settings.updateModules() && settings.forceReading()) {
-            // we already updated this file with recursion and forced reading
-            MavenLog.LOG.debug("Has already been updated (modules update, forced reading): " + mavenProjectFile);
-            return;
-          }
-          // we already updated this file with the same settings
-          if (settings.updateModules() == updateModules && settings.forceReading() == forceReading) {
-            MavenLog.LOG.debug("Has already been updated (same): " + mavenProjectFile);
-            return;
-          }
+        // we already updated this file with the same settings
+        if (settings.updateModules() == updateModules && settings.forceReading() == forceReading) {
+          MavenLog.LOG.debug("Has already been updated (same): " + mavenProjectFile);
+          return;
         }
       }
       fileHistory.add(new UpdateSettings(updateModules, forceReading));
@@ -660,8 +658,12 @@ public final class MavenProjectsTree {
 
       var inheritorUpdateSpecs = new ArrayList<UpdateSpec>();
       for (MavenProject each : prevInheritors) {
-        // no need to go recursively in case of inheritance, only when updating modules
-        inheritorUpdateSpecs.add(new UpdateSpec(new Stack<>(updateStack), each.getFile(), false, false));
+        inheritorUpdateSpecs.add(
+          new UpdateSpec(
+            new Stack<>(updateStack), each.getFile(),
+            false, // no need to go recursively in case of inheritance, only when updating modules
+            readProject // if parent was read, force read children
+          ));
       }
       updateProjects(inheritorUpdateSpecs);
 
