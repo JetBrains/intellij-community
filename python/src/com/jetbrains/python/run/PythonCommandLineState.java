@@ -57,6 +57,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
+import com.jetbrains.python.debugger.PyTargetPathMapper;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.library.PythonLibraryType;
@@ -484,18 +485,19 @@ public abstract class PythonCommandLineState extends CommandLineState {
       }
       return new PythonProcessHandler(process, commandLineString, commandLine.getCharset());
     }
-    PathMappingSettings consolidatedPathMappings = new PathMappingSettings();
+    PathMappingSettings pathMappingSettings = new PathMappingSettings();
     // add mappings from run configuration on top
     PathMappingSettings runConfigurationPathMappings = myConfig.myMappingSettings;
     if (runConfigurationPathMappings != null) {
-      consolidatedPathMappings.addAll(runConfigurationPathMappings);
+      pathMappingSettings.addAll(runConfigurationPathMappings);
     }
     // add path mappings configured in SDK, they will be handled in second place
     PathMappingSettings sdkPathMappings = getSdkPathMappings();
     if (sdkPathMappings != null) {
-      consolidatedPathMappings.addAll(sdkPathMappings);
+      pathMappingSettings.addAll(sdkPathMappings);
     }
-    return new ProcessHandlerWithPyPositionConverter(process, commandLineString, commandLine.getCharset(), targetEnvironment,
+    PyTargetPathMapper consolidatedPathMappings = new PyTargetPathMapper(targetEnvironment, pathMappingSettings);
+    return new ProcessHandlerWithPyPositionConverter(process, commandLineString, commandLine.getCharset(),
                                                      consolidatedPathMappings);
   }
 
