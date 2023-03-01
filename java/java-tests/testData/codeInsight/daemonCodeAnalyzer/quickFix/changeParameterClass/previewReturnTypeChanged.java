@@ -6,10 +6,13 @@ abstract class Foo {
 
 class FooBar extends Foo {
     @Override
-    B<caret>ar foo() {
+    Bar foo() {
         return null;
     }
 
-    static class Bar {}
-}
+    static class Bar implements Runnable {
+        public void run() {
 
+        }
+    }
+}

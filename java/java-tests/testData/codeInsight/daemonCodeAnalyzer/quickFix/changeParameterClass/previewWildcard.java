@@ -5,7 +5,7 @@ interface b<T> {
 
 class a implements b<Integer> {
     public void f(Integer integer) {
-        <caret>
+
     }
 }
 

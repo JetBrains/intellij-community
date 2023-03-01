@@ -1,4 +1,4 @@
-// "Make 'a' implement 'b'" "true"
+// "Make 'a' implement 'b'" "true-preview"
 interface b<T> {
     void f(T t);
 }
