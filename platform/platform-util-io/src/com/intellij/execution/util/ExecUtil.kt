@@ -170,13 +170,13 @@ object ExecUtil {
         GeneralCommandLine(osascriptPath, "-e", escapedScript)
       }
       // other UNIX
-      hasGkSudo.value -> {
+      hasGkSudo.get() -> {
         GeneralCommandLine(listOf("gksudo", "--message", prompt, "--") + envCommand(commandLine) + command)//NON-NLS
       }
-      hasKdeSudo.value -> {
+      hasKdeSudo.get() -> {
         GeneralCommandLine(listOf("kdesudo", "--comment", prompt, "--") + envCommand(commandLine) + command)//NON-NLS
       }
-      hasPkExec.value -> {
+      hasPkExec.get() -> {
         GeneralCommandLine(listOf("pkexec") + envCommand(commandLine) + command)//NON-NLS
       }
       hasTerminalApp() -> {
@@ -239,7 +239,7 @@ object ExecUtil {
   @JvmStatic
   fun hasTerminalApp(): Boolean {
     return SystemInfoRt.isWindows || SystemInfoRt.isMac ||
-           hasKdeTerminal.value || hasGnomeTerminal.value || hasUrxvt.value || hasXTerm.value
+           hasKdeTerminal.get() || hasGnomeTerminal.get() || hasUrxvt.get() || hasXTerm.get()
   }
 
   @NlsSafe
@@ -252,19 +252,19 @@ object ExecUtil {
       SystemInfoRt.isMac -> {
         listOf(openCommandPath, "-a", "Terminal", command)
       }
-      hasKdeTerminal.value -> {
+      hasKdeTerminal.get() -> {
         if (title != null) listOf("konsole", "-p", "tabtitle=\"${title.replace('"', '\'')}\"", "-e", command)
         else listOf("konsole", "-e", command)
       }
-      hasGnomeTerminal.value -> {
+      hasGnomeTerminal.get() -> {
         if (title != null) listOf("gnome-terminal", "-t", title, "-x", command)
         else listOf("gnome-terminal", "-x", command)
       }
-      hasUrxvt.value -> {
+      hasUrxvt.get() -> {
         if (title != null) listOf("urxvt", "-title", title, "-e", command)
         else listOf("urxvt", "-e", command)
       }
-      hasXTerm.value -> {
+      hasXTerm.get() -> {
         if (title != null) listOf("xterm", "-T", title, "-e", command)
         else listOf("xterm", "-e", command)
       }
@@ -299,7 +299,7 @@ object ExecUtil {
 
   @JvmStatic
   fun setupNoTtyExecution(commandLine: GeneralCommandLine) {
-    if (SystemInfoRt.isLinux && hasSetsid.value) {
+    if (SystemInfoRt.isLinux && hasSetsid.get()) {
       val executablePath = commandLine.exePath
       commandLine.exePath = "setsid"
       commandLine.parametersList.prependAll(executablePath)
