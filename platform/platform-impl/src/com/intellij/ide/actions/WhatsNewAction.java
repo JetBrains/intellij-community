@@ -110,15 +110,14 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
     var parameters = new HashMap<String, String>();
     parameters.put("var", "embed");
-    if (darkTheme) {
-      parameters.put("theme", "dark");
+    var theme = darkTheme ? "dark" : "light";
+    if (ExperimentalUI.isNewUI()) {
+      theme += "-new-ui";
     }
+    parameters.put("theme", theme);
     var locale = Locale.getDefault();
     if (locale != null) {
       parameters.put("lang", locale.toLanguageTag().toLowerCase(Locale.ENGLISH));
-    }
-    if (!ExperimentalUI.isNewUI()) {
-      parameters.put("ui", "classic");
     }
     var request = HTMLEditorProvider.Request.url(Urls.newFromEncoded(url).addParameters(parameters).toExternalForm());
 
