@@ -28,13 +28,14 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.coroutineContext
 
+@ApiStatus.Internal
 sealed interface PluginAdvertiserService {
 
   companion object {
     @JvmStatic
     fun getInstance(project: Project): PluginAdvertiserService = project.service()
 
-    internal fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
+    fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
       return when (activeProductCode) {
         "IC", "AS" -> "IU"
         "PC" -> "PY"
