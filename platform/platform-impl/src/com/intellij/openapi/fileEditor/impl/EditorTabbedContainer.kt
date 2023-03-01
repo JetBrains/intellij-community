@@ -616,6 +616,11 @@ private class EditorTabs(
       return super.getPreferredHeight() - insets.top - insets.bottom
     }
 
+    override fun getActionsInset(): Int {
+      val buttonsOnTheRight = UISettings.shadowInstance.closeTabButtonOnTheRight
+      return if (!buttonsOnTheRight || ExperimentalUI.isNewUI()) JBUI.CurrentTheme.EditorTabs.tabActionsInset() else 2
+    }
+
     override fun editLabelForeground(baseForeground: Color?): Color? {
       return if (baseForeground != null && paintDimmed()) {
         val blendValue = JBUI.CurrentTheme.EditorTabs.unselectedBlend()

@@ -585,6 +585,14 @@ public final class JBUI {
         return insets("EditorTabs.tabInsets", insets(0, 8));
       }
 
+      public static int tabActionsInset() {
+        return getInt(tabActionsInsetKey(), 6);
+      }
+
+      public static String tabActionsInsetKey() {
+        return "EditorTabs.tabActionsInset";
+      }
+
       public static @NotNull Color borderColor() {
         return JBColor.namedColor("EditorTabs.borderColor", DefaultTabs.borderColor());
       }

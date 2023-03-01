@@ -522,14 +522,19 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     myActionPanel = new ActionPanel(myTabs, myInfo, e -> processMouseEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, this)),
                                     value -> setHovered(value));
     boolean buttonsOnTheRight = UISettings.getShadowInstance().getCloseTabButtonOnTheRight();
-    Border border = buttonsOnTheRight ? JBUI.Borders.empty(1, ExperimentalUI.isNewUI() ? 3 : 0, 1, 0)
-                                      : JBUI.Borders.empty(1, 0, 1, 3);
+    Border border = buttonsOnTheRight ? JBUI.Borders.empty(1, getActionsInset(), 1, 0)
+                                      : JBUI.Borders.empty(1, 0, 1, getActionsInset());
     myActionPanel.setBorder(border);
     toggleShowActions(false);
 
     add(myActionPanel, buttonsOnTheRight ? BorderLayout.EAST : BorderLayout.WEST);
 
     myTabs.revalidateAndRepaint(false);
+  }
+
+  protected int getActionsInset() {
+    boolean buttonsOnTheRight = UISettings.getShadowInstance().getCloseTabButtonOnTheRight();
+    return !buttonsOnTheRight || ExperimentalUI.isNewUI() ? 6 : 2;
   }
 
   private void removeOldActionPanel() {

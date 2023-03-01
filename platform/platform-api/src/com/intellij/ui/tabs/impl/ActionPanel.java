@@ -44,7 +44,6 @@ public final class ActionPanel extends NonOpaquePanel {
 
     final NonOpaquePanel wrapper = new NonOpaquePanel(new BorderLayout());
     wrapper.setFocusable(false);
-    wrapper.add(Box.createHorizontalStrut(2), BorderLayout.WEST);
     NonOpaquePanel inner = new NonOpaquePanel();
     inner.setLayout(new BoxLayout(inner, BoxLayout.X_AXIS));
     wrapper.add(inner, BorderLayout.CENTER);
