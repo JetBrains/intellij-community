@@ -39,9 +39,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-class CreateXmlElementIntentionAction implements IntentionAction {
+final class CreateXmlElementIntentionAction implements IntentionAction {
   private final String myMessageKey;
-  protected final TypeOrElementOrAttributeReference myRef;
+  private final TypeOrElementOrAttributeReference myRef;
   private boolean myIsAvailableEvaluated;
   private XmlFile myTargetFile;
   private final String myDeclarationTagName;
