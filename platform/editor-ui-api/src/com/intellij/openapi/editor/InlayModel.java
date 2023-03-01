@@ -15,23 +15,10 @@ import java.util.List;
  * Keeps track of all inlays of a single editor.
  * <p>
  * Inlays are visual additions to the editor that are not reflected in the editor's document.
- * <p>
- * There are several kinds of inlays:
- * <ul>
- * <li>Inline inlays are inserted between characters in a line of text
- *     and move the remaining text of the line further to the end of the line.
- *     Examples of inline inlays are parameter hints or inferred types.
- * <li>After-line-end inlays are appended to the end of a logical line,
- *     they do not influence the text wrapping.
- *     An example of after-line-end inlays are evaluated expressions during debugging.
- * <li>Block inlays are inserted between lines of text
- *     and move the remaining lines of the file further down.
- *     An example of block inlays are author attributions.
- * </ul>
- * Each inlay is 'anchored' to a certain document offset at creation,
- * this offset behaves similar to a zero-range {@link RangeMarker} with respect to document changes.
+ * See {@link Inlay} for the available types of inlays.
  *
  * @see Editor#getInlayModel()
+ * @see Inlay
  */
 public interface InlayModel {
   /**
