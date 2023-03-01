@@ -136,6 +136,10 @@ internal class VcsLogNewUiTableCellRenderer(
   }
 
   companion object {
+    @JvmStatic
+    val additionalGap
+      get() = 8
+
     private val INSETS
       get() = 4
 
@@ -147,10 +151,10 @@ internal class VcsLogNewUiTableCellRenderer(
         isOpaque = false
       }
 
-      override fun getPreferredSize(): Dimension = JBDimension(8, 0)
+      override fun getPreferredSize(): Dimension = JBDimension(additionalGap, 0)
     }
 
-    private const val ROOT_COLUMN_INDEX = 0
+    const val ROOT_COLUMN_INDEX = 0
   }
 
   private enum class SelectedRowType {
