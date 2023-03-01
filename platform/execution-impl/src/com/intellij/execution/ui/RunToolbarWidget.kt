@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.*
@@ -224,6 +225,9 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
 private fun createCurrentFileWithInlineActions(runExecutor: Executor,
                                                debugExecutor: Executor,
                                                project: Project): AnAction {
+  if (DumbService.isDumb(project)) {
+    return RunConfigurationsComboBoxAction.RunCurrentFileAction { true }
+  }
   val configs = getCurrentPsiFile(project)?.let { ExecutorRegistryImpl.ExecutorAction.getRunConfigsForCurrentFile(it, false) } ?: emptyList()
   val runRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, runExecutor, project) }
   val debugRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, debugExecutor, project) }
