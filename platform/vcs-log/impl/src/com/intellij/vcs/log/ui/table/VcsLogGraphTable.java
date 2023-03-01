@@ -471,10 +471,20 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull
   Point getPointInCell(@NotNull Point clickPoint, @NotNull VcsLogColumn<?> vcsLogColumn) {
     int width = 0;
+    int columnIndex = 0;
+    int modelIndex = VcsLogColumnManager.getInstance().getModelIndex(vcsLogColumn);
     for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
       TableColumn column = getColumnModel().getColumn(i);
-      if (column.getModelIndex() == VcsLogColumnManager.getInstance().getModelIndex(vcsLogColumn)) break;
+      columnIndex = i;
+      if (column.getModelIndex() == modelIndex) break;
       width += column.getWidth();
+    }
+
+    if (ExperimentalUI.isNewUI()) {
+      boolean isLeftColumn = columnIndex == VcsLogNewUiTableCellRenderer.ROOT_COLUMN_INDEX + 1;
+      if (isLeftColumn) {
+        width += JBUI.scale(VcsLogNewUiTableCellRenderer.getAdditionalGap());
+      }
     }
     return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, getRowHeight()));
   }
