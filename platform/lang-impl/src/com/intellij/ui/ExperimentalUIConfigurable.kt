@@ -9,10 +9,8 @@ import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
 
 /**
  * @author Konstantin Bulenkov
@@ -53,6 +51,7 @@ internal class ExperimentalUIConfigurable : BoundSearchableConfigurable(
     }
 
     row { browserLink(IdeBundle.message("new.ui.blog.changes.and.issues"), "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues") }
+      .topGap(TopGap.MEDIUM)
     row { link(IdeBundle.message("new.ui.submit.feedback")) { NewUIFeedbackDialog(null, false).show() } }
   }
 
