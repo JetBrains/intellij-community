@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.codeInsight.daemon.impl.MarkerType
@@ -28,9 +28,10 @@ import kotlin.io.path.name
 import kotlin.reflect.KFunction
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredMemberFunctions
+import com.intellij.util.Function
 
 @SkipSlowTestLocally
-class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase() {
+open class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase() {
     override fun getTestDataPath(): String = KotlinRoot.DIR
         .resolve("compiler-reference-index/tests/testData/")
         .resolve("customCompilerIndexData")
@@ -50,7 +51,7 @@ class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase() {
     }
 
     fun `test match testData with tests`() {
-        val testNames = this::class.declaredMemberFunctions.filter { it.visibility == KVisibility.PUBLIC }.map(KFunction<*>::name).toSet()
+        val testNames = CustomKotlinCompilerReferenceTest6::class.declaredMemberFunctions.filter { it.visibility == KVisibility.PUBLIC }.map(KFunction<*>::name).toSet()
         for (testDirectory in Path(testDataPath).listDirectoryEntries()) {
             if (!testDirectory.isDirectory() || testDirectory.listDirectoryEntries().isEmpty()) continue
 
@@ -271,7 +272,14 @@ class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase() {
         )
     }
 
-    fun testTooltips() {
+    open fun testTooltips() {
+        doTestTooltips(SUBCLASSED_CLASS.tooltip, OVERRIDDEN_FUNCTION.tooltip)
+    }
+
+    protected fun doTestTooltips(
+        subclassTooltip: Function<in PsiElement, String>,
+        overriddenFunctionTooltip: Function<in PsiElement, String>,
+    ) {
         myFixture.configureByFiles(
             "anonObject.kt",
             "JavaClass.java",
@@ -287,10 +295,8 @@ class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase() {
             "SubSubSub.kt",
         )
 
-        val subclassTooltip = SUBCLASSED_CLASS
         val kInterface = myFixture.findClass("KInterface")
 
-        val overriddenFunctionTooltip = OVERRIDDEN_FUNCTION
         val kInterfaceMethod = kInterface.findMethodsByName("foo", false).single()
 
         testTooltips(
@@ -299,13 +305,13 @@ class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase() {
         )
     }
 
-    private fun testTooltips(vararg tooltips: Pair<MarkerType, PsiElement>) {
-        val expected = tooltips.map { it.first.tooltip.`fun`(it.second) }
+    private fun testTooltips(vararg tooltips: Pair<Function<in PsiElement, String>, PsiElement>) {
+        val expected = tooltips.map { it.first.`fun`(it.second) }
         rebuildProject()
         tooltips.zip(expected).forEach { (pair, before) ->
             val marker = pair.first
             val element = pair.second
-            assertEquals(marker.toString(), before, marker.tooltip.`fun`(element))
+            assertEquals(marker.toString(), before, marker.`fun`(element))
         }
     }
 

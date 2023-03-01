@@ -28,6 +28,8 @@ import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveWithLibTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceToCompiledKotlinResolveInJavaTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
+import org.jetbrains.kotlin.idea.fir.search.refIndex.AbstractFindUsagesWithCompilerReferenceIndexFirTest
+import org.jetbrains.kotlin.idea.fir.search.refIndex.AbstractKotlinCompilerReferenceFirTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
 import org.jetbrains.kotlin.idea.fir.uast.*
 import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
@@ -57,6 +59,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
     generateK2HighlighterTests()
     generateK2RefactoringsTests()
     generateK2SearchTests()
+    generateK2RefIndexTests()
 
     testGroup("base/fir/analysis-api-providers") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
