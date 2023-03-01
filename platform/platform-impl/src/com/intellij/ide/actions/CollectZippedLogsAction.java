@@ -5,6 +5,9 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
+import com.intellij.ide.troubleshooting.DimensionServiceTroubleInfoCollector;
+import com.intellij.ide.troubleshooting.WindowStateApplicationServiceTroubleInfoCollector;
+import com.intellij.ide.troubleshooting.WindowStateProjectServiceTroubleInfoCollector;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
@@ -122,6 +125,12 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
           settings.append(troubleInfoCollector.collectInfo(project)).append('\n');
         }
         zip.addFile("troubleshooting.txt", settings.toString().getBytes(StandardCharsets.UTF_8));
+        zip.addFile("dimension.txt", CompositeGeneralTroubleInfoCollector.collectInfo(
+          project,
+          new WindowStateProjectServiceTroubleInfoCollector(),
+          new WindowStateApplicationServiceTroubleInfoCollector(),
+          new DimensionServiceTroubleInfoCollector()
+        ).getBytes(StandardCharsets.UTF_8));
       }
 
       // JVM crash logs
