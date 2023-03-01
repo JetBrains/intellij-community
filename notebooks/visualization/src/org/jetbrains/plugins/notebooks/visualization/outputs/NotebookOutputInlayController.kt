@@ -34,7 +34,6 @@ interface OutputListener {
   fun outputCreated(editor: Editor, line: Int) {}
   fun outputSizeUpdated(editor: Editor, line: Int?) {}
 }
-
 val OUTPUT_LISTENER: Topic<OutputListener> = Topic.create("OutputAdded", OutputListener::class.java)
 
 val EditorCustomElementRenderer.notebookInlayOutputComponent: JComponent?
@@ -244,13 +243,9 @@ class NotebookOutputInlayController private constructor(
       val interval = intervalIterator.next()
       if (interval.type != NotebookCellLines.CellType.CODE) return null
 
-      val outputDataKeys = NotebookOutputDataKeyExtractor
-        .EP_NAME
-        .extensionList
-        .asSequence()
-          .mapNotNull {
-            it.extract(editor, interval)
-          }
+      val outputDataKeys =
+        NotebookOutputDataKeyExtractor.EP_NAME.extensionList.asSequence()
+          .mapNotNull { it.extract(editor, interval) }
           .firstOrNull()
           ?.takeIf { it.isNotEmpty() }
         ?: return null
