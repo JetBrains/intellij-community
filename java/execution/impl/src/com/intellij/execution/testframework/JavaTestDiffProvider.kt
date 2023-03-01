@@ -4,7 +4,6 @@ package com.intellij.execution.testframework
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
-import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.asSafely
 import com.siyeh.ig.testFrameworks.AssertHint
@@ -24,7 +23,7 @@ class JavaTestDiffProvider : JvmTestDiffProvider() {
     val element = file.findElementAt(startOffset)
     val codeBlock = PsiTreeUtil.getParentOfType(element, PsiCodeBlock::class.java)
     return PsiTreeUtil.findChildrenOfAnyType(codeBlock, false, PsiMethodCallExpression::class.java)
-      .filter { it.startOffset >= startOffset || it.endOffset <= endOffset }
+      .filter { it.startOffset in startOffset..endOffset }
   }
 
   override fun getExpected(call: PsiElement, param: UParameter?): PsiElement? {
