@@ -35,7 +35,7 @@ class LayoutNameInputDialog(
 
   init {
     okAction.putValue(Action.NAME, okButtonText)
-    validator.setErrorText = { text -> setErrorText(text, myField) }
+    validator.setErrorText = { text -> setErrorText(text) }
     validator.validationMoment = ValidationMoment.WHEN_TYPING // construction complete, user can type now
     validatorBeingInitialized = null // we don't need any leaks
   }
