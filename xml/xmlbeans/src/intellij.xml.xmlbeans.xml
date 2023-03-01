@@ -1,0 +1,16 @@
+<idea-plugin package="com.intellij.xml.actions.xmlbeans">
+  <dependencies>
+    <plugin id="com.intellij.modules.xml"/>
+  </dependencies>
+
+  <actions>
+    <action id="XSD2Document" class="com.intellij.xml.actions.xmlbeans.GenerateSchemaFromInstanceDocumentAction">
+      <add-to-group group-id="ToolsXmlGroup" anchor="after" relative-to-action="GenerateDTD"/>
+      <add-to-group group-id="XmlGenerateToolsGroup" anchor="after" relative-to-action="GenerateDTD"/>
+    </action>
+    <action id="Document2XSD" class="com.intellij.xml.actions.xmlbeans.GenerateInstanceDocumentFromSchemaAction">
+      <add-to-group group-id="ToolsXmlGroup" anchor="after" relative-to-action="XSD2Document"/>
+      <add-to-group group-id="XmlGenerateToolsGroup" anchor="after" relative-to-action="XSD2Document"/>
+    </action>
+  </actions>
+</idea-plugin>

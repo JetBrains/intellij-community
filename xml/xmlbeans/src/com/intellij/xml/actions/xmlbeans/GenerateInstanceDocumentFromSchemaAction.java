@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.actions.xmlbeans;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
+final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
@@ -98,7 +99,7 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
       tempDir.mkdir();
 
       pathToUse = tempDir.getPath() + File.separatorChar + Xsd2InstanceUtils.processAndSaveAllSchemas(
-        (XmlFile) file,
+        (XmlFile)file,
         new HashMap<>(),
         new Xsd2InstanceUtils.SchemaReferenceProcessor() {
           @Override
@@ -109,13 +110,15 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
                 fullFileName,
                 new ByteArrayInputStream(schemaContent)
               );
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
               throw new RuntimeException(e);
             }
           }
         }
       );
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       return;
     }
 
@@ -127,16 +130,16 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     String xml;
     try {
       xml = Xsd2InstanceUtils.generate(ArrayUtilRt.toStringArray(parameters));
-    } catch (Throwable e) {
-      Messages.showErrorDialog(project, StringUtil.getMessage(e), XmlBundle.message("error"));
+    }
+    catch (Throwable e) {
+      Messages.showErrorDialog(project, ExceptionUtil.getMessage(e), XmlBundle.message("error"));
       return;
     }
-
 
     String xmlFileName = relativeFileDir.getPath() + File.separatorChar + dialog.getOutputFileName();
 
     try {
-        // the generated XML doesn't have any XML declaration -> utf-8
+      // the generated XML doesn't have any XML declaration -> utf-8
       final File xmlFile = new File(xmlFileName);
       FileUtil.writeToFile(xmlFile, xml);
 
@@ -145,7 +148,8 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
       FileEditorManager.getInstance(project).openFile(virtualFile, true);
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, XmlBundle.message("could.not.save.generated.xml.document.0", StringUtil.getMessage(e)), XmlBundle.message("error"));
+      Messages.showErrorDialog(project, XmlBundle.message("could.not.save.generated.xml.document.0", StringUtil.getMessage(e)),
+                               XmlBundle.message("error"));
     }
   }
 

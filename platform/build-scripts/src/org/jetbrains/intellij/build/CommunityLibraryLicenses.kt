@@ -112,6 +112,10 @@ object CommunityLibraryLicenses {
                    url = "https://www.antlr.org").newBsd("https://www.antlr.org/license.html"),
     LibraryLicense(name = "ap-validation", libraryName = "ap-validation",
                    url = "https://github.com/JetBrains/ap-validation").apache("https://github.com/JetBrains/ap-validation/blob/master/LICENSE"),
+
+    LibraryLicense(libraryName = "apache.logging.log4j.to.slf4j", url = "https://ant.apache.org/")
+      .apache("https://logging.apache.org/log4j/log4j-2.2/license.html"),
+
     LibraryLicense(name = "Apache Ant", version = "1.9", libraryName = "Ant", url = "https://ant.apache.org/")
       .apache("https://ant.apache.org/license.html"),
     LibraryLicense(name = "Apache Axis", libraryName = "axis-1.4", version = "1.4", url = "https://axis.apache.org/axis/")
