@@ -78,9 +78,9 @@ public final class ClassPath {
   public interface ClassDataConsumer {
     boolean isByteBufferSupported(String name);
 
-    Class<?> consumeClassData(String name, byte[] data, Loader loader) throws IOException;
+    Class<?> consumeClassData(String name, byte[] data) throws IOException;
 
-    Class<?> consumeClassData(String name, ByteBuffer data, Loader loader) throws IOException;
+    Class<?> consumeClassData(String name, ByteBuffer data) throws IOException;
   }
 
   public ClassPath(@NotNull Collection<Path> files,
@@ -565,10 +565,10 @@ public final class ClassPath {
     }
 
     @Override
-    public Class<?> consumeClassData(String name, byte[] data, Loader loader) throws IOException {
+    public Class<?> consumeClassData(String name, byte[] data) throws IOException {
       long start = startTiming();
       try {
-        return classDataConsumer.consumeClassData(name, data, loader);
+        return classDataConsumer.consumeClassData(name, data);
       }
       finally {
         record(start);
@@ -576,10 +576,10 @@ public final class ClassPath {
     }
 
     @Override
-    public Class<?> consumeClassData(String name, ByteBuffer data, Loader loader) throws IOException {
+    public Class<?> consumeClassData(String name, ByteBuffer data) throws IOException {
       long start = startTiming();
       try {
-        return classDataConsumer.consumeClassData(name, data, loader);
+        return classDataConsumer.consumeClassData(name, data);
       }
       finally {
         record(start);
