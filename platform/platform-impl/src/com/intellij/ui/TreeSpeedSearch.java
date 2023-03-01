@@ -53,6 +53,14 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     return descriptor != null ? descriptor.toString() : TO_STRING.apply(path);
   };
 
+
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected TreeSpeedSearch(@NotNull JTree tree, Void sig) {
+    this(tree, false, sig, TO_STRING);
+  }
+
   /**
    * @param sig parameter is used to avoid clash with the deprecated constructor
    */

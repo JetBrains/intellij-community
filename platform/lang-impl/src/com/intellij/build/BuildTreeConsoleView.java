@@ -869,7 +869,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     tree.setRootVisible(false);
     EditSourceOnDoubleClickHandler.install(tree);
     EditSourceOnEnterKeyHandler.install(tree);
-    new TreeSpeedSearch(tree).setComparator(new SpeedSearchComparator(false));
+    TreeSpeedSearch.installOn(tree).setComparator(new SpeedSearchComparator(false));
     TreeUtil.installActions(tree);
     if (Registry.is("build.toolwindow.show.inline.statistics")) {
       tree.setCellRenderer(new MyNodeRenderer());

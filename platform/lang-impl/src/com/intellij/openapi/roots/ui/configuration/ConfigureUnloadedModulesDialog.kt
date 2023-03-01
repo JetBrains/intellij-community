@@ -217,7 +217,7 @@ private class ModuleDescriptionsTree(project: Project) {
   init {
     tree.isRootVisible = false
     tree.showsRootHandles = true
-    TreeSpeedSearch(tree, true) { treePath -> (treePath.lastPathComponent as? ModuleDescriptionTreeNode)?.text ?: "" }
+    TreeSpeedSearch.installOn(tree, true) { treePath -> (treePath.lastPathComponent as? ModuleDescriptionTreeNode)?.text ?: "" }
     tree.cellRenderer = ModuleDescriptionTreeRenderer()
   }
 

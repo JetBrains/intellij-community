@@ -111,7 +111,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
     tree = object : CheckboxTree(InlaySettingsTreeRenderer(), root, CheckPolicy(true, true, true, false)) {
       override fun installSpeedSearch() {
-        TreeSpeedSearch(this, true) {
+        TreeSpeedSearch.installOn(this, true) {
           getName(it.lastPathComponent as DefaultMutableTreeNode,
                   it.parentPath?.lastPathComponent as DefaultMutableTreeNode?)
         }

@@ -194,16 +194,16 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       override fun getSourceActions(c: JComponent) = COPY_OR_MOVE
     }
     TreeUtil.installActions(tree)
-    TreeSpeedSearch(tree, false) { o ->
+    TreeSpeedSearch.installOn(tree, false) { o ->
       val node = o.lastPathComponent as DefaultMutableTreeNode
       when (val userObject = node.userObject) {
-        is RunnerAndConfigurationSettingsImpl -> return@TreeSpeedSearch userObject.name
-        is SingleConfigurationConfigurable<*> -> return@TreeSpeedSearch userObject.nameText
+        is RunnerAndConfigurationSettingsImpl -> return@installOn userObject.name
+        is SingleConfigurationConfigurable<*> -> return@installOn userObject.nameText
         else -> if (userObject is ConfigurationType) {
-          return@TreeSpeedSearch userObject.displayName
+          return@installOn userObject.displayName
         }
         else if (userObject is String) {
-          return@TreeSpeedSearch userObject
+          return@installOn userObject
         }
       }
       o.toString()

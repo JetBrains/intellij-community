@@ -94,7 +94,7 @@ public class CustomizableActionsPanel {
   }
 
   static FilterComponent setupFilterComponent(JTree tree) {
-    final TreeSpeedSearch mySpeedSearch = new TreeSpeedSearch(tree, true, new TreePathStringFunction()) {
+    final TreeSpeedSearch mySpeedSearch = new TreeSpeedSearch(tree, true, null, new TreePathStringFunction()) {
       @Override
       public boolean isPopupActive() {
         return /*super.isPopupActive()*/true;
@@ -115,6 +115,7 @@ public class CustomizableActionsPanel {
         //super.showPopup();
       }
     };
+    mySpeedSearch.setupListeners();
     final FilterComponent filterComponent = new FilterComponent("CUSTOMIZE_ACTIONS", 5) {
       @Override
       public void filter() {

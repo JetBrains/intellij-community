@@ -170,7 +170,7 @@ open class StarterLibrariesStep(contextProvider: StarterContextProvider) : Modul
       }
     }
 
-    TreeSpeedSearch(librariesList, false) { treePath: TreePath ->
+    TreeSpeedSearch.installOn(librariesList, false) { treePath: TreePath ->
       when (val dataObject = (treePath.lastPathComponent as DefaultMutableTreeNode).userObject) {
         is LibraryCategory -> dataObject.title
         is Library -> dataObject.title

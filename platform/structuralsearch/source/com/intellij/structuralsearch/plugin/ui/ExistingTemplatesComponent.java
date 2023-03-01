@@ -332,7 +332,7 @@ public final class ExistingTemplatesComponent {
       }
     });
 
-    final TreeSpeedSearch speedSearch = new TreeSpeedSearch(
+    final TreeSpeedSearch speedSearch = TreeSpeedSearch.installOn(
       tree,
       false,
       treePath -> {

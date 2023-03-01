@@ -50,7 +50,7 @@ internal class GrazieTreeComponent(onSelectionChanged: (meta: Any) -> Unit) : Ch
   }
 
   override fun installSpeedSearch() {
-    TreeSpeedSearch(this, false) { (it.lastPathComponent as GrazieRulesTreeNode).nodeText }
+    TreeSpeedSearch.installOn(this, false) { (it.lastPathComponent as GrazieRulesTreeNode).nodeText }
   }
 
   override val component by lazy {

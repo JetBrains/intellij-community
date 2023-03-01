@@ -26,7 +26,7 @@ final class TreeUIHelperImpl extends TreeUIHelper {
 
   @Override
   public void installTreeSpeedSearch(final JTree tree) {
-    new TreeSpeedSearch(tree);
+    TreeSpeedSearch.installOn(tree);
   }
 
   @Override
