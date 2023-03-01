@@ -989,13 +989,23 @@ public class SwitchBlockHighlightingModel {
         }
       }
       else if (selectorClass != null && selectorClass.isRecord()) {
-        if (!checkRecordExhaustiveness(elements)) {
+        if (!checkRecordCaseSetNotEmpty(elements) || !checkRecordExhaustiveness(elements)) {
           results.add(createCompletenessInfoForSwitch(!elements.isEmpty()).create());
         }
       }
       else {
         results.add(createCompletenessInfoForSwitch(!elements.isEmpty()).create());
       }
+    }
+
+    private static boolean checkRecordCaseSetNotEmpty(List<? extends PsiCaseLabelElement> elements) {
+      for (PsiCaseLabelElement element : elements) {
+        PsiPattern pattern = extractPattern(element);
+        if (pattern != null) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private static void fillElementsToCheckDominance(@NotNull List<? super PsiCaseLabelElement> elements,
