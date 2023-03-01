@@ -585,15 +585,12 @@ public final class MavenProjectsTree {
 
       List<MavenProject> prevModules = tree.getModules(mavenProject);
 
-      Set<MavenProject> prevInheritors = new HashSet<>();
-      if (!isNew) {
-        prevInheritors.addAll(tree.findInheritors(mavenProject));
-      }
+      var prevInheritors = new HashSet<>(tree.findInheritors(mavenProject));
 
       boolean readProject = forceReading || timeStampChanged;
 
       if (readProject) {
-        MavenId oldProjectId = isNew ? null : mavenProject.getMavenId();
+        MavenId oldProjectId = mavenProject.isNew() ? null : mavenProject.getMavenId();
         MavenId oldParentId = mavenProject.getParentId();
         var forcedChanges = forceReading ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
         var readChanges = mavenProject.read(generalSettings, explicitProfiles, reader, tree.myProjectLocator);
@@ -1108,6 +1105,8 @@ public final class MavenProjectsTree {
   }
 
   public Collection<MavenProject> findInheritors(MavenProject project) {
+    if (project.isNew()) return List.of();
+
     return withReadLock(() -> {
       List<MavenProject> result = null;
       MavenId id = project.getMavenId();
@@ -1120,7 +1119,7 @@ public final class MavenProjectsTree {
         }
       }
 
-      return result == null ? Collections.emptyList() : result;
+      return result == null ? List.of() : result;
     });
   }
 

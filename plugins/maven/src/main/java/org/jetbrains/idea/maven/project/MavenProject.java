@@ -343,6 +343,10 @@ public class MavenProject {
     return myState.myMavenId;
   }
 
+  boolean isNew() {
+    return null == myState.myMavenId;
+  }
+
   public @Nullable MavenId getParentId() {
     return myState.myParentId;
   }
