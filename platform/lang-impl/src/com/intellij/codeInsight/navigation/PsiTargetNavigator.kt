@@ -5,6 +5,7 @@ import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Computable
@@ -13,7 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.ui.list.buildTargetPopupWithMultiSelect
-import java.util.function.Consumer
+import java.util.function.BiConsumer
 import java.util.function.Function
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -24,33 +25,66 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<List<T>>) {
 
   private var selection: PsiElement? = null
   private var presentationProvider: Function<T, TargetPresentation> = Function { targetPresentation(it) }
-  private var elementsConsumer: Consumer<List<T>>? = null
+  private var elementsConsumer: BiConsumer<List<T>, PsiTargetNavigator<T>>? = null
+  private var title: @PopupTitle String? = null
 
   fun selection(selection: PsiElement?): PsiTargetNavigator<T> = apply { this.selection = selection }
   fun presentationProvider(provider: Function<T, TargetPresentation>): PsiTargetNavigator<T> = apply { this.presentationProvider = provider }
-  fun elementsConsumer(consumer: Consumer<List<T>>): PsiTargetNavigator<T> = apply { elementsConsumer = consumer }
+  fun elementsConsumer(consumer: BiConsumer<List<T>, PsiTargetNavigator<T>>): PsiTargetNavigator<T> = apply { elementsConsumer = consumer }
+  fun title(title: @PopupTitle String?): PsiTargetNavigator<T> = apply { this.title = title }
 
   fun createPopup(project: Project, @PopupTitle title: String?): JBPopup {
     return createPopup(project, title) { element -> EditSourceUtil.navigateToPsiElement(element) }
   }
 
   fun createPopup(project: Project, @PopupTitle title: String?, processor: PsiElementProcessor<T>): JBPopup {
+    val (items, selected) = computeItems(project)
+    return buildPopup(items, title, selected, getPredicate(processor))
+  }
 
-    var selected: ItemWithPresentation? = null
-    val targets: List<ItemWithPresentation> = ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.result"), Computable {
-      val elements = supplier.get()
-      elementsConsumer?.accept(elements)
-      val list = elements.map { ItemWithPresentation(SmartPointerManager.createPointer(it), presentationProvider.apply(it)) }
-      selected = if (selection == null) null else list[elements.indexOf(selection)]
-      list
-    })
+  private fun getPredicate(processor: PsiElementProcessor<T>) = Predicate<ItemWithPresentation> {
+    @Suppress("UNCHECKED_CAST") ((it.dereference() as T).let { element -> processor.execute(element) })
+  }
 
-    val builder = buildTargetPopupWithMultiSelect(targets, Function { it.presentation }, Predicate {
-      @Suppress("UNCHECKED_CAST") ((it.dereference() as T).let { element -> processor.execute(element) })
-    })
-    title?.let { builder.setTitle(title) }
+  fun navigate(editor: Editor, @PopupTitle title: String?, processor: PsiElementProcessor<T>) {
+    val (items, selected) = computeItems(editor.project!!)
+    val predicate = getPredicate(processor)
+    if (items.isEmpty()) {
+      return
+    }
+    else if (items.size == 1) {
+      predicate.test(items.first())
+    }
+    else {
+      buildPopup(items, title, selected, predicate).showInBestPositionFor(editor)
+    }
+  }
+
+  private fun computeItems(project: Project): Pair<List<ItemWithPresentation>, ItemWithPresentation?> {
+    return ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.result"),
+                                         Computable {
+                                           val elements = supplier.get()
+                                           elementsConsumer?.accept(elements, this)
+                                           val list = elements.map {
+                                             ItemWithPresentation(SmartPointerManager.createPointer(it),
+                                                                  presentationProvider.apply(it))
+                                           }
+                                           val selected = if (selection == null) null
+                                           else list[elements.indexOf(selection)]
+                                           return@Computable Pair<List<ItemWithPresentation>, ItemWithPresentation?>(list, selected)
+                                         })
+  }
+
+  private fun buildPopup(targets: List<ItemWithPresentation>,
+                         @PopupTitle title: String?,
+                         selected: ItemWithPresentation?,
+                         predicate: Predicate<ItemWithPresentation>): JBPopup {
+    val builder = buildTargetPopupWithMultiSelect(targets, Function { it.presentation }, predicate)
+    val s = title ?: this.title
+    s?.let {
+      builder.setTitle(s)
+    }
     selected.let { builder.setSelectedValue(selected, true) }
-
     return builder.createPopup()
   }
 }
