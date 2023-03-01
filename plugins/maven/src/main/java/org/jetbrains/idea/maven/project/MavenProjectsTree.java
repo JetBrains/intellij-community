@@ -546,10 +546,6 @@ public final class MavenProjectsTree {
         return;
       }
 
-      var mavenProject = tree.findOrCreateProject(mavenProjectFile);
-      MavenProjectTimestamp timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
-      boolean timeStampChanged = !timestamp.equals(tree.myTimestamps.get(mavenProject));
-
       updateHistory.putIfAbsent(mavenProjectFile, new CopyOnWriteArrayList<>());
 
       var fileHistory = updateHistory.get(mavenProjectFile);
@@ -576,10 +572,13 @@ public final class MavenProjectsTree {
       process.setText(MavenProjectBundle.message("maven.reading.pom", mavenProjectFile.getPath()));
       process.setText2("");
 
-      List<MavenProject> prevModules = tree.getModules(mavenProject);
+      var mavenProject = tree.findOrCreateProject(mavenProjectFile);
 
+      var prevModules = tree.getModules(mavenProject);
       var prevInheritors = new HashSet<>(tree.findInheritors(mavenProject));
 
+      MavenProjectTimestamp timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
+      boolean timeStampChanged = !timestamp.equals(tree.myTimestamps.get(mavenProject));
       boolean readProject = forceReading || timeStampChanged;
 
       if (readProject) {
