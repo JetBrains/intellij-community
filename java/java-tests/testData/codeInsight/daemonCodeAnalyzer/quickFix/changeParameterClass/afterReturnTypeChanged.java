@@ -1,4 +1,4 @@
-// "Make 'Bar' implement 'java.lang.Runnable'" "true"
+// "Make 'Bar' implement 'java.lang.Runnable'" "true-preview"
 
 abstract class Foo {
     abstract Runnable foo();
