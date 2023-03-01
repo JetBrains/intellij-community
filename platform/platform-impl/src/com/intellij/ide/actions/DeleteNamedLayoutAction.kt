@@ -26,11 +26,9 @@ abstract class DeleteNamedLayoutAction(@NlsSafe private val layoutName: String) 
   }
 
   override fun update(e: AnActionEvent) {
-    val protectedLayout = layoutName == ToolWindowDefaultLayoutManager.DEFAULT_LAYOUT_NAME
     val activeLayout = layoutName == ToolWindowDefaultLayoutManager.getInstance().activeLayoutName
-    e.presentation.isEnabled = e.project != null && !protectedLayout && !activeLayout
+    e.presentation.isEnabled = e.project != null && !activeLayout
     e.presentation.description = when {
-      protectedLayout -> ActionsBundle.message("action.DeleteNamedLayout.custom.description", layoutName)
       activeLayout -> ActionsBundle.message("action.DeleteNamedLayout.current.description", layoutName)
       else -> ActionsBundle.message("action.DeleteNamedLayout.description", layoutName)
     }
