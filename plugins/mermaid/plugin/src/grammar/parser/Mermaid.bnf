@@ -32,7 +32,8 @@
 file ::= [frontmatter EOL] start
 private start ::= EOL start | directive start | diagram
 
-frontmatter ::= FRONTMATTER_START FRONTMATTER_VALUE FRONTMATTER_END
+frontmatter ::= FRONTMATTER_START EOL frontmatterContent FRONTMATTER_END
+frontmatterContent ::= (FRONTMATTER_VALUE* EOL)*
 
 private diagram ::= pieHeader EOL* [pieBody]
   | journeyHeader EOL* [journeyBody]

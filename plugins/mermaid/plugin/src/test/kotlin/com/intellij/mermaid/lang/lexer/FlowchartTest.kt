@@ -202,6 +202,7 @@ class FlowchartTest : MermaidLexerTestCase() {
     val content = """
     ---
     title: Node
+    some: Value
     ---
     flowchart LR
       id

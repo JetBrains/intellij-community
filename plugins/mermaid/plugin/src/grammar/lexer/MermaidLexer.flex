@@ -126,8 +126,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 //  [^] { yybegin(YYINITIAL); yypushback(yylength()); return BAD_CHARACTER; }
 //}
 <frontmatter> {
-  \s*[\n\r](.|[\n\r])*[\n\r]/--- { return Frontmatter.FRONTMATTER_VALUE; }
-  --- { yybegin(YYINITIAL); return Frontmatter.FRONTMATTER_END; }
+  "---" { yybegin(YYINITIAL); return Frontmatter.FRONTMATTER_END; }
+  [^\s]+ { return Frontmatter.FRONTMATTER_VALUE; }
 }
 
 <pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, directive> {
