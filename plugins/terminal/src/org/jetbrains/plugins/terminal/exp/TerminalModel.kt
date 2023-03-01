@@ -132,6 +132,21 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     textBuffer.processScreenLines(yStart, count, consumer)
   }
 
+  fun getAllText(): String {
+    val builder = StringBuilder()
+    for (ind in -historyLinesCount until screenLinesCount) {
+      val text = getLine(ind).text
+      builder.append(text)
+      if (text.isNotEmpty()) {
+        builder.append('\n')
+      }
+    }
+    return if (builder.isNotEmpty()) {
+      builder.dropLast(1).toString()  // remove last line break
+    }
+    else builder.toString()
+  }
+
   //-------------------MODIFICATION METHODS------------------------------------------------
 
   fun scrollArea(scrollRegionTop: Int, scrollRegionBottom: Int, dy: Int) {
@@ -212,6 +227,15 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
 
   fun unlock() = textBuffer.unlock()
 
+  inline fun <T> withLock(callable: () -> T): T {
+    lock()
+    return try {
+      callable()
+    }
+    finally {
+      unlock()
+    }
+  }
 
   //---------------------LISTENERS----------------------------------------------
 

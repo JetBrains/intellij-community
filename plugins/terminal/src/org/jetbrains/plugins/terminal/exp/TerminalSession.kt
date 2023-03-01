@@ -24,8 +24,10 @@ class TerminalSession(private val project: Project,
                       private val settings: JBTerminalSystemSettingsProviderBase) : Disposable {
   val model: TerminalModel
   lateinit var terminalStarter: TerminalStarter
+  val completionManager: TerminalCompletionManager
 
   private val terminalExecutor: ExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Terminal-${sessionIndex++}")
+
   private val textBuffer: TerminalTextBuffer
   private val controller: TerminalController
   private val commandManager: ShellCommandManager
@@ -37,7 +39,9 @@ class TerminalSession(private val project: Project,
     textBuffer = TerminalTextBuffer(80, 24, styleState)
     model = TerminalModel(textBuffer, styleState)
     controller = TerminalController(model, settings)
+
     commandManager = ShellCommandManager(controller)
+    completionManager = TerminalCompletionManager(model) { terminalStarter }
 
     val typeAheadTerminalModel = JediTermTypeAheadModel(controller, textBuffer, settings)
     typeAheadManager = TerminalTypeAheadManager(typeAheadTerminalModel)
