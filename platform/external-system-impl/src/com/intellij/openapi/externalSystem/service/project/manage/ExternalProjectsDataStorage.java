@@ -51,6 +51,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -148,7 +149,7 @@ public final class ExternalProjectsDataStorage extends SimpleModificationTracker
         }
       }
     }
-    catch (ProcessCanceledException e) {
+    catch (ProcessCanceledException | CancellationException e) {
       throw e;
     }
     catch (Throwable e) {

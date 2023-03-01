@@ -16,6 +16,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
+import java.util.concurrent.CancellationException
 
 private const val fileBufferSize = 32 * 1024
 internal const val LZ4_MAGIC = 0x184D2204
@@ -64,6 +65,9 @@ data class VersionedFile @JvmOverloads constructor(val file: Path, val version: 
     readPossiblyCompressedIonFile(file) { input ->
       val result = try {
         ObjectSerializer.instance.serializer.readVersioned(objectClass, input, file, version, configuration, originalType)
+      }
+      catch (e: CancellationException) {
+        throw e
       }
       catch (e: Exception) {
         if (renameToCorruptedOnError) {
