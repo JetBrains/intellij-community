@@ -60,6 +60,17 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<List<T>>) {
     }
   }
 
+  fun performSilently(project: Project, processor: PsiElementProcessor<T>) {
+    val (items) = computeItems(project)
+    val predicate = getPredicate(processor)
+    if (items.isEmpty()) {
+      return
+    }
+    else {
+      predicate.test(items.first())
+    }
+  }
+
   private fun computeItems(project: Project): Pair<List<ItemWithPresentation>, ItemWithPresentation?> {
     return ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.result"),
                                          Computable {
