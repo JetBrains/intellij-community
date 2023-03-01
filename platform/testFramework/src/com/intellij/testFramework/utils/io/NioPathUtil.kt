@@ -12,8 +12,9 @@ import java.nio.file.Path
 import kotlin.io.path.exists
 
 
-val Path.children: List<Path>
-  get() = Files.newDirectoryStream(this).use { it.toList() }
+fun Path.getChildren(): List<Path> {
+  return Files.newDirectoryStream(this).use { it.toList() }
+}
 
 fun Path.createFile(): Path {
   if (exists()) {

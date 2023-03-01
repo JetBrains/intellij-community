@@ -4,7 +4,7 @@ package com.intellij.openapi.util.io
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.utils.io.children
+import com.intellij.testFramework.utils.io.getChildren
 import com.intellij.util.io.isFile
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
@@ -52,7 +52,7 @@ abstract class NioPathUtilTestCase {
     override suspend fun createAssertion(init: suspend Path.() -> Path?) =
       assertNioPath(init)
 
-    override fun isEmpty(file: Path) = file.children.isEmpty()
+    override fun isEmpty(file: Path) = file.getChildren().isEmpty()
     override fun exists(file: Path) = file.exists()
     override fun isFile(file: Path) = file.isFile()
     override fun isDirectory(file: Path) = file.isDirectory()
