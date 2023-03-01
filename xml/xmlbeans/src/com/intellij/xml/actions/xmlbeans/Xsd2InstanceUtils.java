@@ -30,7 +30,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public final class Xsd2InstanceUtils {
+final class Xsd2InstanceUtils {
   @SuppressWarnings("SpellCheckingInspection")
   public static String generate(String[] args) {
     var flags = new HashSet<String>();

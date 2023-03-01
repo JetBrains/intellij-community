@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.actions.xmlbeans;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
+final class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
   private JPanel panel;
   private TextFieldWithBrowseButton generateFromUrl;
   private JLabel status;
@@ -53,7 +53,7 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
   private static final List<String> simpleContentTypes = Arrays.asList(STRING_TYPE, SMART_TYPE);
   private Runnable myOkAction;
 
-  public GenerateSchemaFromInstanceDocumentDialog(Project project, VirtualFile file) {
+  GenerateSchemaFromInstanceDocumentDialog(Project project, VirtualFile file) {
     super(project, true);
 
     setTitle(XmlBundle.message("generate.schema.from.instance.document.dialog.title"));
@@ -151,19 +151,19 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
     }
   }
 
-  protected TextFieldWithBrowseButton getUrl() {
+  TextFieldWithBrowseButton getUrl() {
     return generateFromUrl;
   }
 
-  protected JLabel getUrlText() {
+  private JLabel getUrlText() {
     return generateFromUrlText;
   }
 
-  protected JLabel getStatusTextField() {
+  private JLabel getStatusTextField() {
     return statusText;
   }
 
-  protected JLabel getStatusField() {
+  private JLabel getStatusField() {
     return status;
   }
 
@@ -188,7 +188,8 @@ public class GenerateSchemaFromInstanceDocumentDialog extends DialogWrapper {
     return resultSchemaFileName.getText();
   }
 
-  protected @InspectionMessage String doValidateWithData() {
+  @InspectionMessage
+  private String doValidateWithData() {
     if (! new File(generateFromUrl.getText()).exists()) {
       return XmlBundle.message("instance.document.file.is.not.exist");
     }

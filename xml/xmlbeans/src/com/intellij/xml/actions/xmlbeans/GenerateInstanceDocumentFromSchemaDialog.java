@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
+final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
   private JPanel panel;
   private TextFieldWithBrowseButton generateFromUrl;
   private JLabel status;
@@ -50,7 +50,7 @@ public class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
   private Runnable myOkAction;
   private final Project myProject;
 
-  public GenerateInstanceDocumentFromSchemaDialog(Project project, VirtualFile file) {
+  GenerateInstanceDocumentFromSchemaDialog(Project project, VirtualFile file) {
     super(project, true);
     myProject = project;
 
