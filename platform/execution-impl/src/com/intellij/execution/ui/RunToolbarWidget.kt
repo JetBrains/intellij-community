@@ -97,15 +97,20 @@ internal fun createRunConfigurationsActionGroup(project: Project): ActionGroup {
       actions.add(allRunConfigurationsToggle)
     }
 
-    val shouldBeShown: () -> Boolean = if (shouldShowRecent) ({
-      RunConfigurationStartHistory.getInstance(project).state.allConfigurationsExpanded
-    }) else ({ true } )
+    val shouldBeShown = { configuration: RunnerAndConfigurationSettings?, holdingFilter: Boolean ->
+      when {
+        !shouldShowRecent -> true
+        holdingFilter && configuration != null -> !recents.contains(configuration)
+        holdingFilter -> true
+        else -> RunConfigurationStartHistory.getInstance(project).state.allConfigurationsExpanded
+      }
+    }
 
     val createActionFn: (RunnerAndConfigurationSettings) -> AnAction = { configuration ->
-      createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project, shouldBeShown)
+      createRunConfigurationWithInlines(runExecutor, debugExecutor, configuration, project) { shouldBeShown(configuration, it) }
     }
     val createFolderFn: (String) -> DefaultActionGroup = { folderName ->
-      HideableDefaultActionGroup(folderName, shouldBeShown)
+      HideableDefaultActionGroup(folderName) { shouldBeShown(null, it) }
     }
     val allConfigurationsNumber = RunConfigurationsComboBoxAction.addRunConfigurations(actions, project, createActionFn, createFolderFn)
     allRunConfigurationsToggle?.templatePresentation?.text = allConfigurationMessage(allConfigurationsNumber)
@@ -148,20 +153,20 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
 
   override fun shouldBeShowing(value: Any?): Boolean {
     if (!super.shouldBeShowing(value)) return false
-    return if (value !is PopupFactoryImpl.ActionItem) true else shouldBeShowing(value.action)
+    return if (value !is PopupFactoryImpl.ActionItem) true else shouldBeShowing(value.action, mySpeedSearch.isHoldingFilter)
   }
 
 
-  fun shouldBeShowing(action: AnAction): Boolean {
-    return if (action is HideableAction) return action.shouldBeShown() else true
+  fun shouldBeShowing(action: AnAction, holdingFilter: Boolean): Boolean {
+    return if (action is HideableAction) return action.shouldBeShown(holdingFilter) else true
   }
 }
 
 private interface HideableAction {
-  val shouldBeShown: () -> Boolean
+  val shouldBeShown: (holdingFilter: Boolean) -> Boolean
 }
 
-private class HideableDefaultActionGroup(@NlsSafe name: String, override val shouldBeShown: () -> Boolean)
+private class HideableDefaultActionGroup(@NlsSafe name: String, override val shouldBeShown: (holdingFilter: Boolean) -> Boolean)
   : DefaultActionGroup({ name }, true), DumbAware, HideableAction
 
 private class AllRunConfigurationsToggle : ToggleAction(), KeepingPopupOpenAction, DumbAware {
@@ -191,7 +196,8 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
                                               debugExecutor: Executor,
                                               conf: RunnerAndConfigurationSettings,
                                               project: Project,
-                                              shouldBeShown: () -> Boolean = { true }): SelectRunConfigurationWithInlineActions {
+                                              shouldBeShown: (Boolean) -> Boolean = { true }
+): SelectRunConfigurationWithInlineActions {
   val activeExecutor = getActiveExecutor(project, conf)
   val showRerunAndStopButtons = !conf.configuration.isAllowRunningInParallel && activeExecutor != null
   val inlineActions = if (showRerunAndStopButtons)
@@ -279,7 +285,7 @@ internal class SelectRunConfigurationWithInlineActions(
   private val actions: List<AnAction>,
   configuration: RunnerAndConfigurationSettings,
   project: Project,
-  override val shouldBeShown: () -> Boolean
+  override val shouldBeShown: (holdingFilter: Boolean) -> Boolean
 ) : SelectConfigAction(configuration, project, excludeRunAndDebug), InlineActionsHolder, HideableAction {
   override fun getInlineActions(): List<AnAction> = actions
 }
