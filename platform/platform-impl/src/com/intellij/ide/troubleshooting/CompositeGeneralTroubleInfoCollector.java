@@ -12,7 +12,7 @@ public class CompositeGeneralTroubleInfoCollector implements TroubleInfoCollecto
     return collectInfo(project, GeneralTroubleInfoCollector.EP_SETTINGS.getExtensions());
   }
 
-  public static @NotNull String collectInfo(@NotNull Project project, GeneralTroubleInfoCollector... collectors) {
+public static @NotNull String collectInfo(@NotNull Project project, @NotNull GeneralTroubleInfoCollector @NotNull... collectors) {
     StringBuilder builder = new StringBuilder();
     for (GeneralTroubleInfoCollector collector : collectors) {
       builder.append("=== ").append(collector.getTitle()).append(" ===\n");
