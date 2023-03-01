@@ -85,7 +85,7 @@ public class CommanderPanel extends JPanel {
     myList = new JBList(myModel);
     myList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    myListSpeedSearch = new ListSpeedSearch(myList);
+    myListSpeedSearch = ListSpeedSearch.installOn(myList);
     myListSpeedSearch.setClearSearchOnNavigateNoMatch(true);
 
     ScrollingUtil.installActions(myList);

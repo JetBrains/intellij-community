@@ -123,7 +123,7 @@ public class ManagePackagesDialog extends DialogWrapper {
         return ActionUpdateThread.EDT;
       }
     };
-    myListSpeedSearch = new ListSpeedSearch(myPackages, o -> {
+    myListSpeedSearch = ListSpeedSearch.installOn(myPackages, o -> {
       if (o instanceof RepoPackage)
         return ((RepoPackage)o).getName();
       return "";

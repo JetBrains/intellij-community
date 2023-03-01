@@ -36,12 +36,12 @@ final class TreeUIHelperImpl extends TreeUIHelper {
 
   @Override
   public void installListSpeedSearch(JList<?> list) {
-    new ListSpeedSearch<>(list);
+    ListSpeedSearch.installOn(list);
   }
 
   @Override
   public <T> void installListSpeedSearch(JList<T> list, Convertor<? super T, String> convertor) {
-    new ListSpeedSearch<>(list, convertor::convert);
+    ListSpeedSearch.installOn(list, convertor::convert);
   }
 
   @Override

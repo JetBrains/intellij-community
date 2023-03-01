@@ -254,7 +254,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
       }
     });
-    new ListSpeedSearch<>(myList);
+    ListSpeedSearch.installOn(myList);
     myList.getActionMap().put(ListActions.Left.ID, myList.getActionMap().get(ListActions.Home.ID));
     myList.getActionMap().put(ListActions.Right.ID, myList.getActionMap().get(ListActions.End.ID));
     myList.getActionMap().put(FileChooserPanelActions.Root.ID, new AbstractAction() {
