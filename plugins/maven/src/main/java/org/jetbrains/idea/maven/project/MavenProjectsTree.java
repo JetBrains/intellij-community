@@ -599,11 +599,14 @@ public final class MavenProjectsTree {
           tree.fillIDMaps(mavenProject);
         });
 
-        if (!Comparing.equal(oldParentId, mavenProject.getParentId())) {
-          // ensure timestamp reflects actual parent's timestamp
-          timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
+        if (Comparing.equal(oldParentId, mavenProject.getParentId())) {
+          tree.myTimestamps.put(mavenProject, timestamp);
         }
-        tree.myTimestamps.put(mavenProject, timestamp);
+        else {
+          // ensure timestamp reflects actual parent's timestamp
+          var newTimestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
+          tree.myTimestamps.put(mavenProject, newTimestamp);
+        }
         updateContext.update(mavenProject, changes);
       }
 
