@@ -11,10 +11,8 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
 
 /**
  * @author Konstantin Bulenkov
@@ -71,6 +69,7 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
       }
 
       row { browserLink(getMainChangesAndKnowIssuesLabel(), getMainChangesAndKnownIssuesUrl()) }
+        .topGap(TopGap.MEDIUM)
       row { link(IdeBundle.message("new.ui.submit.feedback")) { onSubmitFeedback() } }
     }
   }
