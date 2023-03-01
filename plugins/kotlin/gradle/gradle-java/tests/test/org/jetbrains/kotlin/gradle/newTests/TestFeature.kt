@@ -95,7 +95,14 @@ interface TestFeatureWithSetUpTearDown<V : Any> : TestFeature<V> {
 
 /**
  * Simplified API to implement for cases when you just want to launch some
- * checks after the project is set up, imported and ready to be used
+ * checks after the project is set up, imported and ready to be used.
+ *
+ * ATTENTION. [AbstractTestChecker] are configurable by DSL from
+ * [org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.workspace.WorkspaceChecksDsl]
+ * This means, in particular, that when you add a new checker, tests with `onlyChecker(something)`
+ * **won't run it**!
+ *
+ * If you want to add some check that should be executed in all tests, use raw [TestFeature]
  */
 abstract class AbstractTestChecker<V : Any> : TestFeature<V> {
     abstract fun KotlinMppTestsContext.check(additionalTestClassifier: String? = null)
