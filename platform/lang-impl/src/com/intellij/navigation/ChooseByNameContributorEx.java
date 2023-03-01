@@ -18,6 +18,7 @@ import java.util.List;
  *
  * @see GotoClassContributor
  * @see ChooseByNameRegistry
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/go-to-class-and-go-to-symbol.html">Go to Class and Go to Symbol</a>
  */
 public interface ChooseByNameContributorEx extends ChooseByNameContributor {
 
