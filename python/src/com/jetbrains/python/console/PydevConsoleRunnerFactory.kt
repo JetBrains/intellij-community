@@ -3,6 +3,8 @@ package com.jetbrains.python.console
 
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.value.*
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -17,8 +19,10 @@ import com.jetbrains.python.run.*
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.findPythonTargetInterpreter
 import com.jetbrains.python.sdk.PythonEnvUtil
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.function.Function
+import kotlin.io.path.exists
 
 open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
   @ApiStatus.Experimental
@@ -135,15 +139,27 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
       return workingDir
     }
 
-    private fun getWorkingDirFunction(project: Project,
-                                      module: Module?,
-                                      pathMapper: PathMapper?,
-                                      settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String>? {
+    fun getWorkingDirFunction(project: Project,
+                              module: Module?,
+                              pathMapper: PathMapper?,
+                              settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String>? {
       val workingDir = getWorkingDirFromSettings(project, module, settingsProvider)
       if (pathMapper != null && workingDir != null && pathMapper.canReplaceLocal(workingDir)) {
         return constant(pathMapper.convertToRemote(workingDir))
       }
-      return if (workingDir.isNullOrEmpty()) null else targetPath(Path.of(workingDir))
+
+      var path: Path? = null
+      try {
+        path = workingDir?.let { Path.of(it) }
+      }
+      catch (e: InvalidPathException) {
+        thisLogger().warn(e)
+      }
+      if (path != null && !path.exists()) {
+        thisLogger().warn("Can't find $path")
+        path = null;
+      }
+      return path?.let { targetPath(it) } ?: if (!workingDir.isNullOrBlank()) constant(workingDir) else null
     }
 
     private fun getWorkingDirFromSettings(project: Project, module: Module?, settingsProvider: PyConsoleSettings): String? {
@@ -198,7 +214,10 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
       return constructPyPathAndWorkingDirCommand(pythonPathFuns, workingDir, customStartScript)
     }
 
-    fun createSetupScriptWithHelpersAndProjectRoot(project: Project, projectRoot: String, sdk: Sdk, settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String> {
+    fun createSetupScriptWithHelpersAndProjectRoot(project: Project,
+                                                   projectRoot: String,
+                                                   sdk: Sdk,
+                                                   settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String> {
       val paths = ArrayList<Function<TargetEnvironment, String>>()
       paths.add(getTargetEnvironmentValueForLocalPath(Path.of(projectRoot)))
 
