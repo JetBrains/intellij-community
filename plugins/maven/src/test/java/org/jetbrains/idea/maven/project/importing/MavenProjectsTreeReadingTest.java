@@ -866,17 +866,48 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals("child", myTree.findProject(child).getMavenId().getArtifactId());
   }
 
-  @Test 
+  @Test
+  public void testParentPropertyInterpolation() {
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <properties>
+                         <childName>child</childName>
+                       </properties>
+                       """);
+    update(myProjectPom);
+
+    VirtualFile child = createModulePom("child",
+                                        """
+                                          <groupId>test</groupId>
+                                          <artifactId>${childName}</artifactId>
+                                          <version>1</version>
+                                          <parent>
+                                            <groupId>test</groupId>
+                                            <artifactId>parent</artifactId>
+                                            <version>1</version>
+                                          </parent>
+                                          """);
+
+    update(child);
+
+    assertEquals("child", myTree.findProject(child).getMavenId().getArtifactId());
+  }
+
+  @Test
   public void testAddingInheritanceChildOnParentUpdate() {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
+                       <packaging>pom</packaging>
                        <properties>
                          <childName>child</childName>
                        </properties>
                        <modules>
-                        <module>child</module>
+                         <module>child</module>
                        </modules>
                        """);
 
