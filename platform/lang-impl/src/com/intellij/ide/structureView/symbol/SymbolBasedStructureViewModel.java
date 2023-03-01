@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.intellij.util.ObjectUtils.coalesce;
+import static com.intellij.util.containers.ContainerUtil.*;
+
 public abstract class SymbolBasedStructureViewModel extends TextEditorBasedStructureViewModel {
   protected SymbolBasedStructureViewModel(@NotNull PsiFile psiFile) {
     super(psiFile);
@@ -27,6 +30,30 @@ public abstract class SymbolBasedStructureViewModel extends TextEditorBasedStruc
 
   protected SymbolBasedStructureViewModel(Editor editor, PsiFile file) {
     super(editor, file);
+  }
+
+  @Override
+  public Object getCurrentEditorElement() {
+    if (!(super.getCurrentEditorElement() instanceof PsiElement element)) {
+      return null;
+    }
+
+    final Collection<PsiSymbolDeclaration> declarations = filter(Declarations.allDeclarationsInElement(element), this::shouldCreateNode);
+    if (declarations.isEmpty()) {
+      return element;
+    }
+
+    final Editor editor = getEditor();
+    if (editor == null) {
+      return element;
+    }
+
+    final int offset = editor.getCaretModel().getOffset();
+
+    final PsiSymbolDeclaration declaration =
+      coalesce(find(declarations, it -> it.getAbsoluteRange().containsOffset(offset)), getFirstItem(declarations));
+
+    return new DelegatingPsiElementWithSymbolPointer(element, declaration.getSymbol().createPointer());
   }
 
   protected boolean shouldCreateNode(@NotNull PsiSymbolDeclaration symbolDeclaration) {
