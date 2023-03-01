@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex
 
-import com.intellij.codeInsight.daemon.impl.MarkerType
 import com.intellij.compiler.CompilerReferenceService
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase
 import com.intellij.openapi.vfs.VirtualFile
@@ -9,17 +8,18 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.testFramework.SkipSlowTestLocally
+import com.intellij.util.Function
 import junit.framework.AssertionFailedError
 import junit.framework.TestCase
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.highlighter.markers.OVERRIDDEN_FUNCTION
 import org.jetbrains.kotlin.idea.highlighter.markers.SUBCLASSED_CLASS
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
-import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import kotlin.io.path.Path
 import kotlin.io.path.isDirectory
@@ -28,7 +28,6 @@ import kotlin.io.path.name
 import kotlin.reflect.KFunction
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredMemberFunctions
-import com.intellij.util.Function
 
 @SkipSlowTestLocally
 open class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase() {
@@ -137,7 +136,7 @@ open class CustomKotlinCompilerReferenceTest6 : KotlinCompilerReferenceTestBase(
         //assertEquals(listOf("one.two.K", "one.two.KK"), findSubOrSuperTypes("one.two.KKK", deep = true, subtypes = false))
     }
 
-    fun testMixedSubtypes() {
+    open fun testMixedSubtypes() {
         myFixture.configureByFiles("one/two/MainJava.java", "one/two/SubMainJavaClass.java", "one/two/KotlinSubMain.kt")
         val className = "one.two.MainJava"
         val subtypes = findClassSubtypes(className, true)

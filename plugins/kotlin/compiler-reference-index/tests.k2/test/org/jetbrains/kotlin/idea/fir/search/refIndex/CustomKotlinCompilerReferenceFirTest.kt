@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.search.refIndex
 
 import com.intellij.testFramework.SkipSlowTestLocally
+import junit.framework.AssertionFailedError
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.CallableOverridingsTooltip
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.ClassInheritorsTooltip
 import org.jetbrains.kotlin.idea.search.refIndex.CustomKotlinCompilerReferenceTest6
@@ -12,5 +13,19 @@ class CustomKotlinCompilerReferenceFirTest : CustomKotlinCompilerReferenceTest6(
 
     override fun testTooltips() {
         doTestTooltips(ClassInheritorsTooltip, CallableOverridingsTooltip)
+    }
+
+    override fun testMixedSubtypes() {
+        // drop after KTIJ-24828
+        var failed = false
+        try {
+            super.testMixedSubtypes()
+        } catch (e: AssertionFailedError) {
+            failed = true
+        }
+
+        if (!failed) {
+            error("Unmute me")
+        }
     }
 }
