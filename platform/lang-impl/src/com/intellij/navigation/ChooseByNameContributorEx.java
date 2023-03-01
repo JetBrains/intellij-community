@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.navigation;
 
 import com.intellij.openapi.project.Project;
@@ -13,17 +13,33 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Allows a plugin to add items to "Navigate Class|File|Symbol" lists.
+ *
+ * @see GotoClassContributor
+ * @see ChooseByNameRegistry
+ */
 public interface ChooseByNameContributorEx extends ChooseByNameContributor {
 
+  /**
+   * Feeds the processor with all names available in the given scope.
+   *
+   * @param filter optional filter to use in an index used for searching names
+   */
   void processNames(@NotNull Processor<? super String> processor,
                     @NotNull GlobalSearchScope scope,
                     @Nullable IdFilter filter);
 
+  /**
+   * Feeds the processor with {@link NavigationItem}s matching the given name and parameters.
+   */
   void processElementsWithName(@NotNull String name,
                                @NotNull Processor<? super NavigationItem> processor,
                                @NotNull FindSymbolParameters parameters);
 
-  /** @deprecated Use {@link #processNames(Processor, GlobalSearchScope, IdFilter)} instead */
+  /**
+   * @deprecated Use {@link #processNames(Processor, GlobalSearchScope, IdFilter)} instead
+   */
   @Deprecated
   @Override
   default String @NotNull [] getNames(Project project, boolean includeNonProjectItems) {
@@ -32,7 +48,9 @@ public interface ChooseByNameContributorEx extends ChooseByNameContributor {
     return ArrayUtilRt.toStringArray(result);
   }
 
-  /** @deprecated Use {@link #processElementsWithName(String, Processor, FindSymbolParameters)} instead */
+  /**
+   * @deprecated Use {@link #processElementsWithName(String, Processor, FindSymbolParameters)} instead
+   */
   @Deprecated
   @Override
   default NavigationItem @NotNull [] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
