@@ -5,9 +5,12 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.IdePopupManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
@@ -20,6 +23,8 @@ import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
+import com.intellij.ui.UiInterceptors
+import com.intellij.ui.UiInterceptors.UiInterceptor
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 
@@ -326,7 +331,27 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testIntroduceObjectInsideNestedClass(){
+    IdeEventQueue.getInstance().popupManager.closeAllPopups()
+    IdePopupManager().closeAllPopups()
     doTest()
+  }
+
+  fun testMakeStaticInsideInner(){
+    UiInterceptors.register(DefaultChooserInterceptor)
+    doTest()
+  }
+
+  fun testMakeStaticInsideInnerFail(){
+    IdeaTestUtil.withLevel(module, LanguageLevel.JDK_15) {
+      UiInterceptors.register(DefaultChooserInterceptor)
+      doTest()
+    }
+  }
+
+  object DefaultChooserInterceptor: UiInterceptor<JBPopup>(JBPopup::class.java){
+    override fun doIntercept(component: JBPopup) {
+      component.closeOk(null)
+    }
   }
 
   fun testMakeStaticFailsWithClassUsage(){
