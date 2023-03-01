@@ -31,6 +31,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
@@ -2568,20 +2569,24 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     return new ListenerLog();
   }
 
-  private static class ListenerLog extends LinkedHashMap<String, Set<String>> {
+  private static class ListenerLog extends CopyOnWriteArrayList<Pair<String, Set<String>>> {
     ListenerLog() { super(); }
 
     ListenerLog(ListenerLog log) { super(log); }
 
     ListenerLog add(String key, String... values) {
       var log = new ListenerLog(this);
-      log.put(key, Set.of(values));
+      log.add(new Pair<>(key, Set.of(values)));
       return log;
     }
   }
 
   private static class MyLoggingListener implements MavenProjectsTree.Listener {
-    LinkedHashMap<String, Set<String>> log = new LinkedHashMap<>();
+    List<Pair<String, Set<String>>> log = new CopyOnWriteArrayList<>();
+
+    private void add(String key, Set<String> value) {
+      log.add(new Pair<>(key, value));
+    }
 
     @Override
     public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
@@ -2590,23 +2595,23 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     }
 
     private void append(List<MavenProject> updated, String text) {
-      log.put(text, updated.stream().map(each -> each.getMavenId().getArtifactId()).collect(Collectors.toSet()));
+      add(text, updated.stream().map(each -> each.getMavenId().getArtifactId()).collect(Collectors.toSet()));
     }
 
     @Override
     public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                 NativeMavenProjectHolder nativeMavenProject) {
-      log.put("resolved", Set.of(projectWithChanges.first.getMavenId().getArtifactId()));
+      add("resolved", Set.of(projectWithChanges.first.getMavenId().getArtifactId()));
     }
 
     @Override
     public void pluginsResolved(@NotNull MavenProject project) {
-      log.put("plugins", Set.of(project.getMavenId().getArtifactId()));
+      add("plugins", Set.of(project.getMavenId().getArtifactId()));
     }
 
     @Override
     public void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-      log.put("folders", Set.of(projectWithChanges.first.getMavenId().getArtifactId()));
+      add("folders", Set.of(projectWithChanges.first.getMavenId().getArtifactId()));
     }
   }
 }
