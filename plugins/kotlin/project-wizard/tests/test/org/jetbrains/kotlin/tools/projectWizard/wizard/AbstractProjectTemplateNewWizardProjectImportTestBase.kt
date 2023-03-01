@@ -6,7 +6,9 @@ import org.jetbrains.kotlin.tools.projectWizard.cli.BuildSystem
 import org.jetbrains.kotlin.tools.projectWizard.cli.ProjectTemplateBasedTestWizard
 import java.nio.file.Path
 
-abstract class AbstractProjectTemplateNewWizardProjectImportTest : AbstractNewWizardProjectImportTest() {
+abstract class AbstractProjectTemplateNewWizardProjectImportTestBase : AbstractNewWizardProjectImportTest() {
     override fun createWizard(directory: Path, buildSystem: BuildSystem, projectDirectory: Path): Wizard =
         ProjectTemplateBasedTestWizard.createByDirectory(directory, buildSystem, projectDirectory, IDE_WIZARD_TEST_SERVICES_MANAGER)
 }
+
+abstract class AbstractProjectTemplateNewWizardProjectImportTest : AbstractProjectTemplateNewWizardProjectImportTestBase()

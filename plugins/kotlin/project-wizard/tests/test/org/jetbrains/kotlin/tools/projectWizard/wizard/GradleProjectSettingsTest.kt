@@ -11,7 +11,7 @@ import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import java.nio.file.Files
 import java.nio.file.Paths
 
-class GradleProjectSettingsTest : AbstractProjectTemplateNewWizardProjectImportTest() {
+class GradleProjectSettingsTest : AbstractProjectTemplateNewWizardProjectImportTestBase() {
     fun testDistributionTypeIsWrapped() {
         val directory = Paths.get("consoleApplication")
         val tempDirectory = Files.createTempDirectory(null)
