@@ -16,8 +16,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.Stack;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ArrayListSet;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.DisposableWrapperList;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.io.PathKt;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
@@ -38,8 +40,6 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -497,10 +497,7 @@ public final class MavenProjectsTree {
     updateContext.fireUpdatedIfNecessary();
   }
 
-  private record UpdateSpec(Stack<VirtualFile> updateStack, VirtualFile mavenProjectFile, boolean updateModules, boolean forceReading) {
-    UpdateSpec(VirtualFile mavenProjectFile, boolean updateModules, boolean forceReading){
-      this(new Stack<>(), mavenProjectFile, updateModules, forceReading);
-    }
+  private record UpdateSpec(VirtualFile mavenProjectFile, boolean updateModules, boolean forceReading) {
   }
 
   private static class MavenProjectsTreeUpdater {
@@ -533,19 +530,13 @@ public final class MavenProjectsTree {
       if (specs.isEmpty()) return;
 
       ParallelRunner.runSequentially(specs, spec -> {
-        update(spec.updateStack(), spec.mavenProjectFile(), spec.updateModules(), spec.forceReading());
+        update(spec.mavenProjectFile(), spec.updateModules(), spec.forceReading());
       });
     }
 
-    private void update(final Stack<VirtualFile> updateStack,
-                        final VirtualFile mavenProjectFile,
+    private void update(final VirtualFile mavenProjectFile,
                         final boolean updateModules,
                         final boolean forceReading) {
-      if (updateStack.contains(mavenProjectFile)) {
-        MavenLog.LOG.info("Recursion detected in " + mavenProjectFile);
-        return;
-      }
-
       updateHistory.putIfAbsent(mavenProjectFile, new CopyOnWriteArrayList<>());
 
       var fileHistory = updateHistory.get(mavenProjectFile);
@@ -568,7 +559,6 @@ public final class MavenProjectsTree {
       }
       fileHistory.add(new UpdateSettings(updateModules, forceReading));
 
-      updateStack.push(mavenProjectFile);
       process.setText(MavenProjectBundle.message("maven.reading.pom", mavenProjectFile.getPath()));
       process.setText2("");
 
@@ -638,7 +628,7 @@ public final class MavenProjectsTree {
 
         if (readProject || isNewModule || updateModules) {
           // do not force update modules if only this project was requested to be updated
-          moduleUpdateSpecs.add(new UpdateSpec(new Stack<>(updateStack), each, updateModules, updateModules && forceReading));
+          moduleUpdateSpecs.add(new UpdateSpec(each, updateModules, updateModules && forceReading));
         }
       }
       updateProjects(moduleUpdateSpecs);
@@ -659,14 +649,12 @@ public final class MavenProjectsTree {
       for (MavenProject each : prevInheritors) {
         inheritorUpdateSpecs.add(
           new UpdateSpec(
-            new Stack<>(updateStack), each.getFile(),
+            each.getFile(),
             false, // no need to go recursively in case of inheritance, only when updating modules
             readProject // if parent was read, force read children
           ));
       }
       updateProjects(inheritorUpdateSpecs);
-
-      updateStack.pop();
     }
   }
 
