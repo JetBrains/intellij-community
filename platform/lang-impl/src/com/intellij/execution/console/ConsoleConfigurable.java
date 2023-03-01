@@ -261,7 +261,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
     MyAddDeleteListPanel(@NlsContexts.Label String title, @NlsContexts.DialogMessage String query) {
       super(title, new ArrayList<>());
       myQuery = query;
-      new ListSpeedSearch(myList);
+      ListSpeedSearch.installOn(myList);
     }
 
     @Override

@@ -142,7 +142,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     result.setCellRenderer(new PySdkListCellRenderer());
     result.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     result.addListSelectionListener(selectionListener);
-    new ListSpeedSearch<>(result);
+    ListSpeedSearch.installOn(result);
     return result;
   }
 

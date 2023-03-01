@@ -24,7 +24,7 @@ class GrazieExceptionsListComponent(
   exceptions: List<String>
 ): GrazieUIComponent, AddDeleteListPanel<@Nls String>(null, exceptions.sorted()) {
   init {
-    ListSpeedSearch(myList) { it }
+    ListSpeedSearch.installOn(myList) { it }
 
     emptyText.text = msg("grazie.settings.grammar.exceptions.empty.text")
 

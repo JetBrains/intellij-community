@@ -110,7 +110,7 @@ class CustomizeActionGroupPanel(
   }
 
   private fun createSearchComponent(): Component {
-    val speedSearch = object : ListSpeedSearch<Any>(list, Function {
+    val speedSearch = object : ListSpeedSearch<Any>(list, null, Function {
       when (it) {
         is String -> ActionManager.getInstance().getAction(it).templateText
         else -> null
@@ -121,6 +121,7 @@ class CustomizeActionGroupPanel(
       override fun isSpeedSearchEnabled() = false
       override fun showPopup() {}
     }
+    speedSearch.setupListeners()
     val filterComponent = object : FilterComponent("CUSTOMIZE_ACTIONS", 5) {
       override fun filter() {
         speedSearch.findAndSelectElement(filter)
