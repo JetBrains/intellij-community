@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRootChecker;
@@ -194,7 +195,7 @@ public final class VcsRootScanner implements Disposable {
   static final class TrustListener implements TrustedProjectsListener {
     @Override
     public void onProjectTrusted(@NotNull Project project) {
-      getInstance(project).scheduleScan();
+      StartupManager.getInstance(project).runAfterOpened(() -> getInstance(project).scheduleScan());
     }
   }
 }
