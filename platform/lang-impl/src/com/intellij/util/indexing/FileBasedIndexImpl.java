@@ -497,7 +497,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         addedTypes = null;
       }
 
-      if (VfsAwareMapReduceIndex.hasSnapshotMapping(extension)) {
+      if (FileBasedIndex.hasSnapshotMapping(extension)) {
         contentHashesEnumeratorOk = SnapshotHashEnumeratorService.getInstance().initialize();
       }
     }
@@ -2110,7 +2110,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   static <K, V> int getIndexExtensionVersion(@NotNull FileBasedIndexExtension<K, V> extension) {
     int version = extension.getVersion();
 
-    if (VfsAwareMapReduceIndex.hasSnapshotMapping(extension)) {
+    if (FileBasedIndex.hasSnapshotMapping(extension)) {
       version += SnapshotInputMappings.getVersion();
     }
     return version;

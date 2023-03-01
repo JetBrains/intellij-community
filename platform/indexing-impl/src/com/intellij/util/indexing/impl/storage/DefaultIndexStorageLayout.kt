@@ -34,7 +34,7 @@ object DefaultIndexStorageLayout {
     if (indexExtension is SingleEntryFileBasedIndexExtension<*>) {
       return SingleEntryStorageLayout(indexExtension as FileBasedIndexExtension<Key, Value>)
     }
-    return if (VfsAwareMapReduceIndex.hasSnapshotMapping(indexExtension)) {
+    return if (FileBasedIndex.hasSnapshotMapping(indexExtension)) {
       SnapshotMappingsStorageLayout(indexExtension, contentHashEnumeratorReopen)
     }
     else DefaultStorageLayout(indexExtension)

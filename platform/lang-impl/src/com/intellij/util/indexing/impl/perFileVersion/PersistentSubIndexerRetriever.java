@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -20,7 +20,8 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion> implements Closeable {
+public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersion>
+  implements Closeable, PersistentSubIndexerRetrieverBase<SubIndexerVersion> {
   private static final String INDEXED_VERSIONS = "indexed_versions";
   private static final int UNINDEXED_STATE = -2;
   private static final int NULL_SUB_INDEXER = -3;
@@ -107,6 +108,7 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     }
   }
 
+  @Override
   public int getFileIndexerId(@NotNull IndexedFile file) throws IOException {
     SubIndexerVersion version = getVersion(file);
     if (version == null) return NULL_SUB_INDEXER;
@@ -117,6 +119,7 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
     return myPersistentVersionEnumerator.valueOf(indexerId);
   }
 
+  @Override
   @Nullable
   public SubIndexerVersion getVersion(@NotNull IndexedFile file) {
     SubIndexerType type = myIndexer.calculateSubIndexer(file);

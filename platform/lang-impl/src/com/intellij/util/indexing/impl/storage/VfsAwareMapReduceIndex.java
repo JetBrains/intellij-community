@@ -98,7 +98,7 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
                                                                            ((IntForwardIndex)forwardIndexMap));
       }
     }
-    if (isCompositeIndexer(myIndexer)) {
+    if (FileBasedIndex.isCompositeIndexer(myIndexer)) {
       try {
         // noinspection unchecked,rawtypes
         mySubIndexerRetriever = new PersistentSubIndexerRetriever((ID)myIndexId,
@@ -133,18 +133,6 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
   @Override
   protected Logger getLogger() {
     return LOG;
-  }
-
-  public static boolean isCompositeIndexer(@NotNull DataIndexer<?, ?, ?> indexer) {
-    return indexer instanceof CompositeDataIndexer && !FileBasedIndex.USE_IN_MEMORY_INDEX;
-  }
-
-  public static <Key, Value> boolean hasSnapshotMapping(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
-    //noinspection unchecked
-    return indexExtension instanceof FileBasedIndexExtension &&
-           ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
-           FileBasedIndex.ourSnapshotMappingsEnabled &&
-           !FileBasedIndex.USE_IN_MEMORY_INDEX;
   }
 
   @Override

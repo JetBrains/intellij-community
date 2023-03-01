@@ -16,7 +16,7 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 @Service
-internal class SnapshotHashEnumeratorService : Closeable {
+class SnapshotHashEnumeratorService : Closeable {
   companion object {
     private val LOG = logger<SnapshotHashEnumeratorService>()
 

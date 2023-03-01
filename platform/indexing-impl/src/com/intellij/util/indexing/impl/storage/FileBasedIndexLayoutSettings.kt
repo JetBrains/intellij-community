@@ -5,7 +5,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.DataOutputStream
@@ -17,7 +16,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.outputStream
 
-internal object FileBasedIndexLayoutSettings {
+object FileBasedIndexLayoutSettings {
   private val log = logger<FileBasedIndexLayoutSettings>()
 
   @Synchronized

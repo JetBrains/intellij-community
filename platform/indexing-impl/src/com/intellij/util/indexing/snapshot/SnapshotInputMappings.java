@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.snapshot;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,8 +15,7 @@ import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.forward.AbstractForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
-import com.intellij.util.indexing.impl.perFileVersion.PersistentSubIndexerRetriever;
-import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
+import com.intellij.util.indexing.impl.perFileVersion.PersistentSubIndexerRetrieverBase;
 import com.intellij.util.indexing.storage.UpdatableSnapshotInputMappingIndex;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -59,7 +58,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
 
   private final CompositeHashIdEnumerator myCompositeHashIdEnumerator;
 
-  private PersistentSubIndexerRetriever<?, ?> mySubIndexerRetriever;
+  private PersistentSubIndexerRetrieverBase<?> mySubIndexerRetriever;
 
   public SnapshotInputMappings(@NotNull IndexExtension<Key, Value, FileContent> indexExtension,
                                @NotNull AbstractMapForwardIndexAccessor<Key, Value, ?> accessor) throws IOException {
@@ -76,7 +75,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
     myIndexingTrace = IndexDebugProperties.EXTRA_SANITY_CHECKS ? createIndexingTrace() : null;
     myEnumeratorHandle = SnapshotHashEnumeratorService.getInstance().createHashEnumeratorHandle(myIndexId);
 
-    if (VfsAwareMapReduceIndex.isCompositeIndexer(myIndexer)) {
+    if (FileBasedIndex.isCompositeIndexer(myIndexer)) {
       myCompositeHashIdEnumerator = new CompositeHashIdEnumerator(myIndexId);
     } else {
       myCompositeHashIdEnumerator = null;
@@ -198,7 +197,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
     data.add(content.getFile().getPath());
     data.add(content.getFileType().getName());
     data.add(content.getCharset().name());
-    if (VfsAwareMapReduceIndex.isCompositeIndexer(myIndexer)) {
+    if (FileBasedIndex.isCompositeIndexer(myIndexer)) {
       data.add("composite indexer: " + mySubIndexerRetriever.getVersion(content));
 
     }
@@ -297,7 +296,7 @@ public class SnapshotInputMappings<Key, Value> implements UpdatableSnapshotInput
   }
 
   // TODO replace it with constructor parameter
-  public void setSubIndexerRetriever(@NotNull PersistentSubIndexerRetriever<?, ?> retriever) {
+  public void setSubIndexerRetriever(@NotNull PersistentSubIndexerRetrieverBase<?> retriever) {
     assert myCompositeHashIdEnumerator != null;
     mySubIndexerRetriever = retriever;
   }
