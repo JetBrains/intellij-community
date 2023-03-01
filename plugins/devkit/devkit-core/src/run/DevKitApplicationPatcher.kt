@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PlatformUtils
 import org.jetbrains.idea.devkit.util.PsiUtil
-import java.util.*
 
 internal class DevKitApplicationPatcher : RunConfigurationExtension() {
   @Suppress("SpellCheckingInspection")
@@ -83,6 +82,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     vmParameters.addProperty("jbScreenMenuBar.enabled", "true")
     vmParameters.addProperty("jdk.attach.allowAttachSelf")
     vmParameters.addProperty("idea.initially.ask.config", "true")
+    vmParameters.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false")
   }
 
   override fun isApplicableFor(configuration: RunConfigurationBase<*>): Boolean {
