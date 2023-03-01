@@ -82,14 +82,14 @@ public final class SystemInfo {
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
 
-  private static final Supplier<Boolean> ourHasXdgOpen = PathExecLazyValue.create("xdg-open");
+  private static final Supplier<Boolean> ourHasXdgOpen = isXWindow ? PathExecLazyValue.create("xdg-open") : () -> false;
   public static boolean hasXdgOpen() {
-    return isXWindow && ourHasXdgOpen.get();
+    return ourHasXdgOpen.get();
   }
 
-  private static final Supplier<Boolean> ourHasXdgMime = PathExecLazyValue.create("xdg-mime");
+  private static final Supplier<Boolean> ourHasXdgMime = isXWindow ? PathExecLazyValue.create("xdg-mime") : () -> false;
   public static boolean hasXdgMime() {
-    return isXWindow && ourHasXdgMime.get();
+    return ourHasXdgMime.get();
   }
 
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
