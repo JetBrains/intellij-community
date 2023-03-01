@@ -109,7 +109,6 @@ fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): 
   return directory
 }
 
-@RequiresWriteLock
 fun Path.refreshAndFindVirtualFile(): VirtualFile? {
   val fileManager = VirtualFileManager.getInstance()
   val file = fileManager.refreshAndFindFileByNioPath(this) ?: return null
@@ -119,7 +118,6 @@ fun Path.refreshAndFindVirtualFile(): VirtualFile? {
   return file
 }
 
-@RequiresWriteLock
 fun Path.refreshAndFindVirtualDirectory(): VirtualFile? {
   val fileManager = VirtualFileManager.getInstance()
   val file = fileManager.refreshAndFindFileByNioPath(this) ?: return null

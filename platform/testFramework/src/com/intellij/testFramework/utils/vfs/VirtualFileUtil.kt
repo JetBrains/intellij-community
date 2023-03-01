@@ -78,7 +78,6 @@ fun VirtualFile.deleteChildrenRecursively(relativePath: @SystemIndependent Strin
   findFileOrDirectory(relativePath)?.deleteChildrenRecursively(predicate)
 }
 
-@RequiresWriteLock
 fun Path.refreshAndGetVirtualFile(): VirtualFile {
   val file = refreshAndFindVirtualFile()
   if (file == null) {
@@ -87,7 +86,6 @@ fun Path.refreshAndGetVirtualFile(): VirtualFile {
   return file
 }
 
-@RequiresWriteLock
 fun Path.refreshAndGetVirtualDirectory(): VirtualFile {
   val directory = refreshAndFindVirtualDirectory()
   if (directory == null) {
