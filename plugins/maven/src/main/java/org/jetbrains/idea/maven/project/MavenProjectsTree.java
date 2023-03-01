@@ -452,7 +452,7 @@ public final class MavenProjectsTree {
 
   private void update(final Collection<VirtualFile> files,
                       final boolean updateModules,
-                      final boolean forceUpdate,
+                      final boolean forceReading,
                       final MavenExplicitProfiles explicitProfiles,
                       final MavenProjectReader projectReader,
                       final MavenGeneralSettings generalSettings,
@@ -465,13 +465,10 @@ public final class MavenProjectsTree {
     var updateSpecs = new ArrayList<UpdateSpec>();
     var filesToAddModules = new HashSet<VirtualFile>();
     for (VirtualFile file : files) {
-      var isNew = null == findProject(file);
-      boolean force = isNew ? false : forceUpdate;
-      if (isNew) {
+      if (null == findProject(file)) {
         filesToAddModules.add(file);
       }
-
-      updateSpecs.add(new UpdateSpec(file, updateModules, force));
+      updateSpecs.add(new UpdateSpec(file, updateModules, forceReading));
     }
     updater.updateProjects(updateSpecs);
 
