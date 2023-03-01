@@ -2,25 +2,36 @@
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
-public final class RestoreDefaultLayoutAction extends RestoreNamedLayoutAction {
-
-  public RestoreDefaultLayoutAction() {
-    super(() -> ToolWindowDefaultLayoutManager.getInstance().getActiveLayoutName());
-  }
+public final class RestoreDefaultLayoutAction extends DumbAwareAction {
 
   @Override
-  public boolean isSelected(@NotNull AnActionEvent e) {
-    return false; // Restore Current Layout in the main Layouts menu looks weird with a check mark
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    super.update(e);
-    e.getPresentation().setDescription(ActionsBundle.message("action.RestoreDefaultLayout.named.description", getLayoutNameSupplier().invoke()));
+    e.getPresentation().setEnabled(e.getProject() != null);
+    e.getPresentation().setDescription(ActionsBundle.message(
+      "action.RestoreDefaultLayout.named.description",
+      ToolWindowDefaultLayoutManager.getInstance().getActiveLayoutName()
+    ));
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    var project = e.getProject();
+    if (project == null) {
+      return;
+    }
+    ToolWindowManagerEx.getInstanceEx(project).setLayout(ToolWindowDefaultLayoutManager.getInstance().getLayoutCopy());
   }
 
 }
