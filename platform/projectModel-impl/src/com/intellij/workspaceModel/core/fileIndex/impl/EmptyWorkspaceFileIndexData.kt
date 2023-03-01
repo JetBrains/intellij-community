@@ -10,7 +10,12 @@ import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 
-internal object UninitializedWorkspaceFileIndexData : WorkspaceFileIndexData {
+internal class EmptyWorkspaceFileIndexData private constructor(private val debugName: String): WorkspaceFileIndexData {
+  companion object {
+    val NOT_INITIALIZED: EmptyWorkspaceFileIndexData = EmptyWorkspaceFileIndexData("not initialized")
+    val RESET: EmptyWorkspaceFileIndexData = EmptyWorkspaceFileIndexData("reset")
+  }
+  
   override fun getFileInfo(file: VirtualFile,
                            honorExclusion: Boolean,
                            includeContentSets: Boolean,
@@ -30,4 +35,8 @@ internal object UninitializedWorkspaceFileIndexData : WorkspaceFileIndexData {
   override fun onLowMemory() {}
   override fun clearPackageDirectoryCache() {}
   override fun resetFileCache() {}
+
+  override fun toString(): String {
+    return "EmptyWorkspaceFileIndexData: $debugName"
+  }
 }
