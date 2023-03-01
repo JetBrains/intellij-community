@@ -313,8 +313,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        if (prevItemIndex == e.getFirstIndex()) return;
-        prevItemIndex = e.getFirstIndex();
+        if (prevItemIndex == myList.getSelectedIndex()) return;
+        prevItemIndex = myList.getSelectedIndex();
         myList.setSelectedButtonIndex(null);
       }
     });
