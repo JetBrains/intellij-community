@@ -28,6 +28,9 @@ internal fun lookupPopupContext(editor: Editor?): PopupContext? {
 
 internal class LookupPopupContext(val lookup: LookupEx) : SecondaryPopupContext() {
 
+  // otherwise, selecting lookup items by mouse would close the popup
+  override val closeOnClickOutside: Boolean get() = false
+
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     if ((lookup as LookupImpl).isLookupDisposed) {
       throw CancellationException()

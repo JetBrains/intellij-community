@@ -22,9 +22,11 @@ import java.awt.event.ComponentEvent
 
 internal abstract class SecondaryPopupContext : PopupContext {
 
+  protected abstract val closeOnClickOutside: Boolean
+
   override fun preparePopup(builder: ComponentPopupBuilder) {
     builder.setRequestFocus(false) // otherwise, it won't be possible to continue interacting with lookup/SE
-    builder.setCancelOnClickOutside(false) // otherwise, selecting lookup items by mouse, or resizing SE would close the popup
+    builder.setCancelOnClickOutside(closeOnClickOutside)
   }
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {

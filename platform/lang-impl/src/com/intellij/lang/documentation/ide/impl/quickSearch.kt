@@ -69,6 +69,9 @@ private class QuickSearchPopupContext(
   private val searchComponent: QuickSearchComponent,
 ) : UpdatingPopupContext(project) {
 
+  // otherwise, selecting SE items by mouse would close the popup
+  override val closeOnClickOutside: Boolean get() = false
+
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     super.setUpPopup(popup, popupUI)
     searchComponent.registerHint(popup)
@@ -87,6 +90,8 @@ private class HintUpdateSupplyPopupContext(
   private val referenceComponent: Component,
   private val hintUpdateSupply: HintUpdateSupply,
 ) : UpdatingPopupContext(project) {
+
+  override val closeOnClickOutside: Boolean get() = false
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     super.setUpPopup(popup, popupUI)
