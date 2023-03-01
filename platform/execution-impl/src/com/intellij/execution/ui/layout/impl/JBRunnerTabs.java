@@ -2,7 +2,6 @@
 package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -123,13 +122,8 @@ public class JBRunnerTabs extends SingleHeightTabs implements JBRunnerTabsBase {
       }
 
       @Override
-      public void setTabActions(ActionGroup group) {
-        super.setTabActions(group);
-        if (myActionPanel != null) {
-          final JComponent wrapper = (JComponent)myActionPanel.getComponent(0);
-          wrapper.remove(0);
-          wrapper.add(Box.createHorizontalStrut(6), BorderLayout.WEST);
-        }
+      protected int getActionsInset() {
+        return 8;
       }
 
       @Override
