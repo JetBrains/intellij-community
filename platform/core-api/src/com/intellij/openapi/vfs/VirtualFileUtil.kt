@@ -16,6 +16,7 @@ import org.jetbrains.annotations.SystemIndependent
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.name
+import kotlin.io.path.pathString
 
 
 val VirtualFile.isFile: Boolean
@@ -58,8 +59,9 @@ fun VirtualFile.findFileOrDirectory(relativePath: @SystemIndependent String): Vi
   var virtualFile = checkNotNull(fileSystem.findFileByPath("/")) {
     "Cannot find file system root for file: $path/$relativePath"
   }
-  val names = path.toNioPath().getResolvedPath(relativePath).pathList
-  for (name in names) {
+  val resolvedPath = path.toNioPath().getResolvedPath(relativePath)
+  for (pathPart in resolvedPath) {
+    val name = pathPart.pathString
     virtualFile = virtualFile.findChild(name) ?: return null
   }
   return virtualFile
@@ -99,8 +101,9 @@ fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): 
   var directory = checkNotNull(fileSystem.findFileByPath("/")) {
     "Cannot find file system root for file: $path/$relativePath"
   }
-  val names = path.toNioPath().getResolvedPath(relativePath).pathList
-  for (name in names) {
+  val resolvedPath = path.toNioPath().getResolvedPath(relativePath)
+  for (pathPart in resolvedPath) {
+    val name = pathPart.pathString
     directory = directory.findChild(name) ?: directory.createChildDirectory(fileSystem, name)
     if (!directory.isDirectory) {
       throw IOException("Expected directory instead of file: ${directory.path}")
