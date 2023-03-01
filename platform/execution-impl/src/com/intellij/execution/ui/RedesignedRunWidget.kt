@@ -42,6 +42,8 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
+const val CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH = 25
+
 val isContrastRunWidget: Boolean get() = Registry.`is`("ide.experimental.ui.contrast.run.widget")
 
 private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
@@ -400,7 +402,13 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
         e.presentation.icon = adjustIconForHeader(icon)
       }
     }
-    e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description"))
+    if (e.project?.let { RunManager.getInstance(it) }?.selectedConfiguration?.name?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
+      e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description.long",
+                                                                   RunManager.getInstance(e.project!!).selectedConfiguration?.name ?: "boo"))
+    }
+    else {
+      e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description"))
+    }
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
