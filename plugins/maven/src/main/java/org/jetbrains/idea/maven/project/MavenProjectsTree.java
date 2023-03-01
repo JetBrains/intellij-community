@@ -630,7 +630,6 @@ public final class MavenProjectsTree {
       for (MavenProject each : modulesToRemove) {
         tree.removeModule(mavenProject, each);
         tree.doDelete(mavenProject, each, updateContext);
-        prevInheritors.removeAll(updateContext.getDeletedProjects());
       }
 
       for (MavenProject each : modulesToBecomeRoots) {
@@ -670,6 +669,7 @@ public final class MavenProjectsTree {
         }
       }
 
+      prevInheritors.removeAll(updateContext.getDeletedProjects());
       prevInheritors.addAll(tree.findInheritors(mavenProject));
 
       var inheritorUpdateSpecs = new ArrayList<UpdateSpec>();
