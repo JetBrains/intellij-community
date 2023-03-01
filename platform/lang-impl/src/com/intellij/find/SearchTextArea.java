@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.Utils;
@@ -351,6 +351,9 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
                                      : findInProjectSettings.getRecentReplaceStrings();
       JBList<String> historyList = new JBList<>(ArrayUtil.reverseArray(recent));
+      Dimension size = historyList.getPreferredSize();
+      size.width = Math.min(size.width, getWidth() + 200);
+      historyList.setPreferredSize(size);
       Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null, myPopupState);
     }
   }
