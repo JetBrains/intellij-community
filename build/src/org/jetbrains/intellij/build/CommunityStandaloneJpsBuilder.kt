@@ -95,7 +95,13 @@ suspend fun buildCommunityStandaloneJpsBuilder(targetDir: Path,
     Files.createTempDirectory(targetDir, "jps-standalone-community-")
   }
   try {
-    JarPackager.pack(includedModules = layout.includedModules, outputDir = tempDir, context = context, layout = layout, dryRun = dryRun)
+    JarPackager.pack(includedModules = layout.includedModules,
+                     outputDir = tempDir,
+                     context = context,
+                     layout = layout,
+                     isRootDir = false,
+                     isCodesignEnabled = false,
+                     dryRun = dryRun)
 
     val targetFile = targetDir.resolve("standalone-jps-$buildNumber.zip")
     withContext(Dispatchers.IO) {

@@ -18,7 +18,14 @@ import java.util.concurrent.TimeUnit
  */
 private const val BUILD_STEPS_TO_SKIP_PROPERTY = "intellij.build.skip.build.steps"
 
-class BuildOptions {
+class BuildOptions(
+  @ApiStatus.Internal
+  @JvmField
+  val jarCacheDir: Path? = null,
+  @ApiStatus.Internal
+  @JvmField
+  val compressZipFiles: Boolean = true,
+) {
   companion object {
     /**
      * Use this property to change the project compiled classes output directory.
@@ -199,6 +206,11 @@ class BuildOptions {
    */
   var targetArch: JvmArchitecture? = null
 
+  fun setTargetOsAndArchToCurrent() {
+    targetOs = persistentListOf(OsFamily.currentOs)
+    targetArch = JvmArchitecture.currentJvmArch
+  }
+
   /**
    * If `true` the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
    * mode build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
@@ -364,10 +376,6 @@ class BuildOptions {
   }
 
   var randomSeedNumber: Long = 0
-
-  @ApiStatus.Experimental
-  @ApiStatus.Internal
-  var compressZipFiles = true
 
   init {
     val targetOsId = System.getProperty(TARGET_OS_PROPERTY, OS_ALL).lowercase()

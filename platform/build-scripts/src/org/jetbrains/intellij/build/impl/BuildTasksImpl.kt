@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.diagnostic.telemetry.useWithScope2
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
@@ -58,7 +57,6 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Predicate
 import java.util.zip.Deflater
-import kotlin.io.path.setLastModifiedTime
 
 class BuildTasksImpl(context: BuildContext) : BuildTasks {
   private val context = context as BuildContextImpl
@@ -117,7 +115,7 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
     CompilationTasks.create(context).compileModules(moduleNames)
   }
 
-  override fun buildFullUpdaterJar() {
+  override suspend fun buildFullUpdaterJar() {
     buildUpdaterJar(context, "updater-full.jar")
   }
 
@@ -129,12 +127,13 @@ class BuildTasksImpl(context: BuildContext) : BuildTasks {
     BundledMavenDownloader.downloadMavenCommonLibs(context.paths.communityHomeDirRoot)
     BundledMavenDownloader.downloadMavenDistribution(context.paths.communityHomeDirRoot)
     buildDistribution(state = compileModulesForDistribution(context), context = context, isUpdateFromSources = true)
-    val arch = if (SystemInfo.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
+    val arch = if (SystemInfoRt.isMac && CpuArch.isIntel64() && CpuArch.isEmulated()) {
       JvmArchitecture.aarch64
     }
     else {
       JvmArchitecture.currentJvmArch
     }
+    context.options.targetArch = arch
     layoutShared(context)
     if (includeBinAndRuntime) {
       val propertiesFile = patchIdeaPropertiesFile(context)
@@ -321,17 +320,30 @@ private class DistributionForOsTaskResult(@JvmField val builder: OsSpecificDistr
                                           @JvmField val outDir: Path)
 
 private suspend fun buildOsSpecificDistributions(context: BuildContext): List<DistributionForOsTaskResult> {
-  val stepMessage = "build OS-specific distributions"
-  if (context.options.buildStepsToSkip.contains(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)) {
-    Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
+  if (context.isStepSkipped(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)) {
+    Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), "build OS-specific distributions"))
     return emptyList()
   }
 
-  val propertiesFile = patchIdeaPropertiesFile(context)
+  setLastModifiedTime(context.paths.distAllDir, context)
 
+  if (context.isMacCodeSignEnabled) {
+    withContext(Dispatchers.IO) {
+      for (file in Files.newDirectoryStream(context.paths.distAllDir).use { stream ->
+        stream.filter { !it.endsWith("lib") && !it.endsWith("help") }
+      }) {
+        launch {
+          // todo exclude plugins - layoutAdditionalResources should perform codesign -
+          //  that's why we process files and zip in plugins (but not JARs)
+          // and also kotlin compiler includes JNA
+          recursivelySignMacBinaries(root = file, context = context)
+        }
+      }
+    }
+  }
+
+  val propertiesFile = patchIdeaPropertiesFile(context)
   return supervisorScope {
-    setLastModifiedTime(context.paths.distAllDir, context)
-    recursivelySignMacBinaries(context.paths.distAllDir, context)
     SUPPORTED_DISTRIBUTIONS.mapNotNull { (os, arch) ->
       if (!context.shouldBuildDistributionForOS(os, arch)) {
         return@mapNotNull null
@@ -654,7 +666,7 @@ suspend fun buildDistributions(context: BuildContext): Unit = spanBuilder("build
         Span.current().addEvent("Toolbox LiteGen is not executed - it doesn't support installers are being built only for specific OS")
       }
       else {
-        context.executeStep("build toolbox lite-gen links", BuildOptions.TOOLBOX_LITE_GEN_STEP) {
+        context.executeStep(spanBuilder("build toolbox lite-gen links"), BuildOptions.TOOLBOX_LITE_GEN_STEP) {
           val toolboxLiteGenVersion = System.getProperty("intellij.build.toolbox.litegen.version")
           checkNotNull(toolboxLiteGenVersion) {
             "Toolbox Lite-Gen version is not specified!"
@@ -918,7 +930,7 @@ private fun logFreeDiskSpace(phase: String, context: CompilationContext) {
   }
 }
 
-fun buildUpdaterJar(context: BuildContext, artifactName: String = "updater.jar") {
+suspend fun buildUpdaterJar(context: BuildContext, artifactName: String = "updater.jar") {
   val updaterModule = context.findRequiredModule("intellij.platform.updater")
   val updaterModuleSource = DirSource(context.getModuleOutputDir(updaterModule), excludes = commonModuleExcludes)
   val librarySources = JpsJavaExtensionService.dependencies(updaterModule)
@@ -1227,12 +1239,12 @@ internal suspend fun buildAdditionalAuthoringArtifacts(ideClassPath: Set<String>
 }
 
 internal suspend fun setLastModifiedTime(directory: Path, context: BuildContext) {
-  spanBuilder("Updating last modified time").setAttribute("dir", "$directory").useWithScope2 {
-    withContext(Dispatchers.IO) {
+  withContext(Dispatchers.IO) {
+    spanBuilder("update last modified time").setAttribute("dir", directory.toString()).useWithScope2 {
       Files.walk(directory).use { tree ->
         val fileTime = FileTime.from(context.options.buildDateInSeconds, TimeUnit.SECONDS)
         tree.forEach {
-          it.setLastModifiedTime(fileTime)
+          Files.setLastModifiedTime(it, fileTime)
         }
       }
     }
@@ -1251,3 +1263,23 @@ internal fun collectIncludedPluginModules(enabledPluginModules: Collection<Strin
     .flatMapTo(result) { layout -> layout.includedModules.asSequence().map { it.moduleName } }
 }
 
+fun copyDistFiles(context: BuildContext, newDir: Path, os: OsFamily, arch: JvmArchitecture) {
+  for (item in context.getDistFiles(os, arch)) {
+    val targetFile = newDir.resolve(item.relativePath)
+    Files.createDirectories(targetFile.parent)
+    Files.copy(item.file, targetFile, StandardCopyOption.REPLACE_EXISTING)
+  }
+}
+
+internal fun generateBuildTxt(context: BuildContext, targetDirectory: Path) {
+  Files.writeString(targetDirectory.resolve("build.txt"), context.fullBuildNumber)
+}
+
+internal fun copyInspectScript(context: BuildContext, distBinDir: Path) {
+  val inspectScript = context.productProperties.inspectCommandName
+  if (inspectScript != "inspect") {
+    val targetPath = distBinDir.resolve("$inspectScript.sh")
+    Files.move(distBinDir.resolve("inspect.sh"), targetPath, StandardCopyOption.REPLACE_EXISTING)
+    context.patchInspectScript(targetPath)
+  }
+}

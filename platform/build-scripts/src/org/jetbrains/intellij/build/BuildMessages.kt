@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.openapi.util.ThrowableComputable
+import java.util.concurrent.Callable
 
 interface BuildMessages: System.Logger {
   fun info(message: String)
@@ -28,7 +28,7 @@ interface BuildMessages: System.Logger {
 
   fun setParameter(parameterName: String, value: String)
 
-  fun <V> block(blockName: String, task: ThrowableComputable<V, Exception>): V
+  fun block(blockName: String, task: Callable<Unit>)
 
   fun artifactBuilt(relativeArtifactPath: String)
 

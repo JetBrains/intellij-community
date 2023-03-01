@@ -2,8 +2,6 @@
 package org.jetbrains.intellij.build.impl.logging
 
 import com.intellij.diagnostic.telemetry.useWithScope
-import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.util.containers.Stack
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*
@@ -17,13 +15,12 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.util.*
+import java.util.concurrent.Callable
 import java.util.function.Consumer
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes.BUILD_PORBLEM as BUILD_PROBLEM
 
 class BuildMessagesImpl private constructor(private val logger: BuildMessageLogger,
                                             private val debugLogger: DebugLogger) : BuildMessages {
-  private val blockNames = Stack<String>()
-
   companion object {
     fun create(): BuildMessagesImpl {
       val mainLoggerFactory = if (isUnderTeamCity) TeamCityBuildMessageLogger.FACTORY else ConsoleBuildMessageLogger.FACTORY
@@ -110,12 +107,11 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     processMessage(LogMessage(LogMessage.Kind.SET_PARAMETER, "$parameterName=$value"))
   }
 
-  override fun <V> block(blockName: String, task: ThrowableComputable<V, Exception>): V {
+  override fun block(blockName: String, task: Callable<Unit>) {
     spanBuilder(blockName.lowercase(Locale.getDefault())).useWithScope {
       try {
-        blockNames.push(blockName)
         processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-        return task.compute()
+        task.call()
       }
       catch (e: Throwable) {
         // print all pending spans
@@ -123,7 +119,6 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
         throw e
       }
       finally {
-        blockNames.pop()
         processMessage(LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
       }
     }
@@ -221,6 +216,18 @@ fun reportBuildProblem(description: String, identity: String? = null) {
   }
   else {
     error("$identity: $description")
+  }
+}
+
+private class CompositeBuildMessageLogger(private val loggers: List<BuildMessageLogger>) : BuildMessageLogger() {
+  override fun processMessage(message: LogMessage) {
+    for (it in loggers) {
+      it.processMessage(message)
+    }
+  }
+
+  override fun dispose() {
+    loggers.forEach(BuildMessageLogger::dispose)
   }
 }
 

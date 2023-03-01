@@ -441,7 +441,7 @@ private suspend fun getProductPluginContentModules(context: BuildContext, produc
   val modules = content.children("module")
   val result = LinkedHashSet<ModuleItem>()
   for (module in modules) {
-    result.add(ModuleItem(moduleName = module.attributes.get("name") ?: continue, relativeOutputFile = APP_JAR, reason = "productModule"))
+    result.add(ModuleItem(moduleName = module.attributes.get("name") ?: continue, relativeOutputFile = "modules.jar", reason = "productModule"))
   }
   return result
 }

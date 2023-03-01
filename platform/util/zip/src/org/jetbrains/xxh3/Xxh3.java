@@ -74,8 +74,12 @@ public final class Xxh3 {
     return (int)hash(input);
   }
 
-  private static long hashUnencodedChars(CharSequence input) {
-    return Xxh3Impl.hash(input, CharSequenceAccess.INSTANCE, 0, input.length() * 2, 0);
+  public static long hashUnencodedChars(CharSequence input) {
+    return hashUnencodedChars(input, 0);
+  }
+
+  public static long hashUnencodedChars(CharSequence input, long seed) {
+    return Xxh3Impl.hash(input, CharSequenceAccess.INSTANCE, 0, input.length() * 2, seed);
   }
 
   public static int hashUnencodedChars32(CharSequence input) {
@@ -83,7 +87,11 @@ public final class Xxh3 {
   }
 
   public static long hashLongs(long[] input) {
-    return Xxh3Impl.hash(input, LongArrayAccessForLongs.INSTANCE, 0, input.length * Long.BYTES, 0);
+    return hashLongs(input, 0);
+  }
+
+  public static long hashLongs(long[] input, long seed) {
+    return Xxh3Impl.hash(input, LongArrayAccessForLongs.INSTANCE, 0, input.length * Long.BYTES, seed);
   }
 
   public static long hashInt(int input, final long seed) {

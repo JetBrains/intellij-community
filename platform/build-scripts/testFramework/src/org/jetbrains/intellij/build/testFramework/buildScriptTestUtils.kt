@@ -13,8 +13,8 @@ import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -28,6 +28,18 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import kotlin.io.path.exists
+
+fun createBuildOptionsForTest(productProperties: ProductProperties, skipDependencySetup: Boolean = false): BuildOptions {
+  val options = BuildOptions()
+  customizeBuildOptionsForTest(options = options, productProperties = productProperties, skipDependencySetup = skipDependencySetup)
+  return options
+}
+
+private inline fun createBuildOptionsForTest(productProperties: ProductProperties, customizer: (BuildOptions) -> Unit): BuildOptions {
+  val options = createBuildOptionsForTest(productProperties = productProperties)
+  customizer(options)
+  return options
+}
 
 fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: ProductProperties, skipDependencySetup: Boolean = false) {
   options.skipDependencySetup = skipDependencySetup
@@ -48,15 +60,13 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
   options.compilationLogEnabled = false
 }
 
-suspend fun createBuildContext(
+suspend inline fun createBuildContext(
   homePath: Path, productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: BuildDependenciesCommunityRoot,
-  skipDependencySetup: Boolean = false,
   buildOptionsCustomizer: (BuildOptions) -> Unit = {},
 ): BuildContext {
-  val options = BuildOptions()
-  customizeBuildOptionsForTest(options, productProperties, skipDependencySetup)
+  val options = createBuildOptionsForTest(productProperties)
   buildOptionsCustomizer(options)
   return BuildContextImpl.createContext(communityHome = communityHomePath,
                                         projectHome = homePath,
@@ -66,8 +76,15 @@ suspend fun createBuildContext(
 }
 
 // don't expose BuildDependenciesCommunityRoot
-fun runTestBuild(homePath: Path, productProperties: ProductProperties, buildTools: ProprietaryBuildTools, buildOptionsCustomizer: (BuildOptions) -> Unit = {}) {
-  runTestBuild(homePath = homePath, productProperties = productProperties, buildTools = buildTools, traceSpanName = null, buildOptionsCustomizer = buildOptionsCustomizer)
+fun runTestBuild(homePath: Path,
+                 productProperties: ProductProperties,
+                 buildTools: ProprietaryBuildTools,
+                 buildOptionsCustomizer: (BuildOptions) -> Unit = {}) {
+  runTestBuild(homePath = homePath,
+               productProperties = productProperties,
+               buildTools = buildTools,
+               traceSpanName = null,
+               buildOptionsCustomizer = buildOptionsCustomizer)
 }
 
 fun runTestBuild(
@@ -83,15 +100,36 @@ fun runTestBuild(
 ) {
   runBlocking(Dispatchers.Default) {
     asSingleTraceFile(productProperties.baseFileName + (traceSpanName?.let { "-$it" } ?: "")) {
-      if (!isReproducibilityTestAllowed) {
+      if (isReproducibilityTestAllowed) {
+        val reproducibilityTest = BuildArtifactsReproducibilityTest()
+        repeat(reproducibilityTest.iterations) { iterationNumber ->
+          launch {
+            val buildContext = BuildContextImpl.createContext(communityHome = communityHomePath,
+                                                              projectHome = homePath,
+                                                              productProperties = productProperties,
+                                                              proprietaryBuildTools = buildTools,
+                                                              options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer).also {
+                                                                reproducibilityTest.configure(it)
+                                                              })
+            doRunTestBuild(
+              context = buildContext,
+              traceSpanName = "#$iterationNumber",
+              build = { context ->
+                build(context)
+                onSuccess(context)
+                reproducibilityTest.iterationFinished(iterationNumber, context)
+              }
+            )
+          }
+        }
+      }
+      else {
         doRunTestBuild(
-          context = createBuildContext(
-            homePath = homePath,
-            productProperties = productProperties,
-            buildTools = buildTools,
-            communityHomePath = communityHomePath,
-            buildOptionsCustomizer = buildOptionsCustomizer,
-          ),
+          context = BuildContextImpl.createContext(communityHome = communityHomePath,
+                                                   projectHome = homePath,
+                                                   productProperties = productProperties,
+                                                   proprietaryBuildTools = buildTools,
+                                                   options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer)),
           traceSpanName = traceSpanName,
           build = { context ->
             build(context)
@@ -99,29 +137,6 @@ fun runTestBuild(
           }
         )
         return@asSingleTraceFile
-      }
-      val reproducibilityTest = BuildArtifactsReproducibilityTest()
-      repeat(reproducibilityTest.iterations) { iterationNumber ->
-        launch {
-          doRunTestBuild(
-            context = createBuildContext(
-              homePath = homePath,
-              productProperties = productProperties,
-              buildTools = buildTools,
-              communityHomePath = communityHomePath,
-              buildOptionsCustomizer = {
-                buildOptionsCustomizer(it)
-                reproducibilityTest.configure(it)
-              },
-            ),
-            traceSpanName = "#$iterationNumber",
-            build = { context ->
-              build(context)
-              onSuccess(context)
-              reproducibilityTest.iterationFinished(iterationNumber, context)
-            }
-          )
-        }
       }
     }
   }

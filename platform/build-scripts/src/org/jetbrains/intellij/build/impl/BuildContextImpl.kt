@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "RAW_RUN_BLOCKING")
 
 package org.jetbrains.intellij.build.impl
 
@@ -43,7 +43,6 @@ class BuildContextImpl(
   override val systemSelector: String
     get() = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
-
   override val buildNumber: String = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDirRoot)
 
   override val xBootClassPathJarNames: List<String>
@@ -53,6 +52,10 @@ class BuildContextImpl(
 
   override val applicationInfo = ApplicationInfoPropertiesImpl(this)
   private var builtinModulesData: BuiltinModulesFileData? = null
+
+  internal val jarCacheManager: JarCacheManager by lazy {
+    options.jarCacheDir?.let { LocalDiskJarCacheManager(it) } ?: NonCachingJarCacheManager
+  }
 
   init {
     @Suppress("DEPRECATION")
@@ -137,19 +140,22 @@ class BuildContextImpl(
 
   override fun addDistFile(file: DistFile) {
     Span.current().addEvent("add app resource", Attributes.of(AttributeKey.stringKey("file"), file.toString()))
+
+    val existing = distFiles.firstOrNull { it.os == file.os && it.arch == file.arch && it.relativePath == file.relativePath }
+    check(existing == null) {
+      "$file duplicates $existing"
+    }
     distFiles.add(file)
   }
 
   override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile> {
-    return distFiles.asSequence().filter {
+    val result = distFiles.filterTo(mutableListOf()) {
       (os == null && arch == null) ||
       (os == null || it.os == null || it.os == os) &&
       (arch == null || it.arch == null || it.arch == arch)
-    }.sortedWith(
-      compareBy<DistFile> { it.relativePath }
-        .thenBy { it.os }
-        .thenBy { it.arch }
-    ).toList()
+    }
+    result.sortWith(compareBy({ it.relativePath }, { it.os }, { it.arch }))
+    return result
   }
 
   override fun findApplicationInfoModule(): JpsModule {
@@ -176,16 +182,6 @@ class BuildContextImpl(
     return null
   }
 
-  override fun executeStep(stepMessage: String, stepId: String, step: Runnable): Boolean {
-    if (options.buildStepsToSkip.contains(stepId)) {
-      Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
-    }
-    else {
-      messages.block(stepMessage, step::run)
-    }
-    return true
-  }
-
   override fun shouldBuildDistributions(): Boolean = !options.targetOs.isEmpty()
 
   override fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean {
@@ -194,10 +190,9 @@ class BuildContextImpl(
 
   override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext {
     val projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString())
-    val options = BuildOptions()
+    val options = BuildOptions(compressZipFiles = this.options.compressZipFiles)
     options.useCompiledClassesFromProjectOutput = this.options.useCompiledClassesFromProjectOutput
     options.buildStepsToSkip = this.options.buildStepsToSkip
-    options.compressZipFiles = this.options.compressZipFiles
     options.targetArch = this.options.targetArch
     options.targetOs = this.options.targetOs
     val compilationContextCopy = compilationContext.createCopy(

@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package org.jetbrains.intellij.build
 
 import com.intellij.diagnostic.telemetry.AsyncSpanExporter
@@ -21,8 +23,6 @@ import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-
-internal val tracer: Tracer by lazy { TraceManager.tracer }
 
 object TraceManager {
   internal val tracer: Tracer
@@ -89,17 +89,17 @@ object TracerProviderManager {
   }
 
   fun finish(): Path? {
-    return try {
+    try {
       tracerProvider?.forceFlush()?.join(10, TimeUnit.SECONDS)
-      jaegerJsonSpanExporter.getAndSet(null)?.let {
+      return jaegerJsonSpanExporter.getAndSet(null)?.let {
         val file = it.file
         it.shutdown()
         file
       }
     }
-    catch (io: IOException) {
-      io.printStackTrace(System.err)
-      null
+    catch (e: IOException) {
+      e.printStackTrace(System.err)
+      return null
     }
   }
 

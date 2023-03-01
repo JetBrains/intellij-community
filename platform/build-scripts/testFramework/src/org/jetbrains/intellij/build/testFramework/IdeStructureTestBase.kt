@@ -18,7 +18,6 @@ import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.nio.file.Path
-import java.util.*
 
 @ExtendWith(SoftAssertionsExtension::class)
 abstract class IdeStructureTestBase {
@@ -38,7 +37,6 @@ abstract class IdeStructureTestBase {
       createBuildContext(homePath = projectHome,
                          productProperties = productProperties,
                          buildTools = createBuildTools(),
-                         skipDependencySetup = false,
                          communityHomePath = IdeaProjectLoaderUtil.guessCommunityHome(javaClass))
 
     }

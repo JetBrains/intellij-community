@@ -9,23 +9,29 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.rootTask
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.BootstrapBundle
+import com.intellij.ide.BytecodeTransformer
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.util.lang.PathClassLoader
+import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import java.awt.GraphicsEnvironment
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.system.exitProcess
+
+private const val MARKETPLACE_BOOTSTRAP_JAR = "marketplace-bootstrap.jar"
 
 fun main(rawArgs: Array<String>) {
   val startupTimings = ArrayList<Any>(12)
@@ -129,7 +135,106 @@ private fun bootstrap(startupTimings: MutableList<Any>) {
   }
 
   addBootstrapTiming("classloader init", startupTimings)
-  BootstrapClassLoaderUtil.initClassLoader(AppMode.isRemoteDevHost())
+  initClassLoader(AppMode.isRemoteDevHost())
+}
+
+private fun initClassLoader(addCwmLibs: Boolean) {
+  val distDir = Path.of(PathManager.getHomePath())
+  val classLoader = AppMode::class.java.classLoader as? PathClassLoader
+                    ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
+  if (AppMode.isDevServer()) {
+    loadClassPathFromDevBuild(distDir)?.let {
+      classLoader.classPath.addFiles(it)
+    }
+    return
+  }
+
+  val classpath: MutableCollection<Path> = LinkedHashSet()
+  val preinstalledPluginDir = distDir.resolve("plugins")
+  var pluginDir = preinstalledPluginDir
+  var marketPlaceBootDir = BootstrapClassLoaderUtil.findMarketplaceBootDir(pluginDir)
+  var mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
+  if (Files.notExists(mpBoot)) {
+    pluginDir = Path.of(PathManager.getPluginsPath())
+    marketPlaceBootDir = BootstrapClassLoaderUtil.findMarketplaceBootDir(pluginDir)
+    mpBoot = marketPlaceBootDir.resolve(MARKETPLACE_BOOTSTRAP_JAR)
+  }
+  val installMarketplace = BootstrapClassLoaderUtil.shouldInstallMarketplace(distDir, mpBoot)
+  if (installMarketplace) {
+    val marketplaceImpl = marketPlaceBootDir.resolve("marketplace-impl.jar")
+    if (Files.exists(marketplaceImpl)) {
+      classpath.add(marketplaceImpl)
+    }
+  }
+  var updateSystemClassLoader = false
+  if (addCwmLibs) {
+    // Remote dev requires Projector libraries in system classloader due to AWT internals (see below)
+    // At the same time, we don't want to ship them with base (non-remote) IDE due to possible unwanted interference with plugins
+    // See also: com.jetbrains.codeWithMe.projector.PluginClassPathRuntimeCustomizer
+    val relativeLibPath = "cwm-plugin-projector/lib/projector"
+    var remoteDevPluginLibs = preinstalledPluginDir.resolve(relativeLibPath)
+    var exists = Files.exists(remoteDevPluginLibs)
+    if (!exists) {
+      remoteDevPluginLibs = Path.of(PathManager.getPluginsPath(), relativeLibPath)
+      exists = Files.exists(remoteDevPluginLibs)
+    }
+    if (exists) {
+      Files.newDirectoryStream(remoteDevPluginLibs).use { dirStream ->
+        // add all files in that dir except for plugin jar
+        for (f in dirStream) {
+          if (f.toString().endsWith(".jar")) {
+            classpath.add(f)
+          }
+        }
+      }
+    }
+
+    // AWT can only use builtin and system class loaders to load classes,
+    // so set the system loader to something that can find projector libs
+    updateSystemClassLoader = true
+  }
+  if (!classpath.isEmpty()) {
+    classLoader.classPath.addFiles(java.util.List.copyOf(classpath))
+  }
+  if (installMarketplace) {
+    try {
+      val spiLoader = PathClassLoader(UrlClassLoader.build().files(listOf(mpBoot)).parent(classLoader))
+      val transformers = ServiceLoader.load(BytecodeTransformer::class.java, spiLoader).iterator()
+      if (transformers.hasNext()) {
+        classLoader.setTransformer(BytecodeTransformerAdapter(transformers.next()))
+      }
+    }
+    catch (e: Throwable) {
+      // at this point, logging is not initialized yet, so reporting the error directly
+      val path = pluginDir.resolve(BootstrapClassLoaderUtil.MARKETPLACE_PLUGIN_DIR).toString()
+      val message = "As a workaround, you may uninstall or update JetBrains Marketplace Support plugin at $path"
+      StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.jetbrains.marketplace.boot.failure"),
+                                       Exception(message, e))
+    }
+  }
+  if (updateSystemClassLoader) {
+    val aClass = ClassLoader::class.java
+    MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(classLoader)
+  }
+}
+
+private fun loadClassPathFromDevBuild(distDir: Path): List<Path>? {
+  val platformPrefix = System.getProperty("idea.platform.prefix", "idea")
+  val devRunDir = distDir.resolve("out/dev-run")
+  val productDevRunDir = devRunDir.resolve(AppMode.getDevBuildRunDirName(platformPrefix))
+  val coreClassPathFile = productDevRunDir.resolve("core-classpath.txt")
+  if (Files.notExists(coreClassPathFile)) {
+    return null
+  }
+
+  val fs = FileSystems.getDefault()
+  val result = ArrayList<Path>()
+  for (s in Files.readAllLines(coreClassPathFile)) {
+    if (!s.isEmpty()) {
+      result.add(fs.getPath(s))
+    }
+  }
+  return result
 }
 
 private fun addBootstrapTiming(name: String, startupTimings: MutableList<Any>) {
@@ -215,4 +320,14 @@ private class StartupAbortedExceptionHandler : AbstractCoroutineContextElement(C
   }
 
   override fun toString() = "StartupAbortedExceptionHandler"
+}
+
+private class BytecodeTransformerAdapter(private val impl: BytecodeTransformer) : PathClassLoader.BytecodeTransformer {
+  override fun isApplicable(className: String, loader: ClassLoader): Boolean {
+    return impl.isApplicable(className, loader, null)
+  }
+
+  override fun transform(loader: ClassLoader, className: String, classBytes: ByteArray): ByteArray {
+    return impl.transform(loader, className, null, classBytes)
+  }
 }

@@ -31,10 +31,7 @@ import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataP
 import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
-import org.jetbrains.intellij.build.tasks.ZipSource
-import org.jetbrains.intellij.build.tasks.buildJar
-import org.jetbrains.intellij.build.tasks.generateClasspath
-import org.jetbrains.intellij.build.tasks.injectAppInfo
+import org.jetbrains.intellij.build.tasks.*
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement
@@ -104,7 +101,14 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
           scramble(state.platform, context)
         }
 
-        context.bootClassPathJarNames = generateClasspath(homeDir = context.paths.distAllDir, antTargetFile = antTargetFile)
+        val distAllDir = context.paths.distAllDir
+        val libDir = distAllDir.resolve("lib")
+        val appFile = libDir.resolve("app.jar")
+        mergeProductJar(appFile, libDir)
+        if (!context.isStepSkipped(BuildOptions.GENERATE_JAR_ORDER_STEP)) {
+          reorderJar("lib/app.jar", appFile)
+        }
+        context.bootClassPathJarNames = generateClasspath(homeDir = distAllDir, libDir = libDir, antTargetFile = antTargetFile)
         result
       }
     }
@@ -403,7 +407,11 @@ internal suspend fun generateProjectStructureMapping(context: BuildContext, plat
   val moduleOutputPatcher = ModuleOutputPatcher()
   return coroutineScope {
     val libDirLayout = async {
-      processLibDirectoryLayout(moduleOutputPatcher = moduleOutputPatcher, platform = platform, context = context, copyFiles = false)
+      layoutPlatformDistribution(moduleOutputPatcher = moduleOutputPatcher,
+                                 targetDirectory = context.paths.distAllDir,
+                                 platform = platform,
+                                 context = context,
+                                 copyFiles = false)
     }
     val allPlugins = getPluginLayoutsByJpsModuleNames(modules = context.productProperties.productLayout.bundledPluginModules,
                                                       productLayout = context.productProperties.productLayout)
@@ -571,26 +579,27 @@ suspend fun buildLib(moduleOutputPatcher: ModuleOutputPatcher,
                      platform: PlatformLayout,
                      context: BuildContext): List<DistributionFileEntry> {
   patchKeyMapWithAltClickReassignedToMultipleCarets(moduleOutputPatcher, context)
-  val libDirMappings = processLibDirectoryLayout(moduleOutputPatcher = moduleOutputPatcher,
-                                                 platform = platform,
-                                                 context = context,
-                                                 copyFiles = true)
+  val libDirMappings = layoutPlatformDistribution(moduleOutputPatcher = moduleOutputPatcher,
+                                                  targetDirectory = context.paths.distAllDir,
+                                                  platform = platform,
+                                                  context = context,
+                                                  copyFiles = true)
 
   context.proprietaryBuildTools.scrambleTool?.validatePlatformLayout(platform.includedModules, context)
   return libDirMappings
 }
 
-suspend fun processLibDirectoryLayout(moduleOutputPatcher: ModuleOutputPatcher,
-                                      platform: PlatformLayout,
-                                      context: BuildContext,
-                                      copyFiles: Boolean): List<DistributionFileEntry> {
+suspend fun layoutPlatformDistribution(moduleOutputPatcher: ModuleOutputPatcher,
+                                       targetDirectory: Path,
+                                       platform: PlatformLayout,
+                                       context: BuildContext,
+                                       copyFiles: Boolean): List<DistributionFileEntry> {
   return spanBuilder("layout lib")
-    .setAttribute("path", context.paths.buildOutputDir.relativize(context.paths.distAllDir).toString())
+    .setAttribute("path", targetDirectory.toString())
     .useWithScope2 {
       layoutDistribution(layout = platform,
-                         targetDirectory = context.paths.distAllDir,
+                         targetDirectory = targetDirectory,
                          copyFiles = copyFiles,
-                         simplify = false,
                          moduleOutputPatcher = moduleOutputPatcher,
                          includedModules = platform.includedModules,
                          context = context).first
@@ -872,6 +881,7 @@ suspend fun layoutDistribution(layout: BaseLayout,
       spanBuilder("pack").setAttribute("outputDir", outputDir.toString()).useWithScope2 {
         JarPackager.pack(includedModules = includedModules,
                          outputDir = outputDir,
+                         isRootDir = layout is PlatformLayout,
                          layout = layout,
                          moduleOutputPatcher = moduleOutputPatcher,
                          dryRun = !copyFiles,
@@ -883,7 +893,7 @@ suspend fun layoutDistribution(layout: BaseLayout,
         (!layout.resourcePaths.isEmpty() || (layout is PluginLayout && !layout.resourceGenerators.isEmpty()))) {
       tasks.add(async {
         spanBuilder("pack additional resources").useWithScope2 {
-          layoutAdditionalResources(layout, context, targetDirectory)
+          layoutAdditionalResources(layout = layout, context = context, targetDirectory = targetDirectory)
           emptyList()
         }
       })
@@ -955,13 +965,6 @@ private suspend fun layoutAdditionalResources(layout: BaseLayout, context: Build
     spanBuilder("generate and pack resources").useWithScope2 {
       for (item in resourceGenerators) {
         item(targetDirectory, context)
-        //val resourceFile = item(targetDirectory, context) ?: continue
-        //if (Files.isRegularFile(resourceFile)) {
-        //  copyFileToDir(resourceFile, targetDirectory)
-        //}
-        //else {
-        //  copyDir(resourceFile, targetDirectory)
-        //}
       }
     }
   }

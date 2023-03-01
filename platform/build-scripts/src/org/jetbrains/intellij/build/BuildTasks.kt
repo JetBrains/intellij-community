@@ -63,7 +63,7 @@ interface BuildTasks {
   /**
    * Builds updater-full.jar artifact which includes 'intellij.platform.updater' module with all its dependencies
    */
-  fun buildFullUpdaterJar()
+  suspend fun buildFullUpdaterJar()
 
   suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
 }

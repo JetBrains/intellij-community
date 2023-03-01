@@ -1,13 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope2
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Path
 
@@ -18,6 +23,9 @@ interface BuildContext : CompilationContext {
   val proprietaryBuildTools: ProprietaryBuildTools
 
   val applicationInfo: ApplicationInfoProperties
+
+  val isMacCodeSignEnabled: Boolean
+    get() = !isStepSkipped(BuildOptions.MAC_SIGN_STEP) && proprietaryBuildTools.signTool.signNativeFileMode != SignNativeFileMode.DISABLED
 
   /**
    * Relative paths to files in distribution which should take 'executable' permissions.
@@ -91,17 +99,24 @@ interface BuildContext : CompilationContext {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
-  /**
-   * Execute a build step or skip it if {@code stepId} is included in {@link BuildOptions#buildStepsToSkip}
-   * @return {@code true} if the step was executed
-   */
-  fun executeStep(stepMessage: String, stepId: String, step: Runnable): Boolean
-
   fun shouldBuildDistributions(): Boolean
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
   fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
+}
+
+@Obsolete
+fun executeStepSync(context: BuildContext, stepMessage: String, stepId: String, step: Runnable): Boolean {
+  if (context.isStepSkipped(stepId)) {
+    Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
+  }
+  else {
+    spanBuilder(stepMessage).use {
+      step.run()
+    }
+  }
+  return true
 }
 
 suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend (Span) -> Unit) {

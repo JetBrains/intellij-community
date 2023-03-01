@@ -24,7 +24,10 @@ internal class BuildArtifactsReproducibilityTest {
   }
 
   fun configure(options: BuildOptions) {
-    if (!isEnabled) return
+    if (!isEnabled) {
+      return
+    }
+
     options.randomSeedNumber = randomSeedNumber
     options.buildStepsToSkip.remove(BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP)
     options.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES) // FIXME IDEA-311987 IDEA-310505

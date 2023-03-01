@@ -7,6 +7,7 @@ import com.intellij.util.io.write
 import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.lang.ImmutableZipFile
 import com.intellij.util.lang.ZipFile
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.configuration.ConfigurationProvider
 import org.jetbrains.intellij.build.tasks.DirSource
@@ -110,7 +111,7 @@ class ZipTest {
   }
 
   @Test
-  fun excludes(@TempDir tempDir: Path) {
+  fun excludes(@TempDir tempDir: Path) = runBlocking {
     val random = Random(42)
 
     val dir = Files.createDirectories(tempDir.resolve("dir"))
@@ -161,7 +162,7 @@ class ZipTest {
       }
 
       var found = ""
-      zipFile.processResources("some/nested/dir", Predicate { true }, BiConsumer { name, input ->
+      zipFile.processResources("some/nested/dir", Predicate { true }, BiConsumer { name, _ ->
         found = name
       })
       assertThat(found).isEqualTo("some/nested/dir/hello.txt")
@@ -177,7 +178,7 @@ class ZipTest {
   }
 
   @Test
-  fun excludesInZipSource(@TempDir tempDir: Path) {
+  fun excludesInZipSource(@TempDir tempDir: Path) = runBlocking {
     val random = Random(42)
 
     val dir = Files.createDirectories(tempDir.resolve("zip"))
@@ -199,7 +200,7 @@ class ZipTest {
   }
 
   @Test
-  fun skipIndex(@TempDir tempDir: Path) {
+  fun skipIndex(@TempDir tempDir: Path) = runBlocking {
     val dir = Files.createDirectories(tempDir.resolve("dir"))
     Files.writeString(dir.resolve("file1"), "1")
     Files.writeString(dir.resolve("file2"), "2")

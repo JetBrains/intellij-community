@@ -18,7 +18,6 @@ import java.nio.file.attribute.PosixFilePermissions
 import java.util.*
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
-import kotlin.io.path.moveTo
 import kotlin.io.path.name
 import kotlin.time.Duration.Companion.hours
 
@@ -37,11 +36,18 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
                                      suffix: String,
                                      arch: JvmArchitecture,
                                      notarize: Boolean) {
-  require(macZip.exists())
+  require(Files.isRegularFile(macZip))
+
   val targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
   val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
-  macZip.moveTo(sitFile, overwrite = true)
-  signMacBinaries(context, listOf(sitFile))
+  Files.move(macZip, sitFile, StandardCopyOption.REPLACE_EXISTING)
+
+  if (context.isMacCodeSignEnabled) {
+    context.proprietaryBuildTools.signTool.signFiles(files = listOf(sitFile),
+                                                     context = context,
+                                                     options = signingOptions("application/x-mac-app-zip", context))
+  }
+
   val useNotaryRestApi = useNotaryRestApi()
   val useNotaryXcodeApi = notarize && !useNotaryRestApi
   if (notarize && useNotaryRestApi) {
@@ -59,7 +65,7 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
     )
   }
   else {
-    buildLocally(sitFile, targetName, notarize = useNotaryXcodeApi, customizer, context)
+    buildLocally(sitFile = sitFile, targetName = targetName, notarize = useNotaryXcodeApi, customizer = customizer, context = context)
   }
   check(Files.exists(sitFile)) {
     "$sitFile wasn't created"
@@ -143,11 +149,12 @@ private suspend fun notarizeSitLocally(sitFile: Path,
                                        tempDir: Path,
                                        customizer: MacDistributionCustomizer,
                                        context: BuildContext) {
-  context.executeStep(spanBuilder("Notarizing .sit locally").setAttribute("sitFile", "$sitFile"), BuildOptions.MAC_NOTARIZE_STEP) {
+  context.executeStep(spanBuilder("notarizing .sit locally").setAttribute("sitFile", "$sitFile"), BuildOptions.MAC_NOTARIZE_STEP) { span ->
     if (!SystemInfoRt.isMac) {
-      it.addEvent(".sit can be notarized only on macOS")
+      span.addEvent(".sit can be notarized only on macOS")
       return@executeStep
     }
+
     val targetFile = tempDir.resolve(sitFile.fileName)
     Files.copy(sitFile, targetFile)
     val scripts = context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts")
