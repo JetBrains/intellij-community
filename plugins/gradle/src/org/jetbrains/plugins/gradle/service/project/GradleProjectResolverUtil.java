@@ -23,10 +23,10 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
+import kotlin.Suppress;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.idea.IdeaModule;
-import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -126,7 +126,6 @@ public final class GradleProjectResolverUtil {
 
     boolean useIncludedBuildPathPrefix = isFromIncludedBuild && isIncludedBuildTaskRunningSupported;
     String compositeBuildGradlePath = useIncludedBuildPathPrefix ? ":" + getRootProject(gradleProject).getName() : "";
-    GradleModuleDataKt.setCompositeBuildGradlePath(moduleData, compositeBuildGradlePath);
     GradleModuleDataKt.setIncludedBuild(moduleData, isFromIncludedBuild);
 
     String directoryToRunTask;
@@ -315,15 +314,16 @@ public final class GradleProjectResolverUtil {
   }
 
   /**
-   * @deprecated Use getGradleIdentityPath instead
+   * @deprecated Use getGradleIdentityPathOrNull instead
    */
   @Deprecated
   @Nullable
   public static String getGradlePath(final Module module) {
-    return getGradleIdentityPath(module);
+    return getGradleIdentityPathOrNull(module);
   }
 
-  public static String getGradleIdentityPath(final Module module) {
+  @Nullable
+  public static String getGradleIdentityPathOrNull(final Module module) {
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
     final String externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module);
     if (externalProjectId == null) return null;
@@ -341,22 +341,6 @@ public final class GradleProjectResolverUtil {
     return join.isEmpty() ? ":" : ":" + join;
   }
 
-  /**
-   * @deprecated Consider using .getGradleIdentityPath instead, as the 'gradlePath' mostly is not helpful from a tooling perspective.
-   */
-  @Deprecated
-  @NotNull
-  public static String getGradlePath(@NotNull ModuleData moduleData) {
-    return GradleModuleDataKt.getGradlePath(moduleData);
-  }
-
-  /**
-   * @see  GradleModuleDataKt#getGradleIdentityPath(ModuleData)
-   */
-  @NotNull
-  public static String getGradleIdentityPath(@NotNull ModuleData moduleData) {
-    return GradleModuleDataKt.getGradleIdentityPath(moduleData);
-  }
 
   @NotNull
   public static DependencyScope getDependencyScope(@Nullable String scope) {

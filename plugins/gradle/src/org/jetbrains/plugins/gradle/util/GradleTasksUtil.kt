@@ -14,7 +14,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 /**
@@ -95,8 +94,7 @@ private fun findGradleTasks(project: Project): List<ProjectTaskData> {
 private fun getModuleTasks(moduleNode: DataNode<ModuleData>): ModuleTaskData {
   val moduleData = moduleNode.data
   val externalModulePath = moduleData.linkedExternalProjectPath
-  val gradlePath = GradleProjectResolverUtil.getGradleIdentityPath(moduleData)
-    .removeSuffix(":")
+  val gradlePath = moduleData.gradleIdentityPath.removeSuffix(":")
   val tasks = ExternalSystemApiUtil.getChildren(moduleNode, ProjectKeys.TASK)
     .filter { it.data.name.isNotEmpty() }
 
