@@ -28,7 +28,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     @JvmStatic
     fun getInstance(): ToolWindowDefaultLayoutManager = service()
 
-    const val DEFAULT_LAYOUT_NAME = "Custom"
+    private const val INITIAL_LAYOUT_NAME = "Custom"
   }
 
   @Volatile
@@ -75,7 +75,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   override fun noStateLoaded() {
     if (!isNewUi) {
       (WindowManager.getInstance() as? WindowManagerImpl)?.oldLayout?.let {
-        setLayout(DEFAULT_LAYOUT_NAME, it)
+        setLayout(INITIAL_LAYOUT_NAME, it)
         return
       }
     }
@@ -85,12 +85,12 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   private fun loadDefaultLayout(isNewUi: Boolean) {
     val provider = service<DefaultToolWindowLayoutProvider>()
     val list = if (isNewUi) provider.createV2Layout() else provider.createV1Layout()
-    state = state.withUpdatedLayout(DEFAULT_LAYOUT_NAME, list, isNewUi)
+    state = state.withUpdatedLayout(INITIAL_LAYOUT_NAME, list, isNewUi)
   }
 
   override fun loadState(state: ToolWindowLayoutStorageManagerState) {
     val newState = if (state.layouts.isEmpty() && (state.v1.isNotEmpty() || state.v2.isNotEmpty())) { // migrating from 2022.3
-      ToolWindowLayoutStorageManagerState(layouts = mapOf(DEFAULT_LAYOUT_NAME to LayoutDescriptor(v1 = state.v1, v2 = state.v2)))
+      ToolWindowLayoutStorageManagerState(layouts = mapOf(INITIAL_LAYOUT_NAME to LayoutDescriptor(v1 = state.v1, v2 = state.v2)))
     }
     else {
       state
@@ -115,7 +115,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   @Serializable
   data class ToolWindowLayoutStorageManagerState(
-    val activeLayoutName: String = DEFAULT_LAYOUT_NAME,
+    val activeLayoutName: String = INITIAL_LAYOUT_NAME,
     val layouts: Map<String, LayoutDescriptor> = emptyMap(),
     val v1: List<ToolWindowDescriptor> = emptyList(),
     val v2: List<ToolWindowDescriptor> = emptyList(),

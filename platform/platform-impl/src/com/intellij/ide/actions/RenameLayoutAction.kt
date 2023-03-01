@@ -17,13 +17,9 @@ class RenameLayoutAction(private val layoutName: String) : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.text = ActionsBundle.message("action.CustomLayoutActionsGroup.Rename.text")
-    e.presentation.description = if (layoutName == ToolWindowDefaultLayoutManager.DEFAULT_LAYOUT_NAME)
-      ActionsBundle.message("action.CustomLayoutActionsGroup.Rename.custom.description")
-    else
-      ActionsBundle.message("action.CustomLayoutActionsGroup.Rename.description", layoutName)
+    e.presentation.description = ActionsBundle.message("action.CustomLayoutActionsGroup.Rename.description", layoutName)
     e.presentation.isEnabled =
       e.project != null &&
-      layoutName != ToolWindowDefaultLayoutManager.DEFAULT_LAYOUT_NAME &&
       layoutName in manager.getLayoutNames()
   }
 
