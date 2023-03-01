@@ -242,17 +242,13 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testDuplicatedWithDeclinedChangeSignature(){
-    runAndRevertSettings {
-      DuplicatesMethodExtractor.changeSignatureDefault = false
-      doTest()
-    }
+    DuplicatesMethodExtractor.changeSignatureDefault = false
+    doTest()
   }
 
   fun testDuplicatedButDeclined(){
-    runAndRevertSettings {
-      DuplicatesMethodExtractor.replaceDuplicatesDefault = false
-      doTest()
-    }
+    DuplicatesMethodExtractor.replaceDuplicatesDefault = false
+    doTest()
   }
 
   fun testTemplateRenamesInsertedCallOnly(){
@@ -283,10 +279,8 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testMakeStaticWithThis(){
-    runAndRevertSettings {
-      JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
-      doTest()
-    }
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    doTest()
   }
 
   fun testMakeStaticWithQualifiedThis(){
@@ -295,10 +289,8 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testMakeStaticWithStaticMembers(){
-    runAndRevertSettings {
-      JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
-      doTest()
-    }
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    doTest()
   }
 
   fun testMakeStaticWithLocalMethod(){
@@ -307,10 +299,8 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testFoldedParametersInExactDuplicates(){
-    runAndRevertSettings {
-      DuplicatesMethodExtractor.changeSignatureDefault = false
-      doTest()
-    }
+    DuplicatesMethodExtractor.changeSignatureDefault = false
+    doTest()
   }
 
   fun testIntroduceSimpleObject(){
@@ -340,17 +330,13 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testMakeStaticFailsWithClassUsage(){
-    runAndRevertSettings {
-      JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
-      doTest()
-    }
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    doTest()
   }
 
   fun testMakeStaticWithClassUsage(){
-    runAndRevertSettings {
-      JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
-      doTest()
-    }
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = true
+    doTest()
   }
 
   fun testIntroduceObjectConflictInsideNestedClass(){
@@ -426,10 +412,8 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   }
 
   fun testExtractStaticDuplicateFromNonStaticContext(){
-    runAndRevertSettings {
-      JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = false
-      doTest()
-    }
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = false
+    doTest()
   }
 
   fun testRefactoringListener(){
@@ -473,16 +457,14 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     } while (isVariableSwitched)
   }
 
-  private inline fun runAndRevertSettings(action: () -> Unit) {
+  override fun setUp() {
+    super.setUp()
     val settings = JavaRefactoringSettings.getInstance()
     val defaultStatic = settings.EXTRACT_STATIC_METHOD
     val defaultPassFields = settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS
     val defaultChangeSignature = DuplicatesMethodExtractor.changeSignatureDefault
     val defaultReplaceDuplicates = DuplicatesMethodExtractor.replaceDuplicatesDefault
-    try {
-      action.invoke()
-    }
-    finally {
+    Disposer.register(testRootDisposable) {
       settings.EXTRACT_STATIC_METHOD = defaultStatic
       settings.EXTRACT_STATIC_METHOD_AND_PASS_FIELDS = defaultPassFields
       DuplicatesMethodExtractor.changeSignatureDefault = defaultChangeSignature
