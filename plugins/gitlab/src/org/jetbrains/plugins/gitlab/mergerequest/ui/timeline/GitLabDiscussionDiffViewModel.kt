@@ -15,11 +15,12 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 
 interface GitLabDiscussionDiffViewModel {
-  val position: GitLabNoteDTO.Position
+  val position: GitLabDiscussionPosition.Text
   val patchHunk: Flow<PatchHunkLoadingState>
 
   sealed interface PatchHunkLoadingState {
@@ -35,7 +36,7 @@ private val LOG = logger<GitLabDiscussionDiffViewModel>()
 class GitLabDiscussionDiffViewModelImpl(
   parentCs: CoroutineScope,
   mr: GitLabMergeRequest,
-  override val position: GitLabNoteDTO.Position
+  override val position: GitLabDiscussionPosition.Text
 ) : GitLabDiscussionDiffViewModel {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })

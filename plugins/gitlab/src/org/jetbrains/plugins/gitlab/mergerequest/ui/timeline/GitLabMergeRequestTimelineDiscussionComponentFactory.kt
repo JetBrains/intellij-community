@@ -124,17 +124,16 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       wrapWithLimitedSize(it, CodeReviewChatItemUIUtil.TEXT_CONTENT_WIDTH)
     }
 
-    val diffPanel = createDiffPanel(project, cs, vm)
+    val diffPanelFlow = vm.diffVm.mapLatest { diffVm ->
+      diffVm?.let { createDiffPanel(project, cs, vm, it) }
+    }
 
     val contentPanel = VerticalListPanel().apply {
       add(repliesActionsPanel)
     }
 
-    if (diffPanel == null) {
-      contentPanel.add(textContentPanel, null, 0)
-    }
-    else {
-      contentPanel.bindChildIn(cs, vm.collapsed, index = 0) { _, collapsed ->
+    contentPanel.bindChildIn(cs, combine(vm.collapsed, diffPanelFlow, ::Pair), index = 0) { _, (collapsed, diffPanel) ->
+      if (diffPanel != null) {
         VerticalListPanel(4).apply {
           if (collapsed) {
             add(textContentPanel)
@@ -146,14 +145,18 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
           }
         }
       }
+      else {
+        textContentPanel
+      }
     }
+
     return contentPanel
   }
 
   private fun createDiffPanel(project: Project,
                               cs: CoroutineScope,
-                              vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent? {
-    val diffVm = vm.diffVm ?: return null
+                              vm: GitLabMergeRequestTimelineDiscussionViewModel,
+                              diffVm: GitLabDiscussionDiffViewModel): JComponent {
     return TimelineDiffComponentFactory.createDiffWithHeader(cs, vm, diffVm.position.filePath, {}) {
       Wrapper().apply {
         bindContentIn(it, diffVm.patchHunk) { _, hunkState ->

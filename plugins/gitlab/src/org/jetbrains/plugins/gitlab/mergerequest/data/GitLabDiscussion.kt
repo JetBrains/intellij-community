@@ -26,7 +26,7 @@ interface GitLabDiscussion {
   val notes: Flow<List<GitLabNote>>
   val canAddNotes: Boolean
 
-  val position: GitLabNoteDTO.Position?
+  val position: Flow<GitLabDiscussionPosition?>
 
   val canResolve: Boolean
   val resolved: Flow<Boolean>
@@ -95,7 +95,15 @@ class LoadedGitLabDiscussion(
 
   override val canAddNotes: Boolean = mr.userPermissions.createNote
 
-  override val position: GitLabNoteDTO.Position? = discussionData.notes.first().position?.takeIf { it.positionType == "text" }
+  override val position: Flow<GitLabDiscussionPosition?> =
+    loadedNotes.map { note ->
+      note.first().position?.let {
+        when (it.positionType) {
+          "text" -> GitLabDiscussionPosition.Text(it.diffRefs, it.filePath, it.newPath, it.newLine, it.oldPath, it.oldLine)
+          else -> GitLabDiscussionPosition.Image(it.diffRefs, it.filePath)
+        }
+      }
+    }
 
   // a little cheat that greatly simplifies the implementation
   override val canResolve: Boolean = discussionData.notes.first().let { it.resolvable && it.userPermissions.resolveNote }

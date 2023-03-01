@@ -11,6 +11,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.ui.comment.*
@@ -21,7 +22,7 @@ interface GitLabMergeRequestTimelineDiscussionViewModel : CollapsibleTimelineIte
   val date: Date
   val author: Flow<GitLabUserDTO>
 
-  val diffVm: GitLabDiscussionDiffViewModel?
+  val diffVm: Flow<GitLabDiscussionDiffViewModel?>
 
   val mainNote: Flow<GitLabNoteViewModel>
   val replies: Flow<List<GitLabNoteViewModel>>
@@ -80,8 +81,10 @@ class GitLabMergeRequestTimelineDiscussionViewModelImpl(
   override val replyVm: GitLabDiscussionReplyViewModel? =
     if (discussion.canAddNotes) GitLabDiscussionReplyViewModelImpl(cs, currentUser, discussion) else null
 
-  override val diffVm: GitLabDiscussionDiffViewModel? =
-    discussion.position?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) }
+  override val diffVm: Flow<GitLabDiscussionDiffViewModel?> =
+    discussion.position.map { pos ->
+      (pos as? GitLabDiscussionPosition.Text)?.let { GitLabDiscussionDiffViewModelImpl(cs, mr, it) }
+    }
 
   init {
     val resolvedFlow = resolveVm?.resolved
