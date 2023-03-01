@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
   Propose to cast one argument to corresponding type
@@ -31,6 +31,20 @@ public final class ConstructorParametersFixer {
     }
     CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, constructorCall, builder, fixRange);
     AddTypeArgumentsFix.REGISTRAR.registerCastActions(candidates, constructorCall, builder, fixRange);
+    WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, constructorCall, builder, fixRange);
+    WrapWithAdapterMethodCallFix.registerCastActions(candidates, constructorCall, builder, fixRange);
+  }
+
+  public static void registerEnumConstantFixActions(@NotNull PsiClass aClass,
+                                                    @NotNull PsiConstructorCall constructorCall,
+                                                    @NotNull HighlightInfo.Builder builder,
+                                                    @NotNull TextRange fixRange) {
+    PsiMethod[] methods = aClass.getConstructors();
+    CandidateInfo[] candidates = new CandidateInfo[methods.length];
+    for (int i = 0; i < candidates.length; i++) {
+      candidates[i] = new CandidateInfo(methods[i], PsiSubstitutor.EMPTY);
+    }
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, constructorCall, builder, fixRange);
     WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, constructorCall, builder, fixRange);
     WrapWithAdapterMethodCallFix.registerCastActions(candidates, constructorCall, builder, fixRange);
   }
