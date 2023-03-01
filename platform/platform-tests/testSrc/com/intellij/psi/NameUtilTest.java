@@ -2,11 +2,13 @@
 package com.intellij.psi;
 
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.util.text.NameUtilCore;
 import org.junit.Test;
 
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class NameUtilTest {
   @Test
@@ -42,6 +44,12 @@ public class NameUtilTest {
   @Test
   public void testSplitIntoWordsCN() {
     assertSplitEquals(new String[]{"测", "试", "打", "补", "丁"}, "测试打补丁");
+  }
+  
+  @Test
+  public void testIsWordStart() {
+    assertTrue(NameUtilCore.isWordStart("测试打补丁", 0));
+    assertTrue(NameUtilCore.isWordStart("测试打补丁", 2));
   }
 
   private static void assertSplitEquals(String[] expected, String name) {
