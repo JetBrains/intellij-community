@@ -480,6 +480,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       width += column.getWidth();
     }
 
+    // see also com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener.tryGetTag
     if (ExperimentalUI.isNewUI()) {
       boolean isLeftColumn = columnIndex == VcsLogNewUiTableCellRenderer.ROOT_COLUMN_INDEX + 1;
       if (isLeftColumn) {
