@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
@@ -16,13 +15,9 @@ public class ReplaceInPathAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    if (project == null) return;
 
     ReplaceInProjectManager replaceManager = ReplaceInProjectManager.getInstance(project);
-    if (!replaceManager.isEnabled()) {
-      FindInPathAction.showNotAvailableMessage(e, project);
-      return;
-    }
-
     replaceManager.replaceInProject(dataContext, null);
   }
 
