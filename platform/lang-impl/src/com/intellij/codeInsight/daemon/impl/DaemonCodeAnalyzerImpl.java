@@ -916,6 +916,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           project.isDefault() ||
           !project.isInitialized() ||
           project.isDisposed() ||
+          PowerSaveMode.isEnabled() ||
           LightEdit.owns(project) ||
           (dca = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).myDisposed) {
         return;

@@ -260,7 +260,7 @@ public final class DaemonListeners implements Disposable {
       }
     });
 
-    connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemonAndRestartAllFiles("Power save mode changed to "+PowerSaveMode.isEnabled()));
+    connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemonAndRestartAllFiles("Power save mode changed to " + PowerSaveMode.isEnabled()));
     connection.subscribe(EditorColorsManager.TOPIC, __ -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
     connection.subscribe(CommandListener.TOPIC, new MyCommandListener());
     connection.subscribe(ProfileChangeAdapter.TOPIC, new MyProfileChangeListener());
