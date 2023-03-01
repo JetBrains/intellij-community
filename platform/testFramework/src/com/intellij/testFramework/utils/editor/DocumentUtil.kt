@@ -6,16 +6,19 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 
 
 /**
  * @see com.intellij.openapi.fileEditor.FileDocumentManager.getFile
  */
+@RequiresReadLock
 fun Document.findVirtualFile(): VirtualFile? {
   return FileDocumentManager.getInstance().getFile(this)
 }
 
+@RequiresReadLock
 fun Document.getVirtualFile(): VirtualFile {
   return checkNotNull(findVirtualFile()) {
     "Cannot find virtual file for $this"
