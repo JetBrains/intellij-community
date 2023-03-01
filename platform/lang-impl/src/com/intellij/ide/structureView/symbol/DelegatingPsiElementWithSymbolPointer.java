@@ -45,6 +45,10 @@ public class DelegatingPsiElementWithSymbolPointer implements PsiElement, Synthe
     mySymbolPointer = symbolPointer;
   }
 
+  public @NotNull PsiElement getDelegate() {
+    return myDeclarationElement;
+  }
+
   @Override
   @Contract(pure = true)
   @NotNull
