@@ -546,7 +546,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "IDEtalk.SearchUserHistory", "IDEtalk.Rename", "CIDR.Lang.Cpp.GenerateDefinitions", "ActivateErrorsInSolutionToolWindow",
     "ActivateUnitTestsToolWindow", "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow",
     "RiderBackendAction-EncapsulateField", "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction", "RebuildSolutionAction",
-    "ActivateInspectionResultsToolWindow", ""
+    "ActivateInspectionResultsToolWindow", "", "ValidateXml"
   );
 
   private static final Set<String> DEFAULT_BOUND_ACTIONS = Set.of(

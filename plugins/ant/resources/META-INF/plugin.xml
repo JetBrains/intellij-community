@@ -98,11 +98,11 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant</b>.
       <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>
     </group>
     <action id="AddAntBuildFile" class="com.intellij.lang.ant.config.actions.AddAntBuildFile" icon="AntIcons.Build">
-      <add-to-group group-id="ToolsXmlGroup" relative-to-action="GenerateDTD" anchor="before"/>
+      <add-to-group group-id="ToolsXmlGroup"/>
       <add-to-group group-id="EditorPopupMenu" relative-to-action="PackageFile" anchor="after"/>
-      <add-to-group group-id="ProjectViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
-      <add-to-group group-id="ScopeViewPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
-      <add-to-group group-id="CommanderPopupMenu" relative-to-action="ValidateXml" anchor="after"/>
+      <add-to-group group-id="ProjectViewPopupMenu"/>
+      <add-to-group group-id="ScopeViewPopupMenu"/>
+      <add-to-group group-id="CommanderPopupMenu"/>
     </action>
     <action id="RunTargetAction" class="com.intellij.lang.ant.config.actions.RunTargetAction">
       <add-to-group group-id="BuildMenu" relative-to-action="BuildJar" anchor="before"/>

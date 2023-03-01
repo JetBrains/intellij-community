@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.xml.actions.xmlbeans.GenerateSchemaFromInstanceDocumentDialog">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.xml.tools.GenerateSchemaFromInstanceDocumentDialog">
   <grid id="fece0" binding="panel" layout-manager="GridLayoutManager" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="1" left="1" bottom="1" right="1"/>
     <constraints>
-      <xy x="282" y="178" width="645" height="153"/>
+      <xy x="282" y="178" width="645" height="201"/>
     </constraints>
     <properties/>
     <border type="none"/>

@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.xml.actions.validate;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.xml.tools;
 
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -12,9 +12,12 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.xml.actions.validate.StdErrorReporter;
+import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
+import com.intellij.xml.actions.validate.ValidateXmlHandler;
 import org.jetbrains.annotations.NotNull;
 
-public class ValidateXmlAction extends AnAction {
+final class ValidateXmlAction extends AnAction {
   private static final Key<String> runningValidationKey = Key.create("xml.running.validation.indicator");
 
   public ValidateXmlAction() {
