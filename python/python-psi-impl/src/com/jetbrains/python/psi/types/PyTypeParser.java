@@ -179,11 +179,11 @@ public final class PyTypeParser {
           final TextRange range = token.getRange();
           final ParseResult boundResult = value.getSecond();
           if (boundResult != null) {
-            final PyGenericType type1 = new PyGenericType(name, boundResult.getType());
+            final PyGenericType type1 = new PyTypeVarTypeImpl(name, boundResult.getType());
             final ParseResult result = new ParseResult(type1, range);
             return result.merge(boundResult).withType(type1);
           }
-          return new ParseResult(new PyGenericType(name, null), range);
+          return new ParseResult(new PyTypeVarTypeImpl(name, null), range);
         })
         .named("type-parameter");
 
