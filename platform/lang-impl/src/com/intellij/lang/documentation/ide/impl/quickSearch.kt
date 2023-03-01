@@ -91,7 +91,7 @@ private class HintUpdateSupplyPopupContext(
   private val hintUpdateSupply: HintUpdateSupply,
 ) : UpdatingPopupContext(project) {
 
-  override val closeOnClickOutside: Boolean get() = false
+  override val closeOnClickOutside: Boolean get() = true
 
   override fun setUpPopup(popup: AbstractPopup, popupUI: DocumentationPopupUI) {
     super.setUpPopup(popup, popupUI)
