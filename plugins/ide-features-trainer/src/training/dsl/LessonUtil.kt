@@ -9,6 +9,7 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.execution.ui.UIExperiment
 import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.DataManagerImpl
@@ -45,6 +46,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.content.Content
 import com.intellij.ui.tabs.impl.JBTabsImpl
@@ -423,6 +425,12 @@ fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = true, 
 
   task {
     highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", highlightInside, usePulsation)
+  }
+  task {
+    if (!ExperimentalUI.isNewUI() && !UIExperiment.isNewDebuggerUIEnabled()) {
+      highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint",
+                                 highlightInside, usePulsation, clearPreviousHighlights = false)
+    }
   }
 }
 
