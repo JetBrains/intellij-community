@@ -227,7 +227,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       diffBridge.filesTree = tree
       diffBridge.commitsTree = tree
       diffBridge.activeTree = GHPRDiffController.ActiveTree.FILES
-      tree?.showPullRequestProgress(uiDisposable, repository, dataProvider.reviewData, dataProvider.viewedStateData)
+      tree?.showPullRequestProgress(uiDisposable, repository, dataProvider.reviewData, dataProvider.viewedStateData, diffBridge)
     }.createWithUpdatesStripe(uiDisposable) { parent, model ->
       val getCustomData = { tree: ChangesTree, dataId: String ->
         if (GHPRActionKeys.PULL_REQUEST_FILES.`is`(dataId)) tree.getPullRequestFiles()
