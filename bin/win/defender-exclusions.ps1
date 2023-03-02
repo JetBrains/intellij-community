@@ -1,5 +1,5 @@
 <#
-   The script adds paths, given as parameters, to the Windows Defender folder exclusion list,
+   The script adds paths, given as parameters, to the Microsoft Defender folder exclusion list,
    unless they are already excluded.
 #>
 
