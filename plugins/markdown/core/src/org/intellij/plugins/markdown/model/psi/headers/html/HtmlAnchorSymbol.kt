@@ -13,6 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiFileRange
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
 import org.intellij.plugins.markdown.MarkdownIcons
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import org.intellij.plugins.markdown.model.psi.MarkdownSourceNavigationTarget
@@ -43,6 +45,9 @@ data class HtmlAnchorSymbol(
     val base = SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(file, range)
     return HtmlHeaderSymbolPointer(base, anchorText)
   }
+
+  override val maximalSearchScope: SearchScope
+    get() = GlobalSearchScope.allScope(file.project)
 
   override val text: String
     get() = anchorText

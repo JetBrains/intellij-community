@@ -26,29 +26,31 @@ internal class MarkdownHtmlAnchorPsiReferenceSearcher: PsiSymbolReferenceSearche
     return listOf(request)
   }
 
-  private fun buildSearchRequest(project: Project, symbol: HtmlAnchorSymbol, searchScope: SearchScope): Query<out PsiSymbolReference> {
-    val symbolPointer = symbol.createPointer()
-    return SearchService.getInstance()
-      .searchWord(project, symbol.searchText)
-      .caseSensitive(false)
-      .inContexts(SearchContext.IN_CODE_HOSTS, SearchContext.IN_CODE, SearchContext.IN_PLAIN_TEXT, SearchContext.IN_STRINGS)
-      .inScope(searchScope)
-      .buildQuery(LeafOccurrenceMapper.withPointer(symbolPointer, ::findReferences))
-  }
-
-  private fun findReferences(symbol: Symbol, occurrence: LeafOccurrence): Collection<PsiSymbolReference> {
-    val service = service<PsiSymbolReferenceService>()
-    val (scope, psiElement, offset) = occurrence
-    val elements = walkUp(psiElement, offset, scope).asSequence().filter { (element, _) -> element is PsiExternalReferenceHost }
-    for ((element, offsetInElement) in elements) {
-      val allFoundReferences = service.getReferences(element, PsiSymbolReferenceHints.offsetHint(offsetInElement)).asSequence()
-      val foundReferences = allFoundReferences.filterIsInstance<HeaderAnchorLinkDestinationReference>()
-      val relevantReferences = foundReferences.filter { it.rangeInElement.containsOffset(offsetInElement) }
-      val resolvedReferences = relevantReferences.filter { it.resolvesTo(symbol) }
-      if (resolvedReferences.any()) {
-        return resolvedReferences.toList()
-      }
+  companion object {
+    fun buildSearchRequest(project: Project, symbol: HtmlAnchorSymbol, searchScope: SearchScope): Query<out PsiSymbolReference> {
+      val symbolPointer = symbol.createPointer()
+      return SearchService.getInstance()
+        .searchWord(project, symbol.searchText)
+        .caseSensitive(false)
+        .inContexts(SearchContext.IN_CODE_HOSTS, SearchContext.IN_CODE, SearchContext.IN_PLAIN_TEXT, SearchContext.IN_STRINGS)
+        .inScope(searchScope)
+        .buildQuery(LeafOccurrenceMapper.withPointer(symbolPointer, ::findReferences))
     }
-    return emptyList()
+
+    private fun findReferences(symbol: Symbol, occurrence: LeafOccurrence): Collection<PsiSymbolReference> {
+      val service = service<PsiSymbolReferenceService>()
+      val (scope, psiElement, offset) = occurrence
+      val elements = walkUp(psiElement, offset, scope).asSequence().filter { (element, _) -> element is PsiExternalReferenceHost }
+      for ((element, offsetInElement) in elements) {
+        val allFoundReferences = service.getReferences(element, PsiSymbolReferenceHints.offsetHint(offsetInElement)).asSequence()
+        val foundReferences = allFoundReferences.filterIsInstance<HeaderAnchorLinkDestinationReference>()
+        val relevantReferences = foundReferences.filter { it.rangeInElement.containsOffset(offsetInElement) }
+        val resolvedReferences = relevantReferences.filter { it.resolvesTo(symbol) }
+        if (resolvedReferences.any()) {
+          return resolvedReferences.toList()
+        }
+      }
+      return emptyList()
+    }
   }
 }

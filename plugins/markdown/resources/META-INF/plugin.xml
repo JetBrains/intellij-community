@@ -254,6 +254,12 @@
               implementationClass="org.intellij.plugins.markdown.model.psi.headers.html.MarkdownHtmlAnchorPsiReferenceSearcher"/>
 
     <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
+              implementationClass="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorRenameUsageSearcher"/>
+
+    <vetoRenameCondition implementation="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorVetoRenameCondition"/>
+    <rename.symbolRenameTargetFactory implementation="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorSymbolRenameTargetFactory"/>
+
+    <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"
               implementationClass="org.intellij.plugins.markdown.model.psi.headers.HeaderRenameUsageSearcher"/>
     <psi.declarationProvider implementation="org.intellij.plugins.markdown.model.psi.headers.HeaderSymbolDeclarationProvider"/>
     <psi.declarationProvider implementation="org.intellij.plugins.markdown.model.psi.headers.html.HtmlAnchorSymbolDeclarationProvider"/>

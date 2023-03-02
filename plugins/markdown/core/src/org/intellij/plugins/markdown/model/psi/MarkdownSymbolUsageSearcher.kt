@@ -12,14 +12,12 @@ import com.intellij.model.search.LeafOccurrence
 import com.intellij.model.search.LeafOccurrenceMapper
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.walkUp
-import com.intellij.util.AbstractQuery
-import com.intellij.util.Processor
 import com.intellij.util.Query
+import org.intellij.plugins.markdown.model.psi.headers.MarkdownDirectUsageQuery
 import org.intellij.plugins.markdown.model.psi.headers.html.findInjectedHtmlFile
 
 internal class MarkdownSymbolUsageSearcher: UsageSearcher {
@@ -35,7 +33,7 @@ internal class MarkdownSymbolUsageSearcher: UsageSearcher {
     private fun buildSearchRequests(project: Project, searchScope: SearchScope, target: MarkdownSymbolWithUsages): Collection<Query<out Usage>> {
       val searchText = target.searchText.takeIf { it.isNotEmpty() } ?: return emptyList()
       val usages = buildSearchRequest(project, target, searchText, searchScope)
-      val selfUsage = buildDirectTargetQuery(createSelfUsage(target))
+      val selfUsage = MarkdownDirectUsageQuery(createSelfUsage(target))
       return listOf(usages, selfUsage)
     }
 
@@ -57,21 +55,6 @@ internal class MarkdownSymbolUsageSearcher: UsageSearcher {
         .inScope(searchScope)
         .buildQuery(LeafOccurrenceMapper.withPointer(symbolPointer, Companion::findReferencesToSymbol))
         .mapping { MarkdownPsiUsage.create(it) }
-    }
-
-    /**
-     * Creates a query directly resolving to [usage].
-     */
-    fun buildDirectTargetQuery(usage: PsiUsage): Query<PsiUsage> {
-      return MarkdownDirectUsageQuery(usage)
-    }
-
-    private class MarkdownDirectUsageQuery(private val usage: PsiUsage): AbstractQuery<PsiUsage>() {
-      override fun processResults(consumer: Processor<in PsiUsage>): Boolean {
-        return runReadAction {
-          consumer.process(usage)
-        }
-      }
     }
 
     private fun findReferencesToSymbol(symbol: MarkdownSymbol, leafOccurrence: LeafOccurrence): Collection<MarkdownPsiSymbolReference> {

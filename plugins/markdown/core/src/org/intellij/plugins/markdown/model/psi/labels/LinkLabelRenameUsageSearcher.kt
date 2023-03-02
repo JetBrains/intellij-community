@@ -8,6 +8,7 @@ import com.intellij.refactoring.rename.api.*
 import com.intellij.util.Query
 import org.intellij.plugins.markdown.model.psi.MarkdownPsiUsage
 import org.intellij.plugins.markdown.model.psi.MarkdownSymbolUsageSearcher
+import org.intellij.plugins.markdown.model.psi.headers.MarkdownDirectUsageQuery
 
 internal class LinkLabelRenameUsageSearcher: RenameUsageSearcher {
   override fun collectSearchRequests(parameters: RenameUsageSearchParameters): Collection<Query<out RenameUsage>> {
@@ -17,7 +18,7 @@ internal class LinkLabelRenameUsageSearcher: RenameUsageSearcher {
     }
     val searchText = target.searchText.takeIf { it.isNotEmpty() } ?: return emptyList()
     val usages = MarkdownSymbolUsageSearcher.buildSearchRequest(parameters.project, target, searchText, parameters.searchScope)
-    val selfUsage = MarkdownSymbolUsageSearcher.buildDirectTargetQuery(MarkdownPsiUsage.create(target.file, target.range, declaration = true))
+    val selfUsage = MarkdownDirectUsageQuery(MarkdownPsiUsage.create(target.file, target.range, declaration = true))
     val modifiedUsages = usages.mapping { LinkLabelModifiableRenameUsage(it.file, it.range, declaration = false) }
     val modifiedSelfUsage = selfUsage.mapping { LinkLabelModifiableRenameUsage(it.file, it.range, declaration = true) }
     return listOf(modifiedUsages, modifiedSelfUsage)
