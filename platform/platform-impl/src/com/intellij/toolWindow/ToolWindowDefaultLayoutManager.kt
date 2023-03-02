@@ -28,7 +28,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     @JvmStatic
     fun getInstance(): ToolWindowDefaultLayoutManager = service()
 
-    private const val INITIAL_LAYOUT_NAME = "Custom"
+    const val INITIAL_LAYOUT_NAME = "Custom"
   }
 
   @Volatile
