@@ -82,13 +82,12 @@ class SmartModeScheduler(private val project: Project) : Disposable {
   private fun onStateChanged(updateState: () -> Unit) {
     updateState()
     if (isSmart()) {
-      if (ApplicationManager.getApplication().isDispatchThread) {
-        // Execute immediately only because some tests expect this behavior. No production need.
-        runAllWhileSmart()
-      }
-      else {
-        ApplicationManager.getApplication().invokeLater(this::runAllWhileSmart, ModalityState.NON_MODAL, project.disposed)
-      }
+      // Always reschedule execution to avoid unexpected write lock acquired.
+      // DumbModeListener and FilesScanningListener events are published synchronously. This means that if previous listener started
+      //   write action and tried to publish another event while in write action via synchronous publisher, we'll have unexpected
+      //   write lock acquired in our callback (because message bus first delivers us an event in the same thread with write lock acquired,
+      //   and then delivers other events published by previous publishers).
+      ApplicationManager.getApplication().invokeLater(this::runAllWhileSmart, ModalityState.NON_MODAL, project.disposed)
     }
   }
 
@@ -103,9 +102,10 @@ class SmartModeScheduler(private val project: Project) : Disposable {
   }
 
   private fun runAllWhileSmart() {
-    // we need write lock to make sure that dumb mode does not start while the method is in progress
-    // write lock is not enough to protect against switching to "almost smart": scanning can start at any moment (it does not need write lock)
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
+    // We need EDT or WriteLock to make sure that dumb mode does not start while the method is in progress (see DumbServiceImpl.updateFinished).
+    // Note that neither write lock nor EDT are enough to protect against switching to "almost smart": scanning can start at any moment 
+    //   (it does not need write lock nor EDT), so the code should be ready for scanning to start at any moment.
+    ApplicationManager.getApplication().assertIsDispatchThread()
 
     // It may happen that one of the pending runWhenSmart actions triggers new dumb mode;
     // in this case we should quit processing pending actions and postpone them until the newly started dumb mode finishes.
