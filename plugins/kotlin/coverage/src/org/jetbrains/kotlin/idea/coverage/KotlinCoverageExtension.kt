@@ -58,7 +58,7 @@ class KotlinCoverageExtension : JavaCoverageEngineExtension() {
         if (element !is KtFile) {
             return null
         }
-        LOG.info("Retrieving coverage for " + element.name)
+        LOG.debug("Retrieving coverage for " + element.name)
 
         val qualifiedNames = collectGeneratedClassQualifiedNames(element)
         return if (qualifiedNames.isNullOrEmpty()) null else totalCoverageForQualifiedNames(coverageAnnotator, qualifiedNames)
