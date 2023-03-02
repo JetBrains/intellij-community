@@ -264,8 +264,9 @@ classDiagramIdentifier ::= CLASS_ID {
 }
 
 classStatement ::= classHeader [classBlock]
-classHeader ::= CLASS classDiagramIdentifier [generic] [STYLE_SEPARATOR ID] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
+classHeader ::= CLASS classDiagramIdentifier [generic] [classLabel] [STYLE_SEPARATOR ID] { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierDeclarationHolder" }
 classBlock ::= OPEN_CURLY EOL* classMembers? CLOSE_CURLY { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+classLabel ::= OPEN_SQUARE maybeEmptyString CLOSE_SQUARE
 
 memberStatement ::= classDiagramIdentifier [generic] COLON memberAttribute { implements="com.intellij.mermaid.lang.psi.MermaidClassDiagramIdentifierHolder" }
 

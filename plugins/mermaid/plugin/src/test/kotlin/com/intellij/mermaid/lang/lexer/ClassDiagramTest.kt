@@ -214,4 +214,14 @@ class ClassDiagramTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test class labels`() {
+    val content = """
+    classDiagram
+      class Animal["Animal with a label"]
+      class Car["Car with *! symbols"]
+      Animal --> Car
+    """.trimIndent()
+    doTest(content)
+  }
 }

@@ -38,4 +38,6 @@ class ClassDiagramTest : MermaidParserTestCase("class") {
   fun `test notes`() = doTest(true)
 
   fun `test blocks are parsed without first newline`() = doTest(true)
+
+  fun `test class labels`() = doTest(true)
 }
