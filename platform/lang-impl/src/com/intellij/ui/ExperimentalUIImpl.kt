@@ -5,15 +5,17 @@ package com.intellij.ui
 
 import com.intellij.feedback.new_ui.state.NewUIInfoService
 import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
 
 /**
@@ -43,7 +45,17 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
     newValue = newUI
 
     if (newValue != isNewUI() && suggestRestart) {
-      ApplicationManager.getApplication().invokeLater({ RegistryBooleanOptionDescriptor.suggestRestart(null) }, ModalityState.current())
+      val action = if (ApplicationManager.getApplication().isRestartCapable) IdeBundle.message("ide.restart.action")
+                   else IdeBundle.message("ide.shutdown.action")
+      val result = Messages.showYesNoDialog(IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
+                                                              ApplicationNamesInfo.getInstance().fullProductName),
+                                            IdeBundle.message("dialog.title.restart.required"),
+                                            action,
+                                            IdeBundle.message("ide.notnow.action"),
+                                            Messages.getQuestionIcon())
+      if (result == Messages.YES) {
+        ApplicationManagerEx.getApplicationEx().restart(true);
+      }
     }
   }
 
