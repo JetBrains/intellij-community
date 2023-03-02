@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.breakpoints;
 import com.intellij.AppTopics;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -254,6 +255,7 @@ public final class XLineBreakpointManager {
           || ConsoleViewUtil.isConsoleViewEditor(editor)
           || !isFromMyProject(editor)
           || (editor.getSelectionModel().hasSelection() && myDragDetected)
+          || (ExperimentalUI.isNewUI() && !UISettings.getInstance().getShowBreakpointsOverLineNumbers() && e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA)
         ) {
         return;
       }

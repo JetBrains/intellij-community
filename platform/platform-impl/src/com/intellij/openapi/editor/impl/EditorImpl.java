@@ -4089,7 +4089,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // For example, we don't want to change the caret position
       // when the user sets a new breakpoint by clicking at the 'line markers' area.
       // Also, don't move the caret when the context menu for an inlay is invoked.
-      boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA && !ExperimentalUI.isNewUI()) ||
+      boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) ||
                           isInsideGutterWhitespaceArea(e) ||
                           eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
       if (moveCaret) {
@@ -4152,7 +4152,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       boolean isNavigation = oldStart == oldEnd && newStart == newEnd && oldStart != newStart;
       if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
-        if (ExperimentalUI.isNewUI()) {
+        if (ExperimentalUI.isNewUI() && UISettings.getInstance().getShowBreakpointsOverLineNumbers()) {
           //do nothing here and set/unset a breakpoint if possible in XLineBreakpointManager
           return false;
         }
