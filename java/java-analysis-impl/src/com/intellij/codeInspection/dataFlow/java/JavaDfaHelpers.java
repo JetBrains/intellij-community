@@ -51,7 +51,8 @@ public final class JavaDfaHelpers {
       TypeConstraint constraint = TypeConstraint.fromDfType(type);
       DfType arrayComponentType = constraint.getArrayComponentType();
       if (arrayComponentType == DfType.BOTTOM) {
-        return !(type instanceof DfPrimitiveType) && !constraint.isExact(CommonClassNames.JAVA_LANG_STRING);
+        return !(type instanceof DfPrimitiveType) && !constraint.isExact(CommonClassNames.JAVA_LANG_STRING) &&
+               !constraint.isExact(CommonClassNames.JAVA_LANG_CLASS);
       }
       type = arrayComponentType;
     }
