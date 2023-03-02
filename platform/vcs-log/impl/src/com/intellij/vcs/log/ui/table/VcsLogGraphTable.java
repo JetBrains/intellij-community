@@ -20,7 +20,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -81,12 +80,6 @@ import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
 public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
 
-  public static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
-  private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + 8;
-
-  private static final int NEW_UI_ROOT_INDICATOR_WIDTH = 10;
-
-  private static final int ROOT_NAME_MAX_WIDTH = 300;
   private static final int MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH = 300;
   private static final int MAX_ROWS_TO_CALC_WIDTH = 1000;
 
@@ -499,36 +492,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private void setRootColumnSize() {
     TableColumn column = getRootColumn();
-    int rootWidth;
 
-    TableCellRenderer component = column.getCellRenderer();
-    if (component instanceof RootCellRenderer rootCellRenderer) {
-      rootCellRenderer.updateInsets();
-    }
+    RootCellRenderer rootCellRenderer = (RootCellRenderer)column.getCellRenderer();
+    rootCellRenderer.updateInsets();
 
-    if (!myColorManager.hasMultiplePaths()) {
-      rootWidth = 0;
-    }
-    else if (!isShowRootNames()) {
-      rootWidth = JBUIScale.scale(ExperimentalUI.isNewUI() ? NEW_UI_ROOT_INDICATOR_WIDTH : ROOT_INDICATOR_WIDTH);
-    }
-    else {
-      int textWidth = 0;
-      for (FilePath file : myColorManager.getPaths()) {
-        Font tableFont = getTableFont();
-        textWidth = Math.max(getFontMetrics(tableFont).stringWidth(file.getName() + "  "), textWidth);
-      }
-
-      int insets = 0;
-
-      if (component instanceof SimpleColoredRenderer)  {
-        SimpleColoredComponent coloredComponent = (SimpleColoredComponent)component;
-        Insets componentInsets = coloredComponent.getMyBorder().getBorderInsets(coloredComponent);
-        insets = componentInsets.left + componentInsets.right;
-      }
-      rootWidth = Math.min(textWidth + insets, JBUIScale.scale(ROOT_NAME_MAX_WIDTH));
-    }
-
+    int rootWidth = rootCellRenderer.getPreferredWidth();
     // NB: all further instructions and their order are important, otherwise the minimum size which is less than 15 won't be applied
     column.setMinWidth(rootWidth);
     column.setMaxWidth(rootWidth);
