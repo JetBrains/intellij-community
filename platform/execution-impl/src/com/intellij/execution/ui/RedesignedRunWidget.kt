@@ -402,9 +402,10 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
         e.presentation.icon = adjustIconForHeader(icon)
       }
     }
-    if (e.project?.let { RunManager.getInstance(it) }?.selectedConfiguration?.name?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
+    val configurationName = e.project?.let { RunManager.getInstance(it) }?.selectedConfiguration?.name
+    if (configurationName?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
       e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description.long",
-                                                                   RunManager.getInstance(e.project!!).selectedConfiguration?.name ?: "boo"))
+                                                                   configurationName))
     }
     else {
       e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description"))
