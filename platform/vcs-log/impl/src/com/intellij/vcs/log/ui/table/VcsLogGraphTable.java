@@ -479,14 +479,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       if (column.getModelIndex() == modelIndex) break;
       width += column.getWidth();
     }
-
-    // see also com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener.tryGetTag
-    if (ExperimentalUI.isNewUI()) {
-      boolean isLeftColumn = columnIndex == VcsLogNewUiTableCellRenderer.ROOT_COLUMN_INDEX + 1;
-      if (isLeftColumn) {
-        width += JBUI.scale(VcsLogNewUiTableCellRenderer.getAdditionalGap());
-      }
-    }
+    width += ExperimentalUI.isNewUI() ? VcsLogNewUiTableCellRenderer.getAdditionalOffset(columnIndex) : 0;
     return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, getRowHeight()));
   }
 
