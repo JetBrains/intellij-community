@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.libraryUsage
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer.DaemonListener
@@ -91,7 +91,7 @@ internal class LibraryUsageStatisticsProvider(private val project: Project) : Da
     val isEnabled: Boolean
       get() {
         return isEnforceEnabledInTests || ApplicationManager.getApplication().run {
-          !isUnitTestMode && !isHeadlessEnvironment && StatisticsUploadAssistant.isSendAllowed()
+          !isUnitTestMode && !isHeadlessEnvironment && StatisticsUploadAssistant.isCollectAllowedOrForced()
         }
       }
   }
