@@ -12,7 +12,7 @@ version = "${context.version}"
 kotlin {
     android()
     jvm("desktop") {
-        jvmToolchain(17)
+        jvmToolchain(11)
     }
     sourceSets {
         val commonMain by getting {
