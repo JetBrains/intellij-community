@@ -29,8 +29,8 @@ class AssertCompletionCommand(text: String, line: Int) : PlaybackCommandCoroutin
     }
     if (commandArgs.isNotEmpty()) {
       val expected = commandArgs[0].toInt()
-      if (data.totalNumber < expected) {
-        throw IllegalStateException("Expected >= ${expected} completion variants, but got only ${data.totalNumber}")
+      if (data.totalNumber != expected) {
+        throw IllegalStateException("Expected ${expected} completion variants, but got ${data.totalNumber}")
       }
     }
   }
