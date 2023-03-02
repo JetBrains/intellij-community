@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Throwable2Computable;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
 import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRATEGY;
 
 public final class IndexDataGetter {
+  private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
   private final @NotNull Project myProject;
   private final @NotNull Map<VirtualFile, VcsLogProvider> myProviders;
   private final @NotNull VcsLogPersistentIndex.IndexStorage myIndexStorage;
@@ -421,12 +423,13 @@ public final class IndexDataGetter {
 
   private void processRuntimeException(@NotNull RuntimeException e) {
     if (e instanceof ProcessCanceledException) throw e;
-    myIndexStorage.markCorrupted();
+
     if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
+      myIndexStorage.markCorrupted();
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
     else {
-      VcsLogPersistentIndex.LOG.error("Vcs Log index storage is broken and is being recreated", e);
+      LOG.error("Unknown exception in Vcs Log index processing", e);
       throw new RuntimeException(e);
     }
   }

@@ -276,7 +276,7 @@ public final class VcsLogManager implements Disposable {
           ApplicationManager.getApplication().invokeLater(() -> myRecreateMainLogHandler.consume(source, throwable));
         }
         else {
-          LOG.error("Vcs Log index storage is broken and is being recreated", throwable);
+          LOG.error(source != null ? "Vcs Log exception from " + source : throwable.getMessage(), throwable);
         }
 
         if (source == Source.Storage) {
