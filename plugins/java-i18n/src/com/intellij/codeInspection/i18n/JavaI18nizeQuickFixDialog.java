@@ -204,15 +204,14 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
       myJavaCodeInfoPanel.setVisible(showResourceBundleTextField(templateName, myProject));
     }
 
-    final var state = ModalityState.stateForComponent(myHyperLinkPanel);
     ReadAction
       .nonBlocking(() -> JavaI18nUtil.suggestExpressionOfType(myResourceBundleType, myLiteralExpression.getSourcePsi()))
-      .finishOnUiThread(state == ModalityState.NON_MODAL ? ModalityState.any() : state, result -> {
-        if (result.isEmpty()) {
-          result.add(getResourceBundleText());
-          ContainerUtil.addIfNotNull(result, PropertiesComponent.getInstance(myProject).getValue(RESOURCE_BUNDLE_EXPRESSION_USED));
+      .finishOnUiThread(ModalityState.any(), suggestedBundles -> {
+        if (suggestedBundles.isEmpty()) {
+          suggestedBundles.add(getResourceBundleText());
+          ContainerUtil.addIfNotNull(suggestedBundles, PropertiesComponent.getInstance(myProject).getValue(RESOURCE_BUNDLE_EXPRESSION_USED));
         }
-        myRBEditorTextField.setHistory(ArrayUtilRt.toStringArray(result));
+        myRBEditorTextField.setHistory(ArrayUtilRt.toStringArray(suggestedBundles));
         myRBEditorTextField.setSelectedIndex(0);
       })
       .submit(PooledThreadExecutor.INSTANCE);
