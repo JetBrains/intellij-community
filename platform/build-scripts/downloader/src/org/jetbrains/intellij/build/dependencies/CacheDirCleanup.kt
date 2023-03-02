@@ -24,11 +24,11 @@ import java.util.logging.Logger
  * Older downloaded files will be marked for deletion, and then some of them will be used again.
  * Without the marking they would be removed and re-downloaded again, which we do not want.
  */
-class BuildDependenciesDownloaderCleanup(private val cacheDir: Path) {
+class CacheDirCleanup(private val cacheDir: Path) {
   companion object {
     const val LAST_CLEANUP_MARKER_FILE_NAME: String = ".last.cleanup.marker"
 
-    private val LOG = Logger.getLogger(BuildDependenciesDownloaderCleanup::class.java.name)
+    private val LOG = Logger.getLogger(CacheDirCleanup::class.java.name)
     private val MAXIMUM_ACCESS_TIME_AGE = Duration.ofDays(22)
     private val CLEANUP_EVERY_DURATION = Duration.ofDays(1)
     private const val MARKED_FOR_CLEANUP_SUFFIX = ".marked.for.cleanup"
@@ -38,24 +38,23 @@ class BuildDependenciesDownloaderCleanup(private val cacheDir: Path) {
 
   @Throws(IOException::class)
   fun runCleanupIfRequired(): Boolean {
-    if (!isTimeForCleanup) {
+    if (!isTimeForCleanup()) {
       return false
     }
 
     // update file timestamp mostly
     Files.writeString(lastCleanupMarkerFile, LocalDateTime.now().toString())
-    cleanupCachesDir()
+    cleanupCacheDir()
     return true
   }
 
-  private val isTimeForCleanup: Boolean
-    get() {
-      return Files.notExists(lastCleanupMarkerFile) ||
-             Files.getLastModifiedTime(lastCleanupMarkerFile).toMillis() < (System.currentTimeMillis() - CLEANUP_EVERY_DURATION.toMillis())
-    }
+  private fun isTimeForCleanup(): Boolean {
+    return Files.notExists(lastCleanupMarkerFile) ||
+           Files.getLastModifiedTime(lastCleanupMarkerFile).toMillis() < (System.currentTimeMillis() - CLEANUP_EVERY_DURATION.toMillis())
+  }
 
   @Throws(IOException::class)
-  private fun cleanupCachesDir() {
+  private fun cleanupCacheDir() {
     val cacheFiles = try {
       Files.newDirectoryStream(cacheDir).use { stream ->
         stream.filterTo(HashSet()) { it != lastCleanupMarkerFile }

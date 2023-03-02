@@ -273,7 +273,7 @@ options:${getExtractOptionsShortString(options)}
     }
     val cacheDir = getProjectLocalDownloadCache(communityRoot)
     try {
-      BuildDependenciesDownloaderCleanup(cacheDir).runCleanupIfRequired()
+      CacheDirCleanup(cacheDir).runCleanupIfRequired()
     }
     catch (t: Throwable) {
       val writer = StringWriter()
