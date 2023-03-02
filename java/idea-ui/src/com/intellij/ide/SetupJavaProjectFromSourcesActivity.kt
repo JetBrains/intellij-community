@@ -69,6 +69,10 @@ private class SetupJavaProjectFromSourcesActivity : ProjectActivity {
     withBackgroundProgress(project, title) {
       val importers = searchImporters(projectDir)
       if (!importers.isEmpty) {
+        withContext(Dispatchers.EDT) {
+          setCompilerOutputPath(project, "${projectDir.path}/out")
+        }
+                
         blockingContext {
           showNotificationToImport(project, projectDir, importers)
         }
