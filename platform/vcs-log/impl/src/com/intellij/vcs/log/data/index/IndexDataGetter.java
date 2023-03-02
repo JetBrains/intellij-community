@@ -426,6 +426,7 @@ public final class IndexDataGetter {
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
     else {
+      VcsLogPersistentIndex.LOG.error("Vcs Log index storage is broken and is being recreated", e);
       throw new RuntimeException(e);
     }
   }
