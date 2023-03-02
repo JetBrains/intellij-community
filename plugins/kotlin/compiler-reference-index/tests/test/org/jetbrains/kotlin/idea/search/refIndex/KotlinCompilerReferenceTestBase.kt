@@ -21,12 +21,13 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
     }
 
     protected open val isFir: Boolean get() = false
+    protected open val withK2Compiler: Boolean get() = isFir
 
     override fun setUp() {
         super.setUp()
         KotlinCompilerReferenceIndexService[project]
 
-        if (isFir) {
+        if (withK2Compiler) {
             project.enableK2Compiler()
         }
     }
