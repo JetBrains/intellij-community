@@ -70,5 +70,6 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

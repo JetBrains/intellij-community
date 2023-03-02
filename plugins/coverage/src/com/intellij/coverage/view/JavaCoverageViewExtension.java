@@ -82,18 +82,18 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     final PackageAnnotator.SummaryCoverageInfo info = getSummaryCoverageForNodeValue(node);
 
     if (columnIndex == 1) {
-      return myAnnotator.getClassCoveredPercentage(info);
+      return JavaCoverageAnnotator.getClassCoveredPercentage(info);
     }
     if (columnIndex == 2) {
-      return myAnnotator.getMethodCoveredPercentage(info);
+      return JavaCoverageAnnotator.getMethodCoveredPercentage(info);
     }
 
     if (columnIndex == 3) {
-      return myAnnotator.getLineCoveredPercentage(info);
+      return JavaCoverageAnnotator.getLineCoveredPercentage(info);
     }
 
     if (columnIndex == 4) {
-      return myAnnotator.getBranchCoveredPercentage(info);
+      return JavaCoverageAnnotator.getBranchCoveredPercentage(info);
     }
     return "";
   }
@@ -345,11 +345,15 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   }
 
   private boolean tryAddBranches(ArrayList<? super ColumnInfo> infos, CoverageRunner coverageRunner, boolean branchCoverage) {
-    if (coverageRunner instanceof JavaCoverageRunner && ((JavaCoverageRunner)coverageRunner).isBranchInfoAvailable(branchCoverage)) {
+    if (isBranchInfoAvailable(coverageRunner, branchCoverage)) {
       infos.add(new PercentageCoverageColumnInfo(4, JavaCoverageBundle.message("coverage.view.column.branch"), mySuitesBundle, myStateBean));
       return true;
     }
     return false;
+  }
+
+  protected boolean isBranchInfoAvailable(CoverageRunner coverageRunner, boolean branchCoverage) {
+    return coverageRunner instanceof JavaCoverageRunner && ((JavaCoverageRunner)coverageRunner).isBranchInfoAvailable(branchCoverage);
   }
 
   private boolean isInCoverageScope(PsiElement element) {

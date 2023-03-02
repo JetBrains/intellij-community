@@ -55,6 +55,13 @@ public abstract class CoverageRunner {
   }
 
   /**
+   * Checks whether a file is supported by the runner.
+   */
+  public boolean canBeLoaded(@NotNull File candidate) {
+    return true;
+  }
+
+  /**
    * @return true if coverage runner works with the languages which corresponds to {@link CoverageEngine}.
    */
   public abstract boolean acceptsCoverageEngine(@NotNull final CoverageEngine engine);
