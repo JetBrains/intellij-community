@@ -87,6 +87,17 @@
     </context>
   </template>
 
+  <template id="mermaid_box" name="mermaid_box"
+            value="box $ID$ &#10;    $END$$SELECTION$&#10;end"
+            description="box statement"
+            toReformat="false" toShortenFQNames="false">
+    <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
+    <context>
+      <option name="MERMAID" value="true"/>
+      <option name="OTHER" value="false"/>
+    </context>
+  </template>
+
   <template id="mermaid_section" name="mermaid_section"
             value="section $ID$&#10;    $END$$SELECTION$"
             description="section statement"
