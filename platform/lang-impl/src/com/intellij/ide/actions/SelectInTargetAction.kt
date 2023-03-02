@@ -69,8 +69,10 @@ private class SelectInTargetActionImpl<T : SelectInTarget>(
 ) {
 
   fun doUpdate(e: AnActionEvent) {
-    e.presentation.text = getText()
-    e.presentation.icon = getIcon()
+    e.updateSession.compute(this, "getText() and getIcon()", ActionUpdateThread.EDT) {
+      e.presentation.text = getText()
+      e.presentation.icon = getIcon()
+    }
     e.presentation.isEnabled = isSelectable()
   }
 
