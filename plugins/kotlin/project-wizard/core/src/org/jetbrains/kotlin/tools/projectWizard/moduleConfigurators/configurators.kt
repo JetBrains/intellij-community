@@ -30,7 +30,7 @@ interface JvmModuleConfigurator : ModuleConfiguratorWithTests {
             GenerationPhase.PROJECT_GENERATION
         ) {
             tooltipText = KotlinNewProjectWizardBundle.message("module.configurator.jvm.setting.target.jvm.version.tooltip")
-            defaultValue = value(TargetJvmVersion.JVM_17)
+            defaultValue = value(TargetJvmVersion.JVM_11)
             filter = { _, targetJvmVersion ->
                 // we need to make sure that kotlin compiler supports this target
                 val projectKind = KotlinPlugin.projectKind.settingValue
