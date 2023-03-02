@@ -1119,6 +1119,10 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon FailedInProgress = load("status/failedInProgress.svg", -1938290202, 0);
   }
 
+  public static final class Table {
+    /** 16x16 */ public static final @NotNull Icon Pagination = load("table/pagination.svg", 1845176029, 2);
+  }
+
   public static final class Toolbar {
     /** 16x16 */ public static final @NotNull Icon AddSlot = load("toolbar/addSlot.svg", -748100393, 2);
     /** 16x16 */ public static final @NotNull Icon Collapse = load("toolbar/collapse.svg", -1274953883, 2);

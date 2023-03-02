@@ -619,6 +619,9 @@
       "warning.svg": "general/balloonWarning.svg",
       "warningOutline.svg": "general/showWarning.svg"
     },
+    "table": {
+      "pagination.svg": "table/pagination.svg"
+    },
     "toolbar": {
       "unknown.svg": "toolbar/unknown.svg"
     },
