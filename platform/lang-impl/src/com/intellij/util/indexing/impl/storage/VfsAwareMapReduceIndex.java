@@ -47,7 +47,9 @@ public class VfsAwareMapReduceIndex<Key, Value, FileCachedData extends VfsAwareM
     final Application app = ApplicationManager.getApplication();
 
     if (!IndexDebugProperties.DEBUG) {
-      IndexDebugProperties.DEBUG = (app.isEAP() || app.isInternal()) && !ApplicationManagerEx.isInStressTest();
+      IndexDebugProperties.DEBUG = (app.isEAP() || app.isInternal()) &&
+                                   !ApplicationManagerEx.isInStressTest() &&
+                                   !ApplicationManagerEx.isInIntegrationTest();
     }
 
     if (!IndexDebugProperties.IS_UNIT_TEST_MODE) {
