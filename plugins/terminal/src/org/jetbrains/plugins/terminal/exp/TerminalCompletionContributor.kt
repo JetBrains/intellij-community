@@ -11,8 +11,9 @@ import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.util.Alarm
+import java.util.*
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 
 class TerminalCompletionContributor : CompletionContributor() {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
@@ -26,14 +27,45 @@ class TerminalCompletionContributor : CompletionContributor() {
       return
     }
 
-    val completionResult = result.caseInsensitive()
+    val resultSet = result.caseInsensitive()
+    val baseTimeoutMillis = 1000
+    val completionResult = invokeCompletion(session, command, resultSet, baseTimeoutMillis)
+    if (completionResult.isSingleItem) {
+      val addedPart = completionResult.items.single()
+      val completedItem = resultSet.prefixMatcher.prefix + addedPart
+      if (!addedPart.endsWith('/')) {
+        // Run completion again to check, that initially completed item was full
+        // Consider the following example:
+        // We get 'foo' as the only one completion item for command 'f'
+        // But there can be more specific items: 'foobar' and 'fooboo'
+        // And in this case we need to show these two items instead of incomplete 'foo'
+        val finalResult = invokeCompletion(session, command + addedPart, resultSet, baseTimeoutMillis / 2)
+        // Add initial completion item, if there are no more specific items
+        // If there are such items, they are already added inside 'invokeCompletion'
+        if (finalResult.items.isEmpty()) {
+          resultSet.addElement(createOption(completedItem))
+        }
+      }
+      else {
+        // Consider item, that ends with '/' as fully completed item
+        resultSet.addElement(createOption(completedItem))
+      }
+    }
+
+    resultSet.stopHere()
+  }
+
+  private fun invokeCompletion(session: TerminalSession,
+                               command: String,
+                               resultSet: CompletionResultSet,
+                               timeoutMillis: Int): CompletionResult {
     val completionManager = session.completionManager
     val listenerDisposable = Disposer.newDisposable()
-    val future = CompletableFuture<Boolean>()
+    val addedItems: MutableSet<String> = Collections.synchronizedSet(HashSet())
+    val future = CompletableFuture<CompletionResult>()
     try {
       val model: TerminalModel = session.model
       val promptText = model.withLock { model.getAllText().trim() }
-      val addedItems: MutableSet<String> = HashSet()
       model.addContentListener(object : TerminalModel.ContentListener {
         override fun onContentChanged() {
           val text = model.getAllText().trim()
@@ -42,9 +74,7 @@ class TerminalCompletionContributor : CompletionContributor() {
           }
           val parsingResult = parseCompletionItems(text, command, promptText)
           if (parsingResult.isSingleItem) {
-            val item = completionResult.prefixMatcher.prefix + parsingResult.items.single()
-            completionResult.addElement(createOption(item))
-            future.complete(false)
+            future.complete(CompletionResult(parsingResult.items.single()))
           }
           else {
             val newItems = parsingResult.items.filter { item ->
@@ -52,24 +82,31 @@ class TerminalCompletionContributor : CompletionContributor() {
             }
             addedItems.addAll(newItems)
             val options = newItems.map { createOption(it) }
-            completionResult.addAllElements(options)
+            resultSet.addAllElements(options)
             if (parsingResult.newPromptShown) {
-              future.complete(true)
+              future.complete(CompletionResult(addedItems.toList(), newPromptShown = true))
             }
           }
         }
       }, listenerDisposable)
 
-      future.completeOnTimeout(false, 1000L, TimeUnit.MILLISECONDS)
+      Alarm(Alarm.ThreadToUse.POOLED_THREAD, listenerDisposable).addRequest(Runnable {
+        future.complete(CompletionResult(addedItems.toList(), newPromptShown = false))
+      }, timeoutMillis)
+
       completionManager.invokeCompletion(command)
       ApplicationUtil.runWithCheckCanceled(future, ProgressManager.getInstance().progressIndicator)
     }
     finally {
       Disposer.dispose(listenerDisposable)
-      completionManager.resetPrompt(command.length, newPromptShown = future.getNow(false))
+      val newPromptShown = if (future.isDone) future.get().newPromptShown else false
+      completionManager.resetPrompt(command.length, newPromptShown)
     }
 
-    completionResult.stopHere()
+    return if (future.isDone) {
+      future.get()
+    }
+    else CompletionResult(addedItems.toList(), newPromptShown = false)
   }
 
   private fun parseCompletionItems(text: String, command: String, promptText: String): ParsingResult {
@@ -117,7 +154,7 @@ class TerminalCompletionContributor : CompletionContributor() {
     return LookupElementBuilder.create(option)
   }
 
-  private class ParsingResult private constructor(val items: List<String>, val isSingleItem: Boolean, val newPromptShown: Boolean) {
+  private open class ParsingResult private constructor(val items: List<String>, val isSingleItem: Boolean, val newPromptShown: Boolean) {
     constructor() : this(emptyList(), false, false)
     constructor(items: List<String>, newPromptShown: Boolean) : this(items, false, newPromptShown)
     constructor(item: String) : this(listOf(item), true, false)
@@ -125,5 +162,11 @@ class TerminalCompletionContributor : CompletionContributor() {
     override fun toString(): String {
       return "isSingleItem: $isSingleItem, newPromptShown: $newPromptShown, items: $items"
     }
+  }
+
+  // Now it fully duplicates ParsingResult, but there can be additional fields in the future
+  private class CompletionResult : ParsingResult {
+    constructor(items: List<String>, newPromptShown: Boolean) : super(items, newPromptShown)
+    constructor(item: String) : super(item)
   }
 }
