@@ -452,7 +452,7 @@ public final class MavenProjectsTree {
 
   private void update(final Collection<VirtualFile> files,
                       final boolean updateModules,
-                      final boolean forceReading,
+                      final boolean forceRead,
                       final MavenExplicitProfiles explicitProfiles,
                       final MavenProjectReader projectReader,
                       final MavenGeneralSettings generalSettings,
@@ -468,7 +468,7 @@ public final class MavenProjectsTree {
       if (null == findProject(file)) {
         filesToAddModules.add(file);
       }
-      updateSpecs.add(new UpdateSpec(file, updateModules, forceReading));
+      updateSpecs.add(new UpdateSpec(file, updateModules, forceRead));
     }
     updater.updateProjects(updateSpecs);
 
@@ -497,7 +497,7 @@ public final class MavenProjectsTree {
     updateContext.fireUpdatedIfNecessary();
   }
 
-  private record UpdateSpec(VirtualFile mavenProjectFile, boolean updateModules, boolean forceReading) {
+  private record UpdateSpec(VirtualFile mavenProjectFile, boolean updateModules, boolean forceRead) {
   }
 
   private static class MavenProjectsTreeUpdater {
@@ -509,7 +509,7 @@ public final class MavenProjectsTree {
     private final MavenProgressIndicator process;
     private final ConcurrentHashMap<VirtualFile, CopyOnWriteArrayList<UpdateSettings>> updateHistory = new ConcurrentHashMap<>();
 
-    private record UpdateSettings(boolean updateModules, boolean forceReading) {
+    private record UpdateSettings(boolean updateModules, boolean forceRead) {
     }
 
     MavenProjectsTreeUpdater(MavenProjectsTree tree,
@@ -526,57 +526,42 @@ public final class MavenProjectsTree {
       this.process = process;
     }
 
-    public void updateProjects(@NotNull List<UpdateSpec> specs) {
-      if (specs.isEmpty()) return;
-
-      ParallelRunner.runSequentially(specs, spec -> {
-        update(spec.mavenProjectFile(), spec.updateModules(), spec.forceReading());
-      });
-    }
-
-    private void update(final VirtualFile mavenProjectFile,
-                        final boolean updateModules,
-                        final boolean forceReading) {
+    private boolean startUpdate(VirtualFile mavenProjectFile, boolean updateModules, boolean forceRead) {
       updateHistory.putIfAbsent(mavenProjectFile, new CopyOnWriteArrayList<>());
 
       var fileHistory = updateHistory.get(mavenProjectFile);
-      if (!fileHistory.isEmpty() && !updateModules && !forceReading) {
+      if (!fileHistory.isEmpty() && !updateModules && !forceRead) {
         // we already updated this file with the same or stricter settings
         MavenLog.LOG.debug("Has already been updated (same/stricter): " + mavenProjectFile);
-        return;
+        return false;
       }
       for (var settings : fileHistory) {
-        if (settings.updateModules() && settings.forceReading()) {
+        if (settings.updateModules() && settings.forceRead()) {
           // we already updated this file with recursion and forced reading
           MavenLog.LOG.debug("Has already been updated (modules update, forced reading): " + mavenProjectFile);
-          return;
+          return false;
         }
         // we already updated this file with the same settings
-        if (settings.updateModules() == updateModules && settings.forceReading() == forceReading) {
+        if (settings.updateModules() == updateModules && settings.forceRead() == forceRead) {
           MavenLog.LOG.debug("Has already been updated (same): " + mavenProjectFile);
-          return;
+          return false;
         }
       }
-      fileHistory.add(new UpdateSettings(updateModules, forceReading));
-
+      fileHistory.add(new UpdateSettings(updateModules, forceRead));
       process.setText(MavenProjectBundle.message("maven.reading.pom", mavenProjectFile.getPath()));
       process.setText2("");
+      return true;
+    }
 
-      var mavenProject = tree.findOrCreateProject(mavenProjectFile);
-
-      var prevModules = tree.getModules(mavenProject);
-      var prevInheritors = new HashSet<>(tree.findInheritors(mavenProject));
-
-      MavenProjectTimestamp timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
+    private boolean readPomIfNeeded(MavenProject mavenProject, boolean forceRead) {
+      var timestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
       boolean timeStampChanged = !timestamp.equals(tree.myTimestamps.get(mavenProject));
-      boolean readProject = forceReading || timeStampChanged;
+      boolean readPom = forceRead || timeStampChanged;
 
-      if (readProject) {
+      if (readPom) {
         MavenId oldProjectId = mavenProject.isNew() ? null : mavenProject.getMavenId();
         MavenId oldParentId = mavenProject.getParentId();
-        var forcedChanges = forceReading ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
         var readChanges = mavenProject.read(generalSettings, explicitProfiles, reader, tree.myProjectLocator);
-        var changes = MavenProjectChangesBuilder.merged(forcedChanges, readChanges);
         tree.withWriteLock(() -> {
           tree.clearIDMaps(oldProjectId);
           tree.myVirtualFileToProjectMapping.put(mavenProject.getFile(), mavenProject);
@@ -591,48 +576,32 @@ public final class MavenProjectsTree {
           var newTimestamp = tree.calculateTimestamp(mavenProject, explicitProfiles, generalSettings);
           tree.myTimestamps.put(mavenProject, newTimestamp);
         }
+
+        var forcedChanges = forceRead ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
+        var changes = MavenProjectChangesBuilder.merged(forcedChanges, readChanges);
         updateContext.update(mavenProject, changes);
       }
 
-      List<VirtualFile> existingModuleFiles = mavenProject.getExistingModuleFiles();
+      return readPom;
+    }
 
-      for (MavenProject each : prevModules) {
-        VirtualFile moduleFile = each.getFile();
-        if (!existingModuleFiles.contains(moduleFile)) {
-          if (tree.isManagedFile(moduleFile)) {
-            if (tree.reconnectRoot(each)) {
-              updateContext.update(each, MavenProjectChanges.NONE);
-            }
+    private void handleRemovedModules(MavenProject mavenProject, List<MavenProject> prevModules, List<VirtualFile> existingModuleFiles) {
+      var removedModules = ContainerUtil.filter(prevModules, prevModule -> !existingModuleFiles.contains(prevModule.getFile()));
+      for (MavenProject module : removedModules) {
+        VirtualFile moduleFile = module.getFile();
+        if (tree.isManagedFile(moduleFile)) {
+          if (tree.reconnectRoot(module)) {
+            updateContext.update(module, MavenProjectChanges.NONE);
           }
-          else {
-            tree.removeModule(mavenProject, each);
-            tree.doDelete(mavenProject, each, updateContext);
-          }
+        }
+        else {
+          tree.removeModule(mavenProject, module);
+          tree.doDelete(mavenProject, module, updateContext);
         }
       }
+    }
 
-      var modulesFilesToReconnect = new ArrayList<VirtualFile>();
-      var moduleUpdateSpecs = new ArrayList<UpdateSpec>();
-      for (VirtualFile each : existingModuleFiles) {
-        MavenProject foundModule = tree.findProject(each);
-        boolean isNewModule = foundModule == null;
-        if (!isNewModule) {
-          MavenProject currentAggregator = tree.findAggregator(foundModule);
-          if (currentAggregator != null && currentAggregator != mavenProject) {
-            MavenLog.LOG.info("Module " + each + " is already included into " + mavenProject.getFile());
-            continue;
-          }
-        }
-
-        modulesFilesToReconnect.add(each);
-
-        if (readProject || isNewModule || updateModules) {
-          // do not force update modules if only this project was requested to be updated
-          moduleUpdateSpecs.add(new UpdateSpec(each, updateModules, updateModules && forceReading));
-        }
-      }
-      updateProjects(moduleUpdateSpecs);
-
+    private void reconnectModuleFiles(MavenProject mavenProject, List<VirtualFile> modulesFilesToReconnect) {
       for (var file : modulesFilesToReconnect) {
         MavenProject module = tree.findProject(file);
         if (null != module) {
@@ -641,20 +610,97 @@ public final class MavenProjectsTree {
           }
         }
       }
+    }
 
-      prevInheritors.removeAll(updateContext.getDeletedProjects());
-      prevInheritors.addAll(tree.findInheritors(mavenProject));
+    private List<VirtualFile> collectModuleFilesToReconnect(MavenProject mavenProject, List<VirtualFile> existingModuleFiles) {
+      var modulesFilesToReconnect = new ArrayList<VirtualFile>();
+      for (VirtualFile moduleFile : existingModuleFiles) {
+        MavenProject foundModule = tree.findProject(moduleFile);
+        boolean isNewModule = foundModule == null;
+        if (!isNewModule) {
+          MavenProject currentAggregator = tree.findAggregator(foundModule);
+          if (currentAggregator != null && currentAggregator != mavenProject) {
+            MavenLog.LOG.info("Module " + moduleFile + " is already included into " + mavenProject.getFile());
+            continue;
+          }
+        }
 
-      var inheritorUpdateSpecs = new ArrayList<UpdateSpec>();
-      for (MavenProject each : prevInheritors) {
-        inheritorUpdateSpecs.add(
-          new UpdateSpec(
-            each.getFile(),
-            false, // no need to go recursively in case of inheritance, only when updating modules
-            readProject // if parent was read, force read children
-          ));
+        modulesFilesToReconnect.add(moduleFile);
       }
-      updateProjects(inheritorUpdateSpecs);
+      return modulesFilesToReconnect;
+    }
+
+    private List<VirtualFile> collectModuleFilesToUpdate(List<VirtualFile> moduleFilesToReconnect, boolean updateExistingModules) {
+      if (updateExistingModules) {
+        return moduleFilesToReconnect;
+      }
+
+      // update only new modules
+      return ContainerUtil.filter(moduleFilesToReconnect, moduleFile -> null == tree.findProject(moduleFile));
+    }
+
+    private List<VirtualFile> collectChildFilesToUpdate(MavenProject mavenProject, Collection<MavenProject> prevChildren) {
+      var children = new HashSet<>(prevChildren);
+      children.removeAll(updateContext.getDeletedProjects());
+      children.addAll(tree.findInheritors(mavenProject));
+      return ContainerUtil.map(children, child -> child.getFile());
+    }
+
+    private void update(final VirtualFile mavenProjectFile,
+                        final boolean updateModules,
+                        final boolean forceRead) {
+      // if the file has already been updated, skip subsequent updates
+      if (!startUpdate(mavenProjectFile, updateModules, forceRead)) return;
+
+      var mavenProject = tree.findOrCreateProject(mavenProjectFile);
+
+      // we will compare modules and children before and after reading the pom.xml file
+      var prevModules = tree.getModules(mavenProject);
+      var prevChildren = tree.findInheritors(mavenProject);
+
+      // read pom.xml if something has changed since the last reading or reading is forced
+      boolean readPom = readPomIfNeeded(mavenProject, forceRead);
+
+      var existingModuleFiles = mavenProject.getExistingModuleFiles();
+
+      // some modules might have been removed
+      handleRemovedModules(mavenProject, prevModules, existingModuleFiles);
+
+      // collect new and existing modules to reconnect to the tree
+      var modulesFilesToReconnect = collectModuleFilesToReconnect(mavenProject, existingModuleFiles);
+      boolean updateExistingModules = readPom || updateModules;
+
+      // collect modules to update recursively
+      var modulesFilesToUpdate = collectModuleFilesToUpdate(modulesFilesToReconnect, updateExistingModules);
+
+      // do not force update modules if only this project was requested to be updated
+      var forceReadModules = updateModules && forceRead;
+      var moduleUpdates = ContainerUtil.map(modulesFilesToUpdate, moduleFile ->
+        new UpdateSpec(
+          moduleFile,
+          updateModules,
+          forceReadModules
+        ));
+      updateProjects(moduleUpdates);
+      reconnectModuleFiles(mavenProject, modulesFilesToReconnect);
+
+      // collect children (inheritors) to update recursively
+      var childFilesToUpdate = collectChildFilesToUpdate(mavenProject, prevChildren);
+      var childUpdates = ContainerUtil.map(childFilesToUpdate, childFile ->
+        new UpdateSpec(
+          childFile,
+          false, // no need to update modules of the children
+          readPom // if parent was read, force read children
+        ));
+      updateProjects(childUpdates);
+    }
+
+    public void updateProjects(@NotNull List<UpdateSpec> specs) {
+      if (specs.isEmpty()) return;
+
+      ParallelRunner.runSequentially(specs, spec -> {
+        update(spec.mavenProjectFile(), spec.updateModules(), spec.forceRead());
+      });
     }
   }
 
