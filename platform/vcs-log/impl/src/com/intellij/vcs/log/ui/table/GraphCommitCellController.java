@@ -175,7 +175,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
   }
 
   void showTooltip(int row) {
-    Point topLeftCorner = new Point(myTable.getColumnLeftXCoordinate(myTable.getColumnViewIndex(Commit.INSTANCE)),
+    Point topLeftCorner = new Point(myTable.getColumnDataRectLeftX(myTable.getColumnViewIndex(Commit.INSTANCE)),
                                     row * myTable.getRowHeight());
     Point pointInCell = new Point(getTooltipXCoordinate(row), myTable.getRowHeight() / 2);
     showTooltip(row, pointInCell, new Point(topLeftCorner.x + pointInCell.x, topLeftCorner.y + pointInCell.y), true);

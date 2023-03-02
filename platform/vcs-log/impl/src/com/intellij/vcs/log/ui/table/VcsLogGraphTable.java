@@ -471,13 +471,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @NotNull
   Point getPointInCell(@NotNull Point clickPoint, @NotNull VcsLogColumn<?> vcsLogColumn) {
     int columnIndex = getColumnViewIndex(vcsLogColumn);
-    int leftXCoordinate = getColumnLeftXCoordinate(columnIndex);
-    leftXCoordinate += ExperimentalUI.isNewUI() ? VcsLogNewUiTableCellRenderer.getAdditionalOffset(columnIndex) : 0
-    return new Point(clickPoint.x - leftXCoordinate, PositionUtil.getYInsideRow(clickPoint, getRowHeight()));
+    int width = getColumnDataRectLeftX(columnIndex);
+    return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, getRowHeight()));
   }
 
-  int getColumnLeftXCoordinate(int viewColumnIndex) {
-    return getCellRect(0, viewColumnIndex, false).x;
+  int getColumnDataRectLeftX(int viewColumnIndex) {
+    int x = getCellRect(0, viewColumnIndex, false).x;
+    if (!ExperimentalUI.isNewUI()) return x;
+    return x + VcsLogNewUiTableCellRenderer.getAdditionalOffset(viewColumnIndex);
   }
 
   private void setRootColumnSize() {
@@ -865,11 +866,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
 
     public boolean isOnLeftBorder(@NotNull MouseEvent e, int column) {
-      return Math.abs(getColumnLeftXCoordinate(column) - e.getPoint().x) <= JBUIScale.scale(BORDER_THICKNESS);
+      return Math.abs(getCellRect(0, column, false).x - e.getPoint().x) <= JBUIScale.scale(BORDER_THICKNESS);
     }
 
     public boolean isOnRightBorder(@NotNull MouseEvent e, int column) {
-      return Math.abs(getColumnLeftXCoordinate(column) +
+      return Math.abs(getCellRect(0, column, false).x +
                       getColumnModel().getColumn(column).getWidth() - e.getPoint().x) <= JBUIScale.scale(BORDER_THICKNESS);
     }
 
