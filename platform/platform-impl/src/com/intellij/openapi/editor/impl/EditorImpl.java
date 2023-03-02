@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -4085,9 +4085,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
       // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
       // at 'line markers' area). Also, don't move caret when context menu for an inlay is invoked.
-      boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA && !ExperimentalUI.isNewUI()) ||
-                  isInsideGutterWhitespaceArea(e) ||
-                  eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
+      boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA) ||
+                          isInsideGutterWhitespaceArea(e) ||
+                          eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
       if (moveCaret) {
         VisualPosition visualPosition = getTargetPosition(x, y, true);
         LogicalPosition pos = visualToLogicalPosition(visualPosition);
@@ -4148,7 +4148,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       boolean isNavigation = oldStart == oldEnd && newStart == newEnd && oldStart != newStart;
       if (getMouseEventArea(e) == EditorMouseEventArea.LINE_NUMBERS_AREA && e.getClickCount() == 1) {
-        if (ExperimentalUI.isNewUI()) {
+        if (ExperimentalUI.isNewUI() && UISettings.getInstance().getShowBreakpointsOverLineNumbers()) {
           //do nothing here and set/unset a breakpoint if possible in XLineBreakpointManager
           return false;
         } else {

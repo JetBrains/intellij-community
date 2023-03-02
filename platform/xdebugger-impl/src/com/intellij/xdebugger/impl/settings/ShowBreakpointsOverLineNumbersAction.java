@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.settings;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -20,13 +21,13 @@ public class ShowBreakpointsOverLineNumbersAction extends ToggleAction implement
   }
 
   public static boolean isSelected() {
-    return XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isBreakpointsOnLineNumbers()
+    return UISettings.getInstance().getShowBreakpointsOverLineNumbers()
            && EditorSettingsExternalizable.getInstance().isLineNumbersShown();
   }
 
   @Override
   public void setSelected(@NotNull AnActionEvent e, boolean state) {
-    XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().setBreakpointsOnLineNumbers(state);
+    UISettings.getInstance().setShowBreakpointsOverLineNumbers(state);
     EditorFactory.getInstance().refreshAllEditors();
   }
 
