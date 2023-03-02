@@ -32,6 +32,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -487,13 +488,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     WindowManagerEx manager = getWndManager();
     if (manager != null) {
-      Component focusedComponent = manager.getFocusedComponent(project);
-      if (focusedComponent != null) {
-        Component parent = UIUtil.findUltimateParent(focusedComponent);
-        if (parent instanceof Window) {
-          window = (Window)parent;
-        }
-      }
+      window = getTargetWindow(manager.getFocusedComponent(project));
     }
     if (window == null) {
       window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
@@ -504,6 +499,20 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (window != null && window.isShowing()) {
       showInCenterOf(window);
     }
+  }
+
+  private static Window getTargetWindow(Component component) {
+    while (component != null) {
+      if (component instanceof FloatingDecorator fd) {
+        return fd;
+      }
+      Component parent = component.getParent();
+      if (parent == null && component instanceof Window w) {
+        return w;
+      }
+      component = parent;
+    }
+    return null;
   }
 
   @Override
