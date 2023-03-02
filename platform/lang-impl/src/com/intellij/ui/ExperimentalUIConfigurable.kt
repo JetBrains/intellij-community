@@ -46,14 +46,14 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
             { ExperimentalUI.isNewUI() },
             { ExperimentalUI.setNewUI(it) })
           .comment(IdeBundle.message("checkbox.enable.new.ui.description"))
-      }
+      }.comment(IdeBundle.message("ide.restart.required.comment"))
 
       indent {
         row {
           checkBox(IdeBundle.message("checkbox.compact.mode"))
             .bindSelected(UISettings.getInstance()::compactMode)
             .enabledIf(newUiCheckBox.selected)
-          comment(IdeBundle.message("checkbox.compact.mode.description"))
+            .comment(IdeBundle.message("checkbox.compact.mode.description"))
         }
         if (SystemInfo.isWindows || SystemInfo.isXWindow) {
           row {
