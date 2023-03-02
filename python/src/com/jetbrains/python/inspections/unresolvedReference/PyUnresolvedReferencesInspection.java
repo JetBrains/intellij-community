@@ -159,20 +159,15 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
         }
       }
       else {
-        final String refName = (node instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)node).getReferencedName() : node.getText();
-        if (refName == null) return result;
-        final QualifiedName qname = QualifiedName.fromDottedString(refName);
-        final List<String> components = qname.getComponents();
-        if (!components.isEmpty()) {
-          final String packageName = components.get(0);
-          final Module module = ModuleUtilCore.findModuleForPsiElement(node);
-          if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName) && PythonSdkUtil.findPythonSdk(module) != null) {
-            result.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageName, null, node));
+        String referencedName = node instanceof PyReferenceExpression refExpr && !refExpr.isQualified()? refExpr.getReferencedName() : null;
+        if (referencedName != null && PythonSdkUtil.findPythonSdk(node) != null) {
+          if (PyPIPackageUtil.INSTANCE.isInPyPI(referencedName)) {
+            result.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(referencedName, null, node));
           }
           else {
-            final String packageAlias = PyPackageAliasesProvider.commonImportAliases.get(packageName);
-            if (packageAlias != null && PyPIPackageUtil.INSTANCE.isInPyPI(packageName) && PythonSdkUtil.findPythonSdk(module) != null) {
-              result.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageAlias, packageName, node));
+            String realPackageName = PyPackageAliasesProvider.commonImportAliases.get(referencedName);
+            if (realPackageName != null && PyPIPackageUtil.INSTANCE.isInPyPI(realPackageName)) {
+              result.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(realPackageName, referencedName, node));
             }
           }
         }
