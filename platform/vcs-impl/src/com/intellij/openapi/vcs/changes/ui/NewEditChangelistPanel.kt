@@ -67,12 +67,13 @@ abstract class NewEditChangelistPanel(protected val project: Project) : Wrapper(
   }
 
   private fun buildMainPanel() = panel {
+    val gap = 3
     row(VcsBundle.message("edit.changelist.name")) {
       cell(nameComponent.myComponent)
         .resizableColumn()
         .align(AlignX.FILL)
         .applyToComponent {
-          putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(3))
+          putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(gap))
         }
     }.bottomGap(BottomGap.SMALL)
 
@@ -84,6 +85,7 @@ abstract class NewEditChangelistPanel(protected val project: Project) : Wrapper(
       cell(descriptionTextArea)
         .resizableColumn()
         .align(Align.FILL)
+        .customize(Gaps(left = gap, right = gap))
     }.resizableRow()
       .layout(RowLayout.PARENT_GRID)
       .bottomGap(BottomGap.SMALL)
