@@ -7,14 +7,12 @@ import com.intellij.collaboration.ui.util.gap
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
-import com.intellij.ui.components.panels.HorizontalLayout
 import kotlinx.coroutines.CoroutineScope
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction
-import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadStateAction
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
@@ -54,7 +52,7 @@ internal object GHPRDetailsComponentFactory {
     val commitInfo = GHPRDetailsCommitInfoComponentFactory.create(scope, commitsVm)
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewDetailsVm, reviewFlowVm, securityService, avatarIconsProvider)
     val state = GHPRStatePanel(scope, reviewDetailsVm, reviewFlowVm, dataProvider).also {
-      PopupHandler.installPopupMenu(it, DefaultActionGroup(GHPRReloadStateAction()), "GHPRStatePanelPopup")
+      PopupHandler.installPopupMenu(it, DefaultActionGroup(GHPRReloadDetailsAction()), "GHPRDetailsPanelPopup")
     }
 
     return JPanel(MigLayout(
