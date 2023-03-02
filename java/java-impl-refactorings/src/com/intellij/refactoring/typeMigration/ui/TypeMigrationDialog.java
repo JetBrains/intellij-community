@@ -223,7 +223,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         if (root instanceof PsiMethod) {
           psiTypes = ArrayUtil.append(psiTypes, PsiTypes.voidType());
         }
-        if (type instanceof PsiIntersectionType) {
+        if (type instanceof PsiDisjunctionType) {
           psiTypes = ArrayUtil.prepend(type, psiTypes);
         }
 
