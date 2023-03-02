@@ -159,7 +159,7 @@ public class RootCellRenderer extends SimpleColoredRenderer implements TableCell
     return myTooltip;
   }
 
-  public int getPreferredWidth() {
+  public int getColumnWidth() {
     if (!myColorManager.hasMultiplePaths()) {
       return 0;
     }
