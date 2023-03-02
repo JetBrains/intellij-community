@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.rw
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadConstraint
@@ -144,7 +145,7 @@ private suspend fun yieldUntilRun(schedule: (Runnable) -> Unit) {
   }
 }
 
-private class ResumeContinuationRunnable(continuation: CancellableContinuation<Unit>) : Runnable {
+private class ResumeContinuationRunnable(continuation: CancellableContinuation<Unit>) : ContextAwareRunnable {
 
   @Volatile
   private var myContinuation: CancellableContinuation<Unit>? = continuation

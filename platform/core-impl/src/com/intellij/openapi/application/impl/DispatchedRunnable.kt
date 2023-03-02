@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Conditions
@@ -8,7 +9,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import java.util.concurrent.atomic.AtomicReference
 
-internal class DispatchedRunnable(job: Job, runnable: Runnable) : Runnable {
+internal class DispatchedRunnable(job: Job, runnable: Runnable) : ContextAwareRunnable {
 
   private val runnableRef: AtomicReference<Runnable> = AtomicReference(runnable)
 

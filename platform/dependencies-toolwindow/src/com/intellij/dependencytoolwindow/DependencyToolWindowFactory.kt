@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.dependencytoolwindow
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -35,7 +36,7 @@ internal class DependencyToolWindowFactory : ProjectActivity {
   }
 
   private suspend fun ToolWindowManager.Companion.awaitToolWindows(project: Project) = suspendCancellableCoroutine {
-    getInstance(project).invokeLater { it.resume(Unit) }
+    getInstance(project).invokeLater(ContextAwareRunnable { it.resume(Unit) })
   }
 }
 

@@ -4,6 +4,7 @@
 
 package com.intellij.openapi.wm.impl
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
 import com.intellij.icons.AllIcons
@@ -377,7 +378,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   private fun revalidateStripeButtons() {
     val buttonManagers = toolWindowPanes.values.mapNotNull { it.buttonManager as? ToolWindowPaneNewButtonManager }
-    ApplicationManager.getApplication().invokeLater({ buttonManagers.forEach { it.refreshUi() } }, project.disposed)
+    ApplicationManager.getApplication().invokeLater(ContextAwareRunnable { buttonManagers.forEach { it.refreshUi() } }, project.disposed)
   }
 
   internal fun createNotInHierarchyIterable(paneId: String): Iterable<Component> {

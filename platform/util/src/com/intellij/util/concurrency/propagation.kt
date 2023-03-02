@@ -5,6 +5,7 @@
 
 package com.intellij.util.concurrency
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.registry.Registry
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.concurrent.FutureTask
 import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import com.intellij.openapi.util.Pair as JBPair
@@ -113,7 +115,14 @@ internal fun <V> captureCallableThreadContext(callable: Callable<V>): Callable<V
   return callable
 }
 
+private fun isContextAwareRunnable(runnable: Runnable) : Boolean {
+  return runnable is Continuation<*> || runnable is ContextAwareRunnable
+}
+
 internal fun capturePropagationAndCancellationContext(command: Runnable): Runnable {
+  if (isContextAwareRunnable(command)) {
+    return command
+  }
   val (childContext, childJob) = createChildContext()
   var command = command
   if (childContext != EmptyCoroutineContext) {
@@ -129,6 +138,9 @@ fun capturePropagationAndCancellationContext(
   command: Runnable,
   expired: Condition<*>,
 ): JBPair<Runnable, Condition<*>> {
+  if (isContextAwareRunnable(command)) {
+    return JBPair.create(command, expired)
+  }
   val (childContext, childJob) = createChildContext()
   var command = command
   var expired = expired
