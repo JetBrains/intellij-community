@@ -7,4 +7,7 @@ fun use() {
 
     // Refinement on expects works
     produceCommonMainExpect().iosApi()
+
+    // jvmMain API is not visible
+    <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: produceJvmMainExpect'")!>produceJvmMainExpect<!>()
 }
