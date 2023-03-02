@@ -35,7 +35,7 @@ public abstract class ContentLabel extends BaseLabel {
 
   private CurrentTooltip currentIconTooltip;
 
-  private final BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
+  private final BaseButtonBehavior behavior = new BaseButtonBehavior(this, (Void)null) {
     @Override
     protected void execute(@NotNull MouseEvent e) {
       handleMouseClick(e);
@@ -45,6 +45,7 @@ public abstract class ContentLabel extends BaseLabel {
   public ContentLabel(@NotNull ToolWindowContentUi ui, boolean bold) {
     super(ui, bold);
 
+    behavior.setupListeners();
     behavior.setActionTrigger(BaseButtonBehavior.MOUSE_PRESSED_RELEASED);
     behavior.setMouseDeadzone(TimedDeadzone.NULL);
   }

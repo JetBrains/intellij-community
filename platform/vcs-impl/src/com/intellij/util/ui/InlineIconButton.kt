@@ -120,13 +120,13 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
 
     override fun installUI(c: JComponent) {
       c as InlineIconButton
-      buttonBehavior = object : BaseButtonBehavior(c) {
+      buttonBehavior = object : BaseButtonBehavior(c, null as Void?) {
         override fun execute(e: MouseEvent) {
           if (c.isEnabled) {
             c.actionListener?.actionPerformed(ActionEvent(e.source, ActionEvent.ACTION_PERFORMED, "execute", e.modifiers))
           }
         }
-      }
+      }.also { it.setupListeners() }
       spaceKeyListener = object : KeyAdapter() {
         override fun keyReleased(e: KeyEvent) {
           if (c.isEnabled && !e.isConsumed && e.modifiers == 0 && e.keyCode == KeyEvent.VK_SPACE) {

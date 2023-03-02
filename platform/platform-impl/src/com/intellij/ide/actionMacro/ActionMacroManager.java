@@ -187,12 +187,13 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       };
 
 
-      new BaseButtonBehavior(myIcon) {
+      BaseButtonBehavior behavior = new BaseButtonBehavior(myIcon, (Void)null) {
         @Override
         protected void execute(MouseEvent e) {
           showBalloon();
         }
       };
+      behavior.setupListeners();
 
       myBalloonComponent = new NonOpaquePanel(new BorderLayout());
 

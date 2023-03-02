@@ -53,12 +53,14 @@ final class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, D
   ToolWindowsWidget(@NotNull Disposable parent, StatusBar statusBar) {
     myStatusBar = statusBar;
 
-    new BaseButtonBehavior(this, TimedDeadzone.NULL) {
+    BaseButtonBehavior behavior = new BaseButtonBehavior(this, TimedDeadzone.NULL, null) {
       @Override
       protected void execute(MouseEvent e) {
         performAction();
       }
-    }.setActionTrigger(MouseEvent.MOUSE_PRESSED);
+    };
+    behavior.setupListeners();
+    behavior.setActionTrigger(MouseEvent.MOUSE_PRESSED);
 
     IdeEventQueue.getInstance().addDispatcher(e -> {
       if (e instanceof MouseEvent) {

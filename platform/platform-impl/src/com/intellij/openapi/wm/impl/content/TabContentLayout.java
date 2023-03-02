@@ -52,7 +52,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
   TabContentLayout(@NotNull ToolWindowContentUi ui) {
     super(ui);
 
-    new BaseButtonBehavior(ui.getTabComponent()) {
+    BaseButtonBehavior behavior = new BaseButtonBehavior(ui.getTabComponent(), (Void)null) {
       @Override
       protected void execute(MouseEvent e) {
         if (!TabContentLayout.this.ui.isCurrent(TabContentLayout.this)) {
@@ -64,6 +64,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
         }
       }
     };
+    behavior.setupListeners();
   }
 
   @Override

@@ -1718,12 +1718,13 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
 
       setToolTipText(hint);
 
-      myButton = new BaseButtonBehavior(this, TimedDeadzone.NULL) {
+      myButton = new BaseButtonBehavior(this, TimedDeadzone.NULL, null) {
         @Override
         protected void execute(MouseEvent e) {
           myListener.consume(e);
         }
       };
+      myButton.setupListeners();
     }
 
     @Override
