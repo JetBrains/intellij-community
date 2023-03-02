@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,8 +13,10 @@ import java.util.List;
  * Provides services for drawing custom text annotations in the editor gutter.
  * Such annotations are used, for example, by the "Annotate" feature of version
  * control integrations.
- * <br>
+ * <p>
  * It's also possible to control the display of line numbers in the gutter.
+ * <p>
+ * To add icons to the gutter, see {@link GutterIconRenderer} and {@code LineMarkerProvider}.
  *
  * @author lesya
  * @see Editor#getGutter()
