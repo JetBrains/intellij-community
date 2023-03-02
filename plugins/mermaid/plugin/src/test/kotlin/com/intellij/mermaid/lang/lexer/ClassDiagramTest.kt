@@ -224,4 +224,14 @@ class ClassDiagramTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test backticks`() {
+    val content = """
+    classDiagram
+      class `Animal Class!`
+      class `Car Class`
+      `Animal Class!` --> `Car Class`
+    """.trimIndent()
+    doTest(content)
+  }
 }

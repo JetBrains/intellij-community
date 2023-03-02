@@ -28,45 +28,35 @@ class UndeclaredGenericUsageInspection : LocalInspectionTool() {
     private val manager: InspectionManager,
     private val isOnTheFly: Boolean,
     private val result: MutableList<ProblemDescriptor>
-  ) : MermaidVisitor() {
+  ) : MermaidRecursiveVisitor() {
     private val declaredGenerics = mutableSetOf<String>()
     private val declarations = mutableSetOf<String>()
 
-    override fun visitElement(element: PsiElement) {
-      super.visitElement(element)
-      element.acceptChildren(this)
-    }
-
-    override fun visitMemberStatement(memberStatement: MermaidMemberStatement) {
-      visitGenericUsage(memberStatement.classDiagramIdentifier, memberStatement.generic?.genericTypeId)
-      super.visitMemberStatement(memberStatement)
-    }
-
-    override fun visitAnnotationStatement(annotationStatement: MermaidAnnotationStatement) {
-      visitGenericUsage(annotationStatement.classDiagramIdentifier, annotationStatement.generic?.genericTypeId)
-      super.visitAnnotationStatement(annotationStatement)
+    override fun visitClassDiagramIdentifierHolder(identifierHolder: MermaidClassDiagramIdentifierHolder) {
+      visitGenericUsage(identifierHolder.identifier().text, identifierHolder.generic?.genericTypeId)
+      super.visitClassDiagramIdentifierHolder(identifierHolder)
     }
 
     override fun visitClassDiagramIdentifierDeclarationHolder(declarationHolder: MermaidClassDiagramIdentifierDeclarationHolder) {
-      val diagramIdentifier = declarationHolder.classDiagramIdentifier
+      val diagramIdentifier = declarationHolder.identifier()
       val genericTypeId = declarationHolder.generic?.genericTypeId
       val id = diagramIdentifier.text
       if (declarations.add(id)) {
-        collectGenericDeclaration(diagramIdentifier, genericTypeId)
+        collectGenericDeclaration(id, genericTypeId)
       } else {
-        visitGenericUsage(diagramIdentifier, genericTypeId)
+        visitGenericUsage(id, genericTypeId)
       }
       super.visitClassDiagramIdentifierDeclarationHolder(declarationHolder)
     }
 
-    private fun collectGenericDeclaration(identifier: MermaidClassDiagramIdentifier, genericTypeId: MermaidGenericTypeId?) {
+    private fun collectGenericDeclaration(identifierText: String, genericTypeId: MermaidGenericTypeId?) {
       genericTypeId ?: return
-      declaredGenerics.add(identifier.text)
+      declaredGenerics.add(identifierText)
     }
 
-    private fun visitGenericUsage(diagramIdentifier: MermaidClassDiagramIdentifier, genericTypeId: MermaidGenericTypeId?) {
+    private fun visitGenericUsage(identifierText: String, genericTypeId: MermaidGenericTypeId?) {
       genericTypeId ?: return
-      if (diagramIdentifier.text in declaredGenerics) return
+      if (identifierText in declaredGenerics) return
 
       result.add(
         manager.createProblemDescriptor(

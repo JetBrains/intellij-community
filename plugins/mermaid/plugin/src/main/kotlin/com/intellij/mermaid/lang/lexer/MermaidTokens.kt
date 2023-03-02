@@ -80,6 +80,9 @@ object MermaidTokens {
   val DOUBLE_QUOTE = MermaidToken("DOUBLE_QUOTE")
 
   @JvmField
+  val BACK_QUOTE = MermaidToken("BACK_QUOTE")
+
+  @JvmField
   val STRING_VALUE = MermaidToken("STRING_VALUE")
 
   @JvmField

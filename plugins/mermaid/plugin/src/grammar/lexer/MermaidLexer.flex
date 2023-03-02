@@ -35,6 +35,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 %ignorecase
 
 %state double_quoted_string
+%state back_quoted_string
 
 %state directive
 %state directive_close
@@ -464,6 +465,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <class_diagram, struct, class_name, class_member> {
   [~] { yypushstate(generic); return TILDA; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  [`] { yypushstate(back_quoted_string); return BACK_QUOTE; }
   "<<" { yypushstate(annotation); return ANNOTATION_START; }
 
   ":" { yypushstate(class_member); return COLON; }
@@ -507,6 +509,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [~] { yypushstate(generic); return TILDA; }
   ":" { yypushstate(description); return COLON; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
+  [`] { yypushstate(back_quoted_string); return BACK_QUOTE; }
 
   "|>" { return ClassDiagram.EXTENSION_END; }
   ">" { return ClassDiagram.DEPENDENCY_END; }
@@ -878,6 +881,10 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <double_quoted_string> {
   [\"] { yypopstate(); return DOUBLE_QUOTE; }
   [^\"]* { return STRING_VALUE; }
+}
+<back_quoted_string> {
+  [`] { yypopstate(); return BACK_QUOTE; }
+  [^`]* { return STRING_VALUE; }
 }
 <click> {
   "call" { return CALL; }

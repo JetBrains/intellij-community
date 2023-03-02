@@ -21,7 +21,7 @@ class ClassDiagramAnnotator : Annotator {
   }
 
   private fun annotateUnresolvedClass(element: MermaidClassDiagramIdentifierHolder, holder: AnnotationHolder) {
-    val identifier = element.classDiagramIdentifier
+    val identifier = element.identifier()
 
     val parent = element.parent ?: return
 
@@ -32,10 +32,10 @@ class ClassDiagramAnnotator : Annotator {
 
     val classStatementIdentifiers = prevSiblings
       .filterIsInstance<MermaidClassStatement>()
-      .map { it.classHeader.classDiagramIdentifier }
+      .map { it.classHeader.identifier() }
     val mermaidStatementIdentifiers = prevSiblings
       .filterIsInstance<MermaidRelationStatement>()
-      .flatMap { listOf(it.leftId.classDiagramIdentifier, it.rightId.classDiagramIdentifier) }
+      .flatMap { listOf(it.leftId.identifier(), it.rightId.identifier()) }
     val matchingIds = (classStatementIdentifiers + mermaidStatementIdentifiers)
       .filter { identifier.textMatches(it) }
 
@@ -46,13 +46,14 @@ class ClassDiagramAnnotator : Annotator {
     holder.newAnnotation(HighlightSeverity.ERROR, MermaidBundle.message("annotator.unresolved.class"))
       .range(identifier.textRange)
       .highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL)
-      .withFix(CreateClassDeclarationIntention(identifier.text))
+      .withFix(CreateClassDeclarationIntention(identifier.text, element.isQuoted()))
       .create()
   }
 
-  private class CreateClassDeclarationIntention(@SafeFieldForPreview private val className: String) :
-    AbstractCreateDeclarationIntention(className) {
+  private class CreateClassDeclarationIntention(@SafeFieldForPreview private val className: String, isQuoted: Boolean) :
+    AbstractCreateDeclarationIntention(className, isQuoted, "`") {
     override fun getText(): String = MermaidBundle.message("fix.create.class.declaration", className)
-    override fun createDeclarationPsiElement(project: Project, name: String) = createClassDiagramStatement(project, name)
+    override fun createDeclarationPsiElement(project: Project, name: String) =
+      createClassDiagramStatement(project, name)
   }
 }

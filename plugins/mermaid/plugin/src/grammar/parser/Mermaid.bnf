@@ -259,7 +259,10 @@ classDiagramStatement ::= directionStatement
   | classDiagramClickStatement
   | accStatement
 
-classDiagramIdentifier ::= CLASS_ID {
+classDiagramIdentifier ::= CLASS_ID | BACK_QUOTE quotedClassIdentifier BACK_QUOTE {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+quotedClassIdentifier ::= STRING_VALUE {
   mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
 }
 

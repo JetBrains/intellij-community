@@ -10,7 +10,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 
-abstract class AbstractCreateDeclarationIntention(private val className: String, private val isQuoted: Boolean = false) :
+abstract class AbstractCreateDeclarationIntention(
+  private val className: String,
+  private val isQuoted: Boolean = false,
+  private val quote: String = "\""
+) :
   BaseElementAtCaretIntentionAction() {
   abstract fun createDeclarationPsiElement(project: Project, name: String): PsiElement?
 
@@ -27,9 +31,9 @@ abstract class AbstractCreateDeclarationIntention(private val className: String,
     val document = element.parentOfType(type = DIAGRAM_BODIES_AND_BLOCKS) ?: return
 
     val name = buildString {
-      if (isQuoted) append("\"")
+      if (isQuoted) append(quote)
       append(className.replace(" ", "\\\\ "))
-      if (isQuoted) append("\"")
+      if (isQuoted) append(quote)
     }
 
     val declaration = createDeclarationPsiElement(project, name)
