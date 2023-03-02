@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableSet;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -13,7 +14,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -493,35 +494,43 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
   }
 
-  public static class InstallAndImportQuickFix implements LocalQuickFix {
-    @Nullable private final Sdk mySdk;
-    @Nullable private final Module myModule;
-    @NotNull private final String myPackageName;
-    @Nullable private final String myAsName;
-    @NotNull private final SmartPsiElementPointer<PyElement> myNode;
+  public static class InstallPackageQuickFix implements LocalQuickFix {
+    protected final @NotNull String myPackageName;
 
-    public InstallAndImportQuickFix(@NotNull final String packageName,
-                                    @Nullable final String asName,
-                                    @NotNull final PyElement node) {
+    public InstallPackageQuickFix(@NotNull String packageName) {
       myPackageName = packageName;
-      myAsName = asName;
-      myNode = SmartPointerManager.getInstance(node.getProject()).createSmartPsiElementPointer(node, node.getContainingFile());
-      myModule = ModuleUtilCore.findModuleForPsiElement(node);
-      mySdk = PythonSdkUtil.findPythonSdk(myModule);
-    }
-
-    @Nls
-    @NotNull
-    @Override
-    public String getName() {
-      return PyPsiBundle.message("QFIX.NAME.install.and.import.package", myPackageName);
     }
 
     @Override
-    @NotNull
-    public String getFamilyName() {
-      return PyPsiBundle.message("QFIX.install.and.import.package");
+    public @NotNull String getFamilyName() {
+      return PyBundle.message("python.unresolved.reference.inspection.install.package", myPackageName);
     }
+
+    @Override
+    public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      if (element == null) return;
+      Module module = ModuleUtilCore.findModuleForPsiElement(element);
+      Sdk sdk = PythonSdkUtil.findPythonSdk(element);
+      if (module != null && sdk != null) {
+        new PyInstallRequirementsFix(
+          getFamilyName(), module, sdk,
+          Collections.singletonList(PyRequirementsKt.pyRequirement(myPackageName)),
+          Collections.emptyList(),
+          new RunningPackagingTasksListener(module) {
+            @Override
+            public void finished(List<ExecutionException> exceptions) {
+              super.finished(exceptions);
+              if (exceptions.isEmpty()) {
+                onSuccess(descriptor);
+              }
+            }
+          }
+        ).applyFix(module.getProject(), descriptor);
+      }
+    }
+
+    protected void onSuccess(@NotNull ProblemDescriptor descriptor) { }
 
     @Override
     public boolean startInWriteAction() {
@@ -529,30 +538,45 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      if (mySdk != null && !checkAdminPermissionsAndConfigureInterpreter(project, descriptor, mySdk)) {
-        installAndImportPackage(project);
-      }
+    public boolean availableInBatchMode() {
+      return false;
     }
 
-    private void installAndImportPackage(@NotNull Project project) {
-      final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new RunningPackagingTasksListener(myModule) {
-        @Override
-        public void finished(List<ExecutionException> exceptions) {
-          super.finished(exceptions);
-          if (exceptions.isEmpty()) {
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+  }
 
-            final PyElement element = myNode.getElement();
-            if (element == null) return;
+  public static class InstallAndImportPackageQuickFix extends InstallPackageQuickFix {
+    private final @Nullable String myAsName;
 
-            CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-              AddImportHelper.addImportStatement(element.getContainingFile(), myPackageName, myAsName,
-                                                 AddImportHelper.ImportPriority.THIRD_PARTY, element);
-            }), PyPsiBundle.message("INSP.package.requirements.add.import"), "Add import");
-          }
-        }
-      });
-      ui.install(Collections.singletonList(PyRequirementsKt.pyRequirement(myPackageName)), Collections.emptyList());
+    public InstallAndImportPackageQuickFix(@NotNull String packageName, @Nullable String asName) {
+      super(packageName);
+      myAsName = asName;
+    }
+
+    @Override
+    public @Nls @NotNull String getName() {
+      return PyPsiBundle.message("QFIX.NAME.install.and.import.package", myPackageName);
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return PyPsiBundle.message("QFIX.install.and.import.package");
+    }
+
+    @Override
+    protected void onSuccess(@NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      if (element == null) return;
+      WriteCommandAction.writeCommandAction(element.getProject())
+        .withName(PyPsiBundle.message("INSP.package.requirements.add.import"))
+        .withGroupId("Add import")
+        .run(() -> {
+          AddImportHelper.addImportStatement(element.getContainingFile(), myPackageName, myAsName,
+                                             AddImportHelper.ImportPriority.THIRD_PARTY, element);
+        });
     }
   }
 
