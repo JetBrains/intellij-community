@@ -3,6 +3,7 @@ package com.intellij.ui.jcef
 
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.ui.scale.TestScaleHelper
+import org.cef.misc.CefLog
 import org.intellij.lang.annotations.Language
 import org.junit.After
 import org.junit.Assert.*
@@ -97,6 +98,53 @@ class JBCefBrowserJsCallTest {
   fun `execute the same call twice and simultaneously`() {
     val browser = prepareBrowser()
     val jsCall = JBCefBrowserJsCall("""2+2""", browser)
+    val latch = CountDownLatch(2)
+
+    var r1: String? = null
+    var r2: String? = null
+
+    JBCefTestHelper.invokeAndWaitForLatch(latch) {
+      jsCall().onProcessed { latch.countDown() }.onSuccess { r1 = it }
+      jsCall().onProcessed { latch.countDown() }.onSuccess { r2 = it }
+    }
+
+    assertEquals("4", r1)
+    assertEquals("4", r2)
+  }
+
+  // TODO: remove when IDEA-312158 fixed
+  @Test
+  fun `IDEA-312158 with logging`() {
+    val browser = prepareBrowser()
+    CefLog.Info("Start IDEA-312158 test with browser " + browser.cefBrowser.uiComponent)
+    val javaScript = """
+          console.log("****** exec JS ****** ");
+          return 2+2;
+        """.trimIndent()
+    val jsCall = JBCefBrowserJsCall(javaScript, browser)
+    val latch = CountDownLatch(2)
+
+    var r1: String? = null
+    var r2: String? = null
+
+    JBCefTestHelper.invokeAndWaitForLatch(latch) {
+      jsCall().onProcessed { latch.countDown() }.onSuccess { r1 = it }
+      jsCall().onProcessed { latch.countDown() }.onSuccess { r2 = it }
+    }
+
+    assertEquals("4", r1)
+    assertEquals("4", r2)
+  }
+
+  fun `IDEA-312158 with logging and disabled GPU`() {
+    System.setProperty("ide.browser.jcef.extra.args", "--disable-gpu,--disable-gpu-compositing,--disable-gpu-vsync,--disable-software-rasterizer,--disable-extensions");
+    val browser = prepareBrowser()
+    CefLog.Info("Start IDEA-312158 with disabled GPU, browser " + browser.cefBrowser.uiComponent)
+    val javaScript = """
+          console.log("****** exec JS ****** ");
+          return 2+2;
+        """.trimIndent()
+    val jsCall = JBCefBrowserJsCall(javaScript, browser)
     val latch = CountDownLatch(2)
 
     var r1: String? = null
