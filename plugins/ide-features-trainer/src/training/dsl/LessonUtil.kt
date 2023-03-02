@@ -414,7 +414,7 @@ fun LessonContext.highlightRunToolbar(highlightInside: Boolean = true, usePulsat
   }
 }
 
-fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = true, usePulsation: Boolean = true) {
+fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = false, usePulsation: Boolean = false) {
   task {
     // wait for the treads & variables tab to become selected
     // otherwise the incorrect toolbar can be highlighted in the next task

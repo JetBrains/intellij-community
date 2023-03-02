@@ -338,7 +338,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
       JavaLessonsBundle.message("java.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
-    highlightDebugActionsToolbar(highlightInside = false, usePulsation = false)
+    highlightDebugActionsToolbar()
 
     task {
       rehighlightPreviousUi = true
