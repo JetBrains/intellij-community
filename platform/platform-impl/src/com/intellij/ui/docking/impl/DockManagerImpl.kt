@@ -640,7 +640,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
 
     private fun installListeners(frame: Window) {
       val uiNotifyConnector = if (container is Activatable) {
-        UiNotifyConnector((frame as RootPaneContainer).contentPane, (container as Activatable))
+        UiNotifyConnector.installOn((frame as RootPaneContainer).contentPane, (container as Activatable))
       }
       else {
         null

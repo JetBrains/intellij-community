@@ -95,7 +95,7 @@ object CollaborationToolsUIUtil {
    */
   @Internal
   fun installValidator(component: JComponent, errorValue: SingleValueModel<@Nls String?>) {
-    UiNotifyConnector(component, ValidatorActivatable(errorValue, component), false)
+    UiNotifyConnector.installOn(component, ValidatorActivatable(errorValue, component), false)
   }
 
   private class ValidatorActivatable(
@@ -156,7 +156,7 @@ object CollaborationToolsUIUtil {
    * Add [listener] that will be invoked on each UI update
    */
   fun <T : JComponent> overrideUIDependentProperty(component: T, listener: T.() -> Unit) {
-    UiNotifyConnector(component, object : Activatable {
+    UiNotifyConnector.installOn(component, object : Activatable {
       private var listenerDisposable: Disposable? by Delegates.observable(null) { _, oldValue, _ ->
         oldValue?.also { Disposer.dispose(it) }
       }

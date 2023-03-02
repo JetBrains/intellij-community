@@ -165,7 +165,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     val contentComponent = contentManager.component
     InternalDecoratorImpl.installFocusTraversalPolicy(contentComponent, LayoutFocusTraversalPolicy())
-    Disposer.register(parentDisposable, UiNotifyConnector(contentComponent, object : Activatable {
+    Disposer.register(parentDisposable, UiNotifyConnector.installOn(contentComponent, object : Activatable {
       override fun showNotify() {
         showing.onReady()
       }

@@ -156,7 +156,7 @@ public final class ScopeEditorPanel implements Disposable {
     myPatternLegend.setText("");
 
     initTree(myPackageTree);
-    Disposer.register(this, new UiNotifyConnector(myPanel, new Activatable() {
+    Disposer.register(this, UiNotifyConnector.installOn(myPanel, new Activatable() {
       @Override
       public void hideNotify() {
         cancelCurrentProgress();

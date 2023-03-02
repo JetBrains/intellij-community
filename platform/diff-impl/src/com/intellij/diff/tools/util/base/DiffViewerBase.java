@@ -81,7 +81,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
 
     fireEvent(EventType.INIT);
 
-    new UiNotifyConnector(getComponent(), new Activatable() {
+    UiNotifyConnector.installOn(getComponent(), new Activatable() {
       private boolean wasNotShownYet = true;
 
       @Override

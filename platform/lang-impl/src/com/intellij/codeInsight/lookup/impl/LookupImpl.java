@@ -827,7 +827,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     JComponent editorComponent = myEditor.getContentComponent();
     if (editorComponent.isShowing()) {
-      Disposer.register(this, new UiNotifyConnector(editorComponent, new Activatable() {
+      Disposer.register(this, UiNotifyConnector.installOn(editorComponent, new Activatable() {
         @Override
         public void hideNotify() {
           hideLookup(false);

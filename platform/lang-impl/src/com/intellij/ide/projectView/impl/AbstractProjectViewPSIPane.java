@@ -110,7 +110,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
     initTree();
 
-    Disposer.register(this, new UiNotifyConnector(myTree, new Activatable() {
+    Disposer.register(this, UiNotifyConnector.installOn(myTree, new Activatable() {
       private boolean showing;
 
       @Override

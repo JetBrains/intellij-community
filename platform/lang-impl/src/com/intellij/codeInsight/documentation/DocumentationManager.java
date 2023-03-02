@@ -332,7 +332,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     });
 
-    new UiNotifyConnector(component, new Activatable() {
+    UiNotifyConnector.installOn(component, new Activatable() {
       @Override
       public void showNotify() {
         restartAutoUpdate(PropertiesComponent.getInstance().getBoolean(getAutoUpdateEnabledProperty(), getAutoUpdateDefault()));

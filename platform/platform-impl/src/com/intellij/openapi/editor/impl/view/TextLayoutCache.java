@@ -56,7 +56,7 @@ class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     myDocument = view.getEditor().getDocument();
     myDocument.addDocumentListener(this, this);
     myBidiNotRequiredMarker = LineLayout.create(view, "", Font.PLAIN);
-    Disposer.register(this, new UiNotifyConnector(view.getEditor().getContentComponent(), new Activatable() {
+    Disposer.register(this, UiNotifyConnector.installOn(view.getEditor().getContentComponent(), new Activatable() {
       @Override
       public void hideNotify() {
         trimChunkCache();

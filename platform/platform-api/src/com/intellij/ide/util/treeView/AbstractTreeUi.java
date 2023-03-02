@@ -246,7 +246,7 @@ public class AbstractTreeUi {
       Disposer.register(getBuilder(), () -> myProgress.cancel());
     }
 
-    UiNotifyConnector uiNotify = new UiNotifyConnector(tree, new Activatable() {
+    UiNotifyConnector uiNotify = UiNotifyConnector.installOn(tree, new Activatable() {
       @Override
       public void showNotify() {
         myShowing = true;

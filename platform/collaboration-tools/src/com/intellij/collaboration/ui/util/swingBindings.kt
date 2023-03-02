@@ -255,6 +255,6 @@ class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineCont
     currentConnection?.let {
       Disposer.dispose(it)
     }
-    currentConnection = UiNotifyConnector(component, this, false)
+    currentConnection = UiNotifyConnector.installOn(component, this, false)
   }
 }

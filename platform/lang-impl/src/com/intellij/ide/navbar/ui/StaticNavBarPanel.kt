@@ -24,7 +24,7 @@ internal class StaticNavBarPanel(
 ) : JPanel(BorderLayout()), Activatable {
 
   init {
-    UiNotifyConnector(this, this, false)
+    UiNotifyConnector.installOn(this, this, false)
   }
 
   private var job: Job? = null

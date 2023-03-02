@@ -58,7 +58,7 @@ public final class ShadowAction {
 
     myAction.getTemplatePresentation().copyFrom(copyFromAction.getTemplatePresentation());
 
-    Disposer.register(parentDisposable, new UiNotifyConnector(component, new Activatable() {
+    Disposer.register(parentDisposable, UiNotifyConnector.installOn(component, new Activatable() {
       @Override
       public void showNotify() {
         _connect();

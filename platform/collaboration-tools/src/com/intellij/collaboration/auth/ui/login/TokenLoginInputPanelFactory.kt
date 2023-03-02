@@ -86,7 +86,7 @@ class TokenLoginInputPanelFactory(
       // need to force update server field
       reset()
     }.also { panel ->
-      UiNotifyConnector(panel, CoroutineActivatable {
+      UiNotifyConnector.installOn(panel, CoroutineActivatable {
         model.loginState.collectLatest { state ->
           progressModel.value = state is LoginModel.LoginState.Connecting
         }

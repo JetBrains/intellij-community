@@ -152,13 +152,13 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
           HelpTooltip.dispose(c)
         }
       }
-      tooltipConnector = UiNotifyConnector(c, tooltipActivatable)
+      tooltipConnector = UiNotifyConnector.installOn(c, tooltipActivatable)
 
       propertyListener = PropertyChangeListener {
         tooltipConnector?.let {
           Disposer.dispose(it)
         }
-        tooltipConnector = UiNotifyConnector(c, tooltipActivatable)
+        tooltipConnector = UiNotifyConnector.installOn(c, tooltipActivatable)
         c.revalidate()
         c.repaint()
       }

@@ -101,7 +101,7 @@ public class FileTextFieldImpl implements FileTextField, Disposable {
     boolean headless = ApplicationManager.getApplication().isUnitTestMode();
     myUiUpdater = new MergingUpdateQueue("FileTextField.UiUpdater", 200, false, myPathTextField);
     if (!headless) {
-      new UiNotifyConnector(myPathTextField, myUiUpdater);
+      UiNotifyConnector.installOn(myPathTextField, myUiUpdater);
     }
 
     myFinder = finder;

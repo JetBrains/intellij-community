@@ -800,7 +800,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     MyCellEditorRemover() {
       addPropertyChangeListener("tableCellEditor", this);
-      new UiNotifyConnector(JBTable.this, this);
+      UiNotifyConnector.installOn(JBTable.this, this);
     }
 
     public void activate() {

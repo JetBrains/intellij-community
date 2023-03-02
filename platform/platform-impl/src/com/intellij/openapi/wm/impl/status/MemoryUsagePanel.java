@@ -45,7 +45,7 @@ public final class MemoryUsagePanel extends TextPanel implements CustomStatusBar
     setBorder(JBUI.Borders.empty(0, 2));
     updateUI();
 
-    new UiNotifyConnector(this, this);
+    UiNotifyConnector.installOn(this, this);
   }
 
   @Override

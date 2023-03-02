@@ -121,7 +121,7 @@ public class EditorSearchSession implements SearchSession,
       .build();
 
     myComponent.addListener(this);
-    new UiNotifyConnector(myComponent, new Activatable() {
+    UiNotifyConnector.installOn(myComponent, new Activatable() {
       @Override
       public void showNotify() {
         initLivePreview();

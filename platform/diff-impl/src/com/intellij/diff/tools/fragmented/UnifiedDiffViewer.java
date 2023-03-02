@@ -157,7 +157,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements Differe
     myPanel.setPersistentNotifications(DiffUtil.createCustomNotifications(this, myContext, myRequest));
     myContentPanel.setTitle(createTitles());
 
-    new UiNotifyConnector(getComponent(), new Activatable() {
+    UiNotifyConnector.installOn(getComponent(), new Activatable() {
       @Override
       public void showNotify() {
         myMarkupUpdater.scheduleUpdate();

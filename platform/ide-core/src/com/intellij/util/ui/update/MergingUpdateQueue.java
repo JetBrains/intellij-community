@@ -122,7 +122,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     if (activationComponent != null) {
-      UiNotifyConnector connector = new UiNotifyConnector(activationComponent, this);
+      UiNotifyConnector connector = UiNotifyConnector.installOn(activationComponent, this);
       Disposer.register(this, connector);
     }
 
