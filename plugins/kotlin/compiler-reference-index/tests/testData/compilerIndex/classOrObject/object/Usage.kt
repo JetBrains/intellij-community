@@ -1,3 +1,3 @@
 fun d() {
-    MyObject.a
+    MyObject
 }

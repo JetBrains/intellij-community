@@ -1,3 +1,3 @@
-fun d() {
+fun constructorUsage() {
     MainClass().NestedClass()
 }

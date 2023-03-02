@@ -1,4 +1,4 @@
-public class JavaUsage {
+public class JavaConstructorUsage {
     void t() {
         new MainClass.NestedClass();
     }

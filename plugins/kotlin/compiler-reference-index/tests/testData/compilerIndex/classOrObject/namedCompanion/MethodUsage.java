@@ -1,5 +1,5 @@
-class Usage {
+class MethodUsage {
     public static void main(String[] args) {
-        MainClass.Companion.f();
+        MainClass.Name.f();
     }
 }
