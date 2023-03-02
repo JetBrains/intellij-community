@@ -134,7 +134,7 @@ public class MoveInnerToUpperOrMembersHandler extends MoveHandlerDelegate {
       gr.add(myRbMoveInner);
       gr.add(myRbMoveMembers);
 
-      new RadioUpDownListener(myRbMoveInner, myRbMoveMembers);
+      RadioUpDownListener.installOn(myRbMoveInner, myRbMoveMembers);
 
       Box box = Box.createVerticalBox();
       box.add(Box.createVerticalStrut(5));

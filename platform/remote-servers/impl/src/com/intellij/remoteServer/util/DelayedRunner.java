@@ -33,12 +33,14 @@ public abstract class DelayedRunner implements Disposable {
 
   private int myChangesPastTime = NO_CHANGES;
 
+  /**
+   * Call {@link DelayedRunner#queueChangesCheck()} to start the runner
+   */
   public DelayedRunner(@NotNull JComponent activationComponent) {
     myAlarm = new Alarm(activationComponent, this);
-    queueChangesCheck();
   }
 
-  private void queueChangesCheck() {
+  public void queueChangesCheck() {
     if (myAlarm.isDisposed()) {
       return;
     }

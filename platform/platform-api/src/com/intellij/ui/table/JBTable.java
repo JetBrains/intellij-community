@@ -177,7 +177,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     myUiUpdating = false;
 
-    new MyCellEditorRemover();
+    new MyCellEditorRemover().setupListeners();
   }
 
   protected void onTableChanged(@NotNull TableModelEvent e) {
@@ -798,7 +798,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   private final class MyCellEditorRemover implements PropertyChangeListener, Activatable {
     private boolean myIsActive = false;
 
-    MyCellEditorRemover() {
+    private void setupListeners() {
       addPropertyChangeListener("tableCellEditor", this);
       UiNotifyConnector.installOn(JBTable.this, this);
     }

@@ -69,7 +69,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
 
     myWatchRootsManager = new WatchRootsManager(myWatcher, this);
     Disposer.register(ApplicationManager.getApplication(), this);
-    new SymbolicLinkRefresher(this);
+    new SymbolicLinkRefresher(this).refresh();
   }
 
   public @NotNull FileWatcher getFileWatcher() {

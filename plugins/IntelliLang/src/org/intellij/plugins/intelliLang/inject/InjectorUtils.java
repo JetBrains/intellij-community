@@ -243,6 +243,7 @@ public final class InjectorUtils {
     }
     if (hasReChars) {
       try {
+        //noinspection ResultOfObjectAllocationIgnored
         new URL(s);
       }
       catch (MalformedURLException e) {

@@ -58,7 +58,7 @@ public abstract class QuickFixManager <T extends JComponent>{
     myComponent.addFocusListener(new FocusListenerImpl(this));
 
     // Alt+Enter
-    new ShowHintAction(this, component);
+    new ShowHintAction(this).registerShortcutSet(component);
 
     viewPort.addChangeListener(new ChangeListener() {
       @Override

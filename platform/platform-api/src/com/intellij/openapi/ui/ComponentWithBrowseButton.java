@@ -94,7 +94,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     } else if (Registry.is("ide.browse.button.always.focusable", false)) {
       myBrowseButton.setFocusable(true);
     }
-    new LazyDisposable(this);
+    LazyDisposable.installOn(this);
 
     Insets insets = myComponent.getInsets();
     Gaps visualPaddings = new Gaps(insets.top, insets.left, insets.bottom, inlineBrowseButton ? insets.right : myBrowseButton.getInsets().right);
@@ -329,7 +329,11 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
 
     private LazyDisposable(ComponentWithBrowseButton<?> component) {
       reference = new WeakReference<>(component);
-      UiNotifyConnector.Once.installOn(component, this);
+    }
+
+    private static void installOn(ComponentWithBrowseButton<?> component) {
+      LazyDisposable disposable = new LazyDisposable(component);
+      UiNotifyConnector.Once.installOn(component, disposable);
     }
 
     @Override

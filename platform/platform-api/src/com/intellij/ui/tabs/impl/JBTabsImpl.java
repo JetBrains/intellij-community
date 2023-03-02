@@ -389,7 +389,7 @@ public class JBTabsImpl extends JComponent
       }
     });
 
-    new LazyUiDisposable<>(parentDisposable, this, this) {
+    LazyUiDisposable<JBTabsImpl> listener1 = new LazyUiDisposable<>(parentDisposable, this, this) {
       @Override
       protected void initialize(@NotNull Disposable parent, @NotNull JBTabsImpl child, @Nullable Project project) {
         if (myProject == null && project != null) {
@@ -418,6 +418,7 @@ public class JBTabsImpl extends JComponent
         }
       }
     };
+    listener1.setupListeners();
     ComponentUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS,
                                     (Iterable<? extends Component>)(Iterable<JComponent>)() -> {
                                       return JBIterable.from(getVisibleInfos())

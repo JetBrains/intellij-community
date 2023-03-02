@@ -339,6 +339,7 @@ public final class GuiEditor extends JPanel implements DesignerEditorPanelFacade
 
     myDropTargetListener = new DesignDropTargetListener(this);
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      //noinspection ResultOfObjectAllocationIgnored
       new DropTarget(getGlassLayer(), DnDConstants.ACTION_COPY_OR_MOVE, myDropTargetListener);
     }
 

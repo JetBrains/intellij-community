@@ -51,21 +51,30 @@ public class TreeDropListener extends DropTargetAdapter {
   private boolean myExecuteEnabled;
   private boolean myShowFeedback;
 
-  public TreeDropListener(ComponentTree tree, EditableArea area, ToolProvider provider) {
-    this(tree, area, provider, TreeDropListener.class, PaletteItem.class);
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      tree.setDragEnabled(true);
-      tree.setTransferHandler(new TreeTransfer(TreeDropListener.class));
-    }
+  private TreeDropListener(EditableArea area, ToolProvider provider) {
+    this(area, provider, TreeDropListener.class, PaletteItem.class);
   }
 
-  public TreeDropListener(JComponent component, EditableArea area, ToolProvider provider, Class... dragTargets) {
+  private TreeDropListener(EditableArea area, ToolProvider provider, Class... dragTargets) {
     myArea = area;
     myContext.setArea(area);
     myToolProvider = provider;
     myDragTargets = dragTargets;
+  }
+
+  public static void installOn(ComponentTree tree, EditableArea area, ToolProvider provider) {
+    TreeDropListener listener = new TreeDropListener(area, provider);
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      component.setDropTarget(new DropTarget(component, this));
+      tree.setDragEnabled(true);
+      tree.setTransferHandler(new TreeTransfer(TreeDropListener.class));
+      tree.setDropTarget(new DropTarget(tree, listener));
+    }
+  }
+
+  public static void installOn(JComponent component, EditableArea area, ToolProvider provider, Class... dragTargets) {
+    TreeDropListener listener = new TreeDropListener(area, provider, dragTargets);
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      component.setDropTarget(new DropTarget(component, listener));
     }
   }
 

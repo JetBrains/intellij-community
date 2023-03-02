@@ -1142,14 +1142,16 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     private boolean myHandleDispose = true;
 
     private BalloonPopupSupport(@NotNull JPopupMenu popupMenu,
-                                @NotNull Balloon balloon,
                                 @NotNull JComponent component,
                                 @NotNull Alarm popupAlarm) {
       myPopupMenu = popupMenu;
       myComponent = component;
       myAlarm = popupAlarm;
-      popupAlarm.cancelAllRequests();
-      popupMenu.addPopupMenuListener(this);
+    }
+
+    private void setupListeners(@NotNull Balloon balloon) {
+      myAlarm.cancelAllRequests();
+      myPopupMenu.addPopupMenuListener(this);
       Disposer.register(balloon, this);
     }
 
@@ -1213,7 +1215,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     JPopupMenu menu = showPopup(link, group);
     Balloon balloon = notification.getBalloon();
     if (menu != null && balloon != null) {
-      new BalloonPopupSupport(menu, balloon, link, popupAlarm);
+      new BalloonPopupSupport(menu, link, popupAlarm).setupListeners(balloon);
     }
   }
 

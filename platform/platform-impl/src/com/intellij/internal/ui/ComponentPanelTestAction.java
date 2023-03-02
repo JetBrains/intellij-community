@@ -555,6 +555,7 @@ final class ComponentPanelTestAction extends DumbAwareAction {
       ComponentWithBrowseButton<EditorTextField> etfbb = new ComponentWithBrowseButton<>(editor, e -> System.out.println("JTextField browse button pressed"));
       new ComponentValidator(getDisposable()).withValidator(() -> {
         try {
+          //noinspection ResultOfObjectAllocationIgnored
           new URL(etfbb.getChildComponent().getDocument().getText());
           return null;
         } catch (MalformedURLException mex) {
