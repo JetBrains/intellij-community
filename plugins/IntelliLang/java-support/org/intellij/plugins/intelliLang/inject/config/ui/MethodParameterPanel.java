@@ -115,7 +115,7 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
 
     });
     init(injection.copy());
-    new TreeTableSpeedSearch(myParamsTable, o -> {
+    TreeTableSpeedSearch.installOn(myParamsTable, o -> {
       final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
       return userObject instanceof PsiNamedElement? ((PsiNamedElement)userObject).getName() : null;
     });

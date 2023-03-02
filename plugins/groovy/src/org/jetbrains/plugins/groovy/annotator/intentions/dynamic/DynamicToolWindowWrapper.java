@@ -205,7 +205,7 @@ public final class DynamicToolWindowWrapper {
 
     myTreeTable = new MyTreeTable(myTreeTableModel);
 
-    new TreeTableSpeedSearch(myTreeTable, o -> {
+    TreeTableSpeedSearch.installOn(myTreeTable, o -> {
       final Object node = o.getLastPathComponent();
       if (node instanceof DefaultMutableTreeNode) {
         final Object object = ((DefaultMutableTreeNode)node).getUserObject();

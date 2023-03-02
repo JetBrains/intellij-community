@@ -390,7 +390,7 @@ public class ExtractedSettingsDialog extends DialogWrapper {
         return editor == null ? super.getCellEditor(row, column) : editor;
       }
     };
-    new TreeTableSpeedSearch(treeTable).setComparator(new SpeedSearchComparator(false));
+    TreeTableSpeedSearch.installOn(treeTable).setComparator(new SpeedSearchComparator(false));
 
     treeTable.setRootVisible(false);
 

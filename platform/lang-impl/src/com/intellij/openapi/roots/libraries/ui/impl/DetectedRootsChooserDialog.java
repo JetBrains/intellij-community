@@ -167,7 +167,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
     column.setPreferredWidth(width);
     column.setMaxWidth(width);
     treeTable.setRootVisible(false);
-    new TreeTableSpeedSearch(treeTable, o -> {
+    TreeTableSpeedSearch.installOn(treeTable, o -> {
       Object node = o.getLastPathComponent();
       if (!(node instanceof VirtualFileCheckedTreeNode)) return "";
       return ((VirtualFileCheckedTreeNode)node).getFile().getPresentableUrl();
