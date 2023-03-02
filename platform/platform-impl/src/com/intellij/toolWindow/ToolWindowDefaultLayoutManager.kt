@@ -47,7 +47,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   fun getLayoutNames(): Set<String> = state.layouts.keys
 
-  fun getLayoutCopy(): DesktopLayout = state.getActiveLayoutCopy(isNewUi) ?: DesktopLayout()
+  fun getLayoutCopy(): DesktopLayout = state.getActiveLayoutCopy(isNewUi)
 
   fun setLayout(layout: DesktopLayout) = setLayout(activeLayoutName, layout)
 
@@ -83,9 +83,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   }
 
   private fun loadDefaultLayout(isNewUi: Boolean) {
-    val provider = service<DefaultToolWindowLayoutProvider>()
-    val list = if (isNewUi) provider.createV2Layout() else provider.createV1Layout()
-    state = state.withUpdatedLayout(INITIAL_LAYOUT_NAME, list, isNewUi)
+    state = state.withUpdatedLayout(INITIAL_LAYOUT_NAME, getDefaultLayoutToolWindowDescriptors(isNewUi), isNewUi)
   }
 
   override fun loadState(state: ToolWindowLayoutStorageManagerState) {
@@ -96,12 +94,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
       state
     }
     this.state = newState
-    val activeLayout = newState.getActiveLayoutCopy(isNewUi)
-    if (activeLayout == null) {
-      loadDefaultLayout(isNewUi)
-    } else {
-      setLayout(newState.activeLayoutName, activeLayout)
-    }
+    setLayout(newState.activeLayoutName, newState.getActiveLayoutCopy(isNewUi))
   }
 
   /**
@@ -121,19 +114,16 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     val v2: List<ToolWindowDescriptor> = emptyList(),
   ) {
 
-    fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout? {
-      val activeLayoutDescriptors = getDescriptors(isNewUi)
-      if (activeLayoutDescriptors.isEmpty()) {
-        return null
-      }
+    fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout {
       return DesktopLayout(
-        convertWindowDescriptorsToWindowInfos(activeLayoutDescriptors),
+        convertWindowDescriptorsToWindowInfos(getDescriptors(isNewUi)),
         convertUnifiedWeightsDescriptorToUnifiedWeights(getUnifiedWeights())
       )
     }
 
     private fun getDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> =
-        layouts[activeLayoutName]?.let { if (isNewUi) it.v2 else it.v1 } ?: emptyList()
+      (layouts[activeLayoutName]?.let { if (isNewUi) it.v2 else it.v1 } ?: emptyList())
+        .ifEmpty { getDefaultLayoutToolWindowDescriptors(isNewUi) }
 
     private fun getUnifiedWeights(): Map<String, Float> =
         layouts[activeLayoutName]?.unifiedWeights ?: DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR
@@ -173,6 +163,11 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
       if (isNewUi) copy(v2 = layout, unifiedWeights = weights) else copy(v1 = layout, unifiedWeights = weights)
   }
 
+}
+
+private fun getDefaultLayoutToolWindowDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> {
+  val provider = service<DefaultToolWindowLayoutProvider>()
+  return if (isNewUi) provider.createV2Layout() else provider.createV1Layout()
 }
 
 private val DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR: Map<String, Float> = ToolWindowAnchor.VALUES.associate { it.toString() to WindowInfoImpl.DEFAULT_WEIGHT }
