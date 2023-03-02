@@ -6,5 +6,6 @@
         "JavaConstructorUsageWithImport.java",
         "JavaTypeUsage.java",
         "TypeUsage.kt"
-    ]
+    ],
+    "ignoreK2Compiler": "KTIJ-24833"
 }

@@ -9,5 +9,6 @@
         "MethodUsage.java",
         "Type.java",
         "Type.kt"
-    ]
+    ],
+    "ignoreK2Compiler": "KTIJ-24833"
 }
