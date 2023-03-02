@@ -42,6 +42,7 @@ public class MavenGeneralSettings implements Cloneable {
   private boolean showDialogWithAdvancedSettings = false;
   private boolean useMavenConfig = false;
   private String threads;
+  private boolean emulateTerminal = false;
 
   private MavenExecutionOptions.LoggingLevel outputLevel = MavenExecutionOptions.LoggingLevel.INFO;
   MavenExecutionOptions.ChecksumPolicy checksumPolicy = MavenExecutionOptions.ChecksumPolicy.NOT_SET;
@@ -387,6 +388,17 @@ public class MavenGeneralSettings implements Cloneable {
     }
   }
 
+  public boolean isEmulateTerminal() {
+    return emulateTerminal;
+  }
+
+  public void setEmulateTerminal(boolean emulateTerminal) {
+    if (!Comparing.equal(this.emulateTerminal, emulateTerminal)) {
+      this.emulateTerminal = emulateTerminal;
+      changed();
+    }
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -408,6 +420,7 @@ public class MavenGeneralSettings implements Cloneable {
     if (!mavenHome.equals(that.mavenHome)) return false;
     if (!mavenSettingsFile.equals(that.mavenSettingsFile)) return false;
     if (!Objects.equals(threads, that.threads)) return false;
+    if (emulateTerminal != that.emulateTerminal) return false;
 
     return true;
   }
@@ -426,6 +439,7 @@ public class MavenGeneralSettings implements Cloneable {
     result = 31 * result + checksumPolicy.hashCode();
     result = 31 * result + failureBehavior.hashCode();
     result = 31 * result + pluginUpdatePolicy.hashCode();
+    result = 31 * result + (emulateTerminal ? 1 : 0);
     return result;
   }
 

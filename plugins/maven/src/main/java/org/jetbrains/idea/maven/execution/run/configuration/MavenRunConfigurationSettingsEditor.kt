@@ -23,6 +23,7 @@ import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.isOperationCompleted
 import com.intellij.openapi.observable.operation.core.traceRun
 import com.intellij.openapi.observable.operation.core.whenOperationFinished
+import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.roots.ui.configuration.SdkComboBox
 import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createProjectJdkComboBoxModel
@@ -30,13 +31,13 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.distribution.DistributionComboBox
 import com.intellij.openapi.roots.ui.distribution.FileChooserInfo
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
-import com.intellij.openapi.observable.util.lockOrSkip
-import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
@@ -120,6 +121,7 @@ class MavenRunConfigurationSettingsEditor(
       addWorkOfflineTag()
       addCheckSumPolicyTag()
       addMultiProjectBuildPolicyTag()
+      addEmulateTerminalTag()
     }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addJavaOptionsGroupFragment() =
@@ -359,6 +361,19 @@ class MavenRunConfigurationSettingsEditor(
       { generalSettingsOrDefault.failureBehavior = it },
       { it.displayString }
     )
+  }
+
+  private fun SettingsFragmentsContainer<MavenRunConfiguration>.addEmulateTerminalTag() {
+    if (!SystemInfo.isWindows) {
+      addTag(
+        "maven.emulate.terminal",
+        MavenConfigurableBundle.message("maven.run.configuration.emulate.terminal.name"),
+        MavenConfigurableBundle.message("maven.run.configuration.general.options.group"),
+        MavenConfigurableBundle.message("maven.run.configuration.emulate.terminal.hint"),
+        { generalSettingsOrDefault.isEmulateTerminal },
+        { generalSettingsOrDefault.isEmulateTerminal = it }
+      )
+    }
   }
 
   private fun SettingsFragmentsContainer<MavenRunConfiguration>.addDistributionFragment() =
