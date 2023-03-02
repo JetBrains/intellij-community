@@ -249,7 +249,7 @@ class PythonOnboardingTourLesson :
       PythonLessonsBundle.message("python.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
-    highlightDebugActionsToolbar(highlightInside = false, usePulsation = false)
+    highlightDebugActionsToolbar()
 
     task {
       rehighlightPreviousUi = true
