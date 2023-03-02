@@ -47,9 +47,8 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     "Rider",
     "IntelliJ Light",
     "Light",
-    "New Dark RC",
-    "New Dark",
     "Dark",
+    "Darcula Contrast",
     SCHEME_NAME_OTHER
   };
 
