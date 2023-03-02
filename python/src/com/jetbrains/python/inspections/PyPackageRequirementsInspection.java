@@ -530,13 +530,12 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      if (mySdk == null || !checkAdminPermissionsAndConfigureInterpreter(project, descriptor, mySdk)) {
+      if (mySdk != null && !checkAdminPermissionsAndConfigureInterpreter(project, descriptor, mySdk)) {
         installAndImportPackage(project);
       }
     }
 
     private void installAndImportPackage(@NotNull Project project) {
-      if (mySdk == null) return;
       final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new RunningPackagingTasksListener(myModule) {
         @Override
         public void finished(List<ExecutionException> exceptions) {
