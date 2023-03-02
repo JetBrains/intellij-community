@@ -42,7 +42,7 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
                         with(it) {
                             isEnabled = newValue
                             apply()
-                            refreshHints()
+                            refreshHints(project)
                         }
                     }
                 ).asOptionDescriptor()
@@ -58,7 +58,7 @@ class KotlinInlayHintsTopHitProvider : OptionsSearchTopHitProvider.ProjectLevelP
                                     it.isEnabled = true
                                 }
                                 it.apply()
-                                refreshHints()
+                                refreshHints(project)
                             }
                         ).asOptionDescriptor()
                     }

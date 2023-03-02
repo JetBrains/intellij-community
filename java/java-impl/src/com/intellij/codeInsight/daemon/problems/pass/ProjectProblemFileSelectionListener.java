@@ -73,7 +73,7 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
     FileStateUpdater.setPreviousState(newJavaFile);
     boolean isInSplitEditorMode = FileEditorManager.getInstance(myProject).getSelectedEditors().length > 1;
     if (isInSplitEditorMode) {
-      InlayHintsPassFactory.Companion.forceHintsUpdateOnNextPass();
+      InlayHintsPassFactory.Companion.restartDaemonUpdatingHints(myProject);
     }
   }
 

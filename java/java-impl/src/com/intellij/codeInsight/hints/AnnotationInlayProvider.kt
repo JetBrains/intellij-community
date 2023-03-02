@@ -224,10 +224,11 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     }
 
     override fun actionPerformed(e: AnActionEvent) {
+      val project = e.project ?: return
       prop.set(!prop.get())
       val storage = InlayHintsSettings.instance()
       storage.storeSettings(ourKey, JavaLanguage.INSTANCE, settings)
-      InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+      InlayHintsPassFactory.restartDaemonUpdatingHints(project)
     }
 
   }
