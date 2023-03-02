@@ -19,10 +19,11 @@ import static org.jetbrains.plugins.gradle.execution.test.runner.GradleTestLocat
 /**
  * @author Vladislav.Soroka
  */
-public abstract class AbstractTestEvent implements TestEvent {
+public abstract class AbstractTestEventProcessor implements TestEventProcessor {
+
   private final GradleTestsExecutionConsole myExecutionConsole;
 
-  public AbstractTestEvent(GradleTestsExecutionConsole executionConsole) {
+  public AbstractTestEventProcessor(GradleTestsExecutionConsole executionConsole) {
     this.myExecutionConsole = executionConsole;
   }
 

@@ -28,8 +28,9 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionCo
 /**
  * @author Vladislav.Soroka
  */
-public class AfterSuiteEvent extends AbstractTestEvent {
-  public AfterSuiteEvent(GradleTestsExecutionConsole executionConsole) {
+public class AfterSuiteEventProcessor extends AbstractTestEventProcessor {
+
+  public AfterSuiteEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
   }
 

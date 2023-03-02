@@ -14,12 +14,12 @@ import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionCo
 /**
  * @author Vladislav.Soroka
  */
-public class OnOutputEvent extends AbstractTestEvent {
+public class OnOutputEventProcessor extends AbstractTestEventProcessor {
 
   private static final String OUT = "StdOut";
   private static final String ERR = "StdErr";
 
-  public OnOutputEvent(GradleTestsExecutionConsole executionConsole) {
+  public OnOutputEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
   }
 

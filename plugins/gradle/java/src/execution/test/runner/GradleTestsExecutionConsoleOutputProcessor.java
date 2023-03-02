@@ -31,34 +31,34 @@ public final class GradleTestsExecutionConsoleOutputProcessor {
       final TestEventXmlView xml = new TestEventXPPXmlView(eventMessage);
 
       final TestEventType eventType = TestEventType.fromValue(xml.getTestEventType());
-      TestEvent testEvent = null;
+      TestEventProcessor testEventProcessor = null;
       switch (eventType) {
         case CONFIGURATION_ERROR:
-          testEvent = new ConfigurationErrorEvent(executionConsole);
+          testEventProcessor = new ConfigurationErrorEventProcessor(executionConsole);
           break;
         case REPORT_LOCATION:
-          testEvent = new ReportLocationEvent(executionConsole);
+          testEventProcessor = new ReportLocationEventProcessor(executionConsole);
           break;
         case BEFORE_TEST:
-          testEvent = new BeforeTestEvent(executionConsole);
+          testEventProcessor = new BeforeTestEventProcessor(executionConsole);
           break;
         case ON_OUTPUT:
-          testEvent = new OnOutputEvent(executionConsole);
+          testEventProcessor = new OnOutputEventProcessor(executionConsole);
           break;
         case AFTER_TEST:
-          testEvent = new AfterTestEvent(executionConsole);
+          testEventProcessor = new AfterTestEventProcessor(executionConsole);
           break;
         case BEFORE_SUITE:
-          testEvent = new BeforeSuiteEvent(executionConsole);
+          testEventProcessor = new BeforeSuiteEventProcessor(executionConsole);
           break;
         case AFTER_SUITE:
-          testEvent = new AfterSuiteEvent(executionConsole);
+          testEventProcessor = new AfterSuiteEventProcessor(executionConsole);
           break;
         case UNKNOWN_EVENT:
           break;
       }
-      if (testEvent != null) {
-        testEvent.process(xml);
+      if (testEventProcessor != null) {
+        testEventProcessor.process(xml);
       }
     }
     catch (TestEventXmlView.XmlParserException e) {

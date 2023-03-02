@@ -16,30 +16,30 @@ public final class GradleTestEventsProcessor {
       return;
     }
 
-    TestEvent testEvent = null;
+    TestEventProcessor testEventProcessor = null;
     switch (eventType) {
       case BEFORE_SUITE:
-        testEvent = new BeforeSuiteEvent(console);
+        testEventProcessor = new BeforeSuiteEventProcessor(console);
         break;
       case BEFORE_TEST:
-        testEvent = new BeforeTestEvent(console);
+        testEventProcessor = new BeforeTestEventProcessor(console);
         break;
       case ON_OUTPUT:
-        testEvent = new OnOutputEvent(console);
+        testEventProcessor = new OnOutputEventProcessor(console);
         break;
       case AFTER_TEST:
-        testEvent = new AfterTestEvent(console);
+        testEventProcessor = new AfterTestEventProcessor(console);
         break;
       case AFTER_SUITE:
-        testEvent = new AfterSuiteEvent(console);
+        testEventProcessor = new AfterSuiteEventProcessor(console);
         break;
       case CONFIGURATION_ERROR:
       case REPORT_LOCATION:
       case UNKNOWN_EVENT:
         break;
     }
-    if (testEvent != null) {
-      testEvent.process(event);
+    if (testEventProcessor != null) {
+      testEventProcessor.process(event);
     }
   }
 

@@ -17,8 +17,8 @@ import java.util.Objects;
 /**
  * @author Vladislav.Soroka
  */
-public class BeforeSuiteEvent extends AbstractTestEvent {
-  public BeforeSuiteEvent(GradleTestsExecutionConsole executionConsole) {
+public class BeforeSuiteEventProcessor extends AbstractTestEventProcessor {
+  public BeforeSuiteEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
   }
 

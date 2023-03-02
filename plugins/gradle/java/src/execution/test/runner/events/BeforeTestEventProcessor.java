@@ -16,9 +16,9 @@ import java.util.List;
 /**
  * @author Vladislav.Soroka
  */
-public class BeforeTestEvent extends AbstractTestEvent {
+public class BeforeTestEventProcessor extends AbstractTestEventProcessor {
 
-  public BeforeTestEvent(GradleTestsExecutionConsole executionConsole) {
+  public BeforeTestEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
   }
 

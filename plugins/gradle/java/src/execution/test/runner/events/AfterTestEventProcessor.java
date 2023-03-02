@@ -30,8 +30,9 @@ import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.parseCompa
 /**
  * @author Vladislav.Soroka
  */
-public class AfterTestEvent extends AbstractTestEvent {
-  public AfterTestEvent(GradleTestsExecutionConsole executionConsole) {
+public class AfterTestEventProcessor extends AbstractTestEventProcessor {
+
+  public AfterTestEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
   }
 

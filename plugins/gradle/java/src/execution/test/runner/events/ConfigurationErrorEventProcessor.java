@@ -29,9 +29,9 @@ import javax.swing.event.HyperlinkEvent;
 /**
  * @author Vladislav.Soroka
  */
-public class ConfigurationErrorEvent extends AbstractTestEvent {
+public class ConfigurationErrorEventProcessor extends AbstractTestEventProcessor {
 
-  public ConfigurationErrorEvent(GradleTestsExecutionConsole executionConsole) {
+  public ConfigurationErrorEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
   }
 

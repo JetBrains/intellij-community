@@ -25,9 +25,9 @@ import java.io.File;
 /**
  * @author Vladislav.Soroka
  */
-public class ReportLocationEvent extends AbstractTestEvent {
+public class ReportLocationEventProcessor extends AbstractTestEventProcessor {
 
-  public ReportLocationEvent(GradleTestsExecutionConsole consoleManager) {
+  public ReportLocationEventProcessor(GradleTestsExecutionConsole consoleManager) {
     super(consoleManager);
   }
 

@@ -22,7 +22,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Vladislav.Soroka
  */
-public interface TestEvent {
+public interface TestEventProcessor {
+
   void process(@NotNull final TestEventXmlView eventXml) throws TestEventXmlView.XmlParserException;
 
   void process(@NotNull final ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent);
