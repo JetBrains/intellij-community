@@ -13,6 +13,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.tasks.TaskBundle
 import com.intellij.util.DocumentUtil
@@ -63,7 +64,20 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     clearBreakpoints()
     prepareTask()
 
+    highlightButtonById("Run", highlightInside = false, usePulsation = false)
+
+    task {
+      text(LessonsBundle.message("debug.workflow.run.current"), LearningBalloonConfig(Balloon.Position.below, 0, duplicateMessage = true))
+      checkToolWindowState("Run", true)
+      test {
+        ideFrame {
+          highlightedArea.click()
+        }
+      }
+    }
+
     toggleBreakpointTask(sample, { logicalPosition }, breakpointXRange = breakpointXRange) {
+      text(LessonsBundle.message("debug.workflow.exception.description"))
       text(LessonsBundle.message("debug.workflow.toggle.breakpoint",
                                  action("ToggleLineBreakpoint")))
     }
