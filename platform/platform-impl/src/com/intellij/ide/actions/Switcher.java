@@ -163,7 +163,7 @@ public final class Switcher extends BaseSwitcherAction {
       pinned = !onKeyRelease.isEnabled();
       boolean onlyEdited = Boolean.TRUE.equals(onlyEditedFiles);
       myTitle = title;
-      mySpeedSearch = recent && is("ide.recent.files.speed.search") ? new SwitcherSpeedSearch(this) : null;
+      mySpeedSearch = recent && is("ide.recent.files.speed.search") ? SwitcherSpeedSearch.Companion.installOn(this) : null;
       cbShowOnlyEditedFiles = !recent || !Experiments.getInstance().isFeatureEnabled("recent.and.edited.files.together")
                                       ? null : new JCheckBox(IdeBundle.message("recent.files.checkbox.label"));
 

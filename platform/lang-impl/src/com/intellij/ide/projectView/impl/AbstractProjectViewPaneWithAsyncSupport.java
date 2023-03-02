@@ -238,8 +238,15 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
   }
 
   protected static final class MySpeedSearch extends TreeSpeedSearch {
-    MySpeedSearch(JTree tree) {
-      super(tree);
+    private MySpeedSearch(JTree tree) {
+      super(tree, (Void)null);
+    }
+
+    @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+    public static @NotNull MySpeedSearch installOn(JTree tree) {
+      MySpeedSearch search = new MySpeedSearch(tree);
+      search.setupListeners();
+      return search;
     }
 
     @Override

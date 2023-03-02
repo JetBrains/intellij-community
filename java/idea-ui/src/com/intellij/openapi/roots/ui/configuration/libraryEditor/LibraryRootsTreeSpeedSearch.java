@@ -18,6 +18,8 @@ package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -25,8 +27,15 @@ import java.io.File;
 import java.util.StringTokenizer;
 
 class LibraryRootsTreeSpeedSearch extends TreeSpeedSearch {
-  LibraryRootsTreeSpeedSearch(final Tree tree) {
-    super(tree);
+  private LibraryRootsTreeSpeedSearch(final Tree tree) {
+    super(tree, (Void)null);
+  }
+
+  @Contract("_ -> new")
+  static @NotNull LibraryRootsTreeSpeedSearch installOn(final Tree tree) {
+    LibraryRootsTreeSpeedSearch search = new LibraryRootsTreeSpeedSearch(tree);
+    search.setupListeners();
+    return search;
   }
 
   @Override

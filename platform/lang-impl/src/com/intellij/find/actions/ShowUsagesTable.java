@@ -2,7 +2,6 @@
 package com.intellij.find.actions;
 
 import com.intellij.ide.util.gotoByName.ModelDiff;
-import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -23,6 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +93,7 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
   @NotNull
   Runnable prepareTable(@NotNull Runnable appendMoreUsageRunnable, @NotNull Runnable showInMaximalScopeRunnable,
                         @NotNull ShowUsagesActionHandler actionHandler) {
-    SpeedSearchBase<JTable> speedSearch = new MySpeedSearch(this);
+    SpeedSearchBase<JTable> speedSearch = MySpeedSearch.installOn(this);
     speedSearch.setComparator(new SpeedSearchComparator(false));
 
     setRowHeight(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class).getIconHeight() + 2);
@@ -226,8 +226,15 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
   }
 
   private static class MySpeedSearch extends SpeedSearchBase<JTable> {
-    MySpeedSearch(@NotNull ShowUsagesTable table) {
-      super(table);
+    private MySpeedSearch(@NotNull ShowUsagesTable table) {
+      super(table, null);
+    }
+
+    @Contract("_ -> new")
+    static @NotNull MySpeedSearch installOn(@NotNull ShowUsagesTable table) {
+      MySpeedSearch search = new MySpeedSearch(table);
+      search.setupListeners();
+      return search;
     }
 
     @Override

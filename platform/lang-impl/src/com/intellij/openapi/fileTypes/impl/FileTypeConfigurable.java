@@ -474,7 +474,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       add(scrollPane, BorderLayout.CENTER);
       scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1));
 
-      new MySpeedSearch(myFileTypesList);
+      MySpeedSearch search = new MySpeedSearch(myFileTypesList);
+      search.setupListeners();
     }
 
     private boolean selectedTypeCanBeModified() {
@@ -489,7 +490,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       private String myExtension;
 
       private MySpeedSearch(@NotNull JList<FileTypeManagerImpl.FileTypeWithDescriptor> component) {
-        super(component);
+        super(component, null);
         myOrderedConverters = Arrays.asList(
           // simple
           p -> {

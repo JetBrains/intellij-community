@@ -240,6 +240,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     });
 
     mySpeedSearch = new MyTreeSpeedSearch();
+    mySpeedSearch.setupListeners();
     mySpeedSearch.setComparator(new SpeedSearchComparator(false, true, " ()"));
 
     myTreeExpander = new DefaultTreeExpander(myTree);
@@ -974,8 +975,8 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   private class MyTreeSpeedSearch extends TreeSpeedSearch {
     private volatile boolean myPopupVisible;
 
-    MyTreeSpeedSearch() {
-      super(myTree, true, path -> getSpeedSearchText(TreeUtil.getLastUserObject(path)));
+    private MyTreeSpeedSearch() {
+      super(myTree, true, null, path -> getSpeedSearchText(TreeUtil.getLastUserObject(path)));
     }
 
     @Override

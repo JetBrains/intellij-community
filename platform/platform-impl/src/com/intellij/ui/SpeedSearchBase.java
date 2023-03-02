@@ -99,7 +99,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     setupListeners();
   }
 
-  protected void setupListeners() {
+  public void setupListeners() {
     myComponent.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentHidden(ComponentEvent event) {
