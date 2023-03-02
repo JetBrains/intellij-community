@@ -4,8 +4,7 @@
   "author": "JetBrains",
   "editorScheme": "/themes/expUI/expUI_darkScheme_RC.xml",
   "additionalEditorSchemes": [
-    "/themes/expUI/expUI_darkScheme.xml",
-    "/themes/expUI/expUI_darkSchemeNew.xml"
+    "/themes/expUI/expUI_darkScheme.xml"
   ],
 
   "colors": {

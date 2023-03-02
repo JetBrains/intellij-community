@@ -579,9 +579,10 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       Ref<EditorColorsScheme> schemeRef = Ref.create(colorsScheme);
       String schemeName = colorsScheme.getName();
       //todo[kb] remove after 23.1 EAPs
-      if (ExperimentalUI.isNewUI() && (schemeName.equals("_@user_Dark") || schemeName.equals("Dark"))) {
-        RunOnceUtil.runOnceForApp("force.switch.to.new.dark.editor.scheme", ()-> {
-          EditorColorsScheme newDark = mySchemeManager.findSchemeByName("New Dark RC");
+      // New Dark RC is renamed to Dark, switch the scheme accordingly
+      if (ExperimentalUI.isNewUI() && (schemeName.equals("_@user_New Dark RC") || schemeName.equals("New Dark RC"))) {
+        RunOnceUtil.runOnceForApp("force.switch.from.new.dark.editor.scheme", ()-> {
+          EditorColorsScheme newDark = mySchemeManager.findSchemeByName("Dark");
           if (newDark != null) {
             schemeRef.set(newDark);
           }
