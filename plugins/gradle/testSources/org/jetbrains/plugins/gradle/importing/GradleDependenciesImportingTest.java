@@ -776,7 +776,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
               } else {
                 task.code("baseName = \"${project.archivesBaseName}-tests\"");
               }
-              task.code("classifier 'tests'");
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
               task.code("from sourceSets.test.output");
               return null;
             })
@@ -950,7 +955,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .withJavaPlugin()
             .addPostfix("configurations { tests.extendsFrom testRuntime }")
             .withTask("testJar", "Jar", task -> {
-              task.code("classifier 'test'");
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
               task.code("from project.sourceSets.test.output");
               return null;
             })
@@ -1053,7 +1063,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .withJavaPlugin()
             .addPrefix("configurations { testArtifacts }")
             .withTask("testJar", "Jar", task -> {
-              task.code("classifier 'tests'");
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
               task.code("from sourceSets.test.output");
               return null;
             })
@@ -1095,7 +1110,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .withJavaPlugin()
             .addPrefix("configurations { testArtifacts }")
             .withTask("testJar", "Jar", task -> {
-              task.code("classifier 'tests'");
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
               task.code("from sourceSets.test.output");
               return null;
             })
@@ -1150,7 +1170,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
             .withJavaPlugin()
             .addPrefix("configurations { testArtifacts }")
             .withTask("testJar", "Jar", task -> {
-              task.code("classifier 'tests'");
+              if (isGradleOlderThan("8.0")) {
+                task.code("classifier 'test'");
+              }
+              else {
+                task.code("archiveClassifier = 'test'");
+              }
               task.code("from sourceSets.test.output");
               return null;
             })
@@ -1198,14 +1223,22 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     importProject(
       createBuildScriptBuilder()
         .subprojects(p -> {
-          p
-            .withJavaPlugin()
-            .addPrefix("configurations.all {",
+          p.withJavaPlugin();
+          if (isGradleOlderThan("8.0")) {
+            p.addPrefix("configurations.all {",
                        "  resolutionStrategy.dependencySubstitution {",
                        "    substitute module('mygroup:core') with project(':core')",
                        "    substitute project(':util') with module('junit:junit:4.11')",
                        "  }",
                        "}");
+          } else {
+            p.addPrefix("configurations.all {",
+                        "  resolutionStrategy.dependencySubstitution {",
+                        "    substitute module('mygroup:core') using project(':core')",
+                        "    substitute project(':util') using module('junit:junit:4.11')",
+                        "  }",
+                        "}");
+          }
         })
         .project(":core", p -> {
           p
@@ -1253,13 +1286,22 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
         })
         .project(":app", it -> {
           it.addRuntimeOnlyDependency("org.hamcrest:hamcrest-core:1.3")
-            .addTestImplementationDependency("project:modA:1.0.0")
-            .addPostfix("configurations.all {",
-                        "  resolutionStrategy.dependencySubstitution {",
-                        "    substitute module('project:modA:1.0.0') with project(':modA')",
-                        "    substitute module('project:modB:1.0.0') with project(':modB')",
-                        "  }",
-                        "}");
+            .addTestImplementationDependency("project:modA:1.0.0");
+          if (isGradleOlderThan("8.0")) {
+            it.addPostfix("configurations.all {",
+                          "  resolutionStrategy.dependencySubstitution {",
+                          "    substitute module('project:modA:1.0.0') with project(':modA')",
+                          "    substitute module('project:modB:1.0.0') with project(':modB')",
+                          "  }",
+                          "}");
+          } else {
+            it.addPostfix("configurations.all {",
+                          "  resolutionStrategy.dependencySubstitution {",
+                          "    substitute module('project:modA:1.0.0') using project(':modA')",
+                          "    substitute module('project:modB:1.0.0') using project(':modB')",
+                          "  }",
+                          "}");
+          }
         })
         .project(":modA", it -> { it.addApiDependency(it.project(":modB")); })
         .project(":modB", it -> { it.addApiDependency("org.hamcrest:hamcrest-core:1.3"); })
