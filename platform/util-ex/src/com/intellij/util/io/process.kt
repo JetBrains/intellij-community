@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runInterruptible
+import com.intellij.openapi.util.IntellijInternalApi
+import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -28,5 +28,31 @@ suspend fun Process.awaitExit(): Int {
   }
   return runInterruptible(processWaiter) {
     waitFor()
+  }
+}
+
+/**
+ * Computes and returns result of the [action] which may block for an unforeseeable amount of time.
+ *
+ * The [action] does not inherit coroutine context from the calling coroutine, use [withContext] to install proper context if needed.
+ * The [action] is executed on a special unlimited dispatcher to avoid starving [Dispatchers.IO].
+ * The [action] is cancelled if the calling coroutine is cancelled,
+ * but this function immediately resumes with CancellationException without waiting for completion of the [action],
+ * which means that this function **breaks structured concurrency**.
+ *
+ * This function is designed to work with native calls which may un-interruptibly hang.
+ * Do not run CPU-bound work computations in [action].
+ */
+@DelicateCoroutinesApi // require explicit opt-in
+@IntellijInternalApi
+@Internal
+suspend fun <T> computeDetached(action: suspend CoroutineScope.() -> T): T {
+  val deferred = GlobalScope.async(processWaiter, block = action)
+  try {
+    return deferred.await()
+  }
+  catch (ce: CancellationException) {
+    deferred.cancel(ce)
+    throw ce
   }
 }
