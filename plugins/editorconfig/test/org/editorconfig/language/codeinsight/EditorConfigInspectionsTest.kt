@@ -3,7 +3,9 @@ package org.editorconfig.language.codeinsight
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.ThrowableRunnable
 import org.editorconfig.language.codeinsight.inspections.*
 import kotlin.reflect.KClass
 
@@ -86,6 +88,18 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
     EditorConfigValueCorrectnessInspection::class,
     EditorConfigValueUniquenessInspection::class
   )
+
+  fun _testHeaderProcessingPerformance() {
+    doTestPerf(5000, EditorConfigNoMatchingFilesInspection::class)
+  }
+
+  private fun doTestPerf(expectedMs: Int, inspection: KClass<out LocalInspectionTool>) {
+    myFixture.enableInspections(inspection.java)
+    myFixture.configureByFile("${getTestName(true)}/.editorconfig")
+    PlatformTestUtil.startPerformanceTest("${inspection.simpleName} performance", expectedMs, ThrowableRunnable<Throwable> {
+      myFixture.doHighlighting()
+    }).attempts(1).assertTiming()
+  }
 
   // Utils
 
