@@ -689,7 +689,7 @@ public final class MavenProjectsTree {
       var childUpdates = ContainerUtil.map(childFilesToUpdate, childFile ->
         new UpdateSpec(
           childFile,
-          false, // no need to update modules of the children
+          updateModules,
           readPom // if parent was read, force read children
         ));
       updateProjects(childUpdates);
