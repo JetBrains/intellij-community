@@ -470,25 +470,14 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   @NotNull
   Point getPointInCell(@NotNull Point clickPoint, @NotNull VcsLogColumn<?> vcsLogColumn) {
-    int width = 0;
-    int columnIndex = 0;
-    int modelIndex = VcsLogColumnManager.getInstance().getModelIndex(vcsLogColumn);
-    for (int i = 0; i < getColumnModel().getColumnCount(); i++) {
-      TableColumn column = getColumnModel().getColumn(i);
-      columnIndex = i;
-      if (column.getModelIndex() == modelIndex) break;
-      width += column.getWidth();
-    }
-    width += ExperimentalUI.isNewUI() ? VcsLogNewUiTableCellRenderer.getAdditionalOffset(columnIndex) : 0;
-    return new Point(clickPoint.x - width, PositionUtil.getYInsideRow(clickPoint, getRowHeight()));
+    int columnIndex = getColumnViewIndex(vcsLogColumn);
+    int leftXCoordinate = getColumnLeftXCoordinate(columnIndex);
+    leftXCoordinate += ExperimentalUI.isNewUI() ? VcsLogNewUiTableCellRenderer.getAdditionalOffset(columnIndex) : 0
+    return new Point(clickPoint.x - leftXCoordinate, PositionUtil.getYInsideRow(clickPoint, getRowHeight()));
   }
 
   int getColumnLeftXCoordinate(int viewColumnIndex) {
-    int x = 0;
-    for (int i = 0; i < viewColumnIndex; i++) {
-      x += getColumnModel().getColumn(i).getWidth();
-    }
-    return x;
+    return getCellRect(0, viewColumnIndex, false).x;
   }
 
   private void setRootColumnSize() {
