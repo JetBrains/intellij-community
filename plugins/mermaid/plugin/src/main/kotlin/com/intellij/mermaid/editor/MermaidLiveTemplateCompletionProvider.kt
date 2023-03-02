@@ -1,19 +1,16 @@
 package com.intellij.mermaid.editor
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.template.Template
-import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateSettings
-import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.codeStyle.CodeStyleManager
 
 abstract class MermaidLiveTemplateCompletionProvider :
   CompletionProvider<CompletionParameters>() {
@@ -22,9 +19,16 @@ abstract class MermaidLiveTemplateCompletionProvider :
   protected fun createKeywordLookupElement(project: Project, keyword: String, predefinedNameVar: String? = null): LookupElement {
     val templateManager = TemplateManager.getInstance(project) as TemplateManagerImpl
     val template = TemplateSettings.getInstance().getTemplateById("mermaid_$keyword")
-    val predefinedVarValues = if (predefinedNameVar != null) mapOf("NAME" to predefinedNameVar) else null
     val lookupString = predefinedNameVar ?: keyword
+
+    val indentOptions = CodeStyle.getSettings(project).getLanguageIndentOptions(MermaidLanguage)
+
+    val predefinedVarValues = buildMap {
+      put("INDENT", " ".repeat(indentOptions.INDENT_SIZE))
+      if (predefinedNameVar != null) put("NAME", predefinedNameVar)
+    }
     val insertHandler = createTemplateBasedInsertHandler(templateManager, template, predefinedVarValues)
+
     return PrioritizedLookupElement.withPriority(
       LookupElementBuilder
         .create(lookupString)
@@ -37,7 +41,7 @@ abstract class MermaidLiveTemplateCompletionProvider :
   private fun createTemplateBasedInsertHandler(
     templateManager: TemplateManagerImpl,
     template: Template?,
-    predefinedVarValues: Map<String, String>?
+    predefinedVarValues: Map<String, String>
   ): InsertHandler<LookupElement> {
     return InsertHandler { context: InsertionContext, _: LookupElement? ->
       val editor = context.editor
@@ -46,28 +50,7 @@ abstract class MermaidLiveTemplateCompletionProvider :
         val document = editor.document
         document.deleteString(startOffset, context.tailOffset)
 
-        templateManager.startTemplate(editor, template, true, predefinedVarValues, object : TemplateEditingAdapter() {
-          override fun templateFinished(template: Template, brokenOff: Boolean) {
-            super.templateFinished(template, brokenOff)
-
-            val project = editor.project
-            if (project != null) {
-              val file = PsiDocumentManager.getInstance(project).getPsiFile(document)
-              if (file != null) {
-
-                val line = document.getLineNumber(startOffset)
-                @Suppress("NAME_SHADOWING")
-                val startOffset = document.getLineStartOffset(line)
-                val endOffset = document.getLineEndOffset(line + 1)
-
-                PsiDocumentManager.getInstance(project).commitDocument(document)
-                WriteCommandAction.runWriteCommandAction(project) {
-                  CodeStyleManager.getInstance(project).adjustLineIndent(file, TextRange(startOffset, endOffset))
-                }
-              }
-            }
-          }
-        })
+        templateManager.startTemplate(editor, template, true, predefinedVarValues, null)
       } else {
         EditorModificationUtil.insertStringAtCaret(editor, " ")
       }

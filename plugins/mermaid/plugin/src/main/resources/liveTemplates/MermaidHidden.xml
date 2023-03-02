@@ -1,6 +1,6 @@
 <templateSet group="Mermaid Hidden">
   <template id="mermaid_subgraph" name="mermaid_subgraph"
-            value="subgraph $ID$ &#10;    $END$$SELECTION$&#10;end"
+            value="subgraph $ID$ &#10;$INDENT$$END$$SELECTION$&#10;end"
             description="subgraph statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
@@ -11,7 +11,7 @@
   </template>
 
   <template id="mermaid_loop" name="mermaid_loop"
-            value="loop $ID$ &#10;    $END$$SELECTION$&#10;end"
+            value="loop $ID$ &#10;$INDENT$$END$$SELECTION$&#10;end"
             description="loop statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
@@ -22,7 +22,7 @@
   </template>
 
   <template id="mermaid_alt" name="mermaid_alt"
-            value="alt $ID$ &#10;    $END$$SELECTION$&#10;end"
+            value="alt $ID$ &#10;$INDENT$$END$$SELECTION$&#10;end"
             description="alt statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
@@ -33,7 +33,7 @@
   </template>
 
   <template id="mermaid_opt" name="mermaid_opt"
-            value="opt $ID$ &#10;    $END$$SELECTION$&#10;end"
+            value="opt $ID$ &#10;$INDENT$$END$$SELECTION$&#10;end"
             description="opt statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
@@ -44,7 +44,7 @@
   </template>
 
   <template id="mermaid_par" name="mermaid_par"
-            value="par $ID$ &#10;    $END$$SELECTION$&#10;end"
+            value="par $ID$ &#10;$INDENT$$END$$SELECTION$&#10;end"
             description="par statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
@@ -55,7 +55,7 @@
   </template>
 
   <template id="mermaid_rect" name="mermaid_rect"
-            value="rect rgb($ID)$ &#10;    $END$$SELECTION$&#10;end"
+            value="rect rgb($ID)$ &#10;$INDENT$$END$$SELECTION$&#10;end"
             description="rect statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
@@ -66,7 +66,7 @@
   </template>
 
   <template id="mermaid_critical" name="mermaid_critical"
-            value="critical $ID$ &#10;    $END$$SELECTION$&#10;end"
+            value="critical $ID$ &#10;$INDENT$$END$$SELECTION$&#10;end"
             description="critical statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
@@ -77,7 +77,7 @@
   </template>
 
   <template id="mermaid_break" name="mermaid_break"
-            value="break $ID$ &#10;    $END$$SELECTION$&#10;end"
+            value="break $ID$ &#10;$INDENT$$END$$SELECTION$&#10;end"
             description="break statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
@@ -88,7 +88,7 @@
   </template>
 
   <template id="mermaid_box" name="mermaid_box"
-            value="box $ID$ &#10;    $END$$SELECTION$&#10;end"
+            value="box $ID$ &#10;$INDENT$$END$$SELECTION$&#10;end"
             description="box statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
@@ -99,7 +99,7 @@
   </template>
 
   <template id="mermaid_section" name="mermaid_section"
-            value="section $ID$&#10;    $END$$SELECTION$"
+            value="section $ID$&#10;$INDENT$$END$$SELECTION$"
             description="section statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
@@ -110,12 +110,12 @@
   </template>
 
   <template id="mermaid_requirement" name="mermaid_requirement"
-            value="requirement $NAME$ {&#10;    id: $ID$&#10;    text: $TEXT$&#10;    risk: $RISK$&#10;    verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
+            value="requirement $NAME$ {&#10;$INDENT$id: $ID$&#10;$INDENT$text: $TEXT$&#10;$INDENT$risk: $RISK$&#10;$INDENT$verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
             description="requirement statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
-    <variable name="TEXT" expression="" defaultValue="&quot;text&quot;" alwaysStopAt="true"/>
+    <variable name="TEXT" expression="" defaultValue="&quot;some text&quot;" alwaysStopAt="true"/>
     <variable name="RISK" expression="" defaultValue="&quot;low&quot;" alwaysStopAt="true"/>
     <variable name="VERIFY_METHOD" expression="" defaultValue="&quot;analysis&quot;" alwaysStopAt="true"/>
     <context>
@@ -125,12 +125,12 @@
   </template>
 
   <template id="mermaid_functionalRequirement" name="mermaid_functionalRequirement"
-            value="functionalRequirement $NAME$ {&#10;    id: $ID$&#10;    text: $TEXT$&#10;    risk: $RISK$&#10;    verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
+            value="functionalRequirement $NAME$ {&#10;$INDENT$id: $ID$&#10;$INDENT$text: $TEXT$&#10;$INDENT$risk: $RISK$&#10;$INDENT$verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
             description="functionalRequirement statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
-    <variable name="TEXT" expression="" defaultValue="&quot;text&quot;" alwaysStopAt="true"/>
+    <variable name="TEXT" expression="" defaultValue="&quot;some text&quot;" alwaysStopAt="true"/>
     <variable name="RISK" expression="" defaultValue="&quot;low&quot;" alwaysStopAt="true"/>
     <variable name="VERIFY_METHOD" expression="" defaultValue="&quot;analysis&quot;" alwaysStopAt="true"/>
     <context>
@@ -140,12 +140,12 @@
   </template>
 
   <template id="mermaid_interfaceRequirement" name="mermaid_interfaceRequirement"
-            value="interfaceRequirement $NAME$ {&#10;    id: $ID$&#10;    text: $TEXT$&#10;    risk: $RISK$&#10;    verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
+            value="interfaceRequirement $NAME$ {&#10;$INDENT$id: $ID$&#10;$INDENT$text: $TEXT$&#10;$INDENT$risk: $RISK$&#10;$INDENT$verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
             description="interfaceRequirement statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
-    <variable name="TEXT" expression="" defaultValue="&quot;text&quot;" alwaysStopAt="true"/>
+    <variable name="TEXT" expression="" defaultValue="&quot;some text&quot;" alwaysStopAt="true"/>
     <variable name="RISK" expression="" defaultValue="&quot;low&quot;" alwaysStopAt="true"/>
     <variable name="VERIFY_METHOD" expression="" defaultValue="&quot;analysis&quot;" alwaysStopAt="true"/>
     <context>
@@ -155,7 +155,7 @@
   </template>
 
   <template id="mermaid_performanceRequirement" name="mermaid_performanceRequirement"
-            value="performanceRequirement $NAME$ {&#10;    id: $ID$&#10;    text: $TEXT$&#10;    risk: $RISK$&#10;    verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
+            value="performanceRequirement $NAME$ {&#10;$INDENT$id: $ID$&#10;$INDENT$text: $TEXT$&#10;$INDENT$risk: $RISK$&#10;$INDENT$verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
             description="performanceRequirement statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
@@ -170,12 +170,12 @@
   </template>
 
   <template id="mermaid_physicalRequirement" name="mermaid_physicalRequirement"
-            value="physicalRequirement $NAME$ {&#10;    id: $ID$&#10;    text: $TEXT$&#10;    risk: $RISK$&#10;    verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
+            value="physicalRequirement $NAME$ {&#10;$INDENT$id: $ID$&#10;$INDENT$text: $TEXT$&#10;$INDENT$risk: $RISK$&#10;$INDENT$verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
             description="physicalRequirement statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
-    <variable name="TEXT" expression="" defaultValue="&quot;text&quot;" alwaysStopAt="true"/>
+    <variable name="TEXT" expression="" defaultValue="&quot;some text&quot;" alwaysStopAt="true"/>
     <variable name="RISK" expression="" defaultValue="&quot;low&quot;" alwaysStopAt="true"/>
     <variable name="VERIFY_METHOD" expression="" defaultValue="&quot;analysis&quot;" alwaysStopAt="true"/>
     <context>
@@ -185,12 +185,12 @@
   </template>
 
   <template id="mermaid_designConstraint" name="mermaid_designConstraint"
-            value="designConstraint $NAME$ {&#10;    id: $ID$&#10;    text: $TEXT$&#10;    risk: $RISK$&#10;    verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
+            value="designConstraint $NAME$ {&#10;$INDENT$id: $ID$&#10;$INDENT$text: $TEXT$&#10;$INDENT$risk: $RISK$&#10;$INDENT$verifymethod: $VERIFY_METHOD$&#10;}$END$$SELECTION$"
             description="designConstraint statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
     <variable name="ID" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
-    <variable name="TEXT" expression="" defaultValue="&quot;text&quot;" alwaysStopAt="true"/>
+    <variable name="TEXT" expression="" defaultValue="&quot;some text&quot;" alwaysStopAt="true"/>
     <variable name="RISK" expression="" defaultValue="&quot;low&quot;" alwaysStopAt="true"/>
     <variable name="VERIFY_METHOD" expression="" defaultValue="&quot;analysis&quot;" alwaysStopAt="true"/>
     <context>
@@ -200,7 +200,7 @@
   </template>
 
   <template id="mermaid_element" name="mermaid_element"
-            value="element $NAME$ {&#10;    type: $TYPE$&#10;    docref: $DOCREF$&#10;}$END$$SELECTION$"
+            value="element $NAME$ {&#10;$INDENT$type: $TYPE$&#10;$INDENT$docref: $DOCREF$&#10;}$END$$SELECTION$"
             description="element statement"
             toReformat="false" toShortenFQNames="false">
     <variable name="NAME" expression="" defaultValue="&quot;name&quot;" alwaysStopAt="true"/>
@@ -268,7 +268,7 @@
   </template>
 
   <template id="mermaid_c4_boundary" name="mermaid_c4_boundary"
-            value="$NAME$($ARGS$) {&#10;    $END$$SELECTION$&#10;}"
+            value="$NAME$($ARGS$) {&#10;$INDENT$$END$$SELECTION$&#10;}"
             description="c4 boundary"
             toReformat="false" toShortenFQNames="false">
     <variable name="ARGS" expression="" defaultValue="" alwaysStopAt="true"/>
@@ -279,7 +279,7 @@
   </template>
 
   <template id="mermaid_note" name="mermaid_note"
-            value="note $ARG$ $ID$ &#10;    $END$$SELECTION$&#10;end note"
+            value="note $ARG$ $ID$ &#10;$INDENT$$END$$SELECTION$&#10;end note"
             description="c4 boundary"
             toReformat="false" toShortenFQNames="false">
     <variable name="ARG" expression="" defaultValue="" alwaysStopAt="true"/>
