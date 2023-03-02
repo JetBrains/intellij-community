@@ -33,6 +33,7 @@ class TerminalCompletionContributor : CompletionContributor() {
     try {
       val model: TerminalModel = session.model
       val promptText = model.withLock { model.getAllText().trim() }
+      val addedItems: MutableSet<String> = HashSet()
       model.addContentListener(object : TerminalModel.ContentListener {
         override fun onContentChanged() {
           val text = model.getAllText().trim()
@@ -46,7 +47,11 @@ class TerminalCompletionContributor : CompletionContributor() {
             future.complete(false)
           }
           else {
-            val options = parsingResult.items.map { createOption(it) }
+            val newItems = parsingResult.items.filter { item ->
+              !addedItems.contains(item) && (!item.endsWith('/') || !addedItems.contains(item.removeSuffix("/")))
+            }
+            addedItems.addAll(newItems)
+            val options = newItems.map { createOption(it) }
             completionResult.addAllElements(options)
             if (parsingResult.newPromptShown) {
               future.complete(true)
