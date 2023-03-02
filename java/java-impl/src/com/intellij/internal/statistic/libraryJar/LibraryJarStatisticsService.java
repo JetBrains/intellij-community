@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.libraryJar;
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -31,7 +31,7 @@ public final class LibraryJarStatisticsService implements DumbAware {
 
   public LibraryJarDescriptor @NotNull [] getTechnologyDescriptors() {
     if (ourDescriptors == null) {
-      if (!StatisticsUploadAssistant.isSendAllowed()) return LibraryJarDescriptor.EMPTY;
+      if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return LibraryJarDescriptor.EMPTY;
       final URL url = createVersionsUrl();
       if (url == null) return LibraryJarDescriptor.EMPTY;
       final LibraryJarDescriptors descriptors = deserialize(url);
