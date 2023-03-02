@@ -4,11 +4,9 @@ package org.jetbrains.kotlin.idea.search.refIndex
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.testFramework.assertEqualsToFile
+import com.intellij.util.io.readText
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
-import kotlin.io.path.Path
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
-import kotlin.io.path.reader
+import kotlin.io.path.*
 
 abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
     override fun setUp() {
@@ -20,7 +18,9 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
         myFixture.testDataPath = testDataFilePath
 
         val configurationPath = Path(testDataFilePath, "testConfig.json")
-        val config: JsonObject = JsonParser.parseReader(configurationPath.reader()).asJsonObject
+        val firConfigurationPath = Path(testDataFilePath, "testConfig.fir.json").takeIf { isFir && it.exists() }
+        val pathToCheck = firConfigurationPath ?: configurationPath
+        val config: JsonObject = JsonParser.parseReader(pathToCheck.reader()).asJsonObject
 
         val mainFile = config[MAIN_FILE]?.asString ?: error("Main file not found")
         val shouldBeUsage = config[SHOULD_BE_USAGE]?.asJsonArray?.map { it.asString }?.toSet().orEmpty()
@@ -35,13 +35,18 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
             val actualUsages = getReferentFilesForElementUnderCaret()
             assertEqualsToFile(
                 "",
-                configurationPath.toFile(),
+                pathToCheck.toFile(),
                 createActualText(mainFile, actualUsages, shouldBeUsage, ignoreK2Compiler)
             )
         }.fold(
             onSuccess = { require(isTestEnabled) { "This test passes and shouldn't be muted!" } },
             onFailure = { exception -> if (isTestEnabled) throw exception },
         )
+
+        if (firConfigurationPath?.readText()?.trim() == configurationPath.readText().trim()) {
+            firConfigurationPath.deleteExisting()
+            error("Fir file is redundant")
+        }
     }
 
     companion object {
