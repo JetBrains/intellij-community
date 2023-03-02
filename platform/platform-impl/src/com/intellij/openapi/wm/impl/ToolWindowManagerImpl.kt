@@ -24,7 +24,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -36,8 +38,11 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.project.*
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.popup.Balloon
@@ -61,7 +66,10 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.*
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.util.ui.*
+import com.intellij.util.ui.EDT
+import com.intellij.util.ui.FocusUtil
+import com.intellij.util.ui.PositionTracker
+import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
@@ -72,6 +80,7 @@ import java.awt.event.*
 import java.beans.PropertyChangeListener
 import java.lang.Runnable
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.*
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
@@ -98,7 +107,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     get() = state.layout
     set(value) { state.layout = value }
 
-  private val idToEntry = HashMap<String, ToolWindowEntry>()
+  private val idToEntry = ConcurrentHashMap<String, ToolWindowEntry>()
   private val activeStack = ActiveStack()
   private val sideStack = SideStack()
   private val toolWindowPanes = LinkedHashMap<String, ToolWindowPane>()
