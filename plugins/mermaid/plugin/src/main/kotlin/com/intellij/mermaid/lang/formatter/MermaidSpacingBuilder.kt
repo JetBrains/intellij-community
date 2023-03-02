@@ -2,7 +2,6 @@ package com.intellij.mermaid.lang.formatter
 
 import com.intellij.formatting.SpacingBuilder
 import com.intellij.mermaid.lang.MermaidLanguage
-import com.intellij.mermaid.lang.formatter.settings.MermaidCustomCodeStyleSettings
 import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.mermaid.lang.parser.MermaidElements
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -164,7 +163,7 @@ internal object MermaidSpacingBuilder {
       .between(MermaidTokens.LABEL, MermaidTokens.LABEL).spaces(1)
       // Entity Relationship
       .around(MermaidElements.RELATIONSHIP).spaces(1)
-      .after(MermaidTokens.EntityRelationship.ATTR_KEY).spaces(1)
+      .around(MermaidElements.ATTR_KEYS).spaces(1)
       .before(MermaidElements.ATTR_NAME).spaces(1)
       .between(MermaidElements.ATTR_NAME, MermaidTokens.EntityRelationship.ATTR_KEY).spaces(1)
       .between(MermaidElements.ATTR_NAME, MermaidElements.STRING).spaces(1)

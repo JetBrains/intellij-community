@@ -636,6 +636,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [~] { yypushstate(generic); return TILDA; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   "}" { yybegin(entity_relationship); return CLOSE_CURLY; }
+  "," { return COMMA; }
 }
 <relationship_description> {
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }

@@ -400,10 +400,11 @@ erEntityBlock ::= OPEN_CURLY EOL* erAttributes? CLOSE_CURLY { implements="com.in
 private erAttributes ::= erAttributesLines
 private erAttributesLines ::= erAttributeLine [erAttributesLines]
 private erAttributeLine ::= erAttribute [EOL] | EOL
-erAttribute ::= (attrTypeWithGeneric | attrType) attrName [ATTR_KEY] [maybeEmptyString]
+erAttribute ::= (attrTypeWithGeneric | attrType) attrName [attrKeys] [maybeEmptyString]
 attrType ::= ATTRIBUTE_WORD
 attrTypeWithGeneric ::= attrType generic
 attrName ::= ATTRIBUTE_WORD
+attrKeys ::= ATTR_KEY (COMMA ATTR_KEY)*
 
 
 ganttHeader ::= GANTT

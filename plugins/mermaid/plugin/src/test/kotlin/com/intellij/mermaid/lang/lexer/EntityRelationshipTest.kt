@@ -78,4 +78,15 @@ class EntityRelationshipTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test attr keys`() {
+    val content = """
+    erDiagram
+      NAMED-DRIVER {
+        string carRegistrationNumber PK, FK
+        string driverLicence PK, FK
+      }
+    """.trimIndent()
+    doTest(content)
+  }
 }

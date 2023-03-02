@@ -10,4 +10,6 @@ class EntityRelationshipTest : MermaidParserTestCase("entityRelationship") {
   fun `test entity names with double quotes`() = doTest(true)
 
   fun `test cardinality aliases`() = doTest(true)
+
+  fun `test attr keys`() = doTest(true)
 }
