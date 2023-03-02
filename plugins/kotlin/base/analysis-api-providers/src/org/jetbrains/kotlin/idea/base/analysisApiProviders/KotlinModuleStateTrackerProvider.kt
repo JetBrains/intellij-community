@@ -94,7 +94,7 @@ class KotlinModuleStateTrackerProvider(project: Project) : Disposable {
                 }
 
                 if (file.extension == KotlinParserDefinition.STD_SCRIPT_SUFFIX) {
-                    scriptCache.remove(file)
+                    scriptCache.remove(file)?.invalidate()
                 }
             }
         }
