@@ -20,7 +20,10 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 public class TextMateCommentProvider implements MultipleLangCommentProvider, Commenter {
   @Nullable
   @Override
-  public Commenter getLineCommenter(PsiFile file, Editor editor, Language lineStartLanguage, Language lineEndLanguage) {
+  public Commenter getLineCommenter(@NotNull PsiFile file,
+                                    @NotNull Editor editor,
+                                    @NotNull Language lineStartLanguage,
+                                    @NotNull Language lineEndLanguage) {
     final TextMateScope actualScope = TextMateEditorUtils.getCurrentScopeSelector((EditorEx)editor);
     if (actualScope == null) {
       return null;
@@ -33,7 +36,7 @@ public class TextMateCommentProvider implements MultipleLangCommentProvider, Com
   }
 
   @Override
-  public boolean canProcess(@NotNull PsiFile file, FileViewProvider viewProvider) {
+  public boolean canProcess(@NotNull PsiFile file, @NotNull FileViewProvider viewProvider) {
     return file.getFileType() == TextMateFileType.INSTANCE;
   }
 
@@ -68,11 +71,9 @@ public class TextMateCommentProvider implements MultipleLangCommentProvider, Com
   }
 
   private static final class MyCommenter implements Commenter {
-    @Nullable
-    final String myLinePrefix;
+    @Nullable final String myLinePrefix;
 
-    @Nullable
-    final TextMateBlockCommentPair myBlockPrefixes;
+    @Nullable final TextMateBlockCommentPair myBlockPrefixes;
 
     private MyCommenter(@NotNull TextMateCommentPrefixes prefixes) {
       myLinePrefix = prefixes.getLineCommentPrefix();
