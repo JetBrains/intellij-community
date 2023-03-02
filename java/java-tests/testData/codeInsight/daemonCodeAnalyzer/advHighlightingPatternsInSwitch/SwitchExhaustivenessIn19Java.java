@@ -229,4 +229,19 @@ public class Basic {
       default -> System.out.println("1");
     }
   }
+
+  void exhaustinvenessWithInterface(Pair<I> pairI) {
+    switch (pairI) {
+      case Pair<I>(C fst, D snd) -> {}
+      case Pair<I>(I fst, C snd) -> {}
+      case Pair<I>(D fst, I snd) -> {}
+    }
+  }
+  void exhaustinvenessWithInterface2(Pair<? extends I> pairI) {
+    switch (pairI) {
+      case Pair<? extends I>(C fst, D snd) -> {}
+      case Pair<? extends I>(I fst, C snd) -> {}
+      case Pair<? extends I>(D fst, I snd) -> {}
+    }
+  }
 }
