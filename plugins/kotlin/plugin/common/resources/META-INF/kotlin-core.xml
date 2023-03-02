@@ -379,7 +379,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <advancedSetting
             id="kotlin.mpp.experimental"
-            default="false"
+            default="true"
             groupKey="group.advanced.settings.kotlin"
             bundle="messages.KotlinBundle"/>
   </extensions>
