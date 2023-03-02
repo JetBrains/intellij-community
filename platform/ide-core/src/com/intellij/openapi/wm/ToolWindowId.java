@@ -33,5 +33,5 @@ public interface ToolWindowId {
   String PREVIEW = "Preview";
   String SERVICES = "Services";
   String ENDPOINTS = "Endpoints";
-  String MEET_NEW_UI = "Meet the IntelliJ IDEA New UI";
+  String MEET_NEW_UI = "Meet New UI";
 }
