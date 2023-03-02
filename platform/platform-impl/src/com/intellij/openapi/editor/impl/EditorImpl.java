@@ -2264,16 +2264,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   /**
-   * @return information about total number of lines that can be viewed by user. I.e. this is a number of all document
-   * lines (considering that single logical document line may be represented on multiple visual lines because of
-   * soft wraps appliance) minus number of folded lines
+   * @return the total number of lines that can be viewed by the user.
+   * This is the number of all document lines
+   * (considering that a single logical document line may be represented
+   * as multiple visual lines because of soft wraps appliance)
+   * minus the number of folded lines.
    */
   public int getVisibleLineCount() {
     return ReadAction.compute(() -> Math.max(1, getVisibleLogicalLinesCount() + getSoftWrapModel().getSoftWrapsIntroducedLinesNumber()));
   }
 
   /**
-   * @return number of visible logical lines. Generally, that is a total logical lines number minus number of folded lines
+   * @return the number of visible logical lines, which is the number of total logical lines minus the number of folded lines
    */
   private int getVisibleLogicalLinesCount() {
     return getDocument().getLineCount() - myFoldingModel.getTotalNumberOfFoldedLines();
@@ -3158,10 +3160,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     /**
-     * This is helper method. It returns height of the top (decrease) scroll bar
-     * button. Please note, that it's possible to return real height only if scroll bar
-     * is instance of BasicScrollBarUI. Otherwise, it returns fake (but good enough :) )
-     * value.
+     * Returns the height of the top (decrease) scroll bar button.
+     * The real height is only available if the scroll bar is a BasicScrollBarUI.
+     * Otherwise, returns a fake but good enough value.
      */
     int getDecScrollButtonHeight() {
       ScrollBarUI barUI = getUI();
@@ -3184,10 +3185,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     /**
-     * This is helper method. It returns height of the bottom (increase) scroll bar
-     * button. Please note, that it's possible to return real height only if scroll bar
-     * is instance of BasicScrollBarUI. Otherwise it returns fake (but good enough :) )
-     * value.
+     * Returns the height of the bottom (increase) scroll bar button.
+     * The real height is only available if the scroll bar is a BasicScrollBarUI.
+     * Otherwise, returns a fake but good enough value.
      */
     int getIncScrollButtonHeight() {
       ScrollBarUI barUI = getUI();
@@ -4082,9 +4082,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myLastPressCreatedCaret = false;
       }
       myLastPressWasAtBlockInlay = eventArea == EditorMouseEventArea.EDITING_AREA && hasBlockInlay(e.getPoint());
-      // Don't move caret on mouse press above gutter line markers area (a place where break points, 'override', 'implements' etc icons
-      // are drawn) and annotations area. E.g. we don't want to change caret position if a user sets new break point (clicks
-      // at 'line markers' area). Also, don't move caret when context menu for an inlay is invoked.
+      // Don't move the caret when the mouse is pressed in the gutter line markers area
+      // (a place where breakpoints, 'override', 'implements' and other icons are drawn)
+      // or in the annotations area.
+      //
+      // For example, we don't want to change the caret position
+      // when the user sets a new breakpoint by clicking at the 'line markers' area.
+      // Also, don't move the caret when the context menu for an inlay is invoked.
       boolean moveCaret = (eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA && !ExperimentalUI.isNewUI()) ||
                           isInsideGutterWhitespaceArea(e) ||
                           eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
@@ -4206,12 +4210,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                   if (eventArea == EditorMouseEventArea.EDITING_AREA &&
                       HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK && mySettings.isCamelWords()) {
                     // We want to differentiate between triple and quadruple clicks when 'select by camel humps' is on. The former
-                    // is assumed to select 'hump' while the later points to the whole word.
+                    // is assumed to select 'hump' while the latter points to the whole word.
                     selectWordAtCaret(false);
                     break;
                   }
                 case 4:
-                  // Triple and quadruple clicks on the line number resets selection to the single line,
+                  // Triple and quadruple clicks on the line number reset the selection to a single line,
                   // except that in this case we keep the caret at the beginning of this line, not the next line.
                   selectLineAtCaret(false);
                   mySelectionModel.setUnknownDirection(true);
@@ -4588,8 +4592,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myOwnColors.put(key, color);
       }
 
-      // These two are here because those attributes are cached and I do not whant the clients to call editor's reinit
-      // settings in this case.
+      // These two are here because those attributes are cached
+      // and I do not want the clients to call editor's reinit settings in this case.
       myCaretModel.reinitSettings();
       mySelectionModel.reinitSettings();
     }
