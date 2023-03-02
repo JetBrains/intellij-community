@@ -204,7 +204,7 @@ public final class TextMateServiceImpl extends TextMateService {
     ensureInitialized();
     CharSequence scopeName = myExtensionsMapping.get(new TextMateFileNameMatcher.Name(StringUtil.toLowerCase(fileName.toString())));
     if (!Strings.isEmpty(scopeName)) {
-      new TextMateLanguageDescriptor(scopeName, mySyntaxTable.getSyntax(scopeName));
+      return new TextMateLanguageDescriptor(scopeName, mySyntaxTable.getSyntax(scopeName));
     }
 
     Iterator<CharSequence> extensionsIterator = TextMateEditorUtilsKt.fileNameExtensions(fileName).iterator();
