@@ -1,5 +1,5 @@
 final class Test {
-  int test1(int num, boolean flag1, boolean flag2, boolean flag3) {
+  int <warning descr="Method 'test1()' always returns '42'">test1</warning>(int num, boolean flag1, boolean flag2, boolean flag3) {
     if (flag1) return (42);
     return (flag2 ? switch (num) {
       case 1 -> flag3 ? (42) : 42;
