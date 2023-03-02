@@ -1899,6 +1899,26 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/localVariable2.kt");
         }
 
+        @TestMetadata("nestedTypeFromImplicitReceiverClass.kt")
+        public void testNestedTypeFromImplicitReceiverClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/nestedTypeFromImplicitReceiverClass.kt");
+        }
+
+        @TestMetadata("nestedTypeFromImplicitReceiverInterface.kt")
+        public void testNestedTypeFromImplicitReceiverInterface() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/nestedTypeFromImplicitReceiverInterface.kt");
+        }
+
+        @TestMetadata("nestedTypeFromSupertypeClass.kt")
+        public void testNestedTypeFromSupertypeClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/nestedTypeFromSupertypeClass.kt");
+        }
+
+        @TestMetadata("nestedTypeFromSupertypeInterface.kt")
+        public void testNestedTypeFromSupertypeInterface() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/nestedTypeFromSupertypeInterface.kt");
+        }
+
         @TestMetadata("notApplicableAsReceiver.kt")
         public void testNotApplicableAsReceiver() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/removeRedundantQualifierName/notApplicableAsReceiver.kt");
