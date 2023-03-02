@@ -32,7 +32,7 @@ class MavenCatalogsTable(private val project: Project) : ListTableWithButtons<Ma
     val typeColumn = tableView.columnModel.getColumn(1)
     val locationColumn = tableView.columnModel.getColumn(2)
 
-    val search = TableSpeedSearch(tableView)
+    val search = TableSpeedSearch.installOn(tableView)
     nameColumn.cellRenderer = CatalogNameRenderer(search)
     typeColumn.cellRenderer = Renderer(search)
     locationColumn.cellRenderer = Renderer(search)

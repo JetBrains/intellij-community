@@ -105,7 +105,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     myTable = new JBTable(myModel);
     myTable.setShowGrid(false);
     myTable.getEmptyText().setText(ExecutionBundle.message("settings.project.startup.add.run.configurations.with.the.button"));
-    new TableSpeedSearch(myTable);
+    TableSpeedSearch.installOn(myTable);
     DefaultCellEditor defaultEditor = (DefaultCellEditor)myTable.getDefaultEditor(Object.class);
     defaultEditor.setClickCountToStart(1);
 

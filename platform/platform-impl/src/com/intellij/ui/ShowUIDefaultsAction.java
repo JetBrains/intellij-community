@@ -251,7 +251,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           }
         });
 
-        new TableSpeedSearch(table, (o, cell) -> cell.column == 1 ? null : String.valueOf(o));
+        TableSpeedSearch.installOn(table, (o, cell) -> cell.column == 1 ? null : String.valueOf(o));
         table.setShowGrid(false);
         TableHoverListener.DEFAULT.removeFrom(table);
         myTable = table;

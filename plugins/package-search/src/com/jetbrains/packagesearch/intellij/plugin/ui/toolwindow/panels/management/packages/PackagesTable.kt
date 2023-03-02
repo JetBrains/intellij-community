@@ -212,7 +212,7 @@ internal class PackagesTable(
             }
         })
 
-        TableSpeedSearch(this) { item, _ ->
+        TableSpeedSearch.installOn(this) { item, _ ->
             if (item is PackagesTableItem<*>) {
                 val rawIdentifier = item.packageModel.identifier.rawValue
                 val name = item.packageModel.remoteInfo?.name?.takeIf { !it.equals(rawIdentifier, ignoreCase = true) }

@@ -143,12 +143,13 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       }
     }
     TableView<FeatureDescriptor> table = new TableView<>(new ListTableModel<>(COLUMNS, features, 0));
-    new TableViewSpeedSearch<>(table) {
+    TableViewSpeedSearch<FeatureDescriptor> search = new TableViewSpeedSearch<>(table, null) {
       @Override
       protected String getItemText(@NotNull FeatureDescriptor element) {
         return element.getDisplayName();
       }
     };
+    search.setupListeners();
 
     JPanel controlsPanel = new JPanel(new VerticalFlowLayout());
 

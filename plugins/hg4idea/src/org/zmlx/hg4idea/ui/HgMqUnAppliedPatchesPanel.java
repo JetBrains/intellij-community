@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TableSpeedSearch;
-import com.intellij.ui.UIBundle;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,7 +86,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     myPatchTable.getEmptyText().setText(IdeCoreBundle.message("message.nothingToShow"));
     myPatchTable.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), START_EDITING);
     myPatchTable.setDragEnabled(true);
-    new TableSpeedSearch(myPatchTable);
+    TableSpeedSearch.installOn(myPatchTable);
     myPatchTable.setDropMode(DropMode.INSERT_ROWS);
     myPatchTable.setTransferHandler(new TableRowsTransferHandler(myPatchTable));
 

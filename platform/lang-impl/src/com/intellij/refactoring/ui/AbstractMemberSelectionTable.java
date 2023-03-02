@@ -99,7 +99,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     setIntercellSpacing(new Dimension(0, 0));
 
     new MyEnableDisableAction().register();
-    new TableSpeedSearch(this);
+    TableSpeedSearch.installOn(this);
   }
 
   @NotNull

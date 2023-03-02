@@ -151,7 +151,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
                      storageKey, myVcs.getProject());
       myDualView.switchToTheFlatMode();
     }
-    new TableSpeedSearch(myDualView.getFlatView()).setComparator(new SpeedSearchComparator(false));
+    TableSpeedSearch.installOn(myDualView.getFlatView()).setComparator(new SpeedSearchComparator(false));
     final TableLinkMouseListener listener = new TableLinkMouseListener();
     listener.installOn(myDualView.getFlatView());
     listener.installOn(myDualView.getTreeView());

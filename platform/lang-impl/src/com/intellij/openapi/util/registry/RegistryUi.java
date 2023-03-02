@@ -132,7 +132,7 @@ public class RegistryUi implements Disposable {
     tb.setTargetComponent(myTable);
 
     myContent.add(tb.getComponent(), BorderLayout.NORTH);
-    final TableSpeedSearch search = new TableSpeedSearch(myTable);
+    final TableSpeedSearch search = TableSpeedSearch.installOn(myTable);
     search.setFilteringMode(true);
     myTable.setRowSorter(new TableRowSorter<>(myTable.getModel()));
     myTable.registerKeyboardAction(

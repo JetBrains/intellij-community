@@ -83,7 +83,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     setSplitterProportionKey("UiInspector.table.splitter.proportion");
 
     myTable = new StripeTable(myModel);
-    new TableSpeedSearch(myTable);
+    TableSpeedSearch.installOn(myTable);
 
     TableColumnModel columnModel = myTable.getColumnModel();
     TableColumn propertyColumn = columnModel.getColumn(0);
