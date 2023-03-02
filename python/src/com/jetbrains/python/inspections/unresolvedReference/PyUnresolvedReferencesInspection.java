@@ -167,7 +167,7 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
           final String packageName = components.get(0);
           final Module module = ModuleUtilCore.findModuleForPsiElement(node);
           if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName) && PythonSdkUtil.findPythonSdk(module) != null) {
-            result.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageName, packageName, node));
+            result.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageName, null, node));
           }
           else {
             final String packageAlias = PyPackageAliasesProvider.commonImportAliases.get(packageName);
