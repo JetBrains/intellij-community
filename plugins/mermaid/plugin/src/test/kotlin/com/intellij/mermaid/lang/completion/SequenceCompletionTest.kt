@@ -3,7 +3,8 @@ package com.intellij.mermaid.lang.completion
 import com.intellij.mermaid.lang.MermaidBaseTestCase
 
 class SequenceCompletionTest : MermaidBaseTestCase("completion/diagrams/sequence") {
-  private val keywords = arrayOf("loop", "alt", "opt", "par", "rect", "critical", "break", "participant", "actor", "autonumber")
+  private val keywords =
+    arrayOf("loop", "alt", "opt", "par", "rect", "critical", "break", "box", "participant", "actor", "autonumber")
 
   fun `test at top level`() = doTest(*keywords)
 
