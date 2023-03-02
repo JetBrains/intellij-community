@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.configurationStore.ComponentSerializationUtil;
@@ -38,7 +38,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
@@ -573,7 +572,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
 
     private static boolean isBreakPointsOnLineNumbers() {
-      return XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isBreakpointsOnLineNumbers()
+      return UISettings.getInstance().getShowBreakpointsOverLineNumbers()
              && !UISettings.getInstance().getPresentationMode()
              && !Registry.is("editor.distraction.free.mode");
     }
