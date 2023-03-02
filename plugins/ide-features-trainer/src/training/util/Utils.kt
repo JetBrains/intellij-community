@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.util.PlatformUtils
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import training.lang.LangManager
@@ -139,7 +140,7 @@ val switchOnExperimentalLessons: Boolean
   get() = Registry.`is`("ift.experimental.lessons", false)
 
 val enableLessonsAndPromoters: Boolean
-  get() = ExperimentalUI.isNewUI() || Registry.`is`("ift.enable.in.old.ui", false)
+  get() = ExperimentalUI.isNewUI() || Registry.`is`("ift.enable.in.old.ui", false) || PlatformUtils.isDataSpell()
 
 fun invokeActionForFocusContext(action: AnAction) {
   DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
