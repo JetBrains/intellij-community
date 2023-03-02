@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -9,9 +10,9 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
+import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.*
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
@@ -24,24 +25,54 @@ import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
-import org.junit.Assert
+import org.junit.*
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
-class DumbServiceImplTest extends BasePlatformTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp()
-    String key = "idea.force.dumb.queue.tasks"
-    String prev = System.setProperty(key, "true")
-    disposeOnTearDown {
-      SystemProperties.setProperty(key, prev)
+import static org.junit.Assert.*
+
+@RunWith(JUnit4.class)
+@RunsInEdt
+class DumbServiceImplTest {
+
+  @ClassRule
+  public static final ProjectRule p = new ProjectRule(true, false, null)
+
+  @Rule
+  public EdtRule edt = new EdtRule()
+
+  private static Disposable disposable
+
+  private Project project
+
+  @BeforeClass
+  static void beforeAll() {
+    String prevDumbQueueTasks = System.setProperty("idea.force.dumb.queue.tasks", "true")
+    String prevIgnoreHeadless = System.setProperty("intellij.progress.task.ignoreHeadless", "true")
+
+    disposable = Disposer.newDisposable("DumbServiceImplTest")
+    Disposer.register(disposable) {
+      SystemProperties.setProperty("idea.force.dumb.queue.tasks", prevDumbQueueTasks)
+      SystemProperties.setProperty("intellij.progress.task.ignoreHeadless", prevIgnoreHeadless)
     }
   }
 
+  @AfterClass
+  static void afterAll() throws Exception {
+    Disposer.dispose(disposable)
+  }
+
+  @Before
+  void setUp() throws Exception {
+    project = p.project
+  }
+
+  @Test
   void "test no task leak on dispose"() {
     DumbService dumbService = new DumbServiceImpl(project)
 
@@ -75,11 +106,12 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     dumbService.queueTask(task2)
     Disposer.dispose(dumbService)
 
-    Assert.assertEquals(2, disposes.get())
-    Assert.assertTrue(Disposer.isDisposed(task1))
-    Assert.assertTrue(Disposer.isDisposed(task2))
+    assertEquals(2, disposes.get())
+    assertTrue(Disposer.isDisposed(task1))
+    assertTrue(Disposer.isDisposed(task2))
   }
 
+  @Test
   void "test queueTask is async"() {
     def semaphore = new Semaphore(1)
     dumbService.queueTask(new DumbModeTask() {
@@ -101,38 +133,39 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     UIUtil.dispatchAllInvocationEvents()
   }
 
+  @Test
   void "test runWhenSmart is executed synchronously in smart mode"() {
     int invocations = 0
     dumbService.runWhenSmart { invocations++ }
     assert invocations == 1
   }
 
+  @Test
   void "test runWhenSmart is executed on EDT without write action"() {
     ApplicationManager.application.assertIsDispatchThread()
     int invocations = 0
 
-    Semaphore semaphore = new Semaphore(1)
+    CountDownLatch latch = new CountDownLatch(2)
     dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        ApplicationManager.getApplication().assertIsNonDispatchThread();
+        ApplicationManager.getApplication().assertIsNonDispatchThread()
 
-        edt {
+        EdtTestUtil.runInEdtAndWait {
           dumbService.runWhenSmart {
             invocations++
             ApplicationManager.application.assertIsDispatchThread()
             assert !ApplicationManager.application.writeAccessAllowed
+            latch.countDown()
           }
         }
         TimeoutUtil.sleep(100)
-        semaphore.up()
+        latch.countDown()
       }
     })
     assert dumbService.dumb
     assert invocations == 0
-    UIUtil.dispatchAllInvocationEvents()
-    assert semaphore.waitFor(1000)
-    UIUtil.dispatchAllInvocationEvents()
+    PlatformTestUtil.waitWithEventsDispatching("dumbService.queueTask didn't complete in 5 seconds", { latch.count == 0 }, 5)
     assert invocations == 1
   }
 
@@ -140,9 +173,10 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     (DumbServiceImpl)DumbService.getInstance(project)
   }
 
+  @Test
   void "test no deadlocks when indexing JSP modally"() {
     def tempFixture = new TempDirTestFixtureImpl()
-    disposeOnTearDown { tempFixture.tearDown() }
+    Disposer.register(disposable) { tempFixture.tearDown() }
 
     // create externally and carefully refresh, avoiding eager content loading and charset detection
     def dir = new File(tempFixture.tempDirPath + '/jsps')
@@ -155,7 +189,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     def child = vDir.children[0]
     assert child.fileType.name == 'JSP'
     assert !((VirtualFileImpl) child).charsetSet
-    assert ((PsiManagerImpl)psiManager).fileManager.getCachedPsiFile(child) == null
+    assert ((PsiManagerImpl)project.getService(PsiManager.class)).fileManager.getCachedPsiFile(child) == null
 
     def started = new AtomicBoolean()
     def finished = new AtomicBoolean()
@@ -164,13 +198,13 @@ class DumbServiceImplTest extends BasePlatformTestCase {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         started.set(true)
-        ApplicationManager.getApplication().assertIsNonDispatchThread();
+        ApplicationManager.getApplication().assertIsNonDispatchThread()
         try {
           ProgressIndicatorUtils.withTimeout(20_000) {
             def index = FileBasedIndex.getInstance() as FileBasedIndexImpl
             new IndexUpdateRunner(index, 1)
               .indexFiles(project, Collections.singletonList(new IndexUpdateRunner.FileSet(project, "child", [child])),
-                          indicator, new ProjectIndexingHistoryImpl(getProject(), "Testing", ScanningType.PARTIAL))
+                          indicator, new ProjectIndexingHistoryImpl(project, "Testing", ScanningType.PARTIAL))
           }
         }
         catch (ProcessCanceledException e) {
@@ -185,9 +219,10 @@ class DumbServiceImplTest extends BasePlatformTestCase {
     assert finished.get()
   }
 
+  @Test
   void testDelayBetweenBecomingSmartAndWaitForSmartReturnMustBeSmall() {
     int N = 100
-    int[] delays = new int[N]
+    long[] delays = new long[N]
     DumbServiceImpl dumbService = getDumbService()
     Future<?> future = null
     for (int i=0; i< N; i++) {
@@ -205,11 +240,12 @@ class DumbServiceImplTest extends BasePlatformTestCase {
       delays[i] = elapsed
     }
     Arrays.sort(delays)
-    int avg = ArrayUtil.averageAmongMedians(delays, 3)
+    long avg = ArrayUtil.averageAmongMedians(delays, 3)
     assert avg == 0: "Seems there's is a significant delay between becoming smart and waitForSmartMode() return. Delays in ms:\n" +
                      Arrays.toString(delays) + "\n"
   }
 
+  @Test
   void "test cancelAllTasksAndWait cancels all the tasks submitted via queueTask from other threads with no race"() {
     DumbServiceImpl dumbService = getDumbService()
     AtomicBoolean queuedTaskInvoked = new AtomicBoolean(false)
