@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -36,15 +36,47 @@ public interface ExternalEventLogSettings {
 
   /**
    * Override global setting that enables log uploading see {@link StatisticsUploadAssistant#isSendAllowed()}
+   *
    * @return true if log uploading must be force-enabled
+   * @deprecated overriding setting to enable uploading is no longer possible -
+   * only force disable is supported, see {@link ExternalEventLogSettings#forceDisableCollectionConsent()}
    */
+  @Deprecated(since = "2023.1")
   boolean isSendAllowedOverride();
 
   /**
    * Override global setting that enables collection of statistics by any logger {@link StatisticsUploadAssistant#isCollectAllowed()}
+   *
    * @return true if statistics collection must be force-enabled
+   * @deprecated overriding setting to enable collection and recording is no longer possible -
+   * only force collection not connected with recording to file is supported, see {@link ExternalEventLogSettings#forceCollectionWithoutRecord()}
    */
+  @Deprecated(since = "2023.1")
   boolean isCollectAllowedOverride();
+
+  /**
+   * Override global setting that enables collection of statistics by any logger, see {@link StatisticsUploadAssistant#isCollectAllowed()}
+   * <br/>
+   * Does not affect {@link ExternalEventLogSettings#forceCollectionWithoutRecord()}
+   *
+   * @return true if log collection must be force-disabled even with accepted user consent
+   * */
+  default boolean forceDisableCollectionConsent() {
+    return false;
+  }
+
+  /**
+   * Enables statistics logs collection independently of recording to file ({@link StatisticsEventLoggerProvider#isRecordEnabled()}) for <b>supported</b> loggers.
+   * <br/>
+   * Logger must implement {@link StatisticsEventLoggerProviderExt}.
+   * <br/>
+   * Is not affected by {@link ExternalEventLogSettings#forceDisableCollectionConsent()}
+   *
+   * @return true if statistics collection must be force-enabled by supported logger
+   */
+  default boolean forceCollectionWithoutRecord() {
+    return false;
+  }
 
   /**
    * Provide extra headers to AP log upload requests. E.g. a shared secret to fence off data pollution

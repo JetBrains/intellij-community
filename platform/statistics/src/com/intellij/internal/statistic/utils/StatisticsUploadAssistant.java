@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils;
 
 import com.intellij.internal.statistic.eventLog.*;
@@ -18,6 +18,7 @@ public final class StatisticsUploadAssistant {
   private static final String IDEA_SUPPRESS_REPORT_STATISTICS = "idea.suppress.statistics.report";
   private static final String ENABLE_LOCAL_STATISTICS_WITHOUT_REPORT = "idea.local.statistics.without.report";
   private static final String USE_TEST_STATISTICS_CONFIG = "idea.use.test.statistics.config";
+  private static final String DISABLE_COLLECT_STATISTICS = "idea.disable.collect.statistics";
 
   private StatisticsUploadAssistant() {}
 
@@ -31,7 +32,7 @@ public final class StatisticsUploadAssistant {
     }
 
     UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
-    return settings != null && settings.isAllowed() || getSendAllowedOverride();
+    return settings != null && settings.isAllowed();
   }
 
   public static boolean isCollectAllowed() {
@@ -40,10 +41,23 @@ public final class StatisticsUploadAssistant {
     }
 
     UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
-    boolean collectOverride = getCollectAllowedOverride();
-    return (settings != null && settings.isAllowed() || collectOverride) || isLocalStatisticsWithoutReport();
+    return !isDisableCollectStatistics() && !getForceDisableCollectionOverride() &&
+           ((settings != null && settings.isAllowed()) || isLocalStatisticsWithoutReport());
   }
 
+  private static boolean isForceCollectEnabled() {
+    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
+    return externalEventLogSettings != null && externalEventLogSettings.forceCollectionWithoutRecord();
+  }
+
+  public static boolean isCollectAllowedOrForced() {
+    return isCollectAllowed() || isForceCollectEnabled();
+  }
+
+  /**
+   * @deprecated see {@link ExternalEventLogSettings#isSendAllowedOverride()}
+   */
+  @Deprecated(since = "2023.1")
   public static boolean getSendAllowedOverride() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     if (externalEventLogSettings != null)
@@ -52,9 +66,18 @@ public final class StatisticsUploadAssistant {
       return false;
   }
 
+  /**
+   * @deprecated see {@link ExternalEventLogSettings#isCollectAllowedOverride()}
+   * */
+  @Deprecated(since = "2023.1")
   public static boolean getCollectAllowedOverride() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     return externalEventLogSettings != null && externalEventLogSettings.isCollectAllowedOverride();
+  }
+
+  private static boolean getForceDisableCollectionOverride() {
+    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
+    return externalEventLogSettings != null && externalEventLogSettings.forceDisableCollectionConsent();
   }
 
   private static boolean isHeadlessStatisticsEnabled() {
@@ -106,5 +129,9 @@ public final class StatisticsUploadAssistant {
 
   public static boolean isUseTestStatisticsConfig() {
     return Boolean.getBoolean(USE_TEST_STATISTICS_CONFIG);
+  }
+
+  public static boolean isDisableCollectStatistics() {
+    return Boolean.getBoolean(DISABLE_COLLECT_STATISTICS);
   }
 }
