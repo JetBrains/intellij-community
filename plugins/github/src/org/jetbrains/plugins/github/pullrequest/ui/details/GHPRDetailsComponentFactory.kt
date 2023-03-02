@@ -4,7 +4,8 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
 import kotlinx.coroutines.CoroutineScope
@@ -12,7 +13,6 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRRepositoryDataService
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
@@ -51,9 +51,7 @@ internal object GHPRDetailsComponentFactory {
     }
     val commitInfo = GHPRDetailsCommitInfoComponentFactory.create(scope, commitsVm)
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewDetailsVm, reviewFlowVm, securityService, avatarIconsProvider)
-    val state = GHPRStatePanel(scope, reviewDetailsVm, reviewFlowVm, dataProvider).also {
-      PopupHandler.installPopupMenu(it, DefaultActionGroup(GHPRReloadDetailsAction()), "GHPRDetailsPanelPopup")
-    }
+    val state = GHPRStatePanel(scope, reviewDetailsVm, reviewFlowVm, dataProvider)
 
     return JPanel(MigLayout(
       LC()
@@ -92,7 +90,8 @@ internal object GHPRDetailsComponentFactory {
         right = ReviewDetailsUIUtil.indentRight,
         bottom = ReviewDetailsUIUtil.indentBottom))
 
-      PopupHandler.installPopupMenu(this, DefaultActionGroup(GHPRReloadDetailsAction()), "GHPRDetailsPopup")
+      val group = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
+      PopupHandler.installPopupMenu(this, group, "GHPRDetailsPopup")
     }
   }
 }

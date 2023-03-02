@@ -212,7 +212,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
                                                     commitsLoadingErrorHandler)
       .createWithUpdatesStripe(uiDisposable) { _, model ->
         CommitsBrowserComponentBuilder(project, model)
-          .installPopupActions(DefaultActionGroup(actionManager.getAction("Github.PullRequest.Changes.Reload")), "GHPRCommitsPopup")
+          .installPopupActions(DefaultActionGroup(actionManager.getAction("Github.PullRequest.Details.Reload")), "GHPRCommitsPopup")
           .setEmptyCommitListText(GithubBundle.message("pull.request.does.not.contain.commits"))
           .onCommitSelected { commitSelectionModel.value = it }
           .create()

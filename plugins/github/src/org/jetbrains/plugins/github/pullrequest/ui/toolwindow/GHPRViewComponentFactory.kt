@@ -86,7 +86,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   }
 
   private val reloadDetailsAction = actionManager.getAction("Github.PullRequest.Details.Reload")
-  private val reloadChangesAction = actionManager.getAction("Github.PullRequest.Changes.Reload")
 
   private val detailsLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
     dataProvider.detailsData.reloadDetails()
@@ -287,7 +286,6 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     val diffPreviewController = createAndSetupDiffPreview(tree, diffRequestProducer.changeProducerFactory, dataProvider,
                                                           dataContext.filesManager)
 
-    reloadChangesAction.registerCustomShortcutSet(tree, null)
     tree.installPopupHandler(actionManager.getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
 
     DataManager.registerDataProvider(parentPanel) { dataId ->
