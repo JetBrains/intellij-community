@@ -32,7 +32,7 @@ OCT_INT=0o[0-7](_?[0-7])*
 BIN_INT=0b[01](_?[01])*
 INTEGER={DEC_INT}|{HEX_INT}|{OCT_INT}|{BIN_INT}
 
-EXP=[eE]{DEC_INT}
+EXP=[eE][-+]?[0-9](_?[0-9])*
 FRAC=\.[0-9](_?[0-9])*
 SPECIAL_FLOAT=[-+]?(inf|nan)
 FLOAT={DEC_INT}({EXP}|{FRAC}{EXP}?)|{SPECIAL_FLOAT}

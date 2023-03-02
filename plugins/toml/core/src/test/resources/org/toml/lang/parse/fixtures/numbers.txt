@@ -177,7 +177,7 @@ TOML File
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
     TomlLiteral
-      PsiElement(NUMBER)('1e6')
+      PsiElement(NUMBER)('1e06')
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
