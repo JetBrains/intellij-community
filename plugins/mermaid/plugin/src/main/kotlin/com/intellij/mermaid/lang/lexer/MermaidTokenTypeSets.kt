@@ -30,7 +30,9 @@ object MermaidTokenTypeSets {
     MermaidElements.ELEMENT_BLOCK_STATEMENT,
     MermaidElements.GIT_GRAPH_STATEMENT,
     MermaidElements.C_4_STATEMENT,
-    MermaidElements.MINDMAP_STATEMENT
+    MermaidElements.MINDMAP_STATEMENT,
+    MermaidElements.TIMELINE_STATEMENT,
+    MermaidElements.TIMELINE_SECTION_INNER_STATEMENT
   )
 
   val DIAGRAM_BODIES_AND_BLOCKS = TokenSet.create(
@@ -55,7 +57,9 @@ object MermaidTokenTypeSets {
     MermaidElements.ELEMENT_BLOCK,
     MermaidElements.GIT_GRAPH_BODY,
     MermaidElements.C_4_BODY,
-    MermaidElements.BOUNDARY_BLOCK
+    MermaidElements.BOUNDARY_BLOCK,
+    MermaidElements.TIMELINE_BODY,
+    MermaidElements.TIMELINE_SECTION_BLOCK,
   )
 
   val EXPAND_INDENT_AFTER = TokenSet.create(
@@ -88,6 +92,7 @@ object MermaidTokenTypeSets {
     MermaidTokens.C4.C4_CONTAINER,
     MermaidTokens.C4.C4_COMPONENT,
     MermaidTokens.C4.C4_DYNAMIC,
-    MermaidTokens.C4.C4_DEPLOYMENT
+    MermaidTokens.C4.C4_DEPLOYMENT,
+    MermaidTokens.Timeline.TIMELINE,
   )
 }

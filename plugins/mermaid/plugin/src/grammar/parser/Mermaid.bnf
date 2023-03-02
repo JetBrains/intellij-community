@@ -47,7 +47,7 @@ private diagram ::= pieHeader EOL* [pieBody]
   | gitGraphHeader EOL* [gitGraphBody]
   | c4Header EOL* c4Body
   | mindmapHeader EOL* mindmapBody
-  | (TIMELINE EOL*)+
+  | timelineHeader EOL* [timelineBody]
 
 titleStatement ::= TITLE complexTitleValue
 complexTitleValue ::= TITLE_VALUE+
@@ -76,7 +76,7 @@ journeyStatement ::= journeyDataStatement
   | directive
   | accStatement
 
-journeyDataStatement ::= complexTaskName COLON (IGNORED | journeyTaskData [COLON journeyNamedData? (COLON journeyTaskData?)*])
+journeyDataStatement ::= complexTaskName COLON (IGNORED | sectionTaskData [COLON journeyNamedData? (COLON sectionTaskData?)*])
 
 journeySectionStatement ::= journeySectionHeader EOL* [journeySectionBlock]
 journeySectionHeader ::= SECTION complexSectionTitle
@@ -89,7 +89,7 @@ complexSectionTitle ::= SECTION_TITLE+
 complexTaskName ::= TASK_NAME+
 complexTaskData ::= TASK_DATA*
 private recTaskData ::= complexTaskData [COMMA recTaskData]
-journeyTaskData ::= recTaskData
+sectionTaskData ::= recTaskData
 
 complexNamedData ::= TASK_DATA* { mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement" }
 private recNamedData ::= complexNamedData [COMMA recNamedData]
@@ -705,6 +705,27 @@ nodeDescription ::= NODE_DESCR+ | string
 
 iconStatement ::= OPEN_ICON ICON_VALUE? CLOSE_ICON
 mindmapClassStatement ::= STYLE_SEPARATOR CLASS+
+
+
+timelineHeader ::= TIMELINE
+
+timelineBody ::= timelineLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private timelineLines ::= (timelineLine | IGNORED) [timelineLines]
+private timelineLine ::= timelineStatement [EOL] | EOL
+timelineStatement ::= timelineDataStatement
+  | timelineSectionStatement
+  | titleStatement
+  | directive
+  | accStatement
+
+timelineDataStatement ::= complexTaskName [IGNORED] (EOL* COLON sectionTaskData)*
+
+timelineSectionStatement ::= timelineSectionHeader EOL* [timelineSectionBlock]
+timelineSectionHeader ::= SECTION complexSectionTitle
+timelineSectionBlock ::= timelineSectionLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private timelineSectionLines ::= (timelineSectionLine | IGNORED) [timelineSectionLines]
+private timelineSectionLine ::= timelineSectionInnerStatement [EOL] | EOL
+timelineSectionInnerStatement ::= timelineDataStatement
 
 
 directive ::= OPEN_DIRECTIVE directiveContent? CLOSE_DIRECTIVE

@@ -17,7 +17,7 @@ class UnusedAttributesInspection : LocalInspectionTool(), CleanupLocalInspection
     if (holder.file !is MermaidFile) return PsiElementVisitor.EMPTY_VISITOR
     return object : MermaidVisitor() {
       override fun visitJourneyDataStatement(mermaidJourneyDataStatement: MermaidJourneyDataStatement) {
-        val taskDataList = mermaidJourneyDataStatement.journeyTaskDataList
+        val taskDataList = mermaidJourneyDataStatement.sectionTaskDataList
         if (taskDataList.size >= 1) {
           val secondTaskData = mermaidJourneyDataStatement.journeyNamedData ?: return
 

@@ -40,7 +40,7 @@ FILE
                 PsiElement(TASK_NAME)('tea')
               PsiElement(COLON)(':')
               PsiWhiteSpace(' ')
-              MermaidJourneyTaskDataImpl(JOURNEY_TASK_DATA)
+              MermaidSectionTaskDataImpl(SECTION_TASK_DATA)
                 MermaidComplexTaskDataImpl(COMPLEX_TASK_DATA)
                   PsiElement(TASK_DATA)('5')
               PsiElement(COLON)(':')

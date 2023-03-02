@@ -50,7 +50,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states pie, pie_title, pie_title_value, value
 
-%states journey, title,title_value,journey_task, section, section_title
+%states journey, title,title_value,section_task, section, section_title
 
 %states flowchart, flowchart_body, node_text, node_quoted_text, link_text, link_quoted_text, direction_value, style, link_style, link_style_target, style_opt, style_value, flowchart_class, flowchart_class_target, flowchart_class_val
 
@@ -130,16 +130,16 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\s]+ { return Frontmatter.FRONTMATTER_VALUE; }
 }
 
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, directive> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, directive, timeline> {
   "%%{" { yypushstate(directive); return OPEN_DIRECTIVE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
 }
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, class_name, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, timeline> {
   "accTitle" { yypushstate(acc_title); return ACC_TITLE; }
   "accDescr" { yypushstate(acc_descr); return ACC_DESCR; }
 }
-<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element, gitgraph, c4, mindmap> {
+<pie, journey, flowchart_body, sequence, state_diagram, state_statement, class_diagram, class_name, struct, entity_relationship, entity_attributes, gantt, requirement_diagram, requirement, req_element, gitgraph, c4, mindmap, timeline> {
   [\n\r] { return EOL; }
   ";" { return SEMICOLON; }
 }
@@ -157,7 +157,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <journey> {
   "title" { yypushstate(title); return TITLE; }
   "section" { yypushstate(section); return SECTION; }
-  ":" { yybegin(journey_task); return COLON; }
+  ":" { yypushstate(section_task); return COLON; }
   [^\s#:;]+ { return TASK_NAME; }
 }
 <flowchart, direction_value, simple_direction_value> {
@@ -218,13 +218,13 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\s#:;]+ { return SECTION_TITLE; }
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
-<journey_task> {
+<section_task> {
   (#[^\n\r]*)/[\n\r]? { return IGNORED; }
   ":" { return COLON; }
   "," { return COMMA; }
   [^\S\n\r]+ { return WHITE_SPACE; }
   [^\s#:;,]+ { return TASK_DATA; }
-  [\n\r] { yybegin(journey); return EOL; }
+  [\n\r] { yypopstate(); return EOL; }
 }
 
 //---flowchart--------------------------------------------------------------------
@@ -863,9 +863,13 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [^\S\r\n]+ { return WHITE_SPACE; }
 }
 
-//---mindmap----------------------------------------------------------------------
+//---timeline---------------------------------------------------------------------
 <timeline> {
-  .* { return Timeline.TIMELINE; }
+  "title" { yypushstate(title); return TITLE; }
+  "section" { yypushstate(section); return SECTION; }
+  ":" { yypushstate(section_task); return COLON; }
+  [^\s#:;]+ { return TASK_NAME; }
+  (#[^\n\r]*)/[\n\r]? { return IGNORED; }
 }
 
 //--------------------------------------------------------------------------------
