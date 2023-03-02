@@ -12,18 +12,19 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
-import com.intellij.testFramework.*
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.EdtTestUtil
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 import org.junit.*
 import org.junit.runner.RunWith
@@ -31,13 +32,14 @@ import org.junit.runners.JUnit4
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
+import java.util.concurrent.Phaser
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 import static org.junit.Assert.*
 
 @RunWith(JUnit4.class)
-@RunsInEdt
 class DumbServiceImplTest {
 
   @ClassRule
@@ -46,7 +48,8 @@ class DumbServiceImplTest {
   @Rule
   public EdtRule edt = new EdtRule()
 
-  private static Disposable disposable
+  private static Disposable testClassDisposable
+  private static Disposable testDisposable
 
   private Project project
 
@@ -55,8 +58,8 @@ class DumbServiceImplTest {
     String prevDumbQueueTasks = System.setProperty("idea.force.dumb.queue.tasks", "true")
     String prevIgnoreHeadless = System.setProperty("intellij.progress.task.ignoreHeadless", "true")
 
-    disposable = Disposer.newDisposable("DumbServiceImplTest")
-    Disposer.register(disposable) {
+    testClassDisposable = Disposer.newDisposable("DumbServiceImplTest")
+    Disposer.register(testClassDisposable) {
       SystemProperties.setProperty("idea.force.dumb.queue.tasks", prevDumbQueueTasks)
       SystemProperties.setProperty("intellij.progress.task.ignoreHeadless", prevIgnoreHeadless)
     }
@@ -64,12 +67,18 @@ class DumbServiceImplTest {
 
   @AfterClass
   static void afterAll() throws Exception {
-    Disposer.dispose(disposable)
+    Disposer.dispose(testClassDisposable)
   }
 
   @Before
   void setUp() throws Exception {
+    testDisposable = Disposer.newDisposable("DumbServiceImplTest")
     project = p.project
+  }
+
+  @After
+  void tearDown() {
+    Disposer.dispose(testDisposable)
   }
 
   @Test
@@ -128,13 +137,12 @@ class DumbServiceImplTest {
       }
     })
 
-    UIUtil.dispatchAllInvocationEvents()
     assert semaphore.waitFor(1000)
-    UIUtil.dispatchAllInvocationEvents()
   }
 
   @Test
-  void "test runWhenSmart is executed synchronously in smart mode"() {
+  @RunsInEdt
+  void "test runWhenSmart is executed synchronously in smart mode in EDT"() {
     int invocations = 0
     dumbService.runWhenSmart { invocations++ }
     assert invocations == 1
@@ -142,30 +150,29 @@ class DumbServiceImplTest {
 
   @Test
   void "test runWhenSmart is executed on EDT without write action"() {
-    ApplicationManager.application.assertIsDispatchThread()
     int invocations = 0
 
-    CountDownLatch latch = new CountDownLatch(2)
+    Phaser phaser = new Phaser(2)
     dumbService.queueTask(new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
         ApplicationManager.getApplication().assertIsNonDispatchThread()
+        phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) //1
 
         EdtTestUtil.runInEdtAndWait {
           dumbService.runWhenSmart {
-            invocations++
             ApplicationManager.application.assertIsDispatchThread()
             assert !ApplicationManager.application.writeAccessAllowed
-            latch.countDown()
+            invocations++
+            phaser.arriveAndDeregister() //2
           }
         }
-        TimeoutUtil.sleep(100)
-        latch.countDown()
       }
     })
+    phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) //1
     assert dumbService.dumb
     assert invocations == 0
-    PlatformTestUtil.waitWithEventsDispatching("dumbService.queueTask didn't complete in 5 seconds", { latch.count == 0 }, 5)
+    phaser.awaitAdvanceInterruptibly(phaser.arrive(), 5, TimeUnit.SECONDS) //2
     assert invocations == 1
   }
 
@@ -174,9 +181,10 @@ class DumbServiceImplTest {
   }
 
   @Test
+  @RunsInEdt
   void "test no deadlocks when indexing JSP modally"() {
     def tempFixture = new TempDirTestFixtureImpl()
-    Disposer.register(disposable) { tempFixture.tearDown() }
+    Disposer.register(testDisposable) { tempFixture.tearDown() }
 
     // create externally and carefully refresh, avoiding eager content loading and charset detection
     def dir = new File(tempFixture.tempDirPath + '/jsps')
@@ -226,13 +234,15 @@ class DumbServiceImplTest {
     DumbServiceImpl dumbService = getDumbService()
     Future<?> future = null
     for (int i=0; i< N; i++) {
-      dumbService.runInDumbMode {
-        CountDownLatch waiting = new CountDownLatch(1)
-        future = ApplicationManager.getApplication().executeOnPooledThread({
-            waiting.countDown()
-            dumbService.waitForSmartMode()
-          } as Runnable)
-        waiting.await()
+      EdtTestUtil.runInEdtAndWait {
+        dumbService.runInDumbMode {
+          CountDownLatch waiting = new CountDownLatch(1)
+          future = ApplicationManager.getApplication().executeOnPooledThread({
+                                                                               waiting.countDown()
+                                                                               dumbService.waitForSmartMode()
+                                                                             } as Runnable)
+          waiting.await()
+        }
       }
       long start = System.currentTimeMillis()
       future.get()
@@ -249,7 +259,7 @@ class DumbServiceImplTest {
   void "test cancelAllTasksAndWait cancels all the tasks submitted via queueTask from other threads with no race"() {
     DumbServiceImpl dumbService = getDumbService()
     AtomicBoolean queuedTaskInvoked = new AtomicBoolean(false)
-    AtomicBoolean dumbTaskFinished = new AtomicBoolean(false)
+    CountDownLatch dumbTaskFinished = new CountDownLatch(1)
 
     Thread t1 = new Thread({
                              dumbService.queueTask(
@@ -261,23 +271,25 @@ class DumbServiceImplTest {
 
                                  @Override
                                  void dispose() {
-                                   dumbTaskFinished.set(true)
+                                   dumbTaskFinished.countDown()
                                  }
                                }
                              )
                            }, "Test thread 1")
 
-    // we are on Write thread without write action
-    t1.start()
-    PlatformTestUtil.waitWithEventsDispatching("dumbService.queueTask didn't complete in 5 seconds", { !t1.isAlive() }, 5)
-    assertFalse("Thread should have completed", t1.isAlive())
+    EdtTestUtil.runInEdtAndWait {
+      // we are on Write thread without write action
+      t1.start()
+      t1.join(5_000)
+      assertFalse("Thread should have completed", t1.isAlive())
 
-    // this should also cancel the task submitted by t1. There is no race: t1 definitely submitted this task and the thread itself finished.
-    dumbService.cancelAllTasksAndWait()
+      // this should also cancel the task submitted by t1. There is no race: t1 definitely submitted this task and the thread itself finished.
+      dumbService.cancelAllTasksAndWait()
+    }
 
-    PlatformTestUtil.waitWithEventsDispatching("DumbModeTask didn't complete in 5 seconds", dumbTaskFinished::get, 5)
+    dumbTaskFinished.await(5, TimeUnit.SECONDS)
 
-    assertTrue(dumbTaskFinished.get())
+    assertEquals("DumbModeTask didn't complete in 5 seconds", 0, dumbTaskFinished.count)
     assertFalse(queuedTaskInvoked.get())
   }
 }
