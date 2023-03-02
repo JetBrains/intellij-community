@@ -10,6 +10,9 @@ import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindTextHtml
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.ui.util.emptyBorders
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
@@ -57,6 +60,8 @@ internal object GHPRTitleComponent {
           tooltip = GithubBundle.message("open.on.github.action")
         )
       })
+      val group = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
+      PopupHandler.installPopupMenu(this, group, "GHPRDetailsPopup")
     }
     val stateLabel = JLabel().apply {
       font = JBFont.small()

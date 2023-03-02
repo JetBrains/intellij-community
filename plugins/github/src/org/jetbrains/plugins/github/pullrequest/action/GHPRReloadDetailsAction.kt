@@ -24,5 +24,7 @@ class GHPRReloadDetailsAction
     dataProvider.detailsData.reloadDetails()
     dataProvider.stateData.reloadMergeabilityState()
     dataProvider.reviewData.resetPendingReview()
+    dataProvider.changesData.reloadChanges()
+    dataProvider.viewedStateData.reset()
   }
 }

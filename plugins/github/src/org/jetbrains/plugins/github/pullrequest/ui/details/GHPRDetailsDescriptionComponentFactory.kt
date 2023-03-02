@@ -6,12 +6,13 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.bindText
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
@@ -23,6 +24,8 @@ internal object GHPRDetailsDescriptionComponentFactory {
   fun create(scope: CoroutineScope, reviewDetailsVM: GHPRDetailsViewModel): JComponent {
     val descriptionPanel = HtmlEditorPane().apply {
       bindText(scope, reviewDetailsVM.descriptionState)
+      val group = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
+      PopupHandler.installPopupMenu(this, group, "GHPRDetailsPopup")
     }.let { editor ->
       CollaborationToolsUIUtil.wrapWithLimitedSize(editor, DimensionRestrictions.LinesHeight(editor, VISIBLE_DESCRIPTION_LINES))
     }
