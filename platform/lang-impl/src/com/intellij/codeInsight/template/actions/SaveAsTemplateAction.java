@@ -133,7 +133,7 @@ public class SaveAsTemplateAction extends AnAction {
 
     final LiveTemplatesConfigurable configurable = new LiveTemplatesConfigurable();
     SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable, DialogWrapper.IdeModalityType.MODELESS);
-    new UiNotifyConnector.Once(dialog.getContentPane(), new Activatable() {
+    UiNotifyConnector.Once.installOn(dialog.getContentPane(), new Activatable() {
       @Override
       public void showNotify() {
         configurable.getTemplateListPanel().addTemplate(template);

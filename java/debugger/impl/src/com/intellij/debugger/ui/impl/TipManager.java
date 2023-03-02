@@ -257,7 +257,7 @@ public final class TipManager implements Disposable, PopupMenuListener {
     myTipFactory = factory;
     myComponent = component;
 
-    new UiNotifyConnector.Once(component, new Activatable() {
+    UiNotifyConnector.Once.installOn(component, new Activatable() {
       @Override
       public void showNotify() {
         installListeners();

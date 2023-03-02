@@ -27,7 +27,7 @@ public abstract class LazyUiDisposable<T> implements Activatable {
     myParent = parent;
     myChild = child;
 
-    new UiNotifyConnector.Once(ui, this);
+    UiNotifyConnector.Once.installOn(ui, this);
   }
 
   @Override

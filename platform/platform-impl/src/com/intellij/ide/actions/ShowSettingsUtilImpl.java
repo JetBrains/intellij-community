@@ -267,7 +267,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
       editor = SettingsDialogFactory.getInstance().create(parent, dimensionKey, configurable, showApplyButton, false);
     }
     if (advancedInitialization != null) {
-      new UiNotifyConnector.Once(editor.getContentPane(), new Activatable() {
+      UiNotifyConnector.Once.installOn(editor.getContentPane(), new Activatable() {
         @Override
         public void showNotify() {
           advancedInitialization.accept(configurable);

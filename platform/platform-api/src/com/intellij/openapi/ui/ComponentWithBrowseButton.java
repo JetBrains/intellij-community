@@ -329,7 +329,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
 
     private LazyDisposable(ComponentWithBrowseButton<?> component) {
       reference = new WeakReference<>(component);
-      new UiNotifyConnector.Once(component, this);
+      UiNotifyConnector.Once.installOn(component, this);
     }
 
     @Override

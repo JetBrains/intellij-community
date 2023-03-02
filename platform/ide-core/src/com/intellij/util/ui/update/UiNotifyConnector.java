@@ -164,6 +164,28 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
     private boolean myShown;
     private boolean myHidden;
 
+    /**
+     * Use {@link Once#installOn(Component, Activatable, boolean) method}
+     * @param sig parameter is used to avoid clash with the deprecated constructor
+     */
+    private Once(final Component component, final Activatable target, Void sig) {
+      super(component, target);
+    }
+
+    @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+    public static Once installOn(final @NotNull Component component, final @NotNull Activatable target) {
+      Once once = new Once(component, target, null);
+      once.setupListeners();
+      return once;
+    }
+
+    /**
+     * @deprecated Use the static method {@link Once#installOn(Component, Activatable, boolean)}.
+     * <p>
+     * Also, note that non-deprecated constructor is side effect free, and you should call for {@link Once#setupListeners()}
+     * method
+     */
+    @Deprecated
     public Once(final Component component, final Activatable target) {
       super(component, target);
     }
