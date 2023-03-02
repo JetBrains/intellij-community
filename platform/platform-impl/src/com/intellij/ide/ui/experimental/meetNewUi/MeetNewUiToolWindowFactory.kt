@@ -3,6 +3,7 @@ package com.intellij.ide.ui.experimental.meetNewUi
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.isNotificationSilentMode
@@ -19,8 +20,9 @@ class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    toolWindow.title = IdeBundle.message("meetnewui.toolwindow.title")
-    toolWindow.stripeTitle = IdeBundle.message("meetnewui.toolwindow.title")
+    val title = IdeBundle.message("meetnewui.toolwindow.title", ApplicationNamesInfo.getInstance().fullProductName)
+    toolWindow.title = title
+    toolWindow.stripeTitle = title
     val contentManager = toolWindow.contentManager
     val content = contentManager.factory.createContent(MeetNewUiToolWindow(project, toolWindow), null, true)
     contentManager.addContent(content)
