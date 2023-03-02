@@ -179,6 +179,7 @@ internal class GHPRReviewFlowViewModelImpl(
         _pendingCommentsState.value = pendingComments?.comments?.totalCount ?: 0
       }
     }
+    reviewDataProvider.resetPendingReview()
 
     reviewDataProvider.messageBus
       .connect(scope)
