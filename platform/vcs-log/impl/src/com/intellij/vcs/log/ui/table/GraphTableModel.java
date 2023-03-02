@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.RefsModel;
@@ -20,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.table.AbstractTableModel;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
 
 public final class GraphTableModel extends AbstractTableModel {
   private static final int UP_PRELOAD_COUNT = 20;
@@ -28,7 +28,7 @@ public final class GraphTableModel extends AbstractTableModel {
   private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
 
   private final @NotNull VcsLogData myLogData;
-  private final @NotNull Consumer<? super Runnable> myRequestMore;
+  private final @NotNull Consumer<Runnable> myRequestMore;
   private final @NotNull VcsLogUiProperties myProperties;
 
   private @NotNull VisiblePack myDataPack = VisiblePack.EMPTY;
@@ -36,7 +36,7 @@ public final class GraphTableModel extends AbstractTableModel {
   private boolean myMoreRequested;
 
   public GraphTableModel(@NotNull VcsLogData logData,
-                         @NotNull Consumer<? super Runnable> requestMore,
+                         @NotNull Consumer<Runnable> requestMore,
                          @NotNull VcsLogUiProperties properties) {
     myLogData = logData;
     myRequestMore = requestMore;
@@ -91,7 +91,7 @@ public final class GraphTableModel extends AbstractTableModel {
    */
   public void requestToLoadMore(@NotNull Runnable onLoaded) {
     myMoreRequested = true;
-    myRequestMore.consume(onLoaded);
+    myRequestMore.accept(onLoaded);
   }
 
   /**
