@@ -332,24 +332,24 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     });
   }
 
-  private @NotNull TableCellRenderer createColumnRenderer(VcsLogColumn<?> column) {
+  private @NotNull TableCellRenderer createColumnRenderer(@NotNull VcsLogColumn<?> column) {
     TableCellRenderer renderer = column.createTableCellRenderer(this);
     if (ExperimentalUI.isNewUI() && column != Root.INSTANCE) {
-      renderer = new VcsLogNewUiTableCellRenderer(renderer, myColorManager::hasMultiplePaths);
+      renderer = new VcsLogNewUiTableCellRenderer(column, renderer, myColorManager::hasMultiplePaths);
     }
     return renderer;
   }
 
   private @NotNull GraphCommitCellRenderer getGraphCommitCellRenderer() {
-    VcsLogCellRenderer cellRenderer = getVcsLogCellRenderer(getCommitColumn());
+    TableCellRenderer cellRenderer = getCommitColumn().getCellRenderer();
+    if (cellRenderer instanceof VcsLogNewUiTableCellRenderer) {
+      cellRenderer = ((VcsLogNewUiTableCellRenderer)cellRenderer).getBaseRenderer();
+    }
     return (GraphCommitCellRenderer)Objects.requireNonNull(cellRenderer);
   }
 
   private static @Nullable VcsLogCellRenderer getVcsLogCellRenderer(@NotNull TableColumn column) {
     TableCellRenderer renderer = column.getCellRenderer();
-    if (renderer instanceof VcsLogNewUiTableCellRenderer) {
-      renderer = ((VcsLogNewUiTableCellRenderer)renderer).getDelegate();
-    }
     return renderer instanceof VcsLogCellRenderer ? (VcsLogCellRenderer)renderer : null;
   }
 

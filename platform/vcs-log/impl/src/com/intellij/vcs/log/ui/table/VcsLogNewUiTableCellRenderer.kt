@@ -10,6 +10,8 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcs.log.ui.table.column.VcsLogColumn
+import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
@@ -21,7 +23,8 @@ import javax.swing.table.TableCellRenderer
 
 @ApiStatus.Internal
 internal class VcsLogNewUiTableCellRenderer(
-  val delegate: TableCellRenderer,
+  private val column: VcsLogColumn<*>,
+  private val delegate: TableCellRenderer,
   private val hasMultiplePaths: () -> Boolean,
 ) : TableCellRenderer,
     VcsLogCellRenderer,
@@ -42,11 +45,7 @@ internal class VcsLogNewUiTableCellRenderer(
                                              column: Int): Component {
     val columnRenderer = delegate.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column) as JComponent
 
-    // +1 – root column selection is not supported right now
-    val isLeftColumn = column == ROOT_COLUMN_INDEX + 1
-    val isRightColumn = column == table.columnCount - 1
-
-    updateSelectablePanelIfNeeded(isRightColumn, isLeftColumn, columnRenderer, hasMultiplePaths())
+    updateSelectablePanelIfNeeded(isRightColumn(column, table), isLeftColumn(column), columnRenderer, hasMultiplePaths())
 
     val isHovered = TableHoverListener.getHoveredRow(table) == row
 
@@ -65,6 +64,13 @@ internal class VcsLogNewUiTableCellRenderer(
     }
 
     return selectablePanel
+  }
+
+  private fun isRightColumn(column: Int, table: JTable) = column == table.columnCount - 1
+
+  private fun isLeftColumn(column: Int): Boolean {
+    // +1 – root column selection is not supported right now
+    return column == ROOT_COLUMN_INDEX + 1
   }
 
   override fun getBaseRenderer(): TableCellRenderer = delegate
@@ -98,6 +104,39 @@ internal class VcsLogNewUiTableCellRenderer(
       return (cachedRenderer as VcsLogCellRenderer).getCellController()
     }
     return null
+  }
+
+  override fun getPreferredWidth(): VcsLogCellRenderer.PreferredWidth? {
+    if (delegate !is VcsLogCellRenderer) return null
+    val delegateWidth = delegate.getPreferredWidth() ?: return null
+
+    return when (delegateWidth) {
+      is VcsLogCellRenderer.PreferredWidth.Fixed -> {
+        VcsLogCellRenderer.PreferredWidth.Fixed { table ->
+          val columnModelIndex = VcsLogColumnManager.getInstance().getModelIndex(column)
+          val columnViewIndex = table.convertColumnIndexToView(columnModelIndex)
+          val preferredWidth = delegateWidth.function(table)
+          getAdjustedWidth(table, columnViewIndex, preferredWidth)
+        }
+      }
+      is VcsLogCellRenderer.PreferredWidth.FromData -> {
+        VcsLogCellRenderer.PreferredWidth.FromData { table, value, row, column ->
+          val width = delegateWidth.function(table, value, row, column) ?: return@FromData null
+          getAdjustedWidth(table, column, width)
+        }
+      }
+    }
+  }
+
+  private fun getAdjustedWidth(table: JTable, columnViewIndex: Int, width: Int): Int {
+    var newWidth = width
+    if (isLeftColumn(columnViewIndex)) {
+      newWidth += additionalGap
+    }
+    if (isRightColumn(columnViewIndex, table)) {
+      newWidth += additionalGap
+    }
+    return newWidth
   }
 
   private fun getUnselectedBackground(table: JTable, row: Int, column: Int, hasFocus: Boolean): Color? {
