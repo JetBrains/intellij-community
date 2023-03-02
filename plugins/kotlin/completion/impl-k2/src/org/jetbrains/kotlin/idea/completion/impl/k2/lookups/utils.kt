@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -88,7 +87,9 @@ private fun KtSuperExpression.setSuperTypeQualifier(
  */
 context(KtAnalysisSession)
 internal infix fun KtType.isPossiblySubTypeOf(superType: KtType): Boolean {
-    if (this is KtTypeParameterType || superType is KtTypeParameterType) return true
+    if (this is KtTypeParameterType) return this.hasCommonSubTypeWith(superType)
+
+    if (superType is KtTypeParameterType) return superType.symbol.upperBounds.all { this isPossiblySubTypeOf it }
 
     val superTypeWithReplacedTypeArguments = superType.expandedClassSymbol?.let { symbol ->
         buildClassTypeWithStarProjections(symbol, superType.nullability)

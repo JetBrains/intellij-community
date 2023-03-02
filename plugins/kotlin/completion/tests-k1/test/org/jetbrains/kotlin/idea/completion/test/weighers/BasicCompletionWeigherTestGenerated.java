@@ -294,6 +294,11 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
             runTest("../testData/weighers/basic/expectedType/returnFromLambda.kt");
         }
 
+        @TestMetadata("typeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("../testData/weighers/basic/expectedType/typeParameter.kt");
+        }
+
         @TestMetadata("whileConditionQualified.kt")
         public void testWhileConditionQualified() throws Exception {
             runTest("../testData/weighers/basic/expectedType/whileConditionQualified.kt");

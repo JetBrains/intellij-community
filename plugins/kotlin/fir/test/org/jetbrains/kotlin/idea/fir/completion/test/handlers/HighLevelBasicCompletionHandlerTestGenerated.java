@@ -843,6 +843,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             public void testTypeArgumentsFromReturnType2() throws Exception {
                 runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType2.kt");
             }
+
+            @TestMetadata("TypeArgumentsFromReturnType3.kt")
+            public void testTypeArgumentsFromReturnType3() throws Exception {
+                runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType3.kt");
+            }
+
+            @TestMetadata("TypeArgumentsFromReturnType4.kt")
+            public void testTypeArgumentsFromReturnType4() throws Exception {
+                runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType4.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

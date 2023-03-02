@@ -294,6 +294,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../completion/testData/weighers/basic/expectedType/returnFromLambda.kt");
         }
 
+        @TestMetadata("typeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("../completion/testData/weighers/basic/expectedType/typeParameter.kt");
+        }
+
         @TestMetadata("whileConditionQualified.kt")
         public void testWhileConditionQualified() throws Exception {
             runTest("../completion/testData/weighers/basic/expectedType/whileConditionQualified.kt");
