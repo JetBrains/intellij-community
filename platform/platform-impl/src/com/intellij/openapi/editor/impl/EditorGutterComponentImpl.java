@@ -2745,15 +2745,15 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     PointInfo pointInfo = getPointInfo(point);
     if (pointInfo != null) {
       List<PropertyBean> result = new ArrayList<>();
-      result.add(new PropertyBean("Clicked Renderer", pointInfo.renderer));
-      result.add(new PropertyBean("Clicked Renderer Class", UiInspectorUtil.getClassPresentation(pointInfo.renderer)));
+      result.add(new PropertyBean("Clicked Renderer", pointInfo.renderer, true));
+      result.add(new PropertyBean("Clicked Renderer Class", UiInspectorUtil.getClassPresentation(pointInfo.renderer), true));
       result.add(new PropertyBean("Accessible Name", pointInfo.renderer.getAccessibleName()));
-      result.add(new PropertyBean("Icon", pointInfo.renderer.getIcon()));
+      result.add(new PropertyBean("Icon", pointInfo.renderer.getIcon(), true));
       if (pointInfo.renderer instanceof LineMarkerInfo.LineMarkerGutterIconRenderer<?> lineMarkerRenderer) {
         LineMarkerInfo<?> markerInfo = lineMarkerRenderer.getLineMarkerInfo();
-        result.add(new PropertyBean("Marker Info - Element", markerInfo.getElement()));
+        result.add(new PropertyBean("Marker Info - Element", markerInfo.getElement(), true));
         if (markerInfo.getNavigationHandler() != null) {
-          result.add(new PropertyBean("Marker Info - Navigation Handler", markerInfo.getNavigationHandler()));
+          result.add(new PropertyBean("Marker Info - Navigation Handler", markerInfo.getNavigationHandler(), true));
         }
       }
       return new UiInspectorInfo("GutterIconRenderer", result, null);

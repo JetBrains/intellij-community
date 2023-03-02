@@ -82,7 +82,7 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
       List<PropertyBean> result = new ArrayList<>();
       result.add(new PropertyBean("Inspection Key", toolNode.getKey().getID(), true));
       result.add(new PropertyBean("Inspection tool Class",
-                                  UiInspectorUtil.getClassPresentation(toolNode.getDefaultDescriptor().getToolWrapper().getTool())));
+                                  UiInspectorUtil.getClassPresentation(toolNode.getDefaultDescriptor().getToolWrapper().getTool()), true));
       return result;
     }
     return Collections.emptyList();

@@ -861,10 +861,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     Inlay<?> inlay = myEditor.getInlayModel().getElementAt(point);
     if (inlay != null) {
       List<PropertyBean> result = new ArrayList<>();
-      result.add(new PropertyBean("Inlay Renderer", inlay.getRenderer()));
+      result.add(new PropertyBean("Inlay Renderer", inlay.getRenderer(), true));
       result.add(new PropertyBean("Inlay Renderer Class", UiInspectorUtil.getClassPresentation(inlay.getRenderer()), true));
       if (inlay.getGutterIconRenderer() != null) {
-        result.add(new PropertyBean("Inlay Gutter Renderer", inlay.getGutterIconRenderer()));
+        result.add(new PropertyBean("Inlay Gutter Renderer", inlay.getGutterIconRenderer(), true));
       }
       result.add(new PropertyBean("Inlay Properties", inlay.getProperties()));
       return new UiInspectorInfo("EditorInlay", result, null);

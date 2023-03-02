@@ -486,16 +486,16 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
       when (val item = value.userObject) {
         is InlayGroupSettingProvider -> {
-          result.add(PropertyBean("Inlay Group Key", item.group.key))
+          result.add(PropertyBean("Inlay Group Key", item.group.key, true))
         }
         is InlayGroup -> {
-          result.add(PropertyBean("Inlay Group Key", item.key))
+          result.add(PropertyBean("Inlay Group Key", item.key, true))
         }
         is InlayProviderSettingsModel -> {
-          result.add(PropertyBean("Inlay Provider Model ID", item.id))
+          result.add(PropertyBean("Inlay Provider Model ID", item.id, true))
         }
         is ImmediateConfigurable.Case -> {
-          result.add(PropertyBean("Inlay ImmediateConfigurable ID", item.id))
+          result.add(PropertyBean("Inlay ImmediateConfigurable ID", item.id, true))
         }
       }
       return result

@@ -772,7 +772,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
         result.add(new PropertyBean("Configurable ID", searchableConfigurable.getId(), true));
       }
       if (wrapper.getHelpTopic() != null) {
-        result.add(new PropertyBean("Configurable HelpTopic", wrapper.getHelpTopic()));
+        result.add(new PropertyBean("Configurable HelpTopic", wrapper.getHelpTopic(), true));
       }
       if (wrapper instanceof Weighted weightedConfigurable && weightedConfigurable.getWeight() != 0) {
         result.add(new PropertyBean("Configurable Weight", weightedConfigurable.getWeight(), true));

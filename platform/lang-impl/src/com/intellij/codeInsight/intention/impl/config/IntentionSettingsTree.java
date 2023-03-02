@@ -403,8 +403,8 @@ public abstract class IntentionSettingsTree {
           node.getUserObject() instanceof IntentionActionMetaData metaData) {
         List<PropertyBean> result = new ArrayList<>();
         result.add(new PropertyBean("Intention Class",
-                                    UiInspectorUtil.getClassPresentation(IntentionActionDelegate.unwrap(metaData.getAction()))));
-        result.add(new PropertyBean("Intention description directory", metaData.getDescriptionDirectoryName()));
+                                    UiInspectorUtil.getClassPresentation(IntentionActionDelegate.unwrap(metaData.getAction())), true));
+        result.add(new PropertyBean("Intention description directory", metaData.getDescriptionDirectoryName(), true));
         return result;
       }
       return Collections.emptyList();
