@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils;
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
@@ -62,5 +62,9 @@ public final class StatisticsRecorderUtil {
 
   private static boolean isFusInternalTestMode() {
     return Boolean.getBoolean(IDEA_FUS_RECORDER_INTERNAL_MODE);
+  }
+
+  public static boolean isForceCollectionEnabled(@NotNull String recorderId) {
+    return StatisticsEventLogProviderUtil.getEventLogProvider(recorderId).isForceCollectionEnabled();
   }
 }

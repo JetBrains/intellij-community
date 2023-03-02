@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.utils;
 
 import com.intellij.internal.statistic.eventLog.*;
@@ -32,7 +32,7 @@ public final class StatisticsUploadAssistant {
     }
 
     UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
-    return settings != null && settings.isAllowed() || getSendAllowedOverride();
+    return settings != null && settings.isAllowed();
   }
 
   public static boolean isCollectAllowed() {
@@ -41,11 +41,23 @@ public final class StatisticsUploadAssistant {
     }
 
     UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
-    boolean collectOverride = getCollectAllowedOverride();
-    return !isDisableCollectStatistics() &&
-           ((settings != null && settings.isAllowed() || collectOverride) || isLocalStatisticsWithoutReport());
+    return !isDisableCollectStatistics() && !getForceDisableCollectionOverride() &&
+           ((settings != null && settings.isAllowed()) || isLocalStatisticsWithoutReport());
   }
 
+  private static boolean isForceCollectEnabled() {
+    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
+    return externalEventLogSettings != null && externalEventLogSettings.forceCollectionWithoutRecord();
+  }
+
+  public static boolean isCollectAllowedOrForced() {
+    return isCollectAllowed() || isForceCollectEnabled();
+  }
+
+  /**
+   * @deprecated see {@link ExternalEventLogSettings#isSendAllowedOverride()}
+   */
+  @Deprecated(since = "2023.1")
   public static boolean getSendAllowedOverride() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     if (externalEventLogSettings != null)
@@ -54,9 +66,18 @@ public final class StatisticsUploadAssistant {
       return false;
   }
 
+  /**
+   * @deprecated see {@link ExternalEventLogSettings#isCollectAllowedOverride()}
+   * */
+  @Deprecated(since = "2023.1")
   public static boolean getCollectAllowedOverride() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     return externalEventLogSettings != null && externalEventLogSettings.isCollectAllowedOverride();
+  }
+
+  private static boolean getForceDisableCollectionOverride() {
+    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
+    return externalEventLogSettings != null && externalEventLogSettings.forceDisableCollectionConsent();
   }
 
   private static boolean isHeadlessStatisticsEnabled() {
