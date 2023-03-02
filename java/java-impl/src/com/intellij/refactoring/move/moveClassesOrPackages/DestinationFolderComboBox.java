@@ -91,7 +91,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     myProject = project;
     myUpdateErrorMessage = errorMessageUpdater;
     String leaveInSameSourceRoot = JavaBundle.message("leave.in.same.source.root.item");
-    new ComboboxSpeedSearch(getComboBox()) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(getComboBox(), null) {
       @Override
       protected String getElementText(Object element) {
         if (element == NULL_WRAPPER) return leaveInSameSourceRoot;
@@ -105,6 +105,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         return super.getElementText(element);
       }
     };
+    search.setupListeners();
     getComboBox().setRenderer(SimpleListCellRenderer.<DirectoryChooser.ItemWrapper>create(
       (label, itemWrapper, index) -> {
       if (itemWrapper != NULL_WRAPPER && itemWrapper != null) {

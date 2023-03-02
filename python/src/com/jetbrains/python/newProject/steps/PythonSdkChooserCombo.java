@@ -74,7 +74,7 @@ public class PythonSdkChooserCombo extends ComboboxWithBrowseButton {
         updateTooltip();
       }
     });
-    new ComboboxSpeedSearch(comboBox);
+    ComboboxSpeedSearch.installOn(comboBox);
     updateTooltip();
   }
 

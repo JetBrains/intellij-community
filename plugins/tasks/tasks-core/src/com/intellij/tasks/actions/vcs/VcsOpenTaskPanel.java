@@ -166,8 +166,8 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
       myBranchFrom.setRenderer(SimpleListCellRenderer.create("", VcsTaskHandler.TaskInfo::getName));
       myUseBranchCombo.setRenderer(SimpleListCellRenderer.create("", VcsTaskHandler.TaskInfo::getName));
       myBranchName.setText(branchName);
-      new ComboboxSpeedSearch(myBranchFrom);
-      new ComboboxSpeedSearch(myUseBranchCombo);
+      ComboboxSpeedSearch.installOn(myBranchFrom);
+      ComboboxSpeedSearch.installOn(myUseBranchCombo);
     }
 
     updateFields(true);

@@ -62,7 +62,7 @@ class PySdkPathChoosingComboBox @JvmOverloads constructor(sdks: List<Sdk> = empt
   init {
     childComponent.apply {
       renderer = PySdkListCellRendererExt()
-      ComboboxSpeedSearch(this)
+      ComboboxSpeedSearch.installOn(this)
     }
     // prepare action listener
     val actionListener: ActionListener =

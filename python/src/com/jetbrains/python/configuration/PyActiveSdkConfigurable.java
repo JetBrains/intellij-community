@@ -171,7 +171,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
       }
     );
 
-    new ComboboxSpeedSearch(result);
+    ComboboxSpeedSearch.installOn(result);
     result.setPreferredSize(result.getPreferredSize()); // this line allows making `result` resizable
     return result;
   }

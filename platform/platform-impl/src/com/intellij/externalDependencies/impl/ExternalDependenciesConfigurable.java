@@ -186,12 +186,13 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
 
     ComboBox<String> pluginChooser = new ComboBox<>(ArrayUtilRt.toStringArray(pluginIds), 250);
     pluginChooser.setRenderer(SimpleListCellRenderer.create("", this::getPluginNameById));
-    new ComboboxSpeedSearch(pluginChooser) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(pluginChooser, null) {
       @Override
       protected String getElementText(Object element) {
         return getPluginNameById((String)element);
       }
     };
+    search.setupListeners();
     pluginChooser.setSelectedItem(original.getPluginId());
 
     final JBTextField minVersionField = new JBTextField(StringUtil.notNullize(original.getRawMinVersion()));

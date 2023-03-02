@@ -355,24 +355,26 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         label.setIcon(value.getIcon());
       }
     }));
-    new ComboboxSpeedSearch(myFileTypeComboBox) {
+    ComboboxSpeedSearch search1 = new ComboboxSpeedSearch(myFileTypeComboBox, null) {
       @Override
       protected String getElementText(Object element) {
         return element instanceof PsiViewerSourceWrapper ? ((PsiViewerSourceWrapper)element).getText() : null;
       }
     };
+    search1.setupListeners();
     myFileTypeComboBox.addActionListener(__ -> {
       updateDialectsCombo(null);
       updateExtensionsCombo();
       updateEditor();
     });
     myDialectComboBox.addActionListener(__ -> updateEditor());
-    new ComboboxSpeedSearch(myDialectComboBox) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(myDialectComboBox, null) {
       @Override
       protected String getElementText(Object element) {
         return element instanceof Language ? ((Language)element).getDisplayName() : "<default>";
       }
     };
+    search.setupListeners();
     myFileTypeComboBox.addFocusListener(new AutoExpandFocusListener(myFileTypeComboBox));
     if (!myExternalDocument && lastUsed == null && !mySourceWrappers.isEmpty()) {
       myFileTypeComboBox.setSelectedIndex(0);
