@@ -7,17 +7,20 @@ import com.intellij.psi.util.InheritanceUtil
 import org.jetbrains.uast.*
 
 fun ULambdaExpression.getReturnType(): PsiType? {
-  val lambdaType = functionalInterfaceType
-                   ?: getExpressionType()
-                   ?: uastParent?.let {
-                     when (it) {
-                       is UVariable -> it.type // in Kotlin local functions looks like lambda stored in variable
-                       is UCallExpression -> it.getParameterForArgument(this)?.type
-                       else -> null
-                     }
-                   }
+  val lambdaType = getLambdaType()
   return LambdaUtil.getFunctionalInterfaceReturnType(lambdaType)
 }
+
+fun ULambdaExpression.getLambdaType(): PsiType? =
+  functionalInterfaceType
+   ?: getExpressionType()
+   ?: uastParent?.let {
+     when (it) {
+       is UVariable -> it.type // in Kotlin local functions looks like lambda stored in variable
+       is UCallExpression -> it.getParameterForArgument(this)?.type
+       else -> null
+     }
+   }
 
 fun UAnnotated.findAnnotations(vararg fqNames: String) = uAnnotations.filter { ann -> fqNames.contains(ann.qualifiedName) }
 
