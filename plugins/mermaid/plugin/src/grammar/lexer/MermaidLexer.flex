@@ -267,6 +267,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [xo<]?\-\-+[-xo>] { return ARROW; }
   [xo<]?\=\=+[=xo>] { return ARROW; }
   [xo<]?\-?\.+\-[xo>]? { return ARROW; }
+  \~\~[\~]+ { return ARROW; }
   [xo<]?\-\- { yybegin(link_text); return Flowchart.START_ARROW; }
   [xo<]?\=\= { yybegin(link_text); return Flowchart.START_ARROW; }
   [xo<]?\-\. { yybegin(link_text); return Flowchart.START_ARROW; }
