@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.nastradamus
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.TestCaseLoader
@@ -30,6 +31,15 @@ class NastradamusClient(
 
   fun collectTestRunResults(): TestResultRequestEntity {
     val tests = teamCityClient.getTestRunInfo()
+    val build = teamCityClient.getBuildInfo()
+    val buildProperties: List<JsonNode> = build.findValue("properties")
+                                            ?.findValue("property")
+                                            ?.elements()?.asSequence()?.toList() ?: listOf()
+
+    val bucketId: Int = buildProperties.firstOrNull { (it.findValue("name")?.asText() ?: "") == "system.pass.idea.test.runner.index" }
+                          ?.findValue("value")?.asInt() ?: 0
+    val bucketsNumber: Int = buildProperties.firstOrNull { (it.findValue("name")?.asText() ?: "") == "system.pass.idea.test.runners.count" }
+                               ?.findValue("value")?.asInt() ?: 0
 
     val testResultEntities = tests.map { json ->
       TestResultEntity(
@@ -38,8 +48,10 @@ class NastradamusClient(
         runOrder = json.findValue("runOrder").asInt(),
         duration = json.findValue("duration")?.asLong() ?: 0,
         buildType = teamCityClient.buildTypeId,
-        buildStatusMessage = teamCityClient.getBuildInfo().findValue("statusText").asText(),
-        isMuted = json.findValue("currentlyMuted")?.asBoolean() ?: false
+        buildStatusMessage = build.findValue("statusText").asText(),
+        isMuted = json.findValue("currentlyMuted")?.asBoolean() ?: false,
+        bucketId = bucketId,
+        bucketsNumber = bucketsNumber
       )
     }
 

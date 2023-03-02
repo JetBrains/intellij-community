@@ -251,6 +251,16 @@ class NastradamusClientTest {
 
     Assert.assertEquals("Requested path should be equal", "/result/?build_id=100500", request.path)
     Assert.assertEquals("POST request should be sent", "POST", request.method)
-    Assert.assertTrue("Converted test entities must have 2 muted tests", testResultRequestEntity.testRunResults.count { it.isMuted } == 2)
+
+    Assert.assertTrue("""
+      Converted test entities must have 2 muted tests.
+      ${testResultRequestEntity.testRunResults}
+      """.trimIndent(), testResultRequestEntity.testRunResults.count { it.isMuted } == 2)
+
+    Assert.assertTrue("""
+      Bucket id and total bucket number should not be 0.
+      ${testResultRequestEntity.testRunResults}
+      """.trimIndent(),
+                      testResultRequestEntity.testRunResults.all { it.bucketId != 0 && it.bucketsNumber != 0 })
   }
 }

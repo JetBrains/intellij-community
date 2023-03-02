@@ -35,4 +35,11 @@ data class TestResultEntity(
 
   @JsonProperty("is_muted")
   val isMuted: Boolean,
+
+  @JsonProperty("bucket_id")
+  val bucketId: Int,
+
+  // total buckets number for build type
+  @JsonProperty("buckets_number")
+  val bucketsNumber: Int
 )
