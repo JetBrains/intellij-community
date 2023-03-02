@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 interface Some {
     fun foo()
 }
@@ -8,6 +9,10 @@ class Other <caret>{
     }
     fun otherTest() {
 
+    }
+
+    override fun hashCode(): Int {
+        return super.hashCode()
     }
 }
 

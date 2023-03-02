@@ -2,12 +2,14 @@
 
 package org.jetbrains.kotlin.idea.core.overrideImplement
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.stubs.StubElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
@@ -192,27 +194,58 @@ abstract class KtGenerateMembersHandler(
                 sentinelTailNode.prepend(DoublyLinkedNode(MemberEntry.NewEntry(generatedPsi)))
                 continue
             }
-            var currentPsi = superSymbol.psi?.prevSibling
-            while (currentPsi != null) {
-                val matchedNode = superPsiToMemberEntry[currentPsi]
-                if (matchedNode != null) {
-                    val newNode = DoublyLinkedNode<MemberEntry>(MemberEntry.NewEntry(generatedPsi))
-                    matchedNode.append(newNode)
-                    superPsiToMemberEntry[superPsi] = newNode
-                    continue@outer
+            if (superPsiToMemberEntry.isNotEmpty()) {
+                val currentStubElement = (superPsi as? StubBasedPsiElementBase<*>)?.stub
+                if (currentStubElement != null) {
+                    val parentStub = currentStubElement.parentStub
+                    val childrenStubs = parentStub.childrenStubs
+                    val currentIdx = childrenStubs.indexOf(currentStubElement)
+                    var idx = currentIdx - 1
+                    while (idx >= 0) {
+                        val matchedNode = superPsiToMemberEntry[childrenStubs[idx].psi]
+                        if (matchedNode != null) {
+                            val newNode = DoublyLinkedNode<MemberEntry>(MemberEntry.NewEntry(generatedPsi))
+                            matchedNode.append(newNode)
+                            superPsiToMemberEntry[superPsi] = newNode
+                            continue@outer
+                        }
+                        idx--
+                    }
+                    idx = currentIdx + 1
+                    while (idx < childrenStubs.size) {
+                        val matchedNode = superPsiToMemberEntry[childrenStubs[idx].psi]
+                        if (matchedNode != null) {
+                            val newNode = DoublyLinkedNode<MemberEntry>(MemberEntry.NewEntry(generatedPsi))
+                            matchedNode.prepend(newNode)
+                            superPsiToMemberEntry[superPsi] = newNode
+                            continue@outer
+                        }
+                        idx++
+                    }
+                } else {
+                    var currentPsi = superPsi.prevSibling
+                    while (currentPsi != null) {
+                        val matchedNode = superPsiToMemberEntry[currentPsi]
+                        if (matchedNode != null) {
+                            val newNode = DoublyLinkedNode<MemberEntry>(MemberEntry.NewEntry(generatedPsi))
+                            matchedNode.append(newNode)
+                            superPsiToMemberEntry[superPsi] = newNode
+                            continue@outer
+                        }
+                        currentPsi = currentPsi.prevSibling
+                    }
+                    currentPsi = superPsi.nextSibling
+                    while (currentPsi != null) {
+                        val matchedNode = superPsiToMemberEntry[currentPsi]
+                        if (matchedNode != null) {
+                            val newNode = DoublyLinkedNode<MemberEntry>(MemberEntry.NewEntry(generatedPsi))
+                            matchedNode.prepend(newNode)
+                            superPsiToMemberEntry[superPsi] = newNode
+                            continue@outer
+                        }
+                        currentPsi = currentPsi.nextSibling
+                    }
                 }
-                currentPsi = currentPsi.prevSibling
-            }
-            currentPsi = superSymbol.psi?.nextSibling
-            while (currentPsi != null) {
-                val matchedNode = superPsiToMemberEntry[currentPsi]
-                if (matchedNode != null) {
-                    val newNode = DoublyLinkedNode<MemberEntry>(MemberEntry.NewEntry(generatedPsi))
-                    matchedNode.prepend(newNode)
-                    superPsiToMemberEntry[superPsi] = newNode
-                    continue@outer
-                }
-                currentPsi = currentPsi.nextSibling
             }
             val newNode = DoublyLinkedNode<MemberEntry>(MemberEntry.NewEntry(generatedPsi))
             superPsiToMemberEntry[superPsi] = newNode

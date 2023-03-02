@@ -57,7 +57,7 @@ abstract class GenerateMembersHandler(final override val toImplement: Boolean) :
             val offsetCursorElement = PsiTreeUtil.findFirstParent(classBody.containingFile.findElementAt(offset)) {
                 it.parent == classBody
             }
-            if (offsetCursorElement != null && offsetCursorElement != classBody.rBrace) {
+            if (offsetCursorElement != null && offsetCursorElement != classBody.rBrace && offsetCursorElement != classBody.lBrace) {
                 insertMembersAfterAndReformat(editor, classOrObject, selectedMemberDescriptors.keys)
                 return
             }
