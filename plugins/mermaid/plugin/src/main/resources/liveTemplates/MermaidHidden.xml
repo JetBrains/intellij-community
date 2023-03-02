@@ -246,7 +246,7 @@
   </template>
 
   <template id="mermaid_msg" name="mermaid_git_graph_msg"
-            value="msg: &quot;MSG&quot;$END$$SELECTION$"
+            value="msg: &quot;$MSG$&quot;$END$$SELECTION$"
             description="git graph msg"
             toReformat="false" toShortenFQNames="false">
     <variable name="MSG" expression="" defaultValue="&quot;&quot;" alwaysStopAt="true"/>
