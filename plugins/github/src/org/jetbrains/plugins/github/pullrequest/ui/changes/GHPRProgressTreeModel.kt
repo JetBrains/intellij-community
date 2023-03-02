@@ -16,14 +16,16 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestFileViewed
 import org.jetbrains.plugins.github.api.data.pullrequest.isViewed
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRViewedStateDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 
 internal fun ChangesTree.showPullRequestProgress(
   parent: Disposable,
   repository: GitRepository,
   reviewData: GHPRReviewDataProvider,
-  viewedStateData: GHPRViewedStateDataProvider
+  viewedStateData: GHPRViewedStateDataProvider,
+  diffBridge: GHPRDiffController
 ) {
-  val model = GHPRProgressTreeModel(repository, reviewData, viewedStateData)
+  val model = GHPRProgressTreeModel(repository, reviewData, viewedStateData, diffBridge)
   Disposer.register(parent, model)
 
   setupCodeReviewProgressModel(parent, model)
@@ -32,7 +34,8 @@ internal fun ChangesTree.showPullRequestProgress(
 private class GHPRProgressTreeModel(
   private val repository: GitRepository,
   private val reviewData: GHPRReviewDataProvider,
-  private val viewedStateData: GHPRViewedStateDataProvider
+  private val viewedStateData: GHPRViewedStateDataProvider,
+  private val diffBridge: GHPRDiffController
 ) : CodeReviewProgressTreeModel<Change>(),
     Disposable {
 
@@ -72,6 +75,8 @@ private class GHPRProgressTreeModel(
   }
 
   override fun isRead(leafValue: Change): Boolean {
+    if (diffBridge.activeTree == GHPRDiffController.ActiveTree.COMMITS) return true
+
     val repositoryRelativePath = VcsFileUtil.relativePath(repository.root, ChangesUtil.getFilePath(leafValue))
 
     val viewedState = filesViewedState[repositoryRelativePath] ?: return true
