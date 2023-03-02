@@ -48,6 +48,10 @@ import kotlin.io.path.exists
 private val LOG = logger<MarketplaceRequests>()
 private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
 
+private val PLUGIN_NAMES_IN_COMMUNITY_EDITION: Map<String, String> = mapOf(
+  "com.intellij.database" to "Database Tools and SQL"
+)
+
 private val objectMapper by lazy { ObjectMapper() }
 private val pluginManagerUrl by lazy(LazyThreadSafetyMode.PUBLICATION) {
   ApplicationInfoImpl.getShadowInstance().pluginManagerUrl.trimEnd('/')
@@ -351,13 +355,35 @@ class MarketplaceRequests : PluginInfoProvider {
             && it.nearestUpdate.supports(suggestedIdeCode)) {
 
           pluginNode.suggestedCommercialIde = suggestedIdeCode
-          pluginNode.tags = ((pluginNode.tags ?: emptyList()) + Tags.Ultimate.name).distinct()
+          pluginNode.tags = getTagsForUi(pluginNode).distinct()
+          pluginNode.name = getPluginNameForUi(pluginNode)
 
           return@mapNotNull pluginNode
         }
 
         null
       }
+  }
+
+  private fun getPluginNameForUi(pluginNode: PluginNode): String {
+    if (pluginNode.suggestedCommercialIde != null) {
+      // convert name for Database plugin in Community Edition
+      return PLUGIN_NAMES_IN_COMMUNITY_EDITION[pluginNode.pluginId.idString] ?: pluginNode.name
+    }
+
+    return pluginNode.name
+  }
+
+  private fun getTagsForUi(pluginNode: PluginNode): MutableList<String> {
+    if (pluginNode.suggestedCommercialIde != null) {
+      // drop Paid in Community edition if it is Ultimate-only plugin
+      val newTags = (pluginNode.tags ?: emptyList()).toMutableList()
+      newTags -= Tags.Paid.name
+      newTags += Tags.Ultimate.name
+      return newTags
+    }
+
+    return pluginNode.tags ?: mutableListOf()
   }
 
   private fun NearestUpdate.supports(productCode: String?): Boolean {
@@ -460,7 +486,8 @@ class MarketplaceRequests : PluginInfoProvider {
         downloads = pluginNode.downloads
         date = pluginNode.date
         suggestedCommercialIde = pluginNode.suggestedCommercialIde
-        tags = ((this.tags ?: emptyList()) + (pluginNode.tags ?: emptyList())).distinct()
+        tags = getTagsForUi(this).distinct()
+        name = getPluginNameForUi(pluginNode)
       }
     }
     catch (e: IOException) {
