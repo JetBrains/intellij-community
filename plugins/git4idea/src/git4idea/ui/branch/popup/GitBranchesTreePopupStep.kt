@@ -147,7 +147,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
 
   override fun onChosen(selectedValue: Any?, finalChoice: Boolean): PopupStep<out Any>? {
     if (selectedValue is GitRepository) {
-      return GitBranchesTreePopupStep(project, null, listOf(selectedValue), false)
+      return GitBranchesTreePopupStep(project, selectedValue, listOf(selectedValue), false)
     }
 
     val branchUnderRepository = selectedValue as? GitBranchesTreeModel.BranchUnderRepository
