@@ -631,7 +631,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "{" { yybegin(entity_attributes); return OPEN_CURLY; }
 }
 <entity_attributes> {
-  "FK" | "PK" { return EntityRelationship.ATTR_KEY; }
+  "FK" | "PK" | "UK" { return EntityRelationship.ATTR_KEY; }
   [a-zA-Z][\w\-\[\]]* { return ATTRIBUTE_WORD; }
   [~] { yypushstate(generic); return TILDA; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
