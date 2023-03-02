@@ -39,6 +39,7 @@ internal fun createNavBarPopup(list: JList<NavBarPopupItem>): LightweightHint {
   }
   popup.setFocusRequestor(popupComponent)
   popup.setForceShowAsPopup(true)
+  popup.setCancelOnOtherWindowOpen(false)
   return popup
 }
 

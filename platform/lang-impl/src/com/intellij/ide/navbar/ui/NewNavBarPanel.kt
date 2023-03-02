@@ -27,6 +27,7 @@ import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.project.Project
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.popup.PopupOwner
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.EDT
@@ -52,6 +53,7 @@ internal class NewNavBarPanel(
   val project: Project,
   val isFloating: Boolean,
 ) : JPanel(FlowLayout(FlowLayout.LEFT, 0, 0)),
+    PopupOwner,
     DataProvider {
 
   private val myItemComponents: ArrayList<NavBarItemComponent> = ArrayList()
@@ -205,6 +207,16 @@ internal class NewNavBarPanel(
       isItemComponentFocusable() -> UIUtil.isFocusAncestor(this)
       else -> hasFocus()
     }
+  }
+
+  override fun getBestPopupPosition(): Point? {
+    val itemComponent = myItemComponents.getOrNull(vm.selectedIndex.value)
+                        ?: return null
+    return Point(itemComponent.x, itemComponent.y + itemComponent.height)
+  }
+
+  override fun getPopupComponent(): JComponent? {
+    return popupList?.get()
   }
 
   override fun getData(dataId: String): Any? = when (dataId) {
