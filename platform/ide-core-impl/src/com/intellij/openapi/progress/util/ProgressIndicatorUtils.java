@@ -293,8 +293,7 @@ public final class ProgressIndicatorUtils {
                                                                               int timeout,
                                                                               @NotNull TimeUnit timeUnit,
                                                                               @NotNull ThrowableComputable<T, E> computable) throws E, ProcessCanceledException {
-    awaitWithCheckCanceled(lock, timeout, timeUnit);
-
+    awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUnit));
     try {
       return computable.compute();
     }
@@ -349,8 +348,8 @@ public final class ProgressIndicatorUtils {
     }
   }
 
-  public static void awaitWithCheckCanceled(@NotNull Lock lock, int timeout, @NotNull TimeUnit timeUnit) {
-    awaitWithCheckCanceled(() -> lock.tryLock(timeout, timeUnit));
+  public static void awaitWithCheckCanceled(@NotNull Lock lock) {
+    awaitWithCheckCanceled(() -> lock.tryLock(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS));
   }
 
   public static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {
