@@ -208,7 +208,7 @@ class CtrlMouseHandler2(
     }
   }
 
-  private suspend fun compute(request: CtrlMouseRequest): CtrlMouseResult? = withContext(Dispatchers.IO) {
+  private suspend fun compute(request: CtrlMouseRequest): CtrlMouseResult? = withContext(Dispatchers.Default) {
     try {
       constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
         computeInReadAction(request)
