@@ -1516,6 +1516,8 @@
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.formatting.EditorFormatterListener"
               topic="com.intellij.psi.codeStyle.CodeStyleManager$Listener"/>
+    <listener class="com.intellij.openapi.project.ProjectRootManagerOnEndOfDumbModeIncrementer"
+              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
   </projectListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml">
