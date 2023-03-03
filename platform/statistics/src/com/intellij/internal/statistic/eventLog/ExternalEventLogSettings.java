@@ -42,7 +42,9 @@ public interface ExternalEventLogSettings {
    * only force disable is supported, see {@link ExternalEventLogSettings#forceDisableCollectionConsent()}
    */
   @Deprecated(since = "2023.1")
-  boolean isSendAllowedOverride();
+  default boolean isSendAllowedOverride() {
+    return false;
+  }
 
   /**
    * Override global setting that enables collection of statistics by any logger {@link StatisticsUploadAssistant#isCollectAllowed()}
@@ -52,7 +54,9 @@ public interface ExternalEventLogSettings {
    * only force collection not connected with recording to file is supported, see {@link ExternalEventLogSettings#forceCollectionWithoutRecord()}
    */
   @Deprecated(since = "2023.1")
-  boolean isCollectAllowedOverride();
+  default boolean isCollectAllowedOverride() {
+    return false;
+  }
 
   /**
    * Override global setting that enables collection of statistics by any logger, see {@link StatisticsUploadAssistant#isCollectAllowed()}
