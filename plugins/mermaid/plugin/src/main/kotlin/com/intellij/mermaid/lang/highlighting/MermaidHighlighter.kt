@@ -36,6 +36,7 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
       addRequirementDiagramHighlights(holder)
       addStateDiagramHighlights(holder)
       addSequenceHighlights(holder)
+      addTimelineHighlights(holder)
       return holder
     }
 
@@ -291,6 +292,10 @@ class MermaidHighlighter: SyntaxHighlighterBase() {
         MermaidTokens.Mindmap.OPEN_ICON,
         MermaidTokens.Mindmap.CLOSE_ICON
       )
+    }
+
+    private fun addTimelineHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
+      holder[MermaidTokens.Timeline.TIMELINE] = MermaidTextAttributes.keyword
     }
 
     private fun addBaseHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
