@@ -252,7 +252,21 @@ object ExecUtil {
         listOf(windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(title?.replace('"', '\'') ?: ""), command)
       }
       SystemInfoRt.isMac -> {
-        listOf(openCommandPath, "-a", "Terminal", command)
+        var script = "\"clear ; exec \" & " + escapeAppleScriptArgument(command)
+        if (title != null)
+          script = "\"echo -n \" & " + escapeAppleScriptArgument("\\0033]0;$title\\007") + " & \" ; \" & " + script
+
+        // At this point, the script variable will contain a shell script line like this:
+        // clear ; exec $command                                  # in case no title is provided
+        // echo -n "\\0033]0;$title\\007" ; clear ; exec $command # in case title was provided
+
+        val escapedScript = """
+          |tell application "Terminal"
+          |  activate
+          |  do script $script
+          |end tell
+          """.trimMargin()
+        listOf(osascriptPath, "-e", escapedScript)
       }
       hasKdeTerminal.get() -> {
         if (title != null) listOf("konsole", "-p", "tabtitle=\"${title.replace('"', '\'')}\"", "-e", command)
