@@ -4,7 +4,6 @@ package com.intellij.ide.plugins.advertiser
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
@@ -19,10 +18,7 @@ import kotlin.coroutines.coroutineContext
 private val LOG get() = logger<OnDemandPluginFeatureEnablerImpl>()
 
 @ApiStatus.Experimental
-private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : PluginFeatureEnabler,
-                                                                               Disposable {
-
-  private val coroutineScope = CoroutineScope(SupervisorJob())
+private class OnDemandPluginFeatureEnablerImpl(private val project: Project, private val cs: CoroutineScope) : PluginFeatureEnabler {
 
   override suspend fun enableSuggested(): Boolean {
     val application = ApplicationManager.getApplication()
@@ -71,13 +67,9 @@ private class OnDemandPluginFeatureEnablerImpl(private val project: Project) : P
   }
 
   override fun scheduleEnableSuggested() {
-    coroutineScope.launch(Dispatchers.IO) {
+    cs.launch(Dispatchers.IO) {
       enableSuggested()
     }
-  }
-
-  override fun dispose() {
-    coroutineScope.cancel()
   }
 
   @RequiresEdt
