@@ -16,39 +16,17 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.util
 
-import com.intellij.ide.AppLifecycleListener
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlin.coroutines.EmptyCoroutineContext
-
-private val Application.lifecycleScope: CoroutineScope
-    get() {
-        val scope = CoroutineScope(EmptyCoroutineContext)
-        val connection = messageBus.simpleConnect()
-        connection.subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
-            override fun appClosing() {
-                scope.cancel()
-                connection.disconnect()
-            }
-        })
-        return scope
-    }
 
 object FeatureFlags {
 
-    val useDebugLogging: StateFlow<Boolean>
-        get() = registryChangesFlow("packagesearch.plugin.debug.logging")
-            .stateIn(ApplicationManager.getApplication().lifecycleScope, SharingStarted.Eagerly, Registry.`is`("packagesearch.plugin.debug.logging", false))
+    val useDebugLogging: Boolean
+        get() = Registry.`is`("packagesearch.plugin.debug.logging", false)
 
     val showRepositoriesTabFlow
         get() = registryChangesFlow("packagesearch.plugin.repositories.tab")
