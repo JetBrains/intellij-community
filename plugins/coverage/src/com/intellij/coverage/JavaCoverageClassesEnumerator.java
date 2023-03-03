@@ -87,10 +87,10 @@ public abstract class JavaCoverageClassesEnumerator {
     final String qualifiedName = psiPackage.getQualifiedName();
     final String rootPackageVMName = qualifiedName.replace('.', '/');
 
+    final Set<VirtualFile> seenRoots = new HashSet<>();
     for (final Module module : modules) {
       if (!scope.isSearchInModuleContent(module)) continue;
       ProgressIndicatorProvider.checkCanceled();
-      final Set<VirtualFile> seenRoots = new HashSet<>();
       for (boolean isTestSource : myShouldVisitTestSource) {
         visitSource(psiPackage, module, scope, rootPackageVMName, isTestSource, seenRoots);
       }
