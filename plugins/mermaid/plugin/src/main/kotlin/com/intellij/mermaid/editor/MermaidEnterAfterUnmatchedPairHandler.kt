@@ -45,7 +45,7 @@ internal class MermaidEnterAfterUnmatchedPairHandler : EnterHandlerDelegateAdapt
     val atComplexNote = position.isAt(MermaidTokens.NOTE)
 
     val maxRBraceCount = getMaxRBraceCount(file, editor, offset)
-    if (maxRBraceCount > 0 || atComplexNote) {
+    if (maxRBraceCount > 0) {
       if (atComplexNote) {
         document.insertString(offset, "\nend note")
       } else {
@@ -74,7 +74,13 @@ internal class MermaidEnterAfterUnmatchedPairHandler : EnterHandlerDelegateAdapt
     var position: MermaidSemanticEditorPosition = getPosition(editor, offset - 1)
     var iterator = position.iterator
 
-    position.moveBeforeOptionalMix(MermaidTokens.ID, MermaidTokens.Sequence.MESSAGE, MermaidTokens.WHITE_SPACE)
+    position.moveBeforeOptionalMix(
+      MermaidTokens.ID,
+      MermaidTokens.LEFT_OF,
+      MermaidTokens.RIGHT_OF,
+      MermaidTokens.Sequence.MESSAGE,
+      MermaidTokens.WHITE_SPACE
+    )
 
     val braceMatcher: BraceMatcher = BraceMatchingUtil.getBraceMatcher(fileType, iterator)
 
