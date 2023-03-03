@@ -15,6 +15,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ClassLoaderUtil
+import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -38,15 +39,14 @@ object GrazieSpellchecker {
 }
 
 @Service(Service.Level.APP)
-internal class GrazieSpellcheckerLifecycle : GrazieStateLifecycle {
+internal class GrazieSpellcheckerLifecycle(cs: CoroutineScope) : GrazieStateLifecycle {
 
   private val MAX_SUGGESTIONS_COUNT = 3
 
   private val filter by lazy { RuleFilter.withAllBuiltIn() }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private val executeScope = CoroutineScope(ApplicationManager.getApplication().coroutineScope.coroutineContext +
-                                            Dispatchers.Default.limitedParallelism(1))
+  private val executeScope = cs.childScope(Dispatchers.Default.limitedParallelism(1))
 
   private fun filterCheckers(word: String): Set<SpellerTool> {
     val checkers = this.checkers.value
