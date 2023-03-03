@@ -30,6 +30,7 @@ import com.intellij.platform.documentation.impl.documentationRequest
 import com.intellij.platform.documentation.impl.resolveLink
 import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.util.childScope
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -51,7 +52,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
   }
 
   // separate scope is needed for the ability to cancel its children
-  private val popupScope: CoroutineScope = CoroutineScope(SupervisorJob(parent = cs.coroutineContext.job))
+  private val popupScope: CoroutineScope = cs.childScope()
 
   override fun dispose() {
     cs.cancel()
