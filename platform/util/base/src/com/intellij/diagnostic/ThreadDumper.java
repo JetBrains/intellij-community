@@ -41,14 +41,23 @@ public final class ThreadDumper {
     return getThreadInfos(ManagementFactory.getThreadMXBean(), true);
   }
 
+  /**
+   * @param stripCoroutineDump whether to remove stackframes from coroutine dump that have no useful debug information.
+   *                           Enabling this flag should significantly reduce coroutine dump size.
+   */
   @NotNull
-  public static ThreadDump getThreadDumpInfo(ThreadInfo @NotNull [] threadInfos) {
+  public static ThreadDump getThreadDumpInfo(ThreadInfo @NotNull [] threadInfos, boolean stripCoroutineDump) {
     sort(threadInfos);
     StringWriter writer = new StringWriter();
     StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);
-    String coroutineDump = CoroutineDumperKt.dumpCoroutines();
+    String coroutineDump = CoroutineDumperKt.dumpCoroutines(null, stripCoroutineDump);
     if (coroutineDump != null) {
-      writer.write("\n---------- Coroutine dump ----------\n");
+      if (stripCoroutineDump) {
+        writer.write("\n---------- Coroutine dump (stripped) ----------\n");
+      }
+      else {
+        writer.write("\n---------- Coroutine dump ----------\n");
+      }
       writer.write(coroutineDump);
     }
     return new ThreadDump(writer.toString(), edtStack, threadInfos);

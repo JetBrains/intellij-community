@@ -63,7 +63,22 @@ public abstract class PerformanceWatcher implements Disposable {
   @ApiStatus.Internal
   public abstract void edtEventFinished();
 
-  public abstract @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName);
+  /**
+   * @deprecated use {@link #dumpThreads(String, boolean, boolean)} instead
+   */
+  @Deprecated
+  public @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName) {
+    return dumpThreads(pathPrefix, appendMillisecondsToFileName, false);
+  }
+
+  /**
+   * @param stripDump if set to true, then some information in the dump that is considered useless for debugging
+   *                  might be omitted. This should significantly reduce the size of the dump.
+   *                  <p>
+   *                  For example, some stackframes that correspond to {@code kotlinx.coroutines}
+   *                  library internals might be omitted.
+   */
+  public abstract @Nullable File dumpThreads(@NotNull String pathPrefix, boolean appendMillisecondsToFileName, boolean stripDump);
 
   public static @NotNull String printStacktrace(@NotNull String headerMsg,
                                                 @NotNull Thread thread,
