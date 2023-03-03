@@ -25,6 +25,8 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.popup.PopupState;
+import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +57,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     resetActionIcon();
 
     if (myPopupState.isHidden() && !myPopupState.isRecentlyHidden()) {
-      ListPopup popup = createMainPopup(e.getDataContext());
+      ListPopup popup = createMainPopup(e.getDataContext(), e.getInputEvent().getComponent());
       myPopupState.prepareToShow(popup);
       PopupUtil.showForActionButtonEvent(popup, e);
     }
@@ -80,7 +82,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   @NotNull
-  private static ListPopup createMainPopup(@NotNull DataContext context) {
+  private static ListPopup createMainPopup(@NotNull DataContext context, Component component) {
     List<AnAction> appActions = new ArrayList<>();
     List<AnAction> pluginActions = new ArrayList<>();
 
@@ -138,8 +140,18 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       }
     }
 
+    Project project = CommonDataKeys.PROJECT.getData(context);
+    if (project == null) {
+      return JBPopupFactory.getInstance()
+        .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+    }
+
+    ListPopupStep<?> step = JBPopupFactory.getInstance().createActionsStep(
+      group, context, null, false, true, null, component, true, 0, false);
     return JBPopupFactory.getInstance()
-      .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.MNEMONICS, true);
+      .createListPopup(project, step, renderer -> {
+        return new SettingsPopupListElementRenderer<>(((PopupListElementRenderer<?>) renderer).getPopup());
+      });
   }
 
   private static boolean ourShowPlatformUpdateIcon;
@@ -346,7 +358,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
         }
 
         Component component = event.getComponent();
-        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component));
+        ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component), component);
         myPopupState.prepareToShow(popup);
         popup.addListener(new JBPopupListener() {
           @Override
@@ -396,6 +408,22 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
     public void markAsRead() {
       myNewAction = false;
+    }
+  }
+
+  private static class SettingsPopupListElementRenderer<E> extends PopupListElementRenderer<E> {
+
+    private SettingsPopupListElementRenderer(ListPopupImpl aPopup) {
+      super(aPopup);
+    }
+
+    @Override
+    protected void customizeComponent(JList<? extends E> list, E value, boolean isSelected) {
+      super.customizeComponent(list, value, isSelected);
+
+      myTextLabel.setHorizontalTextPosition(SwingConstants.LEFT);
+      boolean enableNewUi = value instanceof AnActionHolder actionHolder && actionHolder.getAction() instanceof EnableNewUiAction;
+      myTextLabel.setIcon(enableNewUi ? AllIcons.General.Beta : null);
     }
   }
 }
