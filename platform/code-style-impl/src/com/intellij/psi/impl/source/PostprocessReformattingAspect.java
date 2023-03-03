@@ -62,7 +62,7 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
   private final NotNullLazyValue<TreeAspect> myTreeAspect;
   private static final Key<Throwable> REFORMAT_ORIGINATOR = Key.create("REFORMAT_ORIGINATOR");
   private static final Key<Boolean> REPARSE_PENDING = Key.create("REPARSE_PENDING");
-
+  private static final Key<Boolean> FORCE_POSTPROCESS_FORMAT = Key.create("FORCE_POSTPROCESS_FORMAT");
   private final ThreadLocal<Context> myContext = ThreadLocal.withInitial(Context::new);
 
   private static final class Holder {
@@ -152,6 +152,16 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     }
   }
 
+  public void forcePostprocessFormatInside(@NotNull PsiFile psiFile, @NotNull Runnable runnable) {
+    try {
+      psiFile.getViewProvider().putUserData(FORCE_POSTPROCESS_FORMAT, true);
+      runnable.run();
+    }
+    finally {
+      psiFile.getViewProvider().putUserData(FORCE_POSTPROCESS_FORMAT, null);
+    }
+  }
+
   private void incrementPostponedCounter() {
     getContext().myPostponedCounter++;
   }
@@ -179,7 +189,8 @@ public final class PostprocessReformattingAspect implements PomModelAspect {
     final FileViewProvider viewProvider = containingFile.getViewProvider();
 
     if (!viewProvider.isEventSystemEnabled() && ModelBranch.getPsiBranch(containingFile) == null &&
-        !IntentionPreviewUtils.isPreviewElement(containingFile)) return;
+        !IntentionPreviewUtils.isPreviewElement(containingFile) &&
+        !FORCE_POSTPROCESS_FORMAT.isIn(viewProvider)) return;
     getContext().myUpdatedProviders.putValue(viewProvider, (FileElement)containingFile.getNode());
     for (final ASTNode node : changeSet.getChangedElements()) {
       final TreeChange treeChange = changeSet.getChangesByElement(node);
