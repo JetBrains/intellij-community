@@ -483,7 +483,7 @@ open class IdeStatusBarImpl internal constructor(
 
   private fun paintWidgetEffectBackground(g: Graphics) {
     val effectComponent = effectComponent ?: return
-    if (!effectComponent.isEnabled || !UIUtil.isAncestor(this, effectComponent) || effectComponent is MemoryUsagePanel) {
+    if (!effectComponent.isEnabled || !UIUtil.isAncestor(this, effectComponent) || MemoryUsagePanel.isInstance(effectComponent)) {
       return
     }
 
