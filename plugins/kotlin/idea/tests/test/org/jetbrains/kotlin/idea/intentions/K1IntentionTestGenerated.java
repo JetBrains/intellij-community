@@ -2709,6 +2709,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/comment.kt");
                 }
 
+                @TestMetadata("constant.kt")
+                public void testConstant() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/ifToWhen/constant.kt");
+                }
+
                 @TestMetadata("doNotSwallowComment.kt")
                 public void testDoNotSwallowComment() throws Exception {
                     runTest("testData/intentions/branched/ifWhen/ifToWhen/doNotSwallowComment.kt");
