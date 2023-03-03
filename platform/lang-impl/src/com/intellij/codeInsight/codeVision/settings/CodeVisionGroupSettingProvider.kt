@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.settings
 
 import com.intellij.codeInsight.codeVision.CodeVisionBundle
@@ -39,7 +39,7 @@ interface CodeVisionGroupSettingProvider {
 
   object EP {
     val EXTENSION_POINT_NAME: ExtensionPointName<CodeVisionGroupSettingProvider> =
-      ExtensionPointName.create<CodeVisionGroupSettingProvider>("com.intellij.config.codeVisionGroupSettingProvider")
+      ExtensionPointName.create("com.intellij.config.codeVisionGroupSettingProvider")
 
     fun findGroupModels(): List<CodeVisionGroupSettingProvider> {
       val extensions = EXTENSION_POINT_NAME.extensions
