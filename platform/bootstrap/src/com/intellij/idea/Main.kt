@@ -20,6 +20,7 @@ import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import java.awt.GraphicsEnvironment
+import java.awt.Toolkit
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -104,7 +105,7 @@ private fun initLuxIfNeeded(args: List<String>) {
   if (args.isEmpty() || (AppMode.CWM_HOST_COMMAND != args[0] && AppMode.CWM_HOST_NO_LOBBY_COMMAND != args[0] && AppMode.REMOTE_DEV_HOST_COMMAND != args[0])) {
     return
   }
-  if (!System.getProperty("lux.enabled").toBoolean()) {
+  if (!System.getProperty("lux.enabled", "true").toBoolean()) {
     return
   }
   if (!JBR.isGraphicsUtilsSupported()) {
