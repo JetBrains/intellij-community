@@ -52,7 +52,7 @@ public class TypeMigrationLabeler {
   @Nullable private final Set<PsiElement> myAllowedRoots;
   private TypeEvaluator myTypeEvaluator;
   private final LinkedHashMap<PsiElement, Object> myConversions;
-  private final Map<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>, TypeMigrationUsageInfo> myFailedConversions;
+  private final Map<Pair<SmartPsiElementPointer<PsiElement>, PsiType>, TypeMigrationUsageInfo> myFailedConversions;
   private LinkedList<Pair<TypeMigrationUsageInfo, PsiType>> myMigrationRoots;
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiType> myNewExpressionTypeChange;
   private final LinkedHashMap<TypeMigrationUsageInfo, PsiClassType> myClassTypeArgumentsChange;
@@ -99,15 +99,20 @@ public class TypeMigrationLabeler {
     final @Nls String[] report = new String[myFailedConversions.size()];
     int j = 0;
 
-    for (Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : myFailedConversions.keySet()) {
-      final PsiExpression element = p.getFirst().getElement();
-      LOG.assertTrue(element != null);
-      final PsiType type = element.getType();
-      report[j++] = JavaBundle.message("type.migration.cannon.convert.tooltip",
-                                       StringUtil.escapeXmlEntities(element.getText()),
-                                       type != null ? StringUtil.escapeXmlEntities(type.getCanonicalText()) : "",
-                                       StringUtil.escapeXmlEntities(p.getSecond().getCanonicalText()),
-                                       type == null ? 0 : 1);
+    for (Pair<SmartPsiElementPointer<PsiElement>, PsiType> p : myFailedConversions.keySet()) {
+      final PsiElement element = p.getFirst().getElement();
+      if (element instanceof PsiExpression expression) {
+        final PsiType type = expression.getType();
+        report[j++] = JavaBundle.message("type.migration.cannot.convert.message",
+                                         StringUtil.escapeXmlEntities(element.getText()),
+                                         type != null ? StringUtil.escapeXmlEntities(type.getCanonicalText()) : "",
+                                         StringUtil.escapeXmlEntities(p.getSecond().getCanonicalText()),
+                                         type == null ? 0 : 1);
+      }
+      else if (element != null) {
+        report[j++] = JavaBundle.message("type.migration.cannot.convert.vararg.message",
+                                         StringUtil.escapeXmlEntities(element.getParent().getText()));
+      }
     }
 
     return report;
@@ -122,22 +127,25 @@ public class TypeMigrationLabeler {
     return map2Usages(myFailedConversions.keySet());
   }
 
-  private static UsageInfo @NotNull [] map2Usages(Collection<? extends Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> usages) {
-    return ContainerUtil
-      .map2Array(usages, new UsageInfo[usages.size()], pair -> {
-        final PsiExpression expr = pair.getFirst().getElement();
-        LOG.assertTrue(expr != null);
-        return new UsageInfo(expr) {
-          @Override
-          @Nullable
-          public String getTooltipText() {
-            final PsiType type = expr.isValid() ? expr.getType() : null;
+  private static UsageInfo @NotNull [] map2Usages(Collection<? extends Pair<SmartPsiElementPointer<PsiElement>, PsiType>> usages) {
+    return ContainerUtil.map2Array(usages, new UsageInfo[usages.size()], pair -> {
+      final PsiElement element = pair.getFirst().getElement();
+      LOG.assertTrue(element != null);
+      return new UsageInfo(element) {
+        @Override
+        @Nullable
+        public String getTooltipText() {
+          if (element instanceof PsiExpression expression) {
+            final PsiType type = expression.isValid() ? expression.getType() : null;
             if (type == null) return null;
-            return JavaBundle
-              .message("type.migration.cannot.convert.tooltip", type.getCanonicalText(), pair.getSecond().getCanonicalText());
+            return JavaBundle.message("type.migration.cannot.convert.tooltip", type.getCanonicalText(), pair.getSecond().getCanonicalText());
           }
-        };
-      });
+          else {
+            return JavaBundle.message("type.migration.cannot.convert.vararg.tooltip");
+          }
+        }
+      };
+    });
   }
 
   public TypeMigrationUsageInfo[] getMigratedUsages() {
@@ -825,9 +833,9 @@ public class TypeMigrationLabeler {
     setTypeUsage(new TypeMigrationUsageInfo(element), place);
   }
 
-  void markFailedConversion(@NotNull PsiType migrationType, PsiExpression expression) {
-    final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> key =
-      Pair.create(SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression), migrationType);
+  void markFailedConversion(@NotNull PsiType migrationType, PsiElement element) {
+    final Pair<SmartPsiElementPointer<PsiElement>, PsiType> key =
+      Pair.create(SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element), migrationType);
     if (!myFailedConversions.containsKey(key)) {
       myFailedConversions.put(key, getCurrentRoot());
     }
@@ -962,7 +970,7 @@ public class TypeMigrationLabeler {
         if (argumentList != null) {
           final PsiExpression[] expressions = argumentList.getExpressions();
           if (checkNumberOfArguments && parametersCount != expressions.length) {
-            markFailedConversion(migrationType, (PsiCallExpression)parent);
+            markFailedConversion(migrationType, argumentList);
           }
           if (index > -1 && index < expressions.length) {
             for (int idx = index; idx < (param.isVarArgs() ? expressions.length : index + 1); idx++) {
@@ -1135,8 +1143,7 @@ public class TypeMigrationLabeler {
 
     buffer.append("Fails:\n");
 
-    final ArrayList<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>>
-      failsList = new ArrayList<>(myFailedConversions.keySet());
+    final ArrayList<Pair<SmartPsiElementPointer<PsiElement>, PsiType>> failsList = new ArrayList<>(myFailedConversions.keySet());
     failsList.sort((o1, o2) -> {
       final PsiElement element1 = o1.getFirst().getElement();
       final PsiElement element2 = o2.getFirst().getElement();
@@ -1144,7 +1151,7 @@ public class TypeMigrationLabeler {
       return element1.getText().compareTo(element2.getText());
     });
 
-    for (Pair<SmartPsiElementPointer<PsiExpression>, PsiType> p : failsList) {
+    for (Pair<SmartPsiElementPointer<PsiElement>, PsiType> p : failsList) {
       final PsiElement element = p.getFirst().getElement();
       if (element != null) {
         buffer.append(element.getText()).append("->").append(p.getSecond().getCanonicalText()).append("\n");

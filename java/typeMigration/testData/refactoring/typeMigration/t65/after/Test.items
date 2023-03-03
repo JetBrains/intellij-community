@@ -7,6 +7,6 @@ Conversions:
 
 New expression type changes:
 Fails:
+(1, 2)->java.lang.String
 1->java.lang.String
 2->java.lang.String
-foo(1, 2)->java.lang.String
