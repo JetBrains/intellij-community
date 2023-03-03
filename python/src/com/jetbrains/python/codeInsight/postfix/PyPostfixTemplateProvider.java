@@ -18,6 +18,8 @@ public class PyPostfixTemplateProvider implements PostfixTemplateProvider {
     new PyReturnPostfixTemplate(this),
     new PyIfPostfixTemplate(this),
     new PyWhilePostfixTemplate(this),
+    new PyForPostfixTemplate("for", this),
+    new PyForPostfixTemplate("iter", this),
     new PyIsNonePostfixTemplate(this),
     new PyIsNotNonePostfixTemplate(this),
     new PyPrintPostfixTemplate(this),
