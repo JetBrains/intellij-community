@@ -527,7 +527,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           index.buildClasspathNodesMap().get(Path.of(participant.getRootPath()).getParent());
 
         @NotNull Map<String, DataNode<? extends ModuleData>> buildSrcModules = new HashMap<>();
-        @Nullable AtomicReference<DataNode<? extends ModuleData>> buildSrcModuleNode = new AtomicReference<>();
+        AtomicReference<DataNode<? extends ModuleData>> buildSrcModuleNode = new AtomicReference<>();
 
         findAll(projectDataNode, ProjectKeys.MODULE).stream()
           .filter(node -> buildSrcProjectPaths.contains(node.getData().getLinkedExternalProjectPath()))
