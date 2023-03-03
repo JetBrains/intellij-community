@@ -24,7 +24,6 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
   override fun setUp() {
     Registry.get("editor.codeVision.new").setValue(true, testRootDisposable)
     TestModeFlags.set(CodeVisionHost.isCodeVisionTestKey, true, testRootDisposable)
-    CodeVisionHost.isCodeVisionTestKey
     super.setUp()
   }
 
