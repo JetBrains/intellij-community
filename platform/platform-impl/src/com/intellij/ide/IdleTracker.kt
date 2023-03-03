@@ -56,7 +56,7 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
     checkDelay(delay, listener)
 
     val listenerScope = coroutineScope.childScope()
-    listenerScope.launch {
+    listenerScope.launch(CoroutineName("Idle listener: ${listener.javaClass.name}")) {
       events
         .debounce(delay)
         .collect {
@@ -92,7 +92,7 @@ class IdleTracker(private val coroutineScope: CoroutineScope) {
     synchronized(listenerToRequest) {
       val listenerScope = coroutineScope.childScope()
       listenerToRequest.put(runnable, listenerScope)
-      listenerScope.launch {
+      listenerScope.launch(CoroutineName("Idle listener: ${runnable.javaClass.name}")) {
         events
           .debounce(delay)
           .collect {
