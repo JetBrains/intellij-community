@@ -31,10 +31,8 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
     headerPanel.layout = BoxLayout(headerPanel, BoxLayout.X_AXIS)
     headerPanel.alignmentX = Component.LEFT_ALIGNMENT
 
-    val header = JLabel(headerLabel)
-    header.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(2))
 
-    headerPanel.add(header)
+    headerPanel.add(createHeader())
     headerPanel.add(Box.createHorizontalGlue())
 
     val hPanel: JPanel = BackgroundRoundedPanel(JBUI.scale(16))
@@ -124,4 +122,9 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
 
   protected abstract fun runAction()
 
+  protected open fun createHeader(): JLabel {
+    val result = JLabel(headerLabel)
+    result.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(2))
+    return result
+  }
 }
