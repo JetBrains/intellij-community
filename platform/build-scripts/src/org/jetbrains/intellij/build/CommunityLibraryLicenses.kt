@@ -629,7 +629,7 @@ object CommunityLibraryLicenses {
                    license = "GPLv2 (used as hg extension called from hg executable)",
                    url = "https://github.com/willemv/mercurial_prompthooks",
                    licenseUrl = "https://github.com/willemv/mercurial_prompthooks/blob/master/LICENSE.txt"),
-    LibraryLicense(name = "Microba", libraryName = "microba", version = "0.4.2", url = "https://microba.sourceforge.net/",
+    LibraryLicense(libraryName = "microba", url = "https://microba.sourceforge.net/",
                    licenseUrl = "https://microba.sourceforge.net/license.txt").newBsd(),
     LibraryLicense(name = "MigLayout", libraryName = "miglayout-swing",
                    url = "https://www.miglayout.com/", licenseUrl = "https://www.miglayout.com/mavensite/license.html").newBsd(),
