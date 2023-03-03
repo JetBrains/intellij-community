@@ -1521,6 +1521,8 @@
               topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
     <listener class="com.intellij.openapi.project.SmartModeScheduler$SmartModeSchedulerFilesScannerListener"
               topic="com.intellij.openapi.project.FilesScanningListener"/>
+    <listener class="com.intellij.openapi.project.ProjectRootManagerOnEndOfDumbModeIncrementer"
+              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
   </projectListeners>
 
   <xi:include href="/META-INF/RemoteDevUtil.xml">
