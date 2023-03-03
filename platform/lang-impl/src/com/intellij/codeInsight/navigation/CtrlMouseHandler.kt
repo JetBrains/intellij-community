@@ -71,6 +71,7 @@ internal class InitCtrlMouseHandlerActivity : ProjectActivity {
 @Service
 class CtrlMouseHandler2(
   private val project: Project,
+  private val cs: CoroutineScope,
 ) : EditorMouseMotionListener,
     EditorMouseListener,
     FileEditorManagerListener,
@@ -159,8 +160,6 @@ class CtrlMouseHandler2(
     cancelAndClear()
   }
 
-  private val cs = CoroutineScope(SupervisorJob())
-
   private var myState: CtrlMouseState? = null
     get() {
       EDT.assertIsEdt()
@@ -177,7 +176,6 @@ class CtrlMouseHandler2(
   }
 
   override fun dispose() {
-    cs.cancel("CtrlMouseHandler disposal")
     clearState()
   }
 
