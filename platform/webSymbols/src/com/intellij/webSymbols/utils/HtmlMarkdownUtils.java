@@ -12,11 +12,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.markdown4j.Markdown4jProcessor;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.markdown.utils.MarkdownToHtmlConverterKt.convertMarkdownToHtml;
 
 /**
  * TODO move to contrib/markdown/lib/intellij-markdown.jar
@@ -218,7 +219,7 @@ public final class HtmlMarkdownUtils {
 
   private static @Nullable @NlsSafe String convert(@NotNull @Nls String text) {
     try {
-      return new Markdown4jProcessor().process(text);
+      return convertMarkdownToHtml(text);
     }
     catch (Exception e) {
       LOG.warn(e.getMessage(), e);

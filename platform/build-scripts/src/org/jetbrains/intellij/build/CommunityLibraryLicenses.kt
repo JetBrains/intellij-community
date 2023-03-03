@@ -586,8 +586,6 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/lz4/lz4-java")
       .apache("https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
 
-    LibraryLicense(name = "markdown4j", libraryName = "markdown4j", url = "https://code.google.com/p/markdown4j/").newBsd(),
-    LibraryLicense(name = "MarkdownJ", libraryName = "markdownj", version = "0.4.2", url = "https://github.com/myabc/markdownj").newBsd(),
     LibraryLicense(name = "MathJax", attachedTo = "intellij.python", version = "2.6.1",
                    url = "git://github.com/mathjax/MathJax",
                    licenseUrl = "https://github.com/mathjax/MathJax/blob/master/LICENSE").apache(),
