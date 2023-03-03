@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.codeVision
 
 import com.intellij.codeInsight.daemon.impl.JavaInheritorsCodeVisionProvider
@@ -18,7 +18,7 @@ class A {
     foo();
   }
 }
-    """.trimIndent(), JavaReferencesCodeVisionProvider.ID)
+    """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
   fun testClassInheritors() = doTest("""
 <# block [no usages] #>
@@ -31,7 +31,7 @@ class A {
 <# block [no usages] #>
   class B2 extends B {}
 }
-    """.trimIndent(), JavaReferencesCodeVisionProvider.ID, JavaInheritorsCodeVisionProvider.ID)
+    """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
   fun testInterfaceInheritors() = doTest("""
 <# block [no usages] #>
@@ -42,7 +42,7 @@ class A {
 <# block [no usages] #>
   class B1 implements B {}
 }
-    """.trimIndent(), JavaReferencesCodeVisionProvider.ID, JavaInheritorsCodeVisionProvider.ID)
+    """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
   fun testMethodOverrides() = doTest("""
 <# block [1 usage   1 inheritor] #>
@@ -55,7 +55,7 @@ class B extends A {
 <# block [no usages] #>
   void foo(){}
 }
-    """.trimIndent(), JavaReferencesCodeVisionProvider.ID, JavaInheritorsCodeVisionProvider.ID)
+    """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
   fun testDefaultMethodOverrides() = doTest("""
 <# block [2 usages   2 implementations] #>
@@ -73,7 +73,7 @@ class B2 implements A {
 <# block [no usages] #>
   public void foo(){}
 }
-    """.trimIndent(), JavaReferencesCodeVisionProvider.ID, JavaInheritorsCodeVisionProvider.ID)
+    """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
   fun testAbstractMethodImplementations() = doTest("""
 <# block [2 usages   2 implementations] #>
@@ -91,7 +91,7 @@ class B2 implements A {
 <# block [no usages] #>
   public void foo(){}
 }
-    """.trimIndent(), JavaReferencesCodeVisionProvider.ID, JavaInheritorsCodeVisionProvider.ID)
+    """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
   fun testEnumMembers() = doTest("""
 <# block [no usages] #>
@@ -109,7 +109,7 @@ class A {
 <# block [1 usage] #>
   void bar(E... e) {}
 }
-    """.trimIndent(), JavaReferencesCodeVisionProvider.ID)
+    """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
   fun testClassAtZeroOffset() = doTest("""
 <# block [no usages] #>
@@ -127,7 +127,7 @@ class A {
 <# block [1 usage] #>
   void bar(E... e) {}
 }
-    """.trimMargin(), JavaReferencesCodeVisionProvider.ID)
+    """.trimMargin(), JavaReferencesCodeVisionProvider().groupId)
 
   fun testClassAfterPackageStatement() = doTest("""
 
@@ -142,7 +142,7 @@ class B {
    new A();
  }
 }
-""", JavaReferencesCodeVisionProvider.ID)
+""", JavaReferencesCodeVisionProvider().groupId)
 
   fun testFieldOnFirstLineOfInterfaceHasLenses() = doTest("""
 package codeLenses;
@@ -155,9 +155,9 @@ public interface Interface {
     String asd = "asd";
 }
 
-""", JavaReferencesCodeVisionProvider.ID)
+""", JavaReferencesCodeVisionProvider().groupId)
 
-  private fun doTest(text: String, vararg enabledProviderIds: String) {
-    testProviders(text, "test.java", *enabledProviderIds)
+  private fun doTest(text: String, vararg enabledProviderGroupIds: String) {
+    testProviders(text, "test.java", *enabledProviderGroupIds)
   }
 }
