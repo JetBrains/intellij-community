@@ -53,7 +53,7 @@ public interface EditorCustomElementRenderer {
    *                       as provided by {@link #calcWidthInPixels(Inlay)} and {@link #calcHeightInPixels(Inlay)}.
    * @param textAttributes attributes of the surrounding text
    */
-  default void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) {}
+  default void paint(@NotNull Inlay inlay, @NotNull Graphics g, @NotNull Rectangle targetRegion, @NotNull TextAttributes textAttributes) { }
 
   /**
    * Defines the appearance of an inlay.
@@ -71,9 +71,9 @@ public interface EditorCustomElementRenderer {
                      @NotNull Graphics2D g,
                      @NotNull Rectangle2D targetRegion,
                      @NotNull TextAttributes textAttributes) {
-    paint(inlay, (Graphics)g,
-          new Rectangle((int)targetRegion.getX(), (int)targetRegion.getY(), inlay.getWidthInPixels(), inlay.getHeightInPixels()),
-          textAttributes);
+    Rectangle region =
+      new Rectangle((int)targetRegion.getX(), (int)targetRegion.getY(), inlay.getWidthInPixels(), inlay.getHeightInPixels());
+    paint(inlay, (Graphics)g, region, textAttributes);
   }
 
   /**
