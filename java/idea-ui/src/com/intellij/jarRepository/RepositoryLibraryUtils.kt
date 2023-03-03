@@ -8,7 +8,6 @@ import com.intellij.ide.actions.ShowStructureSettingsAction
 import com.intellij.jarRepository.RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
@@ -53,7 +52,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class RepositoryLibraryUtils(private val project: Project) : Disposable {
+class RepositoryLibraryUtils(private val project: Project, private val cs: CoroutineScope) {
   companion object {
     private val logger = logger<RepositoryLibraryUtils>()
 
@@ -73,11 +72,8 @@ class RepositoryLibraryUtils(private val project: Project) : Disposable {
     private val CoroutineScope.progressSinkOrError: ProgressSink get() = requireNotNull(progressSink)
   }
 
-  private val defaultCoroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   private var testCoroutineScope: CoroutineScope? = null
-  private val myCoroutineScope: CoroutineScope get() = testCoroutineScope ?: defaultCoroutineScope
-
-  override fun dispose() = defaultCoroutineScope.cancel()
+  private val myCoroutineScope: CoroutineScope get() = testCoroutineScope ?: cs
 
   /**
    * Should be used only in tests. Required to promote errors to tests via [testScope].
