@@ -63,32 +63,6 @@ inline fun <R> calculateInModalWindow(
     return task.result
 }
 
-@get:ApiStatus.ScheduledForRemoval
-@get:Deprecated(
-    "This method is obsolete and will be removed",
-    ReplaceWith(
-        "resolveToDescriptorIfAny(BodyResolveMode.FULL)",
-        "org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny",
-        "org.jetbrains.kotlin.resolve.lazy.BodyResolveMode"
-    )
-)
-@get:JvmName("getDescriptor")
-val KtDeclaration.descriptorCompat: DeclarationDescriptor?
-    get() = if (this is KtParameter) this.descriptorCompat else this.resolveToDescriptorIfAny(BodyResolveMode.FULL)
-
-@Deprecated(
-    "This method is obsolete and will be removed",
-    ReplaceWith(
-        "resolveToParameterDescriptorIfAny(BodyResolveMode.FULL)",
-        "org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny",
-        "org.jetbrains.kotlin.resolve.lazy.BodyResolveMode"
-    )
-)
-
-@get:JvmName("getDescriptor")
-val KtParameter.descriptorCompat: ValueParameterDescriptor?
-    get() = this.resolveToParameterDescriptorIfAny(BodyResolveMode.FULL)
-
 class KotlinConstructorCallLazyDescriptorHandle(ktElement: KtDeclaration) :
     KotlinSearchUsagesSupport.ConstructorCallHandle {
     private val descriptor: ConstructorDescriptor? by lazyPub { ktElement.constructor }
