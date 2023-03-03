@@ -271,7 +271,12 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
         }
       }
       else {
-        insets.left -= JBUIScale.scale(4);
+        if (ExperimentalUI.isNewUI()) {
+          insets.left = insets.right;
+        }
+        else {
+          insets.left -= JBUIScale.scale(4);
+        }
       }
     }
     return insets;
