@@ -542,6 +542,7 @@
 
     "MainToolbar": {
       "background": "Grey2",
+      "foreground": "Grey12",
       "inactiveBackground": "Grey3",
       "separatorColor": "Grey4",
       "Icon": {
