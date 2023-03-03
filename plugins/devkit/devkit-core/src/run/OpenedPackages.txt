@@ -38,6 +38,7 @@
 --add-opens=java.desktop/sun.lwawt=ALL-UNNAMED
 --add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED
 --add-opens=java.desktop/sun.swing=ALL-UNNAMED
+--add-opens=java.desktop/com.sun.java.swing=ALL-UNNAMED
 --add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED
 --add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
 --add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED
