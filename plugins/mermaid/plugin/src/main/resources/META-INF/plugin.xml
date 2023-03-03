@@ -41,6 +41,7 @@
 
     <enterHandlerDelegate implementation="com.intellij.mermaid.editor.MermaidEnterAfterUnmatchedPairHandler"/>
     <enterHandlerDelegate implementation="com.intellij.mermaid.editor.MermaidEnterBetweenPairHandler"/>
+    <enterHandlerDelegate implementation="com.intellij.mermaid.editor.MermaidEnterAfterSequenceBranchHandler"/>
 
     <lineIndentProvider
       implementation="com.intellij.mermaid.editor.MermaidLineIndentProvider"/>

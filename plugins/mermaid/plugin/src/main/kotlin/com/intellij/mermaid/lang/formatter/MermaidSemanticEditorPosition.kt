@@ -28,6 +28,12 @@ class MermaidSemanticEditorPosition(
     }
   }
 
+  fun moveBeforeNotAtOptionalMix(vararg elements: IElementType) {
+    while (!isAtAnyOf(*elements) && !iterator.atEnd()) {
+      iterator.retreat()
+    }
+  }
+
   fun moveAfterOptionalMix(vararg elements: IElementType) {
     while (isAtAnyOf(*elements)) {
       iterator.advance()
