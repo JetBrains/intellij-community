@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.FilenameIndex
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
+import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_PATH
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import java.io.File
@@ -106,7 +108,12 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                 val pluginDisposable = KotlinPluginDisposable.getInstance(project)
                 val (templates, classpath) =
                     ReadAction.nonBlocking(Callable {
-                        val files = FileTypeIndex.getFiles(ScriptDefinitionMarkerFileType, project.allScope())
+                        val lastPathComponent = SCRIPT_DEFINITION_MARKERS_PATH.split('/').last { it.isNotEmpty() }
+                        val templatesFolders = FilenameIndex.getVirtualFilesByName(lastPathComponent, project.allScope())
+                        val files = mutableListOf<VirtualFile>()
+                        for (templatesFolder in templatesFolders) {
+                            files += templatesFolder.children.filter { ScriptDefinitionMarkerFileType.isMyFileType(it) }
+                        }
                         getTemplateClassPath(files, indicator)
                     })
                         .expireWith(pluginDisposable)
