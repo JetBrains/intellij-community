@@ -168,6 +168,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void dispose() {
     ApplicationManager.getApplication().invokeLater(myBalloon::dispose);
+    myDumbEpoch.incrementAndGet();
     myTaskQueue.disposePendingTasks();
   }
 

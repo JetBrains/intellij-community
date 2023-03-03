@@ -33,7 +33,6 @@ import org.junit.runners.JUnit4
 
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 
 import static org.junit.Assert.*
 
@@ -72,6 +71,9 @@ class DumbServiceImplTest {
   void setUp() throws Exception {
     testDisposable = Disposer.newDisposable("DumbServiceImplTest")
     project = p.project
+    if (!ApplicationManager.application.isReadAccessAllowed()) {
+      dumbService.waitForSmartMode()
+    }
   }
 
   @After
@@ -83,7 +85,7 @@ class DumbServiceImplTest {
   void "test no task leak on dispose"() {
     DumbService dumbService = new DumbServiceImpl(project)
 
-    AtomicInteger disposes = new AtomicInteger(0)
+    CountDownLatch disposes = new CountDownLatch(2)
     def task1 = new DumbModeTask() {
       @Override
       void performInDumbMode(@NotNull ProgressIndicator indicator) {
@@ -94,7 +96,8 @@ class DumbServiceImplTest {
 
       @Override
       void dispose() {
-        disposes.incrementAndGet()
+        assert disposes.count > 0
+        disposes.countDown()
       }
     }
 
@@ -105,7 +108,8 @@ class DumbServiceImplTest {
 
       @Override
       void dispose() {
-        disposes.incrementAndGet()
+        assert disposes.count > 0
+        disposes.countDown()
       }
     }
 
@@ -114,7 +118,7 @@ class DumbServiceImplTest {
     dumbService.queueTask(task2)
     Disposer.dispose(dumbService)
 
-    assertEquals(2, disposes.get())
+    assert disposes.await(5, TimeUnit.SECONDS)
     assertTrue(Disposer.isDisposed(task1))
     assertTrue(Disposer.isDisposed(task2))
   }
@@ -326,7 +330,6 @@ class DumbServiceImplTest {
 
   @Test
   void "test cancelAllTasksAndWait cancels all the tasks submitted via queueTask from other threads with no race"() {
-    DumbServiceImpl dumbService = getDumbService()
     AtomicBoolean queuedTaskInvoked = new AtomicBoolean(false)
     CountDownLatch dumbTaskFinished = new CountDownLatch(1)
 
@@ -359,6 +362,44 @@ class DumbServiceImplTest {
     dumbTaskFinished.await(5, TimeUnit.SECONDS)
 
     assertEquals("DumbModeTask didn't complete in 5 seconds", 0, dumbTaskFinished.count)
+    assertFalse(queuedTaskInvoked.get())
+  }
+
+  @Test
+  void "test dispose cancels all the tasks submitted via queueTask from other threads with no race"() {
+    DumbService dumbService = new DumbServiceImpl(project)
+    AtomicBoolean queuedTaskInvoked = new AtomicBoolean(false)
+    CountDownLatch dumbTaskFinished = new CountDownLatch(1)
+
+    Thread t1 = new Thread({
+                             dumbService.queueTask(
+                               new DumbModeTask() {
+                                 @Override
+                                 void performInDumbMode(@NotNull ProgressIndicator indicator) {
+                                   queuedTaskInvoked.set(true)
+                                 }
+
+                                 @Override
+                                 void dispose() {
+                                   dumbTaskFinished.countDown()
+                                 }
+                               }
+                             )
+                           }, "Test thread 1")
+
+    EdtTestUtil.runInEdtAndWait {
+      // we are on Write thread without write action
+      t1.start()
+      t1.join(5_000)
+      assertFalse("Thread should have completed", t1.isAlive())
+
+      // this should also cancel the task submitted by t1. There is no race: t1 definitely submitted this task and the thread itself finished.
+      Disposer.dispose(dumbService)
+    }
+
+    dumbTaskFinished.await(5, TimeUnit.SECONDS)
+
+    assertEquals("DumbModeTask didn't dispose in 5 seconds", 0, dumbTaskFinished.count)
     assertFalse(queuedTaskInvoked.get())
   }
 }
