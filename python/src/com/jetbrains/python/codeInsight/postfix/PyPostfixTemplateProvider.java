@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.postfix;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
@@ -11,6 +11,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 public class PyPostfixTemplateProvider implements PostfixTemplateProvider {
+
+  private final @NotNull Set<PostfixTemplate> myTemplates = ContainerUtil.newHashSet(
+    new PyNotPostfixTemplate(this),
+    new PyParenthesizedExpressionPostfixTemplate(this),
+    new PyReturnPostfixTemplate(this),
+    new PyIfPostfixTemplate(this),
+    new PyWhilePostfixTemplate(this),
+    new PyIsNonePostfixTemplate(this),
+    new PyIsNotNonePostfixTemplate(this),
+    new PyPrintPostfixTemplate(this),
+    new PyMainPostfixTemplate(this),
+    new PyLenPostfixTemplate(this)
+  );
+
   @NotNull
   @Override
   public String getId() {
@@ -20,16 +34,7 @@ public class PyPostfixTemplateProvider implements PostfixTemplateProvider {
   @NotNull
   @Override
   public Set<PostfixTemplate> getTemplates() {
-    return ContainerUtil.newHashSet(new PyNotPostfixTemplate(),
-                                    new PyParenthesizedExpressionPostfixTemplate(),
-                                    new PyReturnPostfixTemplate(),
-                                    new PyIfPostfixTemplate(),
-                                    new PyWhilePostfixTemplate(),
-                                    new PyIsNonePostfixTemplate(),
-                                    new PyIsNotNonePostfixTemplate(),
-                                    new PyPrintPostfixTemplate(),
-                                    new PyMainPostfixTemplate(),
-                                    new PyLenPostfixTemplate());
+    return myTemplates;
   }
 
   @Override
