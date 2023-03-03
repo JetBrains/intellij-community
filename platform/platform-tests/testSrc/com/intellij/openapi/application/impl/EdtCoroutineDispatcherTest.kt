@@ -69,7 +69,8 @@ class EdtCoroutineDispatcherTest {
     val root = LaterInvocator::class.java
 
     ApplicationManager.getApplication().withModality {
-      val job = CoroutineScope(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()).launch {
+      @OptIn(DelicateCoroutinesApi::class)
+      val job = GlobalScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
         fail(leak.toString()) // keep reference to the leak
       }
       assertReferenced(root, leak)

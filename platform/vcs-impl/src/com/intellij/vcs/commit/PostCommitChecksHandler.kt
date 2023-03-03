@@ -60,8 +60,8 @@ class PostCommitChecksHandler(val project: Project) {
   @RequiresEdt
   fun startPostCommitChecksTask(commitInfo: StaticCommitInfo, commitChecks: List<CommitCheck>) {
     val previousJob = lastJob
-    val scope = CoroutineScope(CoroutineName("post commit checks") + Dispatchers.EDT)
-    lastJob = scope.launch {
+    @OptIn(DelicateCoroutinesApi::class)
+    lastJob = GlobalScope.launch(CoroutineName("post commit checks") + Dispatchers.EDT) {
       previousJob?.cancelAndJoin()
       runPostCommitChecks(commitInfo, commitChecks)
     }

@@ -63,7 +63,7 @@ class WslProxy(distro: AbstractWslDistribution, private val applicationPort: Int
       catch (e: Exception) {
         Logger.getInstance(WslProxy::class.java).warn(e)
       }
-      CoroutineScope(Dispatchers.IO).launch {
+      GlobalScope.launch(Dispatchers.IO) {
         // Wait for process to die. If not -- kill it
         delay(1000)
         if (isAlive) {
