@@ -10,6 +10,8 @@ import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationUtil
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ClassLoaderUtil
@@ -21,8 +23,24 @@ import org.languagetool.JLanguageTool
 import org.languagetool.rules.spelling.SpellingCheckRule
 import java.util.concurrent.Callable
 
-object GrazieSpellchecker : GrazieStateLifecycle {
-  private const val MAX_SUGGESTIONS_COUNT = 3
+object GrazieSpellchecker {
+
+  fun isCorrect(word: String): Boolean? {
+    return ApplicationManager.getApplication().service<GrazieSpellcheckerLifecycle>().isCorrect(word)
+  }
+
+  /**
+   * Checks text for spelling mistakes.
+   */
+  fun getSuggestions(word: String): Collection<String> {
+    return ApplicationManager.getApplication().service<GrazieSpellcheckerLifecycle>().getSuggestions(word)
+  }
+}
+
+@Service(Service.Level.APP)
+internal class GrazieSpellcheckerLifecycle : GrazieStateLifecycle {
+
+  private val MAX_SUGGESTIONS_COUNT = 3
 
   private val filter by lazy { RuleFilter.withAllBuiltIn() }
 
@@ -109,9 +127,6 @@ object GrazieSpellchecker : GrazieStateLifecycle {
     return if (isAlien) null else false
   }
 
-  /**
-   * Checks text for spelling mistakes.
-   */
   fun getSuggestions(word: String): Collection<String> {
     val filtered = filterCheckers(word)
     if (filtered.isEmpty()) {
