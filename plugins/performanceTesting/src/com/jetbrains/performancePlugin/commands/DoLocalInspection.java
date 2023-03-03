@@ -51,7 +51,7 @@ public final class DoLocalInspection extends AbstractCommand implements Disposab
     ApplicationManager.getApplication().invokeAndWait(() -> {
       TypingTarget target = findTarget(context);
       if (target == null) {
-        //actionCallback.reject("There is no focus in editor");
+        actionCallback.reject("There is no focus in editor");
       }
     });
     if (actionCallback.isRejected()) {
@@ -80,7 +80,7 @@ public final class DoLocalInspection extends AbstractCommand implements Disposab
           StringBuilder finishMessage = new StringBuilder("Local inspections have been finished with: ");
 
           spanRef.get().setAttribute("Errors", errorsOnHighlighting.size());
-          if (errorsOnHighlighting.size() > 0) {
+          if (!errorsOnHighlighting.isEmpty()) {
             finishMessage.append("\n").append(new String("Errors: " + errorsOnHighlighting.size()));
           }
           for (HighlightInfo error : errorsOnHighlighting) {
@@ -88,7 +88,7 @@ public final class DoLocalInspection extends AbstractCommand implements Disposab
           }
 
           spanRef.get().setAttribute("Warnings", warningsOnHighlighting.size());
-          if (warningsOnHighlighting.size() > 0) {
+          if (!warningsOnHighlighting.isEmpty()) {
             finishMessage.append("\n").append(new String("Warnings: " + warningsOnHighlighting.size()));
           }
           for (HighlightInfo warning : warningsOnHighlighting) {
@@ -96,7 +96,7 @@ public final class DoLocalInspection extends AbstractCommand implements Disposab
           }
 
           spanRef.get().setAttribute("Weak Warnings", warningsOnHighlighting.size());
-          if (weakWarningsOnHighlighting.size() > 0) {
+          if (!weakWarningsOnHighlighting.isEmpty()) {
             finishMessage.append("\n").append(new String("Weak Warnings: " + weakWarningsOnHighlighting.size()));
           }
           for (HighlightInfo weakWarning : weakWarningsOnHighlighting) {
