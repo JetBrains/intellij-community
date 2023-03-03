@@ -14,9 +14,9 @@ enum class RunnerType {
 
 class CoverageLogger : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("coverage", 5)
+    private val GROUP = EventLogGroup("coverage", 6)
 
-    private val RUNNER_NAME = EventFields.String("runner", listOf("emma", "jacoco", "idea"))
+    private val RUNNER_NAME = EventFields.String("runner", CoverageRunner.EP_NAME.extensionList.map { it.id })
 
     private val START = GROUP.registerEvent("started", EventFields.Enum("runner", RunnerType::class.java),
                                             EventFields.Int("includes"), EventFields.Int("excludes"))
@@ -31,6 +31,7 @@ class CoverageLogger : CounterUsagesCollector() {
     private val CAN_HIDE_FULLY_COVERED = Boolean("can_hide_fully_covered")
     private val FILTER_OPTIONS = GROUP.registerVarargEvent("view.opened", SHOW_ONLY_MODIFIED, CAN_SHOW_ONLY_MODIFIED,
                                                            HIDE_FULLY_COVERED, CAN_HIDE_FULLY_COVERED)
+    private val IMPORT = GROUP.registerEvent("report.imported", RUNNER_NAME)
 
     @JvmStatic
     fun logStarted(coverageRunner: CoverageRunner,
@@ -70,6 +71,14 @@ class CoverageLogger : CounterUsagesCollector() {
                          CAN_SHOW_ONLY_MODIFIED.with(canVcsFilter),
                          HIDE_FULLY_COVERED.with(fullyCoveredFilter),
                          CAN_HIDE_FULLY_COVERED.with(canFullyCoveredFilter))
+
+    @JvmStatic
+    fun logSuiteImport(project: Project?, suitesBundle: CoverageSuitesBundle?) {
+      if (suitesBundle == null) return
+      suitesBundle.suites.map { it.runner.id }.distinct().forEach { runnerId ->
+        IMPORT.log(project, runnerId)
+      }
+    }
 
     private fun roundClasses(classes: Int) = StatisticsUtil.roundToPowerOfTwo(classes)
   }

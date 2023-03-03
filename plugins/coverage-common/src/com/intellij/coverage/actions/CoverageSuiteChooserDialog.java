@@ -99,7 +99,9 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final List<CoverageSuite> suites = collectSelectedSuites();
-    myCoverageManager.chooseSuitesBundle(suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[0])));
+    final CoverageSuitesBundle bundle = suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[0]));
+    CoverageLogger.logSuiteImport(myProject, bundle);
+    myCoverageManager.chooseSuitesBundle(bundle);
     ((CoverageDataManagerImpl)myCoverageManager).addRootsToWatch(suites);
     super.doOKAction();
   }
