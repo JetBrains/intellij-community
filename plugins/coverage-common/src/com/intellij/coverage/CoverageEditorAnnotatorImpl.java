@@ -186,6 +186,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
         var mapping = myMapper.getOldToNewLineMapping();
         if (mapping == null) return;
         removeHighlighters();
+        myUpdateAlarm.cancelAllRequests();
         showCoverage(suite);
       });
     }
@@ -217,7 +218,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
           }
           if (!myUpdateAlarm.isDisposed()) {
             myUpdateAlarm.addRequest(() -> {
-              Int2IntMap newToOldLineMapping = myMapper.getNewToOldLineMapping();
+              Int2IntMap newToOldLineMapping = myMapper.canGetFastMapping() ? myMapper.getNewToOldLineMapping() : null;
               if (newToOldLineMapping != null) {
                 final int lastLine = Math.min(document.getLineCount() - 1, lastLineNumber);
                 for (int line = lineNumber; line <= lastLine; line++) {
@@ -335,11 +336,11 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
     }
     var highlighter = markupModel.addLineHighlighter(lineNumberInCurrent, HighlighterLayer.ADDITIONAL_SYNTAX - 1, textAttributes);
     Function<Integer, Integer> newToOldConverter = newLine -> {
-      var oldLineMapping = myMapper.getNewToOldLineMapping();
+      var oldLineMapping = myMapper.canGetFastMapping() ? myMapper.getNewToOldLineMapping() : null;
       return oldLineMapping != null ? oldLineMapping.getOrDefault(newLine.intValue(), -1) : newLine;
     };
     Function<Integer, Integer> oldToNewConverter = newLine -> {
-      var newLineMapping = myMapper.getOldToNewLineMapping();
+      var newLineMapping = myMapper.canGetFastMapping() ? myMapper.getOldToNewLineMapping() : null;
       return newLineMapping != null ? newLineMapping.getOrDefault(newLine.intValue(), -1) : newLine;
     };
     var markerRenderer = coverageSuite.getLineMarkerRenderer(line, className, executableLines, isCoverageByTestApplicable(coverageSuite),
