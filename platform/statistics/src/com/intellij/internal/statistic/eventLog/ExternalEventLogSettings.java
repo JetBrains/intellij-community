@@ -11,10 +11,12 @@ import java.util.Map;
 
 /**
  * Allows overriding certain AP settings from JB plugins.
- *
+ * <br/>
  * The intention is to let customer organizations acquire and manage both the data collected by the analytics platform in the IDEs
  * and data sharing consent within the organization with the help of Toolbox Enterprise. These settings will be exposed for the
  * customer organization admins to set.
+ * <br/>
+ * Only one instance of this EP can be used - provided by Toolbox Enterprise plugin.
  */
 @ApiStatus.Internal
 public interface ExternalEventLogSettings {
@@ -86,4 +88,13 @@ public interface ExternalEventLogSettings {
    * Provide extra headers to AP log upload requests. E.g. a shared secret to fence off data pollution
    */
   @NotNull Map<String, String> getExtraLogUploadHeaders();
+
+  /**
+   * Provides implementations of {@link StatisticsEventLogListener} to be used in {@link EventLogListenersManager}
+   * <br/>
+   * This method will be called only once.
+   * */
+  default @Nullable StatisticsEventLogListener getEventLogListener() {
+    return null;
+  }
 }
