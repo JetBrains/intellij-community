@@ -9,7 +9,6 @@ import com.intellij.codeInsight.completion.CompositeDeclarativeInsertHandler
 import com.intellij.codeInsight.completion.DeclarativeInsertHandler2
 import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
-import com.intellij.codeInsight.completion.InsertionContext.TAIL_OFFSET
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.injected.editor.VirtualFileWindow
@@ -382,16 +381,9 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
             val isInjected = context.file.viewProvider.virtualFile is VirtualFileWindow
 
             if (!argumentsOnly) {
-                val knownStart = context.startOffset
-                val newTailOffset = context.startOffset + item.lookupString.length
                 surroundWithBracesIfInStringTemplate(context)
 
                 super.handleInsert(context, item)
-                if (isInjected) {
-                    context.offsetMap.addOffset(START_OFFSET, knownStart)
-                    context.offsetMap.addOffset(IDENTIFIER_END_OFFSET, newTailOffset)
-                    context.offsetMap.addOffset(TAIL_OFFSET, newTailOffset)
-                }
             }
 
             if (!isInjected) {
