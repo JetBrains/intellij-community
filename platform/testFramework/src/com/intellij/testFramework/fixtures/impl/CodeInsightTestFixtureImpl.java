@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.analysis.AnalysisScope;
@@ -1830,6 +1830,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       if (loader.caretState.hasExplicitCaret()) {
         int offset = editor.getCaretModel().getOffset();
         if (offset > -1) {
+          if (offset > actualText.length()) actualText += StringUtil.repeat(" ", offset - actualText.length());
           actualText = new StringBuilder(actualText).insert(offset, "<caret>").toString();
         }
         expectedText = loader.fileText;
