@@ -506,8 +506,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
     @NotNull
     public List<Build> getAllBuilds() {
-      List<Build> result = new ArrayList<>(includedBuilds);
-      result.add(0, getMainBuild());
+      List<Build> result = new ArrayList<>();
+      result.add(getMainBuild());
+      result.addAll(includedBuilds);
       return result;
     }
 
