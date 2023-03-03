@@ -381,6 +381,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/typealiasInTypeArguments.kt"));
         }
 
+        @TestMetadata("unresolvedGenericSupertypes.kt")
+        public void testUnresolvedGenericSupertypes() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/unresolvedGenericSupertypes.kt"));
+        }
+
         @TestMetadata("unresolvedWithAliasedImport.kt")
         public void testUnresolvedWithAliasedImport() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/unresolvedWithAliasedImport.kt"));

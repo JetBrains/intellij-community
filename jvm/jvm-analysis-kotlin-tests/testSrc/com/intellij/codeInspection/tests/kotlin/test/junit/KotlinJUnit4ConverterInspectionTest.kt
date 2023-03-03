@@ -250,7 +250,7 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
     myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       
-      class JUnit3<caret>Test : TestCase {
+      class JUnit3<caret>Test : TestCase() {
           fun testAddition() {
               assertEquals(2, 1 + 1)
           }
@@ -273,7 +273,7 @@ class KotlinJUnit4ConverterInspectionTest : JUnit4ConverterInspectionTestBase() 
     myFixture.testQuickFixWithPreview(JvmLanguage.KOTLIN, """
       import junit.framework.TestCase
       
-      class JUnit3<caret>Test : TestCase {
+      class JUnit3<caret>Test : TestCase() {
           override fun setUp() {
               println("setup")
               super.setUp()
