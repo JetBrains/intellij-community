@@ -53,7 +53,7 @@ public final class IconLoader {
 
   // contains mapping between icons and disabled icons.
   private static final Map<@NotNull Supplier<@NotNull RGBImageFilter>, Map<@NotNull Icon, @NotNull Icon>> iconToDisabledIcon =
-    CollectionFactory.createConcurrentWeakMap();
+    new ConcurrentHashMap<>();
 
   private static volatile boolean STRICT_GLOBAL;
 
@@ -599,7 +599,7 @@ public final class IconLoader {
 
     Supplier<RGBImageFilter> filter = disableFilter != null ? disableFilter : UIUtil::getGrayFilter; /* returns laf-aware instance */
 
-    return iconToDisabledIcon.computeIfAbsent(filter, (d) -> CollectionFactory.createConcurrentWeakMap())
+    return iconToDisabledIcon.computeIfAbsent(filter, (d) -> CollectionFactory.createConcurrentWeakKeyWeakValueMap())
       .computeIfAbsent(icon, existingIcon -> {
         return filterIcon(existingIcon, filter, ancestor);
       });
