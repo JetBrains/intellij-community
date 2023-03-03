@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 /**
  * Represents computed information about workspace file sets.
@@ -61,6 +62,11 @@ interface WorkspaceFileIndexData {
    * Reset caches which cannot be updated incrementally.
    */
   fun resetCustomContributors()
+
+  /**
+   * Returns kinds of workspace file sets registered for [url] if the corresponding file doesn't exist. If [url] exists, return an empty set.
+   */
+  fun getNonExistentFileSetKinds(url: VirtualFileUrl): Set<NonExistingFileSetKind>
   
   fun onLowMemory()
   fun clearPackageDirectoryCache()

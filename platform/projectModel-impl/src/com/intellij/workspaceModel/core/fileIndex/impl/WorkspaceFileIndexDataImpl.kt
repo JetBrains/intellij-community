@@ -308,6 +308,10 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     packageDirectoryCache.clear()
   }
 
+  override fun getNonExistentFileSetKinds(url: VirtualFileUrl): Set<NonExistingFileSetKind> {
+    return nonExistingFilesRegistry.getFileSetKindsFor(url)
+  }
+
   override fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? {
     return nonExistingFilesRegistry.analyzeVfsChanges(events)
   }
@@ -322,7 +326,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
         registerFileSet(rootFile, kind, entity, customData)
       }
       else {
-        nonExistingFilesRegistry.registerUrl(root, entity, storageKind)
+        nonExistingFilesRegistry.registerUrl(root, entity, storageKind, if (kind.isContent) NonExistingFileSetKind.INCLUDED_CONTENT else NonExistingFileSetKind.INCLUDED_OTHER)
       }
     }
 
@@ -343,7 +347,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
         fileSets.putValue(excludedRootFile, ExcludedFileSet.ByFileKind(WorkspaceFileKindMask.ALL, entity.createReference(), storageKind))
       }
       else {
-        nonExistingFilesRegistry.registerUrl(excludedRoot, entity, storageKind)
+        nonExistingFilesRegistry.registerUrl(excludedRoot, entity, storageKind, NonExistingFileSetKind.EXCLUDED_FROM_CONTENT)
       }
     }
 
@@ -353,7 +357,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
         registerExcludedRoot(file, excludedFrom, entity)
       }
       else {
-        nonExistingFilesRegistry.registerUrl(excludedRoot, entity, storageKind)
+        nonExistingFilesRegistry.registerUrl(excludedRoot, entity, storageKind, if (excludedFrom.isContent) NonExistingFileSetKind.EXCLUDED_FROM_CONTENT else NonExistingFileSetKind.EXCLUDED_OTHER)
       }
     }
 
@@ -368,13 +372,13 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
                                            patterns: List<String>,
                                            entity: WorkspaceEntity) {
       val rootFile = rootFileSupplier.findFile(root)
-      if (rootFile != null) {
-        if (!patterns.isEmpty()) {
+      if (!patterns.isEmpty()) {
+        if (rootFile != null) {
           fileSets.putValue(rootFile, ExcludedFileSet.ByPattern(rootFile, patterns, entity.createReference(), storageKind))
         }
-      }
-      else {
-        nonExistingFilesRegistry.registerUrl(root, entity, storageKind)
+        else {
+          nonExistingFilesRegistry.registerUrl(root, entity, storageKind, NonExistingFileSetKind.EXCLUDED_OTHER)
+        }
       }
     }
 
@@ -384,7 +388,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
         registerExclusionCondition(rootFile, condition, entity)
       }
       else {
-        nonExistingFilesRegistry.registerUrl(root, entity, storageKind)
+        nonExistingFilesRegistry.registerUrl(root, entity, storageKind, NonExistingFileSetKind.EXCLUDED_OTHER)
       }
     }
 
