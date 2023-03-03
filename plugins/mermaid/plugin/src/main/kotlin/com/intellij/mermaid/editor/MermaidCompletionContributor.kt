@@ -315,6 +315,22 @@ class MermaidCompletionContributor : CompletionContributor() {
       C4CompletionProvider()
     )
     //endregion
+
+    //region Timeline
+    extend(
+      CompletionType.BASIC,
+      or(
+        psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.TIMELINE_HEADER)),
+        psiElement().afterLeaf(psiElement(MermaidTokens.Timeline.TIMELINE))
+      ),
+      TitleCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.TIMELINE_HEADER)),
+      BranchCompletionProvider("section")
+    )
+    //endregion
   }
 
   private fun PsiElementPattern.Capture<PsiElement>.insideBlock(pattern: ElementPattern<in PsiElement>): PsiElementPattern.Capture<PsiElement> {
