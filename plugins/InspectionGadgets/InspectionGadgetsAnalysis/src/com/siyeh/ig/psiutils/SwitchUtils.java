@@ -174,7 +174,7 @@ public final class SwitchUtils {
     final String labelText = "case " + patternCaseText + "->{}";
     final PsiStatement statement = factory.createStatementFromText(labelText, null);
     final PsiSwitchLabelStatementBase label = ObjectUtils.tryCast(statement, PsiSwitchLabelStatementBase.class);
-    if (label == null) return null;
+    assert label != null;
     return Objects.requireNonNull(label.getCaseLabelElementList()).getElements()[0];
   }
 
