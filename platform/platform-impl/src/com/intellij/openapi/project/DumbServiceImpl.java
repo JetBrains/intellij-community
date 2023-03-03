@@ -396,9 +396,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     CountDownLatch switched = new CountDownLatch(1);
     myProject.getService(SmartModeScheduler.class).runWhenSmart(switched::countDown);
 
-    while (myState.get() != State.SMART && !myProject.isDisposed()) {
+    // we check getCurrentMode here because of tests which may hang because runWhenSmart needs EDT for scheduling
+    while (myProject.getService(SmartModeScheduler.class).getCurrentMode() != 0 && !myProject.isDisposed()) {
       try {
-        switched.await(50, TimeUnit.MILLISECONDS);
+        if (switched.await(50, TimeUnit.MILLISECONDS)) break;
       }
       catch (InterruptedException ignored) { }
       ProgressManager.checkCanceled();
