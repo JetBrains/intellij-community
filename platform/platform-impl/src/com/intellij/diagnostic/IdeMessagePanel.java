@@ -23,6 +23,8 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
 import com.intellij.ui.ClickListener;
+import com.intellij.util.LazyInitializer;
+import com.intellij.util.LazyInitializer.LazyValue;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
@@ -49,13 +51,16 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
   private IdeErrorsDialog dialog;
   private boolean isOpeningInProgress;
 
-  private final JPanel component;
+  private final LazyValue<JPanel> component;
 
   private final IdeMessageAction action = new IdeMessageAction();
 
   public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
-    component = new JPanel(new BorderLayout());
-    component.setOpaque(false);
+    component = LazyInitializer.create(() -> {
+      var result = new JPanel(new BorderLayout());
+      result.setOpaque(false);
+      return result;
+    });
 
     this.frame = frame;
 
@@ -82,7 +87,7 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
 
   @Override
   public JComponent getComponent() {
-    return component;
+    return component.get();
   }
 
   public AnAction getAction() {
@@ -149,11 +154,11 @@ public final class IdeMessagePanel implements MessagePoolListener, IconLikeCusto
         }.installOn(icon);
 
         this.icon = icon;
-        component.add(icon, BorderLayout.CENTER);
+        component.get().add(icon, BorderLayout.CENTER);
       }
 
       icon.setState(state);
-      component.setVisible(state != MessagePool.State.NoErrors);
+      component.get().setVisible(state != MessagePool.State.NoErrors);
       action.icon = icon.getIcon();
       action.state = state;
     });
