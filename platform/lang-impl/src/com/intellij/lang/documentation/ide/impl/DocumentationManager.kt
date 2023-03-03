@@ -40,7 +40,7 @@ import java.lang.ref.WeakReference
 
 @ApiStatus.Internal
 @Service
-class DocumentationManager(private val project: Project) : Disposable {
+class DocumentationManager(private val project: Project, private val cs: CoroutineScope) : Disposable {
 
   companion object {
 
@@ -50,7 +50,6 @@ class DocumentationManager(private val project: Project) : Disposable {
     var skipPopup: Boolean by propComponentProperty(name = "documentation.skip.popup", defaultValue = false)
   }
 
-  private val cs: CoroutineScope = CoroutineScope(SupervisorJob())
   // separate scope is needed for the ability to cancel its children
   private val popupScope: CoroutineScope = CoroutineScope(SupervisorJob(parent = cs.coroutineContext.job))
 
