@@ -4,6 +4,7 @@ package com.intellij.coverage.xml
 import com.intellij.coverage.CoverageDataManager
 import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.JavaCoverageAnnotator
+import com.intellij.coverage.PackageAnnotator
 import com.intellij.coverage.PackageAnnotator.ClassCoverageInfo
 import com.intellij.coverage.PackageAnnotator.PackageCoverageInfo
 import com.intellij.openapi.module.ModuleManager
@@ -47,7 +48,11 @@ class XMLReportAnnotator(project: Project?) : JavaCoverageAnnotator(project) {
         }
       }
     }
-    for ((className, coverage) in classCoverage) {
+
+    // Include anonymous and internal classes to the containing class
+    classCoverage.entries.groupBy { PackageAnnotator.getSourceToplevelFQName(it.key) }.forEach { (className, classes) ->
+      val coverage = ClassCoverageInfo()
+      classes.forEach { coverage.append(it.value) }
       annotator.annotateClass(className, coverage)
     }
     for ((packageName, coverage) in packageCoverage) {
