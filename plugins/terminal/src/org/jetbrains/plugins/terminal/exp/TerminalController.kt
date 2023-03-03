@@ -77,7 +77,7 @@ class TerminalController(private val model: TerminalModel,
   }
 
   override fun beep() {
-    if (settings.audibleBell()) {
+    if (model.isCommandRunning && settings.audibleBell()) {
       Toolkit.getDefaultToolkit().beep()
     }
   }

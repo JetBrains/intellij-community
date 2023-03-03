@@ -40,17 +40,19 @@ class TerminalBlocksController(
     session.executeCommand(command)
   }
 
+  override fun commandStarted(command: String) {
+    session.model.isCommandRunning = true
+  }
+
   override fun commandFinished(command: String, exitCode: Int, duration: Long) {
     blocksComponent.makeCurrentBlockReadOnly()
 
-    // prepare terminal for the next command
     val model = session.model
-    model.lock()
-    try {
+    model.isCommandRunning = false
+
+    // prepare terminal for the next command
+    model.withLock {
       model.clearAllExceptPrompt()
-    }
-    finally {
-      model.unlock()
     }
 
     invokeLater {

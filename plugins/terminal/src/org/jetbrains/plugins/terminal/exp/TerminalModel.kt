@@ -24,6 +24,8 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
   var cursorY: Int = 0
     private set
 
+  var isCommandRunning: Boolean = false
+
   var cursorShape: CursorShape = CursorShape.BLINK_BLOCK
     set(value) {
       if (value != field) {
