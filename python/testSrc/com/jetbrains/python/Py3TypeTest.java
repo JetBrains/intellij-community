@@ -1200,6 +1200,58 @@ public class Py3TypeTest extends PyTestCase {
                       """);
   }
 
+  public void testParamSpecArgsKwargsInAnnotations() {
+    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+      from typing import Callable, ParamSpec
+      
+      P = ParamSpec('P')
+      
+      def func(c: Callable[P, int], *args: P.args, **kwargs: P.kwargs) -> None:
+          ...
+      
+      expr = func
+      """);
+  }
+
+  public void testParamSpecArgsKwargsInTypeComments() {
+    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+      from typing import Callable, ParamSpec
+      
+      P = ParamSpec('P')
+      
+      def func(c, # type: Callable[P, int]
+               *args, # type: P.args
+               **kwargs, # type: P.kwargs
+               ):
+          # type: (...) -> None
+          ...
+      
+      expr = func
+      """);
+  }
+
+  public void testParamSpecArgsKwargsInFunctionTypeComment() {
+    doTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+      from typing import Callable, ParamSpec
+      
+      P = ParamSpec('P')
+      
+      def func(c, *args, **kwargs):
+          # type: (Callable[P, int], *P.args, **P.kwargs) -> None
+          ...
+      
+      expr = func
+      """);
+  }
+
+  public void testParamSpecArgsKwargsInImportedFile() {
+    doMultiFileTest("(c: (ParamSpec(\"P\")) -> int, ParamSpec(\"P\"), ParamSpec(\"P\")) -> None", """
+      from mod import func
+            
+      expr = func
+      """);
+  }
+
   // PY-49935
   public void testParamSpecSeveral() {
     doTest("(y: int, x: str) -> bool",
