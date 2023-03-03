@@ -1486,18 +1486,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   private PopupComponent.@NotNull Factory getFactory(boolean forceHeavyweight, boolean forceDialog) {
+    PopupComponentFactoryService service = PopupComponentFactoryService.getInstance();
     if (Registry.is("allow.dialog.based.popups")) {
       boolean noFocus = !myFocusable || !myRequestFocus;
       boolean cannotBeDialog = noFocus; // && SystemInfo.isXWindow
 
       if (!cannotBeDialog && (isPersistent() || forceDialog)) {
-        return new PopupComponent.Factory.Dialog();
+        return service.getDialogFactory();
       }
     }
     if (forceHeavyweight) {
-      return new PopupComponent.Factory.AwtHeavyweight();
+      return service.getHeavyweightFactory();
     }
-    return new PopupComponent.Factory.AwtDefault();
+    return service.getDefaultFactory();
   }
 
   @Override
