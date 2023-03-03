@@ -194,7 +194,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
     visitedDirs.add(dir);
 
-    final boolean isInTestSrcContent = TestSourcesFilter.isTestSources(dir, getProject());
+    final boolean isInTestSrcContent = ReadAction.compute(() -> TestSourcesFilter.isTestSources(dir, getProject()));
 
     // Don't count coverage for tests folders if track test folders is switched off
     if (!trackTestFolders && isInTestSrcContent) {
