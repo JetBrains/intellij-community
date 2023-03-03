@@ -201,7 +201,7 @@
     <action id="SettingsEntryPoint" class="com.intellij.ide.actions.SettingsEntryPointAction" icon="AllIcons.General.GearPlain"/>
 
     <action id="RunAnything" icon="AllIcons.Actions.Run_anything" class="com.intellij.ide.actions.runAnything.RunAnythingAction"/>
-    <action id="EnableNewUi" class="com.intellij.ide.actions.EnableNewUiAction"/>
+    <action id="EnableNewUi" class="com.intellij.ide.actions.EnableNewUiAction" icon="AllIcons.Actions.EnableNewUi"/>
     <action id="DisableNewUi" class="com.intellij.ide.actions.DisableNewUiAction"/>
 
     <action id="SmartSelect" class="com.intellij.ide.actions.SmartSelect" use-shortcut-of="EditorSelectWord"/>

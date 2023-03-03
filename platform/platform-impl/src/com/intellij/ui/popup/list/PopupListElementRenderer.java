@@ -85,6 +85,10 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     myInlineActionsSupport = PopupInlineActionsSupport.Companion.create(myPopup);
   }
 
+  public ListPopupImpl getPopup() {
+    return myPopup;
+  }
+
   @Override
   protected SeparatorWithText createSeparator() {
     Insets labelInsets = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.separatorLabelInsets() :
