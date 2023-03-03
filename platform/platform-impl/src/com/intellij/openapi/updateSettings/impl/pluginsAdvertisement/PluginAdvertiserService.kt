@@ -12,7 +12,6 @@ import com.intellij.ide.ui.PluginBooleanOptionDescriptor
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.SingletonNotificationManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -24,7 +23,10 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.MultiMap
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.coroutineContext
 
@@ -92,14 +94,14 @@ sealed interface PluginAdvertiserService {
   fun rescanDependencies(block: suspend CoroutineScope.() -> Unit = {})
 }
 
-open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdvertiserService,
-                                                                       Disposable {
+open class PluginAdvertiserServiceImpl(
+  private val project: Project,
+  private val cs: CoroutineScope,
+) : PluginAdvertiserService {
 
   companion object {
     private val notificationManager = SingletonNotificationManager(notificationGroup.displayId, NotificationType.INFORMATION)
   }
-
-  private val coroutineScope = CoroutineScope(SupervisorJob())
 
   override suspend fun run(
     customPlugins: List<PluginNode>,
@@ -165,7 +167,7 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
         org = pluginManagerFilters,
       )
 
-    coroutineScope.launch(Dispatchers.EDT) {
+    cs.launch(Dispatchers.EDT) {
       notifyUser(
         bundledPlugins = getBundledPluginToInstall(plugins, descriptorsById),
         suggestionPlugins = suggestToInstall,
@@ -177,10 +179,6 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
         includeIgnored = includeIgnored,
       )
     }
-  }
-
-  override fun dispose() {
-    coroutineScope.cancel()
   }
 
   private fun fetchPluginSuggestions(
@@ -231,7 +229,7 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
           IdeBundle.message("plugins.advertiser.action.enable.plugins")
 
         NotificationAction.createSimpleExpiring(title) {
-          coroutineScope.launch(Dispatchers.EDT) {
+          cs.launch(Dispatchers.EDT) {
             FUSEventSource.NOTIFICATION.logEnablePlugins(
               disabledDescriptors.map { it.pluginId.idString },
               project,
@@ -413,7 +411,7 @@ open class PluginAdvertiserServiceImpl(private val project: Project) : PluginAdv
   }
 
   override fun rescanDependencies(block: suspend CoroutineScope.() -> Unit) {
-    coroutineScope.launch(Dispatchers.IO) {
+    cs.launch(Dispatchers.IO) {
       rescanDependencies()
       block()
     }
