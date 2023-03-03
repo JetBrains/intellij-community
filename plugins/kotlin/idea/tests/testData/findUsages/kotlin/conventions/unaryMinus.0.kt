@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "operator fun unaryMinus(): A"
 
 class A(val n: Int) {
     operator fun <caret>unaryMinus(): A = this

@@ -2,6 +2,7 @@ import java.lang.System
 
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: ""
 
 class Foo {
     fun getFive(){

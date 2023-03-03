@@ -1,1 +1,1 @@
-Implicit 'invoke' 16 Foo.Companion()
+Implicit 'invoke' 17 Foo.Companion()

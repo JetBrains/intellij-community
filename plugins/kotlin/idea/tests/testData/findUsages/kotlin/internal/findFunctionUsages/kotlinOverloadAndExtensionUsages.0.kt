@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: overloadUsages
+// PSI_ELEMENT_AS_TITLE: "fun foo(T): Unit"
 
 interface X<T> {
 }

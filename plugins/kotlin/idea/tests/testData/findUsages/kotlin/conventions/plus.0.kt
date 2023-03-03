@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "infix operator fun plus(Int): A"
 
 class A(val n: Int) {
     infix operator fun <caret>plus(m: Int): A = A(n + m)
