@@ -58,9 +58,7 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
     for ((method, overridingInfo) in methodsToOverride) {
       if (method.isFinal || method.isStatic || !overridingInfo.acceptedModifiers.any{ method.javaPsi.hasModifier(it)}) {
         methodsToAttachToClassFix?.add(method.createUastSmartPointer())
-
-        val methodFixes = createFixesIfApplicable(method, method.name, overridingInfo.acceptedModifiers)
-
+        val methodFixes = createFixesIfApplicable(method, method.name, emptyList(), overridingInfo.acceptedModifiers)
         problemTargets(method, HashSet(methodHighlightableModifiersSet).apply { addAll(modifiersToHighlight(overridingInfo)) }).forEach {
           problems.add(manager.createProblemDescriptor(
             it, overridingInfo.description, isOnTheFly,
@@ -87,22 +85,17 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
     return problems.toTypedArray()
   }
 
+  @Suppress("ConvertArgumentToSet")
   private fun modifiersToHighlight(overridingInfo: ImplicitSubclassProvider.OverridingInfo): HashSet<String> {
-    return HashSet(allModifiers).apply { removeAll(overridingInfo.acceptedModifiers.mapNotNull { MODIFIERS[it] }.toSet ()) }
+    return HashSet(allModifiers).apply { removeAll(overridingInfo.acceptedModifiers.mapNotNull { MODIFIERS[it] }) }
   }
 
   private fun createFixesIfApplicable(aClass: UDeclaration,
                                       hintTargetName: String,
-                                      methodsToAttachToClassFix: List<UastSmartPointer<UDeclaration>> = emptyList()): Array<LocalQuickFix> {
-    val fix = MakeExtendableFix(aClass, hintTargetName, methodsToAttachToClassFix)
-    if (!fix.hasActionsToPerform) return emptyArray()
-    return arrayOf(fix)
-  }
-
-  private fun createFixesIfApplicable(aClass: UDeclaration,
-                                      hintTargetName: String,
-                                      acceptedModifiers: Array<JvmModifier> = arrayOf(JvmModifier.PUBLIC, JvmModifier.PACKAGE_LOCAL, JvmModifier.PROTECTED)): Array<LocalQuickFix> {
-    val fix = MakeExtendableFix(aClass, hintTargetName, emptyList(), acceptedModifiers)
+                                      siblings: List<UastSmartPointer<UDeclaration>> = emptyList(),
+                                      acceptedModifiers: Array<JvmModifier> = arrayOf(JvmModifier.PUBLIC, JvmModifier.PACKAGE_LOCAL,
+                                                                                      JvmModifier.PROTECTED)): Array<LocalQuickFix> {
+    val fix = MakeExtendableFix(aClass, hintTargetName, siblings, acceptedModifiers)
     if (!fix.hasActionsToPerform) return emptyArray()
     return arrayOf(fix)
   }
