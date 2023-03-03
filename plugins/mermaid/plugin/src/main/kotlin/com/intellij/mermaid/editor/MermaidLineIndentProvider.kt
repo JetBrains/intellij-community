@@ -25,7 +25,12 @@ class MermaidLineIndentProvider : LineIndentProvider {
       return MermaidSemanticEditorPosition.createEditorPosition(editor, offset)
     }
 
-    private fun getIndentString(editor: Editor, offset: Int, shouldExpand: Boolean): String {
+    private fun getIndentString(
+      editor: Editor,
+      offset: Int,
+      shouldExpand: Boolean,
+      continuation: Boolean = false
+    ): String {
       val indentOptions = getIndentOptions(editor)
       val docChars = editor.document.charsSequence
       var baseIndent = ""
@@ -40,7 +45,8 @@ class MermaidLineIndentProvider : LineIndentProvider {
         }
       }
       if (shouldExpand) {
-        baseIndent += IndentInfo(0, indentOptions.INDENT_SIZE, 0).generateNewWhiteSpace(indentOptions)
+        val indent = if (!continuation) indentOptions.INDENT_SIZE else indentOptions.CONTINUATION_INDENT_SIZE
+        baseIndent += IndentInfo(0, indent, 0).generateNewWhiteSpace(indentOptions)
       }
       return baseIndent
     }
@@ -67,9 +73,10 @@ class MermaidLineIndentProvider : LineIndentProvider {
       val position: MermaidSemanticEditorPosition = getPosition(editor, offset - 1)
       if (position.isAt(MermaidTokens.EOL) || position.isAt(MermaidTokens.WHITE_SPACE)) {
         moveAtStartOfPreviousLine(position)
-        if (position.isAtAnyOf(*EXPAND_INDENT_AFTER.types)
-        ) {
+        if (position.isAtAnyOf(*EXPAND_INDENT_AFTER.types)) {
           return getIndentString(editor, position.getStartOffset(), true)
+        } else if (position.isAt(MermaidTokens.TASK_NAME)) {
+          return getIndentString(editor, position.getStartOffset(), true, continuation = true)
         } else if (position.isAt(MermaidTokens.TITLE_VALUE)) {
           position.moveBeforeOptionalMix(MermaidTokens.TITLE_VALUE, MermaidTokens.TITLE, MermaidTokens.WHITE_SPACE)
           return getIndentString(editor, position.getStartOffset(), !position.isAt(MermaidTokens.EOL))

@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_BODIES_AND_BLOCKS
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.STATEMENTS
+import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.mermaid.lang.parser.MermaidElements
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.AbstractBlock
@@ -25,22 +26,47 @@ internal open class MermaidFormattingBlock(
   }
 
   override fun getIndent(): Indent? {
+    if (node.isColonBeforeTaskData()) {
+      return Indent.getContinuationIndent()
+    }
+
     if (node.elementType in STATEMENTS && node.treeParent.elementType in DIAGRAM_BODIES_AND_BLOCKS) {
       return Indent.getNormalIndent()
     }
+
     return Indent.getNoneIndent()
   }
 
   override fun buildChildren(): List<Block> {
     val children = node.children()
-    if (children.filter { it.elementType == MermaidElements.MINDMAP_HEADER }.any() || node.elementType == MermaidElements.MINDMAP_BODY) {
+
+    if (children.filter { it.elementType == MermaidElements.MINDMAP_HEADER }.any()
+      || node.elementType == MermaidElements.MINDMAP_BODY
+    ) {
       return children.map { MermaidFormattingBlock(it, settings, spacing) }.toList()
     }
-    return filterFromWhitespaces(children).map { MermaidFormattingBlock(it, settings, spacing) }.toList()
+
+    var alignment: Alignment? = null
+    return children.filterFromWhitespaces().map {
+      alignment = when {
+        it.elementType == MermaidElements.COMPLEX_TASK_NAME -> Alignment.createAlignment(true, Alignment.Anchor.RIGHT)
+        it.isColonBeforeTaskData() -> Alignment.createChildAlignment(alignment)
+        else -> null
+      }
+
+      MermaidFormattingBlock(it, settings, spacing, alignment)
+    }.toList()
   }
 
-  private fun filterFromWhitespaces(sequence: Sequence<ASTNode>) = sequence.filter {
+  private fun Sequence<ASTNode>.filterFromWhitespaces() = filter {
     it.elementType !in MermaidTokenTypeSets.WHITE_SPACES
+  }
+
+  private fun ASTNode.isColonBeforeTaskData(): Boolean {
+    return elementType == MermaidTokens.COLON &&
+      siblings(forward = true, withSelf = false)
+        .filterFromWhitespaces()
+        .firstOrNull()?.elementType == MermaidElements.SECTION_TASK_DATA
   }
 }
 

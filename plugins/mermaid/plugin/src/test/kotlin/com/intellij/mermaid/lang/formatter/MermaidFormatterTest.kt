@@ -32,6 +32,8 @@ class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
 
   fun `test mindmap`() = doTest()
 
+  fun `test timeline`() = doTest()
+
   private fun doTest() {
     val before = getTestName(true) + "_before.mermaid"
     val after = getTestName(true) + "_after.mermaid"
@@ -40,6 +42,7 @@ class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
         getLanguageIndentOptions(MermaidLanguage).apply {
           INDENT_SIZE = 2
           TAB_SIZE = 2
+          CONTINUATION_INDENT_SIZE = 4
         }
       }
       doReformatTest(before, after)
