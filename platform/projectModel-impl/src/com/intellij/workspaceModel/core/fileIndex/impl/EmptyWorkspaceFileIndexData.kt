@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 
 internal class EmptyWorkspaceFileIndexData private constructor(private val debugName: String): WorkspaceFileIndexData {
   companion object {
@@ -31,6 +32,8 @@ internal class EmptyWorkspaceFileIndexData private constructor(private val debug
   override fun getPackageName(dir: VirtualFile): String? = null
   override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> = EmptyQuery.getEmptyQuery()
   override fun resetCustomContributors() {}
+  override fun getNonExistentFileSetKinds(url: VirtualFileUrl): Set<NonExistingFileSetKind> = emptySet()
+
   override fun analyzeVfsChanges(events: List<VFileEvent>): VfsChangeApplier? = null
   override fun onLowMemory() {}
   override fun clearPackageDirectoryCache() {}

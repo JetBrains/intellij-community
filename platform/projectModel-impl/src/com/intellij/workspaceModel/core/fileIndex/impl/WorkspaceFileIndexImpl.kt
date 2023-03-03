@@ -22,7 +22,9 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.CollectionQuery
+import com.intellij.util.PathUtil
 import com.intellij.util.Query
+import com.intellij.util.ThreeState
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
@@ -77,6 +79,33 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
 
   override fun getContentFileSetRoot(file: VirtualFile, honorExclusion: Boolean): VirtualFile? {
     return findFileSet(file, honorExclusion, true, false, false)?.root
+  }
+
+  override fun isUrlInContent(url: String): ThreeState {
+    var currentUrl = url
+    val fileManager = VirtualFileManager.getInstance()
+    val urlManager = VirtualFileUrlManager.getInstance(project)
+    while (currentUrl.isNotEmpty()) {
+      val file = fileManager.findFileByUrl(currentUrl)
+      if (file != null) {
+        return ThreeState.fromBoolean(isInContent(file))
+      }
+      val virtualFileUrl = urlManager.findByUrl(currentUrl)
+      if (virtualFileUrl != null) {
+        val kinds = getMainIndexData().getNonExistentFileSetKinds(virtualFileUrl)
+        if (NonExistingFileSetKind.EXCLUDED_FROM_CONTENT in kinds) {
+          return ThreeState.NO
+        }
+        if (NonExistingFileSetKind.EXCLUDED_OTHER in kinds) {
+          return ThreeState.UNSURE
+        }
+        if (NonExistingFileSetKind.INCLUDED_CONTENT in kinds) {
+          return ThreeState.YES
+        }
+      }
+      currentUrl = PathUtil.getParentPath(currentUrl)
+    }
+    return ThreeState.NO
   }
 
   override fun processContentFilesRecursively(fileOrDir: VirtualFile,
