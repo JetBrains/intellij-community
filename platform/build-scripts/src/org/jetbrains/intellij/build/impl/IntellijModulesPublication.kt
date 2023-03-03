@@ -65,7 +65,7 @@ class IntellijModulesPublication(
      */
     var checkArtifactExistsUrl = property("intellij.modules.publication.repository.existsUrl").trimEnd('/')
 
-    var modulesToExclude = listProperty("intellij.modules.publication.excluded", listOf("fleet"))
+    var modulesToExclude = listProperty("intellij.modules.publication.excluded", listOf("fleet", "multiplatform-tests"))
   }
 
   fun publish() {
