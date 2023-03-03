@@ -415,7 +415,7 @@ public class TypeMigrationLabeler {
     final TypeConversionDescriptorBase conversion = myRules.findConversion(fromType, toType, member, expr, isCovariantPosition, this);
 
     if (conversion == null) {
-      markFailedConversion(Pair.create(fromType, toType), expr);
+      markFailedConversion(toType, expr);
     }
     else {
       setConversionMapping(expr, conversion);
@@ -433,7 +433,7 @@ public class TypeMigrationLabeler {
 
     if (originalType.equals(PsiTypes.nullType())) {
       if (migrationType instanceof PsiPrimitiveType) {
-        markFailedConversion(Pair.create(originalType, migrationType), expr);
+        markFailedConversion(migrationType, expr);
         return;
       }
       if (place instanceof PsiVariable) {
@@ -455,7 +455,7 @@ public class TypeMigrationLabeler {
       return;
     } else if (expr instanceof PsiClassObjectAccessExpression) {
       if (!TypeConversionUtil.isAssignable(migrationType, expr.getType())) {
-        markFailedConversion(Pair.create(expr.getType(), migrationType), expr);
+        markFailedConversion(migrationType, expr);
         return;
       }
     } else if (expr instanceof PsiArrayInitializerExpression && migrationType instanceof PsiArrayType) {
@@ -503,7 +503,7 @@ public class TypeMigrationLabeler {
           }
 
           if (isGenericsArrayType(elementType)) {
-            markFailedConversion(Pair.create(originalType, migrationType), expr);
+            markFailedConversion(migrationType, expr);
             return;
           }
 
@@ -825,10 +825,9 @@ public class TypeMigrationLabeler {
     setTypeUsage(new TypeMigrationUsageInfo(element), place);
   }
 
-  void markFailedConversion(Pair<PsiType, PsiType> typePair, PsiExpression expression) {
-    LOG.assertTrue(typePair.getSecond() != null);
+  void markFailedConversion(@NotNull PsiType migrationType, PsiExpression expression) {
     final Pair<SmartPsiElementPointer<PsiExpression>, PsiType> key =
-      Pair.create(SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression), typePair.getSecond());
+      Pair.create(SmartPointerManager.getInstance(expression.getProject()).createSmartPsiElementPointer(expression), migrationType);
     if (!myFailedConversions.containsKey(key)) {
       myFailedConversions.put(key, getCurrentRoot());
     }
@@ -963,7 +962,7 @@ public class TypeMigrationLabeler {
         if (argumentList != null) {
           final PsiExpression[] expressions = argumentList.getExpressions();
           if (checkNumberOfArguments && parametersCount != expressions.length) {
-            markFailedConversion(Pair.create(param.getType(), migrationType), (PsiCallExpression)parent);
+            markFailedConversion(migrationType, (PsiCallExpression)parent);
           }
           if (index > -1 && index < expressions.length) {
             for (int idx = index; idx < (param.isVarArgs() ? expressions.length : index + 1); idx++) {
