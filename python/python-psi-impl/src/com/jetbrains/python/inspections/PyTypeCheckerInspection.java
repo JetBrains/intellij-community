@@ -345,9 +345,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       List<PyExpression> keywordArguments = getArgumentsMappedToKeywordContainer(mappedParameters);
       List<PyExpression> allArguments = ContainerUtil.concat(positionalArguments, keywordArguments);
 
-      PyParamSpecType paramSpecType = getParamSpecTypeFromContainerParameters(keywordContainer,
-                                                                              positionalContainer,
-                                                                              as(callableType.getCallable(), PyFunction.class));
+      PyParamSpecType paramSpecType = getParamSpecTypeFromContainerParameters(keywordContainer, positionalContainer);
       if (paramSpecType != null) {
         analyzeParamSpec(paramSpecType, allArguments, substitutions, result, unmatchedArguments, unmatchedParameters);
       }
@@ -431,21 +429,11 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Nullable
-    private static PyParamSpecType getParamSpecTypeFromContainerParameters(@Nullable PyCallableParameter positionalContainer,
-                                                                           @Nullable PyCallableParameter keywordContainer,
-                                                                           @Nullable PyFunction function) {
+    private PyParamSpecType getParamSpecTypeFromContainerParameters(@Nullable PyCallableParameter positionalContainer,
+                                                                    @Nullable PyCallableParameter keywordContainer) {
       if (positionalContainer == null && keywordContainer == null) return null;
       PyCallableParameter container = Objects.requireNonNullElse(positionalContainer, keywordContainer);
-
-      PyParameter parameter = container.getParameter();
-      if (!(parameter instanceof PyNamedParameter)) return null;
-      String annotationValue = ((PyNamedParameter)parameter).getAnnotationValue();
-      if (annotationValue == null ||
-          !(annotationValue.endsWith(".args") || annotationValue.endsWith(".kwargs")) ||
-          annotationValue.split("\\.").length != 2) return null;
-      String containerName = StringUtil.substringBeforeLast(annotationValue, ".");
-
-      return new PyParamSpecType(containerName).withScopeOwner(function);
+      return as(container.getType(myTypeEvalContext), PyParamSpecType.class);
     }
 
     private boolean matchParameterAndArgument(@Nullable PyType parameterType,

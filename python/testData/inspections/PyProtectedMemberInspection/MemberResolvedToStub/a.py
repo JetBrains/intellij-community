@@ -3,7 +3,7 @@ class Test:
     def foo1(cls):
         return cls._bar()
 
-    def foo2(self, t: Test):
+    def foo2(self, t):
         return t._bar()
 
     @staticmethod
