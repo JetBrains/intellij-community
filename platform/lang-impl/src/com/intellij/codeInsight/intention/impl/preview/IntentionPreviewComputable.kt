@@ -29,6 +29,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase
+import com.intellij.util.LocalTimeCounter
 import java.io.IOException
 import java.lang.ref.Reference
 import java.util.concurrent.Callable
@@ -101,9 +102,10 @@ internal class IntentionPreviewComputable(private val project: Project,
       val fileFactory = PsiFileFactory.getInstance(project)
       if (origFile != originalFile) { // injection
         val manager = InjectedLanguageManager.getInstance(project)
-        fileToCopy = fileFactory.createFileFromText(origFile.name, origFile.fileType, manager.getUnescapedText(origFile))
+        fileToCopy = fileFactory.createFileFromText(origFile.name, origFile.fileType, manager.getUnescapedText(origFile),
+                                                    LocalTimeCounter.currentTime(), true)
       }
-      psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy)
+      psiFileCopy = IntentionPreviewUtils.obtainCopyForPreview(fileToCopy, origFile)
       editorCopy = IntentionPreviewEditor(psiFileCopy, originalEditor.settings)
       setupEditor(editorCopy, origFile, origEditor)
     } else {
