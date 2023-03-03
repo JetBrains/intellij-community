@@ -145,6 +145,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     checkTestOutput();
   }
 
+  /**
+   * Ensures that the actual output from {@link #systemPrintln(String)} and the related methods
+   * matches the expected output from the {@code .out} file.
+   * <p>
+   * To disable this check, override this method.
+   */
   protected void checkTestOutput() throws Exception {
     getChecker().checkValid(getTestProjectJdk());
   }
