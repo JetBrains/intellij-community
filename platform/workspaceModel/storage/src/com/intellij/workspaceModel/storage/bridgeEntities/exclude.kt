@@ -14,6 +14,7 @@ import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
 interface ExcludeUrlEntity : WorkspaceEntity {
+  @EqualsBy
   val url: VirtualFileUrl
 
   //region generated code
