@@ -112,7 +112,8 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                         val templatesFolders = FilenameIndex.getVirtualFilesByName(lastPathComponent, project.allScope())
                         val files = mutableListOf<VirtualFile>()
                         for (templatesFolder in templatesFolders) {
-                            files += templatesFolder.children.filter { ScriptDefinitionMarkerFileType.isMyFileType(it) }
+                            val children = templatesFolder.children ?: continue
+                            files += children.filter { ScriptDefinitionMarkerFileType.isMyFileType(it) }
                         }
                         getTemplateClassPath(files, indicator)
                     })
