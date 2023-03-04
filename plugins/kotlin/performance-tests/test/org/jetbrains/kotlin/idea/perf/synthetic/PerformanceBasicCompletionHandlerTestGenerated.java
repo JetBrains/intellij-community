@@ -1138,6 +1138,31 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/testData/handlers/basic/NestedTypeArg.kt");
         }
 
+        @TestMetadata("NestedTypeFromImplicitReceiverClass.kt")
+        public void testNestedTypeFromImplicitReceiverClass() throws Exception {
+            runTest("../completion/testData/handlers/basic/NestedTypeFromImplicitReceiverClass.kt");
+        }
+
+        @TestMetadata("NestedTypeFromImplicitReceiverInterface.kt")
+        public void testNestedTypeFromImplicitReceiverInterface() throws Exception {
+            runTest("../completion/testData/handlers/basic/NestedTypeFromImplicitReceiverInterface.kt");
+        }
+
+        @TestMetadata("NestedTypeFromSupertypeClass.kt")
+        public void testNestedTypeFromSupertypeClass() throws Exception {
+            runTest("../completion/testData/handlers/basic/NestedTypeFromSupertypeClass.kt");
+        }
+
+        @TestMetadata("NestedTypeFromSupertypeInterface.kt")
+        public void testNestedTypeFromSupertypeInterface() throws Exception {
+            runTest("../completion/testData/handlers/basic/NestedTypeFromSupertypeInterface.kt");
+        }
+
+        @TestMetadata("NestedTypeFromSupertypeInterface2.kt")
+        public void testNestedTypeFromSupertypeInterface2() throws Exception {
+            runTest("../completion/testData/handlers/basic/NestedTypeFromSupertypeInterface2.kt");
+        }
+
         @TestMetadata("NoTailFromSmart.kt")
         public void testNoTailFromSmart() throws Exception {
             runTest("../completion/testData/handlers/basic/NoTailFromSmart.kt");

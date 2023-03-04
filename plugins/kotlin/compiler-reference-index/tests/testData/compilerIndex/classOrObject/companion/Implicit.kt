@@ -1,3 +1,3 @@
 fun Implicit() {
-    MainClass.f()
+    MainClass
 }

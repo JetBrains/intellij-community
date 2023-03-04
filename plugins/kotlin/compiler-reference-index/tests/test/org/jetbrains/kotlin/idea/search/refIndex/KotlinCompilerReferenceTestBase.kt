@@ -20,9 +20,16 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
         moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, TestKotlinArtifacts.kotlinStdlib.path)
     }
 
+    protected open val isFir: Boolean get() = false
+    protected open val withK2Compiler: Boolean get() = isFir
+
     override fun setUp() {
         super.setUp()
         KotlinCompilerReferenceIndexService[project]
+
+        if (withK2Compiler) {
+            project.enableK2Compiler()
+        }
     }
 
     protected fun getReferentFilesForElementUnderCaret(): Set<String>? {

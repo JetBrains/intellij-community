@@ -31,6 +31,10 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkTypesOfDeprecatedHidden(myFixture)
     }
 
+    fun testReifiedTypeNullability() {
+        checkReifiedTypeNullability(myFixture)
+    }
+
     fun testImplicitReceiverType() {
         checkImplicitReceiverType(myFixture)
     }
@@ -39,12 +43,20 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
         checkSubstitutedReceiverType(myFixture)
     }
 
+    fun testUnderscoreOperatorForTypeArguments() {
+        checkUnderscoreOperatorForTypeArguments(myFixture)
+    }
+
     fun testCallKindOfSamConstructor() {
         checkCallKindOfSamConstructor(myFixture)
     }
 
     fun testExpressionTypeFromIncorrectObject() {
         checkExpressionTypeFromIncorrectObject(myFixture)
+    }
+
+    fun testExpressionTypeForCallToInternalOperator() {
+        checkExpressionTypeForCallToInternalOperator(myFixture)
     }
 
     fun testFlexibleFunctionalInterfaceType() {

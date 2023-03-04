@@ -1138,6 +1138,31 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("../testData/handlers/basic/NestedTypeArg.kt");
         }
 
+        @TestMetadata("NestedTypeFromImplicitReceiverClass.kt")
+        public void testNestedTypeFromImplicitReceiverClass() throws Exception {
+            runTest("../testData/handlers/basic/NestedTypeFromImplicitReceiverClass.kt");
+        }
+
+        @TestMetadata("NestedTypeFromImplicitReceiverInterface.kt")
+        public void testNestedTypeFromImplicitReceiverInterface() throws Exception {
+            runTest("../testData/handlers/basic/NestedTypeFromImplicitReceiverInterface.kt");
+        }
+
+        @TestMetadata("NestedTypeFromSupertypeClass.kt")
+        public void testNestedTypeFromSupertypeClass() throws Exception {
+            runTest("../testData/handlers/basic/NestedTypeFromSupertypeClass.kt");
+        }
+
+        @TestMetadata("NestedTypeFromSupertypeInterface.kt")
+        public void testNestedTypeFromSupertypeInterface() throws Exception {
+            runTest("../testData/handlers/basic/NestedTypeFromSupertypeInterface.kt");
+        }
+
+        @TestMetadata("NestedTypeFromSupertypeInterface2.kt")
+        public void testNestedTypeFromSupertypeInterface2() throws Exception {
+            runTest("../testData/handlers/basic/NestedTypeFromSupertypeInterface2.kt");
+        }
+
         @TestMetadata("NoTailFromSmart.kt")
         public void testNoTailFromSmart() throws Exception {
             runTest("../testData/handlers/basic/NoTailFromSmart.kt");
