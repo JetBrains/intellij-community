@@ -69,7 +69,7 @@ internal open class FirClassifierCompletionContributor(
             .filter { filterClassifiers(it) }
             .forEach { classifierSymbol ->
                 availableFromScope += classifierSymbol
-                addClassifierSymbolToCompletion(classifierSymbol, context, ImportStrategy.DoNothing)
+                addClassifierSymbolToCompletion(classifierSymbol, context, getImportingStrategy(classifierSymbol))
             }
 
         if (prefixMatcher.prefix.isNotEmpty()) {

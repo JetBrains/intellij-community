@@ -1,0 +1,3 @@
+fun methodUsage() {
+    MyObject.a
+}

@@ -1,3 +1,3 @@
 fun Explicit() {
-    MainClass.Companion.f()
+    MainClass.Companion
 }

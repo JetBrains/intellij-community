@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.env.findElementByTextFromPsi
+import org.jetbrains.uast.util.isConstructorCall
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 interface UastApiFixtureTestBase : UastPluginSelection {
@@ -157,6 +158,55 @@ interface UastApiFixtureTestBase : UastPluginSelection {
         }
     }
 
+    fun checkReifiedTypeNullability(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                import kotlin.reflect.KClass
+
+                interface NavArgs
+                class Fragment
+                class Bundle
+                class NavArgsLazy<Args : NavArgs>(
+                    private val navArgsClass: KClass<Args>,
+                    private val argumentProducer: () -> Bundle
+                )
+                
+                inline fun <reified Args : NavArgs> Fragment.navArgs() = NavArgsLazy(Args::class) {
+                    throw IllegalStateException("Fragment $this has null arguments")
+                }
+                
+                inline fun <reified Args : NavArgs> Fragment.navArgsNullable(flag: Boolean) =
+                    if (flag)
+                        NavArgsLazy(Args::class) {
+                            throw IllegalStateException("Fragment $this has null arguments")
+                        }
+                    else
+                        null
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitMethod(node: UMethod): Boolean {
+                if (!node.name.startsWith("navArgs")) return super.visitMethod(node)
+
+                TestCase.assertEquals("NavArgsLazy<Args>", node.javaPsi.returnType?.canonicalText)
+
+                val annotations = node.javaPsi.annotations
+                TestCase.assertEquals(1, annotations.size)
+                val annotation = annotations.single()
+                if (node.name.endsWith("Nullable")) {
+                    TestCase.assertTrue(annotation.isNullable)
+                } else {
+                    TestCase.assertTrue(annotation.isNotNull)
+                }
+
+                return super.visitMethod(node)
+            }
+        })
+    }
+
     fun checkImplicitReceiverType(myFixture: JavaCodeInsightTestFixture) {
         myFixture.addClass(
             """
@@ -199,6 +249,67 @@ interface UastApiFixtureTestBase : UastPluginSelection {
             .orFail("cant convert to UCallExpression")
         TestCase.assertEquals("use", uCallExpression.methodName)
         TestCase.assertEquals("java.lang.String", uCallExpression.receiverType?.canonicalText)
+    }
+
+    fun checkUnderscoreOperatorForTypeArguments(myFixture: JavaCodeInsightTestFixture) {
+        // example from https://kotlinlang.org/docs/generics.html#underscore-operator-for-type-arguments
+        // modified to avoid using reflection (::class.java)
+        myFixture.configureByText(
+            "main.kt", """
+                abstract class SomeClass<T> {
+                    abstract fun execute() : T
+                }
+
+                class SomeImplementation : SomeClass<String>() {
+                    override fun execute(): String = "Test"
+                }
+
+                class OtherImplementation : SomeClass<Int>() {
+                    override fun execute(): Int = 42
+                }
+
+                object Runner {
+                    inline fun <reified S: SomeClass<T>, T> run(instance: S) : T {
+                        return instance.execute()
+                    }
+                }
+
+                fun test() {
+                    val i = SomeImplementation()
+                    // T is inferred as String because SomeImplementation derives from SomeClass<String>
+                    val s = Runner.run<_, _>(i)
+                    assert(s == "Test")
+
+                    val j = OtherImplementation()
+                    // T is inferred as Int because OtherImplementation derives from SomeClass<Int>
+                    val n = Runner.run<_, _>(j)
+                    assert(n == 42)
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                if (node.methodName != "run") return super.visitCallExpression(node)
+
+                TestCase.assertEquals(2, node.typeArgumentCount)
+                val firstTypeArg = node.typeArguments[0]
+                val secondTypeArg = node.typeArguments[1]
+
+                when (firstTypeArg.canonicalText) {
+                    "SomeImplementation" -> {
+                        TestCase.assertEquals("java.lang.String", secondTypeArg.canonicalText)
+                    }
+                    "OtherImplementation" -> {
+                        TestCase.assertEquals("java.lang.Integer", secondTypeArg.canonicalText)
+                    }
+                    else -> TestCase.assertFalse("Unexpected $firstTypeArg", true)
+                }
+
+                return super.visitCallExpression(node)
+            }
+        })
     }
 
     fun checkCallKindOfSamConstructor(myFixture: JavaCodeInsightTestFixture) {
@@ -249,6 +360,68 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 }
 
                 super.visitElement(element)
+            }
+        })
+    }
+
+    fun checkExpressionTypeForCallToInternalOperator(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                object Dependency {
+                    internal operator fun unaryPlus() = Any()
+                    operator fun unaryMinus() = Any()
+                    operator fun not() = Any()
+                }
+                
+                class OtherDependency {
+                    internal operator fun inc() = this
+                    operator fun dec() = this
+                }
+                
+                fun test {
+                    +Dependency
+                    Dependency.unaryPlus()
+                    -Dependency
+                    Dependency.unaryMinus()
+                    !Dependency
+                    Dependency.not()
+                    
+                    var x = OtherDependency()
+                    x++
+                    x.inc()
+                    x--
+                    x.dec()
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val binaryOperators = setOf("inc", "dec")
+
+        uFile.accept(object : AbstractUastVisitor() {
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                if (node.isConstructorCall()) return super.visitCallExpression(node)
+
+                if (node.methodName in binaryOperators) {
+                    TestCase.assertEquals("OtherDependency", node.getExpressionType()?.canonicalText)
+                } else {
+                    TestCase.assertEquals("java.lang.Object", node.getExpressionType()?.canonicalText)
+                }
+
+                return super.visitCallExpression(node)
+            }
+
+            override fun visitPrefixExpression(node: UPrefixExpression): Boolean {
+                TestCase.assertEquals("java.lang.Object", node.getExpressionType()?.canonicalText)
+
+                return super.visitPrefixExpression(node)
+            }
+
+            override fun visitPostfixExpression(node: UPostfixExpression): Boolean {
+                TestCase.assertEquals("OtherDependency", node.getExpressionType()?.canonicalText)
+
+                return super.visitPostfixExpression(node)
             }
         })
     }

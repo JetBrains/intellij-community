@@ -1,3 +1,0 @@
-fun d() {
-    MainClass().NestedClass()
-}

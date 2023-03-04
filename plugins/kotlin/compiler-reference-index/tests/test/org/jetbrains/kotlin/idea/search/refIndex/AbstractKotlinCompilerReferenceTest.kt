@@ -4,11 +4,9 @@ package org.jetbrains.kotlin.idea.search.refIndex
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.intellij.testFramework.assertEqualsToFile
+import com.intellij.util.io.readText
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
-import kotlin.io.path.Path
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
-import kotlin.io.path.reader
+import kotlin.io.path.*
 
 abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTestBase() {
     override fun setUp() {
@@ -20,36 +18,57 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
         myFixture.testDataPath = testDataFilePath
 
         val configurationPath = Path(testDataFilePath, "testConfig.json")
-        val config: JsonObject = JsonParser.parseReader(configurationPath.reader()).asJsonObject
+        val firConfigurationPath = Path(testDataFilePath, "testConfig.fir.json").takeIf { isFir && it.exists() }
+        val pathToCheck = firConfigurationPath ?: configurationPath
+        val config: JsonObject = JsonParser.parseReader(pathToCheck.reader()).asJsonObject
 
         val mainFile = config[MAIN_FILE]?.asString ?: error("Main file not found")
         val shouldBeUsage = config[SHOULD_BE_USAGE]?.asJsonArray?.map { it.asString }?.toSet().orEmpty()
+        val ignoreK2Compiler = config[IGNORE_K2_COMPILER]?.asString
+        val isTestEnabled = !isFir || ignoreK2Compiler == null
 
-        val allFiles = listOf(mainFile) + Path(testDataFilePath).listDirectoryEntries().map { it.name }.minus(mainFile)
-        myFixture.configureByFiles(*allFiles.toTypedArray())
-        rebuildProject()
+        runCatching {
+            val allFiles = listOf(mainFile) + Path(testDataFilePath).listDirectoryEntries().map { it.name }.minus(mainFile)
+            myFixture.configureByFiles(*allFiles.toTypedArray())
+            rebuildProject()
 
-        val actualUsages = getReferentFilesForElementUnderCaret()
-        assertEqualsToFile(
-            "",
-            configurationPath.toFile(),
-            createActualText(mainFile, actualUsages, shouldBeUsage)
+            val actualUsages = getReferentFilesForElementUnderCaret()
+            assertEqualsToFile(
+                "",
+                pathToCheck.toFile(),
+                createActualText(mainFile, actualUsages, shouldBeUsage, ignoreK2Compiler)
+            )
+        }.fold(
+            onSuccess = { require(isTestEnabled) { "This test passes and shouldn't be muted!" } },
+            onFailure = { exception -> if (isTestEnabled) throw exception },
         )
+
+        if (firConfigurationPath?.readText()?.trim() == configurationPath.readText().trim()) {
+            firConfigurationPath.deleteExisting()
+            error("Fir file is redundant")
+        }
     }
 
     companion object {
         private const val USAGES = "usages"
         private const val SHOULD_BE_USAGE = "shouldBeUsage"
         private const val MAIN_FILE = "mainFile"
+        private const val IGNORE_K2_COMPILER = "ignoreK2Compiler"
 
-        private fun createActualText(mainFile: String, actualUsages: Set<String>?, shouldBeUsage: Set<String>): String {
+        private fun createActualText(
+            mainFile: String,
+            actualUsages: Set<String>?,
+            shouldBeUsage: Set<String>,
+            ignoreK2Compiler: String?,
+        ): String {
             val mainFileText = createPair(MAIN_FILE, "\"$mainFile\"")
             val actualUsagesText = actualUsages?.ifNotEmpty { createPair(USAGES, createArray(this)) }
             val shouldBeFixedText = shouldBeUsage.minus(actualUsages.orEmpty()).ifNotEmpty {
                 createPair(SHOULD_BE_USAGE, createArray(this))
             }
 
-            return listOfNotNull(mainFileText, actualUsagesText, shouldBeFixedText).joinToString(
+            val ignoreK2CompilerText = ignoreK2Compiler?.let { createPair(IGNORE_K2_COMPILER, "\"$ignoreK2Compiler\"") }
+            return listOfNotNull(mainFileText, actualUsagesText, shouldBeFixedText, ignoreK2CompilerText).joinToString(
                 prefix = "{\n    ",
                 separator = ",\n    ",
                 postfix = "\n}"

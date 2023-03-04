@@ -257,8 +257,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                     }
                 }
 
-                // FIXME remove .distinct() when getAllOverriddenSymbols stops returning duplicating symbols
-                deepestSuperMethods.mapNotNull { it.psi }.distinct()
+                deepestSuperMethods.mapNotNull { it.psi }
             }
             else -> emptyList()
         }

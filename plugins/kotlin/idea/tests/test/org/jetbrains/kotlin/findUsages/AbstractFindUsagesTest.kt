@@ -103,8 +103,12 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
     )
 
     companion object {
-        enum class FindUsageTestType {
-            DEFAULT, FIR, CRI
+        enum class FindUsageTestType(val isFir: Boolean, val isCri: Boolean) {
+            DEFAULT(isFir = false, isCri = false),
+            FIR(isFir = true, isCri = false),
+
+            CRI(isFir = false, isCri = true),
+            FIR_CRI(isFir = true, isCri = true),
         }
 
         fun <T : PsiElement> doFindUsageTest(
@@ -128,7 +132,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                 return
             }
 
-            if (testType == FindUsageTestType.CRI) {
+            if (testType.isCri) {
                 if (InTextDirectivesUtils.isDirectiveDefined(mainFileText, "// CRI_IGNORE")) {
                     println("test $mainFileName is ignored (${testType.name})")
                     return
@@ -192,7 +196,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                     newFileName to oldFileName
                 }.associate { it }
 
-                if (testType != FindUsageTestType.FIR) {
+                if (testType == FindUsageTestType.DEFAULT) {
                     (configurator.file as? KtFile)?.let { ktFile ->
                         val diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithAllCompilerChecks().bindingContext.diagnostics }
                         DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider = diagnosticsProvider)
@@ -318,7 +322,7 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase() 
                 return UsageType.COMMENT_USAGE
             }
 
-            return UsageTypeProvider.EP_NAME.extensionList.mapNotNull { it.getUsageType(element) }.firstOrNull() ?: UsageType.UNCLASSIFIED
+            return UsageTypeProvider.EP_NAME.extensionList.firstNotNullOfOrNull { it.getUsageType(element) } ?: UsageType.UNCLASSIFIED
         }
 
         internal fun <T> instantiateClasses(mainFileText: String, directive: String): Collection<T> {
@@ -410,12 +414,13 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
     val finalUsages = filteredUsages.map(convertToString).sorted()
 
     var results = File(rootPath, prefix + "results.txt")
-    if (testType == FindUsageTestType.FIR) {
+    if (testType.isFir) {
         val firResults = File(rootPath, prefix + "fir.results.txt")
         if (firResults.exists()) {
             results = firResults
         }
     }
+
     KotlinTestUtils.assertEqualsToFile(testType.name, results, finalUsages.joinToString("\n"))
 
     if (log != null  && !ignoreLog) {
@@ -476,7 +481,7 @@ internal fun findUsages(
         val processor = CommonProcessors.CollectProcessor<UsageInfo>()
         for (psiElement in handler.primaryElements + handler.secondaryElements) {
             if (highlightingMode) {
-                if (testType == FindUsageTestType.FIR) {
+                if (testType.isFir) {
                     ProgressManager.getInstance().run(
                         object : Task.Modal(project, "", false) {
                             override fun run(indicator: ProgressIndicator) {
