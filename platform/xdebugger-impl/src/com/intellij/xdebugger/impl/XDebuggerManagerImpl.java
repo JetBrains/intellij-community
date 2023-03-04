@@ -554,13 +554,12 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
     private static int getLineNumber(EditorMouseEvent event) {
       Editor editor = event.getEditor();
-      int line = event.getVisualPosition().line;
-      if (line >= ((EditorImpl)editor).getVisibleLineCount() ||
-          line >= editor.getDocument().getLineCount()) {
+      if (event.getVisualPosition().line >= ((EditorImpl)editor).getVisibleLineCount()) {
         return -1;
       }
       int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, event.getOffset());
-      return editor.getDocument().getLineNumber(lineStartOffset);
+      int documentLine = editor.getDocument().getLineNumber(lineStartOffset);
+      return documentLine < editor.getDocument().getLineCount() ? documentLine : -1;
     }
 
     @Override
