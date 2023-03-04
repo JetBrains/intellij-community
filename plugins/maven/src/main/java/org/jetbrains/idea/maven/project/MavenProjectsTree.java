@@ -462,15 +462,13 @@ public final class MavenProjectsTree {
     UpdateContext updateContext = new UpdateContext();
 
     var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process);
-    var updateSpecs = new ArrayList<UpdateSpec>();
     var filesToAddModules = new HashSet<VirtualFile>();
     for (VirtualFile file : files) {
       if (null == findProject(file)) {
         filesToAddModules.add(file);
       }
-      updateSpecs.add(new UpdateSpec(file, updateModules, forceRead));
+      updater.updateProjects(List.of(new UpdateSpec(file, updateModules, forceRead)));
     }
-    updater.updateProjects(updateSpecs);
 
     for (MavenProject aggregator : getProjects()) {
       for (VirtualFile moduleFile : aggregator.getExistingModuleFiles()) {
@@ -698,7 +696,7 @@ public final class MavenProjectsTree {
     public void updateProjects(@NotNull List<UpdateSpec> specs) {
       if (specs.isEmpty()) return;
 
-      ParallelRunner.runSequentially(specs, spec -> {
+      ParallelRunner.runInParallel(specs, spec -> {
         update(spec.mavenProjectFile(), spec.updateModules(), spec.forceRead());
       });
     }
