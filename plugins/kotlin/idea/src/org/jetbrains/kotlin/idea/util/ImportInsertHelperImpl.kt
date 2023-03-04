@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.util
 
-import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -482,16 +481,11 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
             val importList = file.importList
             if (importList != null) {
-                val isInjectedScript = file.virtualFile is VirtualFileWindow && file.isScript()
                 val newDirective = psiFactory.createImportDirective(importPath)
                 val imports = importList.imports
                 return if (imports.isEmpty()) { //TODO: strange hack
-                    if (!isInjectedScript) importList.add(psiFactory.createNewLine())
-                    (importList.add(newDirective) as KtImportDirective).also {
-                        if (isInjectedScript) {
-                            importList.add(psiFactory.createNewLine(2))
-                        }
-                    }
+                    importList.add(psiFactory.createNewLine())
+                    (importList.add(newDirective) as KtImportDirective)
                 } else {
                     val importPathComparator = ImportInsertHelperImpl(project).getImportSortComparator(file)
                     val insertAfter = imports.lastOrNull {
@@ -499,16 +493,7 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
                         directivePath != null && importPathComparator.compare(directivePath, importPath) <= 0
                     }
 
-                    (importList.addAfter(newDirective, insertAfter) as KtImportDirective).also { insertedDirective ->
-                        if (isInjectedScript) {
-                            if (insertAfter != null) {
-                                importList.addBefore(psiFactory.createNewLine(1), insertedDirective)
-                            }
-                            if (insertAfter == null) {
-                                importList.addAfter(psiFactory.createNewLine(1), insertedDirective)
-                            }
-                        }
-                    }
+                    (importList.addAfter(newDirective, insertAfter) as KtImportDirective)
                 }
             } else {
                 error("Trying to insert import $fqName into a file ${file.name} of type ${file::class.java} with no import list.")
