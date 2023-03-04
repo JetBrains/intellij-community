@@ -245,8 +245,10 @@ class DistributedTestHost {
           }
         }
       }
-      else
+      else {
         logger.info("Frame was empty when makeScreenshot was called")
+        result.complete(false)
+      }
     }
 
     IdeEventQueue.getInstance().flushQueue()
@@ -266,7 +268,7 @@ class DistributedTestHost {
         }
       }
     }
-    return true
+    return result.get()
   }
 
   private fun assertStateAfterTestMethod() {
