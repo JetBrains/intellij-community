@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
-import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_PATH
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import java.io.File
@@ -108,12 +107,11 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                 val pluginDisposable = KotlinPluginDisposable.getInstance(project)
                 val (templates, classpath) =
                     ReadAction.nonBlocking(Callable {
-                        val lastPathComponent = SCRIPT_DEFINITION_MARKERS_PATH.split('/').last { it.isNotEmpty() }
-                        val templatesFolders = FilenameIndex.getVirtualFilesByName(lastPathComponent, project.allScope())
+                        val templatesFolders = FilenameIndex.getVirtualFilesByName(ScriptDefinitionMarkerFileType.lastPathSegment, project.allScope())
                         val files = mutableListOf<VirtualFile>()
                         for (templatesFolder in templatesFolders) {
-                            val children = templatesFolder.children ?: continue
-                            files += children.filter { ScriptDefinitionMarkerFileType.isMyFileType(it) }
+                            val children = templatesFolder.takeIf { ScriptDefinitionMarkerFileType.isParentOfMyFileType(it) }?.children ?: continue
+                            files += children
                         }
                         getTemplateClassPath(files, indicator)
                     })
