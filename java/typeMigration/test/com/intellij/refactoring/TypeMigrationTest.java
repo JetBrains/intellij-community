@@ -48,6 +48,10 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
     doTestFirstParamType("x", PsiTypes.longType());
   }
 
+  public void testEnumConstant() {
+    doTestFirstParamType("Test", PsiTypes.byteType());
+  }
+
   public void testVarargsAndBoxing() {
     doTestFieldType("x", PsiTypes.longType());
   }

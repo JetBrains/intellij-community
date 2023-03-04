@@ -964,9 +964,9 @@ public class TypeMigrationLabeler {
     final List<PsiReference> refs = filterReferences(psiClass, ReferencesSearch.search(method, scope, false));
     for (PsiReference ref1 : refs) {
       final PsiElement ref = ref1.getElement();
-      final PsiElement parent = Util.getEssentialParent(ref);
-      if (parent instanceof PsiCallExpression) {
-        final PsiExpressionList argumentList = ((PsiCallExpression)parent).getArgumentList();
+      final PsiElement parent = ref instanceof PsiEnumConstant ? ref : ref.getParent();
+      if (parent instanceof PsiCall call) {
+        final PsiExpressionList argumentList = call.getArgumentList();
         if (argumentList != null) {
           final PsiExpression[] expressions = argumentList.getExpressions();
           if (checkNumberOfArguments && parametersCount != expressions.length) {
@@ -1032,7 +1032,6 @@ public class TypeMigrationLabeler {
   }
 
   private void migrate(boolean autoMigrate, PsiElement... victims) {
-
     myMigrationRoots = new LinkedList<>();
     myTypeEvaluator = new TypeEvaluator(myMigrationRoots, this, myProject);
 
