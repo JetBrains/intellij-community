@@ -17,7 +17,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static java.nio.file.StandardOpenOption.*;
 
@@ -37,7 +36,7 @@ import static java.nio.file.StandardOpenOption.*;
  * TODO no support for attributes now, see .toCSVLine()
  */
 @ApiStatus.Internal
-public final class CsvMetricsExporter implements MetricExporter {
+public final class CsvMetricsExporter extends BasicCsvMetricsExporter implements MetricExporter {
   private static final Logger LOG = Logger.getInstance(CsvMetricsExporter.class);
 
   private static final String HTML_PLOTTER_NAME = "open-telemetry-metrics-plotter.html";
@@ -57,7 +56,7 @@ public final class CsvMetricsExporter implements MetricExporter {
       }
     }
     if (!Files.exists(writeToFile) || Files.size(writeToFile) == 0) {
-      Files.write(writeToFile, csvHeadersLines(), CREATE, WRITE);
+      Files.write(writeToFile, BasicCsvMetricsExporter.Companion.csvHeadersLines(), CREATE, WRITE);
     }
 
     copyHtmlPlotterToOutputDir(writeToFile.getParent());
@@ -91,7 +90,7 @@ public final class CsvMetricsExporter implements MetricExporter {
 
     final CompletableResultCode result = new CompletableResultCode();
     final List<String> lines = metrics.stream()
-      .flatMap(CsvMetricsExporter::toCSVLine)
+      .flatMap(BasicCsvMetricsExporter.Companion::toCsvStream)
       .toList();
 
     try {
@@ -105,30 +104,6 @@ public final class CsvMetricsExporter implements MetricExporter {
     return result;
   }
 
-  private static Stream<String> toCSVLine(final MetricData metricData) {
-    return switch (metricData.getType()) {
-      case LONG_SUM -> metricData.getLongSumData().getPoints().stream().map(
-        p ->
-          concatToCsvLine(metricData.getName(), p.getStartEpochNanos(), p.getEpochNanos(), String.valueOf(p.getValue()))
-      );
-      case DOUBLE_SUM -> metricData.getDoubleSumData().getPoints().stream().map(
-        p ->
-          concatToCsvLine(metricData.getName(), p.getStartEpochNanos(), p.getEpochNanos(), String.valueOf(p.getValue()))
-      );
-      case LONG_GAUGE -> metricData.getLongGaugeData().getPoints().stream().map(
-        p ->
-          concatToCsvLine(metricData.getName(), p.getStartEpochNanos(), p.getEpochNanos(), String.valueOf(p.getValue()))
-      );
-      case DOUBLE_GAUGE -> metricData.getDoubleGaugeData().getPoints().stream().map(
-        p ->
-          concatToCsvLine(metricData.getName(), p.getStartEpochNanos(), p.getEpochNanos(), String.valueOf(p.getValue()))
-      );
-      default -> Stream.of(
-        concatToCsvLine(metricData.getName(), -1, -1, "<metrics type " + metricData.getType() + " is not supported yet>")
-      );
-    };
-  }
-
   @Override
   public CompletableResultCode flush() {
     return CompletableResultCode.ofSuccess();
@@ -137,23 +112,5 @@ public final class CsvMetricsExporter implements MetricExporter {
   @Override
   public CompletableResultCode shutdown() {
     return CompletableResultCode.ofSuccess();
-  }
-
-  @NotNull
-  private static List<String> csvHeadersLines() {
-    return List.of(
-      "# OpenTelemetry Metrics report: .csv, 4 fields " +
-      "# <metric name>, <period start, nanoseconds>, <period end, nanoseconds>, <metric value>",
-      "# See CsvMetricsExporter for details.",
-      "# NAME, PERIOD_START_NANOS, PERIOD_END_NANOS, VALUE"
-    );
-  }
-
-  @NotNull
-  private static String concatToCsvLine(final String name,
-                                        final long startEpochNanos,
-                                        final long endEpochNanos,
-                                        final String value) {
-    return name + ',' + startEpochNanos + ',' + endEpochNanos + ',' + value;
   }
 }
