@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 internal class MessageBusConnectionImpl(bus: MessageBusImpl) : BaseBusConnection(bus), MessageBusConnection {
   private var defaultHandler: MessageHandler? = null
+  private var notifyOnDisposal: Boolean = false
 
   override fun <L : Any> subscribe(topic: Topic<L>) {
     val defaultHandler = defaultHandler
@@ -31,6 +32,9 @@ internal class MessageBusConnectionImpl(bus: MessageBusImpl) : BaseBusConnection
   override fun dispose() {
     // already disposed
     val bus = bus ?: return
+    if (notifyOnDisposal) {
+      deliverImmediately()
+    }
     this.bus = null
     defaultHandler = null
     // reset as bus will not remove disposed connection from list immediately
@@ -49,6 +53,10 @@ internal class MessageBusConnectionImpl(bus: MessageBusImpl) : BaseBusConnection
     else {
       bus.deliverImmediately(this)
     }
+  }
+
+  override fun deliverImmediatelyOnDisposal(notifyOnDisposal: Boolean) {
+    this.notifyOnDisposal = notifyOnDisposal
   }
 
   fun isMyHandler(topic: Topic<*>, handler: Any): Boolean {

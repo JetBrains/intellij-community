@@ -52,7 +52,8 @@ public class ConsoleExecutionEditor implements Disposable {
     myConsolePromptDecorator = new ConsolePromptDecorator(myConsoleEditor);
     myConsoleEditor.getGutter().registerTextAnnotation(myConsolePromptDecorator);
 
-    myBusConnection = getProject().getMessageBus().connect();
+    myBusConnection = getProject().getMessageBus().connect(this);
+    myBusConnection.deliverImmediatelyOnDisposal(true);
     // action shortcuts are not yet registered
     ApplicationManager.getApplication().invokeLater(() -> installEditorFactoryListener(), o -> Disposer.isDisposed(myBusConnection));
   }
@@ -199,8 +200,6 @@ public class ConsoleExecutionEditor implements Disposable {
 
   @Override
   public void dispose() {
-    myBusConnection.deliverImmediately();
-    Disposer.dispose(myBusConnection);
     EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.releaseEditor(myConsoleEditor);
 

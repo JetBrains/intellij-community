@@ -35,4 +35,11 @@ interface MessageBusConnection : SimpleMessageBusConnection, Disposable {
    * @see MessageBus.syncPublisher
    */
   fun deliverImmediately()
+
+  /**
+   * Enables possibility to invoke [deliverImmediately][MessageBusConnection.deliverImmediately] on [MessageBus] disposal. Default value is <code>false</code>
+   *
+   * @param notifyOnDisposal boolean flag
+   */
+  fun deliverImmediatelyOnDisposal(notifyOnDisposal: Boolean)
 }
