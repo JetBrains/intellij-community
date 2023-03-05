@@ -75,8 +75,16 @@ public class ExceptionFromCatchWhichDoesntWrap {
   void patternVariable() {
     try {
     } catch (Exception ex) {
-      if (ex instanceof RuntimeException rte) {
+      if (ex instanceof ((RuntimeException rte))) {
         throw  rte;
+      }
+    }
+
+    try {
+    } catch (Exception ex) {
+      switch (ex) {
+        case ((RuntimeException rte)) -> throw rte;
+        default -> {}
       }
     }
   }
