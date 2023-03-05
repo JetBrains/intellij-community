@@ -108,9 +108,13 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                 val (templates, classpath) =
                     ReadAction.nonBlocking(Callable {
                         val templatesFolders = FilenameIndex.getVirtualFilesByName(ScriptDefinitionMarkerFileType.lastPathSegment, project.allScope())
+                        val projectFileIndex = ProjectFileIndex.getInstance(project)
                         val files = mutableListOf<VirtualFile>()
                         for (templatesFolder in templatesFolders) {
-                            val children = templatesFolder.takeIf { ScriptDefinitionMarkerFileType.isParentOfMyFileType(it) }?.children ?: continue
+                            val children =
+                              templatesFolder?.takeIf { ScriptDefinitionMarkerFileType.isParentOfMyFileType(it) }
+                                ?.takeIf { projectFileIndex.isInSource(it) || projectFileIndex.isInLibraryClasses(it) }
+                                ?.children ?: continue
                             files += children
                         }
                         getTemplateClassPath(files, indicator)
