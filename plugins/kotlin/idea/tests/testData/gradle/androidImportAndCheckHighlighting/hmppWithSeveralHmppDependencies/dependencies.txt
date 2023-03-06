@@ -48,7 +48,6 @@ mpp-issue-bootstrap.p1.commonTest
     io.ktor:ktor-utils:commonMain:2.2.1 (TEST)
     io.ktor:ktor-websocket-serialization:commonMain:2.2.1 (TEST)
     io.ktor:ktor-websockets:commonMain:2.2.1 (TEST)
-    org.jetbrains.kotlin:kotlin-stdlib-common:1.8.0 (TEST)
     org.jetbrains.kotlinx:atomicfu:commonMain:0.19.0 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.6.4 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.6.4 (TEST)
