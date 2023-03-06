@@ -14,7 +14,7 @@ public interface ApplicationRunLineMarkerHider {
   ExtensionPointName<ApplicationRunLineMarkerHider> EP_NAME =
     ExtensionPointName.create("com.intellij.execution.applicationRunLineMarkerHider");
 
-  static boolean hideRunLineMarker(@NotNull final PsiElement element) {
+  static boolean shouldHideRunLineMarker(@NotNull final PsiElement element) {
     for (ApplicationRunLineMarkerHider extension : EP_NAME.getExtensionList()) {
       if (!extension.runLineMarkerAvailable(element)) {
         return true;
@@ -24,5 +24,5 @@ public interface ApplicationRunLineMarkerHider {
   }
 
   @Contract(pure=true)
-  boolean runLineMarkerAvailable(PsiElement element);
+  boolean runLineMarkerAvailable(@NotNull PsiElement element);
 }

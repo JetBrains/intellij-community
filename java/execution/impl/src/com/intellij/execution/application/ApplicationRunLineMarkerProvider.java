@@ -26,7 +26,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
   public final @Nullable Info getInfo(@NotNull final PsiElement element) {
     if (Registry.is("ide.jvm.run.marker") ||
         !isIdentifier(element) ||
-        ApplicationRunLineMarkerHider.hideRunLineMarker(element)) {
+        ApplicationRunLineMarkerHider.shouldHideRunLineMarker(element)) {
       return null;
     }
 
