@@ -210,9 +210,10 @@ final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
   }
 
   @Nullable
-  protected @InspectionMessage String doValidateWithData() {
+  @InspectionMessage
+  private String doValidateWithData() {
     String rootElementName = getElementName();
-    if (rootElementName == null || rootElementName.length() == 0) {
+    if (rootElementName == null || rootElementName.isEmpty()) {
       return XmlBundle.message("schema2.instance.no.valid.root.element.name.validation.error");
     }
 
@@ -229,31 +230,31 @@ final class GenerateInstanceDocumentFromSchemaDialog extends DialogWrapper {
     }
 
     final String fileName = getOutputFileName();
-    if (fileName == null || fileName.length() == 0) {
+    if (fileName == null || fileName.isEmpty()) {
       return XmlBundle.message("schema2.instance.output.file.name.is.empty.validation.problem");
     }
     return null;
 
   }
 
-  protected static boolean isAcceptableFile(VirtualFile virtualFile) {
+  private static boolean isAcceptableFile(VirtualFile virtualFile) {
     return GenerateInstanceDocumentFromSchemaAction.isAcceptableFileForGenerateSchemaFromInstanceDocument(virtualFile);
   }
 
 
-  protected TextFieldWithBrowseButton getUrl() {
+  TextFieldWithBrowseButton getUrl() {
     return generateFromUrl;
   }
 
-  protected JLabel getUrlText() {
+  private JLabel getUrlText() {
     return generateFromUrlText;
   }
 
-  protected JLabel getStatusTextField() {
+  private JLabel getStatusTextField() {
     return statusText;
   }
 
-  protected JLabel getStatusField() {
+  private JLabel getStatusField() {
     return status;
   }
 
