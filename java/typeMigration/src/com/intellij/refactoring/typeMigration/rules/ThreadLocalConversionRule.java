@@ -55,7 +55,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
           }
         }
         else {
-          return TypeConversionUtil.isAssignable(from, PsiUtil.captureToplevelWildcards(toTypeParameterValue, context));
+          return TypeConversionUtil.isAssignable(toTypeParameterValue, from);
         }
       }
       return !PsiUtil.isLanguageLevel5OrHigher(context);
