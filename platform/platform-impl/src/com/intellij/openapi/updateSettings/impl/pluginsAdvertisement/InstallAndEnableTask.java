@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.IdeBundle;
@@ -27,13 +27,13 @@ import java.util.Set;
 abstract class InstallAndEnableTask extends Task.Modal {
   private final boolean allowInstallingPlugins;
   protected final Set<PluginDownloader> myPlugins = new HashSet<>();
-  private final @NotNull Set<PluginId> myPluginIds;
+  protected final @NotNull Set<PluginId> myPluginIds;
   protected @Nullable List<PluginNode> myCustomPlugins;
 
   private final boolean myShowDialog;
   private final boolean mySelectAllInDialog;
-  private final @Nullable ModalityState myModalityState;
-  private @NotNull final Runnable myOnSuccess;
+  protected final @Nullable ModalityState myModalityState;
+  protected @NotNull final Runnable myOnSuccess;
 
   InstallAndEnableTask(@Nullable Project project,
                        @NotNull Set<PluginId> pluginIds,
@@ -93,7 +93,7 @@ abstract class InstallAndEnableTask extends Task.Modal {
       .doInstallPlugins(myShowDialog, myModalityState);
   }
 
-  private void runOnSuccess(boolean onSuccess) {
+  protected void runOnSuccess(boolean onSuccess) {
     if (onSuccess) {
       myOnSuccess.run();
     }
