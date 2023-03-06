@@ -1908,7 +1908,7 @@
     },
     {
       "key": "RunWidget.foreground",
-      "description": "Foreground for run widget components and stroke icons",
+      "description": "Foreground for run widget components and stroke icons on the contrast background",
       "since": "2022.3"
     },
     {
@@ -1918,12 +1918,13 @@
     },
     {
       "key": "RunWidget.background",
-      "description": "Background for run widget in non-running state",
-      "since": "2022.3"
+      "description": "Background for the contrast run widget in non-running state",
+      "since": "2022.3",
+      "deprecated": true
     },
     {
       "key": "RunWidget.runningBackground",
-      "description": "Background for run widget in running state",
+      "description": "Background for run widget actions in running state",
       "since": "2022.3"
     },
     {
@@ -1938,8 +1939,9 @@
     },
     {
       "key": "RunWidget.separatorColor",
-      "description": "The color for separator in run widget",
-      "since": "2022.3"
+      "description": "The color for separator in the contrast run widget",
+      "since": "2022.3",
+      "deprecated": true
     },
     {
       "key": "MainWindow.Tab.selectedForeground"
