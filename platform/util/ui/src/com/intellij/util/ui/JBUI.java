@@ -1100,6 +1100,14 @@ public final class JBUI {
 
     public static final class CompletionPopup {
 
+      public static @NotNull Insets selectionInnerInsets() {
+        return insets(selectionInnerInsetsKey(), insets(2));
+      }
+
+      public static @NotNull String selectionInnerInsetsKey() {
+        return "CompletionPopup.selectionInnerInsets";
+      }
+
       public static final class Advertiser {
 
         public static @NotNull Color background() {
