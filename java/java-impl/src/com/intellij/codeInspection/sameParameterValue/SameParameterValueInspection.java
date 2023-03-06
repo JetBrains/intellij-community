@@ -96,7 +96,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
           Boolean isFixAvailable = isFixAvailable(parameter, value, refParameter.isUsedForWriting());
           if (Boolean.FALSE.equals(isFixAvailable) && ignoreWhenRefactoringIsComplicated) return null;
           Object presentableValue = value;
-          if (valueList != null && valueList.size() == 1) presentableValue = valueList.get(0);
+          if (valueList != null && valueList.size() == 1 && valueList.get(0) == null) presentableValue = valueList.get(0);
           ContainerUtil.addIfNotNull(problems, registerProblem(manager, parameter, presentableValue, Boolean.TRUE.equals(isFixAvailable)));
         }
       }
@@ -471,7 +471,7 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
                 Boolean isFixAvailable = isFixAvailable(parameter, value, false);
                 if (Boolean.FALSE.equals(isFixAvailable) && myGlobal.ignoreWhenRefactoringIsComplicated) return true;
                 Object presentableValue = value;
-                if (valueList != null && valueList.size() == 1) presentableValue = valueList.get(0);
+                if (valueList != null && valueList.size() == 1 && valueList.get(0) == null) presentableValue = valueList.get(0);
                 ProblemDescriptor descriptor = 
                   myGlobal.registerProblem(holder.getManager(), parameter, presentableValue, Boolean.TRUE.equals(isFixAvailable));
                 if (descriptor != null) {
