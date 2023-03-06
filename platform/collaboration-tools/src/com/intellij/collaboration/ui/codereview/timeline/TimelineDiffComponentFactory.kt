@@ -77,10 +77,10 @@ object TimelineDiffComponentFactory {
     return createDiffComponent(project, editorFactory, truncatedHunk, anchorRange)
   }
 
-  private fun createDiffComponent(project: Project,
-                                  editorFactory: EditorFactory,
-                                  patchHunk: PatchHunk,
-                                  anchorLineRange: LineRange?): JComponent {
+  fun createDiffComponent(project: Project,
+                          editorFactory: EditorFactory,
+                          patchHunk: PatchHunk,
+                          anchorLineRange: LineRange?): JComponent {
     if (patchHunk.lines.any { it.type != PatchLine.Type.CONTEXT }) {
       val appliedSplitHunks = GenericPatchApplier.SplitHunk.read(patchHunk).map {
         AppliedTextPatch.AppliedSplitPatchHunk(it, -1, -1, AppliedTextPatch.HunkStatus.NOT_APPLIED)
@@ -137,7 +137,7 @@ object TimelineDiffComponentFactory {
     override fun getMarkerColor(editor: Editor?) = getColor(editor)
   }
 
-  private const val DIFF_CONTEXT_SIZE = 3
+  const val DIFF_CONTEXT_SIZE = 3
 
   private fun truncateHunk(hunk: PatchHunk, anchor: DiffLineLocation, anchorStart: DiffLineLocation?): PatchHunk {
     if (hunk.lines.size <= DIFF_CONTEXT_SIZE + 1) return hunk

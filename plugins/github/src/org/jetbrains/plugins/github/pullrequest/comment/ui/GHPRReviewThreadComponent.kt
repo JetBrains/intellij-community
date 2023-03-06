@@ -16,6 +16,8 @@ import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFiel
 import com.intellij.collaboration.ui.codereview.timeline.thread.TimelineThreadCommentsPanel
 import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.util.swingAction
+import com.intellij.diff.util.LineRange
+import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -75,7 +77,7 @@ object GHPRReviewThreadComponent {
                        thread: GHPRReviewThreadModel,
                        selectInToolWindowHelper: GHPRSelectInToolWindowHelper): JComponent {
     val hunk = thread.patchHunk
-    if (hunk == null) {
+    if (hunk == null || hunk.lines.isEmpty()) {
       return JLabel(CollaborationToolsBundle.message("review.thread.diff.not.loaded"))
     }
 
@@ -84,8 +86,22 @@ object GHPRReviewThreadComponent {
       collapsibleState.value = thread.isResolved || thread.isOutdated
     }
 
+    val anchorLocation = thread.originalLocation
+    val startAnchorLocation = thread.originalStartLocation
+
+    val anchorLength = if (startAnchorLocation?.first == anchorLocation?.first) {
+      ((anchorLocation?.second ?: 0) - (startAnchorLocation?.second ?: 0)).coerceAtLeast(0)
+    }
+    else {
+      0
+    }
+
+    val hunkLength = anchorLength + TimelineDiffComponentFactory.DIFF_CONTEXT_SIZE
+    val truncatedHunk = PatchHunkUtil.truncateHunkBefore(hunk, hunk.lines.lastIndex - hunkLength)
+
+    val anchorRange = LineRange(truncatedHunk.lines.lastIndex - anchorLength, truncatedHunk.lines.size)
     val diffComponent = TimelineDiffComponentFactory
-      .createDiffComponent(project, EditorFactory.getInstance(), hunk, thread.originalLocation!!, thread.originalStartLocation)
+      .createDiffComponent(project, EditorFactory.getInstance(), truncatedHunk, anchorRange)
     return TimelineDiffComponentFactory.wrapWithHeader(diffComponent, thread.filePath, collapsibleState, thread.collapsedState) {
       selectInToolWindowHelper.selectChange(thread.commit?.oid, thread.filePath)
     }
