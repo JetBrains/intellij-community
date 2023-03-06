@@ -13,7 +13,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.controlFlow.*;
@@ -22,6 +21,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -85,7 +86,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
           if (parent instanceof PsiAssignmentExpression &&
               ((PsiAssignmentExpression)parent).getOperationTokenType() == JavaTokenType.EQ &&
               EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(
-            ((PsiAssignmentExpression)parent).getLExpression(), ((PsiAssignmentExpression)context).getLExpression())) {
+                ((PsiAssignmentExpression)parent).getLExpression(), ((PsiAssignmentExpression)context).getLExpression())) {
             // x = x = 5; reported by "Variable is assigned to itself"
             continue;
           }
@@ -267,10 +268,9 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     List<PsiMethodCallExpression> results = new ArrayList<>();
     PsiManager manager = field.getManager();
     List<ControlFlowUtil.ControlFlowEdge> edges = ControlFlowUtil.getEdges(flow, 0);
-    Map<Integer, List<ControlFlowUtil.ControlFlowEdge>> edgesFromStart = new HashMap<>();
+    Int2ObjectMap<List<ControlFlowUtil.ControlFlowEdge>> edgesFromStart = new Int2ObjectOpenHashMap<>();
     List<Instruction> instructions = flow.getInstructions();
     for (ControlFlowUtil.ControlFlowEdge edge : edges) {
-      ProgressManager.checkCanceled();
       List<ControlFlowUtil.ControlFlowEdge> existedEdge = edgesFromStart.get(edge.myFrom);
       if (existedEdge != null) {
         existedEdge.add(edge);
@@ -285,7 +285,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     ArrayDeque<Integer> unprocessedInstructions = new ArrayDeque<>();
     unprocessedInstructions.add(0);
     while (!unprocessedInstructions.isEmpty()) {
-      Integer currentPoint = unprocessedInstructions.poll();
+      int currentPoint = unprocessedInstructions.poll();
       if (instructions.size() <= currentPoint) {
         return results;
       }
@@ -300,7 +300,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
       untilAssignment.set(currentPoint);
       List<ControlFlowUtil.ControlFlowEdge> nextPoints = edgesFromStart.get(currentPoint);
       if (nextPoints != null) {
-        unprocessedInstructions.addAll(ContainerUtil.map(nextPoints, t->t.myTo));
+        unprocessedInstructions.addAll(ContainerUtil.map(nextPoints, t -> t.myTo));
       }
     }
     for (int index : untilAssignment.stream().toArray()) {
