@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -46,6 +46,20 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+/**
+ * An entry in an inspection profile describes either a local or a global inspection.
+ * <p>
+ * The inspection is identified by its ID, also known as its short name.
+ * <p>
+ * An inspection can be suppressed in parts of the code by {@link SuppressWarnings}
+ * or specially formatted comments, using the suppression ID returned by {@link #getSuppressId()}.
+ * In most cases, the suppression ID equals the inspection ID.
+ * <p>
+ * An inspection can have options that fine-tune its behavior, see {@link #getOptionsPane()}.
+ *
+ * @see LocalInspectionTool
+ * @see GlobalInspectionTool
+ */
 @Property(assertIfNoBindings = false)
 public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   private static final Logger LOG = Logger.getInstance(InspectionProfileEntry.class);
@@ -350,8 +364,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * @return declarative representation of the inspection options. If this method returns a non-empty pane, then
    * {@link #createOptionsPanel()} is not used.
-   * 
-   * @see OptPane#pane(OptRegularComponent...) 
+   * @see OptPane#pane(OptRegularComponent...)
    * @see InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)
    * @see #getOptionController() if you need custom logic to read/write options
    */
@@ -360,7 +373,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   }
 
   /**
-   * @return a controller to process inspection options specified by {@link #getOptionsPane()}. 
+   * @return a controller to process inspection options specified by {@link #getOptionsPane()}.
    * The default implementation finds a field with the corresponding name and uses/updates its value.
    * If you need to process some options specially, you can override this method in particular inspection
    * and compose a new controller using methods like {@link OptionController#onPrefix} and
