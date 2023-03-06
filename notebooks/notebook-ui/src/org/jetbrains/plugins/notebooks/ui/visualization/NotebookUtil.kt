@@ -91,7 +91,7 @@ fun paintCaretRow(editor: EditorImpl, g: Graphics, lines: IntRange) {
   }
 }
 
-fun installJupyterEditorView(editor: Editor) {
+fun installNotebookEditorView(editor: Editor) {
   if (editor is EditorEx) {
     editor.gutterComponentEx.setLineNumberConverter(object : LineNumberConverter {
       override fun convert(editor: Editor, lineNumber: Int): Int? = null
