@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.SmartList;
@@ -25,6 +26,7 @@ public class LookupElementPresentation {
   private boolean myItemTextBold;
   private boolean myItemTextUnderlined;
   private boolean myItemTextItalic;
+  @Nullable private List<DecoratedTextRange> myItemDecorations;
   private boolean myTypeGrayed;
   @Nullable private List<TextFragment> myTail;
   private volatile boolean myFrozen;
@@ -52,6 +54,18 @@ public class LookupElementPresentation {
   public void setItemTextItalic(boolean itemTextItalic) {
     ensureMutable();
     myItemTextItalic = itemTextItalic;
+  }
+
+  /**
+   * Adds a decoration to a lookup item at a specified text range.
+   */
+  @ApiStatus.Internal
+  public void appendItemDecoration(@NotNull TextRange textRange, @NotNull LookupItemDecoration decoration) {
+    ensureMutable();
+    if (myItemDecorations == null) {
+      myItemDecorations = new SmartList<>();
+    }
+    myItemDecorations.add(new DecoratedTextRange(textRange, decoration));
   }
 
   public void setTailText(@Nullable String text) {
@@ -133,6 +147,12 @@ public class LookupElementPresentation {
     return myItemText;
   }
 
+  @ApiStatus.Internal
+  @NotNull
+  public List<DecoratedTextRange> getItemDecorations() {
+    return myItemDecorations == null ? Collections.emptyList() : Collections.unmodifiableList(myItemDecorations);
+  }
+
   @NotNull
   public List<TextFragment> getTailFragments() {
     return myTail == null ? Collections.emptyList() : Collections.unmodifiableList(myTail);
@@ -183,6 +203,9 @@ public class LookupElementPresentation {
     myIcon = presentation.myIcon;
     myTypeIcon = presentation.myTypeIcon;
     myItemText = presentation.myItemText;
+
+    List<DecoratedTextRange> thatDecoration = presentation.myItemDecorations;
+    myItemDecorations = thatDecoration == null ? null : new SmartList<>(thatDecoration);
 
     List<TextFragment> thatTail = presentation.myTail;
     myTail = thatTail == null ? null : new SmartList<>(thatTail);
@@ -298,6 +321,41 @@ public class LookupElementPresentation {
     @Override
     public int hashCode() {
       return Objects.hash(text, myGrayed, myItalic, myFgColor);
+    }
+  }
+
+  /**
+   * An enumeration that defines possible decorations for the Item element of a presentation.
+   * These decorations are used to indicate additional information about the item being presented.
+   */
+  @ApiStatus.Internal
+  public enum LookupItemDecoration {
+    /**
+     * Indicates that the corresponding part of the item text will not be compilable right upon the insertion.
+     */
+    ERROR
+    // Additional decorations may be added in the future
+  }
+
+  /**
+   * Range of text with an associated decoration {@link LookupItemDecoration}.
+   */
+  @ApiStatus.Internal
+  public static class DecoratedTextRange {
+    private final TextRange myTextRange;
+    private final LookupItemDecoration myDecoration;
+
+    private DecoratedTextRange(TextRange textRange, LookupItemDecoration decoration) {
+      myTextRange = textRange;
+      myDecoration = decoration;
+    }
+
+    public TextRange getTextRange() {
+      return myTextRange;
+    }
+
+    public LookupItemDecoration getDecoration() {
+      return myDecoration;
     }
   }
 }

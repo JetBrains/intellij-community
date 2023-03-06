@@ -10,12 +10,12 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.EditorColorsUtil;
-import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
+import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -48,6 +48,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.lookup.Lookup.LOOKUP_COLOR;
 
@@ -288,7 +289,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       String trimmed = trimLabelText(fragment.text, allowedWidth, fontMetrics);
       int fragmentStyle = fragment.isItalic() ? style | SimpleTextAttributes.STYLE_ITALIC : style;
       if (fragment.isHighlighted()) {
-        renderItemName(item, foreground, fragmentStyle, trimmed, myTailComponent);
+        renderItemName(item, foreground, fragmentStyle, trimmed, myTailComponent, presentation.getItemDecorations());
       }
       else {
         myTailComponent.append(trimmed, new SimpleTextAttributes(fragmentStyle, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection)));
@@ -365,7 +366,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     final String name = trimLabelText(presentation.getItemText(), allowedWidth, metrics);
     int used = getStringWidth(name, metrics);
 
-    renderItemName(item, foreground, style, name, myNameComponent);
+    renderItemName(item, foreground, style, name, myNameComponent, presentation.getItemDecorations());
     return used;
   }
 
@@ -394,10 +395,11 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   private void renderItemName(LookupElement item,
-                      Color foreground,
-                      @SimpleTextAttributes.StyleAttributeConstant int style,
-                      @Nls String name,
-                      final SimpleColoredComponent nameComponent) {
+                              Color foreground,
+                              @SimpleTextAttributes.StyleAttributeConstant int style,
+                              @Nls String name,
+                              final SimpleColoredComponent nameComponent,
+                              @NotNull List<LookupElementPresentation.DecoratedTextRange> itemNameDecorations) {
     final SimpleTextAttributes base = new SimpleTextAttributes(style, foreground);
 
     final String prefix = item instanceof EmptyLookupItem ? "" : myLookup.itemPattern(item);
@@ -406,10 +408,65 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       if (ranges != null) {
         SimpleTextAttributes highlighted = new SimpleTextAttributes(style, MATCHED_FOREGROUND_COLOR);
         SpeedSearchUtil.appendColoredFragments(nameComponent, name, ranges, base, highlighted);
+        renderItemNameDecoration(nameComponent, itemNameDecorations);
         return;
       }
     }
     nameComponent.append(name, base);
+    renderItemNameDecoration(nameComponent, itemNameDecorations);
+  }
+
+  /**
+   * Splits the nameComponent into fragments based on the offsets of the decorated text ranges,
+   * then applies the appropriate decorations to each fragment.
+   */
+  private static void renderItemNameDecoration(SimpleColoredComponent nameComponent,
+                                               @NotNull List<LookupElementPresentation.DecoratedTextRange> itemNameDecorations) {
+    if (nameComponent.getFragmentCount() == 0 || itemNameDecorations.isEmpty()) {
+      return;
+    }
+    List<Integer> offsetsToSplit = itemNameDecorations.stream()
+      .map(decoratedTextRange -> decoratedTextRange.getTextRange())
+      .flatMap(textRange -> Stream.of(textRange.getStartOffset(), textRange.getEndOffset()))
+      .sorted()
+      .distinct()
+      .toList();
+    splitSimpleColoredComponentAtLeastByOffsets(nameComponent, offsetsToSplit);
+
+    EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
+
+    SimpleColoredComponent.ColoredIterator iterator = nameComponent.iterator();
+    while (iterator.hasNext()) {
+      iterator.next();
+      List<LookupElementPresentation.LookupItemDecoration> decorations = itemNameDecorations.stream()
+        .filter(decoratedTextRange -> decoratedTextRange.getTextRange().intersectsStrict(iterator.getOffset(), iterator.getEndOffset()))
+        .map(LookupElementPresentation.DecoratedTextRange::getDecoration)
+        .toList();
+      if (decorations.isEmpty()) {
+        continue;
+      }
+      TextAttributes newAttributes = iterator.getTextAttributes().toTextAttributes();
+      for (LookupElementPresentation.LookupItemDecoration decoration : decorations) {
+        if (decoration == LookupElementPresentation.LookupItemDecoration.ERROR) {
+          Color color = editorColorsScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).getEffectColor();
+          TextAttributesEffectsBuilder.create().coverWith(EffectType.WAVE_UNDERSCORE, color).applyTo(newAttributes);
+        }
+      }
+      iterator.setTextAttributes(SimpleTextAttributes.fromTextAttributes(newAttributes));
+    }
+  }
+
+  private static void splitSimpleColoredComponentAtLeastByOffsets(SimpleColoredComponent component, @NotNull List<Integer> offsets) {
+    SimpleColoredComponent.ColoredIterator iterator = component.iterator();
+    iterator.next();
+    for (int offset : offsets) {
+      while (iterator.hasNext() && offset >= iterator.getEndOffset()) {
+        iterator.next();
+      }
+      if (offset > iterator.getOffset() && offset < iterator.getEndOffset()) {
+        iterator.split(offset - iterator.getOffset(), iterator.getTextAttributes());
+      }
+    }
   }
 
   public static FList<TextRange> getMatchingFragments(String prefix, String name) {
