@@ -51,6 +51,10 @@ public class IdeaGateway {
   }
 
   public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeInContent) {
+    VirtualFileSystem fileSystem = f.getFileSystem();
+    if (fileSystem instanceof VersionManagingFileSystem && !((VersionManagingFileSystem)fileSystem).isVersionable(f)) {
+      return false;
+    }
     if (!f.isInLocalFileSystem()) {
       return isNonLocalVersioned(f);
     }
