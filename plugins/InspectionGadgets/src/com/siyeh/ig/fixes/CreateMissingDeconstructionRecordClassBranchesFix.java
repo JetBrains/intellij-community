@@ -59,7 +59,7 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
   @Nullable
   public static CreateMissingDeconstructionRecordClassBranchesFix create(@NotNull PsiSwitchBlock switchBlock,
                                                                          @NotNull PsiClass selectorType,
-                                                                         @NotNull Map<PsiType, Set<List<PsiClass>>> missedBranches,
+                                                                         @NotNull Map<PsiType, Set<List<PsiType>>> missedBranches,
                                                                          @NotNull List<? extends PsiCaseLabelElement> elements) {
     if (missedBranches.isEmpty()) {
       return null;
@@ -68,7 +68,14 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
       return null;
     }
     if (missedBranches.values().stream().flatMap(t -> t.stream()).flatMap(t -> t.stream())
-      .anyMatch(t -> t == null || t.hasTypeParameters())) {
+      .anyMatch(type -> {
+        if (type == null) {
+          return true;
+        }
+        PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+        return (psiClass == null && !TypeConversionUtil.isPrimitiveAndNotNull(type)) ||
+               (psiClass != null && psiClass.hasTypeParameters());
+      })) {
       return null;
     }
     if (!SwitchUtils.isRuleFormatSwitch(switchBlock)) {
@@ -97,10 +104,10 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
 
   @Nullable
   private static List<String> getMissedLabels(@NotNull PsiSwitchBlock block,
-                                              @NotNull Map<PsiType, Set<List<PsiClass>>> branchesByType) {
+                                              @NotNull Map<PsiType, Set<List<PsiType>>> branchesByType) {
     List<String> result = new ArrayList<>();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(block.getProject());
-    for (Map.Entry<PsiType, Set<List<PsiClass>>> branches : branchesByType.entrySet()) {
+    for (Map.Entry<PsiType, Set<List<PsiType>>> branches : branchesByType.entrySet()) {
       PsiType recordType = branches.getKey();
       if (recordType == null) {
         return null;
@@ -113,12 +120,12 @@ public final class CreateMissingDeconstructionRecordClassBranchesFix extends Cre
         String nextName = codeStyleManager.suggestUniqueVariableName(recordComponent.getName(), block, false);
         variableNames.add(nextName);
       }
-      for (List<PsiClass> branch : branches.getValue()) {
+      for (List<PsiType> branch : branches.getValue()) {
         StringJoiner joiner = new StringJoiner(", ", "(", ")");
         if (branch.size() != variableNames.size()) return null;
         for (int i = 0; i < branch.size(); i++) {
-          PsiClass psiClass = branch.get(i);
-          joiner.add(psiClass.getQualifiedName() + " " + variableNames.get(i));
+          PsiType psiType = branch.get(i);
+          joiner.add(psiType.getCanonicalText() + " " + variableNames.get(i));
         }
         result.add(recordTypeString + joiner);
       }

@@ -1000,7 +1000,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createAddMissingRecordClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
                                                                 @NotNull PsiClass selectorType,
-                                                                @NotNull Map<PsiType, Set<List<PsiClass>>> branches,
+                                                                @NotNull Map<PsiType, Set<List<PsiType>>> branches,
                                                                 @NotNull List<? extends PsiCaseLabelElement> elements) {
     return CreateMissingDeconstructionRecordClassBranchesFix.create(switchBlock, selectorType, branches, elements);
   }

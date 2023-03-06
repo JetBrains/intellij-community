@@ -1,4 +1,4 @@
-// "Create missing branches: 'Pair<I>(D x, I y)', and 'Pair<I>(C x, I y)'" "true-preview"
+// "Create missing switch branch 'Pair<I>(I x, D y)'" "true-preview"
 sealed interface I permits C, D {}
 final class C implements I {}
 final class D implements I {}
@@ -11,9 +11,7 @@ class Test {
       case Pair<I>(I f, I s) when Math.random() > 0.1 -> {}
       case Pair<I>(I f, I s) when Math.random() > 0.5 -> {}
       case Pair<I>(I f, C s) -> {}
-        case Pair<I>(C x, I y) -> {
-        }
-        case Pair<I>(D x, I y) -> {
+        case Pair<I>(I x, D y) -> {
         }
     }
   }

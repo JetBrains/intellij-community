@@ -478,7 +478,7 @@ public abstract class QuickFixFactory {
   @Nullable
   public abstract IntentionAction createAddMissingRecordClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
                                                                          @NotNull PsiClass selectorType,
-                                                                         @NotNull Map<PsiType, Set<List<PsiClass>>> branches,
+                                                                         @NotNull Map<PsiType, Set<List<PsiType>>> branches,
                                                                          @NotNull List<? extends PsiCaseLabelElement> elements);
 
   @NotNull
