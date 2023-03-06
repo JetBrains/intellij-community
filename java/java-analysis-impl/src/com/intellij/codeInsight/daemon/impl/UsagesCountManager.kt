@@ -7,18 +7,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.ConcurrentMap
 
 
-class UsagesCountManager @NonInjectable constructor(project: Project, private val usagesCounter: UsagesCounter): Disposable {
-
-  @Suppress("unused")
-  constructor(project: Project): this(project, DefaultUsagesCounter())
+class UsagesCountManager(project: Project): Disposable {
 
   companion object {
     @JvmStatic
@@ -45,40 +40,30 @@ class UsagesCountManager @NonInjectable constructor(project: Project, private va
 
   fun countMemberUsages(file: PsiFile, member: PsiMember): Int {
     val virtualFile = PsiUtilCore.getVirtualFile(file)
-    return externalUsagesCache.getOrPut(virtualFile) { FileUsagesCache() }.countMemberUsagesCached(usagesCounter, file, member)
+    return externalUsagesCache.getOrPut(virtualFile) { FileUsagesCache() }.countMemberUsagesCached(file, member)
   }
 
   override fun dispose() {
-  }
-
-  interface UsagesCounter {
-    fun countUsages(file: PsiFile, members: List<PsiMember>, scope: SearchScope): Int
-  }
-
-  private class DefaultUsagesCounter: UsagesCounter {
-    override fun countUsages(file: PsiFile, members: List<PsiMember>, scope: SearchScope): Int {
-      return JavaTelescope.usagesCount(file, members, scope)
-    }
   }
 }
 
 private class FileUsagesCache {
   private val externalUsagesCache: ConcurrentMap<String, Int> = ContainerUtil.createConcurrentWeakKeySoftValueMap()
 
-  fun countMemberUsagesCached(usagesCounter: UsagesCountManager.UsagesCounter, file: PsiFile, member: PsiMember): Int {
+  fun countMemberUsagesCached(file: PsiFile, member: PsiMember): Int {
     val methodMembers = if (member is PsiMethod) DeepestSuperMethodsSearch.search(member).findAll().toList() else emptyList()
     val superMembers = methodMembers.ifEmpty { listOf(member) }
     val localScope = GlobalSearchScope.fileScope(file)
     val externalScope = GlobalSearchScope.notScope(localScope)
 
-    val internalUsages = usagesCounter.countUsages(file, superMembers, localScope)
-    if (internalUsages < 0) return internalUsages
+    val internalUsages = JavaTelescope.usagesCount(file, superMembers, localScope)
+    if (internalUsages < 0) return  internalUsages
     val key = QualifiedNameProviderUtil.getQualifiedName(member)
     val externalUsages = if (key != null) {
-      externalUsagesCache.getOrPut(key) { usagesCounter.countUsages(file, superMembers, externalScope) }
+      externalUsagesCache.getOrPut(key) { JavaTelescope.usagesCount(file, superMembers, externalScope) }
     }
     else {
-      usagesCounter.countUsages(file, superMembers, externalScope)
+      JavaTelescope.usagesCount(file, superMembers, externalScope)
     }
     if (externalUsages < 0) return externalUsages
     return externalUsages + internalUsages
