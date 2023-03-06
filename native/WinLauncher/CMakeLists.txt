@@ -45,7 +45,7 @@ if(USE_CEF_SANDBOX)
   # Setup linking with CEF sandbox library
   include("DownloadCEF.cmake")
   if(NOT DEFINED CEF_VERSION)
-    set(CEF_VERSION "104.4.26+g4180781+chromium-104.0.5112.102")
+    set(CEF_VERSION "110.0.26+g732747f+chromium-110.0.5481.97")
   endif()
 
   include(CheckSymbolExists)
