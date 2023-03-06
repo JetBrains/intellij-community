@@ -27,3 +27,4 @@ intellij.vcs.github
 intellij.vcs.hg
 intellij.vcs.svn
 intellij.yaml
+intellij.performanceTesting
