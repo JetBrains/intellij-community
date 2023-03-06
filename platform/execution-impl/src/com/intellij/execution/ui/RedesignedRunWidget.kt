@@ -428,7 +428,8 @@ private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCo
       override fun getMargins(): Insets = JBInsets.create(0, 8)
       override fun iconTextSpace(): Int = JBUI.scale(6)
       override fun shallPaintDownArrow() = true
-      override fun getInactiveTextColor() = JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
+      override fun getInactiveTextColor() = if (isContrastRunWidget) JBUI.CurrentTheme.RunWidget.DISABLED_FOREGROUND
+      else super.getInactiveTextColor()
       override fun getDownArrowIcon(): Icon = PreparedIcon(super.getDownArrowIcon())
 
       override fun updateUI() {
