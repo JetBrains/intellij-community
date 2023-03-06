@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.DependencyScope.PROVIDED
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
-import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.Assume
 import org.junit.Test
@@ -222,11 +221,8 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                  * has a proper libraryName and is *not* considered 'project level'
                  */
                 run {
-                    val platforms = if (isKgpDependencyResolutionEnabled() && !HostManager.hostIsMac) // KTIJ-24573
-                        "linux_arm64, linux_x64, mingw_x64, mingw_x86"
-                    else "linux_arm64, linux_x64, macos_x64, mingw_x64, mingw_x86"
                     val withPosixLibraryNameRegex = Regex(
-                        """Gradle: project:p1-cinterop-withPosix.*\($platforms\).*"""
+                        """Gradle: project:p1-cinterop-withPosix.*\(linux_arm64, linux_x64, macos_x64, mingw_x64, mingw_x86\).*"""
                     )
 
                     val libraryOrderEntries = module.rootManager.orderEntries
