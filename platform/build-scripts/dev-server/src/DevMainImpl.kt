@@ -6,6 +6,7 @@ package org.jetbrains.intellij.build.devServer
 import com.intellij.openapi.application.PathManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.ConsoleSpanExporter
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.TracerProviderManager
 import java.nio.file.Path
@@ -16,8 +17,8 @@ private class DevMainImpl {
     @JvmStatic
     fun build(): Collection<Path> {
       // don't use JaegerJsonSpanExporter - not needed for clients, should be enabled only if needed to avoid writing ~500KB JSON file
-      //TracerProviderManager.spanExporterProvider = { listOf(ConsoleSpanExporter()) }
-      TracerProviderManager.setOutput(Path.of(System.getProperty("user.home"), "trace.json"))
+      TracerProviderManager.spanExporterProvider = { listOf(ConsoleSpanExporter()) }
+      //TracerProviderManager.setOutput(Path.of(System.getProperty("user.home"), "trace.json"))
       try {
         return runBlocking(Dispatchers.Default) {
           var newClassPath: Collection<Path>? = null
