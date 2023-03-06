@@ -35,7 +35,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
   override val repositoryManager: CondaRepositoryManger = CondaRepositoryManger(project, sdk)
 
   override suspend fun installPackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
-    return if (specification is CondaPackageSpecification) withContext(Dispatchers.IO) {
+    return if (specification is CondaPackageSpecification) {
       runPackagingOperationOrShowErrorDialog(sdk, message("python.new.project.install.failed.title", specification.name), specification.name) {
         runConda("install", specification.buildInstallationString() + "-y", message("conda.packaging.install.progress", specification.name))
         refreshPaths()
@@ -46,7 +46,7 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
   }
 
   override suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>> {
-    return if (pkg is CondaPackage && !pkg.installedWithPip) withContext(Dispatchers.IO) {
+    return if (pkg is CondaPackage && !pkg.installedWithPip) {
       runPackagingOperationOrShowErrorDialog(sdk, message("python.packaging.operation.failed.title")) {
         runConda("uninstall", listOf(pkg.name, "-y"), message("conda.packaging.uninstall.progress", pkg.name))
         refreshPaths()

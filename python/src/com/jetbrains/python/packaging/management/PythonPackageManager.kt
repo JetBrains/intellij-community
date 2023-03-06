@@ -12,7 +12,7 @@ import com.jetbrains.python.packaging.common.PackageManagerHolder
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
-import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.PythonSdkUpdater
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
@@ -29,8 +29,8 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   internal suspend fun refreshPaths() {
     writeAction {
       VfsUtil.markDirtyAndRefresh(true, true, true, *sdk.rootProvider.getFiles(OrderRootType.CLASSES))
+      PythonSdkUpdater.scheduleUpdate(sdk, project)
     }
-    PythonSdkType.getInstance().setupSdkPaths(sdk)
   }
 
 
