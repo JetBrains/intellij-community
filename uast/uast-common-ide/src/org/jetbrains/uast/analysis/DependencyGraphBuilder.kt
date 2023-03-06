@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.analysis
 
 import com.intellij.openapi.diagnostic.Attachment
@@ -613,7 +613,7 @@ private class LocalScopeContext(
   fun createChild(isInlined: Boolean = false) = LocalScopeContext(this, inlinedId, isInlined)
 
   fun setLastPotentialUpdate(variable: String, updateElement: UElement) {
-    lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidate(
+    lastPotentialUpdatesOf[variable] = Dependency.PotentialSideEffectDependency.CandidatesTree.fromCandidate(
       SideEffectChangeCandidate(
         updateElement,
         DependencyEvidence(),
@@ -624,13 +624,15 @@ private class LocalScopeContext(
       val (evidence, witness) = evidenceAndWitness
       val newCandidate = SideEffectChangeCandidate(updateElement, evidence, witness)
       val candidatesForReference = lastPotentialUpdatesOf[reference]
-      lastPotentialUpdatesOf[reference] = candidatesForReference?.addToBegin(newCandidate) ?: CandidatesTree.fromCandidate(newCandidate)
+      lastPotentialUpdatesOf[reference] = candidatesForReference?.addToBegin(newCandidate)
+                                          ?: Dependency.PotentialSideEffectDependency.CandidatesTree.fromCandidate(
+                                            newCandidate)
     }
   }
 
   fun setLastPotentialUpdateAsAssignment(variable: String, updateElements: Collection<UElement>) {
     if (updateElements.size == 1) {
-      lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidate(
+      lastPotentialUpdatesOf[variable] = Dependency.PotentialSideEffectDependency.CandidatesTree.fromCandidate(
         SideEffectChangeCandidate(
           updateElements.first(),
           DependencyEvidence(),
@@ -638,7 +640,7 @@ private class LocalScopeContext(
       )
     }
     else {
-      lastPotentialUpdatesOf[variable] = CandidatesTree.fromCandidates(
+      lastPotentialUpdatesOf[variable] = Dependency.PotentialSideEffectDependency.CandidatesTree.fromCandidates(
         updateElements.mapTo(mutableSetOf()) {
           SideEffectChangeCandidate(it, DependencyEvidence(), dependencyWitnessValues = referencesModel.getAllTargetsForReference(variable))
         }
@@ -685,7 +687,7 @@ private class LocalScopeContext(
           }
         }
       }.takeUnless { it.isEmpty() }?.let { candidates ->
-        lastPotentialUpdatesOf[variableName] = CandidatesTree.merge(candidates)
+        lastPotentialUpdatesOf[variableName] = Dependency.PotentialSideEffectDependency.CandidatesTree.merge(candidates)
       }
     }
   }

@@ -1,14 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("UastPatterns")
 
 package com.intellij.patterns.uast
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
-import com.intellij.patterns.*
+import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.ObjectPattern
+import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PsiJavaPatterns.psiClass
+import com.intellij.patterns.PsiNamePatternCondition
 import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext

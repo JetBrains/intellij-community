@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.analysis
 
 import com.intellij.openapi.diagnostic.debug
@@ -14,8 +14,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 
 /**
  * Dependency graph of UElements in some scope.

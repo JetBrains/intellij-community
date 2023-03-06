@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.analysis
 
 import com.intellij.openapi.util.TextRange
@@ -8,7 +8,10 @@ import com.intellij.patterns.uast.callExpression
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UReferenceExpression
+import org.jetbrains.uast.USimpleNameReferenceExpression
+import org.jetbrains.uast.UThisExpression
+import org.jetbrains.uast.getQualifiedChain
 
 object UStringBuilderEvaluator : BuilderLikeExpressionEvaluator<PartiallyKnownString> {
   override val buildMethod: ElementPattern<PsiMethod>

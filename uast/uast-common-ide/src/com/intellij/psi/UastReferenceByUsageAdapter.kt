@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi
 
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
@@ -86,7 +86,8 @@ fun getReferencesForDirectUsagesOfVariable(element: PsiElement, targetHint: PsiE
   val uParentVariable = getUsageVariableTargetForInitializer(uElement) ?: return PsiReference.EMPTY_ARRAY
 
   val registrar = ReferenceProvidersRegistry.getInstance().getRegistrar(Language.findLanguageByID("UAST")!!)
-  val providerInfos = (registrar as PsiReferenceRegistrarImpl).getPairsByElement(originalElement, PsiReferenceService.Hints(targetHint, null))
+  val providerInfos = (registrar as PsiReferenceRegistrarImpl).getPairsByElement(originalElement,
+                                                                                 PsiReferenceService.Hints(targetHint, null))
 
   // by-usage providers must implement acceptsTarget correctly, we rely on fact that they accept targetHint
   val suitableProviders = providerInfos.asSequence()
