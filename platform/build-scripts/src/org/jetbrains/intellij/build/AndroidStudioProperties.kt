@@ -87,9 +87,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
     customJvmMemoryOptions = customJvmMemoryOptions.putAll(arrayOf("-Xms" to "256m", "-Xmx" to "1280m"))
     additionalIdeJvmArguments = mutableListOf("-XX:FlightRecorderOptions=stackdepth=256")
 
-    productLayout.productApiModules = JAVA_IDE_API_MODULES
     productLayout.productImplementationModules =
-      JAVA_IDE_IMPLEMENTATION_MODULES +
       listOf("intellij.platform.duplicates.analysis", "intellij.platform.structuralSearch", "intellij.platform.main") -
       listOf("intellij.platform.jps.model.impl", "intellij.platform.jps.model.serialization")
     productLayout.withAdditionalPlatformJar(BaseLayout.APP_JAR, "intellij.idea.community.resources")
