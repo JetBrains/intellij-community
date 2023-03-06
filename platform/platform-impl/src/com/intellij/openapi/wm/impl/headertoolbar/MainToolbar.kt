@@ -139,11 +139,9 @@ private class MyActionToolbarImpl(group: ActionGroup, val layoutCallBack: Layout
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
     val component = super.createCustomComponent(action, presentation)
 
-    try {
-      component.foreground = JBColor.namedColor("MainToolbar.foreground", JBColor.marker("NO_PROPERTY_MARKER"))
+    if (component.foreground != null) {
+      component.foreground = JBColor.namedColor("MainToolbar.foreground", component.foreground)
     }
-    catch (_: AssertionError) {}
-
 
     if (action is ComboBoxAction) {
       findComboButton(component)?.apply {
