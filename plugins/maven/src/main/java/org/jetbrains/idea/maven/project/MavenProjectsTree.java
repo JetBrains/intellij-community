@@ -1264,7 +1264,7 @@ public final class MavenProjectsTree {
 
   private class UpdateContext {
     private final Map<MavenProject, MavenProjectChanges> updatedProjectsWithChanges = new ConcurrentHashMap<>();
-    private final Map<MavenProject, MavenProject> deletedProjects = new ConcurrentHashMap<>();
+    private final Set<MavenProject> deletedProjects = ConcurrentHashMap.newKeySet();
 
     public void update(MavenProject project, @NotNull MavenProjectChanges changes) {
       deletedProjects.remove(project);
@@ -1275,7 +1275,7 @@ public final class MavenProjectsTree {
 
     public void deleted(MavenProject project) {
       updatedProjectsWithChanges.remove(project);
-      deletedProjects.put(project, project);
+      deletedProjects.add(project);
     }
 
     public void fireUpdatedIfNecessary() {
@@ -1284,7 +1284,7 @@ public final class MavenProjectsTree {
       }
       List<MavenProject> mavenProjects = deletedProjects.isEmpty()
                                          ? Collections.emptyList()
-                                         : new ArrayList<>(deletedProjects.keySet());
+                                         : new ArrayList<>(deletedProjects);
       List<Pair<MavenProject, MavenProjectChanges>> updated = updatedProjectsWithChanges.isEmpty()
                                                               ? Collections.emptyList()
                                                               : mapToListWithPairs();
@@ -1302,7 +1302,7 @@ public final class MavenProjectsTree {
     }
 
     public Collection<MavenProject> getDeletedProjects() {
-      return deletedProjects.keySet();
+      return deletedProjects;
     }
   }
 
