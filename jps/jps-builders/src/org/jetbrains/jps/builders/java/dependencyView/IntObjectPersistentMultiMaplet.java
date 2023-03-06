@@ -16,11 +16,11 @@ import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
 public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaplet<V> {
-  private static final Collection NULL_COLLECTION = Collections.emptySet();
+  private static final Collection<?> NULL_COLLECTION = Collections.emptySet();
   private static final int CACHE_SIZE = 128;
   private final PersistentHashMap<Integer, Collection<V>> myMap;
   private final DataExternalizer<V> myValueExternalizer;
-  private final SLRUCache<Integer, Collection> myCache;
+  private final SLRUCache<Integer, Collection<V>> myCache;
 
   public IntObjectPersistentMultiMaplet(final File file,
                                         final KeyDescriptor<Integer> keyExternalizer,
@@ -28,13 +28,14 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
                                         final Supplier<? extends Collection<V>> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
     myMap = new PersistentHashMap<>(file, keyExternalizer, new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
-    myCache = new SLRUCache<Integer, Collection>(CACHE_SIZE, CACHE_SIZE) {
+    myCache = new SLRUCache<>(CACHE_SIZE, CACHE_SIZE) {
       @NotNull
       @Override
-      public Collection createValue(Integer key) {
+      public Collection<V> createValue(Integer key) {
         try {
           final Collection<V> collection = myMap.get(key);
-          return collection == null? NULL_COLLECTION : collection;
+          //noinspection unchecked
+          return collection == null? (Collection<V>)NULL_COLLECTION : collection;
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);
@@ -102,7 +103,7 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
   @Override
   public void removeAll(int key, Collection<V> values) {
     try {
-      final Collection collection = myCache.get(key);
+      final Collection<V> collection = myCache.get(key);
 
       if (collection != NULL_COLLECTION) {
         if (collection.removeAll(values)) {
@@ -111,7 +112,7 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
             myMap.remove(key);
           }
           else {
-            myMap.put(key, (Collection<V>)collection);
+            myMap.put(key, collection);
           }
         }
       }
@@ -124,7 +125,7 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
   @Override
   public void removeFrom(final int key, final V value) {
     try {
-      final Collection collection = myCache.get(key);
+      final Collection<V> collection = myCache.get(key);
 
       if (collection != NULL_COLLECTION) {
         if (collection.remove(value)) {
@@ -133,7 +134,7 @@ public final class IntObjectPersistentMultiMaplet<V> extends IntObjectMultiMaple
             myMap.remove(key);
           }
           else {
-            myMap.put(key, (Collection<V>)collection);
+            myMap.put(key, collection);
           }
         }
       }

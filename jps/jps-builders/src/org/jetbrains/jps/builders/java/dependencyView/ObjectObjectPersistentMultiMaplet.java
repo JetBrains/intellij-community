@@ -31,7 +31,7 @@ public class ObjectObjectPersistentMultiMaplet<K, V> extends ObjectObjectMultiMa
                                         final Supplier<? extends Collection<V>> collectionFactory) throws IOException {
     myValueExternalizer = valueExternalizer;
     myMap = new PersistentHashMap<>(file, keyExternalizer, new CollectionDataExternalizer<>(valueExternalizer, collectionFactory));
-    myCache = new SLRUCache<K, Collection<V>>(CACHE_SIZE, CACHE_SIZE * 3, keyExternalizer) {
+    myCache = new SLRUCache<>(CACHE_SIZE, CACHE_SIZE * 3, keyExternalizer) {
       @NotNull
       @Override
       public Collection<V> createValue(K key) {
