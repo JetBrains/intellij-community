@@ -72,11 +72,11 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
   private MultiMap<FacetTypeId<?>, Module> getIndex() {
     var index = myIndex.get();
     if (index != null) return index;
-    return myIndex.updateAndGet(value -> value == null ? createAndCacheIndex() : value);
+    return myIndex.updateAndGet(value -> value == null ? createIndex() : value);
   }
 
   @NotNull
-  private MultiMap<FacetTypeId<?>, Module> createAndCacheIndex() {
+  private MultiMap<FacetTypeId<?>, Module> createIndex() {
     MultiMap<FacetTypeId<?>, Module> index = MultiMap.createLinkedSet();
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       Arrays.stream(FacetManager.getInstance(module).getAllFacets())
@@ -84,7 +84,6 @@ public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx impleme
         .distinct()
         .forEach(facetTypeId -> index.putValue(facetTypeId, module));
     }
-    myIndex.compareAndSet(null, index);
     return index;
   }
 
