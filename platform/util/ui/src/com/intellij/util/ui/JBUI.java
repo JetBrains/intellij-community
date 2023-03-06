@@ -1376,7 +1376,12 @@ public final class JBUI {
       }
 
       private static @NotNull JBInsets borderInsets() {
-        return insets("Popup.Advertiser.borderInsets", isNewUI() ? insets(6, 20) : insets(5, 10, 5, 15));
+        return insets(borderInsetsKey(), isNewUI() ? insets(6, 20) : insets(5, 10, 5, 15));
+      }
+
+      @NotNull
+      public static String borderInsetsKey() {
+        return "Popup.Advertiser.borderInsets";
       }
 
       public static @NotNull Color borderColor() {
