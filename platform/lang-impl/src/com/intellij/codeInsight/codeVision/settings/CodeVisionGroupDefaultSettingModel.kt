@@ -28,8 +28,11 @@ open class CodeVisionGroupDefaultSettingModel(override val name: String,
       return editor.getUserData(CODE_VISION_PREVIEW_ENABLED)
     }
 
-    internal val anchorRenderer: SimpleListCellRenderer<CodeVisionAnchorKind> = SimpleListCellRenderer.create(
-      SimpleListCellRenderer.Customizer { label, value, _ -> label.text = CodeVisionBundle.message(value.key) })
+    internal val anchorRenderer: SimpleListCellRenderer<CodeVisionAnchorKind> by lazy {
+      SimpleListCellRenderer.create(
+        SimpleListCellRenderer.Customizer { label, value, _ -> label.text = CodeVisionBundle.message(value.key) }
+      )
+    }
   }
 
 
