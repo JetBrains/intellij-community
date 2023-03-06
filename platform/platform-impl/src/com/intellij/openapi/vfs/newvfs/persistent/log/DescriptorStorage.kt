@@ -5,9 +5,17 @@ interface DescriptorStorage {
   fun bytesForDescriptor(tag: VfsOperationTag): Int
 
   /**
+   * Allocates space for a descriptor and puts a write operation into a job queue
+   * @param compute may be called after an arbitrarily long delay
    * contract: tag == compute().tag
    */
-  fun writeDescriptor(tag: VfsOperationTag, compute: () -> VfsOperation<*>)
+  fun enqueueDescriptorWrite(tag: VfsOperationTag, compute: () -> VfsOperation<*>)
+
+  /**
+   * Performs an actual descriptor write, not supposed to be called directly.
+   * @see enqueueDescriptorWrite
+   */
+  fun writeDescriptor(position: Long, op: VfsOperation<*>)
 
   fun readAt(position: Long, action: (VfsOperation<*>?) -> Unit)
 

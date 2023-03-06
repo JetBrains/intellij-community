@@ -5,6 +5,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
+import com.intellij.openapi.vfs.newvfs.persistent.log.util.SkipListAdvancingPositionTracker
+import com.intellij.openapi.vfs.newvfs.persistent.log.util.trackAdvance
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.ResilientFileChannel
 import java.nio.channels.FileChannel
@@ -26,7 +28,7 @@ class DescriptorStorageImpl(
     val fileChannel = ResilientFileChannel(storagePath / "descriptors", READ, WRITE, CREATE)
     storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
-    position = AdvancingPositionTracker(lastSafeSize ?: 0L)
+    position = SkipListAdvancingPositionTracker(lastSafeSize ?: 0L)
   }
 
   override fun bytesForDescriptor(tag: VfsOperationTag): Int =
@@ -79,7 +81,7 @@ class DescriptorStorageImpl(
    */
   override fun writeDescriptor(tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
     val descrSize = bytesForDescriptor(tag)
-    position.track(descrSize.toLong()) { descrPos ->
+    position.trackAdvance(descrSize.toLong()) { descrPos ->
       // XXX: in case of mmap-based storage, compiler can reorder operations here so that tag.ordinal.toByte() will be written right away,
       // but it is unlikely, because there is too much code in between
       storageIO.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
@@ -167,7 +169,7 @@ class DescriptorStorageImpl(
   override fun size(): Long = lastSafeSize ?: 0L
 
   override fun flush() {
-    val safePos = position.getMinInflightPosition()
+    val safePos = position.getReadyPosition()
     storageIO.force()
     lastSafeSize = safePos
   }
