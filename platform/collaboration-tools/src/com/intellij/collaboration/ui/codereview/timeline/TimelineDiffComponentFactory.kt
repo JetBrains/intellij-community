@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.timeline
 
-import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
@@ -9,6 +8,7 @@ import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
 import com.intellij.collaboration.ui.util.bindChild
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.diff.util.DiffDrawUtil
+import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.TextDiffType
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.diff.impl.patch.PatchHunk
@@ -47,7 +47,6 @@ import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Color
 import java.awt.event.ActionListener
@@ -59,14 +58,31 @@ object TimelineDiffComponentFactory {
 
   fun createDiffComponent(project: Project, editorFactory: EditorFactory,
                           patchHunk: PatchHunk,
-                          anchor: DiffLineLocation?,
+                          anchor: DiffLineLocation,
                           anchorStart: DiffLineLocation?): JComponent {
-    val truncatedHunk = if (anchor == null) patchHunk else truncateHunk(patchHunk, anchor, anchorStart)
+    val truncatedHunk = truncateHunk(patchHunk, anchor, anchorStart)
 
-    val anchorLineIndex = anchor?.let { PatchHunkUtil.findHunkLineIndex(truncatedHunk, it) }
+    val anchorLineIndex = PatchHunkUtil.findHunkLineIndex(truncatedHunk, anchor)
+    val anchorStartLineIndex = anchorStart?.takeIf { it != anchor }?.let { PatchHunkUtil.findHunkLineIndex(truncatedHunk, it) }
+    val anchorRange = if (anchorLineIndex == null) {
+      null
+    }
+    else if (anchorStartLineIndex != null) {
+      LineRange(anchorStartLineIndex, anchorLineIndex + 1)
+    }
+    else {
+      LineRange(anchorLineIndex, anchorLineIndex + 1)
+    }
 
-    if (truncatedHunk.lines.any { it.type != PatchLine.Type.CONTEXT }) {
-      val appliedSplitHunks = GenericPatchApplier.SplitHunk.read(truncatedHunk).map {
+    return createDiffComponent(project, editorFactory, truncatedHunk, anchorRange)
+  }
+
+  private fun createDiffComponent(project: Project,
+                                  editorFactory: EditorFactory,
+                                  patchHunk: PatchHunk,
+                                  anchorLineRange: LineRange?): JComponent {
+    if (patchHunk.lines.any { it.type != PatchLine.Type.CONTEXT }) {
+      val appliedSplitHunks = GenericPatchApplier.SplitHunk.read(patchHunk).map {
         AppliedTextPatch.AppliedSplitPatchHunk(it, -1, -1, AppliedTextPatch.HunkStatus.NOT_APPLIED)
       }
 
@@ -87,26 +103,26 @@ object TimelineDiffComponentFactory {
                                                       hunk.patchInsertionRange,
                                                       null)
         }
-        anchorLineIndex?.let { highlightAnchorLine(editor, it) }
+        anchorLineRange?.let { highlightAnchor(editor, it) }
       }
     }
     else {
-      val patchContent = truncatedHunk.text.removeSuffix("\n")
+      val patchContent = patchHunk.text.removeSuffix("\n")
 
       return createDiffComponent(project, editorFactory, patchContent) { editor ->
         editor.gutter.apply {
           setLineNumberConverter(
-            LineNumberConverter.Increasing { _, line -> line + truncatedHunk.startLineBefore },
-            LineNumberConverter.Increasing { _, line -> line + truncatedHunk.startLineAfter }
+            LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineBefore },
+            LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineAfter }
           )
         }
-        anchorLineIndex?.let { highlightAnchorLine(editor, it) }
+        anchorLineRange?.let { highlightAnchor(editor, it) }
       }
     }
   }
 
-  private fun highlightAnchorLine(editor: EditorEx, line: Int) {
-    DiffDrawUtil.createHighlighter(editor, line, line + 1, AnchorLine, false)
+  private fun highlightAnchor(editor: EditorEx, lineRange: LineRange) {
+    DiffDrawUtil.createHighlighter(editor, lineRange.start, lineRange.end, AnchorLine, false)
   }
 
   object AnchorLine : TextDiffType {
@@ -125,14 +141,8 @@ object TimelineDiffComponentFactory {
 
   private fun truncateHunk(hunk: PatchHunk, anchor: DiffLineLocation, anchorStart: DiffLineLocation?): PatchHunk {
     if (hunk.lines.size <= DIFF_CONTEXT_SIZE + 1) return hunk
-
-    val hunkWithoutStart = if (anchorStart != null && anchor != anchorStart) {
-      truncateHunkBefore(hunk, anchorStart)
-    }
-    else {
-      truncateHunkBefore(hunk, anchor)
-    }
-    return truncateHunkAfter(hunkWithoutStart, anchor)
+    val actualAnchorStart = anchorStart?.takeIf { it != anchor } ?: anchor
+    return truncateHunkAfter(truncateHunkBefore(hunk, actualAnchorStart), anchor)
   }
 
   private fun truncateHunkBefore(hunk: PatchHunk, location: DiffLineLocation): PatchHunk {
@@ -140,28 +150,7 @@ object TimelineDiffComponentFactory {
     if (lines.size <= DIFF_CONTEXT_SIZE + 1) return hunk
     val lineIdx = PatchHunkUtil.findHunkLineIndex(hunk, location) ?: return hunk
     val startIdx = lineIdx - DIFF_CONTEXT_SIZE
-    if (startIdx <= 0) return hunk
-
-    var startLineBefore: Int = hunk.startLineBefore
-    var startLineAfter: Int = hunk.startLineAfter
-
-    for (i in 0 until startIdx) {
-      val line = lines[i]
-      when (line.type) {
-        PatchLine.Type.CONTEXT -> {
-          startLineBefore++
-          startLineAfter++
-        }
-        PatchLine.Type.ADD -> startLineAfter++
-        PatchLine.Type.REMOVE -> startLineBefore++
-      }
-    }
-    val truncatedLines = lines.subList(startIdx, lines.size)
-    return PatchHunk(startLineBefore, hunk.endLineBefore, startLineAfter, hunk.endLineAfter).apply {
-      for (line in truncatedLines) {
-        addLine(line)
-      }
-    }
+    return PatchHunkUtil.truncateHunkBefore(hunk, startIdx)
   }
 
   private fun truncateHunkAfter(hunk: PatchHunk, location: DiffLineLocation): PatchHunk {
@@ -169,28 +158,7 @@ object TimelineDiffComponentFactory {
     if (lines.size <= DIFF_CONTEXT_SIZE + 1) return hunk
     val lineIdx = PatchHunkUtil.findHunkLineIndex(hunk, location) ?: return hunk
     val endIdx = lineIdx + DIFF_CONTEXT_SIZE
-    if (endIdx > lines.size - 1) return hunk
-
-    var endLineBefore: Int = hunk.endLineBefore
-    var endLineAfter: Int = hunk.endLineAfter
-
-    for (i in lines.size - 1 downTo endIdx) {
-      val line = lines[i]
-      when (line.type) {
-        PatchLine.Type.CONTEXT -> {
-          endLineBefore--
-          endLineAfter--
-        }
-        PatchLine.Type.ADD -> endLineAfter--
-        PatchLine.Type.REMOVE -> endLineBefore--
-      }
-    }
-    val truncatedLines = lines.subList(0, endIdx + 1)
-    return PatchHunk(hunk.startLineBefore, endLineBefore, hunk.startLineAfter, endLineAfter).apply {
-      for (line in truncatedLines) {
-        addLine(line)
-      }
-    }
+    return PatchHunkUtil.truncateHunkAfter(hunk, endIdx)
   }
 
   fun createDiffComponent(project: Project, editorFactory: EditorFactory,

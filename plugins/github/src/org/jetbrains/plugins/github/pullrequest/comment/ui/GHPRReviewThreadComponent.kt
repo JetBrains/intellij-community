@@ -85,7 +85,7 @@ object GHPRReviewThreadComponent {
     }
 
     val diffComponent = TimelineDiffComponentFactory
-      .createDiffComponent(project, EditorFactory.getInstance(), hunk, thread.originalLocation, thread.originalStartLocation)
+      .createDiffComponent(project, EditorFactory.getInstance(), hunk, thread.originalLocation!!, thread.originalStartLocation)
     return TimelineDiffComponentFactory.wrapWithHeader(diffComponent, thread.filePath, collapsibleState, thread.collapsedState) {
       selectInToolWindowHelper.selectChange(thread.commit?.oid, thread.filePath)
     }
