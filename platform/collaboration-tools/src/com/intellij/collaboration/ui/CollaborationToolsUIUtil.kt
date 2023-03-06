@@ -286,13 +286,13 @@ object CollaborationToolsUIUtil {
 
 @Suppress("FunctionName")
 fun VerticalListPanel(gap: Int = 0): JPanel =
-  ScrollablePanel(ListLayout.vertical(gap)).apply {
+  JPanel(ListLayout.vertical(gap)).apply {
     isOpaque = false
   }
 
 @Suppress("FunctionName")
 fun HorizontalListPanel(gap: Int = 0): JPanel =
-  ScrollablePanel(ListLayout.horizontal(gap)).apply {
+  JPanel(ListLayout.horizontal(gap)).apply {
     isOpaque = false
   }
 
