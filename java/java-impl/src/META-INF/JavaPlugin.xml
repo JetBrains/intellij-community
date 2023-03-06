@@ -2398,6 +2398,7 @@
     <dataflowIRProvider language="JAVA" implementationClass="com.intellij.codeInspection.dataFlow.java.JavaDataFlowIRProvider"/>
     <java.effectively.final.fixer implementation="com.intellij.codeInsight.daemon.impl.quickfix.makefinal.MoveInitializerToIfBranchFixer"/>
     <java.effectively.final.fixer implementation="com.intellij.codeInspection.streamMigration.ConvertToStreamFixer"/>
+    <postStartupActivity implementation="com.intellij.ide.FileNotInSourceRootChecker"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

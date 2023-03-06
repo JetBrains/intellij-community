@@ -320,5 +320,6 @@
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.CheckerFrameworkSupport"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.EclipseAnnotationSupport"/>
     <lang.jvm.annotationPackageSupport implementation="com.intellij.codeInsight.annoPackages.JSpecifyAnnotationSupport"/>
+    <notificationGroup id="FileSystemIssue" displayType="BALLOON" bundle="messages.JavaAnalysisBundle" key="notification.file.system.issue"/>
   </extensions>
 </idea-plugin>
