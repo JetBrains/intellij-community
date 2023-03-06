@@ -4,7 +4,7 @@ plugins {
 
 kotlin {
 	jvm()
-	js { browser() }
+	js(IR) { browser() }
 
 	ios()
 

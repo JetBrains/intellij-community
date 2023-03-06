@@ -10,12 +10,14 @@ my-app.commonTest
 
 my-app.jsMain
     commonMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (COMPILE)
 
 my-app.jsTest
     commonMain (friend, TEST)
     commonTest (refines, TEST)
     jsMain (friend, TEST)
+    org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-stdlib-js:{{KGP_VERSION}} (TEST)
 
 my-app.jvmMain
