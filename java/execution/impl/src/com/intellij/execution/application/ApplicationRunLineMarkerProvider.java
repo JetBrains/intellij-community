@@ -2,12 +2,11 @@
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.execution.ApplicationRunLineExtension;
+import com.intellij.execution.ApplicationRunLineMarkerHider;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -23,19 +22,11 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
-
-  public static final ExtensionPointName<ApplicationRunLineExtension> EP_NAME =
-    ExtensionPointName.create("com.intellij.execution.applicationRunLineExtension");
-
   @Override
   public final @Nullable Info getInfo(@NotNull final PsiElement element) {
-    for (ApplicationRunLineExtension extension : EP_NAME.getExtensionList()) {
-      if (extension.isAndroidModule(element)) {
-        return null;
-      }
-    }
-    
-    if (Registry.is("ide.jvm.run.marker") || !isIdentifier(element)) {
+    if (Registry.is("ide.jvm.run.marker") ||
+        !isIdentifier(element) ||
+        ApplicationRunLineMarkerHider.hideRunLineMarker(element)) {
       return null;
     }
 
