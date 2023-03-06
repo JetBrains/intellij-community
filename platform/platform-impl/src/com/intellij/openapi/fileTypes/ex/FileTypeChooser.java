@@ -74,7 +74,7 @@ public final class FileTypeChooser extends DialogWrapper {
     myList.setModel(model);
     myList.addListSelectionListener(e -> updateContextHelp());
     myPattern.setModel(new CollectionComboBoxModel<>(ContainerUtil.map(patterns, FunctionUtil.id()), patterns.get(0)));
-    ListSpeedSearch.installOn(myList, o -> ((FileType)o).getDescription());
+    ListSpeedSearch.installOn(myList, o -> o.getDescription());
 
     myContextHelpLabel.setForeground(UIUtil.getContextHelpForeground());
     updateContextHelp();
