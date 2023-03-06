@@ -536,6 +536,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (!checkTrustedState(projectStoreBaseDir)) {
       LOG.info("Project is not trusted, aborting")
       activity.end()
+      if (options.showWelcomeScreen) {
+        WelcomeFrame.showIfNoProjectOpened()
+      }
       throw ProcessCanceledException()
     }
 
