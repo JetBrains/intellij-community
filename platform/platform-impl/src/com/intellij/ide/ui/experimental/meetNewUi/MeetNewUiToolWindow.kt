@@ -18,16 +18,19 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.ui.dsl.gridLayout.JBVerticalGaps
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.WrapLayout
 import org.jetbrains.annotations.Nls
+import java.awt.Color
 import java.awt.FlowLayout
 import java.awt.Font
 import javax.swing.Icon
@@ -40,10 +43,9 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
   companion object {
     internal val LOG = logger<MeetNewUiToolWindow>()
 
-    //private const val BANNER_HEIGHT = 180
     private const val CUSTOM_THEME_INDEX = 0
 
-    //private val BANNER = IconLoader.getIcon("expui/meetNewUi/banner.svg", MeetNewUiToolWindow::class.java.classLoader)
+    private val BANNER = IconLoader.getIcon("expui/meetNewUi/banner.png", MeetNewUiToolWindow::class.java.classLoader)
     private val LIGHT = IconLoader.getIcon("expui/meetNewUi/lightTheme.svg", MeetNewUiToolWindow::class.java.classLoader)
     private val LIGHT_SELECTED = IconLoader.getIcon("expui/meetNewUi/lightThemeSelected.svg", MeetNewUiToolWindow::class.java.classLoader)
     private val DARK = IconLoader.getIcon("expui/meetNewUi/darkTheme.svg", MeetNewUiToolWindow::class.java.classLoader)
@@ -52,6 +54,10 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
     private val SYSTEM_SELECTED = IconLoader.getIcon("expui/meetNewUi/systemThemeSelected.svg", MeetNewUiToolWindow::class.java.classLoader)
     private val CLEAN = IconLoader.getIcon("expui/meetNewUi/densityDefault.svg", MeetNewUiToolWindow::class.java.classLoader)
     private val COMPACT = IconLoader.getIcon("expui/meetNewUi/densityCompact.svg", MeetNewUiToolWindow::class.java.classLoader)
+
+    @Suppress("UseJBColor")
+    private val BANNER_BACKGROUND = Color.BLACK
+    private const val BANNER_HEIGHT = 231
   }
 
   private val themes = mutableListOf<Theme>()
@@ -60,12 +66,19 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
 
   private val panel = panel {
     customizeSpacingConfiguration(EmptySpacingConfiguration()) {
-      /*
       row {
         val scale = JBUI.scale(BANNER_HEIGHT).toFloat() / BANNER.iconHeight
-        cell(JLabel(IconUtil.scale(BANNER, WindowManager.getFrame(project), scale)))
+        cell(object : JLabel(IconUtil.scale(BANNER, WindowManager.getInstance().getFrame(project), scale)) {
+          override fun setBackground(bg: Color?) {
+            // Deny changing background by the tool window framework
+            super.setBackground(BANNER_BACKGROUND)
+          }
+        })
+          .align(AlignX.FILL)
+          .applyToComponent {
+            isOpaque = true
+          }
       }
-      */
       panel {
         row {
           label(IdeBundle.message("meetnewui.toolwindow.title", ApplicationNamesInfo.getInstance().getFullProductName()))
