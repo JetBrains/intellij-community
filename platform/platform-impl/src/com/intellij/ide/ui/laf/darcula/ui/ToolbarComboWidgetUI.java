@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
 import com.intellij.ui.ClickListener;
@@ -9,6 +10,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
 
@@ -292,11 +294,12 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     return res;
   }
 
-  private String getText(ToolbarComboWidget widget) {
+  private @Nls String getText(ToolbarComboWidget widget) {
     View v = (View)widget.getClientProperty(BasicHTML.propertyKey);
     if (v != null) {
       try {
-        return (v.getDocument().getText(0, v.getDocument().getLength())).strip();
+        @NlsSafe String text = (v.getDocument().getText(0, v.getDocument().getLength())).strip();
+        return text;
       }
       catch (BadLocationException ignored) {
       }
