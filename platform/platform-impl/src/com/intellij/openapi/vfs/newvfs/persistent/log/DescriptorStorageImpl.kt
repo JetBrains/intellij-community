@@ -59,6 +59,14 @@ class DescriptorStorageImpl(
       VfsOperationTag.CONTENT_ACQUIRE_RECORD -> VfsOperation.ContentsOperation.AcquireRecord.VALUE_SIZE_BYTES
       VfsOperationTag.CONTENT_RELEASE_RECORD -> VfsOperation.ContentsOperation.ReleaseRecord.VALUE_SIZE_BYTES
       VfsOperationTag.CONTENT_SET_VERSION -> VfsOperation.ContentsOperation.SetVersion.VALUE_SIZE_BYTES
+
+      VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> VfsOperation.VFileEventOperation.EventStart.ContentChange.VALUE_SIZE_BYTES
+      VfsOperationTag.VFILE_EVENT_COPY -> VfsOperation.VFileEventOperation.EventStart.Copy.VALUE_SIZE_BYTES
+      VfsOperationTag.VFILE_EVENT_CREATE -> VfsOperation.VFileEventOperation.EventStart.Create.VALUE_SIZE_BYTES
+      VfsOperationTag.VFILE_EVENT_DELETE -> VfsOperation.VFileEventOperation.EventStart.Delete.VALUE_SIZE_BYTES
+      VfsOperationTag.VFILE_EVENT_MOVE -> VfsOperation.VFileEventOperation.EventStart.Move.VALUE_SIZE_BYTES
+      VfsOperationTag.VFILE_EVENT_PROPERTY_CHANGED -> VfsOperation.VFileEventOperation.EventStart.PropertyChange.VALUE_SIZE_BYTES
+      VfsOperationTag.VFILE_EVENT_END -> VfsOperation.VFileEventOperation.EventEnd.VALUE_SIZE_BYTES
     } + VfsOperationTag.SIZE_BYTES * 2
 
   private fun sizeOfValueInDescriptor(size: Int) = size - VfsOperationTag.SIZE_BYTES * 2

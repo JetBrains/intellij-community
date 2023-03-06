@@ -29,7 +29,15 @@ enum class VfsOperationTag {
   CONTENT_ACQUIRE_NEW_RECORD,
   CONTENT_ACQUIRE_RECORD,
   CONTENT_RELEASE_RECORD,
-  CONTENT_SET_VERSION;
+  CONTENT_SET_VERSION,
+
+  VFILE_EVENT_CONTENT_CHANGE,
+  VFILE_EVENT_COPY,
+  VFILE_EVENT_CREATE,
+  VFILE_EVENT_DELETE,
+  VFILE_EVENT_MOVE,
+  VFILE_EVENT_PROPERTY_CHANGED,
+  VFILE_EVENT_END;
 
   companion object {
     const val SIZE_BYTES = Byte.SIZE_BYTES
@@ -39,3 +47,4 @@ enum class VfsOperationTag {
 val VfsOperationTag.isRecordOperation get() = VfsOperationTag.REC_ALLOC <= this && this <= VfsOperationTag.REC_SET_VERSION
 val VfsOperationTag.isAttributeOperation get() = VfsOperationTag.ATTR_WRITE_ATTR <= this && this <= VfsOperationTag.ATTR_SET_VERSION
 val VfsOperationTag.isContentOperation get() = VfsOperationTag.CONTENT_WRITE_BYTES <= this && this <= VfsOperationTag.CONTENT_SET_VERSION
+val VfsOperationTag.isVFileEventOperation get() = VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE <= this && this <= VfsOperationTag.VFILE_EVENT_END
