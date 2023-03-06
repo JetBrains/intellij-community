@@ -51,11 +51,11 @@ public class AtomicConversionRule extends TypeConversionRule {
   }
 
   @Nullable
-  public static TypeConversionDescriptor findDirectConversion(PsiElement context,
-                                                              PsiType to,
-                                                              PsiType from,
-                                                              AtomicConversionType type,
-                                                              TypeMigrationLabeler labeler) {
+  private static TypeConversionDescriptor findDirectConversion(PsiElement context,
+                                                               PsiType to,
+                                                               PsiType from,
+                                                               AtomicConversionType type,
+                                                               TypeMigrationLabeler labeler) {
     final PsiClass toTypeClass = PsiUtil.resolveClassInType(to);
     LOG.assertTrue(toTypeClass != null);
     final String qualifiedName = toTypeClass.getQualifiedName();
@@ -241,11 +241,11 @@ public class AtomicConversionRule extends TypeConversionRule {
     return null;
   }
 
-  public static TypeConversionDescriptor wrapWithNewExpression(PsiType to,
-                                                               PsiType from,
-                                                               @Nullable PsiExpression expression,
-                                                               PsiElement context,
-                                                               @NotNull AtomicConversionType type) {
+  private static TypeConversionDescriptor wrapWithNewExpression(PsiType to,
+                                                                PsiType from,
+                                                                @Nullable PsiExpression expression,
+                                                                PsiElement context,
+                                                                @NotNull AtomicConversionType type) {
     final String typeText = PsiDiamondTypeUtil.getCollapsedType(to, context);
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(to);
     final PsiClass atomicClass = resolveResult.getElement();
