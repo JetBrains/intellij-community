@@ -1117,6 +1117,11 @@ public abstract class KotlinEvaluateExpressionTestGenerated extends AbstractKotl
                 runTest("testData/evaluation/singleBreakpoint/genericCrossinlineArgument.kt");
             }
 
+            @TestMetadata("genericWithMultipleUpperBounds.kt")
+            public void testGenericWithMultipleUpperBounds() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/genericWithMultipleUpperBounds.kt");
+            }
+
             @TestMetadata("imports.kt")
             public void testImports() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/imports.kt");
