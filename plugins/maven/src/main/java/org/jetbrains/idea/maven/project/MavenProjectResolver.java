@@ -19,7 +19,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.importing.MavenImporter;
-import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.server.MavenConfigParseException;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
@@ -29,6 +32,7 @@ import org.jetbrains.idea.maven.utils.*;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MavenProjectResolver {
   public static final Key<Collection<MavenArtifact>> UNRESOLVED_ARTIFACTS = new Key<>("Unresolved Artifacts");
@@ -151,20 +155,28 @@ public class MavenProjectResolver {
                          @NotNull MavenGeneralSettings generalSettings,
                          @NotNull MavenEmbedderWrapper embedder,
                          @NotNull ResolveContext context) throws MavenProcessCanceledException {
+    var artifactIdToMavenProjects = mavenProjects.stream()
+      .filter(mavenProject -> null != mavenProject.getMavenId().getArtifactId())
+      .collect(Collectors.groupingBy(mavenProject -> mavenProject.getMavenId().getArtifactId()));
     ParallelRunner.<MavenProjectReaderResult, MavenProcessCanceledException>runInParallelRethrow(results, result -> {
-        doResolve(project, result, mavenProjects, generalSettings, embedder, context);
+        doResolve(project, result, artifactIdToMavenProjects, generalSettings, embedder, context);
     });
   }
 
   private void doResolve(@NotNull Project project,
                          @NotNull MavenProjectReaderResult result,
-                         @NotNull Collection<MavenProject> mavenProjects,
+                         @NotNull Map<String, List<MavenProject>> artifactIdToMavenProjects,
                          @NotNull MavenGeneralSettings generalSettings,
                          @NotNull MavenEmbedderWrapper embedder,
                          @NotNull ResolveContext context) throws MavenProcessCanceledException {
+    var mavenId = result.mavenModel.getMavenId();
+    var artifactId = mavenId.getArtifactId();
+
+    List<MavenProject> mavenProjects = artifactIdToMavenProjects.get(artifactId);
+    if (null == mavenProjects) return;
+
     MavenProject mavenProjectCandidate = null;
     for (MavenProject mavenProject : mavenProjects) {
-      MavenId mavenId = result.mavenModel.getMavenId();
       if (mavenProject.getMavenId().equals(mavenId)) {
         mavenProjectCandidate = mavenProject;
         break;
