@@ -207,6 +207,7 @@ class KotlinUFunctionCallExpression(
     override fun isMethodNameOneOf(names: Collection<String>): Boolean {
         if (methodNameCanBeOneOf(names)) {
             // canMethodNameBeOneOf can return false-positive results, additional resolve is needed
+            val methodName = methodName ?: return false
             return methodName in names
         }
         return false
