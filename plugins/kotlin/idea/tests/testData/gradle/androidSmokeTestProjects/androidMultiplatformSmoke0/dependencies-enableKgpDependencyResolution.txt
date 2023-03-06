@@ -283,7 +283,6 @@ project.multiplatformAndroidJvmIosLibrary
 
 project.multiplatformAndroidJvmIosLibrary.androidAndJvmMain
     multiplatformAndroidJvmIosLibrary.commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
 
 project.multiplatformAndroidJvmIosLibrary.androidTest
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (friend, TEST)
@@ -353,7 +352,6 @@ project.multiplatformAndroidJvmIosLibrary2.androidAndJvmMain
     multiplatformAndroidJvmIosLibrary.androidAndJvmMain (COMPILE)
     multiplatformAndroidJvmIosLibrary.commonMain (COMPILE)
     multiplatformAndroidJvmIosLibrary2.commonMain (refines, COMPILE)
-    org.jetbrains.kotlin:kotlin-stdlib-common:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk8:{{KGP_VERSION}} (COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (COMPILE)
