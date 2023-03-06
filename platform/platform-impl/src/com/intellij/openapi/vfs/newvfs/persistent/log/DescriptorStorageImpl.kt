@@ -6,17 +6,18 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.SkipListAdvancingPositionTracker
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.trackAdvance
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.ResilientFileChannel
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
+import java.util.concurrent.Executor
 import kotlin.io.path.div
 
 class DescriptorStorageImpl(
   storagePath: Path,
-  private val stringEnumerator: DataEnumerator<String>
+  private val stringEnumerator: DataEnumerator<String>,
+  private val writeJobsExecutor: Executor
 ) : DescriptorStorage {
   private val storageIO: StorageIO
   private var lastSafeSize by PersistentVar.long(storagePath / "size")
@@ -79,24 +80,35 @@ class DescriptorStorageImpl(
    * 2. we do all the necessary additional logic that the operation needs (e.g. write the payload in PayloadStorage before finalizing the descriptor)
    * 3. we rewrite the first byte as (tag value), designating that the descriptor is (hopefully) was written completely and correctly
    */
-  override fun writeDescriptor(tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
+  override fun enqueueDescriptorWrite(tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
     val descrSize = bytesForDescriptor(tag)
-    position.trackAdvance(descrSize.toLong()) { descrPos ->
-      // XXX: in case of mmap-based storage, compiler can reorder operations here so that tag.ordinal.toByte() will be written right away,
-      // but it is unlikely, because there is too much code in between
-      storageIO.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
-      storageIO.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
-      val op = compute()
-      if (tag != op.tag) {
-        throw IllegalStateException("expected $tag, got ${op.tag}")
+    val descrPos = position.beginAdvance(descrSize.toLong())
+    writeJobsExecutor.execute {
+      try {
+        val op = compute()
+        if (tag != op.tag) {
+          throw IllegalStateException("expected $tag, got ${op.tag}")
+        }
+        writeDescriptor(descrPos, op)
+      } finally {
+        position.finishAdvance(descrPos)
       }
-      val data = serialize(op)
-      if (data.size != sizeOfValueInDescriptor(descrSize)) {
-        throw IllegalStateException("for $tag expected value of size ${sizeOfValueInDescriptor(descrSize)}, got ${data.size}")
-      }
-      storageIO.write(descrPos + VfsOperationTag.SIZE_BYTES, data)
-      storageIO.write(descrPos, byteArrayOf(tag.ordinal.toByte()))
     }
+  }
+
+  override fun writeDescriptor(position: Long, op: VfsOperation<*>) {
+    // TODO: probably preceding -tag write is not needed anymore (or should be moved to #enqueueDescriptorWrite)
+    // XXX: in case of mmap-based storage, compiler can reorder operations here so that tag.ordinal.toByte() will be written right away,
+    // but it is unlikely, because there is too much code in between
+    val descriptorSize = bytesForDescriptor(op.tag)
+    storageIO.write(position, byteArrayOf((-op.tag.ordinal).toByte()))
+    storageIO.write(position + descriptorSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(op.tag.ordinal.toByte()))
+    val data = serialize(op)
+    if (data.size != sizeOfValueInDescriptor(descriptorSize)) {
+      throw IllegalStateException("for ${op.tag} expected value of size ${sizeOfValueInDescriptor(descriptorSize)}, got ${data.size}")
+    }
+    storageIO.write(position + VfsOperationTag.SIZE_BYTES, data)
+    storageIO.write(position, byteArrayOf(op.tag.ordinal.toByte()))
   }
 
   override fun readAt(position: Long, action: (VfsOperation<*>?) -> Unit) {

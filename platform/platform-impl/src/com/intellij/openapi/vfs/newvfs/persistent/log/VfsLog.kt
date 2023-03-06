@@ -10,7 +10,6 @@ import com.intellij.util.io.delete
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import kotlin.io.path.div
 import kotlin.io.path.forEachDirectoryEntry
@@ -43,17 +42,15 @@ class VfsLog(
       }
     }
   }
-  private val coroutineDispatcher =
-    if (readOnly) { Dispatchers.IO } else { Executors.newScheduledThreadPool(WORKER_THREADS_COUNT).asCoroutineDispatcher() }
-  private val exceptionsHandler = CoroutineExceptionHandler { _, throwable ->
-    LOG.error("Uncaught exception", throwable)
-  }
-  private val coroutineScope = CoroutineScope(SupervisorJob() + coroutineDispatcher + exceptionsHandler)
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val coroutineDispatcher = Dispatchers.IO.limitedParallelism(WORKER_THREADS_COUNT)
+  private val coroutineScope = CoroutineScope(SupervisorJob() + coroutineDispatcher)
 
   private val context = object : Context {
     // todo: probably need to propagate readOnly to storages to ensure safety
     override val stringEnumerator = SimpleStringPersistentEnumerator(storagePath / "stringsEnum")
-    override val descriptorStorage = DescriptorStorageImpl(storagePath / "events", stringEnumerator)
+    override val descriptorStorage = DescriptorStorageImpl(storagePath / "events", stringEnumerator, coroutineDispatcher.asExecutor())
     override val payloadStorage = PayloadStorageImpl(storagePath / "data")
 
     fun flush() {
@@ -83,18 +80,22 @@ class VfsLog(
     }
   }
 
-  private val processor = object : OperationProcessor {
-    override fun enqueue(action: suspend Context.() -> Unit) =
+  private val contextExecutor = object : VfsLogContextExecutor {
+    override fun launch(action: suspend Context.() -> Unit) =
       coroutineScope.launch {
         context.action()
       }
+
+    override fun run(action: Context.() -> Unit) {
+      context.action()
+    }
   }
 
   val interceptors : List<ConnectionInterceptor> = if (readOnly) { emptyList() } else {
     listOf(
-      ContentsLogInterceptor(processor),
-      AttributesLogInterceptor(processor),
-      RecordsLogInterceptor(processor)
+      ContentsLogInterceptor(contextExecutor),
+      AttributesLogInterceptor(contextExecutor),
+      RecordsLogInterceptor(contextExecutor)
     )
   }
 

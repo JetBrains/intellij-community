@@ -3,6 +3,8 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import kotlinx.coroutines.Job
 
-interface OperationProcessor {
-  fun enqueue(action: suspend VfsLog.Context.() -> Unit): Job
+interface VfsLogContextExecutor {
+  fun launch(action: suspend VfsLog.Context.() -> Unit): Job
+
+  fun run(action: VfsLog.Context.() -> Unit)
 }

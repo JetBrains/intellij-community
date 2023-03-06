@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.AttributesInterceptor
 
 class AttributesLogInterceptor(
-  private val processor: OperationProcessor
+  private val executor: VfsLogContextExecutor
 ) : AttributesInterceptor {
   override fun onWriteAttribute(underlying: (connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute) -> AttributeOutputStream): (connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute) -> AttributeOutputStream =
     { connection, fileId, attribute ->
@@ -21,8 +21,8 @@ class AttributesLogInterceptor(
 
         private fun interceptClose(result: OperationResult<Unit>) {
           val data = aos.asByteArraySequence().toBytes()
-          processor.enqueue {
-            descriptorStorage.writeDescriptor(VfsOperationTag.ATTR_WRITE_ATTR) {
+          executor.run {
+            descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.ATTR_WRITE_ATTR) {
               val attrIdEnumerated = stringEnumerator.enumerate(attribute.id)
               val payloadRef =
                 payloadStorage.writePayload(data.size.toLong()) {
@@ -38,8 +38,8 @@ class AttributesLogInterceptor(
   override fun onDeleteAttributes(underlying: (connection: PersistentFSConnection, fileId: Int) -> Unit): (connection: PersistentFSConnection, fileId: Int) -> Unit =
     { connection, fileId ->
       { underlying(connection, fileId) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.ATTR_DELETE_ATTRS) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.ATTR_DELETE_ATTRS) {
             VfsOperation.AttributesOperation.DeleteAttributes(fileId, result)
           }
         }
@@ -49,8 +49,8 @@ class AttributesLogInterceptor(
   override fun onSetVersion(underlying: (version: Int) -> Unit): (version: Int) -> Unit =
     { version ->
       { underlying(version) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.ATTR_SET_VERSION) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.ATTR_SET_VERSION) {
             VfsOperation.AttributesOperation.SetVersion(version, result)
           }
         }

@@ -4,13 +4,13 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.RecordsInterceptor
 
 class RecordsLogInterceptor(
-  private val processor: OperationProcessor
+  private val executor: VfsLogContextExecutor
 ) : RecordsInterceptor {
   override fun onAllocateRecord(underlying: () -> Int): () -> Int =
     {
       { underlying() } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_ALLOC) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.REC_ALLOC) {
             VfsOperation.RecordsOperation.AllocateRecord(result)
           }
         }
@@ -20,8 +20,8 @@ class RecordsLogInterceptor(
   override fun onSetAttributeRecordId(underlying: (fileId: Int, recordId: Int) -> Unit): (fileId: Int, recordId: Int) -> Unit =
     { fileId, recordId ->
       { underlying(fileId, recordId) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_ATTR_REC_ID) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.REC_SET_ATTR_REC_ID) {
             VfsOperation.RecordsOperation.SetAttributeRecordId(fileId, recordId, result)
           }
         }
@@ -31,8 +31,8 @@ class RecordsLogInterceptor(
   override fun onSetContentRecordId(underlying: (fileId: Int, recordId: Int) -> Boolean): (fileId: Int, recordId: Int) -> Boolean =
     { fileId, recordId ->
       { underlying(fileId, recordId) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_CONTENT_RECORD_ID) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.REC_SET_CONTENT_RECORD_ID) {
             VfsOperation.RecordsOperation.SetContentRecordId(fileId, recordId, result)
           }
         }
@@ -42,8 +42,8 @@ class RecordsLogInterceptor(
   override fun onSetParent(underlying: (fileId: Int, parentId: Int) -> Unit): (fileId: Int, parentId: Int) -> Unit =
     { fileId, parentId ->
       { underlying(fileId, parentId) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_PARENT) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.REC_SET_PARENT) {
             VfsOperation.RecordsOperation.SetParent(fileId, parentId, result)
           }
         }
@@ -53,8 +53,8 @@ class RecordsLogInterceptor(
   override fun onSetNameId(underlying: (fileId: Int, nameId: Int) -> Unit): (fileId: Int, nameId: Int) -> Unit =
     { fileId, nameId ->
       { underlying(fileId, nameId) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_NAME_ID) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.REC_SET_NAME_ID) {
             VfsOperation.RecordsOperation.SetNameId(fileId, nameId, result)
           }
         }
@@ -64,8 +64,8 @@ class RecordsLogInterceptor(
   override fun onSetFlags(underlying: (fileId: Int, flags: Int) -> Boolean): (fileId: Int, flags: Int) -> Boolean =
     { fileId, flags ->
       { underlying(fileId, flags) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_FLAGS) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.REC_SET_FLAGS) {
             VfsOperation.RecordsOperation.SetFlags(fileId, flags, result)
           }
         }
@@ -75,8 +75,8 @@ class RecordsLogInterceptor(
   override fun onSetLength(underlying: (fileId: Int, length: Long) -> Boolean): (fileId: Int, length: Long) -> Boolean =
     { fileId, length ->
       { underlying(fileId, length) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_LENGTH) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.REC_SET_LENGTH) {
             VfsOperation.RecordsOperation.SetLength(fileId, length, result)
           }
         }
@@ -86,8 +86,8 @@ class RecordsLogInterceptor(
   override fun onSetTimestamp(underlying: (fileId: Int, timestamp: Long) -> Boolean): (fileId: Int, timestamp: Long) -> Boolean =
     { fileId, timestamp ->
       { underlying(fileId, timestamp) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_TIMESTAMP) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.REC_SET_TIMESTAMP) {
             VfsOperation.RecordsOperation.SetTimestamp(fileId, timestamp, result)
           }
         }
@@ -97,8 +97,8 @@ class RecordsLogInterceptor(
   override fun onMarkRecordAsModified(underlying: (fileId: Int) -> Unit): (fileId: Int) -> Unit =
     { fileId ->
       { underlying(fileId) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_MARK_RECORD_AS_MODIFIED) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.REC_MARK_RECORD_AS_MODIFIED) {
             VfsOperation.RecordsOperation.MarkRecordAsModified(fileId, result)
           }
         }
@@ -111,8 +111,8 @@ class RecordsLogInterceptor(
      nameId: Int, parentId: Int, overwriteAttrRef: Boolean) -> Unit =
     { fileId, timestamp, length, flags, nameId, parentId, overwriteAttrRef ->
       { underlying(fileId, timestamp, length, flags, nameId, parentId, overwriteAttrRef) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_FILL_RECORD) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.REC_FILL_RECORD) {
             VfsOperation.RecordsOperation.FillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteAttrRef, result)
           }
         }
@@ -123,8 +123,8 @@ class RecordsLogInterceptor(
   override fun onCleanRecord(underlying: (fileId: Int) -> Unit): (fileId: Int) -> Unit =
     { fileId ->
       { underlying(fileId) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_CLEAN_RECORD) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.REC_CLEAN_RECORD) {
             VfsOperation.RecordsOperation.CleanRecord(fileId, result)
           }
         }
@@ -134,8 +134,8 @@ class RecordsLogInterceptor(
   override fun onSetVersion(underlying: (version: Int) -> Unit): (version: Int) -> Unit =
     { version ->
       { underlying(version) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.REC_SET_VERSION) {
+        executor.run {
+          descriptorStorage.enqueueDescriptorWrite(VfsOperationTag.REC_SET_VERSION) {
             VfsOperation.RecordsOperation.SetVersion(version, result)
           }
         }
