@@ -176,6 +176,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   protected SearchTextField mySpeedSearchPatternField;
+  private PopupComponentFactory.PopupType myPopupType;
   private boolean myNativePopup;
   private boolean myMayBeParent;
   private JComponent myAdComponent;
@@ -1040,10 +1041,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     myRequestorComponent = owner;
 
-    boolean forcedDialog = myMayBeParent || SystemInfo.isMac && !(myOwner instanceof IdeFrame) && myOwner.isShowing();
-
-    PopupComponent.Factory factory = getFactory(myForcedHeavyweight || myResizable, forcedDialog);
-    myNativePopup = factory.isNativePopup();
+    myPopupType = getMostSuitablePopupType();
+    myNativePopup = myPopupType != PopupComponentFactory.PopupType.DIALOG;
     Component popupOwner = myOwner;
     if (popupOwner instanceof RootPaneContainer && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
       // JDK uses cached heavyweight popup for a window ancestor
@@ -1054,7 +1053,8 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected preferred size: " + myContent.getPreferredSize());
     }
-    myPopup = factory.getPopup(popupOwner, myContent, targetBounds.x, targetBounds.y, this);
+    PopupComponentFactory factory = PopupComponentFactory.getCurrentInstance();
+    myPopup = factory.getPopup(myPopupType, popupOwner, myContent, targetBounds.x, targetBounds.y, this);
     if (LOG.isDebugEnabled()) {
       LOG.debug("  actual preferred size: " + myContent.getPreferredSize());
     }
@@ -1485,20 +1485,20 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     return null;
   }
 
-  private PopupComponent.@NotNull Factory getFactory(boolean forceHeavyweight, boolean forceDialog) {
-    PopupComponentFactoryService service = PopupComponentFactoryService.getInstance();
+  private PopupComponentFactory.PopupType getMostSuitablePopupType() {
+    boolean forceDialog = myMayBeParent || SystemInfo.isMac && !(myOwner instanceof IdeFrame) && myOwner.isShowing();
     if (Registry.is("allow.dialog.based.popups")) {
       boolean noFocus = !myFocusable || !myRequestFocus;
       boolean cannotBeDialog = noFocus; // && SystemInfo.isXWindow
 
       if (!cannotBeDialog && (isPersistent() || forceDialog)) {
-        return service.getDialogFactory();
+        return PopupComponentFactory.PopupType.DIALOG;
       }
     }
-    if (forceHeavyweight) {
-      return service.getHeavyweightFactory();
+    if (myForcedHeavyweight || myResizable) {
+      return PopupComponentFactory.PopupType.HEAVYWEIGHT;
     }
-    return service.getDefaultFactory();
+    return PopupComponentFactory.PopupType.DEFAULT;
   }
 
   @Override
