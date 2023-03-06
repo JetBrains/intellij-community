@@ -457,11 +457,6 @@
         <xs:documentation>An URL for the "Help | What's New" action. See also 'show-on-update' attribute.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
-    <xs:attribute type="xs:anyURI" name="eap_url" use="optional">
-      <xs:annotation>
-        <xs:documentation>An URL for the "EAP What's New" action.</xs:documentation>
-      </xs:annotation>
-    </xs:attribute>
     <xs:attribute type="xs:boolean" name="show-on-update">
       <xs:annotation>
         <xs:documentation>
