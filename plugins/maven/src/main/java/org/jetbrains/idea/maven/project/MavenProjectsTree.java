@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -42,7 +43,6 @@ import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -461,13 +461,13 @@ public final class MavenProjectsTree {
 
     UpdateContext updateContext = new UpdateContext();
 
-    var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process);
+    var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process, updateModules);
     var filesToAddModules = new HashSet<VirtualFile>();
     for (VirtualFile file : files) {
       if (null == findProject(file)) {
         filesToAddModules.add(file);
       }
-      updater.updateProjects(List.of(new UpdateSpec(file, updateModules, forceRead)));
+      updater.updateProjects(List.of(new UpdateSpec(file, forceRead)));
     }
 
     for (MavenProject aggregator : getProjects()) {
@@ -495,7 +495,7 @@ public final class MavenProjectsTree {
     updateContext.fireUpdatedIfNecessary();
   }
 
-  private record UpdateSpec(VirtualFile mavenProjectFile, boolean updateModules, boolean forceRead) {
+  private record UpdateSpec(VirtualFile mavenProjectFile, boolean forceRead) {
   }
 
   private static class MavenProjectsTreeUpdater {
@@ -505,47 +505,38 @@ public final class MavenProjectsTree {
     private final MavenProjectReader reader;
     private final MavenGeneralSettings generalSettings;
     private final MavenProgressIndicator process;
-    private final ConcurrentHashMap<VirtualFile, CopyOnWriteArrayList<UpdateSettings>> updateHistory = new ConcurrentHashMap<>();
-
-    private record UpdateSettings(boolean updateModules, boolean forceRead) {
-    }
+    private final ConcurrentHashMap<VirtualFile, Boolean> updated = new ConcurrentHashMap<>();
+    private final boolean updateModules;
 
     MavenProjectsTreeUpdater(MavenProjectsTree tree,
                              MavenExplicitProfiles profiles,
                              UpdateContext context,
                              MavenProjectReader reader,
                              MavenGeneralSettings settings,
-                             MavenProgressIndicator process) {
+                             MavenProgressIndicator process,
+                             boolean updateModules) {
       this.tree = tree;
       explicitProfiles = profiles;
       updateContext = context;
       this.reader = reader;
       generalSettings = settings;
       this.process = process;
+      this.updateModules = updateModules;
     }
 
-    private boolean startUpdate(VirtualFile mavenProjectFile, boolean updateModules, boolean forceRead) {
-      updateHistory.putIfAbsent(mavenProjectFile, new CopyOnWriteArrayList<>());
+    private boolean startUpdate(VirtualFile mavenProjectFile, boolean forceRead) {
+      Ref<Boolean> previousUpdateRef = new Ref<>();
+      updated.compute(mavenProjectFile, (file, value) -> {
+        previousUpdateRef.set(value);
+        return Boolean.TRUE.equals(value) || forceRead;
+      });
+      var previousUpdate = previousUpdateRef.get();
 
-      var fileHistory = updateHistory.get(mavenProjectFile);
-      if (!fileHistory.isEmpty() && !updateModules && !forceRead) {
-        // we already updated this file with the same or stricter settings
-        MavenLog.LOG.debug("Has already been updated (same/stricter): " + mavenProjectFile);
+      if ((null != previousUpdate && !forceRead) || Boolean.TRUE.equals(previousUpdate)) {
+        // we already updated this file
+        MavenLog.LOG.debug("Has already been updated (%s): %s; forceRead: %s".formatted(previousUpdate, mavenProjectFile, forceRead));
         return false;
       }
-      for (var settings : fileHistory) {
-        if (settings.updateModules() && settings.forceRead()) {
-          // we already updated this file with recursion and forced reading
-          MavenLog.LOG.debug("Has already been updated (modules update, forced reading): " + mavenProjectFile);
-          return false;
-        }
-        // we already updated this file with the same settings
-        if (settings.updateModules() == updateModules && settings.forceRead() == forceRead) {
-          MavenLog.LOG.debug("Has already been updated (same): " + mavenProjectFile);
-          return false;
-        }
-      }
-      fileHistory.add(new UpdateSettings(updateModules, forceRead));
       process.setText(MavenProjectBundle.message("maven.reading.pom", mavenProjectFile.getPath()));
       process.setText2("");
       return true;
@@ -644,11 +635,9 @@ public final class MavenProjectsTree {
       return ContainerUtil.map(children, child -> child.getFile());
     }
 
-    private void update(final VirtualFile mavenProjectFile,
-                        final boolean updateModules,
-                        final boolean forceRead) {
+    private void update(final VirtualFile mavenProjectFile, final boolean forceRead) {
       // if the file has already been updated, skip subsequent updates
-      if (!startUpdate(mavenProjectFile, updateModules, forceRead)) return;
+      if (!startUpdate(mavenProjectFile, forceRead)) return;
 
       var mavenProject = tree.findOrCreateProject(mavenProjectFile);
 
@@ -676,7 +665,6 @@ public final class MavenProjectsTree {
       var moduleUpdates = ContainerUtil.map(modulesFilesToUpdate, moduleFile ->
         new UpdateSpec(
           moduleFile,
-          updateModules,
           forceReadModules
         ));
       updateProjects(moduleUpdates);
@@ -687,7 +675,6 @@ public final class MavenProjectsTree {
       var childUpdates = ContainerUtil.map(childFilesToUpdate, childFile ->
         new UpdateSpec(
           childFile,
-          updateModules,
           readPom // if parent was read, force read children
         ));
       updateProjects(childUpdates);
@@ -697,7 +684,7 @@ public final class MavenProjectsTree {
       if (specs.isEmpty()) return;
 
       ParallelRunner.runInParallel(specs, spec -> {
-        update(spec.mavenProjectFile(), spec.updateModules(), spec.forceRead());
+        update(spec.mavenProjectFile(), spec.forceRead());
       });
     }
   }
@@ -793,10 +780,10 @@ public final class MavenProjectsTree {
     }
     inheritorsToUpdate.removeAll(updateContext.getDeletedProjects());
 
-    var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process);
+    var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process, false);
     var updateSpecs = new ArrayList<UpdateSpec>();
     for (MavenProject mavenProject : inheritorsToUpdate) {
-      updateSpecs.add(new UpdateSpec(mavenProject.getFile(), false, false));
+      updateSpecs.add(new UpdateSpec(mavenProject.getFile(), false));
     }
     updater.updateProjects(updateSpecs);
 
