@@ -1950,6 +1950,11 @@
       "since": "2023.1"
     },
     {
+      "key": "RunWidget.stopBackground",
+      "description": "Background for the stop button in the run widget",
+      "since": "2023.1"
+    },
+    {
       "key": "MainWindow.Tab.selectedForeground"
     },
     {
