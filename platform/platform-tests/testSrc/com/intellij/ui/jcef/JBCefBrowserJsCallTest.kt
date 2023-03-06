@@ -136,6 +136,7 @@ class JBCefBrowserJsCallTest {
     assertEquals("4", r2)
   }
 
+  @Test
   fun `IDEA-312158 with logging and disabled GPU`() {
     System.setProperty("ide.browser.jcef.extra.args", "--disable-gpu,--disable-gpu-compositing,--disable-gpu-vsync,--disable-software-rasterizer,--disable-extensions");
     val browser = prepareBrowser()
