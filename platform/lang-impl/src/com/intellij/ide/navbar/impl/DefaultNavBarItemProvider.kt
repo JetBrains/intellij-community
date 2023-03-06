@@ -33,6 +33,7 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
   @RequiresBackgroundThread
   override fun findParent(item: NavBarItem): NavBarItem? {
     if (item !is PsiNavBarItem) return null
+    if (!item.data.isValid) return null
 
     // TODO: cache all roots? (like passing through NavBarModelBuilder.traverseToRoot)
     // TODO: hash all roots? (Set instead of Sequence)
