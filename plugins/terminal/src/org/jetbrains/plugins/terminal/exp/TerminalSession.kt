@@ -36,7 +36,7 @@ class TerminalSession(private val project: Project,
   init {
     val styleState = StyleState()
     styleState.setDefaultStyle(settings.defaultStyle)
-    textBuffer = TerminalTextBuffer(80, 24, styleState)
+    textBuffer = TerminalTextBufferEx(80, 24, styleState)
     model = TerminalModel(textBuffer, styleState)
     controller = TerminalController(model, settings)
 

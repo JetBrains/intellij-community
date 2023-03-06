@@ -245,7 +245,15 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
   private val cursorListeners: MutableList<CursorListener> = mutableListOf()
 
   fun addContentListener(listener: ContentListener, parentDisposable: Disposable? = null) {
-    val terminalListener = TerminalModelListener { listener.onContentChanged() }
+    val terminalListener = object : TerminalModelListenerEx {
+      override fun modelChanged() {
+        listener.onContentChanged()
+      }
+
+      override fun textWritten(x: Int, y: Int, text: String) {
+        listener.onTextWritten(x, y, text)
+      }
+    }
     textBuffer.addModelListener(terminalListener)
     if (parentDisposable != null) {
       Disposer.register(parentDisposable) {
@@ -264,6 +272,8 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
 
   interface ContentListener {
     fun onContentChanged() {}
+
+    fun onTextWritten(x: Int, y: Int, text: String) {}
   }
 
   interface TerminalListener {
