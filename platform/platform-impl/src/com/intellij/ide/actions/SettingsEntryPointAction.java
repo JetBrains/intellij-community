@@ -24,10 +24,12 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.IconManager;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +46,8 @@ import java.util.List;
  */
 public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
   private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
+  private static final Icon NEW_UI_ICON =
+    IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
   private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
   private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
@@ -225,7 +229,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
              : getCustomizedIcon(PLUGIN_UPDATE_ICON);
     }
     if (ourNewUiIcon) {
-      return GEAR_ICON.getInfoIcon();
+      return NEW_UI_ICON;
     }
 
     return getCustomizedIcon(GEAR_ICON);
@@ -422,6 +426,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       super.customizeComponent(list, value, isSelected);
 
       myTextLabel.setHorizontalTextPosition(SwingConstants.LEFT);
+      myTextLabel.setIconTextGap(JBUI.scale(6));
       boolean enableNewUi = value instanceof AnActionHolder actionHolder && actionHolder.getAction() instanceof EnableNewUiAction;
       myTextLabel.setIcon(enableNewUi ? AllIcons.General.Beta : null);
     }
