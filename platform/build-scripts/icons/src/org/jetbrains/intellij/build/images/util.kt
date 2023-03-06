@@ -3,11 +3,10 @@ package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.ui.svg.SvgTranscoder
+import com.intellij.ui.svg.getSvgDocumentSize
 import java.awt.Dimension
 import java.awt.image.BufferedImage
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.imageio.ImageIO
@@ -64,18 +63,18 @@ private fun loadPng(file: Path): BufferedImage {
 internal fun isImage(file: Path): Boolean = ImageExtension.fromName(file.fileName.toString()) != null
 
 internal fun imageSize(file: Path, failOnMalformedImage: Boolean = false): Dimension? {
+  if (file.toString().endsWith(".svg")) {
+    val data = Files.readAllBytes(file)
+    val size = getSvgDocumentSize(data = data)
+    return Dimension(size.width.toInt(), size.height.toInt())
+  }
+
   val image = try {
-    loadImage(file, failOnMalformedImage)
+    loadPng(file)
   }
   catch (e: Exception) {
     if (failOnMalformedImage) {
       throw e
-    }
-    null
-  }
-  if (image == null) {
-    if (failOnMalformedImage) {
-      error("Can't load $file")
     }
     println("WARNING: can't load $file")
     return null
@@ -84,30 +83,6 @@ internal fun imageSize(file: Path, failOnMalformedImage: Boolean = false): Dimen
   val width = image.width
   val height = image.height
   return Dimension(width, height)
-}
-
-private fun loadImage(file: Path, failOnMalformedImage: Boolean): BufferedImage? {
-  if (file.toString().endsWith(".svg")) {
-    // don't mask any exception for svg file
-    Files.newInputStream(file).use {
-      try {
-        return SvgTranscoder.createImage(scale = 1f, input = it)
-      }
-      catch (e: Exception) {
-        throw IOException("Cannot decode $file", e)
-      }
-    }
-  }
-
-  try {
-    return loadPng(file)
-  }
-  catch (e: Exception) {
-    if (failOnMalformedImage) {
-      throw e
-    }
-    return null
-  }
 }
 
 internal enum class ImageType(private val suffix: String) {

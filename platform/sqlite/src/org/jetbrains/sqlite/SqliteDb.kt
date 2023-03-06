@@ -31,7 +31,7 @@ internal abstract class SqliteDb {
     /**
      * Throws formatted SqliteException with error code and message.
      */
-    fun newException(errorCode: Int, errorMessage: String, sql: String? = null): SqliteException {
+    fun newException(errorCode: Int, errorMessage: String, sql: ByteArray? = null): SqliteException {
       val code = SqliteErrorCode.getErrorCode(errorCode)
       var text = if (code == SqliteErrorCode.UNKNOWN_ERROR) {
         "$code:$errorCode ($errorMessage)"
@@ -40,7 +40,7 @@ internal abstract class SqliteDb {
         "$code ($errorMessage)"
       }
       if (sql != null) {
-        text += " (sql=$sql)"
+        text += " (sql=${sql.decodeToString()})"
       }
       return SqliteException(message = text, resultCode = code)
     }
@@ -116,7 +116,7 @@ internal abstract class SqliteDb {
    * @see [http://www.sqlite.org/c3ref/exec.html](http://www.sqlite.org/c3ref/exec.html)
    */
   @Synchronized
-  fun exec(sql: String) {
+  fun exec(sql: ByteArray) {
     val status = _exec(sql)
     if (status != SqliteCodes.SQLITE_OK) {
       throw newException(errorCode = status, errorMessage = errmsg()!!, sql = sql)
@@ -150,7 +150,7 @@ internal abstract class SqliteDb {
    * @see [http://www.sqlite.org/c3ref/prepare.html](http://www.sqlite.org/c3ref/prepare.html)
    */
   @Synchronized
-  fun prepareForStatement(sql: String): SafeStatementPointer {
+  fun prepareForStatement(sql: ByteArray): SafeStatementPointer {
     val pointer = prepare(sql)
     check(statements.add(pointer)) { "Already added pointer to statements set" }
     return pointer
@@ -197,16 +197,9 @@ internal abstract class SqliteDb {
    * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
    * @see [http://www.sqlite.org/c3ref/exec.html](http://www.sqlite.org/c3ref/exec.html)
    */
-  abstract fun _exec(sql: String): Int
+  abstract fun _exec(sql: ByteArray): Int
 
-  /**
-   * Complies an SQL statement.
-   *
-   * @param sql An SQL statement.
-   * @return [Result Codes](http://www.sqlite.org/c3ref/c_abort.html)
-   * @see [http://www.sqlite.org/c3ref/prepare.html](http://www.sqlite.org/c3ref/prepare.html)
-   */
-  protected abstract fun prepare(sql: String): SafeStatementPointer
+  protected abstract fun prepare(sql: ByteArray): SafeStatementPointer
 
   /**
    * Destroys a prepared statement.
@@ -569,7 +562,7 @@ internal abstract class SqliteDb {
     throw newException(errorCode = errorCode, errorMessage = errmsg()!!)
   }
 
-  fun newException(errorCode: Int, sql: String? = null): SqliteException {
+  fun newException(errorCode: Int, sql: ByteArray? = null): SqliteException {
     return newException(errorCode = errorCode, errorMessage = errmsg()!!, sql = sql)
   }
 

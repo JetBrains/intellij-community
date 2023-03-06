@@ -98,7 +98,7 @@ object DotnetIconSync {
 
   private fun generateClasses() {
     step("Generating classes..")
-    generateIconClasses(dbFile = null, config = DotnetIconClasses(context.devRepoDir.toAbsolutePath().toString()))
+    generateIconClasses(config = DotnetIconClasses(context.devRepoDir.toAbsolutePath().toString()))
   }
 
   private fun stageChanges(): Collection<String> {

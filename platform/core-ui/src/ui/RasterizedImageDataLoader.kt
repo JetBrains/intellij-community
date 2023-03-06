@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package com.intellij.ui
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -162,11 +164,14 @@ private fun loadRasterized(path: String,
     }
   }
   val image = if (isSvg) {
-    SVGLoader.loadFromClassResource(classLoader = classLoader,
-                                    path = effectivePath,
-                                    rasterizedCacheKey = rasterizedCacheKey,
-                                    mapper = SvgCacheMapper(scale = scale, isDark = isEffectiveDark, isStroke = parameters.isStroke),
-                                    colorPatcher = parameters.colorPatcher)
+    SVGLoader.loadFromClassResource(
+      classLoader = classLoader,
+      path = effectivePath,
+      precomputedCacheKey = rasterizedCacheKey,
+      scale = scale,
+      compoundCacheKey = SvgCacheMapper(scale = scale, isDark = isEffectiveDark, isStroke = parameters.isStroke),
+      colorPatcherProvider = parameters.colorPatcher,
+    )
   }
   else {
     ImageLoader.loadPngFromClassResource(path = effectivePath, classLoader = classLoader, scale = nonSvgScale)
@@ -215,11 +220,12 @@ private fun loadPatched(name: String,
     val image = if (isSvg) {
       SVGLoader.loadFromClassResource(classLoader = classLoader,
                                       path = descriptor.name,
-                                      rasterizedCacheKey = 0,
-                                      mapper = SvgCacheMapper(scale = descriptor.scale,
-                                                              isDark = isEffectiveDark,
-                                                              isStroke = parameters.isStroke),
-                                      colorPatcher = parameters.colorPatcher)
+                                      precomputedCacheKey = 0,
+                                      scale = descriptor.scale,
+                                      compoundCacheKey = SvgCacheMapper(scale = descriptor.scale,
+                                                                        isDark = isEffectiveDark,
+                                                                        isStroke = parameters.isStroke),
+                                      colorPatcherProvider = parameters.colorPatcher)
     }
     else {
       ImageLoader.loadPngFromClassResource(path = descriptor.name, classLoader = classLoader, scale = descriptor.scale)

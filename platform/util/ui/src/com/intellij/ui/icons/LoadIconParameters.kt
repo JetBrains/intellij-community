@@ -15,7 +15,7 @@ data class LoadIconParameters(
   @JvmField val isStroke: Boolean
 ) {
   companion object {
-    fun defaultParameters(isDark: Boolean): LoadIconParameters {
+    internal fun defaultParameters(isDark: Boolean): LoadIconParameters {
       return LoadIconParameters(filters = emptyList(),
                                 scaleContext = ScaleContext.create(),
                                 isDark = isDark,

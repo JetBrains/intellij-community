@@ -4,7 +4,7 @@ package org.jetbrains.sqlite
 import kotlin.time.Duration
 
 class SqlitePreparedStatement<T : Binder> internal constructor(private val connection: SqliteConnection,
-                                                               private val sql: String,
+                                                               private val sql: ByteArray,
                                                                val binder: T,
                                                                private val queryTimeout: Duration = Duration.ZERO) : SqliteStatement {
   private val resultSet = SqliteResultSet(this)
@@ -79,7 +79,7 @@ class SqlitePreparedStatement<T : Binder> internal constructor(private val conne
   fun executeUpdate() {
     pointer.ensureOpen()
     connection.withConnectionTimeout(queryTimeout) {
-      synchronized(this.db) {
+      synchronized(db) {
         bindParams()
         try {
           connection.step(pointer.pointer, sql)

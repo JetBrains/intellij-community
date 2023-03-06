@@ -60,7 +60,6 @@ internal suspend fun buildDistribution(state: DistributionBuilderState,
                                        context: BuildContext,
                                        isUpdateFromSources: Boolean = false): List<DistributionFileEntry> = coroutineScope {
   validateModuleStructure(state.platform, context)
-  createPrebuildSvgIconsJob(context)
   createBuildBrokenPluginListJob(context)
 
   val flatIdeClassPath = createIdeClassPath(state.platform, context)

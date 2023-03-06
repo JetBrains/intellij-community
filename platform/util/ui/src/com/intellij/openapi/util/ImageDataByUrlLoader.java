@@ -5,6 +5,7 @@ import com.intellij.ui.icons.IconTransform;
 import com.intellij.ui.icons.ImageDataLoader;
 import com.intellij.ui.icons.LoadIconParameters;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ImageLoaderKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +85,7 @@ public final class ImageDataByUrlLoader implements ImageDataLoader {
       }
       path = url.toString();
     }
-    return ImageLoader.INSTANCE.loadImage(path, parameters, ownerClass, classLoader, flags, !path.endsWith(".svg"));
+    return ImageLoaderKt.loadImage(path, parameters, ownerClass, classLoader, flags, !path.endsWith(".svg"));
   }
 
   /**

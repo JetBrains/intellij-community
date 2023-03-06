@@ -10,6 +10,7 @@ import java.security.Provider
 import java.security.SecureRandom
 import kotlin.io.path.inputStream
 
+@Suppress("FunctionName")
 object DigestUtil {
   @JvmStatic
   val random: SecureRandom by lazy { SecureRandom() }
@@ -30,8 +31,8 @@ object DigestUtil {
   fun sha256(): MessageDigest = cloneDigest(sha256)
   private val sha256 by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA-256") }
 
-  @Suppress("FunctionName")
-  fun sha3_224(): MessageDigest = cloneDigest(sha224)
+  fun sha3_224(): MessageDigest = cloneDigest(sha3_224)
+  fun sha3_512(): MessageDigest = cloneDigest(sha3_512)
 
   @JvmStatic
   fun sha512(): MessageDigest = cloneDigest(sha512)
@@ -96,7 +97,9 @@ object DigestUtil {
 }
 
 private val sunSecurityProvider: Provider = java.security.Security.getProvider("SUN")
-private val sha224: MessageDigest by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA3-224") }
+
+private val sha3_224: MessageDigest by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA3-224") }
+private val sha3_512: MessageDigest by lazy(LazyThreadSafetyMode.PUBLICATION) { getMessageDigest("SHA3-512") }
 
 private fun getMessageDigest(algorithm: String): MessageDigest {
   return MessageDigest.getInstance(algorithm, sunSecurityProvider)

@@ -3,7 +3,7 @@ package com.intellij.ui.scale;
 
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RestoreScaleRule;
-import com.intellij.util.ImageLoader;
+import com.intellij.ui.svg.SvgKt;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.ImageUtil;
 import org.junit.ClassRule;
@@ -11,6 +11,7 @@ import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
 import java.awt.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
@@ -62,7 +63,7 @@ public class SvgIconSizeTest {
      * Test SVGLoader.getDocumentSize for SVG starting with <svg.
      */
     url = getSvgIconPath("20x10").toUri().toURL();
-    ImageLoader.Dimension2DDouble size = SVGLoader.getDocumentSize(url.openStream(), 1);
+    Rectangle2D.Float size = SvgKt.getSvgDocumentSize(url.openStream().readAllBytes());
     assertEquals("wrong svg doc width", 20d, size.getWidth());
     assertEquals("wrong svg doc height", 10d, size.getHeight());
 
@@ -70,7 +71,7 @@ public class SvgIconSizeTest {
      * Test SVGLoader.getDocumentSize for SVG starting with <?xml.
      */
     url = getSvgIconPath("xml_20x10").toUri().toURL();
-    size = SVGLoader.getDocumentSize(url.openStream(), 1);
+    size = SvgKt.getSvgDocumentSize(url.openStream().readAllBytes());
     assertEquals("wrong svg doc width", 20d, size.getWidth());
     assertEquals("wrong svg doc height", 10d, size.getHeight());
   }

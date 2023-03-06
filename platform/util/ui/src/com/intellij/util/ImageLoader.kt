@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "LiftReturnOrAssignment")
 
 package com.intellij.util
 
@@ -15,7 +15,9 @@ import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale.isHiDPI
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.SvgCacheMapper
+import com.intellij.ui.svg.renderSvg
 import com.intellij.util.ImageLoader.USE_CACHE
+import com.intellij.util.ImageLoader.convertImage
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.URLUtil
@@ -53,6 +55,54 @@ import kotlin.math.roundToInt
 private val LOG: Logger
   get() = logger<ImageLoader>()
 
+// Some duplication here: isDark presents in parameters and in flags
+@Internal
+fun loadImage(path: String,
+              parameters: LoadIconParameters,
+              resourceClass: Class<*>? = null,
+              classLoader: ClassLoader?,
+              @MagicConstant(flagsFromClass = ImageLoader::class) flags: Int,
+              isUpScaleNeeded: Boolean): Image? {
+  val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+  val descriptors = createImageDescriptorList(path = path, flags = flags, scaleContext = parameters.scaleContext)
+  val imageCache = ImageCache.INSTANCE
+  var ioExceptionThrown = false
+  for (i in descriptors.indices) {
+    val descriptor = descriptors.get(i)
+    ioExceptionThrown = try {
+      // check only for the first one, as io miss cache doesn't have a scale
+      val image = loadByDescriptor(descriptor = descriptor,
+                                   flags = flags,
+                                   resourceClass = resourceClass,
+                                   classLoader = classLoader,
+                                   ioMissCache = if (i == 0) imageCache.ioMissCache else null,
+                                   imageCache = imageCache,
+                                   ioMissCacheKey = path,
+                                   colorPatcherProvider = parameters.colorPatcher) ?: continue
+      if (start != -1L) {
+        IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = start)
+      }
+
+      val isHiDpiNeeded = StartupUiUtil.isJreHiDPI(parameters.scaleContext)
+      return convertImage(image = image,
+                          filters = parameters.filters,
+                          flags = flags,
+                          scaleContext = parameters.scaleContext,
+                          isUpScaleNeeded = isUpScaleNeeded,
+                          isHiDpiNeeded = isHiDpiNeeded,
+                          imageScale = descriptor.scale,
+                          isSvg = descriptor.isSvg)
+    }
+    catch (e: IOException) {
+      true
+    }
+  }
+  if (ioExceptionThrown) {
+    imageCache.ioMissCache.add(path)
+  }
+  return null
+}
+
 object ImageLoader {
   const val ALLOW_FLOAT_SCALING = 0x01
   const val USE_CACHE = 0x02
@@ -67,54 +117,6 @@ object ImageLoader {
     return 4L * icon.iconWidth * icon.iconHeight > CACHED_IMAGE_MAX_SIZE
   }
 
-  // Some duplication here: isDark presents in parameters and in flags
-  @Internal
-  fun loadImage(path: String,
-                parameters: LoadIconParameters,
-                resourceClass: Class<*>? = null,
-                classLoader: ClassLoader?,
-                @MagicConstant(flagsFromClass = ImageLoader::class) flags: Int,
-                isUpScaleNeeded: Boolean): Image? {
-    val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-    val descriptors = createImageDescriptorList(path = path, flags = flags, scaleContext = parameters.scaleContext)
-    val imageCache = ImageCache.INSTANCE
-    var ioExceptionThrown = false
-    for (i in descriptors.indices) {
-      val descriptor = descriptors.get(i)
-      ioExceptionThrown = try {
-        // check only for the first one, as io miss cache doesn't have a scale
-        val image = loadByDescriptor(descriptor = descriptor,
-                                     flags = flags,
-                                     resourceClass = resourceClass,
-                                     classLoader = classLoader,
-                                     ioMissCache = if (i == 0) imageCache.ioMissCache else null,
-                                     imageCache = imageCache,
-                                     ioMissCacheKey = path,
-                                     colorPatcher = parameters.colorPatcher) ?: continue
-        if (start != -1L) {
-          IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = start)
-        }
-
-        val isHiDpiNeeded = StartupUiUtil.isJreHiDPI(parameters.scaleContext)
-        return convertImage(image = image,
-                            filters = parameters.filters,
-                            flags = flags,
-                            scaleContext = parameters.scaleContext,
-                            isUpScaleNeeded = isUpScaleNeeded,
-                            isHiDpiNeeded = isHiDpiNeeded,
-                            imageScale = descriptor.scale,
-                            isSvg = descriptor.isSvg)
-      }
-      catch (e: IOException) {
-        true
-      }
-    }
-    if (ioExceptionThrown) {
-      imageCache.ioMissCache.add(path)
-    }
-    return null
-  }
-
   @Internal
   fun loadImageForStartUp(requestedPath: String, classLoader: ClassLoader): BufferedImage? {
     val scaleContext = ScaleContext.create()
@@ -124,7 +126,7 @@ object ImageLoader {
         val data = getResourceData(path = descriptor.path, resourceClass = null, classLoader = classLoader) ?: continue
         val image: Image
         if (descriptor.isSvg) {
-          return SVGLoader.loadWithoutCache(data, descriptor.scale)
+          return renderSvg(data = data, scale = descriptor.scale)
         }
         else {
           image = loadPng(stream = ByteArrayInputStream(data), scale = descriptor.scale, originalUserSize = null)
@@ -182,8 +184,8 @@ object ImageLoader {
                      @MagicConstant(flags = [USE_DARK.toLong(), USE_SVG.toLong()]) flags: Int): Image {
     stream.use {
       return if (flags and USE_SVG == USE_SVG) {
-        val mapper = SvgCacheMapper(scale = scale, isDark = flags and USE_DARK == USE_DARK, isStroke = false)
-        SVGLoader.load(path = path, stream = stream, mapper = mapper, colorPatcher = null)
+        val compoundCacheKey = SvgCacheMapper(scale = scale, isDark = flags and USE_DARK == USE_DARK, isStroke = false)
+        SVGLoader.load(path = path, stream = stream, scale = scale, compoundCacheKey = compoundCacheKey, colorPatcherProvider = null)
       }
       else {
         loadPng(stream = stream, scale = scale, originalUserSize = originalUserSize)
@@ -237,41 +239,6 @@ object ImageLoader {
     return createImageDescriptorList(path = path, flags = flags, scaleContext = scaleContext)
   }
 
-  private fun createImageDescriptorList(path: String,
-                                        @MagicConstant(flagsFromClass = ImageLoader::class) flags: Int,
-                                        scaleContext: ScaleContext): List<ImageDescriptor> {
-    // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
-    val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-    val i = path.lastIndexOf('.')
-    val name = if (i < 0) path else path.substring(0, i)
-    val ext = if (i < 0 || i == path.length - 1) "" else path.substring(i + 1)
-    val scale = adjustScaleFactor(
-      flags and ALLOW_FLOAT_SCALING == ALLOW_FLOAT_SCALING, pixScale)
-    val list: List<ImageDescriptor>
-    if (!path.startsWith("file:") && path.contains("://")) {
-      val qI = path.lastIndexOf('?')
-      val isSvg = StringUtilRt.endsWithIgnoreCase(if (qI == -1) path else path.substring(0, qI), ".svg")
-      list = listOf(ImageDescriptor("$name.$ext", 1f, isSvg, true, false))
-    }
-    else {
-      val isSvg = "svg".equals(ext, ignoreCase = true)
-      val isDark = flags and USE_DARK == USE_DARK
-      val retina = isHiDPI(pixScale.toDouble())
-      list = ArrayList()
-      if (!isSvg && flags and USE_SVG == USE_SVG) {
-        addFileNameVariant(retina, isDark, true, false, name, ext, scale, list)
-      }
-      addFileNameVariant(retina, isDark, false, isSvg, name, ext, scale, list)
-      if (isDark) {
-        // fallback to non-dark
-        addFileNameVariant(retina, false, false, isSvg, name, ext, scale, list)
-        if (!isSvg && flags and USE_SVG == USE_SVG) {
-          addFileNameVariant(false, false, false, true, name, ext, scale, list)
-        }
-      }
-    }
-    return list
-  }
 
   @JvmStatic
   fun loadFromUrl(url: URL): Image? {
@@ -305,10 +272,6 @@ object ImageLoader {
                      classLoader = null,
                      flags = flags,
                      isUpScaleNeeded = !path.endsWith(".svg"))
-  }
-
-  private fun adjustScaleFactor(allowFloatScaling: Boolean, scale: Float): Float {
-    return if (allowFloatScaling) scale else if (isHiDPI(scale.toDouble())) 2f else 1f
   }
 
   @JvmStatic
@@ -424,7 +387,7 @@ object ImageLoader {
                        ioMissCache = null,
                        imageCache = ImageCache.INSTANCE,
                        ioMissCacheKey = null,
-                       colorPatcher = null),
+                       colorPatcherProvider = null),
       scaleContext) ?: return null
     val w = icon.getWidth(null)
     val h = icon.getHeight(null)
@@ -450,6 +413,45 @@ object ImageLoader {
       this.height = height
     }
   }
+}
+
+private fun adjustScaleFactor(allowFloatScaling: Boolean, scale: Float): Float {
+  return if (allowFloatScaling) scale else if (isHiDPI(scale.toDouble())) 2f else 1f
+}
+
+private fun createImageDescriptorList(path: String,
+                                      @MagicConstant(flagsFromClass = ImageLoader::class) flags: Int,
+                                      scaleContext: ScaleContext): List<ImageDescriptor> {
+  // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
+  val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+  val i = path.lastIndexOf('.')
+  val name = if (i < 0) path else path.substring(0, i)
+  val ext = if (i < 0 || i == path.length - 1) "" else path.substring(i + 1)
+  val scale = adjustScaleFactor(flags and ImageLoader.ALLOW_FLOAT_SCALING == ImageLoader.ALLOW_FLOAT_SCALING, pixScale)
+  val list: List<ImageDescriptor>
+  if (!path.startsWith("file:") && path.contains("://")) {
+    val qI = path.lastIndexOf('?')
+    val isSvg = StringUtilRt.endsWithIgnoreCase(if (qI == -1) path else path.substring(0, qI), ".svg")
+    list = listOf(ImageDescriptor("$name.$ext", 1f, isSvg, true, false))
+  }
+  else {
+    val isSvg = "svg".equals(ext, ignoreCase = true)
+    val isDark = flags and ImageLoader.USE_DARK == ImageLoader.USE_DARK
+    val retina = isHiDPI(pixScale.toDouble())
+    list = ArrayList()
+    if (!isSvg && flags and ImageLoader.USE_SVG == ImageLoader.USE_SVG) {
+      addFileNameVariant(retina, isDark, true, false, name, ext, scale, list)
+    }
+    addFileNameVariant(retina, isDark, false, isSvg, name, ext, scale, list)
+    if (isDark) {
+      // fallback to non-dark
+      addFileNameVariant(retina, false, false, isSvg, name, ext, scale, list)
+      if (!isSvg && flags and ImageLoader.USE_SVG == ImageLoader.USE_SVG) {
+        addFileNameVariant(false, false, false, true, name, ext, scale, list)
+      }
+    }
+  }
+  return list
 }
 
 @Internal
@@ -513,21 +515,21 @@ private fun loadByDescriptor(descriptor: ImageDescriptor,
                              ioMissCache: Set<String?>?,
                              imageCache: ImageCache,
                              ioMissCacheKey: String?,
-                             colorPatcher: SvgElementColorPatcherProvider?): Image? {
+                             colorPatcherProvider: SvgElementColorPatcherProvider?): Image? {
   var cacheKey: CacheKey? = null
   var tmpPatcher = false
   var digest: ByteArray? = null
-  if (colorPatcher != null) {
-    val subPatcher = colorPatcher.forPath(descriptor.path)
-    if (subPatcher != null) {
-      digest = subPatcher.digest()
+  if (colorPatcherProvider != null) {
+    val colorPatcher = colorPatcherProvider.forPath(descriptor.path)
+    if (colorPatcher != null) {
+      digest = colorPatcher.digest()
       if (digest == null) {
         tmpPatcher = true
       }
     }
   }
   if (digest == null) {
-    digest = SVGLoader.DEFAULT_THEME
+    digest = DEFAULT_THEME_DIGEST
   }
   if ((flags and USE_CACHE) == USE_CACHE && !tmpPatcher) {
     cacheKey = CacheKey(path = descriptor.path, scale = (if (descriptor.isSvg) descriptor.scale else 0f), digest = digest)
@@ -542,7 +544,7 @@ private fun loadByDescriptor(descriptor: ImageDescriptor,
   val image = loadByDescriptorWithoutCache(descriptor = descriptor,
                                            resourceClass = resourceClass,
                                            classLoader = classLoader,
-                                           colorPatcher = colorPatcher) ?: return null
+                                           colorPatcher = colorPatcherProvider) ?: return null
   if (cacheKey != null) {
     if (4L * image.getWidth(null) * image.getHeight(null) <= CACHED_IMAGE_MAX_SIZE) {
       imageCache.imageCache.put(cacheKey, image)
@@ -565,7 +567,11 @@ private fun loadByDescriptorWithoutCache(descriptor: ImageDescriptor,
     (connection as? HttpURLConnection)?.addRequestProperty("User-Agent", "IntelliJ")
     connection.getInputStream().use { stream ->
       image = if (descriptor.isSvg) {
-        SVGLoader.load(path = descriptor.path, stream = stream, mapper = descriptor.toSvgMapper(), colorPatcher = colorPatcher)
+        SVGLoader.load(path = descriptor.path,
+                       stream = stream,
+                       scale = descriptor.scale,
+                       compoundCacheKey = descriptor.toSvgMapper(),
+                       colorPatcherProvider = colorPatcher)
       }
       else {
         loadPng(stream = stream, scale = descriptor.scale, originalUserSize = null)
@@ -580,9 +586,10 @@ private fun loadByDescriptorWithoutCache(descriptor: ImageDescriptor,
       SVGLoader.loadFromClassResource(resourceClass = resourceClass,
                                       classLoader = classLoader,
                                       path = descriptor.path,
-                                      rasterizedCacheKey = 0,
-                                      mapper = descriptor.toSvgMapper(),
-                                      colorPatcher = colorPatcher)
+                                      precomputedCacheKey = 0,
+                                      scale = descriptor.scale,
+                                      compoundCacheKey = descriptor.toSvgMapper(),
+                                      colorPatcherProvider = colorPatcher)
     }
     else {
       ImageLoader.loadPngFromClassResource(path = descriptor.path,

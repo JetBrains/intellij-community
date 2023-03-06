@@ -23,11 +23,11 @@ import javax.swing.Icon
  * @author Konstantin Bulenkov
  */
 @Internal
-open class SpinningProgressIcon: AnimatedIcon() {
-  open val opacities
+open class SpinningProgressIcon : AnimatedIcon() {
+  open val opacities: Array<Double>
     get() = arrayOf(1.0, 0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125)
 
-  open val paths
+  open val paths: Array<String>
     get() = arrayOf("M8 2V4.5",
                     "M3.75739 3.75739L5.52515 5.52515",
                     "M2.0011 7.99738H4.5011",
@@ -41,9 +41,11 @@ open class SpinningProgressIcon: AnimatedIcon() {
 
   private var iconColor: Color = JBColor.namedColor("ProgressIcon.color", JBColor(0x767A8A, 0xCED0D6))
 
-  fun getCacheKey() = ColorUtil.toHex(iconColor)
+  fun getCacheKey(): String = ColorUtil.toHex(iconColor)
+
   private val iconCache = arrayOfNulls<Icon>(paths.size)
   private var iconCacheKey = ""
+
   override fun createFrames() = Array(paths.size) { createFrame(it) }
 
   fun setIconColor(color: Color) {
@@ -57,39 +59,41 @@ open class SpinningProgressIcon: AnimatedIcon() {
       override fun getDelay() = JBUI.getInt("ProgressIcon.delay", 125)
     }
   }
-  inner class CashedDelegateIcon(val index: Int): Icon {
+
+  inner class CashedDelegateIcon(val index: Int) : Icon {
     private fun getDelegate() = getIconFromCache(index)
     override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) = getDelegate().paintIcon(c, g, x, y)
     override fun getIconWidth() = getDelegate().iconWidth
     override fun getIconHeight() = getDelegate().iconHeight
   }
+
   private fun getIconFromCache(i: Int): Icon {
     val icon = iconCache[i]
     if (icon != null && iconCacheKey == getCacheKey()) {
       return icon
     }
-    iconCache.forEachIndexed { index, _ ->
-      run {
-        val svg = generateSvgIcon(index)
-        val scaleContext = ScaleContext.create()
-        val image = SVGLoader.load(svg.byteInputStream(), scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat())
-        iconCache[index] = IconUtil.toRetinaAwareIcon(image as BufferedImage)
-      }
+
+    val scaleContext = ScaleContext.create()
+    val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+    for ((index, _) in iconCache.withIndex()) {
+      val svg = generateSvgIcon(index)
+      val image = SVGLoader.loadSvg(data = svg, scale = scale)
+      iconCache[index] = IconUtil.toRetinaAwareIcon(image as BufferedImage)
     }
 
     iconCacheKey = getCacheKey()
     return iconCache[i]!!
   }
 
-  private fun generateSvgIcon(index: Int): String {
+  private fun generateSvgIcon(index: Int): ByteArray {
     val stroke = getCacheKey()
-    var s = """<svg width="$size" height="$size" viewBox="0 0 $size $size" fill="none" xmlns="http://www.w3.org/2000/svg">""".plus("\n")
+    val s = StringBuilder("""<svg width="$size" height="$size" viewBox="0 0 $size $size" fill="none" xmlns="http://www.w3.org/2000/svg">""").append('\n')
     for (n in paths.indices) {
       val opacity = opacities[(n + index) % opacities.size]
-      s += """  <path opacity="$opacity" d="${paths[n]}" stroke="#$stroke" stroke-width="1.6" stroke-linecap="round"/>""".plus("\n")
+      s.append("""  <path opacity="$opacity" d="${paths[n]}" stroke="#$stroke" stroke-width="1.6" stroke-linecap="round"/>""").append('\n')
     }
-    s += "</svg>"
-    return s
+    s.append("</svg>")
+    return s.toString().encodeToByteArray()
   }
 }
 

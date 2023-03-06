@@ -94,6 +94,10 @@ public final class Xxh3 {
     return Xxh3Impl.hash(input, LongArrayAccessForLongs.INSTANCE, 0, input.length * Long.BYTES, seed);
   }
 
+  public static long hashInt(int input) {
+    return hashInt(input, 0);
+  }
+
   public static long hashInt(int input, final long seed) {
     input = H2LE.applyAsInt(input);
     long s = seed ^ Long.reverseBytes(seed & 0xFFFFFFFFL);
@@ -104,7 +108,7 @@ public final class Xxh3 {
     return Xxh3Impl.rrmxmx(keyed, 4);
   }
 
-  private static final class ByteBufferAccess extends Access<ByteBuffer> {
+  private static final class ByteBufferAccess implements Access<ByteBuffer> {
     private static final VarHandle LONG_HANDLE = MethodHandles.byteBufferViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
     private static final VarHandle INT_HANDLE = MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
 
@@ -129,7 +133,7 @@ public final class Xxh3 {
   }
 
   // special implementation for hashing long array - it is guaranteed that only i64 will be called (as input is aligned)
-  private static final class LongArrayAccessForLongs extends Access<long[]> {
+  private static final class LongArrayAccessForLongs implements Access<long[]> {
     private static final LongArrayAccessForLongs INSTANCE = new LongArrayAccessForLongs();
 
     private LongArrayAccessForLongs() { }
@@ -146,7 +150,7 @@ public final class Xxh3 {
     }
 
     @Override
-    protected int i8(long[] input, int offset) {
+    public int i8(long[] input, int offset) {
       throw new UnsupportedOperationException();
     }
   }

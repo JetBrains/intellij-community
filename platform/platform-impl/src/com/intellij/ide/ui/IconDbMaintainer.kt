@@ -12,12 +12,12 @@ private class IconDbMaintainer(coroutineScope: CoroutineScope) {
       try {
         while (true) {
           delay(5.minutes)
-          SVGLoader.persistentCache?.save()
+          SVGLoader.cache?.save()
         }
       }
       finally {
         withContext(NonCancellable) {
-          SVGLoader.persistentCache?.close()
+          SVGLoader.cache?.close()
         }
       }
     }

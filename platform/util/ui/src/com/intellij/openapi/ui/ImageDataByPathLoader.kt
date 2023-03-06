@@ -11,6 +11,7 @@ import com.intellij.ui.icons.IconTransform
 import com.intellij.ui.icons.ImageDataLoader
 import com.intellij.ui.icons.LoadIconParameters
 import com.intellij.util.ImageLoader
+import com.intellij.util.loadImage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Image
@@ -91,11 +92,11 @@ class ImageDataByPathLoader private constructor(private val path: String,
     if (parameters.isDark) {
       flags = flags or ImageLoader.USE_DARK
     }
-    return ImageLoader.loadImage(path = path,
-                                 parameters = parameters,
-                                 classLoader = classLoader,
-                                 flags = flags,
-                                 isUpScaleNeeded = !path.endsWith(".svg"))
+    return loadImage(path = path,
+                     parameters = parameters,
+                     classLoader = classLoader,
+                     flags = flags,
+                     isUpScaleNeeded = !path.endsWith(".svg"))
   }
 
   override val url: URL?

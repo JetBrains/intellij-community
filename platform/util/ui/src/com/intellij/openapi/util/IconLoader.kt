@@ -23,13 +23,13 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextSupport
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.*
-import com.intellij.util.ImageLoader.loadImage
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.xxh3.Xxh3
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.awt.image.ImageFilter
@@ -57,7 +57,7 @@ private val iconCache = ConcurrentHashMap<Pair<String, ClassLoader?>, CachedImag
 private val iconToDisabledIcon = ConcurrentHashMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
 private val standardDisablingFilter: () -> RGBImageFilter = { UIUtil.getGrayFilter() }
 
-private val colorPatchCache = ConcurrentHashMap<Int, MutableMap<List<Byte>, MutableMap<Icon, Icon>>>()
+private val colorPatchCache = ConcurrentHashMap<Int, MutableMap<LongArray, MutableMap<Icon, Icon>>>()
 
 @Volatile
 private var STRICT_GLOBAL = false
@@ -440,8 +440,16 @@ object IconLoader {
       }
     }
 
-    val wholeDigest = colorPatcher.wholeDigest()
-    if (wholeDigest == null) {
+    var digest = colorPatcher.digest()
+    if (digest == null) {
+      @Suppress("DEPRECATION")
+      val bytes = colorPatcher.wholeDigest()
+      if (bytes != null) {
+        digest = longArrayOf(Xxh3.hash(bytes), Xxh3.seededHash(bytes, 5238470482016868669L))
+      }
+    }
+
+    if (digest == null) {
       return result.createWithPatcher(colorPatcher)
     }
 
@@ -452,7 +460,7 @@ object IconLoader {
     }
 
     return colorPatchCache.computeIfAbsent(topMapIndex) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
-      .computeIfAbsent(wholeDigest.asList()) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
+      .computeIfAbsent(digest) { CollectionFactory.createConcurrentWeakKeyWeakValueMap() }
       .computeIfAbsent(imageIcon) {result.createWithPatcher(colorPatcher) }
   }
 

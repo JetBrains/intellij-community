@@ -24,8 +24,8 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil.scale
 import com.intellij.util.ImageLoader
 import com.intellij.util.ImageLoader.loadFromUrl
-import com.intellij.util.ImageLoader.loadImage
 import com.intellij.util.ResourceUtil
+import com.intellij.util.loadImage
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.Nls

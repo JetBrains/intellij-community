@@ -339,7 +339,7 @@ public class Menu extends MenuItem {
     }
     catch (Throwable e) {
       // default screen menu implementation will be used
-      Logger.getInstance(Menu.class).warn("can't load menu library: " + lib.toFile().getAbsolutePath() + ", exception: " + e.getMessage());
+      Logger.getInstance(Menu.class).warn("can't load menu library: " + lib + ", exception: " + e.getMessage());
     }
 
     return IS_ENABLED;

@@ -52,7 +52,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
 
     SVGLoader.SvgElementColorPatcherProvider colorPatcher = myTheme.getColorPatcher();
     if (colorPatcher != null) {
-      SVGLoader.setColorPatcherProvider(colorPatcher);
+      SVGLoader.INSTANCE.setColorPatcherProvider(colorPatcher);
     }
 
     installBackgroundImage();
@@ -146,7 +146,7 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     if (patcher != null) {
       IconLoader.removePathPatcher(patcher);
     }
-    SVGLoader.setColorPatcherProvider(null);
+    SVGLoader.INSTANCE.setColorPatcherProvider(null);
 
     unsetBackgroundProperties(IdeBackgroundUtil.EDITOR_PROP);
     unsetBackgroundProperties(IdeBackgroundUtil.FRAME_PROP);

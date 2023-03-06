@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "LiftReturnOrAssignment")
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.StringUtil
@@ -446,7 +446,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       if (file.toString().endsWith(".svg")) {
         // don't mask any exception for svg file
         val data = loadAndNormalizeSvgFile(imageFile).toByteArray()
-        val size = getSvgDocumentSize(data = data, scale = 1f)
+        val size = getSvgDocumentSize(data = data)
         key = getImageKey(data, file.fileName.toString())
         javaDoc = "/** ${size.width.toInt()}x${size.height.toInt()} */ "
       }
