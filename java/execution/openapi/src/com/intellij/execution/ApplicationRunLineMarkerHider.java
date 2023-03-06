@@ -16,7 +16,7 @@ public interface ApplicationRunLineMarkerHider {
 
   static boolean hideRunLineMarker(@NotNull final PsiElement element) {
     for (ApplicationRunLineMarkerHider extension : EP_NAME.getExtensionList()) {
-      if (extension.runLineMarkerAvailable(element)) {
+      if (!extension.runLineMarkerAvailable(element)) {
         return true;
       }
     }
