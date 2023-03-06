@@ -508,6 +508,7 @@ public class SwitchBlockHighlightingModel {
     void checkSwitchLabelValues(@NotNull HighlightInfoHolder holder) {
       PsiCodeBlock body = myBlock.getBody();
       if (body == null) return;
+      boolean java20plus = PsiUtil.getLanguageLevel(holder.getProject()).isAtLeast(LanguageLevel.JDK_20_PREVIEW);
       MultiMap<Object, PsiElement> elementsToCheckDuplicates = new MultiMap<>();
       List<List<PsiSwitchLabelStatementBase>> elementsToCheckFallThroughLegality = new SmartList<>();
       List<PsiElement> elementsToCheckDominance = new ArrayList<>();
@@ -541,8 +542,10 @@ public class SwitchBlockHighlightingModel {
       checkDuplicates(elementsToCheckDuplicates, holder);
       if (holder.hasErrorResults()) return;
 
-      if (PsiUtil.getLanguageLevel(holder.getProject()).isAtLeast(LanguageLevel.JDK_20_PREVIEW)) {
-        checkFallThroughFromToPatternJava20(elementsToCheckFallThroughLegality, holder);
+      if (java20plus) {
+        HashSet<PsiElement> alreadyFallThroughElements = new HashSet<>();
+        checkFallThroughFromToPatternJava20(elementsToCheckFallThroughLegality, holder, alreadyFallThroughElements);
+        checkFallThroughInSwitchLabels(elementsToCheckFallThroughLegality, holder, alreadyFallThroughElements);
       }
       else {
         checkFallThroughFromToPattern(elementsToCheckFallThroughLegality, holder);
@@ -821,51 +824,87 @@ public class SwitchBlockHighlightingModel {
       checkFallThroughInSwitchLabels(switchBlockGroup, holder, alreadyFallThroughElements);
     }
 
-    private static void checkFallThroughFromToPatternJava20(@NotNull List<? extends List<PsiSwitchLabelStatementBase>> switchBlockGroup,
-                                                            @NotNull HighlightInfoHolder holder) {
+    private static void checkFallThroughFromToPatternJava20(@NotNull List<List<PsiSwitchLabelStatementBase>> switchBlockGroup,
+                                                            @NotNull HighlightInfoHolder holder,
+                                                            @NotNull Set<PsiElement> alreadyFallThroughElements) {
       if (switchBlockGroup.isEmpty()) return;
-      Set<PsiElement> alreadyFallThroughElements = new HashSet<>();
       for (var switchLabel : switchBlockGroup) {
-        boolean canPrecedingStatementCompleteNormally = false;
         for (PsiSwitchLabelStatementBase switchLabelElement : switchLabel) {
           PsiCaseLabelElementList labelElementList = switchLabelElement.getCaseLabelElementList();
-          if (labelElementList == null) continue;
-          boolean existPattern = false;
-          boolean existsConst = false;
-          boolean existsNull = false;
+          if (labelElementList == null || labelElementList.getElementCount() == 0) continue;
           PsiCaseLabelElement[] elements = labelElementList.getElements();
-          for (int i = 0; i < elements.length; i++) {
-            PsiCaseLabelElement currentElement = elements[i];
-            if (isInCaseNullDefaultLabel(currentElement)) continue;
-            if (ExpressionUtils.isNullLiteral(currentElement) && i != 0 && !existPattern ||
-                existsConst && !isConstantLabelElement(currentElement) ||
-                existsNull) {
-              addIllegalFallThroughError(currentElement, "invalid.case.label.combination", holder, alreadyFallThroughElements);
-              break;
-            }
-            if (JavaPsiPatternUtil.containsPatternVariable(currentElement)) {
-              if (existPattern || PsiTreeUtil.skipWhitespacesAndCommentsForward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
-                addIllegalFallThroughError(currentElement, "switch.illegal.fall.through.from", holder, alreadyFallThroughElements);
-                break;
-              }
-              else if (canPrecedingStatementCompleteNormally ||
-                       PsiTreeUtil.skipWhitespacesAndCommentsBackward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
-                addIllegalFallThroughError(currentElement, "switch.illegal.fall.through.to", holder, alreadyFallThroughElements);
-                break;
-              }
-            }
-            if (existPattern) {
-              addIllegalFallThroughError(currentElement, "switch.illegal.fall.through.from", holder, alreadyFallThroughElements);
-              break;
-            }
-            existPattern = currentElement instanceof PsiPattern || currentElement instanceof PsiPatternGuard;
-            existsConst |= isConstantLabelElement(currentElement);
-            existsNull = ExpressionUtils.isNullLiteral(currentElement);
+          final PsiCaseLabelElement first = elements[0];
+          CaseLabelCombinationProblem problem = checkCaseLabelCombination(elements);
+          if (problem != null) {
+            addIllegalFallThroughError(problem.element(), problem.message(), holder, alreadyFallThroughElements);
           }
-          canPrecedingStatementCompleteNormally = true;
+          else if (JavaPsiPatternUtil.containsPatternVariable(first)) {
+            if (PsiTreeUtil.skipWhitespacesAndCommentsForward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
+              addIllegalFallThroughError(first, "multiple.switch.labels", holder, alreadyFallThroughElements);
+            }
+            else if (PsiTreeUtil.skipWhitespacesAndCommentsBackward(switchLabelElement) instanceof PsiSwitchLabelStatement) {
+              addIllegalFallThroughError(first, "multiple.switch.labels", holder, alreadyFallThroughElements);
+            }
+          }
         }
       }
-      checkFallThroughInSwitchLabels(switchBlockGroup, holder, alreadyFallThroughElements);
+    }
+
+    private record CaseLabelCombinationProblem(@NotNull PsiCaseLabelElement element,
+                                               @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String message) {
+    }
+
+    private static @Nullable CaseLabelCombinationProblem checkCaseLabelCombination(PsiCaseLabelElement[] elements) {
+      PsiCaseLabelElement firstElement = elements[0];
+      if (elements.length == 1) {
+        if (firstElement instanceof PsiDefaultCaseLabelElement) {
+          return new CaseLabelCombinationProblem(firstElement, "default.label.must.not.contains.case.keyword");
+        }
+        return null;
+      }
+      if (elements.length == 2) {
+        if (firstElement instanceof PsiDefaultCaseLabelElement && ExpressionUtils.isNullLiteral(elements[1])) {
+          return new CaseLabelCombinationProblem(firstElement, "invalid.default.and.null.order");
+        }
+        if (ExpressionUtils.isNullLiteral(firstElement) && elements[1] instanceof PsiDefaultCaseLabelElement) {
+          return null;
+        }
+      }
+
+      int defaultIndex = -1;
+      int nullIndex = -1;
+      int patternIndex = -1;
+
+      for (int i = 0; i < elements.length; i++) {
+        if (elements[i] instanceof PsiDefaultCaseLabelElement) {
+          defaultIndex = i;
+          break;
+        }
+        else if (ExpressionUtils.isNullLiteral(elements[i])) {
+          nullIndex = i;
+          break;
+        }
+        else if (elements[i] instanceof PsiPattern || elements[i] instanceof PsiPatternGuard) {
+          patternIndex = i;
+        }
+      }
+
+      if (defaultIndex != -1) {
+        return new CaseLabelCombinationProblem(elements[defaultIndex], "default.label.not.allowed.here");
+      }
+      if (nullIndex != -1) {
+        return new CaseLabelCombinationProblem(elements[nullIndex], "null.label.not.allowed.here");
+      }
+      if (firstElement instanceof PsiExpression && patternIndex != -1) {
+        return new CaseLabelCombinationProblem(elements[patternIndex], "invalid.case.label.combination.constants.and.patterns");
+      }
+      else if (firstElement instanceof PsiPattern || firstElement instanceof PsiPatternGuard) {
+        if (elements[1] instanceof PsiPattern || elements[1] instanceof PsiPatternGuard) {
+          return new CaseLabelCombinationProblem(elements[1], "invalid.case.label.combination.several.patterns");
+        }
+        return new CaseLabelCombinationProblem(elements[1], "invalid.case.label.combination.constants.and.patterns");
+      }
+      return null;
     }
 
     private static void addIllegalFallThroughError(@NotNull PsiElement element,
