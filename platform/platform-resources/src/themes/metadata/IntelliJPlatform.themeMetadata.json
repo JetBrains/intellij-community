@@ -1913,8 +1913,9 @@
     },
     {
       "key": "RunWidget.disabledForeground",
-      "description": "Foreground for run widget components and stroke icons in disable state",
-      "since": "2022.3"
+      "description": "Foreground for run widget components and stroke icons in disable state in the contrast run widget",
+      "since": "2022.3",
+      "deprecated": true
     },
     {
       "key": "RunWidget.background",
