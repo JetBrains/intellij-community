@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.ConsoleSpanExporter
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.TracerProviderManager
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 private class DevMainImpl {
   companion object {
@@ -20,16 +21,18 @@ private class DevMainImpl {
       TracerProviderManager.spanExporterProvider = { listOf(ConsoleSpanExporter()) }
       //TracerProviderManager.setOutput(Path.of(System.getProperty("user.home"), "trace.json"))
       try {
+        var homePath: String? = null
         return runBlocking(Dispatchers.Default) {
           var newClassPath: Collection<Path>? = null
           buildProductInProcess(BuildRequest(
             platformPrefix = System.getProperty("idea.platform.prefix") ?: "idea",
             additionalModules = getAdditionalModules()?.toList() ?: emptyList(),
-            homePath = Path.of(PathManager.getHomePath()),
+            homePath = Path.of(PathManager.getHomePathFor(PathManager::class.java)!!),
             keepHttpClient = false,
-            isPackagedLib = true,
             platformClassPathConsumer = { classPath, runDir ->
               newClassPath = classPath
+
+              homePath = runDir.invariantSeparatorsPathString
 
               // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
               val libDir = runDir.resolve("lib")
@@ -40,6 +43,10 @@ private class DevMainImpl {
               System.setProperty("jna.noclasspath", "true")
             },
           ))
+
+          if (homePath != null) {
+            System.setProperty(PathManager.PROPERTY_HOME_PATH, homePath!!)
+          }
           newClassPath!!
         }
       }

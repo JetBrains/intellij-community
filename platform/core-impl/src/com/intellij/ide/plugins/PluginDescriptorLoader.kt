@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "RAW_RUN_BLOCKING", "LiftReturnOrAssignment")
 @file:JvmName("PluginDescriptorLoader")
 @file:Internal
 
@@ -501,7 +501,7 @@ fun loadDescriptorsForDeprecatedWizard(): PluginLoadingResult {
 }
 
 /**
- * Think twice before use and get approve from core team.
+ * Think twice before use and get approve from the core team.
  *
  * Returns enabled plugins only.
  */
@@ -561,8 +561,6 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
   isRunningFromSources: Boolean = PluginManagerCore.isRunningFromSources(),
   zipFilePool: ZipFilePool?,
 ): List<Deferred<IdeaPluginDescriptorImpl?>> {
-  val isInDevServerMode = AppMode.isDevServer()
-
   val platformPrefixProperty = PlatformUtils.getPlatformPrefix()
   val platformPrefix = if (platformPrefixProperty == PlatformUtils.QODANA_PREFIX) {
     System.getProperty("idea.parent.prefix", PlatformUtils.IDEA_PREFIX)
@@ -574,7 +572,7 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
   val root = loadCoreModules(context = context,
                              platformPrefix = platformPrefix,
                              isUnitTestMode = isUnitTestMode,
-                             isInDevServerMode = isInDevServerMode,
+                             isInDevServerMode = AppMode.isDevServer(),
                              isRunningFromSources = isRunningFromSources,
                              pool = zipFilePool)
 
@@ -582,9 +580,6 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
 
   val effectiveBundledPluginDir = bundledPluginDir ?: if (isUnitTestMode) {
     null
-  }
-  else if (isInDevServerMode) {
-    Paths.get(PathManager.getHomePath(), "out/dev-run", AppMode.getDevBuildRunDirName(platformPrefix), "plugins")
   }
   else {
     Paths.get(PathManager.getPreInstalledPluginsPath())
@@ -917,7 +912,7 @@ private fun loadDescriptorFromResource(
                                    includeBase = null,
                                    readInto = null,
                                    locationSource = file.toString())
-    // it is very important to not set useCoreClassLoader = true blindly
+    // it is very important to not set `useCoreClassLoader = true` blindly
     // - product modules must uses own class loader if not running from sources
     val descriptor = IdeaPluginDescriptorImpl(raw = raw,
                                               path = basePath,

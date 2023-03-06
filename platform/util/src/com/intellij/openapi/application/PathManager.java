@@ -108,7 +108,17 @@ public final class PathManager {
 
       // set before ourHomePath because getBinDirectories() rely on the fact that if `getHomePath(true)`
       // returns something, then `ourBinDirectories` is already computed
-      ourBinDirectories = result == null ?  Collections.emptyList() : getBinDirectories(Paths.get(result));
+      if (result == null) {
+        ourBinDirectories = Collections.emptyList();
+      }
+      else {
+        Path root = Paths.get(result);
+        if (Boolean.getBoolean("idea.use.dev.build.server")) {
+          root = root.resolve("../../..").normalize();
+        }
+        ourBinDirectories = getBinDirectories(root);
+      }
+
       ourHomePath = result;
     }
 
@@ -176,19 +186,20 @@ public final class PathManager {
     String osSuffix = SystemInfoRt.isWindows ? "win" : SystemInfoRt.isMac ? "mac" : "linux";
 
     for (Path dir : candidates) {
-      if (binDirs.contains(dir)) continue;
+      if (binDirs.contains(dir) || !Files.isDirectory(dir)) {
+        continue;
+      }
+
+      binDirs.add(dir);
+      dir = dir.resolve(osSuffix);
       if (Files.isDirectory(dir)) {
         binDirs.add(dir);
-        dir = dir.resolve(osSuffix);
-        if (Files.isDirectory(dir)) {
-          binDirs.add(dir);
-          if (SystemInfoRt.isWindows || SystemInfoRt.isLinux) {
-            String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
-            if (arch != null) {
-              dir = dir.resolve(arch);
-              if (Files.isDirectory(dir)) {
-                binDirs.add(dir);
-              }
+        if (SystemInfoRt.isWindows || SystemInfoRt.isLinux) {
+          String arch = CpuArch.isIntel64() ? "amd64" : CpuArch.isArm64() ? "aarch64" : null;
+          if (arch != null) {
+            dir = dir.resolve(arch);
+            if (Files.isDirectory(dir)) {
+              binDirs.add(dir);
             }
           }
         }

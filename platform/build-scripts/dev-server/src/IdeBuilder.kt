@@ -37,7 +37,7 @@ data class BuildRequest(
                                                       ?: homePath.resolve("out/classes/production").toString()).toAbsolutePath(),
   @JvmField val keepHttpClient: Boolean = true,
   @JvmField val platformClassPathConsumer: ((classPath: Set<Path>, runDir: Path) -> Unit)? = null,
-  @JvmField val isPackagedLib: Boolean = false,
+  @JvmField val isPackagedLib: Boolean = true,
 )
 
 internal suspend fun buildProduct(productConfiguration: ProductConfiguration, request: BuildRequest) {
