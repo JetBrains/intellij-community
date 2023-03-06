@@ -23,7 +23,7 @@ version = "1.0"
 
 kotlin {
     jvm()
-    js()
+    js(IR)
     linuxX64()
 
     sourceSets {

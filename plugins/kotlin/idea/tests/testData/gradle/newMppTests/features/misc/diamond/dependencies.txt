@@ -10,6 +10,7 @@ my-app.jsMain
     commonMain (refines, COMPILE)
     jvmAndJsMain (refines, COMPILE)
     linuxAndJsMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (COMPILE)
 
 my-app.jsTest
     commonMain (friend, TEST)
@@ -19,6 +20,7 @@ my-app.jsTest
     jvmAndJsTest (refines, TEST)
     linuxAndJsMain (friend, TEST)
     linuxAndJsTest (refines, TEST)
+    org.jetbrains.kotlin:kotlin-dom-api-compat:{{KGP_VERSION}} (TEST)
 
 my-app.jvmAndJsMain
     commonMain (refines, COMPILE)
