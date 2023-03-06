@@ -5,15 +5,15 @@
     <content url="file://$MODULE_DIR$" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" />
-    <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.tests" />
-    <orderEntry type="module" module-name="kotlin.gradle.gradle.tests" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.gradle" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.code-insight-groovy" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.gradle" scope="RUNTIME" />
   </component>
 </module>
