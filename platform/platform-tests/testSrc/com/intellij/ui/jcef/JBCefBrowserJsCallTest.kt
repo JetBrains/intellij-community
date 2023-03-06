@@ -128,19 +128,31 @@ class JBCefBrowserJsCallTest {
     var r2: String? = null
 
     JBCefTestHelper.invokeAndWaitForLatch(latch) {
-      jsCall().onProcessed { latch.countDown() }.onSuccess { r1 = it }
-      jsCall().onProcessed { latch.countDown() }.onSuccess { r2 = it }
+      jsCall().onProcessed {
+        CefLog.Info("onProcessed");
+        latch.countDown()
+      }.onSuccess {
+        CefLog.Info("Success, r1=%s", it)
+        r1 = it
+      }
+      jsCall().onProcessed {
+        CefLog.Info("onProcessed");
+        latch.countDown()
+      }.onSuccess {
+        CefLog.Info("Success, r2=%s", it)
+        r2 = it
+      }
     }
 
     assertEquals("4", r1)
     assertEquals("4", r2)
   }
 
+  // TODO: remove when IDEA-312158 fixed
   @Test
-  fun `IDEA-312158 with logging and disabled GPU`() {
-    System.setProperty("ide.browser.jcef.extra.args", "--disable-gpu,--disable-gpu-compositing,--disable-gpu-vsync,--disable-software-rasterizer,--disable-extensions");
+  fun `IDEA-312158 with fix`() {
     val browser = prepareBrowser()
-    CefLog.Info("Start IDEA-312158 with disabled GPU, browser " + browser.cefBrowser.uiComponent)
+    CefLog.Info("Start IDEA-312158 test with browser " + browser.cefBrowser.uiComponent)
     val javaScript = """
           console.log("****** exec JS ****** ");
           return 2+2;
@@ -152,8 +164,20 @@ class JBCefBrowserJsCallTest {
     var r2: String? = null
 
     JBCefTestHelper.invokeAndWaitForLatch(latch) {
-      jsCall().onProcessed { latch.countDown() }.onSuccess { r1 = it }
-      jsCall().onProcessed { latch.countDown() }.onSuccess { r2 = it }
+      jsCall().onProcessed {
+        CefLog.Info("onProcessed");
+        latch.countDown()
+      }.onSuccess {
+        CefLog.Info("Success, r1=%s", it)
+        r1 = it
+      }
+      jsCall().onProcessed {
+        CefLog.Info("onProcessed");
+      }.onSuccess {
+        CefLog.Info("Success, r2=%s", it)
+        r2 = it
+        latch.countDown()
+      }
     }
 
     assertEquals("4", r1)
