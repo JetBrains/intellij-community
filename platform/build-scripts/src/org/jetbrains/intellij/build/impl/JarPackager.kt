@@ -35,6 +35,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.IntConsumer
+import kotlin.io.path.invariantSeparatorsPathString
 
 private val JAR_NAME_WITH_VERSION_PATTERN = "(.*)-\\d+(?:\\.\\d+)*\\.jar*".toPattern()
 
@@ -201,9 +202,9 @@ class JarPackager private constructor(private val outputDir: Path, private val c
         }
 
         // sort because projectStructureMapping is a concurrent collection
-        // call Path::toString because the result of Path ordering is platform-dependent
+        // call invariantSeparatorsPathString because the result of Path ordering is platform-dependent
         list +
-        packager.libraryEntries.sortedWith(compareBy({ it.path.toString() }, { it.type }, { it.libraryFile?.toString() }))
+        packager.libraryEntries.sortedWith(compareBy({ it.path.invariantSeparatorsPathString }, { it.type }, { it.libraryFile?.invariantSeparatorsPathString }))
       }
     }
   }
