@@ -1945,6 +1945,11 @@
       "deprecated": true
     },
     {
+      "key": "RunWidget.runModeIconColor",
+      "description": "The non-running state color for stroke icons in the non-contrast run widget",
+      "since": "2023.1"
+    },
+    {
       "key": "MainWindow.Tab.selectedForeground"
     },
     {
