@@ -3,6 +3,7 @@ package com.intellij.codeInspection.blockingCallsDetection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.*;
@@ -144,6 +145,13 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
       if (contextType instanceof ContextType.Blocking) {
         return;
       }
+      ProgressIndicatorProvider.checkCanceled();
+
+      PsiMethod referencedMethod = callExpression.resolve();
+      if (referencedMethod == null) return;
+
+      if (!isMethodOrSupersBlocking(referencedMethod, myBlockingMethodCheckers, mySettings)) return;
+
       if (contextType instanceof ContextType.Unsure && myConsiderUnknownContextBlocking) {
         if (myHolder.isOnTheFly()) {
           myHolder.registerProblem(
@@ -154,12 +162,6 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
         }
         return;
       }
-      ProgressIndicatorProvider.checkCanceled();
-
-      PsiMethod referencedMethod = callExpression.resolve();
-      if (referencedMethod == null) return;
-
-      if (!isMethodOrSupersBlocking(referencedMethod, myBlockingMethodCheckers, mySettings)) return;
 
       ElementContext elementContext = new ElementContext(element, mySettings);
       StreamEx<LocalQuickFix> fixesStream = StreamEx.of(myBlockingMethodCheckers)
@@ -280,7 +282,7 @@ public final class BlockingMethodInNonBlockingContextInspection extends Abstract
     return first.getPriority() > second.getPriority() ? first : second;
   }
 
-  private class ConsiderUnknownContextBlockingFix implements LocalQuickFix {
+  private class ConsiderUnknownContextBlockingFix implements LocalQuickFix, LowPriorityAction {
     private final boolean considerUnknownContextBlocking;
 
     private ConsiderUnknownContextBlockingFix(boolean considerUnknownContextBlocking) {
