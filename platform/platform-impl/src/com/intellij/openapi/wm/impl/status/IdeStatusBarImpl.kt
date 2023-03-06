@@ -161,11 +161,11 @@ open class IdeStatusBarImpl internal constructor(
     add(rightPanel, BorderLayout.EAST)
 
     infoAndProgressPanel = InfoAndProgressPanel(UISettings.shadowInstance)
-    ClientProperty.put(infoAndProgressPanel, WIDGET_ID, infoAndProgressPanel.ID())
-    centerPanel.add(infoAndProgressPanel)
+    ClientProperty.put(infoAndProgressPanel.component, WIDGET_ID, infoAndProgressPanel.ID())
+    centerPanel.add(infoAndProgressPanel.component)
     widgetMap.put(infoAndProgressPanel.ID(), WidgetBean(widget = infoAndProgressPanel,
                                                         position = Position.CENTER,
-                                                        component = infoAndProgressPanel,
+                                                        component = infoAndProgressPanel.component,
                                                         order = LoadingOrder.ANY))
     Disposer.register(frameHelper, infoAndProgressPanel)
 
@@ -246,7 +246,7 @@ open class IdeStatusBarImpl internal constructor(
     }
     widgetMap.put(id, WidgetBean(widget = widget, position = Position.CENTER, component = component, order = LoadingOrder.ANY))
     infoAndProgressPanel.setCentralComponent(component)
-    infoAndProgressPanel.revalidate()
+    infoAndProgressPanel.component.revalidate()
   }
 
   /**
