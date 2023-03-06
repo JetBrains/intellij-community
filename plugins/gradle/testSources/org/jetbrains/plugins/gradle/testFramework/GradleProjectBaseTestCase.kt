@@ -25,10 +25,19 @@ abstract class GradleProjectBaseTestCase {
       "Gradle fixture isn't setup. Please use [GradleBaseTestCase.test] function inside your tests."
     }
 
-  open fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
-    fixture = getOrCreateGradleTestFixture(gradleVersion, fixtureBuilder)
+  open fun setUp() = Unit
+
+  open fun tearDown() = Unit
+
+  open fun patchFixtureBuilder(fixtureBuilder: GradleTestFixtureBuilder): GradleTestFixtureBuilder = fixtureBuilder
+
+  fun test(gradleVersion: GradleVersion, fixtureBuilder: GradleTestFixtureBuilder, test: () -> Unit) {
+    val patchedBuilder = patchFixtureBuilder(fixtureBuilder)
+    fixture = getOrCreateGradleTestFixture(gradleVersion, patchedBuilder)
+    setUp()
     runAll(
       { test() },
+      { tearDown() },
       { rollbackOrDestroyGradleTestFixture(gradleFixture) },
       { fixture = null }
     )
