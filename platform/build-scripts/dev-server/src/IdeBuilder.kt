@@ -272,7 +272,7 @@ private suspend fun layoutPlatform(homePath: Path, runDir: Path, isPackagedLib: 
   if (isPackagedLib) {
     projectStructureMapping.mapTo(classPath) { it.path }
 
-    copyDistFiles(context = context, newDir = runDir, os = OsFamily.MACOS, arch = JvmArchitecture.currentJvmArch)
+    copyDistFiles(context = context, newDir = runDir, os = OsFamily.currentOs, arch = JvmArchitecture.currentJvmArch)
   }
   else {
     for (entry in projectStructureMapping) {
