@@ -420,14 +420,13 @@ public final class RecursionManager {
   private static void setFlag(@NotNull Disposable parentDisposable, boolean toAssert, AtomicBoolean flag) {
     boolean prev = flag.get();
     if (toAssert == prev) return;
-    Exception init = new Exception();
 
     flag.set(toAssert);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
       public void dispose() {
         if (flag.get() != toAssert) {
-          throw new IllegalStateException("Non-nested assertion flag modifications", init);
+          throw new IllegalStateException("Non-nested assertion flag modifications");
         }
         flag.set(prev);
       }
