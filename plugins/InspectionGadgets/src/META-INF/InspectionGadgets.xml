@@ -2773,11 +2773,6 @@
                      bundle="messages.InspectionGadgetsBundle" key="inspection.enhanced.for.with.record.pattern.can.be.used.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids20"
                      implementationClass="com.intellij.codeInspection.ForEachWithRecordPatternCanBeUsedInspection" cleanupTool="true"/>
-    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
-                     shortName="DeconstructionCanBeUsed" enabledByDefault="false" level="INFORMATION"
-                     bundle="messages.InspectionGadgetsBundle" key="inspection.deconstruction.can.be.used.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids19"
-                     implementationClass="com.intellij.codeInspection.DeconstructionCanBeUsedInspection" cleanupTool="false"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CastCanBeReplacedWithVariable" enabledByDefault="true" level="INFORMATION"
                      bundle="messages.InspectionGadgetsBundle" key="inspection.cast.can.be.replaced.with.variable.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
