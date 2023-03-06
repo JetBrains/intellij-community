@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
  *
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public abstract class ExperimentalUI {
 
   private static final Logger LOG = Logger.getInstance(ExperimentalUI.class);
