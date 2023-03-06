@@ -439,12 +439,8 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
       return StreamEx.empty();
     }
 
-    // Android Studio: In some scenarios we need to set a breakpoint in a different class to the one found here.
-    // when that happens we need to allow a custom position manager to change the class at the last minute.
-    // here we call "mapClass" to obtain the final class.
     if (!isLocalOrAnonymous) {
-      return StreamEx.of(myDebugProcess.getVirtualMachineProxy().classesByName(className))
-          .map(outer -> mapClass(outer));
+      return StreamEx.of(myDebugProcess.getVirtualMachineProxy().classesByName(className));
     }
 
     final int depth = requiredDepth;
@@ -452,13 +448,6 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     return StreamEx.of(myDebugProcess.getVirtualMachineProxy().classesByName(className))
       .map(outer -> findNested(outer, 0, psiClass, depth, position))
       .nonNull();
-  }
-
-  /**
-   * Indirection which allows custom position managers to provide a different class type to represent the vm's class.
-   */
-  protected ReferenceType mapClass(ReferenceType type) {
-    return type;
   }
 
   private static Pair<PsiClass, Integer> getTopOrStaticEnclosingClass(PsiClass aClass) {
@@ -525,10 +514,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
 
       int rangeBegin = Integer.MAX_VALUE;
       int rangeEnd = Integer.MIN_VALUE;
-      // Android Studio: After recursing to get the right inner class, but before line calculations
-      // happen, we again give the chance to swap the actual class to use.
-      final ReferenceType mapped = mapClass(fromClass);
-      List<Location> locations = DebuggerUtilsEx.allLineLocations(mapped);
+      List<Location> locations = DebuggerUtilsEx.allLineLocations(fromClass);
       if (locations != null) {
         for (Location location : locations) {
           final int lnumber = DebuggerUtilsEx.getLineNumber(location, false);
@@ -571,12 +557,12 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           // if there's more than one class on the line - try to match by name
           for (PsiClass aClass : lineClasses) {
             if (classToFind.equals(aClass)) {
-              return mapped;
+              return fromClass;
             }
           }
         }
         else if (!lineClasses.isEmpty()){
-          return classToFind.equals(lineClasses.iterator().next())? mapped : null;
+          return classToFind.equals(lineClasses.iterator().next())? fromClass : null;
         }
         return null;
       }
