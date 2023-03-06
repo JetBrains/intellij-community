@@ -55,19 +55,13 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.controlflow.UnnecessaryDefaultInspection;
-import com.siyeh.ig.fixes.CreateDefaultBranchFix;
-import com.siyeh.ig.fixes.CreateEnumMissingSwitchBranchesFix;
-import com.siyeh.ig.fixes.CreateSealedClassMissingSwitchBranchesFix;
-import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.fixes.*;
 import com.siyeh.ipp.modifiers.ChangeModifierIntention;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public final class QuickFixFactoryImpl extends QuickFixFactory {
@@ -1000,6 +994,15 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                                 @NotNull Set<String> missingCases,
                                                                 @NotNull List<String> allNames) {
     return new CreateSealedClassMissingSwitchBranchesFix(switchBlock, missingCases, allNames);
+  }
+
+  @Nullable
+  @Override
+  public IntentionAction createAddMissingRecordClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
+                                                                @NotNull PsiClass selectorType,
+                                                                @NotNull Map<PsiType, Set<List<PsiClass>>> branches,
+                                                                @NotNull List<? extends PsiCaseLabelElement> elements) {
+    return CreateMissingDeconstructionRecordClassBranchesFix.create(switchBlock, selectorType, branches, elements);
   }
 
   @NotNull

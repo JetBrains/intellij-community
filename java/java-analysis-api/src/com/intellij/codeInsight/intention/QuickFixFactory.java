@@ -16,10 +16,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class QuickFixFactory {
   public static QuickFixFactory getInstance() {
@@ -477,6 +474,12 @@ public abstract class QuickFixFactory {
   public abstract IntentionAction createAddMissingSealedClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
                                                                          @NotNull Set<String> missingCases,
                                                                          @NotNull List<String> allNames);
+
+  @Nullable
+  public abstract IntentionAction createAddMissingRecordClassBranchesFix(@NotNull PsiSwitchBlock switchBlock,
+                                                                         @NotNull PsiClass selectorType,
+                                                                         @NotNull Map<PsiType, Set<List<PsiClass>>> branches,
+                                                                         @NotNull List<? extends PsiCaseLabelElement> elements);
 
   @NotNull
   public abstract IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, @Nullable String message);

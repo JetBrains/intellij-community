@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.*;
-import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel;
 import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -2008,7 +2007,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (myHolder.hasErrorResults()) return;
       PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(TypeConversionUtil.erasure(itemType));
       if (selectorClass != null && (selectorClass.hasModifierProperty(SEALED) || selectorClass.isRecord())) {
-        if (!PatternsInSwitchBlockHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern))) {
+        if (!PatternHighlightingModel.checkRecordExhaustiveness(Collections.singletonList(deconstructionPattern)).isExhausted()) {
           add(createPatternIsNotExhaustiveError(deconstructionPattern, patternType, itemType));
         }
       }
