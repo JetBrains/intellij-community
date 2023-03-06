@@ -79,6 +79,7 @@ if(USE_CEF_SANDBOX)
       SetupAPI.lib
       Shell32.lib
       shlwapi.lib
+      Userenv.lib
       version.lib
       wbemuuid.lib
       winmm.lib
