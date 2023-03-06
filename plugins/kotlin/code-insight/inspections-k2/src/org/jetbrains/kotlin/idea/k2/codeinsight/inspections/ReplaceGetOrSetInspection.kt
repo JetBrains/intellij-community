@@ -8,14 +8,14 @@ import org.jetbrains.kotlin.analysis.api.calls.KtSimpleFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.ReplaceGetOrSetInspectionUtils
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSuperExpression
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -55,7 +55,7 @@ internal class ReplaceGetOrSetInspection :
 
         if (functionSymbol.name == OperatorNameConventions.SET &&
             element.getPossiblyQualifiedCallExpression()?.getKtType()?.isUnit != true &&
-            element.isExpressionResultValueUsed()
+            element.isUsedAsExpression()
         ) return null
         return Context(functionSymbol.name)
     }
@@ -66,31 +66,5 @@ internal class ReplaceGetOrSetInspection :
             isSet = context.calleeName == OperatorNameConventions.SET,
             editor
         )
-    }
-
-    /**
-     * A method that returns whether the value of the KtExpression is used by other expression or not.
-     *
-     * TODO: This is a stub for the `fun KtElement.isUsedAsExpression(context: BindingContext): Boolean` implementation.
-     *       It should be replaced with when https://youtrack.jetbrains.com/issue/KT-50250 is implemented.
-     */
-    private fun KtExpression.isExpressionResultValueUsed(): Boolean {
-        return when (parent) {
-            is KtOperationExpression,
-            is KtCallExpression,
-            is KtReferenceExpression,
-            is KtVariableLikeSymbol,
-            is KtReturnExpression,
-            is KtThrowExpression -> {
-                true
-            }
-            is KtIfExpression,
-            is KtWhenExpression,
-            is KtLoopExpression,
-            is KtDotQualifiedExpression -> {
-                (parent as KtExpression).isExpressionResultValueUsed()
-            }
-            else -> false
-        }
     }
 }
