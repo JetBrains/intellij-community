@@ -4,13 +4,12 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import com.intellij.util.io.delete
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.concurrent.ScheduledThreadPoolExecutor
+import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.div
 import kotlin.io.path.forEachDirectoryEntry
 
@@ -43,14 +42,13 @@ class VfsLog(
     }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private val coroutineDispatcher = Dispatchers.IO.limitedParallelism(WORKER_THREADS_COUNT)
-  private val coroutineScope = CoroutineScope(SupervisorJob() + coroutineDispatcher)
+  private val context = object : VfsLogContext {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val coroutineContext: CoroutineContext = SupervisorJob() + Dispatchers.IO.limitedParallelism(WORKER_THREADS_COUNT)
 
-  private val context = object : Context {
     // todo: probably need to propagate readOnly to storages to ensure safety
     override val stringEnumerator = SimpleStringPersistentEnumerator(storagePath / "stringsEnum")
-    override val descriptorStorage = DescriptorStorageImpl(storagePath / "events", stringEnumerator, coroutineScope)
+    override val descriptorStorage = DescriptorStorageImpl(storagePath / "events", stringEnumerator)
     override val payloadStorage = PayloadStorageImpl(storagePath / "data")
 
     fun flush() {
@@ -59,50 +57,33 @@ class VfsLog(
     }
 
     fun dispose() {
+      cancel("dispose")
       flush()
       descriptorStorage.dispose()
       payloadStorage.dispose()
     }
 
     suspend fun flusher() {
-      if (readOnly) {
-        return
-      }
       while (true) {
         delay(5000)
         flush()
-
-        val jobsQueued = ((coroutineDispatcher as ExecutorCoroutineDispatcher).executor as ScheduledThreadPoolExecutor).queue.size
-        if (jobsQueued > 20) {
-          LOG.warn("VFS log # queued jobs: $jobsQueued")
-        }
       }
     }
   }
 
-  private val contextExecutor = object : VfsLogContextExecutor {
-    override fun launch(action: suspend Context.() -> Unit) =
-      coroutineScope.launch {
-        context.action()
-      }
-
-    override fun enqueueDescriptorWrite(tag: VfsOperationTag, compute: Context.() -> VfsOperation<*>) =
-      context.descriptorStorage.enqueueDescriptorWrite(tag) { context.compute() }
-  }
-
   val interceptors : List<ConnectionInterceptor> = if (readOnly) { emptyList() } else {
     listOf(
-      ContentsLogInterceptor(contextExecutor),
-      AttributesLogInterceptor(contextExecutor),
-      RecordsLogInterceptor(contextExecutor)
+      ContentsLogInterceptor(context),
+      AttributesLogInterceptor(context),
+      RecordsLogInterceptor(context)
     )
   }
 
-  suspend fun <R> query(body: suspend Context.() -> R): R = context.body()
+  suspend fun <R> query(body: suspend VfsLogContext.() -> R): R = context.body()
 
   init {
     if (!readOnly) {
-      coroutineScope.launch {
+      context.launch {
         context.flusher()
       }
     }
@@ -110,11 +91,7 @@ class VfsLog(
 
   fun dispose() {
     LOG.debug("VfsLog disposing")
-    coroutineScope.cancel("dispose")
     context.dispose()
-    if (!readOnly) {
-      (coroutineDispatcher as ExecutorCoroutineDispatcher).close()
-    }
     LOG.debug("VfsLog disposed")
   }
 
@@ -125,12 +102,6 @@ class VfsLog(
         child.delete(true)
       }
     }
-  }
-
-  interface Context {
-    val descriptorStorage: DescriptorStorage
-    val payloadStorage: PayloadStorage
-    val stringEnumerator: DataEnumerator<String>
   }
 
   companion object {

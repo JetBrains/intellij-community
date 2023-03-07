@@ -8,18 +8,17 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTrac
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.SkipListAdvancingPositionTracker
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.ResilientFileChannel
-import java.nio.channels.FileChannel
-import java.nio.file.Path
-import java.nio.file.StandardOpenOption.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.IOException
+import java.nio.channels.FileChannel
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption.*
 import kotlin.io.path.div
 
 class DescriptorStorageImpl(
   storagePath: Path,
   private val stringEnumerator: DataEnumerator<String>,
-  private val writeJobsScope: CoroutineScope
 ) : DescriptorStorage {
   private val storageIO: StorageIO
   private var lastSafeSize by PersistentVar.long(storagePath / "size")
@@ -77,10 +76,10 @@ class DescriptorStorageImpl(
   private fun sizeOfValueInDescriptor(size: Int) = size - VfsOperationTag.SIZE_BYTES * 2
 
   // TODO: write doc on new behaviour
-  override fun enqueueDescriptorWrite(tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
+  override fun enqueueDescriptorWrite(scope: CoroutineScope, tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
     val descrSize = bytesForDescriptor(tag)
     val descrPos = position.beginAdvance(descrSize.toLong())
-    writeJobsScope.launch {
+    scope.launch {
       val op = compute()
       if (tag != op.tag) {
         throw IllegalStateException("expected $tag, got ${op.tag}")

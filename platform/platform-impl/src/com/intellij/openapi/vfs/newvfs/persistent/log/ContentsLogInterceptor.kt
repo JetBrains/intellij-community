@@ -7,14 +7,14 @@ import com.intellij.util.io.storage.IAppenderStream
 import com.intellij.util.io.storage.IStorageDataOutput
 
 class ContentsLogInterceptor(
-  private val executor: VfsLogContextExecutor
+  private val context: VfsLogContext
 ) : ContentsInterceptor {
 
   override fun onWriteBytes(underlying: (record: Int, bytes: ByteArraySequence, fixedSize: Boolean) -> Unit) =
     { record: Int, bytes: ByteArraySequence, fixedSize: Boolean ->
       { underlying(record, bytes, fixedSize) } catchResult { result ->
         val data = bytes.toBytes()
-        executor.enqueueDescriptorWrite(VfsOperationTag.CONTENT_WRITE_BYTES) {
+        context.enqueueDescriptorWrite(VfsOperationTag.CONTENT_WRITE_BYTES) {
           val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
             write(data, 0, data.size)
           }
@@ -33,7 +33,7 @@ class ContentsLogInterceptor(
 
         private fun interceptClose(result: OperationResult<Unit>) {
           val data = sdo.asByteArraySequence().toBytes()
-          executor.enqueueDescriptorWrite(VfsOperationTag.CONTENT_WRITE_STREAM) {
+          context.enqueueDescriptorWrite(VfsOperationTag.CONTENT_WRITE_STREAM) {
             val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
               write(data, 0, data.size)
             }
@@ -53,7 +53,7 @@ class ContentsLogInterceptor(
 
         private fun interceptClose(result: OperationResult<Unit>) {
           val data = sdo.asByteArraySequence().toBytes()
-          executor.enqueueDescriptorWrite(VfsOperationTag.CONTENT_WRITE_STREAM_2) {
+          context.enqueueDescriptorWrite(VfsOperationTag.CONTENT_WRITE_STREAM_2) {
             val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
               write(data, 0, data.size)
             }
@@ -73,7 +73,7 @@ class ContentsLogInterceptor(
 
         private fun interceptClose(result: OperationResult<Unit>) {
           val data = ias.asByteArraySequence().toBytes()
-          executor.enqueueDescriptorWrite(VfsOperationTag.CONTENT_APPEND_STREAM) {
+          context.enqueueDescriptorWrite(VfsOperationTag.CONTENT_APPEND_STREAM) {
             val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
               write(data, 0, data.size)
             }
@@ -87,7 +87,7 @@ class ContentsLogInterceptor(
     { record, offset, bytes ->
       { underlying(record, offset, bytes) } catchResult { result ->
         val data = bytes.toBytes()
-        executor.enqueueDescriptorWrite(VfsOperationTag.CONTENT_REPLACE_BYTES) {
+        context.enqueueDescriptorWrite(VfsOperationTag.CONTENT_REPLACE_BYTES) {
           val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
             write(data, 0, data.size)
           }
@@ -99,7 +99,7 @@ class ContentsLogInterceptor(
   override fun onAcquireNewRecord(underlying: () -> Int): () -> Int =
     {
       { underlying() } catchResult { result ->
-        executor.enqueueDescriptorWrite(VfsOperationTag.CONTENT_ACQUIRE_NEW_RECORD) {
+        context.enqueueDescriptorWrite(VfsOperationTag.CONTENT_ACQUIRE_NEW_RECORD) {
           VfsOperation.ContentsOperation.AcquireNewRecord(result)
         }
       }
@@ -108,7 +108,7 @@ class ContentsLogInterceptor(
   override fun onAcquireRecord(underlying: (record: Int) -> Unit): (record: Int) -> Unit =
     { record ->
       { underlying(record) } catchResult { result ->
-        executor.enqueueDescriptorWrite(VfsOperationTag.CONTENT_ACQUIRE_RECORD) {
+        context.enqueueDescriptorWrite(VfsOperationTag.CONTENT_ACQUIRE_RECORD) {
           VfsOperation.ContentsOperation.AcquireRecord(record, result)
         }
       }
@@ -118,7 +118,7 @@ class ContentsLogInterceptor(
   override fun onReleaseRecord(underlying: (record: Int) -> Unit): (record: Int) -> Unit =
     { record ->
       { underlying(record) } catchResult { result ->
-        executor.enqueueDescriptorWrite(VfsOperationTag.CONTENT_RELEASE_RECORD) {
+        context.enqueueDescriptorWrite(VfsOperationTag.CONTENT_RELEASE_RECORD) {
           VfsOperation.ContentsOperation.ReleaseRecord(record, result)
         }
       }
@@ -127,7 +127,7 @@ class ContentsLogInterceptor(
   override fun onSetVersion(underlying: (version: Int) -> Unit): (version: Int) -> Unit =
     { version ->
       { underlying(version) } catchResult { result ->
-        executor.enqueueDescriptorWrite(VfsOperationTag.CONTENT_SET_VERSION) {
+        context.enqueueDescriptorWrite(VfsOperationTag.CONTENT_SET_VERSION) {
           VfsOperation.ContentsOperation.SetVersion(version, result)
         }
       }

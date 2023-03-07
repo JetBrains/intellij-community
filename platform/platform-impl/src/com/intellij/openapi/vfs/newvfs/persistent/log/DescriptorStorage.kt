@@ -1,15 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
+import kotlinx.coroutines.CoroutineScope
+
 interface DescriptorStorage {
   fun bytesForDescriptor(tag: VfsOperationTag): Int
 
   /**
-   * Allocates space for a descriptor and puts a write operation into a job queue
-   * @param compute may be called after an arbitrarily long delay
+   * Allocates space for a descriptor and launches a write operation in [scope]
+   * @param compute is called at most once inside the launched coroutine
    * contract: tag == compute().tag
    */
-  fun enqueueDescriptorWrite(tag: VfsOperationTag, compute: () -> VfsOperation<*>)
+  fun enqueueDescriptorWrite(scope: CoroutineScope, tag: VfsOperationTag, compute: () -> VfsOperation<*>)
 
   /**
    * Performs an actual descriptor write, not supposed to be called directly.
