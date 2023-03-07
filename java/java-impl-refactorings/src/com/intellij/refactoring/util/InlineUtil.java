@@ -64,12 +64,13 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     PsiClass refParent = RefactoringChangeUtil.getThisClass(ref);
     final PsiType varType = variable.getType();
     initializer = CommonJavaRefactoringUtil.convertInitializerToNormalExpression(initializer, varType);
-    if (initializer instanceof PsiPolyadicExpression) {
-      final IElementType operationTokenType = ((PsiPolyadicExpression)initializer).getOperationTokenType();
+    if (initializer instanceof PsiPolyadicExpression concatenation && parent instanceof PsiPolyadicExpression parentConcatenation) {
+      final IElementType operationTokenType = concatenation.getOperationTokenType();
       if ((operationTokenType == JavaTokenType.PLUS || operationTokenType == JavaTokenType.MINUS) &&
-          parent instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)parent).getOperationTokenType() == JavaTokenType.PLUS) {
-        final PsiType type = ((PsiPolyadicExpression)parent).getType();
-        if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+          parentConcatenation.getOperationTokenType() == JavaTokenType.PLUS) {
+        final PsiType type = parentConcatenation.getType();
+        if (type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING) &&
+            !varType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
           final PsiElementFactory factory = JavaPsiFacade.getElementFactory(initializer.getProject());
           initializer = factory.createExpressionFromText("(" + initializer.getText() + ")", initializer);
         }
