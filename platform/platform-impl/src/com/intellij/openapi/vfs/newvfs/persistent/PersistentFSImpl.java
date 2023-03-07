@@ -1512,6 +1512,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Applying " + event);
     }
+    myVfsLog.getVFileEventApplicationListener().beforeApply(event);
+    Throwable exception = null;
     try {
       if (event instanceof VFileCreateEvent) {
         VFileCreateEvent ce = (VFileCreateEvent)event;
@@ -1558,10 +1560,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     }
     catch (ProcessCanceledException e) {
+      exception = e;
       throw e;
     }
     catch (Exception e) {
+      exception = e;
       LOG.error(e);
+    } finally {
+      myVfsLog.getVFileEventApplicationListener().afterApply(event, exception);
     }
   }
 

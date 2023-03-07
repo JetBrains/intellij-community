@@ -166,7 +166,7 @@ final class FSRecordsImpl {
         currentVersion,
         USE_CONTENT_HASHES,
         invertedNameIndex,
-        vfsLog.getInterceptors()
+        vfsLog.getConnectionInterceptors()
       );
       PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(USE_CONTENT_HASHES, connection);
       PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);

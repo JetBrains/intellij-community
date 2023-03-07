@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.vfs.newvfs.persistent.VFileEventApplicationListener
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.SimpleStringPersistentEnumerator
@@ -16,7 +17,7 @@ import kotlin.io.path.forEachDirectoryEntry
 /**
  * VfsLog tracks every modification operation done to files of PersistentFS and persists them in a separate storage,
  * allows to query the resulting operations log.
- * @param readOnly if true, won't modify storages and register [interceptors] thus VfsLog won't track [PersistentFS] changes
+ * @param readOnly if true, won't modify storages and register [connectionInterceptors] thus VfsLog won't track [PersistentFS] changes
  */
 @ApiStatus.Experimental
 class VfsLog(
@@ -71,16 +72,6 @@ class VfsLog(
     }
   }
 
-  val interceptors : List<ConnectionInterceptor> = if (readOnly) { emptyList() } else {
-    listOf(
-      ContentsLogInterceptor(context),
-      AttributesLogInterceptor(context),
-      RecordsLogInterceptor(context)
-    )
-  }
-
-  suspend fun <R> query(body: suspend VfsLogContext.() -> R): R = context.body()
-
   init {
     if (!readOnly) {
       context.launch {
@@ -88,6 +79,8 @@ class VfsLog(
       }
     }
   }
+
+  suspend fun <R> query(body: suspend VfsLogContext.() -> R): R = context.body()
 
   fun dispose() {
     LOG.debug("VfsLog disposing")
@@ -102,6 +95,20 @@ class VfsLog(
         child.delete(true)
       }
     }
+  }
+
+  val connectionInterceptors : List<ConnectionInterceptor> = if (readOnly) { emptyList() } else {
+    listOf(
+      ContentsLogInterceptor(context),
+      AttributesLogInterceptor(context),
+      RecordsLogInterceptor(context)
+    )
+  }
+
+  val vFileEventApplicationListener = if (readOnly) {
+    object : VFileEventApplicationListener {} // noop
+  } else {
+    VFileEventApplicationLogListener(context)
   }
 
   companion object {
