@@ -13,7 +13,7 @@ import com.intellij.workspaceModel.storage.EntityReference
 internal class ModuleUnawareContentEntityIteratorImpl(private val reference: EntityReference<*>,
                                                       private val roots: Collection<VirtualFile>) : IndexableFilesIterator {
   override fun getDebugName(): String {
-    return "Content roots from entity (${ExternalWorkspaceEntityIteratorImpl.getRootsDebugStr(roots)})"
+    return "Content roots from entity (${ExternalEntityIndexableIteratorImpl.getRootsDebugStr(roots)})"
   }
 
   override fun getIndexingProgressText(): String {

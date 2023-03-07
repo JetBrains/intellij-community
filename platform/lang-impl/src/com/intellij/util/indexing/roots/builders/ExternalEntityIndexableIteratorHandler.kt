@@ -2,7 +2,7 @@
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
-import com.intellij.util.indexing.roots.ExternalWorkspaceEntityIteratorImpl
+import com.intellij.util.indexing.roots.ExternalEntityIndexableIteratorImpl
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.workspaceModel.storage.EntityStorage
@@ -19,7 +19,7 @@ class ExternalEntityIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     builders as Collection<ExternalEntityIteratorBuilder>
 
     return builders.groupBy { it.entityReference }.map {
-      ExternalWorkspaceEntityIteratorImpl(it.key, it.value.flatMap { builder -> builder.roots },
+      ExternalEntityIndexableIteratorImpl(it.key, it.value.flatMap { builder -> builder.roots },
                                           it.value.flatMap { builder -> builder.sourceRoots })
     }
   }
