@@ -11,13 +11,15 @@ import com.intellij.util.io.ResilientFileChannel
 import java.nio.channels.FileChannel
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
-import java.util.concurrent.Executor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import java.io.IOException
 import kotlin.io.path.div
 
 class DescriptorStorageImpl(
   storagePath: Path,
   private val stringEnumerator: DataEnumerator<String>,
-  private val writeJobsExecutor: Executor
+  private val writeJobsScope: CoroutineScope
 ) : DescriptorStorage {
   private val storageIO: StorageIO
   private var lastSafeSize by PersistentVar.long(storagePath / "size")
@@ -74,41 +76,42 @@ class DescriptorStorageImpl(
 
   private fun sizeOfValueInDescriptor(size: Int) = size - VfsOperationTag.SIZE_BYTES * 2
 
-  /**
-   * How an operation gets written down:
-   * 1. we allocate space for the descriptor and write (-tag value) at the first byte and (tag value) at the last byte
-   * 2. we do all the necessary additional logic that the operation needs (e.g. write the payload in PayloadStorage before finalizing the descriptor)
-   * 3. we rewrite the first byte as (tag value), designating that the descriptor is (hopefully) was written completely and correctly
-   */
+  // TODO: write doc on new behaviour
   override fun enqueueDescriptorWrite(tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
     val descrSize = bytesForDescriptor(tag)
     val descrPos = position.beginAdvance(descrSize.toLong())
-    writeJobsExecutor.execute {
-      try {
-        val op = compute()
-        if (tag != op.tag) {
-          throw IllegalStateException("expected $tag, got ${op.tag}")
-        }
-        writeDescriptor(descrPos, op)
-      } finally {
-        position.finishAdvance(descrPos)
+    writeJobsScope.launch {
+      val op = compute()
+      if (tag != op.tag) {
+        throw IllegalStateException("expected $tag, got ${op.tag}")
       }
+      writeDescriptor(descrPos, op)
+    }.invokeOnCompletion {
+      if (it != null) { // TODO: probably need to check specific classes (also, what to do on coroutine cancellation?)
+        try { // try to write error bounding tags
+          val descriptorSize = bytesForDescriptor(tag)
+          storageIO.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
+          storageIO.write(descrPos + descriptorSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
+        }
+        catch (e: Throwable) {
+          it.addSuppressed(IOException("failed to set error descriptor bounds", e))
+        }
+      }
+      position.finishAdvance(descrPos)
     }
   }
 
   override fun writeDescriptor(position: Long, op: VfsOperation<*>) {
-    // TODO: probably preceding -tag write is not needed anymore (or should be moved to #enqueueDescriptorWrite)
-    // XXX: in case of mmap-based storage, compiler can reorder operations here so that tag.ordinal.toByte() will be written right away,
-    // but it is unlikely, because there is too much code in between
     val descriptorSize = bytesForDescriptor(op.tag)
-    storageIO.write(position, byteArrayOf((-op.tag.ordinal).toByte()))
-    storageIO.write(position + descriptorSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(op.tag.ordinal.toByte()))
     val data = serialize(op)
     if (data.size != sizeOfValueInDescriptor(descriptorSize)) {
       throw IllegalStateException("for ${op.tag} expected value of size ${sizeOfValueInDescriptor(descriptorSize)}, got ${data.size}")
     }
-    storageIO.write(position + VfsOperationTag.SIZE_BYTES, data)
-    storageIO.write(position, byteArrayOf(op.tag.ordinal.toByte()))
+    storageIO.offsetOutputStream(position).use {
+      it.write(op.tag.ordinal)
+      it.write(data)
+      it.write(op.tag.ordinal)
+    }
   }
 
   override fun readAt(position: Long, action: (VfsOperation<*>?) -> Unit) {
@@ -175,8 +178,8 @@ class DescriptorStorageImpl(
   }
 
   override fun serialize(operation: VfsOperation<*>): ByteArray = operation.serializeValue(stringEnumerator)
-  override fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T = VfsOperation.deserialize(tag, data,
-                                                                                                                      stringEnumerator)
+  override fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T =
+    VfsOperation.deserialize(tag, data, stringEnumerator)
 
   override fun size(): Long = lastSafeSize ?: 0L
 

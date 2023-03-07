@@ -50,7 +50,7 @@ class VfsLog(
   private val context = object : Context {
     // todo: probably need to propagate readOnly to storages to ensure safety
     override val stringEnumerator = SimpleStringPersistentEnumerator(storagePath / "stringsEnum")
-    override val descriptorStorage = DescriptorStorageImpl(storagePath / "events", stringEnumerator, coroutineDispatcher.asExecutor())
+    override val descriptorStorage = DescriptorStorageImpl(storagePath / "events", stringEnumerator, coroutineScope)
     override val payloadStorage = PayloadStorageImpl(storagePath / "data")
 
     fun flush() {
@@ -86,9 +86,8 @@ class VfsLog(
         context.action()
       }
 
-    override fun run(action: Context.() -> Unit) {
-      context.action()
-    }
+    override fun enqueueDescriptorWrite(tag: VfsOperationTag, compute: Context.() -> VfsOperation<*>) =
+      context.descriptorStorage.enqueueDescriptorWrite(tag) { context.compute() }
   }
 
   val interceptors : List<ConnectionInterceptor> = if (readOnly) { emptyList() } else {

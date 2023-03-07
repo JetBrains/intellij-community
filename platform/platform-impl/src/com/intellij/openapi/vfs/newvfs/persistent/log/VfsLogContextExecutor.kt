@@ -6,5 +6,5 @@ import kotlinx.coroutines.Job
 interface VfsLogContextExecutor {
   fun launch(action: suspend VfsLog.Context.() -> Unit): Job
 
-  fun run(action: VfsLog.Context.() -> Unit)
+  fun enqueueDescriptorWrite(tag: VfsOperationTag, compute: VfsLog.Context.() -> VfsOperation<*>)
 }
