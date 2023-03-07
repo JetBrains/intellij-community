@@ -42,7 +42,7 @@ class PackageSearchEventsLogger : CounterUsagesCollector() {
 
     companion object {
 
-        private const val VERSION = 11
+        private const val VERSION = 12
         private val GROUP = EventLogGroup(FUSGroupIds.GROUP_ID, VERSION)
 
         // FIELDS
