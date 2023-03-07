@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -272,10 +273,16 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           cancel();
           break;
         }
-        //noinspection Convert2Lambda,Anonymous2MethodRef
-        Disposable child = new Disposable() { // not a lambda to create a separate object for each parent
+        Disposable child = new CheckedDisposable() {
+          private volatile boolean disposed;
+          @Override
+          public boolean isDisposed() {
+            return disposed;
+          }
+
           @Override
           public void dispose() {
+            disposed = true;
             cancel();
           }
         };

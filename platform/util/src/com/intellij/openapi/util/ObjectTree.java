@@ -79,6 +79,9 @@ final class ObjectTree {
     }
   }
   boolean isDisposed(@NotNull Disposable object) {
+    if (object instanceof CheckedDisposable) {
+      return ((CheckedDisposable)object).isDisposed();
+    }
     synchronized (getTreeLock()) {
       return myDisposedObjects.get(object) != null;
     }
@@ -231,6 +234,9 @@ final class ObjectTree {
 
   // return old value
   Throwable rememberDisposedTrace(@NotNull Disposable object, @Nullable Throwable trace) {
+    if (object instanceof CheckedDisposable) {
+      return null;
+    }
     return myDisposedObjects.put(object, ObjectUtils.notNull(trace, UNKNOWN_TRACE));
   }
 
