@@ -13,6 +13,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.processExtensionsByClassName
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 private const val APPLICATION_SERVICE_FQN = "com.intellij.applicationService"
@@ -63,12 +64,13 @@ class ApplicationServiceAsStaticFinalFieldInspection : AbstractBaseJavaLocalInsp
 
 
   private fun isRegisteredApplicationService(project: Project, className: String): Boolean {
-    var foundApplicationService = false
+    val foundApplicationService = AtomicBoolean(false)
     processExtensionsByClassName(project, className) { _, ep ->
-      foundApplicationService = ep.effectiveQualifiedName == APPLICATION_SERVICE_FQN
-      !foundApplicationService
+      val hasServiceFqn = ep.effectiveQualifiedName == APPLICATION_SERVICE_FQN
+      foundApplicationService.set(hasServiceFqn)
+      !hasServiceFqn
     }
-    return foundApplicationService
+    return foundApplicationService.get()
   }
 
 }
