@@ -576,6 +576,11 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
             runTest("testData/resolve/references/DefaultObjectInShortReferenceFormCall.kt");
         }
 
+        @TestMetadata("EnumEntriesInJdk.kt")
+        public void testEnumEntriesInJdk() throws Exception {
+            runTest("testData/resolve/references/EnumEntriesInJdk.kt");
+        }
+
         @TestMetadata("EnumValues.kt")
         public void testEnumValues() throws Exception {
             runTest("testData/resolve/references/EnumValues.kt");
