@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.RESOLUTION_ANCHOR_PROVIDER_CAPABILITY
 import org.jetbrains.kotlin.resolve.ResolutionAnchorProvider
+import org.jetbrains.kotlin.resolve.STDLIB_CLASS_FINDER_CAPABILITY
 import org.jetbrains.kotlin.resolve.jvm.JvmPlatformParameters
 import org.jetbrains.kotlin.types.TypeRefinement
 import org.jetbrains.kotlin.types.checker.REFINER_CAPABILITY
@@ -81,6 +82,8 @@ class IdeaResolverForProject(
     private val builtInsCache: BuiltInsCache =
         (delegateResolver as? IdeaResolverForProject)?.builtInsCache ?: BuiltInsCache(projectContext, this)
 
+    private val stdlibClassFinder = IdeStdlibClassFinderImpl(projectContext.project)
+
     @OptIn(TypeRefinement::class)
     private fun getRefinerCapability(): Pair<ModuleCapability<Ref<TypeRefinementSupport>>, Ref<TypeRefinementSupport>> {
         val isCompositeAnalysisEnabled = settings is CompositeAnalysisSettings
@@ -102,7 +105,8 @@ class IdeaResolverForProject(
                 getRefinerCapability() +
                 (PLATFORM_ANALYSIS_SETTINGS to settings) +
                 (RESOLUTION_ANCHOR_PROVIDER_CAPABILITY to resolutionAnchorProvider) +
-                (INVALID_MODULE_NOTIFIER_CAPABILITY to invalidModuleNotifier)
+                (INVALID_MODULE_NOTIFIER_CAPABILITY to invalidModuleNotifier) +
+                (STDLIB_CLASS_FINDER_CAPABILITY to stdlibClassFinder)
     }
 
     override fun sdkDependency(module: IdeaModuleInfo): SdkInfo? {
