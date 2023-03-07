@@ -92,7 +92,9 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {
-        getFrameHelper(project)?.let {
+        val helper = getFrameHelper(project)
+        LOG.info("=== Release(${helper != null}) frame on closed project ===")
+        helper?.let {
           releaseFrame(it)
         }
       }
