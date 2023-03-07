@@ -71,9 +71,8 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
   override fun update(e: AnActionEvent) {
     val project = e.project
     val projectName = project?.name ?: ""
-    @NlsSafe val fullName = StringBuilder(projectName)
-    e.presentation.setText(fullName.toString(), false)
-    e.presentation.description = fullName.toString()
+    e.presentation.setText(projectName, false)
+    e.presentation.description = projectName
     e.presentation.putClientProperty(projectKey, project)
   }
 
