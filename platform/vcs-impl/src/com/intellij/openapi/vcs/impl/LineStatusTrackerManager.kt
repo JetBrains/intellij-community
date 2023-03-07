@@ -1384,15 +1384,7 @@ private object DefaultLocalStatusTrackerProvider : BaseRevisionStatusTrackerCont
 private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTrackerContentLoader {
   override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
     if (!LineStatusTrackerBaseContentUtil.isSupported(project, file)) return false
-
-    val status = FileStatusManager.getInstance(project).getStatus(file)
-    if (status == FileStatus.ADDED ||
-        status == FileStatus.DELETED ||
-        status == FileStatus.UNKNOWN ||
-        status == FileStatus.IGNORED) {
-      return false
-    }
-    return true
+    return LineStatusTrackerBaseContentUtil.isTracked(project, file)
   }
 
   override fun getContentInfo(project: Project, file: VirtualFile): ContentInfo? {
