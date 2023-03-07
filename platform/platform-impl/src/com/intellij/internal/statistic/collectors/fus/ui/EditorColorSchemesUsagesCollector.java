@@ -21,7 +21,7 @@ import java.util.Set;
 
 public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
 
-  private final static int CURR_VERSION = 5;
+  private final static int CURR_VERSION = 6;
 
   public static final String SCHEME_NAME_OTHER = "Other";
   public final static String[] KNOWN_NAMES = {
