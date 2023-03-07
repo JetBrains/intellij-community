@@ -1,6 +1,6 @@
 package com.intellij.mermaid.preview
 
-import com.intellij.mermaid.util.MermaidPluginScopeManager
+import com.intellij.mermaid.MermaidPlugin
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -27,7 +28,10 @@ internal class MermaidPreviewEditor(
   private val project: Project,
   private val file: VirtualFile
 ): FileEditor, UserDataHolder by UserDataHolderBase() {
-  private val coroutineScope = service<MermaidPluginScopeManager>().coroutineScope
+  private val pluginScope
+    get() = service<MermaidPlugin>().coroutineScope
+
+  private val coroutineScope = pluginScope.childScope(CoroutineName("MermaidPreviewEditorScope"))
   private val updateViewRequests = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val document = FileDocumentManager.getInstance().getDocument(file)!!
@@ -88,5 +92,7 @@ internal class MermaidPreviewEditor(
 
   override fun removePropertyChangeListener(listener: PropertyChangeListener) = Unit
 
-  override fun dispose() = Unit
+  override fun dispose() {
+    coroutineScope.cancel("Cancel on dispose")
+  }
 }

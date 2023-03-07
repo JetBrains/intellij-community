@@ -1,4 +1,4 @@
-package com.intellij.mermaid.util
+package com.intellij.mermaid
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -8,7 +8,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 
 // TODO: Replace with service constructor injection after 231
 @Service
-internal class MermaidPluginScopeManager: Disposable {
+internal class MermaidPlugin: Disposable {
   val coroutineScope: CoroutineScope = CoroutineScope(EmptyCoroutineContext)
 
   override fun dispose() {
