@@ -218,6 +218,32 @@ public class PyOverrideTest extends PyTestCase {
     doTest("B");
   }
 
+  // PY-34493
+  public void testAnnotationNotCopiedFromPyiStubs() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    myFixture.configureByFile("main.py");
+    doOverride(null);
+    myFixture.checkResultByFile(getTestName(false) + "/main_after.py", true);
+  }
+
+  // PY-34493
+  public void testAnnotationsAreCopiedFromPyiStubToPyiStub() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    myFixture.configureByFile("main.pyi");
+    doOverride(null);
+    myFixture.checkResultByFile(getTestName(false) + "/main_after.pyi", true);
+  }
+
+  // PY-34493
+  public void testAnnotationsNotCopiedFromThirdPartyLibraries() {
+    runWithAdditionalClassEntryInSdkRoots(getTestName(false) + "/lib", () -> {
+      myFixture.copyDirectoryToProject(getTestName(false) + "/src", "");
+      myFixture.configureByFile("main.py");
+      doOverride(null);
+      myFixture.checkResultByFile(getTestName(false) + "/src/main_after.py", true);
+    });
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/override";

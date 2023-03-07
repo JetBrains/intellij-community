@@ -13,9 +13,11 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -205,9 +207,8 @@ public final class PyOverrideImplementUtil {
         pyFunctionBuilder.decorate(PyNames.PROPERTY);
       }
     }
-    final LanguageLevel level = LanguageLevel.forElement(pyClass);
     PyAnnotation anno = baseFunction.getAnnotation();
-    if (anno != null && !level.isPython2()) {
+    if (anno != null && shouldCopyAnnotations(baseFunction, pyClass)) {
       pyFunctionBuilder.annotation(anno.getText());
     }
     if (baseFunction.isAsync()) {
@@ -223,7 +224,7 @@ public final class PyOverrideImplementUtil {
         final StringBuilder parameterBuilder = new StringBuilder();
         parameterBuilder.append(ParamHelper.getNameInSignature(namedParameter));
         final PyAnnotation annotation = namedParameter.getAnnotation();
-        if (annotation != null && !level.isPython2()) {
+        if (annotation != null && shouldCopyAnnotations(baseFunction, pyClass)) {
           parameterBuilder.append(annotation.getText());
         }
         final PyExpression defaultValue = namedParameter.getDefaultValue();
@@ -312,6 +313,14 @@ public final class PyOverrideImplementUtil {
 
     pyFunctionBuilder.statement(statementBody.toString());
     return pyFunctionBuilder;
+  }
+
+  private static boolean shouldCopyAnnotations(@NotNull PyFunction baseFunction, @NotNull PyClass subClass) {
+    if (LanguageLevel.forElement(baseFunction).isPython2() || (PyiUtil.isInsideStub(baseFunction) && !PyiUtil.isInsideStub(subClass))) {
+      return false;
+    }
+    VirtualFile virtualFile = baseFunction.getContainingFile().getVirtualFile();
+    return virtualFile != null && ProjectScope.getProjectScope(baseFunction.getProject()).contains(virtualFile);
   }
 
   // TODO find a better place for this logic
