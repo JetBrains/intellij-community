@@ -135,20 +135,16 @@ public final class PluginManagerConfigurable
   private boolean myForceShowInstalledTabForTag = false;
   private boolean myShowMarketplaceTab;
 
+  /**
+   * @deprecated Use {@link PluginManagerConfigurable#PluginManagerConfigurable()}
+   */
+  @Deprecated
   public PluginManagerConfigurable(@Nullable Project project) {
-    myPluginModel = new MyPluginModel(project);
+    this();
   }
 
   public PluginManagerConfigurable() {
-    this((Project)null);
-  }
-
-  /**
-   * @deprecated use {@link PluginManagerConfigurable}
-   */
-  @Deprecated(forRemoval = true)
-  public PluginManagerConfigurable(PluginManagerUISettings uiSettings) {
-    this();
+    myPluginModel = new MyPluginModel(null);
   }
 
   @NotNull
@@ -1487,7 +1483,7 @@ public final class PluginManagerConfigurable
 
   public static void showPluginConfigurable(@Nullable Project project,
                                             @NotNull Collection<PluginId> pluginIds) {
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
     ShowSettingsUtil.getInstance().editConfigurable(project,
                                                     configurable,
                                                     () -> configurable.select(pluginIds));
@@ -1497,7 +1493,7 @@ public final class PluginManagerConfigurable
                                             @Nullable Project project,
                                             @NotNull Collection<PluginId> pluginIds) {
     if (parent != null) {
-      PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
+      PluginManagerConfigurable configurable = new PluginManagerConfigurable();
       ShowSettingsUtil.getInstance().editConfigurable(parent,
                                                       configurable,
                                                       () -> configurable.select(pluginIds));
@@ -1509,7 +1505,7 @@ public final class PluginManagerConfigurable
 
   public static void showPluginConfigurableAndEnable(@Nullable Project project,
                                                      @NotNull Set<? extends IdeaPluginDescriptor> descriptors) {
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
     ShowSettingsUtil.getInstance().editConfigurable(project,
                                                     configurable,
                                                     () -> {
