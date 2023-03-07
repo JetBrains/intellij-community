@@ -7,8 +7,14 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.CommitMessageProvider
 import git4idea.repo.GitCommitTemplateTracker
 
-internal class GitCommitTemplateMessageProvider: CommitMessageProvider {
+internal class GitCommitTemplateMessageProvider : CommitMessageProvider {
+  companion object {
+    internal fun getCommitMessage(project: Project): String? {
+      return project.service<GitCommitTemplateTracker>().getTemplateContent()
+    }
+  }
+
   override fun getCommitMessage(forChangelist: LocalChangeList, project: Project): String? {
-    return project.service<GitCommitTemplateTracker>().getTemplateContent()
+    return getCommitMessage(project)
   }
 }

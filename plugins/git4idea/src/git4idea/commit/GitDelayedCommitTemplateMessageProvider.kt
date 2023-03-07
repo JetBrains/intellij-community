@@ -30,7 +30,7 @@ internal class GitDelayedCommitTemplateMessageProvider : DelayedCommitMessagePro
     }
 
     override fun notifyCommitTemplateChanged(repository: GitRepository) {
-      runInEdt { update(repository) }
+      runInEdt { updateCommitMessage() }
     }
 
     fun startLoadingIfNeeded() {
@@ -39,10 +39,10 @@ internal class GitDelayedCommitTemplateMessageProvider : DelayedCommitMessagePro
       }
     }
 
-    private fun update(repository: GitRepository? = null) {
+    private fun updateCommitMessage() {
       if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
 
-      val templateContent = templateTracker.getTemplateContent(repository)
+      val templateContent = GitCommitTemplateMessageProvider.getCommitMessage(project)
       if (templateContent != null) {
         vcsConfiguration.saveCommitMessage(commitUi.commitMessageUi.text)
         commitUi.commitMessageUi.text = templateContent
