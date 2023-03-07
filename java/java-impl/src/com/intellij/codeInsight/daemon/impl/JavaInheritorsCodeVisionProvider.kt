@@ -74,7 +74,7 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
     val markerType = if (element is PsiClass) MarkerType.SUBCLASSED_CLASS else MarkerType.OVERRIDDEN_METHOD
     val navigationHandler = markerType.navigationHandler
     if (element is PsiNameIdentifierOwner) {
-      navigationHandler.navigate(event, element.nameIdentifier)
+      navigationHandler.navigate(event, element.nameIdentifier ?: element)
     }
   }
 
