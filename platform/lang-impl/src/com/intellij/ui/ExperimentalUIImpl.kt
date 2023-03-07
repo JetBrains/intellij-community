@@ -38,7 +38,6 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
       }
       else {
         propertyComponent.setValue(NEW_UI_FIRST_SWITCH, true)
-        propertyComponent.setValue(NEW_UI_USED_PROPERTY, true)
       }
     }
 
@@ -56,6 +55,13 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
       if (result == Messages.YES) {
         ApplicationManagerEx.getApplicationEx().restart(true);
       }
+    }
+  }
+
+  override fun appStarted() {
+    if (isNewUI()) {
+      val propertyComponent = PropertiesComponent.getInstance()
+      propertyComponent.setValue(NEW_UI_USED_PROPERTY, true)
     }
   }
 
