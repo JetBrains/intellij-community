@@ -12,12 +12,7 @@ class GitStageCommitMessagePolicy(project: Project,
   fun init(disposable: Disposable) {
     listenForDelayedProviders(commitMessageUi, disposable)
 
-    if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
-      commitMessageUi.text = ""
-      return
-    }
-
-    commitMessageUi.text = vcsConfiguration.LAST_COMMIT_MESSAGE.orEmpty()
+    commitMessageUi.text = getCommitMessage()
   }
 
   fun onBeforeCommit() {
@@ -26,13 +21,16 @@ class GitStageCommitMessagePolicy(project: Project,
   }
 
   fun onAfterCommit() {
+    commitMessageUi.text = getCommitMessage()
+  }
+
+  private fun getCommitMessage(): String {
     if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
-      commitMessageUi.text = ""
-      return
+      return ""
     }
 
     val defaultChangeList = ChangeListManager.getInstance(project).defaultChangeList // always blank, required for 'CommitMessageProvider'
-    commitMessageUi.text = getCommitMessageFromProvider(defaultChangeList)
-                           ?: vcsConfiguration.LAST_COMMIT_MESSAGE
+    return getCommitMessageFromProvider(defaultChangeList)
+           ?: vcsConfiguration.LAST_COMMIT_MESSAGE
   }
 }
