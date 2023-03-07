@@ -118,5 +118,6 @@
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.python.psi" />
   </component>
 </module>
