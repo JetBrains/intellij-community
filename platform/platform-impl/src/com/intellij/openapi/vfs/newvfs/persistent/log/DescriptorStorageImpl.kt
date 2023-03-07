@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.newvfs.persistent.log.DescriptorStorage.DescriptorReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
@@ -113,65 +114,54 @@ class DescriptorStorageImpl(
     }
   }
 
-  override fun readAt(position: Long, action: (VfsOperation<*>?) -> Unit) {
-    val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
-    storageIO.read(position, buf)
-    validateTagByte(buf[0]) {
-      action(null)
-      return
-    }
-    val tag = VfsOperationTag.values()[buf[0].toInt()]
-    // check right bound
-    val descrSize = bytesForDescriptor(tag)
-    storageIO.read(position + descrSize - VfsOperationTag.SIZE_BYTES, buf)
-    validateTagByte(buf[0]) {
-      action(null)
-      return
-    }
-    if (tag.ordinal.toByte() != buf[0]) {
-      // not matching bounding tags
-      action(null)
-      return
-    }
-    val bytesToRead = sizeOfValueInDescriptor(bytesForDescriptor(tag))
-    val data = ByteArray(bytesToRead)
-    storageIO.read(position + VfsOperationTag.SIZE_BYTES, data)
-    val descr = deserialize<VfsOperation<*>>(tag, data)
-    action(descr)
-  }
-
-  private inline fun validateTagByte(tagByte: Byte,
-                                     onInvalid: () -> Unit) {
-    // TODO: revisit unexpected value cases, throw an exception?
-    if (tagByte == 0.toByte()) {
-      onInvalid()
-      return
-    }
-    if (tagByte < 0) {
-      // partial write
-      onInvalid()
-      return
-    }
-    // tagByte > 0
-    if (tagByte >= VfsOperationTag.values().size) {
-      // incorrect value
-      onInvalid()
-      return
+  override fun readAt(position: Long): DescriptorReadResult {
+    try {
+      val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
+      storageIO.read(position, buf)
+      if (buf[0] < 0.toByte()) {
+        return recoverDescriptorTag(position, buf)
+      }
+      if (buf[0] == 0.toByte() || buf[0] >= VfsOperationTag.values().size) {
+        return DescriptorReadResult.Invalid(IllegalStateException("read tag value is ${buf[0]}"))
+      }
+      val tag = VfsOperationTag.values()[buf[0].toInt()]
+      val descrSize = bytesForDescriptor(tag)
+      val descrData = ByteArray(descrSize)
+      storageIO.read(position, descrData)
+      if (descrData.last() != descrData.first()) {
+        return DescriptorReadResult.Invalid(IllegalStateException("bounding tags do not match: ${descrData.first()} ${descrData.last()}"))
+      }
+      val op = deserialize<VfsOperation<*>>(tag, descrData.copyOfRange(1, descrData.size - 1))
+      return DescriptorReadResult.Valid(op)
+    } catch (e: Throwable) {
+      return DescriptorReadResult.Invalid(e)
     }
   }
 
-  override fun readAll(action: (VfsOperation<*>) -> Boolean) {
+  private fun recoverDescriptorTag(position: Long, buf: ByteArray): DescriptorReadResult {
+    val probableTagByte = -buf[0]
+    if (probableTagByte >= VfsOperationTag.values().size) {
+      return DescriptorReadResult.Invalid(IllegalStateException("read tag value is ${buf}"))
+    }
+    val probableTag = VfsOperationTag.values()[probableTagByte]
+    val descriptorSize = bytesForDescriptor(probableTag)
+    storageIO.read(position + descriptorSize - VfsOperationTag.SIZE_BYTES, buf)
+    if (probableTagByte != buf[0].toInt()) {
+      return DescriptorReadResult.Invalid(IllegalStateException("failed to recover incomplete descriptor, bounding bytes: ${-probableTagByte} ${buf[0]}"))
+    }
+    return DescriptorReadResult.Incomplete(probableTag)
+  }
+
+  override fun readAll(action: (DescriptorReadResult) -> Boolean) {
     var pos = 0L
     val size = size()
     while (pos < size) {
-      readAt(pos) {
-        if (it == null) {
-          return@readAt
-        }
-        if (!action(it)) {
-          return@readAt
-        }
-        pos += bytesForDescriptor(it.tag)
+      val descr = readAt(pos)
+      if (!action(descr)) break
+      pos += when (descr) {
+        is DescriptorReadResult.Valid -> bytesForDescriptor(descr.operation.tag)
+        is DescriptorReadResult.Incomplete -> bytesForDescriptor(descr.tag)
+        is DescriptorReadResult.Invalid -> break
       }
     }
   }

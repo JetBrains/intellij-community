@@ -19,18 +19,31 @@ interface DescriptorStorage {
    */
   fun writeDescriptor(position: Long, op: VfsOperation<*>)
 
-  fun readAt(position: Long, action: (VfsOperation<*>?) -> Unit)
+  fun readAt(position: Long): DescriptorReadResult
 
   /**
+   * Tries to read the whole storage in a sequential manner.
+   * In case [DescriptorReadResult.Invalid] was read, it will be the last item to be passed to [action].
    * @param action return true to continue reading, false to stop.
    */
-  fun readAll(action: (VfsOperation<*>) -> Boolean)
+  fun readAll(action: (DescriptorReadResult) -> Boolean)
 
   fun serialize(operation: VfsOperation<*>): ByteArray
-  fun <T: VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T
+  fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T
 
   fun size(): Long
 
   fun flush()
   fun dispose()
+
+  sealed interface DescriptorReadResult {
+    /** Descriptor was read correctly */
+    data class Valid(val operation: VfsOperation<*>) : DescriptorReadResult
+
+    /** Attempt to read a descriptor has failed but operation tag was recovered */
+    data class Incomplete(val tag: VfsOperationTag) : DescriptorReadResult
+
+    /** Couldn't retrieve any information at all */
+    data class Invalid(val cause: Throwable) : DescriptorReadResult
+  }
 }
