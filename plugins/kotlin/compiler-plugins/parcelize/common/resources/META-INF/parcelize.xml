@@ -9,7 +9,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <expressionCodegenExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.IdeParcelizeCodegenExtension"/>
     <irGenerationExtension implementation="org.jetbrains.kotlin.parcelize.ParcelizeIrGeneratorExtension"/>
     <syntheticResolveExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.IdeParcelizeResolveExtension"/>
     <classBuilderFactoryInterceptorExtension
