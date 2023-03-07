@@ -10,11 +10,13 @@ class TerminalCompletionManager(private val model: TerminalModel,
     terminalOutputGetter().sendString(command + "\t", false)
   }
 
-  fun resetPrompt(typedLength: Int, newPromptShown: Boolean) {
-    if (newPromptShown) {
-      model.clearAllExceptPrompt()
+  fun resetPrompt(typedLength: Int, promptLines: Int, newPromptShown: Boolean) {
+    model.withLock {
+      if (newPromptShown) {
+        model.clearAllExceptPrompt(promptLines)
+      }
+      else model.clearLines(promptLines, model.screenLinesCount - promptLines)
     }
-    else model.clearLines(1, model.screenLinesCount - 1)
 
     val backSpaceCommands = ByteArray(typedLength + 100) { Ascii.DEL }
     terminalOutputGetter().sendBytes(backSpaceCommands, false)

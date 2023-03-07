@@ -27,7 +27,7 @@ class TerminalCompletionContributor : CompletionContributor() {
     }
 
     val resultSet = result.caseInsensitive()
-    val promptText = session.model.withLock { session.model.getAllText() }
+    val promptText = session.model.withLock { session.model.getAllText() }.replace("\n", "")
     val baseTimeoutMillis = 1000
     var completionResult = invokeCompletion(session, command, promptText, baseTimeoutMillis)
     if (completionResult.isSingleItem) {
@@ -66,11 +66,12 @@ class TerminalCompletionContributor : CompletionContributor() {
                                promptText: String,
                                timeoutMillis: Int): CompletionResult {
     val completionManager = session.completionManager
+    val model: TerminalModel = session.model
+
     val listenerDisposable = Disposer.newDisposable()
     val future = CompletableFuture<CompletionResult>()
+    val context = ParsingContext(command, promptText, model.width)
     try {
-      val model: TerminalModel = session.model
-      val context = ParsingContext(command, promptText)
       model.addContentListener(object : TerminalModel.ContentListener {
         override fun onTextWritten(x: Int, y: Int, text: String) {
           val allText = model.getAllText(x + text.length, y)
@@ -78,6 +79,7 @@ class TerminalCompletionContributor : CompletionContributor() {
             return
           }
           context.addedText.append(text)
+          context.cursorY = model.cursorY
           val parsingResult = parseCompletionItems(allText, context)
           if (parsingResult.isSingleItem) {
             future.complete(CompletionResult(parsingResult.items.single()))
@@ -98,7 +100,7 @@ class TerminalCompletionContributor : CompletionContributor() {
     finally {
       Disposer.dispose(listenerDisposable)
       val newPromptShown = if (future.isDone) future.get().newPromptShown else false
-      completionManager.resetPrompt(command.length, newPromptShown)
+      completionManager.resetPrompt(command.length, context.promptAndCommandLines, newPromptShown)
     }
 
     return if (future.isDone) {
@@ -108,17 +110,13 @@ class TerminalCompletionContributor : CompletionContributor() {
   }
 
   private fun parseCompletionItems(text: String, context: ParsingContext): ParsingResult {
-    val firstLine = text.substringBefore('\n')
-    if (firstLine.startsWith(context.promptText)) {
-      val completedCommand = firstLine.removePrefix(context.promptText).trim()
-      if (completedCommand.startsWith(context.command)) {
-        context.commandWritten = true
-        val addedPart = completedCommand.removePrefix(context.command).trim()
-        if (addedPart.isNotEmpty()) {
-          // There is only one item that complete our command
-          // So it is just added to the already typed text
-          return ParsingResult(addedPart)
-        }
+    if (text.startsWith(context.promptAndCommandText)) {
+      context.commandWritten = true
+      val addedPart = text.removePrefix(context.promptAndCommandText).substringBefore('\n')
+      if (addedPart.isNotBlank()) {
+        // There is only one item that complete our command
+        // So it is just added to the already typed text
+        return ParsingResult(addedPart)
       }
     }
 
@@ -127,14 +125,15 @@ class TerminalCompletionContributor : CompletionContributor() {
     }
 
     val returnedToPrompt = context.addedText.endsWith(context.command)
+                           && context.cursorY == context.promptAndCommandLines
     val newPromptShown = context.addedText.endsWith(context.promptText + context.command)
 
-    return if ((returnedToPrompt || newPromptShown) && text.count { it == '\n' } > 0) {
-      // Remove line with prompt and typed command
-      var optionsText = text.substringAfter('\n').trim()
+    var optionsText = text.removePrefix(context.promptAndCommandText)
+    return if ((returnedToPrompt || newPromptShown) && optionsText.count { it == '\n' } > 0) {
+      optionsText = optionsText.trim { it == ' ' || it == '\n' }
       if (newPromptShown) {
-        // If the last line contain prompt, it means that all completion items do not fit inside terminal screen
-        optionsText = optionsText.substringBeforeLast('\n').trim()
+        // If the last part contains prompt, it means that all completion items do not fit inside terminal screen
+        optionsText = optionsText.removeSuffix(context.promptAndCommandText).trim { it == ' ' || it == '\n' }
       }
 
       val items = optionsText.split(Regex("""(?<!\\)[ \n]+"""))
@@ -153,9 +152,25 @@ class TerminalCompletionContributor : CompletionContributor() {
     return LookupElementBuilder.create(option)
   }
 
-  private class ParsingContext(val command: String, val promptText: String) {
+  private class ParsingContext(val command: String, val promptText: String, terminalWidth: Int) {
     var commandWritten: Boolean = false
+    var cursorY: Int = -1
+
     val addedText: StringBuilder = StringBuilder()
+
+    val promptAndCommandText: String = createPromptAndCommandString(promptText, command, terminalWidth)
+    val promptAndCommandLines: Int = promptAndCommandText.length / terminalWidth +
+                                     if (promptAndCommandText.length % terminalWidth > 0) 1 else 0
+
+    private fun createPromptAndCommandString(prompt: String, command: String, width: Int): String {
+      val builder = StringBuilder(prompt).append(command)
+      var pos = width
+      while (pos < builder.length) {
+        builder.insert(pos, '\n')
+        pos += width + 1
+      }
+      return builder.toString()
+    }
   }
 
   private open class ParsingResult private constructor(val items: List<String>, val isSingleItem: Boolean, val newPromptShown: Boolean) {

@@ -223,10 +223,10 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     method.invoke(textBuffer)
   }
 
-  fun clearAllExceptPrompt() {
-    textBuffer.scrollArea(1, 1 - cursorY, height)
+  fun clearAllExceptPrompt(promptLines: Int = 1) {
+    textBuffer.scrollArea(1, promptLines - cursorY, height)
     textBuffer.clearHistory()
-    cursorY = 1
+    cursorY = promptLines
   }
 
   fun lock() = textBuffer.lock()
