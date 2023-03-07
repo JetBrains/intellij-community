@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.ex.ProgressSlide;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
@@ -50,14 +49,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myCopyrightStart = "2000";
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
-  private long myProgressColor = -1;
   private long myCopyrightForeground = -1;
   private long myAboutForeground = -1;
   private long myAboutLinkColor = -1;
   private int[] myAboutLogoRect;  // don't use Rectangle to avoid dependency on AWT
-  private String myProgressTailIconName;
-  private int myProgressHeight = 2;
-  private int myProgressY = 350;
   private String mySplashImageUrl;
   private String myAboutImageUrl;
   private String mySmallIconUrl = "/icon_small.png";
@@ -101,7 +96,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String mySubscriptionTipsKey;
   private boolean mySubscriptionTipsAvailable;
   private String mySubscriptionAdditionalFormData;
-  private List<ProgressSlide> progressSlides = Collections.emptyList();
   private XmlElement myFeedbackForm;
 
   private String myDefaultLightLaf;
@@ -146,7 +140,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         break;
 
         case "logo": {
-          readLogoInfo(child);
+          mySplashImageUrl = getAttributeValue(element, "url");
         }
         break;
 
@@ -339,48 +333,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
     }
   }
 
-  private void readLogoInfo(XmlElement element) {
-    mySplashImageUrl = getAttributeValue(element, "url");
-    String v = element.getAttributeValue("progressColor");
-    if (v != null && !v.isEmpty()) {
-      myProgressColor = parseColor(v);
-    }
-
-    v = element.getAttributeValue("progressTailIcon");
-    if (v != null && !v.isEmpty()) {
-      myProgressTailIconName = v;
-    }
-
-    v = element.getAttributeValue("progressHeight");
-    if (v != null && !v.isEmpty()) {
-      myProgressHeight = Integer.parseInt(v);
-    }
-
-    v = element.getAttributeValue("progressY");
-    if (v != null && !v.isEmpty()) {
-      myProgressY = Integer.parseInt(v);
-    }
-
-    if (!element.children.isEmpty()) {
-      progressSlides = new ArrayList<>(element.children.size());
-      for (XmlElement child : element.children) {
-        if (!child.name.equals("progressSlide")) {
-          continue;
-        }
-
-        String slideUrl = requireNonNull(child.getAttributeValue("url"));
-        String progressPercent = requireNonNull(child.getAttributeValue("progressPercent"));
-        int progressPercentInt = Integer.parseInt(progressPercent);
-        if (progressPercentInt < 0 || progressPercentInt > 100) {
-          throw new IllegalArgumentException("Expected [0, 100], got " + progressPercent);
-        }
-
-        float progressPercentFloat = (float)progressPercentInt / 100;
-        progressSlides.add(new ProgressSlide(slideUrl, progressPercentFloat));
-      }
-    }
-  }
-
   public static @NotNull ApplicationInfoEx getShadowInstance() {
     return getShadowInstanceImpl();
   }
@@ -530,28 +482,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public long getProgressColor() {
-    return myProgressColor;
-  }
-
-  @Override
   public long getCopyrightForeground() {
     return myCopyrightForeground;
-  }
-
-  @Override
-  public int getProgressHeight() {
-    return myProgressHeight;
-  }
-
-  @Override
-  public int getProgressY() {
-    return myProgressY;
-  }
-
-  @Override
-  public @Nullable String getProgressTailIcon() {
-    return myProgressTailIconName;
   }
 
   @Override
@@ -758,11 +690,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @Nullable String getSubscriptionAdditionalFormData() {
     return mySubscriptionAdditionalFormData;
-  }
-
-  @Override
-  public @NotNull List<ProgressSlide> getProgressSlides() {
-    return progressSlides;
   }
 
   public @NotNull @NlsSafe String getPluginsCompatibleBuild() {
