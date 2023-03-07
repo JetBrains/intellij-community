@@ -9,6 +9,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.BackgroundRoundedPanel
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -67,7 +68,8 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
       }
     }
 
-    vPanel.add(Box.createVerticalGlue())
+    val minSize = JBDimension(0, 8)
+    vPanel.add(Box.Filler(minSize, minSize, Dimension(0, Short.MAX_VALUE.toInt())))
     vPanel.add(buttonPixelHunting(jButton))
 
     hPanel.background = JBColor.namedColor("WelcomeScreen.SidePanel.background", JBColor(0xF2F2F2, 0x3C3F41))
