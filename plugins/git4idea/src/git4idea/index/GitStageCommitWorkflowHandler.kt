@@ -14,7 +14,7 @@ class GitStageCommitWorkflowHandler(
   override val ui: GitStageCommitPanel
 ) : NonModalCommitWorkflowHandler<GitStageCommitWorkflow, NonModalCommitWorkflowUi>() {
 
-  private val commitMessagePolicy = GitStageCommitMessagePolicy(project)
+  private val commitMessagePolicy = GitStageCommitMessagePolicy(project, ui.commitMessageUi)
 
   override val commitPanel: CheckinProjectPanel = CommitProjectPanelAdapter(this)
   override val amendCommitHandler: NonModalAmendCommitHandler = NonModalAmendCommitHandler(this)
@@ -36,8 +36,7 @@ class GitStageCommitWorkflowHandler(
     setupCommitChecksResultTracking()
     vcsesChanged()
 
-    val initialCommitMessage = commitMessagePolicy.init()
-    setCommitMessage(initialCommitMessage)
+    commitMessagePolicy.init()
     DelayedCommitMessageProvider.init(project, ui)
   }
 
@@ -50,7 +49,7 @@ class GitStageCommitWorkflowHandler(
   }
 
   override fun saveCommitMessageBeforeCommit() {
-    commitMessagePolicy.onBeforeCommit(getCommitMessage())
+    commitMessagePolicy.onBeforeCommit()
   }
 
   override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean {
@@ -71,7 +70,7 @@ class GitStageCommitWorkflowHandler(
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {
     override fun onSuccess() {
       ui.commitAuthor = null
-      commitMessagePolicy.onAfterCommit(ui.commitMessageUi)
+      commitMessagePolicy.onAfterCommit()
 
       super.onSuccess()
     }
