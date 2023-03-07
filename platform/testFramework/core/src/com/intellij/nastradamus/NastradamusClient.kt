@@ -47,7 +47,6 @@ class NastradamusClient(
         status = TestStatus.fromString(json.findValue("status").asText()),
         runOrder = json.findValue("runOrder").asInt(),
         duration = json.findValue("duration")?.asLong() ?: 0,
-        buildType = teamCityClient.buildTypeId,
         buildStatusMessage = build.findValue("statusText").asText(),
         isMuted = json.findValue("currentlyMuted")?.asBoolean() ?: false,
         bucketId = bucketId,
@@ -55,15 +54,14 @@ class NastradamusClient(
       )
     }
 
-    return TestResultRequestEntity(testRunResults = testResultEntities)
+    return TestResultRequestEntity(buildInfo = getBuildInfo(), testRunResults = testResultEntities)
   }
 
   fun sendTestRunResults(testResultRequestEntity: TestResultRequestEntity) {
     val uri = URIBuilder(baseUrl.resolve("/result/").normalize())
-      .addParameter("build_id", teamCityClient.buildId)
       .build()
 
-    val stringJson = jacksonMapper.writeValueAsString(testResultRequestEntity.testRunResults)
+    val stringJson = jacksonMapper.writeValueAsString(testResultRequestEntity)
 
     val httpPost = HttpPost(uri).apply {
       addHeader("Content-Type", "application/json")
@@ -197,7 +195,8 @@ class NastradamusClient(
     return BuildInfo(buildId = teamCityClient.buildId,
                      aggregatorBuildId = aggregatorBuildId,
                      branchName = branchName,
-                     os = teamCityClient.os)
+                     os = teamCityClient.os,
+                     buildType = teamCityClient.buildTypeId)
   }
 
   fun getRankedClasses(): Map<Class<*>, Int> {
