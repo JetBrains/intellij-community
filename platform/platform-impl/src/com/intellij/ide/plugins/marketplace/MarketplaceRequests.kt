@@ -47,6 +47,7 @@ import kotlin.io.path.exists
 
 private val LOG = logger<MarketplaceRequests>()
 private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"
+private const val JB_PLUGINS_XML_IDS_FILENAME = "jbPluginsXMLIds.json"
 
 private val PLUGIN_NAMES_IN_COMMUNITY_EDITION: Map<String, String> = mapOf(
   "com.intellij.database" to "Database Tools and SQL"
@@ -71,7 +72,7 @@ class MarketplaceRequests : PluginInfoProvider {
         val handler = RepositoryContentHandler()
 
         val spf = SAXParserFactory.newDefaultInstance()
-        spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
         spf.setFeature("http://xml.org/sax/features/external-general-entities", false)
         spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
 
@@ -216,10 +217,6 @@ class MarketplaceRequests : PluginInfoProvider {
 
   private val MARKETPLACE_ORGANIZATIONS_URL = Urls.newFromEncoded("${pluginManagerUrl}/api/search/aggregation/organizations")
     .addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
-
-  private val JETBRAINS_PLUGINS_URL = Urls.newFromEncoded(
-    "${pluginManagerUrl}/api/search/plugins?organization=JetBrains&max=1000"
-  ).addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
 
   private val IDE_EXTENSIONS_URL = Urls.newFromEncoded("${pluginManagerUrl}/files/IDE/extensions.json")
     .addParameters(mapOf("build" to IDE_BUILD_FOR_REQUEST))
@@ -554,36 +551,39 @@ class MarketplaceRequests : PluginInfoProvider {
     }
   }
 
-  var jetBrainsPluginsIds: Set<String>? = null
-    private set
-
-  fun loadJetBrainsPluginsIds() {
-    if (jetBrainsPluginsIds != null) {
-      return
-    }
-
-    try {
-      HttpRequests
-        .request(JETBRAINS_PLUGINS_URL)
-        .productNameAsUserAgent()
-        .setHeadersViaTuner()
-        .throwStatusCodeException(false)
-        .connect {
-          deserializeJetBrainsPluginsIds(it.inputStream)
-        }
-    }
-    catch (e: Exception) {
-      LOG.infoOrDebug("Can not get JetBrains plugins' IDs from Marketplace", e)
-      jetBrainsPluginsIds = null
+  @RequiresBackgroundThread
+  private fun getJetBrainsMarketplacePlugins(indicator: ProgressIndicator?): Set<PluginId> {
+    return runCatching {
+      readOrUpdateFile(
+        Path.of(PathManager.getPluginTempPath(), JB_PLUGINS_XML_IDS_FILENAME),
+        "${pluginManagerUrl}/files/$JB_PLUGINS_XML_IDS_FILENAME",
+        indicator,
+        IdeBundle.message("progress.downloading.available.plugins"),
+        ::parseXmlIds,
+      )
+    }.getOrElse {
+      LOG.infoOrDebug("Cannot get the list of JetBrains plugins from Marketplace", it)
+      emptySet()
     }
   }
 
-  @VisibleForTesting
-  fun deserializeJetBrainsPluginsIds(stream: InputStream) {
-    jetBrainsPluginsIds = objectMapper.readValue(stream, object : TypeReference<List<MarketplaceSearchPluginData>>() {})
-      .asSequence()
-      .map(MarketplaceSearchPluginData::id)
-      .toCollection(HashSet())
+  fun loadJetBrainsPluginsIds(indicator: ProgressIndicator? = null): Future<Set<PluginId>> {
+    return ApplicationManager.getApplication().executeOnPooledThread(Callable {
+      getJetBrainsMarketplacePlugins(indicator)
+    })
+  }
+
+  fun loadCachedJBPlugins(): Set<PluginId>? {
+    val pluginXmlIdsFile = Paths.get(PathManager.getPluginTempPath(), JB_PLUGINS_XML_IDS_FILENAME)
+    try {
+      if (Files.size(pluginXmlIdsFile) > 0) {
+        return Files.newInputStream(pluginXmlIdsFile).use(::parseXmlIds)
+      }
+    } catch (_: IOException) { }
+
+    // can't find/read jb plugins xml ids cache file, schedule reload
+    loadJetBrainsPluginsIds()
+    return null
   }
 
   var extensionsForIdes: Map<String, List<String>>? = null

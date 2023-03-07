@@ -11,13 +11,13 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.impl.DetectedByContentFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -69,7 +69,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
     private val project: Project,
     private val extensionOrFileName: String,
     dataSet: Set<PluginData>,
-    jbPluginsIds: Set<String>,
+    jbPluginsIds: Set<PluginId>,
     val suggestedIdes: List<SuggestedIde>,
   ) : Function<FileEditor, EditorNotificationPanel?> {
 
@@ -88,7 +88,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
           installedPlugin = descriptorsById[pluginId]
         }
         else if (!data.isBundled) {
-          (if (jbPluginsIds.contains(pluginId.idString)) jbProduced else thirdParty) += data
+          (if (jbPluginsIds.contains(pluginId)) jbProduced else thirdParty) += data
         }
       }
     }
@@ -210,7 +210,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
       fileType: FileType,
     ): AdvertiserSuggestion? {
       val marketplaceRequests = MarketplaceRequests.getInstance()
-      val jbPluginsIds = marketplaceRequests.jetBrainsPluginsIds ?: return null
+      val jbPluginsIds = marketplaceRequests.loadCachedJBPlugins() ?: return null
       val ideExtensions = marketplaceRequests.extensionsForIdes ?: return null
 
       val extensionOrFileName = extensionsData.extensionOrFileName

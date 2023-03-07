@@ -33,15 +33,6 @@ class PluginsAdvertiserTest {
         MarketplaceRequests.getInstance().deserializeExtensionsForIdes(it)
       }
     }
-
-    @BeforeClass
-    @JvmStatic
-    fun loadJetBrainsPlugins() {
-      val path = PlatformTestUtil.getPlatformTestDataPath() + "plugins/pluginAdvertiser/jetBrainsPlugins.json"
-      File(path).inputStream().use {
-        MarketplaceRequests.getInstance().deserializeJetBrainsPluginsIds(it)
-      }
-    }
   }
 
   @Test
