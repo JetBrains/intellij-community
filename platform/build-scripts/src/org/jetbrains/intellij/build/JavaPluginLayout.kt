@@ -51,6 +51,7 @@ object JavaPluginLayout {
         "intellij.jsp",
         "intellij.platform.uast",
         "intellij.platform.uast.ide",
+        "intellij.java.uast.ide",
       ))
 
       spec.withModules(listOf(

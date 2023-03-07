@@ -89,3 +89,8 @@ fun isJava(element: PsiElement?): Boolean {
 fun isJava(language: Language?): Boolean {
   return language == JavaLanguage.INSTANCE
 }
+
+internal fun <T> lazyPub(initializer: () -> T): Lazy<T> = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
+
+@Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
+internal inline fun <reified T : Any> Any?.asSafely(): @kotlin.internal.NoInfer T? = this as? T

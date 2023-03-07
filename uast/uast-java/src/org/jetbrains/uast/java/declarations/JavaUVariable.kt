@@ -6,10 +6,8 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor.LightRecordConstructorParameter
 import com.intellij.psi.impl.light.LightRecordField
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
-import com.intellij.psi.util.parentOfType
-import com.intellij.util.asSafely
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.CONVERSION_LOGGER
@@ -137,7 +135,7 @@ private fun createAlternatives(element: PsiElement,
   val (psiRecordComponent, lightRecordField, lightConstructorParameter) = when (element) {
     is PsiRecordComponent -> Triple(element, null, null)
     is LightRecordConstructorParameter -> {
-      val containingClass = element.parentOfType<PsiMethod>()?.containingClass
+      val containingClass = PsiTreeUtil.getParentOfType(element, PsiMethod::class.java)?.containingClass
                             ?: return logAndNull { "failed to get containingClass" }
       val findFieldByName = containingClass.findFieldByName(element.name, false)
                             ?: return logAndNull { "failed to find ${element.name} in $containingClass" }

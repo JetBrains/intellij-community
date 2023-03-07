@@ -6,8 +6,6 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.util.SmartList
-import com.intellij.util.asSafely
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments

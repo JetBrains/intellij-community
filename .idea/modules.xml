@@ -696,6 +696,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/java-tests/intellij.java.tests.iml" filepath="$PROJECT_DIR$/java/java-tests/intellij.java.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/typeMigration/intellij.java.typeMigration.iml" filepath="$PROJECT_DIR$/java/typeMigration/intellij.java.typeMigration.iml" />
       <module fileurl="file://$PROJECT_DIR$/uast/uast-java/intellij.java.uast.iml" filepath="$PROJECT_DIR$/uast/uast-java/intellij.java.uast.iml" />
+      <module fileurl="file://$PROJECT_DIR$/uast/uast-java-ide/intellij.java.uast.ide.iml" filepath="$PROJECT_DIR$/uast/uast-java-ide/intellij.java.uast.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/idea-ui/intellij.java.ui.iml" filepath="$PROJECT_DIR$/java/idea-ui/intellij.java.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/java/idea-ui/intellij.java.ui.tests.iml" filepath="$PROJECT_DIR$/java/idea-ui/intellij.java.ui.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/javaFX/intellij.javaFX.iml" filepath="$PROJECT_DIR$/plugins/javaFX/intellij.javaFX.iml" />
