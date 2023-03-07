@@ -56,7 +56,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
     private val COMPACT = IconLoader.getIcon("expui/meetNewUi/densityCompact.svg", MeetNewUiToolWindow::class.java.classLoader)
 
     @Suppress("UseJBColor")
-    private val BANNER_BACKGROUND = Color.BLACK
+    private val BANNER_BACKGROUND = Color(0x010101)
     private const val BANNER_HEIGHT = 231
   }
 
