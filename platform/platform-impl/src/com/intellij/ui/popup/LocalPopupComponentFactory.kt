@@ -17,11 +17,11 @@ import javax.swing.*
 
 
 open class LocalPopupComponentFactory: PopupComponentFactory {
-  override fun getPopup(type: PopupComponentFactory.PopupType,
-                             owner: Component,
-                             content: Component,
-                             x: Int, y: Int,
-                             jbPopup: JBPopup): PopupComponent {
+  override fun createPopupComponent(type: PopupComponentFactory.PopupType,
+                                    owner: Component,
+                                    content: Component,
+                                    x: Int, y: Int,
+                                    jbPopup: JBPopup): PopupComponent {
     if (type == PopupComponentFactory.PopupType.DIALOG) {
       return DialogPopupWrapper(owner, content, x, y, jbPopup)
     }

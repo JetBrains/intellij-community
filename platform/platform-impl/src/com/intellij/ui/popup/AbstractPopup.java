@@ -1054,7 +1054,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       LOG.debug("expected preferred size: " + myContent.getPreferredSize());
     }
     PopupComponentFactory factory = PopupComponentFactory.getCurrentInstance();
-    myPopup = factory.getPopup(myPopupType, popupOwner, myContent, targetBounds.x, targetBounds.y, this);
+    myPopup = factory.createPopupComponent(myPopupType, popupOwner, myContent, targetBounds.x, targetBounds.y, this);
     if (LOG.isDebugEnabled()) {
       LOG.debug("  actual preferred size: " + myContent.getPreferredSize());
     }
