@@ -394,10 +394,14 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       throw new AssertionError("Don't invoke waitForSmartMode from a background startup activity");
     }
     CountDownLatch switched = new CountDownLatch(1);
-    myProject.getService(SmartModeScheduler.class).runWhenSmart(switched::countDown);
+    SmartModeScheduler smartModeScheduler = myProject.getService(SmartModeScheduler.class);
+    smartModeScheduler.runWhenSmart(switched::countDown);
 
     // we check getCurrentMode here because of tests which may hang because runWhenSmart needs EDT for scheduling
-    while (myProject.getService(SmartModeScheduler.class).getCurrentMode() != 0 && !myProject.isDisposed()) {
+    while (!myProject.isDisposed() && smartModeScheduler.getCurrentMode() != 0) {
+      // it is fine to unblock the caller when myProject.isDisposed, even if didn't reach smart mode: we are on background thread
+      // without read action. Dumb mode may start immediately after the caller is unblocked, so caller is prepared for this situation.
+
       try {
         if (switched.await(50, TimeUnit.MILLISECONDS)) break;
       }
