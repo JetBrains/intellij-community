@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -16,10 +16,8 @@ public abstract class ExtensionPluginDescriptorDeclarationRelatedItemLineMarkerP
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    String extensionsJar = PathUtil.getJarPathForClass(ExtensionPointName.class);
-    moduleBuilder.addLibrary("extensions", extensionsJar);
-    String platformApiJar = PathUtil.getJarPathForClass(JBList.class);
-    moduleBuilder.addLibrary("platform-api", platformApiJar);
+    moduleBuilder.addLibrary("platform-extensions", PathUtil.getJarPathForClass(ExtensionPointName.class));
+    moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
   }
 
   protected void doTestExtension(@NotNull String file, @NotNull String xmlDeclarationText) {
