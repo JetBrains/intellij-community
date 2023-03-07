@@ -2,13 +2,13 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.testFramework.TestDataPath
-import org.jetbrains.idea.devkit.inspections.quickfix.RetrievingLightServiceInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.quickfix.RetrievingServiceInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
-@TestDataPath("\$CONTENT_ROOT/testData/inspections/retrievingLightService")
-class KtRetrievingLightServiceInspectionTest : RetrievingLightServiceInspectionTestBase() {
+@TestDataPath("\$CONTENT_ROOT/testData/inspections/retrievingService")
+class KtRetrievingServiceInspectionTest : RetrievingServiceInspectionTestBase() {
 
-  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/retrievingLightService/"
+  override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/retrievingService/"
 
   override fun getFileExtension() = "kt"
 

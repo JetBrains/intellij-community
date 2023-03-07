@@ -239,10 +239,10 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.MismatchedLightServiceLevelAndCtorInspection"
                      key="inspection.mismatched.light.service.level.and.ctor.display.name"/>
-    <localInspection language="UAST" shortName="RetrievingLightService"
+    <localInspection language="UAST" shortName="RetrievingService"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
                      enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.RetrievingLightServiceInspection"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.RetrievingServiceInspection"
                      key="inspection.retrieving.light.service.display.name"/>
     <localInspection language="UAST" shortName="NonFinalOrNonInternalExtensionClass"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"

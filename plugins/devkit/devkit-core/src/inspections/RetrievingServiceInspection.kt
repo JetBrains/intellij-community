@@ -8,19 +8,23 @@ import com.intellij.codeInspection.isInheritorOf
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.uast.UastHintedVisitorAdapter
+import com.intellij.util.xml.DomManager
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.dom.Extension
+import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-internal class RetrievingLightServiceInspection : DevKitUastInspectionBase() {
+internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
   private val COMPONENT_MANAGER_FQN = ComponentManager::class.java.canonicalName
   private val COMPONENT_MANAGER_GET_SERVICE: CallMatcher = CallMatcher.anyOf(
     CallMatcher.instanceCall(COMPONENT_MANAGER_FQN, "getService").parameterTypes(CommonClassNames.JAVA_LANG_CLASS),
@@ -33,11 +37,11 @@ internal class RetrievingLightServiceInspection : DevKitUastInspectionBase() {
         if (!COMPONENT_MANAGER_GET_SERVICE.uCallMatches(node.selector as? UCallExpression)) return true
         val uClass = (node.selector.getExpressionType() as? PsiClassType)?.resolve()?.toUElement(UClass::class.java) ?: return true
         if (isInsideGetInstance(node, uClass)) return true
-        val serviceAnnotation = uClass.findAnnotation(Service::class.java.canonicalName) ?: return true
-        val level = getLevel(serviceAnnotation)
+        val level = getLevel(uClass, holder.project) ?: return true
         val receiverType = node.receiver.getExpressionType() ?: return true
         val array = listOf(
-          MismatchReceivingChecker(Project::class.java.canonicalName, Level.APP, "inspection.retrieving.light.service.mismatch.for.app.level"),
+          MismatchReceivingChecker(Project::class.java.canonicalName, Level.APP,
+                                   "inspection.retrieving.light.service.mismatch.for.app.level"),
           MismatchReceivingChecker(Application::class.java.canonicalName, Level.PROJECT,
                                    "inspection.retrieving.light.service.mismatch.for.project.level"))
         val hasError = array.any { it.check(level, receiverType, toHighlight, holder) }
@@ -45,6 +49,29 @@ internal class RetrievingLightServiceInspection : DevKitUastInspectionBase() {
         return true
       }
     }, arrayOf(UQualifiedReferenceExpression::class.java))
+
+  private fun getLevel(uClass: UClass, project: Project): Level? {
+    val serviceAnnotation = uClass.findAnnotation(Service::class.java.canonicalName)
+    if (serviceAnnotation != null) return getLevel(serviceAnnotation)
+    val javaPsi = uClass.javaPsi
+    val domManager = DomManager.getDomManager(project)
+    for (candidate in locateExtensionsByPsiClass(javaPsi)) {
+      val tag = candidate.pointer.element ?: continue
+      val element = domManager.getDomElement(tag) ?: continue
+      if (element is Extension && hasServiceBeanFqn(element)) {
+        return when (element.extensionPoint?.name?.value) {
+          "applicationService" -> Level.APP
+          "projectService" -> Level.PROJECT
+          else -> Level.NOT_SPECIFIED
+        }
+      }
+    }
+    return null
+  }
+
+  private fun hasServiceBeanFqn(extension: Extension): Boolean {
+    return extension.extensionPoint?.beanClass?.stringValue == ServiceDescriptor::class.java.canonicalName
+  }
 
   data class MismatchReceivingChecker(val retrievingClassName: String,
                                       val level: Level,
