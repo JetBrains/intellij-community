@@ -36,7 +36,6 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
         val toHighlight = node.sourcePsi ?: return true
         if (!COMPONENT_MANAGER_GET_SERVICE.uCallMatches(node.selector as? UCallExpression)) return true
         val uClass = (node.selector.getExpressionType() as? PsiClassType)?.resolve()?.toUElement(UClass::class.java) ?: return true
-        if (isInsideGetInstance(node, uClass)) return true
         val level = getLevel(uClass, holder.project) ?: return true
         val receiverType = node.receiver.getExpressionType() ?: return true
         val array = listOf(
@@ -45,7 +44,7 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
           MismatchReceivingChecker(Application::class.java.canonicalName, Level.PROJECT,
                                    "inspection.retrieving.light.service.mismatch.for.project.level"))
         val hasError = array.any { it.check(level, receiverType, toHighlight, holder) }
-        if (!hasError) checkIfCanBeReplacedWithGetInstance(uClass, receiverType, holder, toHighlight)
+        if (!hasError) checkIfCanBeReplacedWithGetInstance(uClass, receiverType, holder, node)
         return true
       }
     }, arrayOf(UQualifiedReferenceExpression::class.java))
@@ -86,21 +85,24 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
     }
   }
 
-  private fun checkIfCanBeReplacedWithGetInstance(uClass: UClass, receiverType: PsiType, holder: ProblemsHolder, toHighlight: PsiElement) {
+  private fun checkIfCanBeReplacedWithGetInstance(uClass: UClass,
+                                                  receiverType: PsiType,
+                                                  holder: ProblemsHolder,
+                                                  node: UQualifiedReferenceExpression) {
     val isApplicationLevelService = receiverType.isInheritorOf(Application::class.java.canonicalName)
+    val returnExpr = node.uastParent as? UReturnExpression
+    if (returnExpr != null) {
+      val containingMethod = returnExpr.jumpTarget as? UMethod
+      if (containingMethod != null) {
+        if (isApplicationLevelService && isGetInstanceApplicationLevel(containingMethod)) return
+        if (!isApplicationLevelService && isGetInstanceProjectLevel(containingMethod)) return
+      }
+    }
     val method = if (isApplicationLevelService) findGetInstanceApplicationLevel(uClass) else findGetInstanceProjectLevel(uClass)
     val qualifiedName = method?.getContainingUClass()?.qualifiedName ?: return
     val serviceName = StringUtil.getShortName(qualifiedName)
     val message = DevKitBundle.message("inspection.retrieving.light.service.can.be.replaced.with", serviceName, method.name)
-    holder.registerProblem(toHighlight, message, ReplaceWithGetInstanceCallFix(serviceName, method.name, isApplicationLevelService))
-  }
-
-  private fun isInsideGetInstance(node: UExpression, uClass: UClass): Boolean {
-    val returnExpr = node.uastParent as? UReturnExpression ?: return false
-    val method = returnExpr.jumpTarget as? UMethod ?: return false
-    val returnExpression = getReturnExpression(method)
-    return method.getContainingDeclaration() == uClass &&
-           returnExpression?.sourcePsi === returnExpr.sourcePsi
+    holder.registerProblem(node.sourcePsi!!, message, ReplaceWithGetInstanceCallFix(serviceName, method.name, isApplicationLevelService))
   }
 
   private fun getLevel(annotation: UAnnotation): Level {
@@ -127,29 +129,31 @@ internal class RetrievingServiceInspection : DevKitUastInspectionBase() {
   }
 
   private fun findGetInstanceProjectLevel(uClass: UClass): UMethod? {
-    return uClass.methods
-      .filter { it.isStatic }
-      .filter { it.visibility == UastVisibility.PUBLIC }
-      .filter { it.uastParameters.size == 1 }
-      .find {
-        val param = it.uastParameters[0]
-        if (param.type.canonicalText != Project::class.java.canonicalName) return@find false
-        val qualifiedRef = getReturnExpression(it)?.returnExpression as? UQualifiedReferenceExpression ?: return@find false
-        COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
-        (qualifiedRef.receiver as? USimpleNameReferenceExpression)?.resolveToUElement() == param
-      }
+    return uClass.methods.find { isGetInstanceProjectLevel(it) }
+  }
+
+  private fun isGetInstanceProjectLevel(method: UMethod): Boolean {
+    if (!((method.isStatic || method.findAnnotation("kotlin.jvm.JvmStatic") != null) &&
+          method.visibility == UastVisibility.PUBLIC &&
+          method.uastParameters.size == 1)) return false
+    val param = method.uastParameters[0]
+    if (param.type.canonicalText != Project::class.java.canonicalName) return false
+    val qualifiedRef = getReturnExpression(method)?.returnExpression as? UQualifiedReferenceExpression ?: return false
+    return COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
+           (qualifiedRef.receiver as? USimpleNameReferenceExpression)?.resolveToUElement() == param
   }
 
   private fun findGetInstanceApplicationLevel(uClass: UClass): UMethod? {
-    return uClass.methods
-      .filter { it.isStatic }
-      .filter { it.visibility == UastVisibility.PUBLIC }
-      .filter { it.uastParameters.isEmpty() }
-      .find {
-        val qualifiedRef = getReturnExpression(it)?.returnExpression as? UQualifiedReferenceExpression ?: return@find false
-        COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
-        qualifiedRef.receiver.getExpressionType()?.isInheritorOf(Application::class.java.canonicalName) == true
-      }
+    return uClass.methods.find { isGetInstanceApplicationLevel(it) }
+  }
+
+  private fun isGetInstanceApplicationLevel(method: UMethod): Boolean {
+    if (!(method.isStatic &&
+          method.visibility == UastVisibility.PUBLIC &&
+          method.uastParameters.isEmpty())) return false
+    val qualifiedRef = getReturnExpression(method)?.returnExpression as? UQualifiedReferenceExpression ?: return false
+    return COMPONENT_MANAGER_GET_SERVICE.uCallMatches(qualifiedRef.selector as? UCallExpression) &&
+           qualifiedRef.receiver.getExpressionType()?.isInheritorOf(Application::class.java.canonicalName) == true
   }
 
   private fun getReturnExpression(method: UMethod): UReturnExpression? {
