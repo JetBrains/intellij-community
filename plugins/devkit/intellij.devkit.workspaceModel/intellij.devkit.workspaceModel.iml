@@ -28,5 +28,6 @@
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
+    <orderEntry type="module" module-name="intellij.platform.workspaceModel.codegen.impl" />
   </component>
 </module>

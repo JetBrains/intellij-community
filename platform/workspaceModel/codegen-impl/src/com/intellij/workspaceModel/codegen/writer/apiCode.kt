@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 import com.intellij.workspaceModel.codegen.engine.GenerationProblem
 import com.intellij.workspaceModel.codegen.engine.ProblemLocation
+import com.intellij.workspaceModel.codegen.engine.SKIPPED_TYPES
 import com.intellij.workspaceModel.codegen.engine.impl.ProblemReporter
 import com.intellij.workspaceModel.codegen.fields.javaMutableType
 import com.intellij.workspaceModel.codegen.fields.javaType
@@ -23,10 +24,6 @@ import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
-
-val SKIPPED_TYPES: Set<String> = setOfNotNull(WorkspaceEntity::class.simpleName,
-                                              WorkspaceEntity.Builder::class.simpleName,
-                                              WorkspaceEntityWithSymbolicId::class.simpleName)
 
 fun ObjClass<*>.generateBuilderCode(reporter: ProblemReporter): String = lines {
   checkSuperTypes(this@generateBuilderCode, reporter)

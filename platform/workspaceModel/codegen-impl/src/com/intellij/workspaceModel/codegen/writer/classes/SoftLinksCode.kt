@@ -109,7 +109,7 @@ private fun ValueType<*>.operate(
       }
     }
     is ValueType.Optional<*> -> {
-      if (type is ValueType.JvmClass && type.isSymbolicId) {
+      if (type is ValueType.JvmClass && (type as ValueType.JvmClass<*>).isSymbolicId) {
         context.line("val optionalLink_${varName.clean()} = $varName")
         context.`if`("optionalLink_${varName.clean()} != null") label@{
           type.operate("optionalLink_${varName.clean()}", this@label, operation)
