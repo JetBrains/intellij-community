@@ -9,7 +9,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.concurrency.await
 
 internal class MermaidDiagramPreviewComponent: BorderLayoutPanel(), Disposable {
-  private val browser = JBCefBrowser()
+  private val browser = createBrowser()
 
   init {
     Disposer.register(this, browser)
@@ -36,4 +36,8 @@ internal class MermaidDiagramPreviewComponent: BorderLayoutPanel(), Disposable {
   }
 
   override fun dispose() = Unit
+
+  private fun createBrowser(): JBCefBrowser {
+    return JBCefBrowser.createBuilder().setOffScreenRendering(true).build()
+  }
 }
