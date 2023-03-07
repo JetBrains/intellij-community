@@ -3783,6 +3783,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/invalidArgument.kt");
             }
 
+            @TestMetadata("javaGet.kt")
+            public void testJavaGet() throws Exception {
+                runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/javaGet.kt");
+            }
+
+            @TestMetadata("javaSet.kt")
+            public void testJavaSet() throws Exception {
+                runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/javaSet.kt");
+            }
+
+            @TestMetadata("javaSet2.kt")
+            public void testJavaSet2() throws Exception {
+                runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/javaSet2.kt");
+            }
+
             @TestMetadata("missingDefaultArgument.kt")
             public void testMissingDefaultArgument() throws Exception {
                 runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/missingDefaultArgument.kt");
@@ -3801,6 +3816,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("notOperator.kt")
             public void testNotOperator() throws Exception {
                 runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/notOperator.kt");
+            }
+
+            @TestMetadata("overriddenSet.kt")
+            public void testOverriddenSet() throws Exception {
+                runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/overriddenSet.kt");
             }
 
             @TestMetadata("qualifier.kt")

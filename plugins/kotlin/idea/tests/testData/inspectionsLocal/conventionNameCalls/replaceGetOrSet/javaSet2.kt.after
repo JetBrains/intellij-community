@@ -1,0 +1,4 @@
+// HIGHLIGHT: INFORMATION
+fun test(foo: Foo) {
+    foo[Int.MAX_VALUE] = Int.MAX_VALUE
+}
