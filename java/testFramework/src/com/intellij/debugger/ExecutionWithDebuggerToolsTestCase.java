@@ -361,7 +361,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         String breakpointLocation = fileName + ":" + (commentLine + 1 + 1);
 
         String commentText = text.substring(document.getLineStartOffset(commentLine), document.getLineEndOffset(commentLine));
-        BreakpointComment comment = BreakpointComment.parse(commentText, fileName, commentLine + 1);
+        BreakpointComment comment = BreakpointComment.parse(commentText, file.getVirtualFile().getPresentableUrl(), commentLine);
 
         Breakpoint breakpoint;
 
@@ -398,7 +398,8 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
             }
           }
           case "Exception" -> {
-            breakpoint = breakpointManager.addExceptionBreakpoint(comment.readKindValue(), "");
+            String exceptionClassName = Objects.requireNonNull(comment.readKindValue());
+            breakpoint = breakpointManager.addExceptionBreakpoint(exceptionClassName, "");
             if (breakpoint == null) break;
             systemPrintln("ExceptionBreakpoint created at " + breakpointLocation);
             String catchClassFiltersStr = comment.readValue("Catch class filters");
