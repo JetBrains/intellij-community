@@ -114,7 +114,7 @@ class VfsLog(
   companion object {
     private val LOG = Logger.getInstance(VfsLog::class.java)
 
-    const val VERSION = -43
+    const val VERSION = -44
 
     @JvmField
     val LOG_VFS_OPERATIONS_ENABLED = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)

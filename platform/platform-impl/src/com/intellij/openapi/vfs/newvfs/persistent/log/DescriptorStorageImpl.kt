@@ -76,7 +76,6 @@ class DescriptorStorageImpl(
 
   private fun sizeOfValueInDescriptor(size: Int) = size - VfsOperationTag.SIZE_BYTES * 2
 
-  // TODO: write doc on new behaviour
   override fun enqueueDescriptorWrite(scope: CoroutineScope, tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
     val descrSize = bytesForDescriptor(tag)
     val descrPos = position.beginAdvance(descrSize.toLong())
