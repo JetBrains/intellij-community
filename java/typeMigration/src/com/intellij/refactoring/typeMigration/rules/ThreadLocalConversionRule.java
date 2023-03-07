@@ -169,6 +169,13 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                                                   PsiExpression initializer,
                                                                   String boxedTypeName) {
     if (PsiUtil.isLanguageLevel8OrHigher(initializer)) {
+      if (from instanceof PsiPrimitiveType) {
+        PsiType parameterType = ((PsiClassType)to).getParameters()[0];
+        PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(parameterType);
+        if (unboxed != null && !from.equals(unboxed)) {
+          return "java.lang.ThreadLocal.withInitial(() -> (" + unboxed.getCanonicalText() + ")$qualifier$)";
+        }
+      }
       return "java.lang.ThreadLocal.withInitial(() -> $qualifier$)";
     }
     return "new " +
