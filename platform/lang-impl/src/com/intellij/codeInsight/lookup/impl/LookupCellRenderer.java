@@ -426,7 +426,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       return;
     }
     List<Integer> offsetsToSplit = itemNameDecorations.stream()
-      .map(decoratedTextRange -> decoratedTextRange.getTextRange())
+      .map(decoratedTextRange -> decoratedTextRange.textRange())
       .flatMap(textRange -> Stream.of(textRange.getStartOffset(), textRange.getEndOffset()))
       .sorted()
       .distinct()
@@ -439,8 +439,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     while (iterator.hasNext()) {
       iterator.next();
       List<LookupElementPresentation.LookupItemDecoration> decorations = itemNameDecorations.stream()
-        .filter(decoratedTextRange -> decoratedTextRange.getTextRange().intersectsStrict(iterator.getOffset(), iterator.getEndOffset()))
-        .map(LookupElementPresentation.DecoratedTextRange::getDecoration)
+        .filter(decoratedTextRange -> decoratedTextRange.textRange().intersectsStrict(iterator.getOffset(), iterator.getEndOffset()))
+        .map(LookupElementPresentation.DecoratedTextRange::decoration)
         .toList();
       if (decorations.isEmpty()) {
         continue;

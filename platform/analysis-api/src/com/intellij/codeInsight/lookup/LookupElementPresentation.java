@@ -341,21 +341,6 @@ public class LookupElementPresentation {
    * Range of text with an associated decoration {@link LookupItemDecoration}.
    */
   @ApiStatus.Internal
-  public static class DecoratedTextRange {
-    private final TextRange myTextRange;
-    private final LookupItemDecoration myDecoration;
-
-    private DecoratedTextRange(TextRange textRange, LookupItemDecoration decoration) {
-      myTextRange = textRange;
-      myDecoration = decoration;
-    }
-
-    public TextRange getTextRange() {
-      return myTextRange;
-    }
-
-    public LookupItemDecoration getDecoration() {
-      return myDecoration;
-    }
+  public record DecoratedTextRange(TextRange textRange, LookupItemDecoration decoration) {
   }
 }
