@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.changes.ChangeListListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl
-import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
@@ -101,10 +100,9 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
 
     companion object {
       private fun refreshFileStatus(document: Document) {
-        val file = FileDocumentManager.getInstance().getFile(document)
-        if (file?.isTrackable != true) {
-          return
-        }
+        val file = FileDocumentManager.getInstance().getFile(document) ?: return
+        if (!file.isInLocalFileSystem) return // no VCS
+        if (!isSupported(file)) return
 
         val projectManager = ProjectManager.getInstanceIfCreated() ?: return
         for (project in projectManager.openProjects) {
@@ -206,8 +204,11 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
       return
     }
 
-    if (file.isTrackable
-        && cachedStatuses.get(file) == null) {
+    if (!isSupported(file)) {
+      // do not leak light files via cache
+      return
+    }
+    if (cachedStatuses.get(file) == null) {
       return
     }
 
@@ -224,8 +225,7 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
     }
     val updatedFiles = ArrayList<VirtualFile>()
     for (file in toRefresh) {
-      val wasUpdated = file.fileSystem is NonPhysicalFileSystem && file.isTrackable
-                       || updateFileStatusFor(file)
+      val wasUpdated = updateFileStatusFor(file)
       if (wasUpdated) {
         updatedFiles.add(file)
       }
@@ -259,7 +259,7 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
   }
 
   override fun getStatus(file: VirtualFile): FileStatus {
-    if (file.fileSystem is NonPhysicalFileSystem) {
+    if (!isSupported(file)) {
       // do not leak light files via cache
       return FileStatus.SUPPRESSED
     }
@@ -353,8 +353,9 @@ class FileStatusManagerImpl(private val project: Project) : FileStatusManager(),
   }
 }
 
-private inline val VirtualFile.isTrackable: Boolean
-  get() = FileDocumentManagerBase.isTrackable(this)
+private fun isSupported(file: VirtualFile): Boolean {
+  return FileDocumentManagerBase.isTrackable(file)
+}
 
 private fun isDocumentModified(virtualFile: VirtualFile): Boolean {
   return if (virtualFile.isDirectory) false else FileDocumentManager.getInstance().isFileModified(virtualFile)
