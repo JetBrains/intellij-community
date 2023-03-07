@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog;
 
 import com.intellij.internal.statistic.eventLog.connection.EventLogConnectionSettings;
@@ -44,23 +44,6 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   @NotNull
   @Override
   public String getTemplateUrl() {
-    ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    if (externalEventLogSettings != null) {
-      String result = externalEventLogSettings.getTemplateUrl();
-      return result == null ? getDefaultTemplateUrl() : result;
-    }
-    else if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(EventLogEndpointSubstitutor.EP_NAME.getName())) {
-      EventLogEndpointSubstitutor validSubstitutor = EventLogEndpointSubstitutor.EP_NAME.findFirstSafe(substitutor -> {
-        return PluginInfoDetectorKt.getPluginInfo(substitutor.getClass()).isAllowedToInjectIntoFUS();
-      });
-
-      String result = validSubstitutor == null ? null : validSubstitutor.getTemplateUrl();
-      return result == null ? getDefaultTemplateUrl() : result;
-    }
-    return getDefaultTemplateUrl();
-  }
-
-  private static String getDefaultTemplateUrl() {
     return ((ApplicationInfoImpl)ApplicationInfoImpl.getShadowInstance()).getEventLogSettingsUrl();
   }
 
