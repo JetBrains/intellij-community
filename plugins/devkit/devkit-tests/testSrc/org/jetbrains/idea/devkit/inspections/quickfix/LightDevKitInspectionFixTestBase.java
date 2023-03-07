@@ -4,6 +4,9 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Use {@link DevKitInspectionFixTestBase} if light test is not possible.
+ */
 public abstract class LightDevKitInspectionFixTestBase extends LightJavaCodeInsightFixtureTestCase {
 
   @NotNull

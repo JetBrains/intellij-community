@@ -9,6 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+/**
+ * Prefer {@link LightDevKitInspectionFixTestBase} if possible.
+ */
 public abstract class DevKitInspectionFixTestBase extends JavaCodeInsightFixtureTestCase {
 
   @NotNull
@@ -28,7 +31,8 @@ public abstract class DevKitInspectionFixTestBase extends JavaCodeInsightFixture
       String previewText = fixture.getIntentionPreviewText(intention);
       assertSameLinesWithFile(previewPath.toString(), previewText);
       fixture.launchAction(intention);
-    } else {
+    }
+    else {
       fixture.checkPreviewAndLaunchAction(intention);
     }
     fixture.checkResultByFile(fileNameBefore, fileNameAfter, true);
