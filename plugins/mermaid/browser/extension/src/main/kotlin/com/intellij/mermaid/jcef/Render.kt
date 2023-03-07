@@ -1,6 +1,7 @@
 package com.intellij.mermaid.jcef
 
-import com.intellij.mermaid.api.*
+import com.intellij.mermaid.api.Mermaid
+import com.intellij.mermaid.api.appendTo
 import com.intellij.mermaid.jcef.impl.decode
 import kotlinx.browser.window
 import kotlinx.coroutines.await
@@ -30,7 +31,10 @@ suspend fun renderBlock(
 ): Node? {
   val id = "mermaid-generated-$cacheId"
   try {
-    val renderResult = Mermaid.api.render(id, content).await()
+    // Remove when `mermaid.render` will throw correct error messages
+    Mermaid.core.parse(content, null).await()
+
+    val renderResult = Mermaid.core.render(id, content).await()
     renderResult.appendTo(block)
     val node = block.findSvgElement()
     checkNotNull(node) { "Failed to find svg node after append" }
