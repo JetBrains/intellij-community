@@ -93,4 +93,11 @@ object IndexableEntityProviderMethods {
     if (roots.isEmpty()) return emptyList()
     return listOf(ModuleUnawareContentEntityIteratorImpl(reference, roots))
   }
+
+  fun createModuleAwareContentEntityIterators(module: Module,
+                                              reference: EntityReference<*>,
+                                              roots: Collection<VirtualFile>): Collection<IndexableFilesIterator> {
+    if (roots.isEmpty()) return emptyList()
+    return listOf(ModuleAwareContentEntityIteratorImpl(module, reference, roots))
+  }
 }
