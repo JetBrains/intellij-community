@@ -27,7 +27,7 @@ import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
-import git4idea.changes.GitParsedChangesBundle
+import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.findCumulativeChange
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.*
@@ -67,7 +67,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private val detailsLoadingModel = GHCompletableFutureLoadingModel<GHPullRequest>(disposable)
   private val commitsLoadingModel = GHCompletableFutureLoadingModel<List<GHCommit>>(disposable)
-  private val changesLoadingModel = GHCompletableFutureLoadingModel<GitParsedChangesBundle>(disposable)
+  private val changesLoadingModel = GHCompletableFutureLoadingModel<GitBranchComparisonResult>(disposable)
   private val viewedStateLoadingModel = GHCompletableFutureLoadingModel<Map<String, GHPullRequestFileViewedState>>(disposable)
 
   init {
@@ -145,7 +145,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private class Controller(
     private val tree: AsyncChangesTree,
-    private val changesProviderModel: SingleValueModel<GitParsedChangesBundle>,
+    private val changesProviderModel: SingleValueModel<GitBranchComparisonResult>,
     private val commitsVm: GHPRCommitsViewModel
   ) : GHPRCommitBrowserComponentController {
     override fun selectCommit(oid: String) {
@@ -252,7 +252,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
   private fun createCommitChangesModel(
     scope: CoroutineScope,
-    changesProviderModel: SingleValueModel<GitParsedChangesBundle>,
+    changesProviderModel: SingleValueModel<GitBranchComparisonResult>,
     commitsAndFilesVm: GHPRCommitsViewModel
   ): SingleValueModel<Collection<Change>> {
     val changesState = MutableStateFlow(changesProviderModel.value)

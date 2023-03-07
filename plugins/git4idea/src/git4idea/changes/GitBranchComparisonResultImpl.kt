@@ -14,13 +14,13 @@ import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
 import java.util.*
 
-class GitParsedChangesBundleImpl(private val project: Project,
-                                 private val vcsRoot: VirtualFile,
-                                 private val baseSha: String,
-                                 private val mergeBaseSha: String,
-                                 commits: List<GitCommitShaWithPatches>,
-                                 private val headPatches: List<FilePatch>)
-  : GitParsedChangesBundle {
+class GitBranchComparisonResultImpl(private val project: Project,
+                                    private val vcsRoot: VirtualFile,
+                                    private val baseSha: String,
+                                    private val mergeBaseSha: String,
+                                    commits: List<GitCommitShaWithPatches>,
+                                    private val headPatches: List<FilePatch>)
+  : GitBranchComparisonResult {
 
   private val headSha = commits.last().sha
 
@@ -28,7 +28,7 @@ class GitParsedChangesBundleImpl(private val project: Project,
   override val changesByCommits = mutableMapOf<String, Collection<Change>>()
 
   private val _diffDataByChange: MutableMap<Change, GitTextFilePatchWithHistory> =
-    CollectionFactory.createCustomHashingStrategyMap(GitParsedChangesBundle.REVISION_COMPARISON_HASHING_STRATEGY)
+    CollectionFactory.createCustomHashingStrategyMap(GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY)
   override val patchesByChange: Map<Change, GitTextFilePatchWithHistory> = Collections.unmodifiableMap(_diffDataByChange)
 
   init {
@@ -143,7 +143,7 @@ class GitParsedChangesBundleImpl(private val project: Project,
   }
 
   companion object {
-    private val LOG = logger<GitParsedChangesBundle>()
+    private val LOG = logger<GitBranchComparisonResult>()
   }
 }
 

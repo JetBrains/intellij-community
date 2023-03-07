@@ -18,7 +18,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.childScope
-import git4idea.changes.GitParsedChangesBundle
+import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.getDiffComputer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.awaitClose
@@ -86,7 +86,7 @@ private fun Flow<ListSelection<Change>?>.mapToDiffChain(project: Project, change
       return@combineTransformLatest
     }
 
-    val changesBundle: GitParsedChangesBundle = try {
+    val changesBundle: GitBranchComparisonResult = try {
       loadRevisionsAndParseChanges(changes)
     }
     catch (ce: CancellationException) {
@@ -105,7 +105,7 @@ private fun Flow<ListSelection<Change>?>.mapToDiffChain(project: Project, change
     emit(producers.let(SimpleDiffRequestChain::fromProducers))
   }
 
-private suspend fun loadRevisionsAndParseChanges(changes: GitLabMergeRequestChanges): GitParsedChangesBundle =
+private suspend fun loadRevisionsAndParseChanges(changes: GitLabMergeRequestChanges): GitBranchComparisonResult =
   coroutineScope {
     launch {
       changes.ensureAllRevisionsFetched()
@@ -114,7 +114,7 @@ private suspend fun loadRevisionsAndParseChanges(changes: GitLabMergeRequestChan
   }
 
 private fun createData(
-  parsedChanges: GitParsedChangesBundle,
+  parsedChanges: GitBranchComparisonResult,
   change: Change
 ): Map<Key<out Any>, Any?> {
   val requestDataKeys = mutableMapOf<Key<out Any>, Any?>()

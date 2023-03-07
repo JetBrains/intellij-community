@@ -19,7 +19,7 @@ import java.util.*
  *
  * Actual parsed changes are stored in [patchesByChange]
  */
-interface GitParsedChangesBundle {
+interface GitBranchComparisonResult {
   val changes: List<Change>
   val changesByCommits: Map<String, Collection<Change>>
 

@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.history.VcsDiffUtil
-import git4idea.changes.GitParsedChangesBundle
+import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.getDiffComputer
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -74,7 +74,7 @@ open class GHPRDiffRequestChainProducer(
 
   private fun loadRequestDataKeys(indicator: ProgressIndicator,
                                   change: Change,
-                                  changesProviderFuture: CompletableFuture<GitParsedChangesBundle>,
+                                  changesProviderFuture: CompletableFuture<GitBranchComparisonResult>,
                                   fetchFuture: CompletableFuture<Void>): Map<Key<out Any>, Any?> {
 
     val changesProvider = ProgressIndicatorUtils.awaitWithCheckCanceled(changesProviderFuture, indicator)
@@ -113,7 +113,7 @@ open class GHPRDiffRequestChainProducer(
     return requestDataKeys
   }
 
-  private fun getReviewSupport(changesProvider: GitParsedChangesBundle, change: Change): GHPRDiffReviewSupport? {
+  private fun getReviewSupport(changesProvider: GitBranchComparisonResult, change: Change): GHPRDiffReviewSupport? {
     val diffData = changesProvider.patchesByChange[change] ?: return null
 
     return GHPRDiffReviewSupportImpl(project,
