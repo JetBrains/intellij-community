@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -42,21 +42,15 @@ final class VarianceCandidate {
   static VarianceCandidate findVarianceCandidate(@NotNull PsiTypeElement innerTypeElement) {
     PsiType type = innerTypeElement.getType();
     if (type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType) return null;
-    PsiElement parent = innerTypeElement.getParent();
-    if (!(parent instanceof PsiReferenceParameterList)) return null;
-    PsiElement pp = parent.getParent();
-    if (!(pp instanceof PsiJavaCodeReferenceElement refElement)) return null;
-    if (!parent.equals(refElement.getParameterList())) return null;
-    JavaResolveResult result = refElement.advancedResolve(false);
-    if (!(result.getElement() instanceof PsiClass resolved)) return null;
-    int index = ArrayUtil.indexOf(((PsiReferenceParameterList)parent).getTypeParameterElements(), innerTypeElement);
+    if (!(innerTypeElement.getParent() instanceof PsiReferenceParameterList referenceParameterList)) return null;
+    if (!(referenceParameterList.getParent() instanceof PsiJavaCodeReferenceElement refElement)) return null;
+    if (!referenceParameterList.equals(refElement.getParameterList())) return null;
+    if (!(refElement.advancedResolve(false).getElement() instanceof PsiClass resolved)) return null;
+    int index = ArrayUtil.indexOf(referenceParameterList.getTypeParameterElements(), innerTypeElement);
 
-    PsiElement p3 = pp.getParent();
-    if (!(p3 instanceof PsiTypeElement)) return null;
-    PsiElement p4 = p3.getParent();
-    if (!(p4 instanceof PsiParameter parameter)) return null;
-    PsiElement scope = parameter.getDeclarationScope();
-    if (!(scope instanceof PsiMethod method)) return null;
+    if (!(refElement.getParent() instanceof PsiTypeElement typeElement)) return null;
+    if (!(typeElement.getParent() instanceof PsiParameter parameter)) return null;
+    if (!(parameter.getDeclarationScope() instanceof PsiMethod method)) return null;
 
     PsiTypeParameter[] typeParameters = resolved.getTypeParameters();
     if (typeParameters.length <= index) return null;
@@ -65,24 +59,22 @@ final class VarianceCandidate {
     PsiParameterList parameterList = method.getParameterList();
     int parameterIndex = parameterList.getParameterIndex(parameter);
     if (parameterIndex == -1) return null;
-    PsiType parameterType = parameter.getType();
-    if (!(parameterType instanceof PsiClassReferenceType)) return null;
+    if (!(parameter.getType() instanceof PsiClassReferenceType classReferenceType)) return null;
     PsiParameter[] methodParameters = parameterList.getParameters();
-    VarianceCandidate candidate = new VarianceCandidate(parameter, (PsiClassReferenceType)parameterType, method, parameterIndex, typeParameter, type, index);
+    VarianceCandidate candidate = new VarianceCandidate(parameter, classReferenceType, method, parameterIndex, typeParameter, type, index);
 
     // check that if there is a super method, then it's parameterized similarly.
     // otherwise, it would make no sense to wildcardize "new Function<List<T>, T>(){ T apply(List<T> param) {...} }"
     // Oh, and make sure super methods are all modifiable, or it wouldn't make sense to report them
-    if (!
-    SuperMethodsSearch.search(method, null, true, true).forEach((MethodSignatureBackedByPsiMethod superMethod)-> {
+    if (!SuperMethodsSearch.search(method, null, true, true).forEach((MethodSignatureBackedByPsiMethod superMethod)-> {
       ProgressManager.checkCanceled();
       if (superMethod.getMethod() instanceof PsiCompiledElement) return false;
       // check not substituted super parameters
       PsiParameter[] superMethodParameters = superMethod.getMethod().getParameterList().getParameters();
       if (superMethodParameters.length != methodParameters.length) return false;
       PsiType superParameterType = superMethodParameters[parameterIndex].getType();
-      if (!(superParameterType instanceof PsiClassType)) return false;
-      PsiType[] superTypeParameters = ((PsiClassType)superParameterType).getParameters();
+      if (!(superParameterType instanceof PsiClassType classType)) return false;
+      PsiType[] superTypeParameters = classType.getParameters();
       candidate.superMethods.add(superMethod.getMethod());
       return superTypeParameters.length == typeParameters.length;
     })) return null;
