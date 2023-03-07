@@ -92,9 +92,11 @@ public interface ExternalEventLogSettings {
   /**
    * Provides implementations of {@link StatisticsEventLogListener} to be used in {@link EventLogListenersManager}
    * <br/>
-   * This method will be called only once.
+   * This method will be called only once per recorder on IDE start or plugin loading (for dynamic plugins)
+   *
+   * @param recorderId of a recorder which logs will trigger provided listener
    * */
-  default @Nullable StatisticsEventLogListener getEventLogListener() {
+  default @Nullable StatisticsEventLogListener getEventLogListener(@NotNull String recorderId) {
     return null;
   }
 }
