@@ -461,25 +461,27 @@ private fun scheduleBackgroundPostStartupActivities(project: Project, coroutineS
 
 private fun CoroutineScope.runBackgroundPostStartupActivities(activities: Sequence<Any>, project: Project) {
   for (activity in activities.filter { project !is LightEditCompatible || it is LightEditCompatible }) {
-    try {
-      if (activity is ProjectActivity) {
-        launch {
+    launch {
+      try {
+        if (activity is ProjectActivity) {
           activity.execute(project)
         }
+        else {
+          blockingContext {
+            @Suppress("UsagesOfObsoleteApi")
+            (activity as StartupActivity).runActivity(project)
+          }
+        }
       }
-      else {
-        @Suppress("UsagesOfObsoleteApi")
-        (activity as StartupActivity).runActivity(project)
-      }
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      if (e is ControlFlowException) {
+      catch (e: CancellationException) {
         throw e
       }
-      LOG.error(e)
+      catch (e: Throwable) {
+        if (e is ControlFlowException) {
+          throw e
+        }
+        LOG.error(e)
+      }
     }
   }
 }
