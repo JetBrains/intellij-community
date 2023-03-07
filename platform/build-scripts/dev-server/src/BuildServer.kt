@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.closeKtorClient
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 @Serializable
 internal data class Configuration(@JvmField val products: Map<String, ProductConfiguration>)
@@ -45,7 +46,15 @@ suspend fun buildProductInProcess(request: BuildRequest) {
 private fun createConfiguration(productionClassOutput: Path, homePath: Path): Configuration {
   // for compatibility with local runs and runs on CI
   System.setProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY, productionClassOutput.parent.toString())
-  return Json.decodeFromString(Configuration.serializer(), Files.readString(homePath.resolve(PRODUCTS_PROPERTIES_PATH)))
+  var projectPropertiesPath = homePath.resolve(PRODUCTS_PROPERTIES_PATH)
+  // Handle Rider repository layout
+  if (!projectPropertiesPath.exists()) {
+    val riderSpecificProjectPropertiesPath = homePath.parent.resolve("ultimate").resolve(PRODUCTS_PROPERTIES_PATH)
+    if (riderSpecificProjectPropertiesPath.exists()) {
+      projectPropertiesPath = riderSpecificProjectPropertiesPath
+    }
+  }
+  return Json.decodeFromString(Configuration.serializer(), Files.readString(projectPropertiesPath))
 }
 
 private fun getProductConfiguration(configuration: Configuration, platformPrefix: String): ProductConfiguration {

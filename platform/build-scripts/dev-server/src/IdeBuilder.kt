@@ -22,6 +22,7 @@ import java.lang.invoke.MethodType
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
 internal const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
@@ -357,6 +358,13 @@ private fun CoroutineScope.prepareExistingRunDirForProduct(runDir: Path, usePlug
 }
 
 private fun getCommunityHomePath(homePath: Path): BuildDependenciesCommunityRoot {
-  val communityDotIdea = homePath.resolve("community/.idea")
+  var communityDotIdea = homePath.resolve("community/.idea")
+  // Handle Rider repository layout
+  if (!communityDotIdea.exists()) {
+    val riderSpecificCommunityDotIdea = homePath.parent.resolve("ultimate/community/.idea")
+    if (riderSpecificCommunityDotIdea.exists()) {
+      communityDotIdea = riderSpecificCommunityDotIdea
+    }
+  }
   return BuildDependenciesCommunityRoot(if (Files.isDirectory(communityDotIdea)) communityDotIdea.parent else homePath)
 }
