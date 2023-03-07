@@ -323,7 +323,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     actionTask("XDebugger.MuteBreakpoints") {
       proposeModificationRestore(afterFixText)
-      LessonsBundle.message("debug.workflow.mute.breakpoints", icon(AllIcons.Debugger.MuteBreakpoints), action(it))
+      LessonsBundle.message("debug.workflow.mute.breakpoints", icon(AllIcons.Debugger.MuteBreakpoints))
     }
   }
 
