@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.OPEN_IN_PREVIEW_TAB
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.OnePixelSplitter
@@ -201,6 +202,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
 
   private fun navigateToSource(requestFocus: Boolean) {
     val node = selectedNode ?: return
+    if (node.asVirtualFile?.fileType == FileTypes.UNKNOWN) { return }
     val task = Runnable { OpenSourceUtil.navigateToSource(requestFocus, false, node) }
     ApplicationManager.getApplication()?.invokeLater(task, stateForComponent(tree)) { project.isDisposed }
   }
