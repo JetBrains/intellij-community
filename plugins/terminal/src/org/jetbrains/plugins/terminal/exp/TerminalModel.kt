@@ -12,6 +12,7 @@ import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.*
 import com.jediterm.terminal.model.JediTerminal.ResizeHandler
 import java.awt.Dimension
+import kotlin.math.min
 
 class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: StyleState) {
   val width: Int
@@ -134,10 +135,13 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     textBuffer.processScreenLines(yStart, count, consumer)
   }
 
-  fun getAllText(): String {
+  fun getAllText(updatedCursorX: Int = cursorX, updatedCursorY: Int = cursorY): String {
     val builder = StringBuilder()
     for (ind in -historyLinesCount until screenLinesCount) {
-      val text = getLine(ind).text
+      var text = getLine(ind).text
+      if (ind == updatedCursorY - 1) {
+        text = text.substring(0, min(updatedCursorX, text.length))
+      }
       builder.append(text)
       if (text.isNotEmpty()) {
         builder.append('\n')

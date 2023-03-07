@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Alarm
-import java.util.*
 import java.util.concurrent.CompletableFuture
 
 class TerminalCompletionContributor : CompletionContributor() {
@@ -28,28 +27,35 @@ class TerminalCompletionContributor : CompletionContributor() {
     }
 
     val resultSet = result.caseInsensitive()
+    val promptText = session.model.withLock { session.model.getAllText() }
     val baseTimeoutMillis = 1000
-    val completionResult = invokeCompletion(session, command, resultSet, baseTimeoutMillis)
+    var completionResult = invokeCompletion(session, command, promptText, baseTimeoutMillis)
     if (completionResult.isSingleItem) {
       val addedPart = completionResult.items.single()
-      val completedItem = resultSet.prefixMatcher.prefix + addedPart
+      // Consider item, that ends with '/' as fully completed item
       if (!addedPart.endsWith('/')) {
         // Run completion again to check, that initially completed item was full
         // Consider the following example:
         // We get 'foo' as the only one completion item for command 'f'
         // But there can be more specific items: 'foobar' and 'fooboo'
         // And in this case we need to show these two items instead of incomplete 'foo'
-        val finalResult = invokeCompletion(session, command + addedPart, resultSet, baseTimeoutMillis / 2)
-        // Add initial completion item, if there are no more specific items
-        // If there are such items, they are already added inside 'invokeCompletion'
-        if (finalResult.items.isEmpty()) {
-          resultSet.addElement(createOption(completedItem))
+        val secondResult = invokeCompletion(session, command + addedPart, promptText, baseTimeoutMillis / 2)
+        if (secondResult.isSingleItem) {
+          completionResult = CompletionResult(addedPart + secondResult.items.single())
+        }
+        else if (!secondResult.items.isEmpty()) {
+          completionResult = secondResult
         }
       }
-      else {
-        // Consider item, that ends with '/' as fully completed item
-        resultSet.addElement(createOption(completedItem))
-      }
+    }
+
+    if (completionResult.isSingleItem) {
+      val option = createOption(resultSet.prefixMatcher.prefix + completionResult.items.single())
+      resultSet.addElement(option)
+    }
+    else {
+      val options = completionResult.items.map { createOption(it) }
+      resultSet.addAllElements(options)
     }
 
     resultSet.stopHere()
@@ -57,41 +63,33 @@ class TerminalCompletionContributor : CompletionContributor() {
 
   private fun invokeCompletion(session: TerminalSession,
                                command: String,
-                               resultSet: CompletionResultSet,
+                               promptText: String,
                                timeoutMillis: Int): CompletionResult {
     val completionManager = session.completionManager
     val listenerDisposable = Disposer.newDisposable()
-    val addedItems: MutableSet<String> = Collections.synchronizedSet(HashSet())
     val future = CompletableFuture<CompletionResult>()
     try {
       val model: TerminalModel = session.model
-      val promptText = model.withLock { model.getAllText().trim() }
+      val context = ParsingContext(command, promptText)
       model.addContentListener(object : TerminalModel.ContentListener {
-        override fun onContentChanged() {
-          val text = model.getAllText().trim()
-          if (text.isEmpty() || future.isDone) {
+        override fun onTextWritten(x: Int, y: Int, text: String) {
+          val allText = model.getAllText(x + text.length, y)
+          if (allText.isEmpty() || future.isDone) {
             return
           }
-          val parsingResult = parseCompletionItems(text, command, promptText)
+          context.addedText.append(text)
+          val parsingResult = parseCompletionItems(allText, context)
           if (parsingResult.isSingleItem) {
             future.complete(CompletionResult(parsingResult.items.single()))
           }
-          else {
-            val newItems = parsingResult.items.filter { item ->
-              !addedItems.contains(item) && (!item.endsWith('/') || !addedItems.contains(item.removeSuffix("/")))
-            }
-            addedItems.addAll(newItems)
-            val options = newItems.map { createOption(it) }
-            resultSet.addAllElements(options)
-            if (parsingResult.newPromptShown) {
-              future.complete(CompletionResult(addedItems.toList(), newPromptShown = true))
-            }
+          else if (parsingResult.items.isNotEmpty()) {
+            future.complete(CompletionResult(parsingResult.items, parsingResult.newPromptShown))
           }
         }
       }, listenerDisposable)
 
       Alarm(Alarm.ThreadToUse.POOLED_THREAD, listenerDisposable).addRequest(Runnable {
-        future.complete(CompletionResult(addedItems.toList(), newPromptShown = false))
+        future.complete(CompletionResult(emptyList(), newPromptShown = false))
       }, timeoutMillis)
 
       completionManager.invokeCompletion(command)
@@ -106,15 +104,16 @@ class TerminalCompletionContributor : CompletionContributor() {
     return if (future.isDone) {
       future.get()
     }
-    else CompletionResult(addedItems.toList(), newPromptShown = false)
+    else CompletionResult(emptyList(), newPromptShown = false)
   }
 
-  private fun parseCompletionItems(text: String, command: String, promptText: String): ParsingResult {
+  private fun parseCompletionItems(text: String, context: ParsingContext): ParsingResult {
     val firstLine = text.substringBefore('\n')
-    if (firstLine.startsWith(promptText)) {
-      val completedCommand = firstLine.removePrefix(promptText).trim()
-      if (completedCommand.startsWith(command)) {
-        val addedPart = completedCommand.removePrefix(command).trim()
+    if (firstLine.startsWith(context.promptText)) {
+      val completedCommand = firstLine.removePrefix(context.promptText).trim()
+      if (completedCommand.startsWith(context.command)) {
+        context.commandWritten = true
+        val addedPart = completedCommand.removePrefix(context.command).trim()
         if (addedPart.isNotEmpty()) {
           // There is only one item that complete our command
           // So it is just added to the already typed text
@@ -123,20 +122,20 @@ class TerminalCompletionContributor : CompletionContributor() {
       }
     }
 
-    val linesCount = text.count { it == '\n' }
-    return if (linesCount > 0) {
-      var optionsText = text
-      if (text.startsWith(promptText)) {
-        // Remove line with prompt and typed command
-        optionsText = optionsText.substringAfter('\n')
-      }
-      val newPromptShown = text.substringAfterLast('\n').startsWith(promptText)
+    if (!context.commandWritten) {
+      return ParsingResult()
+    }
+
+    val returnedToPrompt = context.addedText.endsWith(context.command)
+    val newPromptShown = context.addedText.endsWith(context.promptText + context.command)
+
+    return if ((returnedToPrompt || newPromptShown) && text.count { it == '\n' } > 0) {
+      // Remove line with prompt and typed command
+      var optionsText = text.substringAfter('\n').trim()
       if (newPromptShown) {
         // If the last line contain prompt, it means that all completion items do not fit inside terminal screen
-        // Also it means that completion is finished
-        optionsText = optionsText.substringBeforeLast('\n')
+        optionsText = optionsText.substringBeforeLast('\n').trim()
       }
-      optionsText = optionsText.trim { it == ' ' || it == '\n' }
 
       val items = optionsText.split(Regex("""(?<!\\)[ \n]+"""))
       if (items.firstOrNull() == "zsh:") {
@@ -152,6 +151,11 @@ class TerminalCompletionContributor : CompletionContributor() {
 
   private fun createOption(option: String): LookupElement {
     return LookupElementBuilder.create(option)
+  }
+
+  private class ParsingContext(val command: String, val promptText: String) {
+    var commandWritten: Boolean = false
+    val addedText: StringBuilder = StringBuilder()
   }
 
   private open class ParsingResult private constructor(val items: List<String>, val isSingleItem: Boolean, val newPromptShown: Boolean) {
