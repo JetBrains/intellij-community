@@ -18,26 +18,24 @@ package org.jetbrains.intellij.build
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 
-import java.nio.file.Path
-
 /**
  * Based on IdeaCommunityBuilder, but simplified a bit since we build fewer things
  * (for example, no intellij-core distribution)
  */
 class AndroidStudioBuilder {
-  private final BuildContext buildContext
+  private val buildContext: BuildContext
 
-  AndroidStudioBuilder(BuildDependenciesCommunityRoot home, BuildOptions options = new BuildOptions()) {
-    def properties = new AndroidStudioProperties(home.communityRoot, options)
+  constructor(home: BuildDependenciesCommunityRoot, options: BuildOptions = BuildOptions()) {
+    val properties = AndroidStudioProperties(home.communityRoot, options)
     buildContext = BuildContextImpl.createContextBlocking(home, home.communityRoot, properties, ProprietaryBuildTools.DUMMY, options)
   }
 
-  void compileModules() {
-    BuildTasks.create(buildContext).compileProjectAndTests(["jps-builders"])
+  fun compileModules() {
+    BuildTasks.create(buildContext).compileProjectAndTests(listOf("jps-builders"))
   }
 
-  void buildDistributions() {
-    def tasks = BuildTasks.create(buildContext)
+  fun buildDistributions() {
+    val tasks = BuildTasks.create(buildContext)
     tasks.buildDistributionsBlocking()
     tasks.buildFullUpdaterJar()
   }
