@@ -731,7 +731,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     ApplicationManager.getApplication().assertIsDispatchThread();
     myUninitializedPanes.remove(pane);
     //assume we are completely initialized here
-    String idToRemove = pane.getId();
+    @NotNull String idToRemove = pane.getId();
 
     if (!myId2Pane.containsKey(idToRemove)) return;
     for (int i = getContentManager().getContentCount() - 1; i >= 0; i--) {
@@ -805,7 +805,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     final ContentManager manager = getContentManager();
     for (index = 0; index < manager.getContentCount(); index++) {
       Content content = manager.getContent(index);
+      if (content == null) {
+        continue;
+      }
       String id = content.getUserData(ID_KEY);
+      if (id == null) {
+        continue;
+      }
       AbstractProjectViewPane pane = myId2Pane.get(id);
 
       int comp = PANE_WEIGHT_COMPARATOR.compare(pane, newPane);
@@ -816,7 +822,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       }
     }
 
-    final String id = newPane.getId();
+    final @NotNull String id = newPane.getId();
     myId2Pane.put(id, newPane);
     String[] subIds = newPane.getSubIds();
     subIds = subIds.length == 0 ? new String[]{null} : subIds;
@@ -1104,6 +1110,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   @CalledInAny
   public AbstractProjectViewPane getProjectViewPaneById(String id) {
+    if (id == null) {
+      return null;
+    }
+
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       // most tests don't need all panes to be loaded
       ensurePanesLoaded();
@@ -1618,6 +1628,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public boolean isUseFileNestingRules(String paneId) {
     if (!myCurrentState.getUseFileNestingRules()) return false;
+    if (paneId == null) {
+      return false;
+    }
     AbstractProjectViewPane pane = myId2Pane.get(paneId);
     return pane != null && pane.isFileNestingEnabled();
   }
@@ -1903,9 +1916,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull
   @Override
   public ActionCallback getReady(@NotNull Object requestor) {
-    AbstractProjectViewPane pane = myId2Pane.get(myCurrentViewSubId);
+    AbstractProjectViewPane pane = myCurrentViewSubId == null ? null : myId2Pane.get(myCurrentViewSubId);
     if (pane == null) {
-      pane = myId2Pane.get(myCurrentViewId);
+      pane = myCurrentViewId == null ? null : myId2Pane.get(myCurrentViewId);
     }
     return pane != null ? pane.getReady(requestor) : ActionCallback.DONE;
   }
@@ -1938,7 +1951,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     boolean isEnabled(@Nullable String paneId) {
-      AbstractProjectViewPane pane = myId2Pane.get(paneId);
+      AbstractProjectViewPane pane = paneId == null ? null : myId2Pane.get(paneId);
       return pane != null ? isEnabled(pane) : ApplicationManager.getApplication().isUnitTestMode();
     }
 
