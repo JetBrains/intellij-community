@@ -15,16 +15,13 @@ internal class GitDelayedCommitTemplateMessageProvider : DelayedCommitMessagePro
 
   override fun init(project: Project, commitUi: CommitWorkflowUi) {
     val commitMessageUpdater = CommitMessageUpdater(project, commitUi)
+    commitMessageUpdater.startLoadingIfNeeded()
 
     project.messageBus.connect(commitUi).subscribe(GitCommitTemplateListener.TOPIC, commitMessageUpdater)
   }
 
   private inner class CommitMessageUpdater(private val project: Project,
                                            private val commitUi: CommitWorkflowUi) : GitCommitTemplateListener {
-    init {
-      startLoadingIfNeeded()
-    }
-
     private val templateTracker get() = project.service<GitCommitTemplateTracker>()
     private val vcsConfiguration get() = VcsConfiguration.getInstance(project)
 
@@ -36,7 +33,7 @@ internal class GitDelayedCommitTemplateMessageProvider : DelayedCommitMessagePro
       runInEdt { update(repository) }
     }
 
-    private fun startLoadingIfNeeded() {
+    fun startLoadingIfNeeded() {
       if (!templateTracker.isStarted()) {
         commitUi.commitMessageUi.startLoading()
       }
