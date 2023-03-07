@@ -71,7 +71,6 @@ public abstract class ExperimentalUI {
       }
       else {
         propertyComponent.setValue(NEW_UI_FIRST_SWITCH, true);
-        propertyComponent.setValue(NEW_UI_USED_PROPERTY, true);
       }
     }
 

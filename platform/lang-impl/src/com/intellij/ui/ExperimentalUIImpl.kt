@@ -4,11 +4,13 @@
 package com.intellij.ui
 
 import com.intellij.feedback.new_ui.state.NewUIInfoService
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.laf.LafManagerImpl
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -17,8 +19,21 @@ import com.intellij.openapi.util.registry.Registry
 /**
  * @author Konstantin Bulenkov
  */
-class ExperimentalUIImpl : ExperimentalUI() {
+class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
+
+  init {
+    val app = ApplicationManager.getApplication()
+    app.messageBus.connect().subscribe(AppLifecycleListener.TOPIC, this)
+  }
+
   override fun getIconMappings(): Map<ClassLoader, Map<String, String>> = service<IconMapLoader>().loadIconMapping()
+
+  override fun appStarted() {
+    if (isNewUI()) {
+      val propertyComponent = PropertiesComponent.getInstance()
+      propertyComponent.setValue(NEW_UI_USED_PROPERTY, true)
+    }
+  }
 
   override fun onExpUIEnabled(suggestRestart: Boolean) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
