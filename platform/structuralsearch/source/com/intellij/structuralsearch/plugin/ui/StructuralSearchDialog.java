@@ -13,6 +13,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.lang.Language;
 import com.intellij.notification.NotificationGroupManager;
@@ -265,7 +266,9 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     document.putUserData(STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, (myPatternContext == null) ? "" : myPatternContext.getId());
 
     final EditorTextField textField = new MyEditorTextField(document, replace);
-    textField.setFont(EditorFontType.getGlobalPlainFont());
+    textField.setFont(EditorFontType.getGlobalPlainFont().deriveFont(
+      UISettingsUtils.getInstance().getScaledEditorFontSize()
+    ));
     textField.setPreferredSize(new Dimension(550, 150));
     textField.setMinimumSize(new Dimension(200, 50));
     myComponentsWithEditorBackground.add(textField);
