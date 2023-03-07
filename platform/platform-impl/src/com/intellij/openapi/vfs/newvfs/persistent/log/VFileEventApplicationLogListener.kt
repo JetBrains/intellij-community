@@ -41,7 +41,7 @@ class VFileEventApplicationLogListener(
       is VFilePropertyChangeEvent -> {
         val fileId = (event.file as VirtualFileWithId).id
         val propName = event.propertyName
-        context.enqueueDescriptorWrite(VfsOperationTag.VFILE_EVENT_MOVE) {
+        context.enqueueDescriptorWrite(VfsOperationTag.VFILE_EVENT_PROPERTY_CHANGED) {
           VfsOperation.VFileEventOperation.EventStart.PropertyChange(timestamp, fileId, propName)
         }
       }
