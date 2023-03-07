@@ -77,8 +77,7 @@ internal class ChangesViewCommitWorkflowHandler(
     val busConnection = project.messageBus.connect(this)
     busConnection.subscribe(ProjectCloseListener.TOPIC, this)
 
-    commitMessagePolicy.init(currentChangeList)
-    DelayedCommitMessageProvider.init(project, ui)
+    commitMessagePolicy.init(currentChangeList, this)
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {

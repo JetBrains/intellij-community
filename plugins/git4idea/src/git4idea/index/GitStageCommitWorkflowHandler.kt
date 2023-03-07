@@ -36,8 +36,7 @@ class GitStageCommitWorkflowHandler(
     setupCommitChecksResultTracking()
     vcsesChanged()
 
-    commitMessagePolicy.init()
-    DelayedCommitMessageProvider.init(project, ui)
+    commitMessagePolicy.init(this)
   }
 
   override fun isCommitEmpty(): Boolean = ui.rootsToCommit.isEmpty()

@@ -206,10 +206,6 @@
                     area="IDEA_PROJECT"
                     dynamic="true"/>
 
-    <extensionPoint name="vcs.delayedCommitMessageProvider"
-                    interface="com.intellij.vcs.commit.DelayedCommitMessageProvider"
-                    dynamic="true"/>
-
     <extensionPoint name="vcs.envCustomizer"
                     interface="com.intellij.openapi.vcs.VcsEnvCustomizer"
                     dynamic="true"/>

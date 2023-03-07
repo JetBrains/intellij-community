@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
@@ -9,7 +10,9 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 internal class ChangesViewCommitMessagePolicy(project: Project,
                                               private val commitMessageUi: CommitMessageUi,
                                               private val includedChanges: () -> List<Change>) : AbstractCommitMessagePolicy(project) {
-  fun init(changeList: LocalChangeList) {
+  fun init(changeList: LocalChangeList, disposable: Disposable) {
+    listenForDelayedProviders(commitMessageUi, disposable)
+
     commitMessageUi.text = getCommitMessage(changeList)
   }
 
