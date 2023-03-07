@@ -816,7 +816,8 @@ private fun createDefaultEditorProvider(frameHelper: ProjectFrameHelper): () -> 
   }
 }
 
-private class IconPresentationComponent(private val presentation: IconPresentation) : WithIconAndArrows(), StatusBarWidgetWrapper {
+private class IconPresentationComponent(private val presentation: IconPresentation) : WithIconAndArrows(presentation::getTooltipText),
+                                                                                      StatusBarWidgetWrapper {
   init {
     setTextAlignment(CENTER_ALIGNMENT)
     border = JBUI.CurrentTheme.StatusBar.Widget.iconBorder()
@@ -850,7 +851,7 @@ private class TextPresentationComponent(
   }
 }
 
-private class MultipleTextValues(private val presentation: MultipleTextValuesPresentation) : WithIconAndArrows(), StatusBarWidgetWrapper {
+private class MultipleTextValues(private val presentation: MultipleTextValuesPresentation) : WithIconAndArrows(presentation::getTooltipText), StatusBarWidgetWrapper {
   init {
     isVisible = !presentation.getSelectedValue().isNullOrEmpty()
     setTextAlignment(CENTER_ALIGNMENT)
