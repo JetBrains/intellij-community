@@ -35,6 +35,9 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.RetentionPolicy;
 import java.util.List;
 
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
+
 public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements LocalQuickFix {
   protected final String myAnnotation;
   final String[] myAnnotationsToRemove;
@@ -166,7 +169,8 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement implements Lo
     PsiModifierList modifierList = modifierListOwner.getModifierList();
     return modifierList != null
            && !(modifierList instanceof LightElement)
-           && !(modifierListOwner instanceof LightElement);
+           && !(modifierListOwner instanceof LightElement)
+           && !AnnotationUtil.isAnnotated(modifierListOwner, annotationFQN, CHECK_EXTERNAL | CHECK_TYPE);
   }
 
   @Override

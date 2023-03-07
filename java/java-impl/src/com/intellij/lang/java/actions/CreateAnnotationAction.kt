@@ -69,15 +69,14 @@ internal class CreateAnnotationAction(target: PsiModifierListOwner, override val
                                          psiElementFactory: PsiElementFactory,
                                          context: PsiElement?) {
       for ((name, value) in annotationRequest.attributes) {
-        val memberValue = attributeRequestToValue(value, psiElementFactory, context, annotationRequest)
-        annotation.setDeclaredAttributeValue(name.takeIf { name != "value" }, memberValue)
+        val memberValue = attributeRequestToValue(value, psiElementFactory, context)
+        annotation.setDeclaredAttributeValue(name.takeIf { name != PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME }, memberValue)
       }
     }
 
-    private fun attributeRequestToValue(value: AnnotationAttributeValueRequest,
-                                        psiElementFactory: PsiElementFactory,
-                                        context: PsiElement?,
-                                        annotationRequest: AnnotationRequest): PsiAnnotationMemberValue? = when (value) {
+    internal fun attributeRequestToValue(value: AnnotationAttributeValueRequest,
+                                         psiElementFactory: PsiElementFactory,
+                                         context: PsiElement?): PsiAnnotationMemberValue? = when (value) {
       is AnnotationAttributeValueRequest.PrimitiveValue -> psiElementFactory
         .createExpressionFromText(value.value.toString(), null)
       is AnnotationAttributeValueRequest.StringValue -> psiElementFactory
@@ -92,7 +91,7 @@ internal class CreateAnnotationAction(target: PsiModifierListOwner, override val
         }
       is AnnotationAttributeValueRequest.ArrayValue -> {
         val arrayExpressionText = value.members.joinToString {
-          attributeRequestToValue(it, psiElementFactory, context, annotationRequest)?.text ?: ""
+          attributeRequestToValue(it, psiElementFactory, context)?.text ?: ""
         }
         val dummyAnnotation = psiElementFactory.createAnnotationFromText("@dummy({$arrayExpressionText})", context)
         dummyAnnotation.findAttributeValue(null)

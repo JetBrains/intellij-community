@@ -9,6 +9,7 @@ import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue
 import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
 import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiFile
@@ -27,17 +28,20 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
         if (!method.isConstructor) return true
         val file: PsiFile = method.sourceElement?.containingFile ?: return true
         val containingClass = method.containingClass ?: return true
-        val serviceAnnotation = containingClass.annotations.find { it.qualifiedName == Service::class.java.canonicalName } ?: return true
-        val level = getLevel(serviceAnnotation)
-        if (level !in listOf(Level.PROJECT, Level.APP_AND_PROJECT)) {
+        val annotation = containingClass.annotations.find { it.qualifiedName == Service::class.java.canonicalName } ?: return true
+        val annotationName = (annotation as? PsiAnnotation)?.nameReferenceElement
+        val level = getLevel(annotation)
+        if (annotationName != null && level !in listOf(Level.PROJECT, Level.APP_AND_PROJECT)) {
           val isProjectParamCtor = (method.parameters.singleOrNull()?.type as? PsiType)?.canonicalText == Project::class.java.canonicalName
           if (isProjectParamCtor) {
             val projectLevelFqn = "${Service.Level::class.java.canonicalName}.${Service.Level.PROJECT}"
-            val request = annotationRequest(Service::class.java.canonicalName,
-                                            constantAttribute(DEFAULT_REFERENCED_METHOD_NAME, projectLevelFqn))
-            val actions = createAddAnnotationActions(containingClass, request)
+            val request = constantAttribute(DEFAULT_REFERENCED_METHOD_NAME, projectLevelFqn)
+            val actions = createChangeAnnotationAttributeActions(annotation, 0, request)
             val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
-            sink.highlight(DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.project.level.required"), *fixes)
+            val holder = (sink as HighlightSinkImpl).holder
+            holder.registerProblem(annotationName,
+                                   DevKitBundle.message("inspection.mismatched.light.service.level.and.ctor.project.level.required"),
+                                   *fixes)
           }
         }
         if (level == Level.APP || level == Level.APP_AND_PROJECT) {

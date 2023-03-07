@@ -1,11 +1,11 @@
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 
-@Service({})
+@<warning descr="If constructor takes Project, Service.Level.PROJECT is required">Service<caret></warning>({})
 final class MyService {
   private final Project myProject;
 
-  public <warning descr="If constructor takes Project, Service.Level.PROJECT is required">MyService<caret></warning>(Project project) {
+  public MyService(Project project) {
     myProject = project;
   }
 }

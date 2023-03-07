@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
+import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.openapi.project.Project
 import com.intellij.testFramework.TestDataPath
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.idea.devkit.inspections.quickfix.MismatchedLightServiceLevelAndCtorInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
@@ -13,18 +16,20 @@ class KtMismatchedLightServiceLevelAndCtorInspectionTest : MismatchedLightServic
   override fun getFileExtension() = "kt"
 
   fun testMakeProjectLevel1() {
-    doTest("Annotate as @Service")
+    doTest(annotateAsServiceFixName)
   }
 
   fun testMakeProjectLevel2() {
-    doTest("Annotate as @Service")
+    doTest(annotateAsServiceFixName)
   }
 
   fun testRemoveProjectParam() {
-    doTest("Remove 1st parameter from constructor 'MyService'")
+    doTest(QuickFixBundle.message("remove.parameter.from.usage.text", 1, "parameter", "constructor", "MyService"))
   }
 
   fun testChangeParamToCoroutineScope() {
-    doTest("Change 1st parameter of constructor 'MyService' from 'Project' to 'CoroutineScope'")
+    doTest(
+      QuickFixBundle.message("change.parameter.from.usage.text", 1, "parameter", "constructor", "MyService", Project::class.java.simpleName,
+                             CoroutineScope::class.java.simpleName))
   }
 }

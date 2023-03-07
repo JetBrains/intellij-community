@@ -85,6 +85,14 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     return listOf(CreateAnnotationAction(declaration, request))
   }
 
+  override fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
+                                                      attributeIndex: Int,
+                                                      request: AnnotationAttributeRequest): List<IntentionAction> {
+    val psiAnnotation = annotation as? PsiAnnotation ?: return emptyList()
+    if (psiAnnotation.language != JavaLanguage.INSTANCE) return emptyList()
+    return listOf(ChangeAnnotationAttributeAction(psiAnnotation, request))
+  }
+
   override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
     val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
 

@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
@@ -40,7 +41,6 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeIn
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.idea.util.resolveToKotlinType
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
@@ -416,6 +416,82 @@ class KotlinElementActionsFactory : JvmElementActionsFactory() {
         }
     }
 
+    override fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
+                                                        attributeIndex: Int,
+                                                        request: AnnotationAttributeRequest): List<IntentionAction> {
+        val annotationEntry = annotation.safeAs<KtLightElement<*, *>>()?.kotlinOrigin.safeAs<KtAnnotationEntry>().takeIf {
+            it?.language == KotlinLanguage.INSTANCE
+        } ?: return emptyList()
+        return listOf(ChangeAnnotationAction(annotationEntry, attributeIndex, request))
+    }
+
+    private class ChangeAnnotationAction(annotationEntry: KtAnnotationEntry,
+                                         private val attributeIndex: Int,
+                                         private val request: AnnotationAttributeRequest) : IntentionAction {
+
+        private val pointer: SmartPsiElementPointer<KtAnnotationEntry>
+        private val qualifiedName: String
+
+        override fun startInWriteAction(): Boolean = true
+
+        override fun getFamilyName(): String = QuickFixBundle.message("change.annotation.attribute.value.family")
+
+        override fun getText(): String = QuickFixBundle.message("change.annotation.attribute.value.text", request.name)
+
+        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null
+
+        override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
+            invokeImpl(PsiTreeUtil.findSameElementInCopy(pointer.element, file), project)
+            return IntentionPreviewInfo.DIFF
+        }
+
+        override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
+            val annotationEntry = pointer.element ?: return
+            invokeImpl(annotationEntry, project)
+        }
+
+        private fun invokeImpl(annotationEntry: KtAnnotationEntry, project: Project) {
+            val facade = JavaPsiFacade.getInstance(annotationEntry.project)
+            val isKotlinAnnotation = facade.findClass(qualifiedName, annotationEntry.resolveScope)?.language == KotlinLanguage.INSTANCE
+            val dummyAnnotationRequest = annotationRequest(qualifiedName, request)
+            val psiFactory = KtPsiFactory(project)
+            val annotationText = '@' + renderAnnotation(dummyAnnotationRequest, psiFactory) { isKotlinAnnotation }
+            val dummyArgumentList = psiFactory.createAnnotationEntry(annotationText).valueArgumentList!!
+            val argumentList = annotationEntry.valueArgumentList
+            if (argumentList == null) {
+                annotationEntry.add(dummyArgumentList)
+            }
+            else {
+                val dummyArgument = dummyArgumentList.arguments[0]
+                val attribute = findAttribute(annotationEntry, request.name, attributeIndex)
+                if (attribute != null) {
+                    argumentList.addArgumentBefore(dummyArgument, attribute.value)
+                    argumentList.removeArgument(attribute.index + 1)
+                }
+                else {
+                    argumentList.addArgument(dummyArgument)
+                }
+            }
+            ShortenReferences.DEFAULT.process(annotationEntry)
+        }
+
+        private fun findAttribute(annotationEntry: KtAnnotationEntry, name: String, index: Int): IndexedValue<KtValueArgument>? {
+            val arguments = annotationEntry.valueArgumentList?.arguments ?: return null
+            arguments.withIndex().find { (_, argument) ->
+                argument.getArgumentName()?.asName?.identifier == name
+            }?.let {
+                return it
+            }
+            val valueArgument = arguments.getOrNull(index) ?: return null
+            return IndexedValue(index, valueArgument)
+        }
+
+        init {
+            pointer = annotationEntry.createSmartPointer()
+            qualifiedName = annotationEntry.toLightAnnotation()?.qualifiedName ?: throw IllegalStateException("r")
+        }
+    }
+
     override fun createChangeParametersActions(target: JvmMethod, request: ChangeParametersRequest): List<IntentionAction> {
         return when (val kotlinOrigin = (target as? KtLightElement<*, *>)?.kotlinOrigin) {
             is KtNamedFunction -> listOfNotNull(ChangeMethodParameters.create(kotlinOrigin, request))
@@ -554,11 +630,7 @@ internal fun addAnnotationEntry(
     val psiFactory = KtPsiFactory(target.project)
     // could be generated via descriptor when KT-30478 is fixed
     val annotationText = '@' + annotationUseSiteTargetPrefix + renderAnnotation(target, request, psiFactory)
-    val annotationEntry = psiFactory.createAnnotationEntry(annotationText)
-    target.findAnnotation(FqName(request.qualifiedName))?.let {
-        return it.replace(annotationEntry) as KtAnnotationEntry
-    }
-    return target.addAnnotationEntry(annotationEntry)
+    return target.addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
 }
 
 private fun renderAnnotation(target: PsiElement, request: AnnotationRequest, psiFactory: KtPsiFactory): String {

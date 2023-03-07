@@ -2,10 +2,7 @@
 package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmMethod
-import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.JvmParameter
+import com.intellij.lang.jvm.*
 
 /**
  * This extension point provides language-abstracted code modifications for JVM-based languages.
@@ -23,6 +20,10 @@ abstract class JvmElementActionsFactory {
   open fun createChangeOverrideActions(target: JvmModifiersOwner, shouldBePresent: Boolean): List<IntentionAction> = emptyList()
 
   open fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
+
+  open fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
+                                                  attributeIndex: Int,
+                                                  request: AnnotationAttributeRequest): List<IntentionAction> = emptyList()
 
   open fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> = emptyList()
 
