@@ -576,6 +576,11 @@ public abstract class FirReferenceResolveTestGenerated extends AbstractFirRefere
             runTest("../idea/tests/testData/resolve/references/DefaultObjectInShortReferenceFormCall.kt");
         }
 
+        @TestMetadata("EnumEntriesInJdk.kt")
+        public void testEnumEntriesInJdk() throws Exception {
+            runTest("../idea/tests/testData/resolve/references/EnumEntriesInJdk.kt");
+        }
+
         @TestMetadata("EnumValues.kt")
         public void testEnumValues() throws Exception {
             runTest("../idea/tests/testData/resolve/references/EnumValues.kt");
