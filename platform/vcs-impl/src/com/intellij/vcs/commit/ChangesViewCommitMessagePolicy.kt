@@ -15,6 +15,7 @@ internal class ChangesViewCommitMessagePolicy(project: Project,
 
   fun onChangelistChanged(oldChangeList: LocalChangeList, newChangeList: LocalChangeList, currentMessage: TextAccessor) {
     changeListManager.editComment(oldChangeList.name, currentMessage.text)
+    vcsConfiguration.saveCommitMessage(currentMessage.text)
 
     currentMessage.text = getCommitMessage(newChangeList)
   }

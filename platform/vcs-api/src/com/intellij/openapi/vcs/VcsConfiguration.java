@@ -163,7 +163,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
 
   public void saveCommitMessage(final String comment) {
     LAST_COMMIT_MESSAGE = comment;
-    if (comment == null || comment.length() == 0) return;
+    if (comment == null || comment.isBlank()) return;
 
     updateRecentMessages(recentMessages -> {
       recentMessages.remove(comment);

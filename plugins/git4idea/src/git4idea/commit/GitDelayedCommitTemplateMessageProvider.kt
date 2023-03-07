@@ -40,9 +40,11 @@ internal class GitDelayedCommitTemplateMessageProvider : DelayedCommitMessagePro
     }
 
     private fun update(repository: GitRepository? = null) {
-      val templateContent = templateTracker.getTemplateContent(repository)
+      if (vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) return
 
-      if (templateContent != null && !vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE) {
+      val templateContent = templateTracker.getTemplateContent(repository)
+      if (templateContent != null) {
+        vcsConfiguration.saveCommitMessage(commitUi.commitMessageUi.text)
         commitUi.commitMessageUi.text = templateContent
       }
     }
