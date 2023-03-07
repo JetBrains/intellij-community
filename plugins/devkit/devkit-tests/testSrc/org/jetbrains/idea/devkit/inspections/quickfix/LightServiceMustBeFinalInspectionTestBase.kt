@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 
 import org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalInspection
 
-abstract class LightServiceMustBeFinalInspectionTestBase : DevKitInspectionFixTestBase() {
+abstract class LightServiceMustBeFinalInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun setUp() {
     super.setUp()

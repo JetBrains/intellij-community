@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import org.jetbrains.idea.devkit.inspections.UseGrayInspection;
 
-public abstract class ConvertToGrayQuickFixTestBase extends DevKitInspectionFixTestBase {
+public abstract class ConvertToGrayQuickFixTestBase extends LightDevKitInspectionFixTestBase {
 
   protected static final String CONVERT_TO_GRAY_FIX_NAME_PATTERN = "Convert to 'Gray._%d'";
 

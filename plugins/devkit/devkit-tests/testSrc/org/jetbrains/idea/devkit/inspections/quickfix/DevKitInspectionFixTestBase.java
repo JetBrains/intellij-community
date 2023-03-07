@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
@@ -14,20 +15,23 @@ public abstract class DevKitInspectionFixTestBase extends JavaCodeInsightFixture
   protected abstract String getFileExtension();
 
   protected void doTest(String fixName) {
-    String testName = getTestName(false);
-    String fileNameBefore = testName + '.' + getFileExtension();
-    String fileNameAfter = testName + "_after." + getFileExtension();
-    myFixture.testHighlighting(fileNameBefore);
-    IntentionAction intention = myFixture.findSingleIntention(fixName);
-    Path previewPath = Path.of(myFixture.getTestDataPath(), testName + "_preview." + getFileExtension());
+    doTest(myFixture, fixName, getFileExtension(), getTestName(false));
+  }
+
+  static void doTest(JavaCodeInsightTestFixture fixture, String fixName, String fileExtension, String testName) {
+    String fileNameBefore = testName + '.' + fileExtension;
+    String fileNameAfter = testName + "_after." + fileExtension;
+    fixture.testHighlighting(fileNameBefore);
+    IntentionAction intention = fixture.findSingleIntention(fixName);
+    Path previewPath = Path.of(fixture.getTestDataPath(), testName + "_preview." + fileExtension);
     if (Files.exists(previewPath)) {
-      String previewText = myFixture.getIntentionPreviewText(intention);
+      String previewText = fixture.getIntentionPreviewText(intention);
       assertSameLinesWithFile(previewPath.toString(), previewText);
-      myFixture.launchAction(intention);
+      fixture.launchAction(intention);
     } else {
-      myFixture.checkPreviewAndLaunchAction(intention);
+      fixture.checkPreviewAndLaunchAction(intention);
     }
-    myFixture.checkResultByFile(fileNameBefore, fileNameAfter, true);
+    fixture.checkResultByFile(fileNameBefore, fileNameAfter, true);
   }
 
   protected void doTest() {

@@ -3,7 +3,7 @@ package org.jetbrains.idea.devkit.inspections.quickfix
 
 import org.jetbrains.idea.devkit.inspections.MismatchedLightServiceLevelAndCtorInspection
 
-abstract class MismatchedLightServiceLevelAndCtorInspectionTestBase : DevKitInspectionFixTestBase() {
+abstract class MismatchedLightServiceLevelAndCtorInspectionTestBase : LightDevKitInspectionFixTestBase() {
 
   override fun setUp() {
     super.setUp()

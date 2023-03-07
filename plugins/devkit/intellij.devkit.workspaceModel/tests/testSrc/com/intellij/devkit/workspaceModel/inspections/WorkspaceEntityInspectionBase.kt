@@ -2,9 +2,9 @@
 package com.intellij.devkit.workspaceModel.inspections
 
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
-abstract class WorkspaceEntityInspectionBase: JavaCodeInsightFixtureTestCase() {
+abstract class WorkspaceEntityInspectionBase: LightJavaCodeInsightFixtureTestCase() {
   private val TESTDATA_PATH = PluginPathManager.getPluginHomePathRelative("devkit") + "/intellij.devkit.workspaceModel/tests/testData/inspections/"
 
   override fun setUp() {
