@@ -64,8 +64,8 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
   }
 
   @Override
-  public void update(int index, @NotNull VcsLogIndexer.CompressedDetails detail) {
-    super.update(index, detail);
+  public void update(int commitId, @NotNull VcsLogIndexer.CompressedDetails details) {
+    super.update(commitId, details);
   }
 
   @Override
@@ -92,9 +92,9 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
   }
 
   @Override
-  public @Nullable VcsUser getAuthorForCommit(int commit) {
+  public @Nullable VcsUser getAuthorForCommit(int commitId) {
     try {
-      Collection<Integer> userIds = getKeysForCommit(commit);
+      Collection<Integer> userIds = getKeysForCommit(commitId);
       if (userIds == null || userIds.isEmpty()) {
         return null;
       }
@@ -107,7 +107,7 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
   }
 
   @Override
-  public int getUserId(@NotNull VcsUser user) {
+  public int getUserId(int commitId, @NotNull VcsUser user) {
     try {
       return myUserIndexer.getUserId(user);
     }
@@ -124,6 +124,11 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
     catch (IOException e) {
       throw new UncheckedIOException(e);
     }
+  }
+
+  @Override
+  public boolean isUsersEmpty() throws IOException {
+    return isEmpty();
   }
 
   @Override

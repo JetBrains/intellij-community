@@ -5,6 +5,7 @@ package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
@@ -13,10 +14,12 @@ import com.intellij.util.childScope
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.VcsUserRegistry
 import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.util.PersistentUtil
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
@@ -59,6 +62,9 @@ private const val TABLE_SCHEMA = """
   
   create table rename (parent integer not null, child integer not null, rename integer not null) strict;
   create index rename_index on rename (parent, child);
+  
+  create table user (commitId integer not null, committerId integer null, name text not null, email text not null) strict;
+  create index user_index on user (name, email);
   
   commit transaction;
 """
@@ -111,8 +117,10 @@ private class ProjectLevelConnectionManager(project: Project, logId: String) : D
 private const val RENAME_SQL = "insert into rename(parent, child, rename) values(?, ?, ?)"
 private const val RENAME_DELETE_SQL = "delete from rename where parent = ? and child = ?"
 
-internal class SqliteVcsLogStorageBackend(project: Project, logId: String, disposable: Disposable) : VcsLogStorageBackend {
+internal class SqliteVcsLogStorageBackend(project: Project, logId: String, disposable: Disposable) : VcsLogStorageBackend, VcsLogUserBiMap {
   private val connectionManager = ProjectLevelConnectionManager(project, logId).also { Disposer.register(disposable, it) }
+
+  private val userRegistry = project.service<VcsUserRegistry>()
 
   override var isFresh: Boolean
     get() = connectionManager.isFresh
@@ -157,8 +165,8 @@ internal class SqliteVcsLogStorageBackend(project: Project, logId: String, dispo
         return null
       }
 
-      val result = resultSet.getInt(0)
-      return if (resultSet.wasNull()) getAuthorForCommit.apply(commitId) else getUserById.apply(result)
+      val committerId = resultSet.getInt(0)
+      return if (resultSet.wasNull()) getAuthorForCommit(commitId) else getCommitterForCommit(commitId, committerId)
     }
   }
 
@@ -281,6 +289,82 @@ internal class SqliteVcsLogStorageBackend(project: Project, logId: String, dispo
   override fun markCorrupted() {
     connectionManager.recreate()
   }
+
+  override fun isUsersEmpty(): Boolean {
+    return connection.selectBoolean("select not exists (select 1 from user)")
+  }
+
+  override fun getAuthorForCommit(commitId: Int): VcsUser? {
+    val paramBinder = IntBinder(paramCount = 1)
+    connection.prepareStatement("select name, email from user where commitId = ? and committerId is null",
+                                paramBinder)
+      .use { statement ->
+        paramBinder.bind(commitId)
+        val rs = statement.executeQuery()
+        if (!rs.next()) {
+          return null
+        }
+
+      return userRegistry.createUser(rs.getString(0)!!, rs.getString(1)!!)
+    }
+  }
+
+  override fun getCommitsForUsers(users: Set<VcsUser>): IntSet {
+    val commitIds = IntOpenHashSet()
+
+    for (user in users) {
+      val paramBinder = ObjectBinder(paramCount = 2)
+      connection.prepareStatement("select commitId from user where name = ? and email = ?", paramBinder).use { statement ->
+        paramBinder.bindMultiple(user.name, user.email)
+        val rs = statement.executeQuery()
+        while (rs.next()) {
+          commitIds.add(rs.getInt(0))
+        }
+      }
+    }
+
+    return commitIds
+  }
+
+  override fun getUserId(commitId: Int, user: VcsUser): Int {
+    val paramBinder = IntBinder(paramCount = 1)
+    connection.prepareStatement("select rowid from user where commitId = ?", paramBinder).use { statement ->
+      paramBinder.bind(commitId)
+      val rs = statement.executeQuery()
+      if (rs.next()) {
+        return rs.getInt(0)
+      }
+    }
+
+    throw IOException("User $user not found for commit $commitId")
+  }
+
+  private fun getCommitterForCommit(commitId: Int, committerId: Int): VcsUser? {
+    val paramBinder = IntBinder(paramCount = 2)
+    connection.prepareStatement("select name, email from user where commitId = ? and committerId = ?", paramBinder).use { statement ->
+      paramBinder.bind(commitId, committerId)
+      val rs = statement.executeQuery()
+      if (rs.next()) {
+        return userRegistry.createUser(rs.getString(0)!!, rs.getString(1)!!)
+      }
+
+      return null
+    }
+  }
+
+  /**
+   * Not used, replaced by [getCommitterForCommit]
+   */
+  override fun getUserById(id: Int): VcsUser? {
+    throw UnsupportedOperationException()
+  }
+
+  /**
+   * Not used, author/committer will be added in the same batch (see [SqliteVcsLogWriter.putCommit])
+   */
+  override fun update(commitId: Int, details: VcsLogIndexer.CompressedDetails) {}
+
+  override fun flush() {}
 }
 
 @Suppress("SqlResolve")
@@ -296,6 +380,14 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
     values(?, ?, ?, ?, ?) 
     on conflict(commitId) do update set message=excluded.message
     """, ObjectBinder(paramCount = 5, batchCountHint = 256)).binder
+  private val committerBatch = statementCollection.prepareStatement("""
+    insert into user(commitId, committerId, name, email) 
+    values(?, ?, ?, ?) 
+    """, ObjectBinder(paramCount = 4, batchCountHint = 256)).binder
+  private val authorBatch = statementCollection.prepareStatement("""
+    insert into user(commitId, name, email) 
+    values(?, ?, ?) 
+    """, ObjectBinder(paramCount = 3, batchCountHint = 256)).binder
 
   // first `delete`, then `insert` - `delete` statement must be added to the statement collection first
   private val parentDeleteStatement = statementCollection.prepareIntStatement("delete from parent where commitId = ?")
@@ -305,8 +397,14 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
   private val renameStatement = statementCollection.prepareIntStatement(RENAME_SQL)
 
   override fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails, userToId: ToIntFunction<VcsUser>) {
-    val committer = if (details.author == details.committer) null else userToId.applyAsInt(details.committer)
-    logBatch.bind(commitId, details.fullMessage, details.authorTime, details.commitTime, committer)
+    val committerId = if (details.author == details.committer) null else 0
+    if (committerId != null) {
+      committerBatch.bindMultiple(commitId, committerId, details.committer.name, details.committer.email)
+      committerBatch.addBatch()
+    }
+    authorBatch.bindMultiple(commitId, details.author.name, details.author.email)
+    authorBatch.addBatch()
+    logBatch.bind(commitId, details.fullMessage, details.authorTime, details.commitTime, committerId)
     logBatch.addBatch()
   }
 

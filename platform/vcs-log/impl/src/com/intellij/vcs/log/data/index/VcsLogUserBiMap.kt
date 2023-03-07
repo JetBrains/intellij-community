@@ -9,19 +9,19 @@ import java.io.IOException
 
 internal interface VcsLogUserBiMap {
   @Throws(IOException::class)
-  fun isEmpty(): Boolean
+  fun isUsersEmpty(): Boolean
 
-  fun getAuthorForCommit(commit: Int): VcsUser?
+  fun getAuthorForCommit(commitId: Int): VcsUser?
 
-  fun getUserId(user: VcsUser): Int
+  fun getUserId(commitId: Int, user: VcsUser): Int
 
   fun getUserById(id: Int): VcsUser?
 
-  fun update(index: Int, detail: VcsLogIndexer.CompressedDetails)
+  fun update(commitId: Int, details: VcsLogIndexer.CompressedDetails)
 
   @Throws(StorageException::class)
   fun flush()
 
   @Throws(IOException::class, StorageException::class)
-  fun getCommitsForUsers(users: Set<VcsUser?>): IntSet?
+  fun getCommitsForUsers(users: Set<VcsUser>): IntSet?
 }

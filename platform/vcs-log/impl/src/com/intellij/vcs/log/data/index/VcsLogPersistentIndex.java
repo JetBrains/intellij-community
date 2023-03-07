@@ -222,7 +222,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       int commitId = myStorage.getCommitIndex(detail.getId(), detail.getRoot());
       myIndexStorage.add(commitId, detail);
       mutator.putParents(commitId, detail.getParents(), hash -> myStorage.getCommitIndex(hash, detail.getRoot()));
-      mutator.putCommit(commitId, detail, user -> myIndexStorage.users.getUserId(user));
+      mutator.putCommit(commitId, detail, user -> myIndexStorage.users.getUserId(commitId, user));
     }
     catch (IOException | UncheckedIOException e) {
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
@@ -331,7 +331,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
           store = new PhmVcsLogStorageBackend(indexStorageId, storageLockContext, errorHandler, this);
         }
 
-        users = new VcsLogUserIndex(indexStorageId, storageLockContext, userRegistry, errorHandler, this);
+        users = useSqlite ? (SqliteVcsLogStorageBackend)store :
+                new VcsLogUserIndex(indexStorageId, storageLockContext, userRegistry, errorHandler, this);
         paths = new VcsLogPathsIndex(indexStorageId, storage, roots, storageLockContext, errorHandler, store, this);
 
         reportEmpty();
@@ -353,7 +354,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       }
 
       var trigramsEmpty = store.getTrigramsEmpty();
-      boolean usersEmpty = users.isEmpty();
+      boolean usersEmpty = users.isUsersEmpty();
       boolean pathsEmpty = paths.isEmpty();
       if ((trigramsEmpty != null && trigramsEmpty) || usersEmpty || pathsEmpty) {
         LOG.warn("Some of the index maps empty:\n" +
