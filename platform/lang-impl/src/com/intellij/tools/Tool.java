@@ -31,14 +31,15 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Objects;
 
 public class Tool implements SchemeElement {
   private static final Logger LOG = Logger.getInstance(Tool.class);
@@ -300,6 +301,13 @@ public class Tool implements SchemeElement {
                 processHandler.addProcessListener(processListener);
               }
             }
+
+            @Override
+            public void processNotStarted() {
+              if (processListener != null) {
+                processListener.processNotStarted();
+              }
+            }
           });
         if (environment.getState() == null) {
           return false;
@@ -323,6 +331,7 @@ public class Tool implements SchemeElement {
     }
     catch (ExecutionException ex) {
       ExecutionErrorDialog.show(ex, ToolsBundle.message("tools.process.start.error"), project);
+      notifyCouldNotStart(processListener);
       return false;
     }
     return true;
