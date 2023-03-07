@@ -6,4 +6,5 @@
 .mermaid > .error-text, #diagram-container > .error-text {
     color: red;
     white-space: pre-wrap;
+    font-family: monospace;
 }
