@@ -1,3 +1,3 @@
-import com.intellij.codeInspection.LocalInspectionTool;
+import java.util.ArrayList
 
-class <warning descr="Extension class should be internal">MyInspection<caret></warning> : LocalInspectionTool()
+class <warning descr="Extension class should be internal">MyInspection<caret></warning> : ArrayList<String>()

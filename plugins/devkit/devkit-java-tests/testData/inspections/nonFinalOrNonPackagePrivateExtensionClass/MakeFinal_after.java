@@ -1,4 +1,4 @@
-import com.intellij.codeInspection.LocalInspectionTool;
+import java.util.ArrayList;
 
-final class MyInspection extends LocalInspectionTool {
+final class MyInspection extends ArrayList<String> {
 }

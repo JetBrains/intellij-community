@@ -1,3 +1,3 @@
-import com.intellij.codeInspection.LocalInspectionTool;
+import java.util.ArrayList
 
-internal class MyInspection : LocalInspectionTool()
+internal class MyInspection : ArrayList<String>()
