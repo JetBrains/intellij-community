@@ -60,7 +60,7 @@ public class LookupElementPresentation {
    * Adds a decoration to a lookup item at a specified text range.
    */
   @ApiStatus.Internal
-  public void appendItemDecoration(@NotNull TextRange textRange, @NotNull LookupItemDecoration decoration) {
+  public void decorateItemTextRange(@NotNull TextRange textRange, @NotNull LookupItemDecoration decoration) {
     ensureMutable();
     if (myItemDecorations == null) {
       myItemDecorations = new SmartList<>();
