@@ -516,17 +516,22 @@ public final class JUnitUtil {
 
   public static class  TestMethodFilter implements Condition<PsiMethod> {
     private final PsiClass myClass;
-    private final JavaTestFramework framework;
+    private final TestFramework framework;
 
     public TestMethodFilter(final PsiClass aClass) {
       myClass = aClass;
-      TestFramework framework = TestFrameworks.detectFramework(aClass);
-      this.framework = (framework instanceof JavaTestFramework) ? (JavaTestFramework)framework : null;
+      this.framework = TestFrameworks.detectFramework(aClass);
     }
 
     @Override
     public boolean value(final PsiMethod method) {
-      return framework != null && framework.isTestMethod(method, myClass);
+      if (framework == null) {
+        return false;
+      }
+      if (framework instanceof JavaTestFramework) {
+        return ((JavaTestFramework)framework).isTestMethod(method, myClass);
+      }
+      return framework.isTestMethod(method);
     }
   }
 

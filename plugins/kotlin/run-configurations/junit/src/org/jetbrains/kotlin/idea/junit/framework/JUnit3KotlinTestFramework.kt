@@ -38,7 +38,24 @@ class JUnit3KotlinTestFramework : AbstractKotlinTestFramework() {
         return isTestClass(classOrObject)
     }
 
+    override fun findSetUp(classOrObject: KtClassOrObject): KtNamedFunction? =
+        findFunctionWithName(classOrObject.takeIf { isTestClass(it) }, "setUp")
+
+    override fun findTearDown(classOrObject: KtClassOrObject): KtNamedFunction? =
+        findFunctionWithName(classOrObject.takeIf { isTestClass(it) }, "tearDown")
+
+    private fun findFunctionWithName(classOrObject: KtClassOrObject?, name: String): KtNamedFunction? {
+        if (classOrObject == null) return null
+        for (declaration in classOrObject.declarations) {
+            if (declaration is KtNamedFunction && declaration.name == name) {
+                return declaration
+            }
+        }
+        return null
+    }
+
     private fun isJUnit3TestClass(declaration: KtClassOrObject, visitedShortNames: MutableSet<String>): Boolean {
+        if (!isFrameworkAvailable(declaration)) return false
         if (declaration is KtClass && declaration.isInner()) return false
         for (superTypeEntry in declaration.superTypeListEntries) {
             if (superTypeEntry is KtSuperTypeCallEntry && superTypeEntry.valueArguments.isEmpty()) {

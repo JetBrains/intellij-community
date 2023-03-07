@@ -5,7 +5,9 @@ import com.intellij.execution.junit.JUnitUtil
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinTestFramework
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinTestFramework.Companion.KOTLIN_TEST_TEST
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -21,6 +23,9 @@ class JUnit5KotlinTestFramework : AbstractKotlinTestFramework() {
             "org.junit.jupiter.api.TestFactory",
             "org.junit.jupiter.api.TestTemplate"
         )
+
+        private val setUpAnnotations = setOf(JUnitUtil.BEFORE_EACH_ANNOTATION_NAME, KotlinTestFramework.KOTLIN_TEST_BEFORE_TEST)
+        private val tearDownAnnotations = setOf(JUnitUtil.AFTER_EACH_ANNOTATION_NAME, KotlinTestFramework.KOTLIN_TEST_AFTER_TEST)
     }
 
     override val markerClassFqn: String = JUnitUtil.TEST5_ANNOTATION
@@ -38,20 +43,25 @@ class JUnit5KotlinTestFramework : AbstractKotlinTestFramework() {
         return isJUnit5TestMethod(declaration)
     }
 
-    private fun isJUnit5TestClass(declaration: KtClassOrObject): Boolean {
-        if (declaration is KtClass && declaration.isInner() && !isAnnotated(declaration, "org.junit.jupiter.api.Nested")) {
-            return false
+    private fun isJUnit5TestClass(declaration: KtClassOrObject): Boolean =
+        if (!isFrameworkAvailable(declaration)) {
+            false
+        } else if (declaration is KtClass && declaration.isInner() && !isAnnotated(declaration, "org.junit.jupiter.api.Nested")) {
+            false
         } else if (declaration.isTopLevel() && isAnnotated(declaration, "org.junit.jupiter.api.extension.ExtendWith")) {
-            return true
+            true
+        } else {
+            findAnnotatedFunction(declaration, METHOD_ANNOTATION_FQN) != null
         }
-
-        return declaration.declarations
-            .asSequence()
-            .filterIsInstance<KtNamedFunction>()
-            .any { isJUnit5TestMethod(it) }
-    }
 
     private fun isJUnit5TestMethod(method: KtNamedFunction): Boolean {
         return isAnnotated(method, METHOD_ANNOTATION_FQN)
     }
+
+    override fun findSetUp(classOrObject: KtClassOrObject): KtNamedFunction? =
+        findAnnotatedFunction(classOrObject.takeIf { isTestClass(it) }, setUpAnnotations)
+
+    override fun findTearDown(classOrObject: KtClassOrObject): KtNamedFunction? =
+        findAnnotatedFunction(classOrObject.takeIf { isTestClass(it) }, tearDownAnnotations)
+
 }

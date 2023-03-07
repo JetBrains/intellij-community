@@ -27,6 +27,9 @@ interface KotlinTestFramework {
 
     companion object {
         const val KOTLIN_TEST_TEST = "kotlin.test.Test"
+        const val KOTLIN_TEST_IGNORE = "kotlin.test.Ignore"
+        const val KOTLIN_TEST_BEFORE_TEST = "kotlin.test.BeforeTest"
+        const val KOTLIN_TEST_AFTER_TEST = "kotlin.test.AfterTest"
 
         val EXTENSION_NAME: ExtensionPointName<KotlinTestFramework> =
             ExtensionPointName.create("org.jetbrains.kotlin.kotlinTestFramework")
@@ -54,4 +57,8 @@ interface KotlinTestFramework {
     fun isIgnoredMethod(declaration: KtNamedFunction): Boolean
 
     fun qualifiedName(declaration: KtNamedDeclaration): String?
+
+    fun findSetUp(classOrObject: KtClassOrObject): KtNamedFunction? = null
+
+    fun findTearDown(classOrObject: KtClassOrObject): KtNamedFunction? = null
 }

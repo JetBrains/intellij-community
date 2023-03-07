@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -13,11 +14,16 @@ abstract class AbstractKotlinTestFramework : KotlinTestFramework {
     override val isSlow: Boolean
         get() = false
 
-    override fun responsibleFor(declaration: KtNamedDeclaration): Boolean {
-        val markerPsiClass = JavaPsiFacade.getInstance(declaration.project)
-            .findClass(markerClassFqn, declaration.resolveScope)
 
-        if (markerPsiClass == null) {
+    protected fun isFrameworkAvailable(element: KtElement): Boolean =
+        findMarkerPsiClass(element) != null
+
+    private fun findMarkerPsiClass(element: KtElement): PsiClass? =
+        JavaPsiFacade.getInstance(element.project)
+            .findClass(markerClassFqn, element.resolveScope)
+
+    override fun responsibleFor(declaration: KtNamedDeclaration): Boolean {
+        if (!isFrameworkAvailable(declaration)) {
             return false
         }
 
@@ -55,7 +61,7 @@ abstract class AbstractKotlinTestFramework : KotlinTestFramework {
     }
 
     override fun isIgnoredMethod(declaration: KtNamedFunction): Boolean {
-        return isAnnotated(declaration, "kotlin.test.Ignore")
+        return isAnnotated(declaration, KotlinTestFramework.KOTLIN_TEST_IGNORE)
                 || isAnnotated(declaration, disabledTestAnnotation)
     }
 
@@ -109,5 +115,16 @@ abstract class AbstractKotlinTestFramework : KotlinTestFramework {
         }
 
         return false
+    }
+
+    protected fun findAnnotatedFunction(classOrObject: KtClassOrObject?, fqNames: Set<String>): KtNamedFunction? {
+        if (classOrObject == null) return null
+        for (declaration in classOrObject.declarations) {
+            val function = declaration as? KtNamedFunction ?: continue
+            if (isAnnotated(function, fqNames)) {
+                return function
+            }
+        }
+        return null
     }
 }

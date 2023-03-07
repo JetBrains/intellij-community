@@ -6,6 +6,13 @@
   <extensions defaultExtensionNs="com.intellij">
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer"/>
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer"/>
+
+    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit3FrameworkAdapter"
+                   order="before junit3"/>
+    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit4FrameworkAdapter"
+                   order="before junit4"/>
+    <testFramework implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnit5FrameworkAdapter"
+                   order="before junit5"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
