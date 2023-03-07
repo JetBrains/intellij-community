@@ -21,7 +21,7 @@ PsiJavaFile:SnippetTag4.java
             PsiSnippetAttribute:attrName
               PsiDocToken:DOC_TAG_ATTRIBUTE_NAME('attrName')
               PsiDocToken:DOC_TAG_VALUE_TOKEN('=')
-              PsiDocToken:DOC_TAG_ATTRIBUTE_VALUE('attrValue')
+              PsiSnippetAttributeValue:attrValue('attrValue')
           PsiWhiteSpace(' ')
           PsiSnippetDocTagBody
             PsiDocToken:DOC_TAG_VALUE_COLON(':')

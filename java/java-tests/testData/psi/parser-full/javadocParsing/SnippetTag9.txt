@@ -16,12 +16,12 @@ PsiJavaFile:SnippetTag9.java
             PsiSnippetAttribute:attr1
               PsiDocToken:DOC_TAG_ATTRIBUTE_NAME('attr1')
               PsiDocToken:DOC_TAG_VALUE_TOKEN('=')
-              PsiDocToken:DOC_TAG_ATTRIBUTE_VALUE('attr1Val')
+              PsiSnippetAttributeValue:attr1Val('attr1Val')
             PsiWhiteSpace('\n    ')
             PsiSnippetAttribute:attr2
               PsiDocToken:DOC_TAG_ATTRIBUTE_NAME('attr2')
               PsiDocToken:DOC_TAG_VALUE_TOKEN('=')
-              PsiDocToken:DOC_TAG_ATTRIBUTE_VALUE('attr2Val')
+              PsiSnippetAttributeValue:attr2Val('attr2Val')
           PsiWhiteSpace('\n  ')
           PsiSnippetDocTagBody
             PsiDocToken:DOC_TAG_VALUE_COLON(':')

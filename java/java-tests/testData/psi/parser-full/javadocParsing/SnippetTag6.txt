@@ -19,7 +19,7 @@ PsiJavaFile:SnippetTag6.java
             PsiSnippetAttribute:attrWithoutClosingQuote
               PsiDocToken:DOC_TAG_ATTRIBUTE_NAME('attrWithoutClosingQuote')
               PsiDocToken:DOC_TAG_VALUE_TOKEN('=')
-              PsiDocToken:DOC_TAG_ATTRIBUTE_VALUE('" :')
+              PsiSnippetAttributeValue: :('" :')
         PsiWhiteSpace('\n ')
         PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
         PsiDocToken:DOC_COMMENT_DATA('    ')

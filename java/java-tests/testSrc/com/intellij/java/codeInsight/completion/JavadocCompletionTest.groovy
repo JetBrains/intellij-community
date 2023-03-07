@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
@@ -823,5 +823,36 @@ interface Bar<T> extends Foo<T> {
     myFixture.configureByText "a.java", "/**\n * @fo<caret>\n */\npublic class Demo {}"
     myFixture.completeBasic()
     myFixture.checkResult("/**\n * @foobar \n */\npublic class Demo {}")
+  }
+  
+  void "test in snippet file"() {
+    myFixture.addFileToProject("snippet-files/test.txt", "empty")
+    myFixture.addFileToProject("snippet-files/sub/test.txt", "empty")
+    myFixture.addFileToProject("snippet-files/sub/Test.java", "empty")
+    myFixture.configureByText "a.java", "/**\n * {@snippet file=\"<caret>\"}\n */\npublic class Demo {}"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['test.txt', 'sub/']
+    myFixture.lookup.setCurrentItem(myFixture.lookupElements[1])
+    myFixture.type('\n')
+    myFixture.checkResult("/**\n * {@snippet file=\"sub/<caret>\"}\n */\npublic class Demo {}")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['Test.java', 'test.txt']
+    myFixture.type('\n')
+    myFixture.checkResult("/**\n * {@snippet file=\"sub/Test.java<caret>\"}\n */\npublic class Demo {}")
+  }
+  
+  void "test in snippet class"() {
+    myFixture.addFileToProject("snippet-files/test.txt", "empty")
+    myFixture.addFileToProject("snippet-files/sub/test.txt", "empty")
+    myFixture.addFileToProject("snippet-files/sub/Test.java", "empty")
+    myFixture.configureByText "a.java", "/**\n * {@snippet class=\"<caret>\"}\n */\npublic class Demo {}"
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['sub.']
+    myFixture.type('\n')
+    myFixture.checkResult("/**\n * {@snippet class=\"sub.<caret>\"}\n */\npublic class Demo {}")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ['Test']
+    myFixture.type('\n')
+    myFixture.checkResult("/**\n * {@snippet class=\"sub.Test\"}\n */\npublic class Demo {}")
   }
 }

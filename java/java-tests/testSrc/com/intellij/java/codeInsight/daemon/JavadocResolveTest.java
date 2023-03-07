@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -21,6 +21,9 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
   public void testModuleInfo() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("/module-info.java"); }
   public void testOtherPackageLocal() {
     myJavaDocReferenceInspection.REPORT_INACCESSIBLE = false;
+    doTest();
+  }
+  public void testSnippetRefs() {
     doTest();
   }
 

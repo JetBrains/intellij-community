@@ -19,14 +19,14 @@ PsiJavaFile:SnippetTag7.java
             PsiSnippetAttribute:attr1
               PsiDocToken:DOC_TAG_ATTRIBUTE_NAME('attr1')
               PsiDocToken:DOC_TAG_VALUE_TOKEN('=')
-              PsiDocToken:DOC_TAG_ATTRIBUTE_VALUE('""')
+              PsiSnippetAttributeValue:""('""')
             PsiWhiteSpace('\n ')
             PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
             PsiWhiteSpace(' ')
             PsiSnippetAttribute:attr2
               PsiDocToken:DOC_TAG_ATTRIBUTE_NAME('attr2')
               PsiDocToken:DOC_TAG_VALUE_TOKEN('=')
-              PsiDocToken:DOC_TAG_ATTRIBUTE_VALUE('''')
+              PsiSnippetAttributeValue:''('''')
           PsiWhiteSpace('\n ')
           PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')
           PsiWhiteSpace('  ')

@@ -104,23 +104,27 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     if (comment == null) return;
 
     JavadocManager javadocManager = JavadocManager.getInstance(holder.getProject());
-    comment.accept(new JavaElementVisitor() {
+    comment.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         visitRefElement(reference, context, isOnTheFly, holder);
       }
 
       @Override
-      public void visitDocTag(@NotNull PsiDocTag tag) {
-        super.visitDocTag(tag);
-        visitRefInDocTag(tag, javadocManager, context, holder, isOnTheFly);
+      public void visitSnippetAttributeValue(@NotNull PsiSnippetAttributeValue attributeValue) {
+        PsiReference ref = attributeValue.getReference();
+        if (ref != null) {
+          PsiElement resolved = ref.resolve();
+          if (resolved == null) {
+            holder.registerProblem(attributeValue, JavaBundle.message("inspection.message.snippet.file.not.found"));
+          }
+        }
       }
 
       @Override
-      public void visitElement(@NotNull PsiElement element) {
-        for (PsiElement child = element.getFirstChild(); child != null; child = child.getNextSibling()) {
-          child.accept(this);
-        }
+      public void visitDocTag(@NotNull PsiDocTag tag) {
+        super.visitDocTag(tag);
+        visitRefInDocTag(tag, javadocManager, context, holder, isOnTheFly);
       }
     });
   }

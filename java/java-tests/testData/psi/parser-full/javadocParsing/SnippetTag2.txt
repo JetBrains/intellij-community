@@ -19,7 +19,7 @@ PsiJavaFile:SnippetTag2.java
             PsiSnippetAttribute:class
               PsiDocToken:DOC_TAG_ATTRIBUTE_NAME('class')
               PsiDocToken:DOC_TAG_VALUE_TOKEN('=')
-              PsiDocToken:DOC_TAG_ATTRIBUTE_VALUE('ClassName')
+              PsiSnippetAttributeValue:ClassName('ClassName')
           PsiSnippetDocTagBody
             PsiDocToken:DOC_TAG_VALUE_COLON(':')
             PsiWhiteSpace('\n ')

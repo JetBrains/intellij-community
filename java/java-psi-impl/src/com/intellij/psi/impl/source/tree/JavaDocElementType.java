@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
@@ -58,6 +58,7 @@ public interface JavaDocElementType {
   IElementType DOC_SNIPPET_BODY = new JavaDocCompositeElementType("DOC_SNIPPET_BODY", () -> new PsiSnippetDocTagBodyImpl());
   IElementType DOC_SNIPPET_ATTRIBUTE = new JavaDocCompositeElementType("DOC_SNIPPET_ATTRIBUTE", () -> new PsiSnippetAttributeImpl());
   IElementType DOC_SNIPPET_ATTRIBUTE_LIST = new JavaDocCompositeElementType("DOC_SNIPPET_ATTRIBUTE_LIST", () -> new PsiSnippetAttributeListImpl());
+  IElementType DOC_SNIPPET_ATTRIBUTE_VALUE = new IJavaDocElementType("DOC_SNIPPET_ATTRIBUTE_VALUE");
 
   ILazyParseableElementType DOC_REFERENCE_HOLDER = new JavaDocLazyElementType("DOC_REFERENCE_HOLDER") {
     private final JavaParserUtil.ParserWrapper myParser = builder -> JavadocParser.parseJavadocReference(builder);

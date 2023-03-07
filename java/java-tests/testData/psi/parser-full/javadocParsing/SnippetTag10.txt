@@ -19,7 +19,7 @@ PsiJavaFile:SnippetTag10.java
             PsiSnippetAttribute:attr
               PsiDocToken:DOC_TAG_ATTRIBUTE_NAME('attr')
               PsiDocToken:DOC_TAG_VALUE_TOKEN('=')
-              PsiDocToken:DOC_TAG_ATTRIBUTE_VALUE('""')
+              PsiSnippetAttributeValue:""('""')
           PsiSnippetDocTagBody
             PsiDocToken:DOC_TAG_VALUE_COLON(':')
             PsiWhiteSpace('\n ')
