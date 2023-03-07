@@ -2,9 +2,9 @@
   "name": "Dark",
   "dark": true,
   "author": "JetBrains",
-  "editorScheme": "/themes/expUI/expUI_darkScheme_RC.xml",
+  "editorScheme": "/themes/expUI/expUI_darkScheme.xml",
   "additionalEditorSchemes": [
-    "/themes/expUI/expUI_darkScheme.xml"
+    "/themes/expUI/expUI_darculaContrastScheme.xml"
   ],
 
   "colors": {
