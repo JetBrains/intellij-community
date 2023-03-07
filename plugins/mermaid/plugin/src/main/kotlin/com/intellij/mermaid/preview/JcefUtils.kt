@@ -4,6 +4,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefClient
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefLoadHandler
@@ -29,9 +30,10 @@ internal class LoadErrorException(
 ): IllegalStateException("Failed to load $url:\n$code: $text")
 
 internal suspend fun JBCefBrowser.waitForLoad(content: JBCefBrowser.() -> Unit) {
-  return suspendCoroutine { continuation ->
+  return suspendCancellableCoroutine { continuation ->
     val handler = object: CefLoadHandlerAdapter() {
       override fun onLoadEnd(browser: CefBrowser, frame: CefFrame, httpStatusCode: Int) {
+        jbCefClient.removeLoadHandler(this, cefBrowser)
         continuation.resume(Unit)
       }
 
@@ -42,8 +44,12 @@ internal suspend fun JBCefBrowser.waitForLoad(content: JBCefBrowser.() -> Unit) 
         errorText: String,
         failedUrl: String
       ) {
+        jbCefClient.removeLoadHandler(this, cefBrowser)
         continuation.resumeWithException(LoadErrorException(errorCode, errorText, failedUrl))
       }
+    }
+    continuation.invokeOnCancellation {
+      jbCefClient.removeLoadHandler(handler, cefBrowser)
     }
     jbCefClient.addLoadHandler(handler, cefBrowser)
     content.invoke(this)
