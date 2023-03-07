@@ -54,6 +54,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private long myAboutLinkColor = -1;
   private int[] myAboutLogoRect;  // don't use Rectangle to avoid dependency on AWT
   private String mySplashImageUrl;
+  private String myEapSplashImageUrl;
   private String myAboutImageUrl;
   private String mySmallIconUrl = "/icon_small.png";
   private String mySvgIconUrl;
@@ -141,6 +142,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
         case "logo": {
           mySplashImageUrl = getAttributeValue(element, "url");
+        }
+        break;
+
+        case "logo-eap": {
+          myEapSplashImageUrl = getAttributeValue(element, "url");
         }
         break;
 
@@ -473,7 +479,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getSplashImageUrl() {
-    return mySplashImageUrl;
+    return isEAP() && myEapSplashImageUrl != null ? myEapSplashImageUrl : mySplashImageUrl;
   }
 
   @Override

@@ -8,6 +8,7 @@
         <xs:element type="companyType" name="company"/>
         <xs:element type="buildType" name="build"/>
         <xs:element type="logoType" name="logo"/>
+        <xs:element type="logoType" name="logo-eap" minOccurs="0"/>
         <xs:element type="aboutType" name="about"/>
         <xs:element type="iconType" name="icon"/>
         <xs:element type="iconEapType" name="icon-eap" minOccurs="0"/>

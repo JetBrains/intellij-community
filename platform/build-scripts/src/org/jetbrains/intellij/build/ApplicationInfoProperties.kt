@@ -31,5 +31,6 @@ interface ApplicationInfoProperties {
   val fullVersion: String
   val productNameWithEdition: String
 
+
   val appInfoXml: String
 }
