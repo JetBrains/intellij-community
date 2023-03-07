@@ -18,4 +18,6 @@ public interface ProcessListener extends EventListener {
 
   default void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
   }
+
+  default void processNotStarted() {}
 }
