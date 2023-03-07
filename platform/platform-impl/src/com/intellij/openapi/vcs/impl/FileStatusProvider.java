@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * Can be used to override file color in 'Project View' and Editor titles.
  *
  * @see com.intellij.openapi.vcs.FileStatusManager#getStatus(VirtualFile)
+ * @see com.intellij.openapi.vcs.FileStatusManager#fileStatusChanged(VirtualFile)
  */
 public interface FileStatusProvider {
   @ApiStatus.Internal
