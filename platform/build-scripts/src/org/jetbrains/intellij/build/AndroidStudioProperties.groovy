@@ -276,7 +276,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     void copyAdditionalFilesBlocking(BuildContext buildContext, Path targetDirectory, JvmArchitecture arch) {
       new FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
         .includeAll()
-        .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/mac/" + arch))
+        .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/mac"))
     }
   }
 
