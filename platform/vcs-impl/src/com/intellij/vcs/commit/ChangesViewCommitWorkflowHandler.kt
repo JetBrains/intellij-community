@@ -79,7 +79,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
     val initialCommitMessage = commitMessagePolicy.init(currentChangeList)
     setCommitMessage(initialCommitMessage)
-    DelayedCommitMessageProvider.init(project, ui, initialCommitMessage)
+    DelayedCommitMessageProvider.init(project, ui)
   }
 
   override fun createDataProvider(): DataProvider = object : DataProvider {

@@ -38,7 +38,7 @@ class GitStageCommitWorkflowHandler(
 
     val initialCommitMessage = commitMessagePolicy.init()
     setCommitMessage(initialCommitMessage)
-    DelayedCommitMessageProvider.init(project, ui, initialCommitMessage)
+    DelayedCommitMessageProvider.init(project, ui)
   }
 
   override fun isCommitEmpty(): Boolean = ui.rootsToCommit.isEmpty()

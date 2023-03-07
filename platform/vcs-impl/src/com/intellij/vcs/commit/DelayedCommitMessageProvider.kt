@@ -15,12 +15,12 @@ interface DelayedCommitMessageProvider {
     private val EP_DELAYED_COMMIT_MESSAGE_PROVIDER =
       ExtensionPointName<DelayedCommitMessageProvider>("com.intellij.vcs.delayedCommitMessageProvider")
 
-    fun init(project: Project,
-             commitUi: CommitWorkflowUi,
-             initialCommitMessage: String?) = EP_DELAYED_COMMIT_MESSAGE_PROVIDER.forEachExtensionSafe { e ->
-      e.init(project, commitUi, initialCommitMessage)
+    fun init(project: Project, commitUi: CommitWorkflowUi) {
+      EP_DELAYED_COMMIT_MESSAGE_PROVIDER.forEachExtensionSafe { e ->
+        e.init(project, commitUi)
+      }
     }
   }
 
-  fun init(project: Project, commitUi: CommitWorkflowUi, initialCommitMessage: String?)
+  fun init(project: Project, commitUi: CommitWorkflowUi)
 }
