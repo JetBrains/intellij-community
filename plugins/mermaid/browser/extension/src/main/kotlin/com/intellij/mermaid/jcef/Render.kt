@@ -32,7 +32,7 @@ suspend fun renderBlock(
   val id = "mermaid-generated-$cacheId"
   try {
     // Remove when `mermaid.render` will throw correct error messages
-    Mermaid.core.parse(content, null).await()
+    Mermaid.core.parse(content).await()
 
     val renderResult = Mermaid.core.render(id, content).await()
     renderResult.appendTo(block)

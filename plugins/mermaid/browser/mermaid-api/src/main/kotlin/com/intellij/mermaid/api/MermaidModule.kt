@@ -19,7 +19,7 @@ external interface MermaidModule {
   fun setParseErrorHandler(handler: (error: Any, hash: Any) -> Unit)
 
   // declare const parse: (text: string, parseOptions?: ParseOptions) => Promise<boolean | void>;
-  fun parse(text: String, options: ParseOptions?): Promise<Boolean>
+  fun parse(text: String, options: ParseOptions? = definedExternally): Promise<Boolean>
 
   // declare const registerExternalDiagrams: (diagrams: ExternalDiagramDefinition[], { lazyLoad, }?: {
   //   lazyLoad?: boolean | undefined;
