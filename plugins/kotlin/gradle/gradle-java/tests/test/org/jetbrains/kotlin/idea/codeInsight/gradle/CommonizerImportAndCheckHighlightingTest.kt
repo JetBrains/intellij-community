@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.Assume
 import org.junit.Test
 import java.io.PrintStream
+import java.util.*
 
 class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
     override fun testDataDirName(): String = "commonizerImportAndCheckHighlighting"
@@ -211,8 +212,8 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
 
                     assertEquals(
                         "Expected posix being 'PROJECT' level",
-                        LibraryLevel.PROJECT.name.toLowerCase(),
-                        posix.libraryLevel.toLowerCase(),
+                        LibraryLevel.PROJECT.name.lowercase(Locale.getDefault()),
+                        posix.libraryLevel.lowercase(Locale.getDefault()),
                     )
                 }
 
@@ -242,8 +243,8 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                     if (!isKgpDependencyResolutionEnabled()) { // FIXME: KTIJ-24560
                         assertEquals(
                             "Expected 'withPosix' (c-interop) to be 'module level'",
-                            LibraryLevel.MODULE.name.toLowerCase(),
-                            withPosix.libraryLevel.toLowerCase()
+                            LibraryLevel.MODULE.name.lowercase(Locale.getDefault()),
+                            withPosix.libraryLevel.lowercase(Locale.getDefault())
                         )
                     }
                 }
@@ -270,8 +271,8 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                     posixEntriesMatchingNamingScheme.forEach { posix ->
                         assertEquals(
                             "Expected posix being 'PROJECT' level",
-                            LibraryLevel.PROJECT.name.toLowerCase(),
-                            posix.libraryLevel.toLowerCase(),
+                            LibraryLevel.PROJECT.name.lowercase(Locale.getDefault()),
+                            posix.libraryLevel.lowercase(Locale.getDefault()),
                         )
                     }
                 }
@@ -298,8 +299,8 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                     if (!isKgpDependencyResolutionEnabled()) { // FIXME: KTIJ-24560
                         assertEquals(
                             "Expected 'withPosix' (c-interop) to be 'module level'",
-                            LibraryLevel.MODULE.name.toLowerCase(),
-                            withPosix.libraryLevel.toLowerCase()
+                            LibraryLevel.MODULE.name.lowercase(Locale.getDefault()),
+                            withPosix.libraryLevel.lowercase(Locale.getDefault())
                         )
                     }
                 }
