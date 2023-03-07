@@ -10,7 +10,7 @@ import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.io.IOUtil
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.impl.VcsLogIndexer
-import com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE
+import com.intellij.vcs.log.util.PersistentUtil.getPersistenceLogCacheDir
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Files
 import java.nio.file.Path
@@ -44,6 +44,16 @@ object PersistentUtil {
   }
 
   @JvmStatic
+  fun getPersistenceLogCacheDir(project: Project, logId: String): Path {
+    return getPersistenceLogCacheDir(project.name, logId)
+  }
+
+  @JvmStatic
+  internal fun getPersistenceLogCacheDir(projectName: String, logId: String): Path {
+    return LOG_CACHE.resolve(getProjectLogDataDirectoryName(projectName, logId))
+  }
+
+  @JvmStatic
   fun getProjectLogDataDirectoryName(projectName: String, logId: String): String {
     return PathUtilRt.suggestFileName("${projectName.take(7)}.$logId", false, false)
   }
@@ -53,8 +63,7 @@ internal class StorageId(@NonNls private val projectName: String,
                          @NonNls private val subdirName: String,
                          private val logId: String,
                          val version: Int) {
-  private val safeProjectName = PersistentUtil.getProjectLogDataDirectoryName(projectName, logId)
-  val projectStorageDir: Path by lazy { LOG_CACHE.resolve(safeProjectName).resolve(subdirName) }
+  val projectStorageDir: Path by lazy { getPersistenceLogCacheDir(projectName, logId).resolve(subdirName) }
 
   @JvmOverloads
   fun getStorageFile(kind: String, forMapIndexStorage: Boolean = false): Path {

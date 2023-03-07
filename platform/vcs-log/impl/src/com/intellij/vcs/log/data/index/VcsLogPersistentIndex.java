@@ -111,9 +111,10 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
     VcsUserRegistry userRegistry = myProject.getService(VcsUserRegistry.class);
 
-    myIndexStorageId = new StorageId(myProject.getName(), INDEX, calcIndexId(myProject, myIndexers),
+    String logId = calcIndexId(myProject, myIndexers);
+    myIndexStorageId = new StorageId(myProject.getName(), INDEX, logId,
                                      VcsLogStorageImpl.VERSION + VERSION);
-    myIndexStorage = createIndexStorage(myIndexStorageId, errorHandler, userRegistry);
+    myIndexStorage = createIndexStorage(logId, myIndexStorageId, errorHandler, userRegistry);
     if (myIndexStorage != null) {
       myDataGetter = new IndexDataGetter(myProject, ContainerUtil.filter(providers, root -> myRoots.contains(root)),
                                          myIndexStorage, myStorage, myErrorHandler);
@@ -141,15 +142,18 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return Math.max(1, Registry.intValue("vcs.log.index.limit.minutes"));
   }
 
-  private IndexStorage createIndexStorage(@NotNull StorageId indexStorageId, @NotNull VcsLogErrorHandler errorHandler,
+  private IndexStorage createIndexStorage(@NotNull String logId,
+                                          @NotNull StorageId indexStorageId,
+                                          @NotNull VcsLogErrorHandler errorHandler,
                                           @NotNull VcsUserRegistry registry) {
     try {
-      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(myProject, indexStorageId, myStorage, registry, myRoots, errorHandler, this),
-                                           () -> {
-                                             if (!indexStorageId.cleanupAllStorageFiles()) {
-                                               LOG.error("Could not clean up storage files in " + indexStorageId.getProjectStorageDir());
-                                             }
-                                           });
+      return IOUtil.openCleanOrResetBroken(
+        () -> new IndexStorage(myProject, logId, indexStorageId, myStorage, registry, myRoots, errorHandler, this),
+        () -> {
+          if (!indexStorageId.cleanupAllStorageFiles()) {
+            LOG.error("Could not clean up storage files in " + indexStorageId.getProjectStorageDir());
+          }
+        });
     }
     catch (IOException e) {
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
@@ -308,6 +312,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     public final @NotNull VcsLogPathsIndex paths;
 
     IndexStorage(@NotNull Project project,
+                 @NotNull String logId,
                  @NotNull StorageId indexStorageId,
                  @NotNull VcsLogStorage storage,
                  @NotNull VcsUserRegistry userRegistry,
@@ -320,7 +325,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       try {
         StorageLockContext storageLockContext = new StorageLockContext();
         if (useSqlite) {
-          store = new SqliteVcsLogStorageBackend(project);
+          store = new SqliteVcsLogStorageBackend(project, logId, this);
         }
         else {
           store = new PhmVcsLogStorageBackend(indexStorageId, storageLockContext, errorHandler, this);

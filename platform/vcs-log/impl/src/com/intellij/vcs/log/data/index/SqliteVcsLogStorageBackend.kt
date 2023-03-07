@@ -5,10 +5,8 @@ package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.getProjectDataPath
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.childScope
@@ -17,9 +15,11 @@ import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.data.VcsLogStorageImpl
 import com.intellij.vcs.log.impl.VcsLogIndexer
+import com.intellij.vcs.log.util.PersistentUtil
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntSet
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.intellij.lang.annotations.Language
 import org.jetbrains.sqlite.*
 import java.nio.file.Files
@@ -65,12 +65,11 @@ private const val TABLE_SCHEMA = """
 
 internal const val SQLITE_VCS_LOG_DB_FILENAME_PREFIX = "vcs-log-v"
 
-@Service(Service.Level.PROJECT)
-private class ProjectLevelStoreManager(project: Project) : Disposable {
+private class ProjectLevelConnectionManager(project: Project, logId: String) : Disposable {
   var connection: SqliteConnection
     private set
 
-  private val dbFile = project.getProjectDataPath(
+  private val dbFile = PersistentUtil.getPersistenceLogCacheDir(project, logId).resolve(
     "$SQLITE_VCS_LOG_DB_FILENAME_PREFIX${DB_VERSION}-${VcsLogStorageImpl.VERSION}-${VcsLogPersistentIndex.VERSION}.db")
 
   @Suppress("DEPRECATION")
@@ -112,8 +111,8 @@ private class ProjectLevelStoreManager(project: Project) : Disposable {
 private const val RENAME_SQL = "insert into rename(parent, child, rename) values(?, ?, ?)"
 private const val RENAME_DELETE_SQL = "delete from rename where parent = ? and child = ?"
 
-internal class SqliteVcsLogStorageBackend(project: Project) : VcsLogStorageBackend {
-  private val connectionManager = project.service<ProjectLevelStoreManager>()
+internal class SqliteVcsLogStorageBackend(project: Project, logId: String, disposable: Disposable) : VcsLogStorageBackend {
+  private val connectionManager = ProjectLevelConnectionManager(project, logId).also { Disposer.register(disposable, it) }
 
   override var isFresh: Boolean
     get() = connectionManager.isFresh
