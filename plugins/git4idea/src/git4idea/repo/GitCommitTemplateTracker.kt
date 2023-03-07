@@ -24,9 +24,10 @@ import git4idea.commands.Git
 import git4idea.config.GitConfigUtil
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
 import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
 import java.io.File
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -38,14 +39,13 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   private val commitTemplates = mutableMapOf<GitRepository, GitCommitTemplate>()
   private val TEMPLATES_LOCK = ReentrantReadWriteLock()
 
-  private val started = AtomicBoolean()
+  private val _initPromise = AsyncPromise<Unit>()
+  val initPromise: Promise<Unit> get() = _initPromise
 
   init {
     project.messageBus.connect(this).subscribe(GitConfigListener.TOPIC, this)
     AsyncVfsEventsPostProcessor.getInstance().addListener(this, this)
   }
-
-  fun isStarted() = started.get()
 
   fun templatesCount(): Int {
     return TEMPLATES_LOCK.read { commitTemplates.values.size }
@@ -88,10 +88,13 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   @VisibleForTesting
   @RequiresBackgroundThread
   fun start() {
-    if (started.compareAndSet(false, true)) {
+    try {
       BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).loadingStarted()
       GitUtil.getRepositories(project).forEach(::trackCommitTemplate)
       BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).loadingFinished()
+    }
+    finally {
+      _initPromise.setResult(null)
     }
   }
 
@@ -282,12 +285,18 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
 private class GitCommitTemplate(val watchedRoot: LocalFileSystem.WatchRequest,
                                 var content: String)
 
+/**
+ * Events are fired on a pooled thread.
+ */
 internal interface GitCommitTemplateListener {
 
+  /**
+   * @see [GitCommitTemplateTracker.initPromise]
+   */
   fun loadingStarted() {}
   fun loadingFinished() {}
 
-  fun notifyCommitTemplateChanged(repository: GitRepository)
+  fun notifyCommitTemplateChanged(repository: GitRepository) {}
 
   companion object {
     @JvmField
