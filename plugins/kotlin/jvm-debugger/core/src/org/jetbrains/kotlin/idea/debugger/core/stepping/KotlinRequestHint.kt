@@ -56,8 +56,9 @@ class KotlinStepOverRequestHint(
     stepThread: ThreadReferenceProxyImpl,
     suspendContext: SuspendContextImpl,
     private val filter: KotlinMethodFilter,
-    parentHint: RequestHint?
-) : RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_OVER, filter, parentHint) {
+    parentHint: RequestHint?,
+    stepSize: Int
+) : RequestHint(stepThread, suspendContext, stepSize, StepRequest.STEP_OVER, filter, parentHint) {
     private companion object {
         private val LOG = Logger.getInstance(KotlinStepOverRequestHint::class.java)
     }

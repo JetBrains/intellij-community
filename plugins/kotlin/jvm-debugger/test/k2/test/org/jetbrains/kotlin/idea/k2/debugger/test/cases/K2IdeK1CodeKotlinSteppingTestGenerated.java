@@ -1520,6 +1520,16 @@ public abstract class K2IdeK1CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/stepOutInlineFunctionStdlib.kt");
         }
 
+        @TestMetadata("stepOutOfInlineLambdas.kt")
+        public void testStepOutOfInlineLambdas() throws Exception {
+            runTest("../testData/stepping/custom/stepOutOfInlineLambdas.kt");
+        }
+
+        @TestMetadata("stepOutOfNestedInlineLambdas.kt")
+        public void testStepOutOfNestedInlineLambdas() throws Exception {
+            runTest("../testData/stepping/custom/stepOutOfNestedInlineLambdas.kt");
+        }
+
         @TestMetadata("stepOverInvokeMethodInLambda.kt")
         public void testStepOverInvokeMethodInLambda() throws Exception {
             runTest("../testData/stepping/custom/stepOverInvokeMethodInLambda.kt");
