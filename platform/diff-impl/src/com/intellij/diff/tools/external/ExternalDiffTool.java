@@ -29,7 +29,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -100,15 +99,35 @@ public final class ExternalDiffTool {
     return null;
   }
 
+  @RequiresEdt
   public static boolean showIfNeeded(@Nullable Project project,
                                      @NotNull DiffRequestChain chain,
                                      @NotNull DiffDialogHints hints) {
-    return show(project, hints, indicator -> {
-      List<? extends DiffRequestProducer> producers = loadProducersFromChain(chain);
-      if (!wantShowExternalToolFor(producers)) return null;
-      if (!checkNotTooManyRequests(project, producers)) return null;
-      return collectRequests(project, producers, indicator);
-    });
+    if (chain instanceof AsyncDiffRequestChain asyncChain) {
+      return show(project, hints, indicator -> {
+        ListSelection<? extends DiffRequestProducer> listSelection = asyncChain.loadRequestsInBackground();
+        List<? extends DiffRequestProducer> producers = listSelection.getExplicitSelection();
+        if (!wantShowExternalToolFor(producers)) return null;
+        if (!checkNotTooManyRequests(project, producers)) return null;
+        return collectRequests(project, producers, indicator);
+      });
+    }
+    else {
+      ListSelection<? extends DiffRequestProducer> listSelection;
+      if (chain instanceof DiffRequestSelectionChain selectionChain) {
+        listSelection = selectionChain.getListSelection();
+      }
+      else {
+        listSelection = ListSelection.createAt(chain.getRequests(), chain.getIndex());
+      }
+
+      return show(project, hints, indicator -> {
+        List<? extends DiffRequestProducer> producers = listSelection.getExplicitSelection();
+        if (!wantShowExternalToolFor(producers)) return null;
+        if (!checkNotTooManyRequests(project, producers)) return null;
+        return collectRequests(project, producers, indicator);
+      });
+    }
   }
 
   public static boolean showIfNeeded(@Nullable Project project,
@@ -167,22 +186,6 @@ public final class ExternalDiffTool {
 
     showRequest(project, request, externalTool);
     return true;
-  }
-
-  @NotNull
-  @RequiresBackgroundThread
-  private static List<? extends DiffRequestProducer> loadProducersFromChain(@NotNull DiffRequestChain chain) {
-    ListSelection<? extends DiffRequestProducer> listSelection;
-    if (chain instanceof AsyncDiffRequestChain) {
-      listSelection = ((AsyncDiffRequestChain)chain).loadRequestsInBackground();
-    }
-    else if (chain instanceof DiffRequestSelectionChain) {
-      listSelection = ((DiffRequestSelectionChain)chain).getListSelection();
-    }
-    else {
-      listSelection = ListSelection.createAt(chain.getRequests(), chain.getIndex());
-    }
-    return listSelection.getExplicitSelection();
   }
 
   @NotNull
