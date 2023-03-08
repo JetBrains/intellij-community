@@ -12,7 +12,6 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.DefaultProgramRunnerKt;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.ui.ExecutionUiService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -162,7 +162,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration, @Nullable ProgressIndicator indicator)
     throws Exception {
-    ExecutionUiService.getInstance().assertTimeConsuming();
+    SlowOperations.assertSlowOperationsAreAllowed();
 
     EntryPoint inProcess = acquireInProcess(target, configuration);
     if (inProcess != null) return inProcess;
