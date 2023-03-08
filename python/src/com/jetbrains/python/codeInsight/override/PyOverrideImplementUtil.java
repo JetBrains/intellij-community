@@ -208,7 +208,8 @@ public final class PyOverrideImplementUtil {
       }
     }
     PyAnnotation anno = baseFunction.getAnnotation();
-    if (anno != null && shouldCopyAnnotations(baseFunction, pyClass)) {
+    boolean copyAnnotations = PyPsiRefactoringUtil.shouldCopyAnnotations(baseFunction, pyClass.getContainingFile());
+    if (anno != null && copyAnnotations) {
       pyFunctionBuilder.annotation(anno.getText());
     }
     if (baseFunction.isAsync()) {
@@ -224,7 +225,7 @@ public final class PyOverrideImplementUtil {
         final StringBuilder parameterBuilder = new StringBuilder();
         parameterBuilder.append(ParamHelper.getNameInSignature(namedParameter));
         final PyAnnotation annotation = namedParameter.getAnnotation();
-        if (annotation != null && shouldCopyAnnotations(baseFunction, pyClass)) {
+        if (annotation != null && copyAnnotations) {
           parameterBuilder.append(annotation.getText());
         }
         final PyExpression defaultValue = namedParameter.getDefaultValue();
@@ -313,14 +314,6 @@ public final class PyOverrideImplementUtil {
 
     pyFunctionBuilder.statement(statementBody.toString());
     return pyFunctionBuilder;
-  }
-
-  private static boolean shouldCopyAnnotations(@NotNull PyFunction baseFunction, @NotNull PyClass subClass) {
-    if (LanguageLevel.forElement(baseFunction).isPython2() || (PyiUtil.isInsideStub(baseFunction) && !PyiUtil.isInsideStub(subClass))) {
-      return false;
-    }
-    VirtualFile virtualFile = baseFunction.getContainingFile().getVirtualFile();
-    return virtualFile != null && ProjectScope.getProjectScope(baseFunction.getProject()).contains(virtualFile);
   }
 
   // TODO find a better place for this logic

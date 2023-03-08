@@ -6,12 +6,14 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -365,6 +367,13 @@ public abstract class PythonCommonTestCase extends TestCase {
     runWithAdditionalRoot(sdk, directory, OrderRootType.CLASSES, (__) -> runnable.run());
   }
 
+  protected void runWithAdditionalClassEntryInSdkRoots(@NotNull String relativeTestDataPath, @NotNull Runnable runnable) {
+    final String absPath = getTestDataPath() + "/" + relativeTestDataPath;
+    final VirtualFile testDataDir = StandardFileSystems.local().findFileByPath(absPath);
+    assertNotNull("Additional class entry directory '" + absPath + "' not found", testDataDir);
+    runWithAdditionalClassEntryInSdkRoots(testDataDir, runnable);
+  }
+
   private static void runWithAdditionalRoot(@NotNull Sdk sdk,
                                             @NotNull VirtualFile root,
                                             @NotNull OrderRootType rootType,
@@ -386,5 +395,9 @@ public abstract class PythonCommonTestCase extends TestCase {
         modificator.commitChanges();
       });
     }
+  }
+
+  protected @NotNull String getTestDataPath() {
+    return PythonTestUtil.getTestDataPath();
   }
 }
