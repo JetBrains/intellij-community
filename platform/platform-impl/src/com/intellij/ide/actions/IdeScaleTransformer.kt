@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager
@@ -53,7 +54,8 @@ class IdeScaleTransformer : Disposable {
         if (editor.isDisposed) continue
 
         editor.putUserData(ZoomIndicatorManager.SUPPRESS_ZOOM_INDICATOR_ONCE, true)
-        editor.setFontSize(settingsUtils.scaledEditorFontSize)
+        editor.setFontSize(if (editor.editorKind == EditorKind.CONSOLE) settingsUtils.scaledConsoleFontSize
+                           else settingsUtils.scaledEditorFontSize)
       }
     }
   }
