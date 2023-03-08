@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.idea.inspections.VirtualFunction.*
 import org.jetbrains.kotlin.idea.inspections.VirtualFunction.Function
 import org.jetbrains.kotlin.idea.intentions.conventionNameCalls.*
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
-import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -67,9 +66,6 @@ class ConvertObjectToDataObjectInspection : AbstractKotlinInspection() {
                     ),
                     ConvertToDataObjectQuickFix(),
                 )
-                ktObject.containingFile.virtualFile?.let { file ->
-                    KotlinLanguageFeaturesFUSCollector.DataObject.logObjectToDataObjectQuickFixIsSuggested(file)
-                }
             }
         }
     }
@@ -141,9 +137,6 @@ private class ConvertToDataObjectQuickFix : LocalQuickFix {
             functions.forEach { it.delete() }
             if (ktObject.body?.declarations?.isEmpty() == true) ktObject.body?.delete()
             ktObject.addModifier(KtTokens.DATA_KEYWORD)
-        }
-        ktObject.containingFile.virtualFile?.let { file ->
-            KotlinLanguageFeaturesFUSCollector.DataObject.logObjectToDataObjectQuickFixIsApplied(file)
         }
     }
 
