@@ -30,6 +30,8 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -63,31 +65,31 @@ public class PySuperMethodCompletionContributor extends CompletionContributor im
                }
                LanguageLevel languageLevel = LanguageLevel.forElement(parameters.getOriginalFile());
                seenNames.addAll(PyNames.getBuiltinMethods(languageLevel).keySet());
-               for (PyClass ancestor : containingClass.getAncestorClasses(null)) {
-                 for (PyFunction superMethod : ancestor.getMethods()) {
-                   if (!seenNames.add(superMethod.getName())) {
-                     continue;
-                   }
-                   StringBuilder builder = new StringBuilder();
-                   builder.append(superMethod.getName());
-                   if (!(nextElement instanceof PyParameterList)) {
-                     builder.append(superMethod.getParameterList().getText());
-                     if (superMethod.getAnnotation() != null) {
-                       builder.append(" ")
-                         .append(superMethod.getAnnotation().getText())
-                         .append(":");
-                     }
-                     else if (superMethod.getTypeComment() != null) {
-                       builder.append(":  ")
-                         .append(superMethod.getTypeComment().getText());
-                     }
-                     else {
-                       builder.append(":");
-                     }
-                   }
-                   LookupElementBuilder element = LookupElementBuilder.create(builder.toString());
-                   result.addElement(TailTypeDecorator.withTail(element, TailType.NONE));
+               TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(containingClass.getProject(),
+                                                                                containingClass.getContainingFile());
+               for (PyFunction superMethod : PyPsiRefactoringUtil.getAllSuperMethods(containingClass, typeEvalContext)) {
+                 if (!seenNames.add(superMethod.getName())) {
+                   continue;
                  }
+                 StringBuilder builder = new StringBuilder();
+                 builder.append(superMethod.getName());
+                 if (!(nextElement instanceof PyParameterList)) {
+                   builder.append(superMethod.getParameterList().getText());
+                   if (superMethod.getAnnotation() != null) {
+                     builder.append(" ")
+                       .append(superMethod.getAnnotation().getText())
+                       .append(":");
+                   }
+                   else if (superMethod.getTypeComment() != null) {
+                     builder.append(":  ")
+                       .append(superMethod.getTypeComment().getText());
+                   }
+                   else {
+                     builder.append(":");
+                   }
+                 }
+                 LookupElementBuilder element = LookupElementBuilder.create(builder.toString());
+                 result.addElement(TailTypeDecorator.withTail(element, TailType.NONE));
                }
              }
            });
