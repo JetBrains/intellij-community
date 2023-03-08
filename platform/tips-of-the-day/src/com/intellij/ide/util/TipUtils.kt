@@ -1,412 +1,357 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.util;
+@file:Suppress("LiftReturnOrAssignment", "ReplacePutWithAssignment")
 
-import com.intellij.CommonBundle;
-import com.intellij.DynamicBundle;
-import com.intellij.featureStatistics.FeatureDescriptor;
-import com.intellij.featureStatistics.GroupDescriptor;
-import com.intellij.featureStatistics.ProductivityFeaturesRegistry;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.ui.text.paragraph.TextParagraph;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Trinity;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.icons.LoadIconParameters;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.ResourceUtil;
-import com.intellij.util.ui.JBImageIcon;
-import com.intellij.util.ui.StartupUiUtil;
-import kotlin.Unit;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
+package com.intellij.ide.util
 
-import javax.swing.*;
-import javax.swing.text.StyleConstants;
-import java.awt.*;
-import java.awt.geom.RoundRectangle2D;
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.*;
+import com.intellij.CommonBundle
+import com.intellij.DynamicBundle
+import com.intellij.featureStatistics.FeatureDescriptor
+import com.intellij.featureStatistics.ProductivityFeaturesRegistry
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.ui.text.paragraph.TextParagraph
+import com.intellij.ide.util.TipUiSettings.imageBorderColor
+import com.intellij.ide.util.TipUiSettings.imageMaxWidth
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Trinity
+import com.intellij.ui.icons.LoadIconParameters
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.IconUtil.scale
+import com.intellij.util.ImageLoader
+import com.intellij.util.ImageLoader.loadFromUrl
+import com.intellij.util.ImageLoader.loadImage
+import com.intellij.util.ResourceUtil
+import com.intellij.util.ui.JBImageIcon
+import com.intellij.util.ui.StartupUiUtil
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
+import java.awt.*
+import java.awt.geom.RoundRectangle2D
+import java.io.File
+import java.io.IOException
+import java.net.MalformedURLException
+import java.net.URL
+import java.nio.file.Files
+import java.nio.file.Path
+import javax.swing.Icon
+import javax.swing.text.StyleConstants
 
-public final class TipUtils {
-  private static final Logger LOG = Logger.getInstance(TipUtils.class);
-  private static final List<TipEntity> ENTITIES;
+private val LOG = logger<TipUtils>()
 
-  static {
-    ApplicationInfo appInfo = ApplicationInfo.getInstance();
-    ENTITIES = List.of(
-      TipEntity.of("productName", ApplicationNamesInfo.getInstance().getFullProductName()),
-      TipEntity.of("majorVersion", appInfo.getMajorVersion()),
-      TipEntity.of("minorVersion", appInfo.getMinorVersion()),
-      TipEntity.of("majorMinorVersion", appInfo.getMajorVersion() +
-                                        ("0".equals(appInfo.getMinorVersion()) ? "" :
-                                         ("." + appInfo.getMinorVersion()))),
-      TipEntity.of("settingsPath", CommonBundle.settingsActionPath()));
-  }
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
-  private TipUtils() {
-  }
+private val ENTITIES: List<TipEntity> = ApplicationInfo.getInstance().let { appInfo ->
+  java.util.List.of(
+    TipEntity("productName", ApplicationNamesInfo.getInstance().fullProductName),
+    TipEntity("majorVersion", appInfo.majorVersion),
+    TipEntity("minorVersion", appInfo.minorVersion),
+    TipEntity("majorMinorVersion", "${appInfo.majorVersion}${if ("0" == appInfo.minorVersion) "" else "." + appInfo.minorVersion}"),
+    TipEntity("settingsPath", CommonBundle.settingsActionPath()))
+}
 
-  public static @Nullable TipAndTrickBean getTip(@Nullable FeatureDescriptor feature) {
-    if (feature == null) return null;
-    String tipId = feature.getTipId();
+object TipUtils {
+  fun getTip(feature: FeatureDescriptor?): TipAndTrickBean? {
+    if (feature == null) {
+      return null
+    }
+
+    val tipId = feature.tipId
     if (tipId == null) {
-      LOG.warn("No Tip of the day for feature " + feature.getId());
-      return null;
+      LOG.warn("No Tip of the day for feature ${feature.id}")
+      return null
     }
 
-    TipAndTrickBean tip = TipAndTrickBean.findById(tipId);
-    if (tip == null && StringUtil.isNotEmpty(tipId)) {
-      tip = new TipAndTrickBean();
-      tip.fileName = tipId + TipAndTrickBean.TIP_FILE_EXTENSION;
+    var tip = TipAndTrickBean.findById(tipId)
+    if (tip == null && tipId.isNotEmpty()) {
+      tip = TipAndTrickBean()
+      tip.fileName = tipId + TipAndTrickBean.TIP_FILE_EXTENSION
     }
-    return tip;
+    return tip
   }
 
-  public static @Nullable @Nls String getGroupDisplayNameForTip(@NotNull TipAndTrickBean tip) {
-    ProductivityFeaturesRegistry registry = ProductivityFeaturesRegistry.getInstance();
-    if (registry == null) return null;
-    return registry.getFeatureIds().stream()
-      .map(featureId -> registry.getFeatureDescriptor(featureId))
-      .filter(descriptor -> Objects.equals(descriptor.getTipId(), tip.getId()))
-      .findFirst()
-      .map(feature -> {
-        String groupId = feature.getGroupId();
-        if (groupId == null) return null;
-        GroupDescriptor group = registry.getGroupDescriptor(groupId);
-        return group != null ? group.getDisplayName() : null;
-      })
-      .orElse(null);
+  @JvmStatic
+  fun getGroupDisplayNameForTip(tip: TipAndTrickBean): @Nls String? {
+    val registry = ProductivityFeaturesRegistry.getInstance() ?: return null
+    val featureDescriptor = registry.featureIds.asSequence()
+      .map { registry.getFeatureDescriptor(it) }
+      .firstOrNull { it.tipId == tip.id }
+    return registry.getGroupDescriptor(featureDescriptor?.groupId ?: return null)?.displayName
   }
 
   /**
-   * @param contextComponent is used for obtaining system scale to properly load and scale the images
+   * @param contextComponent is used for obtaining a system scale to properly load and scale the images
    */
-  public static List<TextParagraph> loadAndParseTip(@Nullable TipAndTrickBean tip, @Nullable Component contextComponent) {
-    return loadAndParseTip(tip, contextComponent, false);
+  @JvmStatic
+  fun loadAndParseTip(tip: TipAndTrickBean, contextComponent: Component?): List<TextParagraph> {
+    return loadAndParseTip(tip = tip, contextComponent = contextComponent, isStrict = false)
   }
 
   /**
    * Throws exception on any issue occurred during tip loading and parsing
    */
   @TestOnly
-  public static List<TextParagraph> loadAndParseTipStrict(@Nullable TipAndTrickBean tip) {
-    return loadAndParseTip(tip, null, true);
+  fun loadAndParseTipStrict(tip: TipAndTrickBean): List<TextParagraph> {
+    return loadAndParseTip(tip = tip, contextComponent = null, isStrict = true)
   }
 
-  private static List<TextParagraph> loadAndParseTip(@Nullable TipAndTrickBean tip,
-                                                     @Nullable Component contextComponent,
-                                                     boolean isStrict) {
-    Trinity<@NotNull String, @Nullable ClassLoader, @Nullable String> result = loadTip(tip, isStrict);
-    String text = result.first;
-    @Nullable ClassLoader loader = result.second;
-    @Nullable String tipsPath = result.third;
-
-    Document tipHtml = Jsoup.parse(text);
-    Element tipContent = tipHtml.body();
-
-    Map<String, Icon> icons = loadImages(tipContent, loader, tipsPath, contextComponent, isStrict);
-    inlineProductInfo(tipContent);
-
-    List<TextParagraph> paragraphs = new TipContentConverter(tipContent, icons, isStrict).convert();
-    if (paragraphs.size() > 0) {
-      paragraphs.get(0).editAttributes(attr -> {
-        StyleConstants.setSpaceAbove(attr, TextParagraph.NO_INDENT);
-        return Unit.INSTANCE;
-      });
-    }
-    else {
-      handleWarning("Parsed paragraphs is empty for tip: " + tip, isStrict);
-    }
-    return paragraphs;
-  }
-
-  private static Trinity<@NotNull String, @Nullable ClassLoader, @Nullable String> loadTip(@Nullable TipAndTrickBean tip,
-                                                                                           boolean isStrict) {
-    if (tip == null) return Trinity.create(IdeBundle.message("no.tip.of.the.day"), null, null);
-    try {
-      File tipFile = new File(tip.fileName);
-      if (tipFile.isAbsolute() && tipFile.exists()) {
-        String content = FileUtil.loadFile(tipFile, StandardCharsets.UTF_8);
-        return Trinity.create(content, null, tipFile.getParentFile().getAbsolutePath());
-      }
-      else {
-        List<TipRetriever> retrievers = getTipRetrievers(tip);
-        for (final TipRetriever retriever : retrievers) {
-          String tipContent = retriever.getTipContent(tip.fileName);
-          if (tipContent != null) {
-            final String tipImagesLocation =
-              String.format("/%s/%s", retriever.myPath, retriever.mySubPath.length() > 0 ? retriever.mySubPath + "/" : "");
-            return Trinity.create(tipContent, retriever.myLoader, tipImagesLocation);
-          }
-        }
-      }
-    }
-    catch (IOException e) {
-      handleError(e, isStrict);
-    }
-    //All retrievers have failed or error occurred, return error.
-    return Trinity.create(getCantReadText(tip), null, null);
-  }
-
-  public static boolean checkTipFileExist(@NotNull TipAndTrickBean tip) {
-    List<TipRetriever> retrievers = getTipRetrievers(tip);
-    for (TipRetriever retriever : retrievers) {
+  fun checkTipFileExist(tip: TipAndTrickBean): Boolean {
+    val retrievers = getTipRetrievers(tip)
+    for (retriever in retrievers) {
       if (retriever.getTipUrl(tip.fileName) != null) {
-        return true;
+        return true
       }
     }
-    return false;
+    return false
   }
+}
 
-  @NotNull
-  private static List<TipRetriever> getTipRetrievers(@NotNull TipAndTrickBean tip) {
-    final ClassLoader fallbackLoader = TipUtils.class.getClassLoader();
-    final PluginDescriptor pluginDescriptor = tip.getPluginDescriptor();
-    final DynamicBundle.LanguageBundleEP langBundle = DynamicBundle.findLanguageBundle();
-
-    //I know of ternary operators, but in cases like this they're harder to comprehend and debug than this.
-    ClassLoader tipLoader = null;
-
-    if (langBundle != null) {
-      final PluginDescriptor langBundleLoader = langBundle.pluginDescriptor;
-      if (langBundleLoader != null) tipLoader = langBundleLoader.getPluginClassLoader();
-    }
-
-    if (tipLoader == null && pluginDescriptor != null && pluginDescriptor.getPluginClassLoader() != null) {
-      tipLoader = pluginDescriptor.getPluginClassLoader();
-    }
-
-    if (tipLoader == null) tipLoader = fallbackLoader;
-
-    String ideCode = ApplicationInfoEx.getInstanceEx().getApiVersionAsNumber().getProductCode().toLowerCase(Locale.ROOT);
-    //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
-    if (ideCode.contains("ic")) ideCode = "iu";
-    //So the primary loader is determined. Now we're constructing retrievers that use a pair of path/loaders to try to get the tips.
-    final List<TipRetriever> retrievers = new ArrayList<>();
-
-    retrievers.add(new TipRetriever(tipLoader, "tips", ideCode));
-    retrievers.add(new TipRetriever(tipLoader, "tips", "misc"));
-    retrievers.add(new TipRetriever(tipLoader, "tips", ""));
-    retrievers.add(new TipRetriever(fallbackLoader, "tips", ""));
-
-    return retrievers;
+private fun loadAndParseTip(tip: TipAndTrickBean?, contextComponent: Component?, isStrict: Boolean): List<TextParagraph> {
+  val result = loadTip(tip = tip, isStrict = isStrict)
+  val text = result.first
+  val loader = result.second
+  val tipsPath = result.third
+  val tipHtml = Jsoup.parse(text)
+  val tipContent = tipHtml.body()
+  val icons = loadImages(tipContent, loader, tipsPath, contextComponent, isStrict)
+  inlineProductInfo(tipContent)
+  val paragraphs = TipContentConverter(tipContent, icons, isStrict).convert()
+  if (paragraphs.isEmpty()) {
+    handleWarning("Parsed paragraphs is empty for tip: $tip", isStrict)
   }
-
-  private static Map<String, Icon> loadImages(@NotNull Element tipContent,
-                                              @Nullable ClassLoader loader,
-                                              @Nullable String tipsPath,
-                                              @Nullable Component contextComponent,
-                                              boolean isStrict) {
-    if (tipsPath == null) return Collections.emptyMap();
-    Map<String, Icon> icons = new HashMap<>();
-    tipContent.getElementsByTag("img").forEach(imgElement -> {
-      if (!imgElement.hasAttr("src")) {
-        handleWarning("Not found src attribute in img element:\n" + imgElement, isStrict);
-        return;
-      }
-      String path = imgElement.attr("src");
-
-      Image image = null;
-      if (loader == null) {
-        // This case is required only for testing by opening tip from the file (see TipDialog.OpenTipsAction)
-        try {
-          URL imageUrl = new File(tipsPath, path).toURI().toURL();
-          image = ImageLoader.loadFromUrl(imageUrl);
-        }
-        catch (MalformedURLException e) {
-          handleError(e, isStrict);
-        }
-        // This case is required only for Startdust Tips of the Day preview
-        if (image == null) {
-          try {
-            URL imageUrl = new URL(null, path);
-            image = ImageLoader.loadFromUrl(imageUrl);
-          }
-          catch (MalformedURLException e) {
-            handleError(e, isStrict);
-          }
-        }
-      }
-      else {
-        int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING | ImageLoader.USE_CACHE;
-        boolean isDark = StartupUiUtil.isUnderDarcula();
-        if (isDark) {
-          flags |= ImageLoader.USE_DARK;
-        }
-        ScaleContext context = ScaleContext.create(contextComponent);
-        LoadIconParameters parameters = new LoadIconParameters(Collections.emptyList(), context, isDark, null, false);
-        image = ImageLoader.INSTANCE.loadImage(tipsPath + path, parameters, null, loader, flags, !path.endsWith(".svg"));
-      }
-
-      if (image != null) {
-        Icon icon = new JBImageIcon(image);
-        int maxWidth = TipUiSettings.getImageMaxWidth();
-        if (icon.getIconWidth() > maxWidth) {
-          icon = IconUtil.scale(icon, null, maxWidth * 1f / icon.getIconWidth());
-        }
-        icons.put(path, icon);
-      }
-      else {
-        handleWarning("Not found icon for path: " + tipsPath + path, isStrict);
-      }
-    });
-    return icons;
-  }
-
-  private static void inlineProductInfo(@NotNull Element tipContent) {
-    // Inline all custom entities like productName
-    for (Element element : tipContent.getElementsContainingOwnText("&")) {
-      String text = element.text();
-      for (TipEntity entity : ENTITIES) {
-        text = entity.inline(text);
-      }
-      element.text(text);
+  else {
+    paragraphs[0].editAttributes {
+      StyleConstants.setSpaceAbove(this, TextParagraph.NO_INDENT)
     }
   }
+  return paragraphs
+}
 
-  private static void handleWarning(@NotNull String message, boolean isStrict) {
-    if (isStrict) {
-      throw new RuntimeException("Warning: " + message);
+private fun loadTip(tip: TipAndTrickBean?, isStrict: Boolean): Trinity<String, ClassLoader?, String?> {
+  if (tip == null) {
+    return Trinity.create(IdeBundle.message("no.tip.of.the.day"), null, null)
+  }
+
+  try {
+    val tipFile = Path.of(tip.fileName)
+    if (tipFile.isAbsolute && Files.exists(tipFile)) {
+      val content = Files.readString(tipFile)
+      return Trinity.create(content, null, tipFile.parent.toString())
     }
     else {
-      LOG.warn(message);
+      val retrievers = getTipRetrievers(tip)
+      for (retriever in retrievers) {
+        val tipContent = retriever.getTipContent(tip.fileName)
+        if (tipContent != null) {
+          val tipImagesLocation = "/${retriever.path}/${if (retriever.subPath.isNotEmpty()) "${retriever.subPath}/" else ""}"
+          return Trinity.create(tipContent, retriever.loader, tipImagesLocation)
+        }
+      }
     }
   }
+  catch (e: IOException) {
+    handleError(e, isStrict)
+  }
+  //All retrievers have failed or error occurred, return error.
+  return Trinity.create(getCantReadText(tip), null, null)
+}
 
-  private static void handleError(@NotNull Throwable t, boolean isStrict) {
-    if (isStrict) {
-      throw new RuntimeException(t);
+private fun getTipRetrievers(tip: TipAndTrickBean): List<TipRetriever> {
+  val fallbackLoader = TipUtils::class.java.classLoader
+  val pluginDescriptor = tip.pluginDescriptor
+  val langBundle = DynamicBundle.findLanguageBundle()
+
+  //I know of ternary operators, but in cases like this they're harder to comprehend and debug than this.
+  var tipLoader: ClassLoader? = null
+  if (langBundle != null) {
+    val langBundleLoader = langBundle.pluginDescriptor
+    if (langBundleLoader != null) tipLoader = langBundleLoader.pluginClassLoader
+  }
+  if (tipLoader == null && pluginDescriptor != null && pluginDescriptor.pluginClassLoader != null) {
+    tipLoader = pluginDescriptor.pluginClassLoader
+  }
+  if (tipLoader == null) tipLoader = fallbackLoader
+  var ideCode = ApplicationInfoEx.getInstanceEx().apiVersionAsNumber.productCode.lowercase()
+  //Let's just use the same set of tips here to save space. IC won't try displaying tips it is not aware of, so there'll be no trouble.
+  if (ideCode.contains("ic")) ideCode = "iu"
+  //So the primary loader is determined. Now we're constructing retrievers that use a pair of path/loaders to try to get the tips.
+  val retrievers: MutableList<TipRetriever> = ArrayList()
+  retrievers.add(TipRetriever(tipLoader, "tips", ideCode))
+  retrievers.add(TipRetriever(tipLoader, "tips", "misc"))
+  retrievers.add(TipRetriever(tipLoader, "tips", ""))
+  retrievers.add(TipRetriever(fallbackLoader, "tips", ""))
+  return retrievers
+}
+
+private fun loadImages(tipContent: Element,
+                       loader: ClassLoader?,
+                       tipsPath: String?,
+                       contextComponent: Component?,
+                       isStrict: Boolean): Map<String, Icon> {
+  if (tipsPath == null) {
+    return emptyMap()
+  }
+
+  val icons = HashMap<String, Icon>()
+  for (imgElement in tipContent.getElementsByTag("img")) {
+    if (!imgElement.hasAttr("src")) {
+      handleWarning("Not found src attribute in img element:\n$imgElement", isStrict)
+      continue
+    }
+
+    val path = imgElement.attr("src")
+    var image: Image? = null
+    if (loader == null) {
+      // This case is required only for testing by opening tip from the file (see TipDialog.OpenTipsAction)
+      try {
+        val imageUrl = File(tipsPath, path).toURI().toURL()
+        image = loadFromUrl(imageUrl)
+      }
+      catch (e: MalformedURLException) {
+        handleError(e, isStrict)
+      }
+      // This case is required only for Startdust Tips of the Day preview
+      if (image == null) {
+        try {
+          val imageUrl = URL(null, path)
+          image = loadFromUrl(imageUrl)
+        }
+        catch (e: MalformedURLException) {
+          handleError(e, isStrict)
+        }
+      }
     }
     else {
-      LOG.warn(t);
-    }
-  }
-
-  private static @NotNull String getCantReadText(@NotNull TipAndTrickBean bean) {
-    String plugin = getPoweredByText(bean);
-    String product = ApplicationNamesInfo.getInstance().getFullProductName();
-    if (!plugin.isEmpty()) {
-      product += " and " + plugin + " plugin";
-    }
-    return IdeBundle.message("error.unable.to.read.tip.of.the.day", bean.fileName, product);
-  }
-
-  private static @NlsSafe @NotNull String getPoweredByText(@NotNull TipAndTrickBean tip) {
-    PluginDescriptor descriptor = tip.getPluginDescriptor();
-    return descriptor == null ||
-           PluginManagerCore.CORE_ID.equals(descriptor.getPluginId()) ?
-           "" :
-           descriptor.getName();
-  }
-
-  private static final class TipEntity {
-    private final String name;
-    private final String value;
-
-    private TipEntity(String name, String value) {
-      this.name = name;
-      this.value = value;
-    }
-
-    String inline(final String where) {
-      return where.replace(String.format("&%s;", name), value);
-    }
-
-    static TipEntity of(String name, String value) {
-      return new TipEntity(name, value);
-    }
-  }
-
-  private static class TipRetriever {
-
-    private final ClassLoader myLoader;
-    private final String myPath;
-    private final String mySubPath;
-
-    private TipRetriever(ClassLoader loader, String path, String subPath) {
-      myLoader = loader;
-      myPath = path;
-      mySubPath = subPath;
-    }
-
-    @Nullable
-    String getTipContent(final @Nullable String tipName) {
-      if (tipName == null) return null;
-      URL tipUrl = getTipUrl(tipName);
-      if (tipUrl != null) {
-        try {
-          return ResourceUtil.loadText(tipUrl.openStream());
-        }
-        catch (IOException ignored) {
-        }
+      var flags = ImageLoader.USE_SVG or ImageLoader.ALLOW_FLOAT_SCALING or ImageLoader.USE_CACHE
+      val isDark = StartupUiUtil.isUnderDarcula()
+      if (isDark) {
+        flags = flags or ImageLoader.USE_DARK
       }
-      return null;
+      val context = ScaleContext.create(contextComponent)
+      val parameters = LoadIconParameters(filters = emptyList(),
+                                          scaleContext = context,
+                                          isDark = isDark,
+                                          colorPatcher = null,
+                                          isStroke = false)
+      image = loadImage(path = tipsPath + path,
+                        parameters = parameters,
+                        resourceClass = null,
+                        classLoader = loader,
+                        flags = flags,
+                        isUpScaleNeeded = !path.endsWith(".svg"))
+    }
+    if (image != null) {
+      var icon: Icon = JBImageIcon(image)
+      val maxWidth = imageMaxWidth
+      if (icon.iconWidth > maxWidth) {
+        icon = scale(icon, null, maxWidth * 1f / icon.iconWidth)
+      }
+      icons.put(path, icon)
+    }
+    else {
+      handleWarning("Not found icon for path: $tipsPath$path", isStrict)
+    }
+  }
+  return icons
+}
+
+private fun inlineProductInfo(tipContent: Element) {
+  // Inline all custom entities like productName
+  for (element in tipContent.getElementsContainingOwnText("&")) {
+    var text = element.text()
+    for (entity in ENTITIES) {
+      text = entity.inline(text)
+    }
+    element.text(text)
+  }
+}
+
+private fun handleWarning(message: String, isStrict: Boolean) {
+  if (isStrict) {
+    throw RuntimeException("Warning: $message")
+  }
+  else {
+    LOG.warn(message)
+  }
+}
+
+private fun handleError(t: Throwable, isStrict: Boolean) {
+  if (isStrict) {
+    throw t
+  }
+  else {
+    LOG.warn(t)
+  }
+}
+
+private fun getCantReadText(bean: TipAndTrickBean): String {
+  val plugin = getPoweredByText(bean)
+  var product = ApplicationNamesInfo.getInstance().fullProductName
+  if (!plugin.isEmpty()) {
+    product += " and $plugin plugin"
+  }
+  return IdeBundle.message("error.unable.to.read.tip.of.the.day", bean.fileName, product)
+}
+
+private fun getPoweredByText(tip: TipAndTrickBean): @NlsSafe String {
+  val descriptor = tip.pluginDescriptor
+  return if (descriptor == null || PluginManagerCore.CORE_ID == descriptor.pluginId) "" else descriptor.name
+}
+
+private class TipEntity(private val name: String, private val value: String) {
+  fun inline(where: String): String {
+    return where.replace("&$name;", value)
+  }
+}
+
+private class TipRetriever(@JvmField val loader: ClassLoader?, @JvmField val path: String, @JvmField val subPath: String) {
+  fun getTipContent(tipName: String?): String? {
+    if (tipName == null) {
+      return null
     }
 
-    @Nullable
-    URL getTipUrl(final @NotNull String tipName) {
-      final String tipLocation = String.format("/%s/%s", myPath, mySubPath.length() > 0 ? mySubPath + "/" : "");
-      URL tipUrl = ResourceUtil.getResource(myLoader, tipLocation, tipName);
-      //Tip is not found, but if its name starts with prefix, try without as a safety measure.
-      if (tipUrl == null && tipName.startsWith("neue-")) {
-        tipUrl = ResourceUtil.getResource(myLoader, tipLocation, tipName.substring(5));
-      }
-      return tipUrl;
+    val tipUrl = getTipUrl(tipName) ?: return null
+    try {
+      return ResourceUtil.loadText(tipUrl.openStream())
+    }
+    catch (ignored: IOException) {
+      return null
     }
   }
 
-  static class IconWithRoundedBorder implements Icon {
-    private final @NotNull Icon delegate;
-
-    IconWithRoundedBorder(@NotNull Icon delegate) {
-      this.delegate = delegate;
+  fun getTipUrl(tipName: String): URL? {
+    val tipLocation = "/$path/${if (subPath.isNotEmpty()) "$subPath/" else ""}"
+    val tipUrl = ResourceUtil.getResource(loader!!, tipLocation, tipName)
+    // tip is not found, but if its name starts with prefix, try without as a safety measure
+    @Suppress("SpellCheckingInspection")
+    if (tipUrl == null && tipName.startsWith("neue-")) {
+      return ResourceUtil.getResource(loader, tipLocation, tipName.substring(5))
     }
+    return tipUrl
+  }
+}
 
-    @Override
-    public int getIconWidth() {
-      return delegate.getIconWidth();
-    }
+internal class IconWithRoundedBorder(private val delegate: Icon) : Icon {
+  override fun getIconWidth(): Int = delegate.iconWidth
 
-    @Override
-    public int getIconHeight() {
-      return delegate.getIconHeight();
-    }
+  override fun getIconHeight(): Int = delegate.iconHeight
 
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      Graphics2D g2d = (Graphics2D)g.create();
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-      float arcSize = JBUIScale.scale(16);
-      var clipBounds = new RoundRectangle2D.Float(x, y, getIconWidth(), getIconHeight(), arcSize, arcSize);
-      g2d.clip(clipBounds);
-
-      delegate.paintIcon(c, g2d, x, y);
-
-      g2d.setPaint(TipUiSettings.getImageBorderColor());
-      g2d.setStroke(new BasicStroke(2f));
-      g2d.draw(clipBounds);
-
-      g2d.dispose();
-    }
+  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+    val g2d = g.create() as Graphics2D
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    val arcSize = scale(16).toFloat()
+    val clipBounds = RoundRectangle2D.Float(x.toFloat(), y.toFloat(), iconWidth.toFloat(), iconHeight.toFloat(), arcSize, arcSize)
+    g2d.clip(clipBounds)
+    delegate.paintIcon(c, g2d, x, y)
+    g2d.paint = imageBorderColor
+    g2d.stroke = BasicStroke(2f)
+    g2d.draw(clipBounds)
+    g2d.dispose()
   }
 }

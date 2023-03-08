@@ -136,8 +136,8 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
     for (String id : registry.getFeatureIds()) {
       FeatureDescriptor feature = registry.getFeatureDescriptor(id);
       if (feature.isNeedToBeShownInGuide()) {
-        TipAndTrickBean tip = TipUtils.getTip(feature);
-        if (tip != null && TipUtils.checkTipFileExist(tip)) {
+        TipAndTrickBean tip = TipUtils.INSTANCE.getTip(feature);
+        if (tip != null && TipUtils.INSTANCE.checkTipFileExist(tip)) {
           features.add(feature);
         }
       }
@@ -200,9 +200,9 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
           textPane.clear();
         }
         else {
-          TipAndTrickBean tip = TipUtils.getTip(selection.iterator().next());
+          TipAndTrickBean tip = TipUtils.INSTANCE.getTip(selection.iterator().next());
           Component contextComponent = table.isShowing() ? table : WindowManager.getInstance().getFrame(myProject);
-          List<TextParagraph> paragraphs = TipUtils.loadAndParseTip(tip, contextComponent);
+          List<TextParagraph> paragraphs = TipUtils.INSTANCE.loadAndParseTip(tip, contextComponent);
           textPane.setParagraphs(paragraphs);
         }
       }
