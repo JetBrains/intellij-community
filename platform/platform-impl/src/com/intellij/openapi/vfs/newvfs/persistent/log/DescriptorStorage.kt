@@ -31,7 +31,17 @@ interface DescriptorStorage {
   fun serialize(operation: VfsOperation<*>): ByteArray
   fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T
 
+  /**
+   * Size of storage in bytes. The range [0, size) of storage is guaranteed to contain only descriptors
+   * for which their write procedures have been finished already.
+   */
   fun size(): Long
+
+  /**
+   * Similar to [size], but in addition there is a guarantee that [flush] has happened and before its
+   * invocation [size] was at least current [persistentSize].
+   */
+  fun persistentSize(): Long
 
   fun flush()
   fun dispose()

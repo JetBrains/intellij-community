@@ -22,7 +22,7 @@ class DescriptorStorageImpl(
   private val stringEnumerator: DataEnumerator<String>,
 ) : DescriptorStorage {
   private val storageIO: StorageIO
-  private var lastSafeSize by PersistentVar.long(storagePath / "size")
+  private var persistentSize by PersistentVar.long(storagePath / "size")
   private val position: AdvancingPositionTracker
 
   init {
@@ -31,7 +31,7 @@ class DescriptorStorageImpl(
     val fileChannel = ResilientFileChannel(storagePath / "descriptors", READ, WRITE, CREATE)
     storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
 
-    position = SkipListAdvancingPositionTracker(lastSafeSize ?: 0L)
+    position = SkipListAdvancingPositionTracker(persistentSize ?: 0L)
   }
 
   override fun bytesForDescriptor(tag: VfsOperationTag): Int =
@@ -169,12 +169,15 @@ class DescriptorStorageImpl(
   override fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T =
     VfsOperation.deserialize(tag, data, stringEnumerator)
 
-  override fun size(): Long = lastSafeSize ?: 0L
+  override fun size(): Long = position.getReadyPosition()
+  override fun persistentSize() = persistentSize ?: 0L
 
   override fun flush() {
     val safePos = position.getReadyPosition()
-    storageIO.force()
-    lastSafeSize = safePos
+    if (safePos != persistentSize) {
+      storageIO.force()
+      persistentSize = safePos
+    }
   }
 
   override fun dispose() {

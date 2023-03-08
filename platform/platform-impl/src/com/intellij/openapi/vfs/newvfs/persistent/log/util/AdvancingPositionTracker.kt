@@ -2,8 +2,12 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log.util
 
 interface AdvancingPositionTracker {
-  fun beginAdvance(amount: Long): Long
+  fun beginAdvance(size: Long): Long
   fun finishAdvance(fromPosition: Long)
+
+  /**
+   * Value of [getReadyPosition] means that every advance from positions in [0, value) has been already finished.
+   */
   fun getReadyPosition(): Long
   fun getCurrentAdvancePosition(): Long
 }
