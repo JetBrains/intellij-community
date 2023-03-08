@@ -46,6 +46,7 @@
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinJvmModuleAnnotationsIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinBuiltInsMetadataIndex"/>
     <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinStdlibIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.kotlin.idea.vfilefinder.KotlinShortClassNameFileIndex"/>
 
     <idIndexer filetype="Kotlin" implementationClass="org.jetbrains.kotlin.idea.search.KotlinIdIndexer"/>
     <todoIndexer filetype="Kotlin" implementationClass="org.jetbrains.kotlin.idea.search.KotlinTodoIndexer"/>
@@ -55,12 +56,19 @@
             serviceInterface="org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService"
             serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactoryService"/>
 
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.stubindex.resolve.ShortNamesCacheService"/>
+
     <applicationService
             serviceInterface="org.jetbrains.kotlin.psi.stubs.elements.StubIndexService"
             serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeStubIndexService"/>
 
     <globalIndexFilter implementation="org.jetbrains.kotlin.idea.stubindex.KotlinNonSourceRootIndexFilter"/>
 
-    <registryKey key="kotlin.indices.nested.access.enabled" defaultValue="false" description="Allows nested indices access" />
+    <registryKey key="kotlin.indices.nested.access.enabled"
+                 defaultValue="false"
+                 description="Allows nested indices access" />
+    <registryKey key="kotlin.indices.short.names.filtering.enabled" defaultValue="true"
+                 description="Filter irrelevant Kotlin FQNames by short name index"
+                 restartRequired="true"/>
   </extensions>
 </idea-plugin>

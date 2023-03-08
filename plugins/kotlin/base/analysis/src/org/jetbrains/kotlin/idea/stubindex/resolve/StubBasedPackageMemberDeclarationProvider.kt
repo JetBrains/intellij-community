@@ -5,12 +5,14 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.CommonProcessors
 import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinPackageSourcesMemberNamesIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -21,6 +23,8 @@ import org.jetbrains.kotlin.resolve.lazy.data.KtClassOrObjectInfo
 import org.jetbrains.kotlin.resolve.lazy.data.KtScriptInfo
 import org.jetbrains.kotlin.resolve.lazy.declarations.PackageMemberDeclarationProvider
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
+
+private val isShortNameFilteringEnabled: Boolean by lazy { Registry.`is`("kotlin.indices.short.names.filtering.enabled") }
 
 class StubBasedPackageMemberDeclarationProvider(
     private val fqName: FqName,
@@ -33,7 +37,6 @@ class StubBasedPackageMemberDeclarationProvider(
         val result = ArrayList<KtDeclaration>()
 
         fun addFromIndex(helper: KotlinStringStubIndexHelper<out KtNamedDeclaration>) {
-            //println("helper $helper processElements $fqNameAsString")
             helper.processElements(fqNameAsString, project, searchScope) {
                 if (nameFilter(it.nameAsSafeName)) {
                     result.add(it)
@@ -82,7 +85,13 @@ class StubBasedPackageMemberDeclarationProvider(
 
     override fun getClassOrObjectDeclarations(name: Name): Collection<KtClassOrObjectInfo<*>> {
         val childName = childName(name)
-        return runReadAction {
+        if (isShortNameFilteringEnabled && !name.isSpecial) {
+            val shortNames = ShortNamesCacheService.getInstance(project).getShortNameCandidates(name.asString())
+            if (childName !in shortNames) {
+                return emptyList()
+            }
+        }
+        val ktClassOrObjectInfos = runReadAction {
             val results = arrayListOf<KtClassOrObjectInfo<*>>()
             KotlinFullClassNameIndex.processElements(childName, project, searchScope) {
                 ProgressManager.checkCanceled()
@@ -91,6 +100,7 @@ class StubBasedPackageMemberDeclarationProvider(
             }
             results
         }
+        return ktClassOrObjectInfos
     }
 
     @ApiStatus.Internal
@@ -108,7 +118,8 @@ class StubBasedPackageMemberDeclarationProvider(
                      | KotlinFullClassNameIndex ${if (processor.isFound) "has" else "has not"} '$childName' key.
                      | No value for it in $searchScope.
                      | Everything scope has ${everyObjects.size} objects${if (everyObjects.isNotEmpty())" locations: ${everyObjects.map { it.containingFile.virtualFile }}" else ""}.
-                     | ${if (everyObjects.isEmpty()) "Please try File -> Cache recovery -> Repair IDE" else ""}
+                     | 
+                     | ${if (everyObjects.isEmpty()) "Please try File -> ${if (isApplicationInternalMode()) "Cache recovery -> " else ""}Repair IDE" else ""}
                     """.trimMargin()
                 )
             }

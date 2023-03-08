@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.ArrayUtil
+import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.Processors
 import com.intellij.util.containers.ContainerUtil
@@ -97,6 +98,10 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
 
             return@Processor processor.process(psiClass)
         }
+
+        val processor = CommonProcessors.CollectProcessor<String>()
+        KotlinClassShortNameIndex.processAllKeys(effectiveScope, null, processor)
+        processor.results
 
         val allKtClassOrObjectsProcessed = StubIndex.getInstance().processElements(
             KotlinClassShortNameIndex.indexKey,
