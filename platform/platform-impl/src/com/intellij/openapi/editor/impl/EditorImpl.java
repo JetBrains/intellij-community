@@ -3412,6 +3412,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myMouseSelectionState;
   }
 
+  /**
+   * Update baseline selection if {@link Caret#selectWordAtCaret} action was performed asynchronously.
+   *
+   * @see #selectWordAtCaret(boolean)
+   */
+  @ApiStatus.Internal
+  public void updateMouseWordSelectionStateToCaret() {
+    if (myMouseSelectionState != MOUSE_SELECTION_STATE_WORD_SELECTED) return;
+    Caret caret = getCaretModel().getCurrentCaret();
+    mySavedSelectionStart = caret.getSelectionStart();
+    mySavedSelectionEnd = caret.getSelectionEnd();
+    caret.moveToOffset(mySavedSelectionEnd);
+  }
+
   private void setMouseSelectionState(@MouseSelectionState int mouseSelectionState) {
     if (getMouseSelectionState() == mouseSelectionState) return;
 
@@ -4288,6 +4302,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return true;
   }
 
+  /**
+   * Enter click-and-drag selection mode: select words only.
+   */
   private void selectWordAtCaret(boolean honorCamelCase) {
     Caret caret = getCaretModel().getCurrentCaret();
     try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
@@ -4299,6 +4316,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     caret.moveToOffset(mySavedSelectionEnd);
   }
 
+  /**
+   * Enter click-and-drag selection mode: select lines only.
+   */
   private void selectLineAtCaret(boolean moveToEnd) {
     Caret caret = getCaretModel().getCurrentCaret();
     caret.selectLineAtCaret();
