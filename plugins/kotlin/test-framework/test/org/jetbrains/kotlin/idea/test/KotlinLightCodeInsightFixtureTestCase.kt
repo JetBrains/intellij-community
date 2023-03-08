@@ -62,6 +62,7 @@ import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
 import org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.API_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_ARGUMENTS_DIRECTIVE
+import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.COMPILER_PLUGIN_OPTIONS
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.JVM_TARGET_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.KOTLIN_COMPILER_VERSION_DIRECTIVE
 import org.jetbrains.kotlin.idea.test.CompilerTestDirectives.LANGUAGE_VERSION_DIRECTIVE
@@ -350,6 +351,8 @@ object CompilerTestDirectives {
     const val API_VERSION_DIRECTIVE = "API_VERSION:"
     const val JVM_TARGET_DIRECTIVE = "JVM_TARGET:"
     const val COMPILER_ARGUMENTS_DIRECTIVE = "COMPILER_ARGUMENTS:"
+    const val COMPILER_PLUGIN_OPTIONS = "COMPILER_PLUGIN_OPTIONS:"
+
 
     val ALL_COMPILER_TEST_DIRECTIVES = listOf(
         LANGUAGE_VERSION_DIRECTIVE,
@@ -385,6 +388,11 @@ private fun configureCompilerOptions(fileText: String, project: Project, module:
         ?.let { LanguageVersion.fromVersionString(it) }
     val apiVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $API_VERSION_DIRECTIVE ")
         ?.let { ApiVersion.parse(it) }
+
+    InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $COMPILER_PLUGIN_OPTIONS ")
+        ?.split("\\s+,\\s+")?.toTypedArray()?.let {
+            KotlinCommonCompilerArgumentsHolder.getInstance(project).update { this.pluginOptions = it }
+        }
 
     if (compilerVersion != null || languageVersion != null || apiVersion != null || jvmTarget != null || options != null ||
         projectLanguageVersion != null

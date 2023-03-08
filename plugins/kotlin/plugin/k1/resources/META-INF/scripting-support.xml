@@ -29,6 +29,10 @@
                          parentId="preferences.language.Kotlin"/>
 
     <fileEditorProvider implementation="org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorProvider"/>
+
+    <projectService serviceImplementation="org.jetbrains.kotlin.analysis.api.descriptors.KtFe10CompilerPluginsProvider"
+                    serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtCompilerPluginsProvider"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">

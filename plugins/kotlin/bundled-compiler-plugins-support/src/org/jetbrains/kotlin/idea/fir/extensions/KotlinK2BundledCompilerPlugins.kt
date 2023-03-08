@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.fir.extensions
 
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.kotlin.allopen.AllOpenComponentRegistrar
+import org.jetbrains.kotlin.assignment.plugin.AssignmentComponentRegistrar
 import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins.Companion.COMPILER_PLUGIN_REGISTRAR_FILE
@@ -48,6 +49,10 @@ enum class KotlinK2BundledCompilerPlugins(
 
     SAM_WITH_RECEIVER_COMPILER_PLUGIN(
         SamWithReceiverComponentRegistrar::class,
+    ),
+
+    ASSIGNMENT_COMPILER_PLUGIN(
+        AssignmentComponentRegistrar::class,
     ),
 
     KOTLINX_SERIALIZATION_COMPILER_PLUGIN(

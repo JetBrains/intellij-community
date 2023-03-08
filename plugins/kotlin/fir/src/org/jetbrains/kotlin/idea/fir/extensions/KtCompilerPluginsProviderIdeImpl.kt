@@ -34,6 +34,9 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.extensions.ProjectExtensionDescriptor
+import org.jetbrains.kotlin.fir.extensions.FirAssignExpressionAltererExtension
+import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
+import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
@@ -127,6 +130,17 @@ internal class KtCompilerPluginsProviderIdeImpl(private val project: Project) : 
         val registrars = extensionStorage.registeredExtensions[extensionType] ?: return emptyList()
         @Suppress("UNCHECKED_CAST")
         return registrars as List<T>
+    }
+
+    override fun isPluginOfTypeRegistered(module: KtSourceModule, pluginType: CompilerPluginType): Boolean {
+        val extension = when (pluginType) {
+            CompilerPluginType.ASSIGNMENT -> FirAssignExpressionAltererExtension::class
+            else -> return false
+        }
+
+        return getRegisteredExtensions(module, FirExtensionRegistrarAdapter)
+            .map { (it as FirExtensionRegistrar).configure() }
+            .any { it.extensions[extension]?.isNotEmpty() == true }
     }
 
     @OptIn(Frontend10ApiUsage::class)
