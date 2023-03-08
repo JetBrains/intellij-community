@@ -1825,6 +1825,30 @@ public class JavaDocInfoGenerator {
         }
       }
       buffer.append("</pre>");
+    } else {
+      PsiSnippetAttribute[] attributes = value.getAttributeList().getAttributes();
+      for (PsiSnippetAttribute attribute : attributes) {
+        PsiSnippetAttributeValue attrValue = attribute.getValue();
+        if (attrValue != null) {
+          PsiReference ref = attrValue.getReference();
+          if (ref != null) {
+            PsiElement resolved = ref.resolve();
+            if (resolved instanceof PsiFile file) {
+              buffer.append("<pre>");
+              if (file instanceof PsiJavaFile) {
+                generateJavaSnippetBody(buffer, file);
+              }
+              else {
+                buffer.append(file.getText());
+              }
+              buffer.append("</pre>");
+            } else {
+              buffer.append(getSpanForUnresolvedItem()).append(JavaBundle.message("javadoc.snippet.not.found"))
+                .append(attrValue.getValue()).append("</span>");
+            }
+          }
+        }
+      }
     }
   }
 
