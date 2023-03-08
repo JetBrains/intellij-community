@@ -6,6 +6,7 @@ import com.intellij.cce.metric.util.Sample
 
 internal fun createCompletionGolfMetrics(): List<Metric> =
   listOf(
+    MatchedRatio(),
     MovesCount(),
     TypingsCount(),
     NavigationsCount(),
@@ -14,7 +15,8 @@ internal fun createCompletionGolfMetrics(): List<Metric> =
     PerfectLine(),
     Precision(),
     RecallAt(1),
-    RecallAt(5)
+    RecallAt(5),
+    RecallAt(null)
   )
 
 internal abstract class CompletionGolfMetric<T : Number> : Metric {
@@ -135,6 +137,33 @@ internal class MovesCountNormalised : Metric {
   }
 }
 
+internal class MatchedRatio : Metric {
+  private var totalMatched: Int = 0
+  private var totalExpected: Int = 0
+
+  override val name = "Matched Ratio"
+  override val valueType = MetricValueType.DOUBLE
+  override val value: Double
+    get() = totalMatched.toDouble() / totalExpected
+
+  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+    var matched = 0
+    var expected = 0
+    for (session in sessions) {
+      for (lookup in session.lookups) {
+        val expectedText = session.expectedText.substring(lookup.offset)
+        expected += expectedText.length
+        lookup.selectedWithoutPrefix()?.let {
+          matched += it.length
+        }
+      }
+    }
+    totalMatched += matched
+    totalExpected += expected
+    return matched.toDouble() / expected
+  }
+}
+
 internal class PerfectLine : CompletionGolfMetric<Int>() {
   override val name = NAME
   override val valueType = MetricValueType.INT
@@ -175,9 +204,9 @@ internal class Precision : Metric {
   }
 }
 
-internal class RecallAt(private val n: Int) : Metric {
+internal class RecallAt(private val n: Int?) : Metric {
   private val sample = Sample()
-  override val name = NAME_PREFIX + n
+  override val name = n?.let { "RecallAt$n" } ?: "Recall"
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = sample.mean()
@@ -186,7 +215,7 @@ internal class RecallAt(private val n: Int) : Metric {
     val fileSample = Sample()
 
     for (lookup in sessions.flatMap { it.lookups }) {
-      if (lookup.selectedPosition in 0 until n) {
+      if (n != null && lookup.selectedPosition in 0 until n || n == null && lookup.selectedPosition >= 0) {
         fileSample.add(1.0)
         sample.add(1.0)
       }
@@ -196,10 +225,6 @@ internal class RecallAt(private val n: Int) : Metric {
       }
     }
     return fileSample.mean()
-  }
-
-  companion object {
-    const val NAME_PREFIX = "RecallAt"
   }
 }
 
