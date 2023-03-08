@@ -253,8 +253,8 @@ private class JUnitMalformedSignatureVisitor(
         ?.findSubdirectory("META-INF")
         ?.findSubdirectory("services")
         ?.findFile(ORG_JUNIT_JUPITER_API_EXTENSION_EXTENSION)
-      val serviceFqn = serviceFile?.text ?: break
-      val service = JavaPsiFacade.getInstance(module.project).findClass(serviceFqn, module.moduleContentScope) ?: break
+      val serviceFqn = serviceFile?.text ?: continue
+      val service = JavaPsiFacade.getInstance(module.project).findClass(serviceFqn, module.moduleContentScope) ?: continue
       if (InheritanceUtil.isInheritor(service, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)) return true
     }
     return false
