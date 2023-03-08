@@ -1,10 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.override.PyMethodMember;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
@@ -13,10 +11,12 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
+import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,20 +29,43 @@ public class PyOverrideTest extends PyTestCase {
   }
 
   private void doTest() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-    PyFunction toOverride = getTopLevelClass(0).getMethods()[0];
-    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(1),
-                                            Collections.singletonList(new PyMethodMember(toOverride)), false);
+    doTest(null);
+  }
+
+  private void doTest(@Nullable String subClassName, String @NotNull ... methodName) {
+    myFixture.configureByFiles(getTestName(true) + ".py");
+    doOverride(subClassName, methodName);
     myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
+  }
+
+  private void doOverride(@Nullable String subClassName, String @NotNull ... methodNames) {
+    TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myFixture.getProject(), myFixture.getFile());
+    PyClass subClass;
+    if (subClassName == null) {
+      subClass = ContainerUtil.getLastItem(((PyFile)myFixture.getFile()).getTopLevelClasses());
+    }
+    else {
+      subClass = myFixture.findElementByText(subClassName, PyClass.class);
+    }
+    assertNotNull(subClass);
+    List<PyFunction> methodsToOverride;
+    if (methodNames.length == 0) {
+      List<PyClass> ancestorClasses = subClass.getAncestorClasses(typeEvalContext);
+      assertNotEmpty(ancestorClasses);
+      methodsToOverride = Collections.singletonList(ancestorClasses.get(0).getMethods()[0]);
+    }
+    else {
+      methodsToOverride = ContainerUtil.map(methodNames, name -> subClass.findMethodByName(name, true, typeEvalContext));
+    }
+    methodsToOverride.forEach(TestCase::assertNotNull);
+    List<PyFunction> implToOverride = ContainerUtil.map(
+      methodsToOverride, method -> ObjectUtils.chooseNotNull(PyiUtil.getImplementation(method, typeEvalContext), method)
+    );
+    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), subClass, ContainerUtil.map(implToOverride, PyMethodMember::new), false);
   }
 
   private void doTest3k() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
-  }
-
-  private PyClass getTopLevelClass(int index) {
-    PyFile file = (PyFile)myFixture.getFile();
-    return file.getTopLevelClasses().get(index);
   }
 
   /**
@@ -77,53 +100,28 @@ public class PyOverrideTest extends PyTestCase {
   }
 
   public void testIndent() {  // PY-1796
-    doTest();
+    doTest("B");
   }
 
   public void testInnerClass() {  // PY-10976
-    myFixture.configureByFile(getTestName(true) + ".py");
-    PyFunction toOverride = getTopLevelClass(0).getMethods()[0];
-    PyClass pyClass = getTopLevelClass(1).getNestedClasses()[0];
-    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), pyClass,
-                                            Collections.singletonList(new PyMethodMember(toOverride)), false);
-    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
+    doTest("Inner");
   }
 
   public void testInnerFunctionClass() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-    PyFunction toOverride = getTopLevelClass(0).getMethods()[0];
-    final PsiElement element = myFixture.getElementAtCaret();
-    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), PsiTreeUtil.getParentOfType(element, PyClass.class, false),
-                                            Collections.singletonList(new PyMethodMember(toOverride)), false);
-    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
+    doTest("B");
   }
 
   public void testQualified() {  // PY-2171
-    myFixture.configureByFile(getTestName(true) + ".py");
-    PyClass cls = PyClassNameIndex.findClass("turtle.TurtleScreenBase", myFixture.getProject());
-    assertNotNull(cls);
-    PyFunction initMethod = cls.findMethodByName(PyNames.INIT, false, null);
-    assertNotNull(initMethod);
-    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(0),
-                                            Collections.singletonList(new PyMethodMember(initMethod)), false);
-    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
+    doTest();
   }
 
   public void testImplement() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-    PyFunction toImplement = getTopLevelClass(0).getMethods()[1];
-    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(1),
-                                            Collections.singletonList(new PyMethodMember(toImplement)), true);
-    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
+    doTest("B", "my_method");
   }
 
   // PY-4418
   public void testProperty() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-    PyFunction toImplement = getTopLevelClass(0).getMethods()[0];
-    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(1),
-                                            Collections.singletonList(new PyMethodMember(toImplement)), false);
-    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
+    doTest();
   }
 
   // PY-11127
@@ -138,17 +136,7 @@ public class PyOverrideTest extends PyTestCase {
 
   // PY-25906
   public void testImplementationOrder() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-
-    final PyFunction[] toImplement = getTopLevelClass(0).getMethods();
-    assertEquals(Arrays.asList("foo", "bar"), ContainerUtil.map(toImplement, PyFunction::getName));
-
-    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(),
-                                            getTopLevelClass(1),
-                                            ContainerUtil.map(toImplement, PyMethodMember::new),
-                                            true);
-
-    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
+    doTest("Impl", "foo", "bar");
   }
 
   public void testPy3k() {
@@ -180,30 +168,22 @@ public class PyOverrideTest extends PyTestCase {
 
   // PY-18553
   public void testImportsForTypeAnnotations1() {
-    testImportsForTypeAnnotations(getTestName(true), 0);
+    doTestImportsForTypeAnnotations();
   }
 
   public void testImportsForTypeAnnotations2() {
-    testImportsForTypeAnnotations(getTestName(true), 0);
+    doTestImportsForTypeAnnotations();
   }
 
   public void testImportsForTypeAnnotations3() {
-    testImportsForTypeAnnotations(getTestName(true), 2);
+    doTestImportsForTypeAnnotations();
   }
 
-  private void testImportsForTypeAnnotations(String testName, int orderOfClassToOverride) {
-
+  private void doTestImportsForTypeAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
-      final String initialFilePath = String.format("%s.py", testName);
-      final String importFilePath = String.format("%s_import.py", testName);
-      final String resultFilePath = String.format("%s_after.py", testName);
-
-      List<PyFile> pyFiles = ContainerUtil.map(myFixture.configureByFiles(initialFilePath, importFilePath), PyFile.class::cast);
-
-      PyFunction toOverride = pyFiles.get(1).getTopLevelClasses().get(orderOfClassToOverride).getMethods()[0];
-      PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(0),
-                                              Collections.singletonList(new PyMethodMember(toOverride)), false);
-      myFixture.checkResultByFile(resultFilePath, true);
+      myFixture.configureByFiles(getTestName(true) + ".py", getTestName(true) + "_import.py");
+      doOverride(null);
+      myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
     });
   }
 
@@ -225,63 +205,31 @@ public class PyOverrideTest extends PyTestCase {
 
   // PY-10229
   public void testInstanceCheck() {
-    myFixture.configureByFile(getTestName(true) + ".py");
-    final PyClass cls = getTopLevelClass(0);
-    final PyFunction method = cls.findMethodByName("__instancecheck__", true, null);
-    assertNotNull(method);
-    PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), cls, Collections.singletonList(new PyMethodMember(method)), false);
-    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
+    doTest("MyType", "__instancecheck__");
   }
 
   // PY-19312
   public void testAsyncMethod() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> doTest());
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
   // PY-30287
   public void testMethodWithOverloadsInTheSameFile() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        myFixture.configureByFile(getTestName(true) + ".py");
-
-        PyOverrideImplementUtil.overrideMethods(
-          myFixture.getEditor(),
-          getTopLevelClass(1),
-          Collections.singletonList(new PyMethodMember(getTopLevelClass(0).getMethods()[2])),
-          false
-        );
-
-        myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
-      }
-    );
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
   // PY-30287
   public void testMethodWithOverloadsInAnotherFile() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final PsiFile[] files = myFixture.configureByFiles(
-          getTestName(true) + ".py",
-          getTestName(true) + "_parent.py"
-        );
-
-        PyOverrideImplementUtil.overrideMethods(
-          myFixture.getEditor(),
-          getTopLevelClass(0),
-          Collections.singletonList(new PyMethodMember(((PyFile)files[1]).getTopLevelClasses().get(0).getMethods()[2])),
-          false
-        );
-
-        myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
-      }
-    );
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
+      myFixture.configureByFiles(getTestName(true) + ".py", getTestName(true) + "_parent.py");
+      doOverride(null);
+      myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
+    });
   }
 
   // PY-35512
   public void testPositionalOnlyParameters() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON38, () -> doTest("B"));
   }
 
   @Override
