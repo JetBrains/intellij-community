@@ -1,13 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.telemetry
 
-import com.intellij.diagnostic.telemetry.BasicCsvMetricsExporter.Companion.csvHeadersLines
-import com.intellij.diagnostic.telemetry.BasicCsvMetricsExporter.Companion.toCsvStream
+import com.intellij.diagnostic.telemetry.MetricsExporterUtils.toCsvStream
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.util.io.FileSetLimiter
+import com.intellij.util.SystemProperties
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.metrics.InstrumentType
-import io.opentelemetry.sdk.metrics.data.*
+import io.opentelemetry.sdk.metrics.data.AggregationTemporality
+import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.io.File
 import java.nio.file.Files
@@ -15,7 +18,7 @@ import java.nio.file.Path
 
 class CsvGzippedMetricsExporter(writeToFile: Path) : MetricExporter {
   private var fileToWrite: File = writeToFile.toFile()
-  private var storage = LinesStorage(fileToWrite)
+  private val storage = LinesStorage(fileToWrite)
 
   init {
     initFileCreating(writeToFile)
@@ -28,17 +31,14 @@ class CsvGzippedMetricsExporter(writeToFile: Path) : MetricExporter {
         Files.createDirectories(parentDir)
       }
     }
-    val csvHeadersLines = csvHeadersLines()
     logger.runAndLogException {
       val tmp = ArrayList<String>()
       val lines = storage.getLines()
-      if (lines.size > 0) {
+      if (lines.isNotEmpty()) {
         tmp.addAll(lines)
-        storage.emptyStorage()
+        storage.clearStorage()
       }
-      for (line in csvHeadersLines) {
-        storage.appendLine(line)
-      }
+      storage.appendHeaderLines()
       if (tmp.size > 0) {
         for (line in tmp) {
           storage.appendLine(line)
@@ -58,18 +58,12 @@ class CsvGzippedMetricsExporter(writeToFile: Path) : MetricExporter {
 
     val result = CompletableResultCode()
 
-    val lines: MutableList<String> = metrics.stream().flatMap { metricData: MetricData ->
-        toCsvStream(metricData)
-      }.toList()
-
-    for (line in lines) {
-      storage.appendLine(line)
-    }
+    metrics.forEach { toCsvStream(it).forEach(storage::appendLine) }
 
     try {
-      val fileSizeInMb = fileToWrite.length()
-      if (fileSizeInMb > 10 * 1024 * 1024) {
-        val newPath = MetricsFileManager.generateFileForMetrics(connectionMetricsPath)
+      val fileSize = fileToWrite.length()
+      if (fileSize > 10 * 1024 * 1024) {
+        val newPath = generateFileForConnectionMetrics()
         fileToWrite = newPath.toFile()
         initFileCreating(newPath)
         storage.updateDestFile(fileToWrite)
@@ -90,7 +84,18 @@ class CsvGzippedMetricsExporter(writeToFile: Path) : MetricExporter {
     storage.closeBufferedWriter()
     return CompletableResultCode.ofSuccess()
   }
+
   companion object {
     val logger = Logger.getInstance(CsvGzippedMetricsExporter::class.java)
+
+    fun generateFileForConnectionMetrics(): Path {
+      val connectionMetricsPath = "open-telemetry-connection-metrics.gz"
+      val pathResolvedAgainstLogDir = PathManager.getLogDir().resolve(connectionMetricsPath).toAbsolutePath()
+      val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.rdct.metrics.max-files-to-keep", 14)
+
+      return FileSetLimiter.inDirectory(pathResolvedAgainstLogDir.parent).withBaseNameAndDateFormatSuffix(
+        pathResolvedAgainstLogDir.fileName.toString(), "yyyy-MM-dd-HH-mm-ss").removeOldFilesBut(maxFilesToKeep,
+                                                                                                FileSetLimiter.DELETE_ASYNC).createNewFile()
+    }
   }
 }

@@ -81,11 +81,13 @@ object TraceManager {
 
     val metricExporters = mutableListOf<MetricExporter>()
     if (metricsEnabled) {
-      val exporter = FilteredMetricsExporter(createMetricsExporter(metricsReportingPath)) { metric -> !metric.name.contains("rdct") }
+      val writeMetricsTo = MetricsExporterUtils.generateFileForMetrics(metricsReportingPath)
+      val exporter = FilteredMetricsExporter(CsvMetricsExporter(writeMetricsTo)) { metric -> !metric.name.contains("rdct") }
       metricExporters.add(exporter)
 
       if (connectionMetricsFlag != null) {
-        val connectionExporter = FilteredMetricsExporter(createRdctMetricsExporter(connectionMetricsPath)) { metric ->
+        val connectionExporter = FilteredMetricsExporter(
+          CsvGzippedMetricsExporter(CsvGzippedMetricsExporter.generateFileForConnectionMetrics())) { metric ->
           metric.name.contains("rdct")
         }
         connectionMetricsReader = PeriodicMetricReader.builder(connectionExporter)
@@ -148,16 +150,6 @@ object TraceManager {
 
     val useVerboseSdk = System.getProperty("idea.diagnostic.opentelemetry.verbose")
     verboseMode = useVerboseSdk?.toBooleanStrictOrNull() == true
-  }
-
-  private fun createMetricsExporter(metricsReportingPath: String): MetricExporter {
-    val writeMetricsTo = MetricsFileManager.generateFileForMetrics(metricsReportingPath)
-    return CsvMetricsExporter(writeMetricsTo)
-  }
-
-  private fun createRdctMetricsExporter(metricsReportingPath: String): MetricExporter {
-    val writeMetricsTo = MetricsFileManager.generateFileForMetrics(metricsReportingPath)
-    return CsvGzippedMetricsExporter(writeMetricsTo)
   }
 
   /**
