@@ -89,5 +89,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement-k2" />
     <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" />
   </component>
 </module>

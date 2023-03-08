@@ -193,5 +193,6 @@
     <orderEntry type="module" module-name="kotlin.refactorings.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" exported="" />
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" exported="" />
+    <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" exported="" />
   </component>
 </module>
