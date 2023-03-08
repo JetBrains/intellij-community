@@ -4618,7 +4618,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = false;
 
-      if (fontSize == UISettingsUtils.getInstance().scaleFontSize(super.getEditorFontSize2D())) {
+      if (fontSize == UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D())) {
         myFontSize = FONT_SIZE_TO_IGNORE;
       }
       else {
