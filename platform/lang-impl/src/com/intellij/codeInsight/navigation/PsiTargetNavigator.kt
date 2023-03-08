@@ -23,19 +23,19 @@ import java.awt.event.MouseEvent
 import java.util.function.*
 import java.util.function.Function
 
-class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<List<T>>) {
+class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
 
   constructor(elements: Array<T>) : this(Supplier { elements.toList() })
 
   private var selection: PsiElement? = null
   private var presentationProvider: Function<T, TargetPresentation> = Function { targetPresentation(it) }
-  private var elementsConsumer: BiConsumer<List<T>, PsiTargetNavigator<T>>? = null
+  private var elementsConsumer: BiConsumer<Collection<T>, PsiTargetNavigator<T>>? = null
   private var title: @PopupTitle String? = null
   private var tabTitle: @TabTitle String? = null
 
   fun selection(selection: PsiElement?): PsiTargetNavigator<T> = apply { this.selection = selection }
   fun presentationProvider(provider: Function<T, TargetPresentation>): PsiTargetNavigator<T> = apply { this.presentationProvider = provider }
-  fun elementsConsumer(consumer: BiConsumer<List<T>, PsiTargetNavigator<T>>): PsiTargetNavigator<T> = apply { elementsConsumer = consumer }
+  fun elementsConsumer(consumer: BiConsumer<Collection<T>, PsiTargetNavigator<T>>): PsiTargetNavigator<T> = apply { elementsConsumer = consumer }
   fun title(title: @PopupTitle String?): PsiTargetNavigator<T> = apply { this.title = title }
   fun tabTitle(title: @TabTitle String?): PsiTargetNavigator<T> = apply { this.tabTitle = title }
 
@@ -52,23 +52,23 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<List<T>>) {
     @Suppress("UNCHECKED_CAST") ((it.dereference() as T).let { element -> processor.execute(element) })
   }
 
-  fun navigate(editor: Editor, @PopupTitle title: String?, processor: PsiElementProcessor<T>) {
-    navigate(editor.project!!, title, processor, Consumer { it.showInBestPositionFor(editor) })
+  fun navigate(editor: Editor, @PopupTitle title: String?, processor: PsiElementProcessor<T>): Boolean {
+    return navigate(editor.project!!, title, processor, Consumer { it.showInBestPositionFor(editor) })
   }
 
-  fun navigate(e: MouseEvent, @PopupTitle title: String?, project: Project) {
-    navigate(project, title, { element -> EditSourceUtil.navigateToPsiElement(element) }, Consumer { it.show(RelativePoint(e)) })
+  fun navigate(e: MouseEvent, @PopupTitle title: String?, project: Project): Boolean {
+    return navigate(project, title, { element -> EditSourceUtil.navigateToPsiElement(element) }, Consumer { it.show(RelativePoint(e)) })
   }
 
   private fun navigate(project: Project,
                        @PopupTitle title: String?,
                        processor: PsiElementProcessor<T>,
-                       popupConsumer: Consumer<JBPopup>
-  ) {
+                       popupConsumer: Consumer<JBPopup>): Boolean
+  {
     val (items, selected) = computeItems(project)
     val predicate = getPredicate(processor)
     if (items.isEmpty()) {
-      return
+      return false
     }
     else if (items.size == 1) {
       predicate.test(items.first())
@@ -77,6 +77,7 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<List<T>>) {
       val popup = buildPopup(items, title, project, selected, predicate)
       popupConsumer.accept(popup)
     }
+    return true
   }
 
   fun performSilently(project: Project, processor: PsiElementProcessor<T>) {
