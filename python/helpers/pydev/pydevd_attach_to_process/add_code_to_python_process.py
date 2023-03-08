@@ -287,9 +287,10 @@ def is_mac():
     return platform.system() == 'Darwin'
 
 
-def is_mac_arm64():
+def is_aarch64():
     import platform
-    return platform.machine() == 'arm64'
+    # `aarch64` on Linux, `arm64` on macOS
+    return platform.machine().lower() in ['aarch64', 'arm64']
 
 
 def run_python_code_windows(pid, python_code, connect_debugger_tracing=False, show_debug_info=0):
@@ -452,11 +453,15 @@ def run_python_code_linux(pid, python_code, connect_debugger_tracing=False, show
 
     # Valid arguments for arch are i386, i386:x86-64, i386:x64-32, i8086,
     #   i386:intel, i386:x86-64:intel, i386:x64-32:intel, i386:nacl,
-    #   i386:x86-64:nacl, i386:x64-32:nacl, auto.
+    #   i386:x86-64:nacl, i386:x64-32:nacl, aarch64, auto.
 
     if is_python_64bit():
-        suffix = 'amd64'
-        arch = 'i386:x86-64'
+        if is_aarch64():
+            suffix = 'aarch64'
+            arch = 'aarch64'
+        else:
+            suffix = 'amd64'
+            arch = 'i386:x86-64'
     else:
         suffix = 'x86'
         arch = 'i386'
@@ -539,19 +544,16 @@ def run_python_code_mac(pid, python_code, connect_debugger_tracing=False, show_d
     #   i386:x86-64:nacl, i386:x64-32:nacl, auto, arm64
 
     if is_python_64bit():
-        if is_mac_arm64():
-            suffix = 'arm64.dylib'
+        if is_aarch64():
             arch = 'arm64'
         else:
-            suffix = 'x86_64.dylib'
             arch = 'i386:x86-64'
     else:
-        suffix = 'x86.dylib'
         arch = 'i386'
 
     debug('Attaching with arch: %s'% (arch,))
 
-    target_dll = os.path.join(filedir, 'attach_%s' % suffix)
+    target_dll = os.path.join(filedir, 'attach.dylib')
     target_dll = os.path.normpath(target_dll)
     if not os.path.exists(target_dll):
         raise RuntimeError('Could not find dll file to inject: %s' % target_dll)

@@ -79,7 +79,9 @@ elif IS_IRONPYTHON:
     IS_WINDOWS = "windows" in System.Environment.OSVersion.VersionString.lower()
 
 IS_64BIT_PROCESS = sys.maxsize > (2 ** 32)
-IS_ARM64 = platform.machine() == 'arm64'
+
+# `aarch64` on Linux, `arm64` on macOS
+IS_AARCH64 = platform.machine().lower() in ['aarch64', 'arm64']
 
 IS_LINUX = sys.platform.startswith('linux')
 IS_MACOS = sys.platform == 'darwin'
