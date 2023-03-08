@@ -29,6 +29,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.list.TargetPopup;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -37,6 +38,7 @@ import com.intellij.util.text.MatcherHolder;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,12 +48,29 @@ import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import java.awt.*;
 import java.util.Comparator;
+import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ * This class assumes a number of previously-working contracts (read action on EDT, model access on EDT),
+ * which we are trying to get rid of because they slow down the rendering and user action response time.
+ * <br/>
+ * The renderer itself must not compute any data. The renderer must use data computed on a background thread.
+ * The data must be computed before {@link #getListCellRendererComponent} is invoked. This data is <i>presentation</i>.
+ * {@link TargetPresentation} can be used with the {@link TargetPopup#createTargetPresentationRenderer corresponding renderer},
+ * or the presentation class/interface should be defined separately to allow customization on the presentation level (not on renderer level).
+ * This approach is used in {@link TargetPopup#createTargetPopup(String, List, List, Consumer)},
+ * other APIs/implementations are welcome to use the same approach as well.
+ * </p>
+ */
+@Obsolete
 @DirtyUI
 // extends ListCellRenderer<Object> because it can render strings too
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer<Object> {
