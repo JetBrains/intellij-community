@@ -318,7 +318,7 @@ public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSepa
    */
   private static int getStepSize(int lineHeight) {
     // the divider needs ~3 half-periods (6 steps) to be drawn nicely
-    return JBUIScale.scale(Registry.intValue("diff.divider.width")) / 6;
+    return Math.max(JBUIScale.scale(Registry.intValue("diff.divider.width")) / 6, 2);
   }
 
   /**
