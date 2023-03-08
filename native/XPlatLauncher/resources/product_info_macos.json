@@ -162,7 +162,6 @@
     "com.jetbrains.packagesearch.intellij-plugin",
     "com.jetbrains.performancePlugin",
     "com.jetbrains.performancePlugin.dynamicPlugins",
-    "com.jetbrains.performancePlugin.kotlin",
     "com.jetbrains.performancePlugin.workspaceModel",
     "com.jetbrains.plugins.webDeployment",
     "com.jetbrains.projector.libs",
