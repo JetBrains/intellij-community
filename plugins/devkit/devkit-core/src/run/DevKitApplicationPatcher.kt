@@ -51,7 +51,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       vmParameters.add("-Xmx2g")
     }
     if (vmParametersAsList.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
-      vmParameters.add("-XX:ReservedCodeCacheSize=240m")
+      vmParameters.add("-XX:ReservedCodeCacheSize=512m")
     }
     vmParameters.addAll(
       "-XX:+UseG1GC",
