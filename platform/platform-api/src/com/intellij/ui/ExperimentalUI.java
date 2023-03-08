@@ -219,6 +219,10 @@ public abstract class ExperimentalUI {
       public static final Icon Search = loadIcon("expui/general/search.svg");
     }
 
+    public static final class ToolWindow {
+      public static final Icon MeetNewUi = loadIcon("expui/toolwindow/meetNewUi.svg");
+    }
+
     private static Icon loadIcon(String path) {
       return IconLoader.getIcon(path, AllIcons.class.getClassLoader());
     }

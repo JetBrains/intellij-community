@@ -1145,7 +1145,6 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon Documentation = load("toolwindows/documentation.svg", -109460896, 2);
     /** 13x13 */ public static final @NotNull Icon ErrorEvents = load("toolwindows/errorEvents.svg", -1325472331, 2);
     /** 13x13 */ public static final @NotNull Icon InfoEvents = load("toolwindows/infoEvents.svg", -1959104863, 2);
-    /** 16x16 */ public static final @NotNull Icon MeetNewUi = load("toolwindows/meetNewUi.svg", -919334031, 0);
     /** 13x13 */ public static final @NotNull Icon NoEvents = load("toolwindows/noEvents.svg", -54977595, 2);
     /** 13x13 */ public static final @NotNull Icon Notifications = load("toolwindows/notifications.svg", -1680199155, 2);
     /** 13x13 */ public static final @NotNull Icon NotificationsNew = load("toolwindows/notificationsNew.svg", 919374629, 2);

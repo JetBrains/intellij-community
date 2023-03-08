@@ -29,6 +29,8 @@ class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun init(toolWindow: ToolWindow) {
+    toolWindow.setIcon(ExperimentalUI.Icons.ToolWindow.MeetNewUi)
+
     val project = toolWindow.project
     val propertiesComponent = PropertiesComponent.getInstance()
     if (isNotificationSilentMode(project) || !propertiesComponent.getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH)) {

@@ -643,7 +643,6 @@
       "find.svg": "toolwindows/toolWindowFind.svg",
       "gradle.svg": "icons/toolWindowGradle.svg",
       "hierarchy.svg": "toolwindows/toolWindowHierarchy.svg",
-      "meetNewUi.svg": "toolwindows/meetNewUi.svg",
       "messages.svg": "toolwindows/toolWindowMessages.svg",
       "notifications.svg": "toolwindows/notifications.svg",
       "problems.svg": [
