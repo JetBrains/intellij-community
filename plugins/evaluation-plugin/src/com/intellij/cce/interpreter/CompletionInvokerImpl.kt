@@ -6,6 +6,7 @@ import com.intellij.cce.actions.UserEmulator
 import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.*
 import com.intellij.cce.evaluation.CodeCompletionHandlerFactory
+import com.intellij.cce.evaluation.SuggestionsProvider
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.completion.CompletionType
@@ -41,6 +42,7 @@ class CompletionInvokerImpl(private val project: Project,
                             userEmulationSettings: UserEmulator.Settings?,
                             private val completionGolfSettings: CompletionGolfEmulation.Settings?) : CompletionInvoker {
   private val benchmarkRandom = Random(completionGolfSettings?.randomSeed ?: 0)
+
   private companion object {
     val LOG = Logger.getInstance(CompletionInvokerImpl::class.java)
     const val LOG_MAX_LENGTH = 50
@@ -109,7 +111,8 @@ class CompletionInvokerImpl(private val project: Project,
       val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl
       if (lookup != null) {
         lookup.replacePrefix(lookup.additionalPrefix, lookup.additionalPrefix + text)
-      } else {
+      }
+      else {
         runnable.run()
       }
     }
@@ -193,7 +196,8 @@ class CompletionInvokerImpl(private val project: Project,
     val session = Session(offset, expectedLine, completableRanges.sumOf { it.end - it.start }, null, TokenProperties.UNKNOWN)
     if (isBenchmark) {
       session.benchmark(expectedLine, completableRanges, offset, emulator)
-    } else {
+    }
+    else {
       session.emulateCG(expectedLine, completableRanges, offset, emulator)
     }
     return session
@@ -208,7 +212,7 @@ class CompletionInvokerImpl(private val project: Project,
         printText(toAdd)
         currentString += toAdd
       }
-      val lookup = callCompletion(expectedLine, null)
+      val lookup = getSuggestions(expectedLine, completionGolfSettings?.suggestionsProvider)
       emulator.pickBestSuggestion(currentString, lookup, this).also {
         LookupManager.hideActiveLookup(project)
         addLookup(it)
@@ -230,7 +234,7 @@ class CompletionInvokerImpl(private val project: Project,
         continue
       }
 
-      val lookup = callCompletion(expectedLine, null)
+      val lookup = getSuggestions(expectedLine, completionGolfSettings?.suggestionsProvider)
 
       emulator.pickBestSuggestion(currentString, lookup, this).also {
         if (invokeOnEachChar) {
@@ -240,7 +244,8 @@ class CompletionInvokerImpl(private val project: Project,
         if (selected != null) {
           printText(selected)
           currentString += selected
-        } else {
+        }
+        else {
           printText(nextChar)
           currentString += nextChar
         }
@@ -252,6 +257,17 @@ class CompletionInvokerImpl(private val project: Project,
         addLookup(it)
       }
     }
+  }
+
+  private fun getSuggestions(expectedLine: String, suggestionsProvider: String?): com.intellij.cce.core.Lookup {
+    if (suggestionsProvider == null) {
+      return callCompletion(expectedLine, null)
+    }
+    val lang = com.intellij.lang.Language.findLanguageByID(language.ideaLanguageId)
+               ?: throw IllegalStateException("Can't find language \"${language.ideaLanguageId}\"")
+    val provider = SuggestionsProvider.find(project, suggestionsProvider)
+                   ?: throw IllegalStateException("Can't find suggestions provider \"$suggestionsProvider\"")
+    return provider.getSuggestions(expectedLine, editor!!, lang)
   }
 
   private fun positionToString(offset: Int): String {

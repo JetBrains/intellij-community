@@ -33,6 +33,9 @@
     <extensionPoint qualifiedName="com.intellij.cce.codeCompletionHandlerFactory" area="IDEA_PROJECT"
                     interface="com.intellij.cce.evaluation.CodeCompletionHandlerFactory"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.suggestionsProvider" area="IDEA_PROJECT"
+                    interface="com.intellij.cce.evaluation.SuggestionsProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.cce.openProjectMethodProvider"
                     interface="com.intellij.cce.actions.OpenProjectMethodProvider"
                     dynamic="true"/>
@@ -70,4 +73,5 @@
   <depends optional="true" config-file="evaluationPlugin-ruby.xml">org.jetbrains.plugins.ruby</depends>
   <depends optional="true" config-file="evaluationPlugin-kotlin.xml">org.jetbrains.kotlin</depends>
   <depends optional="true" config-file="evaluationPlugin-statsCollector.xml">com.intellij.stats.completion</depends>
+  <depends optional="true" config-file="evaluationPlugin-fullLine.xml">org.jetbrains.completion.full.line</depends>
 </idea-plugin>
