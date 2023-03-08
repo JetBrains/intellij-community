@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtExtensionApplicabilityResult
 import org.jetbrains.kotlin.analysis.api.components.KtScopeContext
@@ -30,6 +32,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 
 internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -106,7 +109,7 @@ internal open class FirCallableCompletionContributor(
         val callablesWithMetadata: Sequence<CallableWithMetadataForCompletion> = when {
             receiver != null -> collectDotCompletion(scopesContext, receiver, extensionChecker, visibilityChecker)
             else -> completeWithoutReceiver(scopesContext, extensionChecker, visibilityChecker)
-        }
+        }.filterOutUninitializedCallables(positionContext.position)
 
         for (callableWithMetadata in callablesWithMetadata) {
             val context = if (callableWithMetadata.withExpectedType) weighingContext else weighingContextWithoutExpectedType
@@ -376,6 +379,43 @@ internal open class FirCallableCompletionContributor(
         explicitReceiverTypeHint: KtType? = null,
         withExpectedType: Boolean = true,
     ) = CallableWithMetadataForCompletion(symbol, substitutor, explicitReceiverTypeHint, options, scopeKind, withExpectedType)
+
+    context(KtAnalysisSession)
+    private fun Sequence<CallableWithMetadataForCompletion>.filterOutUninitializedCallables(
+        position: PsiElement
+    ): Sequence<CallableWithMetadataForCompletion> {
+        val uninitializedCallablesForPosition = collectUninitializedCallablesForPosition(position)
+        return filterNot { it.symbol.psi in uninitializedCallablesForPosition }
+    }
+
+    context(KtAnalysisSession)
+    private fun collectUninitializedCallablesForPosition(position: PsiElement): Set<KtCallableDeclaration> = buildSet {
+        for (parent in position.parents(withSelf = false)) {
+            val grandParent = parent.parent
+            when (grandParent) {
+                is KtParameter -> {
+                    if (grandParent.defaultValue == parent) {
+                        // Filter out current parameter and all parameters initialized after current parameter. In the following example:
+                        // ```
+                        // fun test(a, b: Int = <caret>, c: Int) {}
+                        // ```
+                        // `a` and `b` should not show up in completion.
+                        val originalOrSelf = getOriginalDeclarationOrSelf(grandParent)
+                        originalOrSelf.getNextParametersWithSelf().forEach { add(it) }
+                    }
+                }
+
+                is KtProperty -> if (grandParent.initializer == parent) add(getOriginalDeclarationOrSelf(grandParent))
+            }
+
+            if (parent is KtDeclaration) break // we can use variable inside lambda or anonymous object located in its initializer
+        }
+    }
+
+    private inline fun <reified T : KtDeclaration> KtAnalysisSession.getOriginalDeclarationOrSelf(declaration: T): T =
+        declaration.getOriginalDeclaration() as? T ?: declaration
+
+    private fun KtParameter.getNextParametersWithSelf(): Sequence<KtParameter> = generateSequence({ this }, { it.nextSiblingOfSameType() })
 }
 
 internal class FirCallableReferenceCompletionContributor(

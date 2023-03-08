@@ -1997,6 +1997,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/shadowing/InInitializer7.kt");
             }
 
+            @TestMetadata("InInitializerProperty.kt")
+            public void testInInitializerProperty() throws Exception {
+                runTest("../testData/basic/common/shadowing/InInitializerProperty.kt");
+            }
+
             @TestMetadata("Locals1.kt")
             public void testLocals1() throws Exception {
                 runTest("../testData/basic/common/shadowing/Locals1.kt");
