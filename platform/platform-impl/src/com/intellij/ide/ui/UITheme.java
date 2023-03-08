@@ -14,6 +14,7 @@ import com.intellij.ui.Gray;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.InsecureHashBuilder;
 import com.intellij.util.SVGLoader;
+import com.intellij.util.SvgAttributePatcher;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -237,7 +238,7 @@ public final class UITheme {
       colors.forEach((key, value) -> alpha.put(value, 255));
       theme.selectionColorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
         @Override
-        public SVGLoader.@Nullable SvgElementColorPatcher forPath(@Nullable String path) {
+        public @Nullable SvgAttributePatcher attributeForPath(@Nullable String path) {
           PaletteScope scope = paletteScopeManager.getScopeByPath(path);
           InsecureHashBuilder hash = new InsecureHashBuilder()
             .stringMap(colors)
@@ -316,8 +317,9 @@ public final class UITheme {
         }
 
         theme.colorPatcher = new SVGLoader.SvgElementColorPatcherProvider() {
+          @Nullable
           @Override
-          public @Nullable SVGLoader.SvgElementColorPatcher forPath(@Nullable String path) {
+          public SvgAttributePatcher attributeForPath(@Nullable String path) {
             PaletteScope scope = paletteScopeManager.getScopeByPath(path);
             return scope == null ? null : SVGLoader.INSTANCE.newPatcher(scope.digest(), scope.newPalette, scope.alphas);
           }
@@ -597,7 +599,7 @@ public final class UITheme {
       }
 
       if (value.endsWith(".png") || value.endsWith(".svg")) {
-        Icon icon = ImageDataByPathLoader.findIcon(value, classLoader, null);
+        Icon icon = ImageDataByPathLoader.Companion.findIcon(value, classLoader, null);
         if (icon != null) {
           return icon;
         }

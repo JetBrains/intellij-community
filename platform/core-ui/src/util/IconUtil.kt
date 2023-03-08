@@ -15,7 +15,6 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.IconLoader.copy
 import com.intellij.openapi.util.IconLoader.filterIcon
 import com.intellij.openapi.util.IconLoader.getIcon
-import com.intellij.openapi.util.IconLoader.loadCustomVersion
 import com.intellij.openapi.util.IconLoader.patchColorsInCacheImageIcon
 import com.intellij.openapi.util.IconLoader.replaceCachedImageIcons
 import com.intellij.openapi.util.Iconable.IconFlags
@@ -54,7 +53,6 @@ import javax.swing.JLabel
 import javax.swing.SwingConstants
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
 private val PROJECT_WAS_EVER_INITIALIZED = Key.create<Boolean>("iconDeferrer:projectWasEverInitialized")
@@ -97,7 +95,7 @@ object IconUtil {
       scale = hdpi.scale
       if (hdpi.delegate != null) image = hdpi.delegate
     }
-    val bi = ImageUtil.toBufferedImage(Objects.requireNonNull(image))
+    val bi = ImageUtil.toBufferedImage(image!!)
     val g = bi.createGraphics()
     val imageWidth = ImageUtil.getRealWidth(image)
     val imageHeight = ImageUtil.getRealHeight(image)
@@ -336,9 +334,7 @@ object IconUtil {
 
       override fun getIconHeight(): Int = iconUnderSelection.iconHeight
 
-      override fun toString(): String {
-        return "IconUtil.wrapToSelectionAwareIcon for $iconUnderSelection"
-      }
+      override fun toString(): String = "IconUtil.wrapToSelectionAwareIcon for $iconUnderSelection"
     }
   }
 
@@ -355,9 +351,7 @@ object IconUtil {
 
       override fun getIconHeight(): Int = (source.iconHeight * clampedScale).toInt()
 
-      override fun toString(): String {
-        return "IconUtil.scale for $source"
-      }
+      override fun toString(): String = "IconUtil.scale for $source"
     }
   }
 
@@ -374,9 +368,7 @@ object IconUtil {
 
       override fun getIconHeight(): Int = sizeValue.get()
 
-      override fun toString(): String {
-        return "IconUtil.resizeSquared for $source"
-      }
+      override fun toString(): String = "IconUtil.resizeSquared for $source"
     }
   }
 
@@ -420,8 +412,12 @@ object IconUtil {
    */
   @JvmStatic
   fun scale(icon: Icon, ancestor: Component?, scale: Float): Icon {
+    if (icon is CachedImageIcon) {
+      return icon.scale(scale = scale, ancestor = ancestor)
+    }
+
     val ctx = if (ancestor == null && icon is ScaleContextAware) {
-      // In this case, the icon's context should be preserved, except the OBJ_SCALE.
+      // in this case, the icon's context should be preserved, except the OBJ_SCALE
       val usrCtx = icon.scaleContext
       ScaleContext.create(usrCtx)
     }
@@ -429,7 +425,7 @@ object IconUtil {
       ScaleContext.create(ancestor)
     }
     ctx.setScale(ScaleType.OBJ_SCALE.of(scale.toDouble()))
-    return scale(icon = icon, ctx = ctx)
+    return scale(icon = icon, scaleContext = ctx)
   }
 
   /**
@@ -439,28 +435,31 @@ object IconUtil {
    *
    * @see .scale
    * @param icon the icon to scale
-   * @param ctx the scale context to apply
+   * @param scaleContext the scale context to apply
    * @return the scaled icon
    */
   @JvmStatic
-  fun scale(icon: Icon, ctx: ScaleContext): Icon {
-    var icon = icon
-    var scaleContext = ctx
+  fun scale(icon: Icon, scaleContext: ScaleContext): Icon {
     val scale = scaleContext.getScale(ScaleType.OBJ_SCALE)
-    if (icon is CopyableIcon) {
-      icon = icon.deepCopy()
-      if (icon is ScalableIcon) {
-        if (icon is ScaleContextAware) {
-          scaleContext = scaleContext.copy()
-          // Reset OBJ_SCALE in the context to preserve ScalableIcon.scale(float) implementation
-          // from accumulation of the scales: OBJ_SCALE * scale.
-          scaleContext.setScale(ScaleType.OBJ_SCALE.of(1.0))
-          icon.updateScaleContext(scaleContext)
-        }
-        return icon.scale(scale.toFloat())
-      }
+    if (icon !is CopyableIcon) {
+      @Suppress("DEPRECATION")
+      return scale(source = icon, scale = scale)
     }
-    return scale(source = icon, scale = scale)
+
+    val copiedIcon = icon.deepCopy()
+    if (copiedIcon !is ScalableIcon) {
+      @Suppress("DEPRECATION")
+      return scale(source = copiedIcon, scale = scale)
+    }
+
+    if (copiedIcon is ScaleContextAware) {
+      val newScaleContext = scaleContext.copy<ScaleContext>()
+      // reset OBJ_SCALE in the context to preserve ScalableIcon.scale(float) implementation
+      // from accumulation of the scales: OBJ_SCALE * scale.
+      newScaleContext.setScale(ScaleType.OBJ_SCALE.of(1.0))
+      copiedIcon.updateScaleContext(newScaleContext)
+    }
+    return copiedIcon.scale(scale.toFloat())
   }
 
   /**
@@ -491,31 +490,6 @@ object IconUtil {
   @JvmStatic
   fun scaleByIconWidth(icon: Icon?, ancestor: Component?, defaultIcon: Icon): Icon {
     return scaleByIcon(icon, ancestor, defaultIcon) { it.iconWidth }
-  }
-
-  /**
-   * @param icon  the icon to scale
-   * @param scale the scale factor
-   * @return the scaled icon
-   */
-  @ApiStatus.Internal
-  fun scaleOrLoadCustomVersion(icon: Icon, scale: Float): Icon {
-    if (icon is CachedImageIcon) {
-      val oldWidth = icon.getIconWidth()
-      val oldHeight = icon.getIconHeight()
-      val newWidth = (scale * oldWidth).roundToInt()
-      val newHeight = (scale * oldHeight).roundToInt()
-      if (oldWidth == newWidth && oldHeight == newHeight) {
-        return icon
-      }
-
-      val version = loadCustomVersion(icon = icon, width = newWidth, height = newHeight)
-      if (version != null) {
-        return version
-      }
-    }
-
-    return if (icon is ScalableIcon) icon.scale(scale) else scale(icon = icon, ancestor = null, scale = scale)
   }
 
   /**

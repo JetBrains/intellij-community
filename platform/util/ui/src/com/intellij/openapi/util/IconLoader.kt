@@ -17,7 +17,6 @@ import com.intellij.ui.*
 import com.intellij.ui.icons.*
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.DerivedScaleType
-import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextSupport
@@ -78,45 +77,6 @@ internal val fakeComponent: JComponent by lazy { object : JComponent() {} }
  * @see com.intellij.util.IconUtil
  */
 object IconLoader {
-  @ApiStatus.Internal
-  fun loadCustomVersion(icon: com.intellij.openapi.util.CachedImageIcon, width: Int, height: Int): Icon? {
-    val resolver = icon.resolver
-    val url = resolver?.url
-    val path = url?.toString()
-    if (path != null && path.endsWith(".svg")) {
-      val modified = "${path.substring(0, path.length - 4)}@${width}x$height.svg"
-      try {
-        val foundIcon = findIcon(URL(modified))
-        if (foundIcon is com.intellij.openapi.util.CachedImageIcon && foundIcon.getIconWidth() == scale(width) && foundIcon.getIconHeight() == scale(height)) {
-          return foundIcon
-        }
-      }
-      catch (ignore: MalformedURLException) {
-      }
-    }
-    return null
-  }
-
-  /** @param size the size before system scaling (without JBUIScale.scale)
-   */
-  @ApiStatus.Internal
-  fun loadCustomVersionOrScale(icon: ScalableIcon, size: Int): Icon {
-    if (icon.iconWidth == scale(size)) {
-      return icon
-    }
-    var cachedIcon: Icon = icon
-    if (cachedIcon !is com.intellij.openapi.util.CachedImageIcon && cachedIcon is RetrievableIcon) {
-      cachedIcon = cachedIcon.retrieveIcon()
-    }
-    if (cachedIcon is com.intellij.openapi.util.CachedImageIcon) {
-      val version = loadCustomVersion(cachedIcon, size, size)
-      if (version != null) {
-        return version
-      }
-    }
-    return icon.scale(scale(1.0f) * size / icon.iconWidth)
-  }
-
   @TestOnly
   @JvmStatic
   fun <T> performStrictly(computable: Supplier<out T>): T {
@@ -219,7 +179,7 @@ object IconLoader {
   @JvmStatic
   fun getIcon(path: String, aClass: Class<*>): Icon {
     return findIcon(originalPath = path, aClass = aClass, classLoader = aClass.classLoader, handleNotFound = null, deferUrlResolve = true)
-           ?: throw IllegalStateException("Icon cannot be found in '" + path + "', class='" + aClass.name + "'")
+           ?: throw IllegalStateException("Icon cannot be found in '$path', class='${aClass.name}'")
   }
 
   @JvmStatic
@@ -234,16 +194,14 @@ object IconLoader {
     val patchedPath = transform.patchPath(originalPath, originalClassLoader) ?: return null
     val classLoader = if (patchedPath.second == null) originalClassLoader else patchedPath.second
     val path = patchedPath.first
-    if (path != null && path.startsWith("/")) {
+    if (path != null && path.startsWith('/')) {
       return FinalImageDataLoader(path = path.substring(1), classLoader = classLoader ?: transform.javaClass.classLoader)
     }
 
-    // This uses case for temp themes only. Here we want to immediately replace the existing icon with a local one
+    // This uses case for temp themes only. Here we want to immediately replace the existing icon with a local one.
     if (path != null && path.startsWith("file:/")) {
       try {
-        val resolver = ImageDataByUrlLoader(URL(path), path, classLoader, false)
-        resolver.resolve()
-        return resolver
+        return ImageDataByUrlLoader(url = URL(path), path = path, classLoader = classLoader)
       }
       catch (ignore: MalformedURLException) {
       }
@@ -612,29 +570,6 @@ object IconLoader {
     }
   }
 
-  internal fun doResolve(path: String?,
-                         classLoader: ClassLoader?,
-                         ownerClass: Class<*>?,
-                         handleNotFound: HandleNotFound): URL? {
-    var effectivePath = path
-    var url: URL? = null
-    if (effectivePath != null) {
-      if (classLoader != null) {
-        // paths in ClassLoader getResource must not start with "/"
-        effectivePath = if (effectivePath[0] == '/') effectivePath.substring(1) else effectivePath
-        url = findUrl(path = effectivePath, urlProvider = classLoader::getResource)
-      }
-      if (url == null && ownerClass != null) {
-        // some plugins use findIcon("icon.png",IconContainer.class)
-        url = findUrl(path = effectivePath, urlProvider = ownerClass::getResource)
-      }
-    }
-    if (url == null) {
-      handleNotFound.handle("Can't find icon in '$effectivePath' near $classLoader")
-    }
-    return url
-  }
-
   @JvmStatic
   fun createLazy(producer: Supplier<out Icon>): Icon {
     return object : LazyIcon() {
@@ -741,10 +676,12 @@ private fun findIcon(originalPath: String,
     var cachedIcon = iconCache.get(key)
     if (cachedIcon == null) {
       cachedIcon = iconCache.computeIfAbsent(key) { k ->
-        val classLoader1 = k.getSecond()
         val effectiveHandleNotFound = handleNotFound
                                       ?: if (STRICT_LOCAL.get()) HandleNotFound.THROW_EXCEPTION else HandleNotFound.IGNORE
-        val resolver = ImageDataByUrlLoader(path, aClass, classLoader1, effectiveHandleNotFound,  /* useCacheOnLoad = */true)
+        val resolver = ImageDataByPathResourceLoader(path = path,
+                                                     ownerClass = aClass,
+                                                     classLoader = k.getSecond(),
+                                                     handleNotFound = effectiveHandleNotFound)
         CachedImageIcon(originalPath = originalPath, resolver = resolver)
       }
     }
@@ -766,13 +703,13 @@ private fun findIcon(originalPath: String,
 
 internal enum class HandleNotFound {
   THROW_EXCEPTION {
-    override fun handle(msg: String) {
-      throw RuntimeException(msg)
+    override fun handle(message: String) {
+      throw RuntimeException(message)
     }
   },
   IGNORE;
 
-  open fun handle(msg: String) {
+  open fun handle(message: String) {
   }
 }
 
@@ -829,25 +766,6 @@ private abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, Retrievab
   override fun copy(): Icon = IconLoader.copy(icon = getOrComputeIcon(), ancestor = null, deepCopy = false)
 }
 
-private fun findUrl(path: String, urlProvider: (String) -> URL?): URL? {
-  urlProvider(path)?.let {
-    return it
-  }
-
-  // Find either PNG or SVG icon.
-  // The icon will then be wrapped into CachedImageIcon,
-  // which will load a proper icon version depending on the context - UI theme, DPI.
-  // SVG version, when present, has more priority than PNG.
-  // See for details: com.intellij.util.ImageLoader.ImageDescList#create
-  var effectivePath = path
-  when {
-    effectivePath.endsWith(".png") -> effectivePath = effectivePath.substring(0, effectivePath.length - 4) + ".svg"
-    effectivePath.endsWith(".svg") -> effectivePath = effectivePath.substring(0, effectivePath.length - 4) + ".png"
-    else -> LOG.debug("unexpected path: ", effectivePath)
-  }
-  return urlProvider(effectivePath)
-}
-
 private class FinalImageDataLoader(private val path: String, classLoader: ClassLoader) : ImageDataLoader {
   private val classLoaderRef: WeakReference<ClassLoader>
 
@@ -855,20 +773,16 @@ private class FinalImageDataLoader(private val path: String, classLoader: ClassL
     classLoaderRef = WeakReference(classLoader)
   }
 
-  override fun loadImage(parameters: LoadIconParameters): Image? {
-    // do not use cache
-    var flags = ImageLoader.ALLOW_FLOAT_SCALING
-    if (parameters.isDark) {
-      flags = flags or ImageLoader.USE_DARK
-    }
-
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
     val classLoader = classLoaderRef.get() ?: return null
+    // do not use cache
     return loadImage(path = path,
+                     useCache = false,
+                     isDark = parameters.isDark,
                      parameters = parameters,
+                     scaleContext = scaleContext,
                      resourceClass = null,
-                     classLoader = classLoader,
-                     flags = flags,
-                     isUpScaleNeeded = !path.endsWith(".svg"))
+                     classLoader = classLoader)
   }
 
   override val url: URL?

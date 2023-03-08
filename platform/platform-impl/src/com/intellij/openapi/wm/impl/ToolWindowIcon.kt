@@ -6,7 +6,7 @@ import com.intellij.openapi.util.ScalableIcon
 import com.intellij.ui.IconReplacer
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.icons.MenuBarIconProvider
-import com.intellij.util.IconUtil
+import com.intellij.ui.scaleIconOrLoadCustomVersion
 import java.awt.Component
 import java.awt.Graphics
 import javax.swing.Icon
@@ -35,5 +35,5 @@ internal class ToolWindowIcon(private val icon: Icon,
 
   override fun getScale() = if (icon is ScalableIcon) icon.scale else 1f
 
-  override fun scale(scaleFactor: Float) = ToolWindowIcon(IconUtil.scaleOrLoadCustomVersion(icon, scaleFactor), toolWindowId)
+  override fun scale(scaleFactor: Float) = ToolWindowIcon(scaleIconOrLoadCustomVersion(icon = icon, scale = scaleFactor), toolWindowId)
 }

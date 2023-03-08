@@ -10,7 +10,7 @@ import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.icons.IconTransform
 import com.intellij.ui.icons.ImageDataLoader
 import com.intellij.ui.icons.LoadIconParameters
-import com.intellij.util.ImageLoader
+import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.loadImage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -25,7 +25,6 @@ class ImageDataByPathLoader private constructor(private val path: String,
                                                 private val original: ImageDataByPathLoader?) : ImageDataLoader {
   companion object {
     // cache is not used - image data resolved using cache in any case
-    @JvmStatic
     fun findIcon(@NonNls originalPath: String,
                  originalClassLoader: ClassLoader,
                  cache: MutableMap<Pair<String, ClassLoader?>, CachedImageIcon>?): Icon? {
@@ -79,24 +78,22 @@ class ImageDataByPathLoader private constructor(private val path: String,
       val patched = transform.patchPath(originalLoader.path, originalLoader.classLoader) ?: return if (isOriginal) null else originalLoader
       val classLoader = if (patched.second == null) originalLoader.classLoader else patched.second!!
       return if (patched.first.startsWith("file:/")) {
-        ImageDataByUrlLoader(URL(patched.first), patched.first, classLoader, false)
+        ImageDataByUrlLoader(url = URL(patched.first), path = patched.first, classLoader = classLoader)
       }
       else {
-        ImageDataByPathLoader(normalizePath(patched.first), classLoader, originalLoader)
+        ImageDataByPathLoader(path = normalizePath(patched.first), classLoader = classLoader, original = originalLoader)
       }
     }
   }
 
-  override fun loadImage(parameters: LoadIconParameters): Image? {
-    var flags = ImageLoader.ALLOW_FLOAT_SCALING or ImageLoader.USE_CACHE
-    if (parameters.isDark) {
-      flags = flags or ImageLoader.USE_DARK
-    }
+  override fun getCoords(): kotlin.Pair<String, ClassLoader> = path to classLoader
+
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
     return loadImage(path = path,
+                     isDark = parameters.isDark,
+                     scaleContext = scaleContext,
                      parameters = parameters,
-                     classLoader = classLoader,
-                     flags = flags,
-                     isUpScaleNeeded = !path.endsWith(".svg"))
+                     classLoader = classLoader)
   }
 
   override val url: URL?
@@ -104,7 +101,7 @@ class ImageDataByPathLoader private constructor(private val path: String,
 
   override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
     val isOriginal = original == null
-    return doPatch((if (isOriginal) this else original)!!, transform, isOriginal)
+    return doPatch(originalLoader = (if (isOriginal) this else original)!!, transform = transform, isOriginal = isOriginal)
   }
 
   override fun isMyClassLoader(classLoader: ClassLoader): Boolean {

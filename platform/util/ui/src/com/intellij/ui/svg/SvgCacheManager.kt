@@ -63,11 +63,11 @@ class SvgCacheManager(dbFile: Path) {
   fun save() {
   }
 
-  fun loadFromCache(precomputedCacheKey: Int, imageBytes: ByteArray?, themeDigest: ByteArray, compoundKey: SvgCacheMapper): BufferedImage? {
+  fun loadFromCache(precomputedCacheKey: Int, imageBytes: ByteArray?, themeDigest: LongArray, compoundKey: SvgCacheMapper): BufferedImage? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
     return selectStatementPool.use { statement, binder ->
       val kind = compoundKey.key.toLong()
-      val theme = Xxh3.hash(themeDigest)
+      val theme = themeDigestToDbValue(themeDigest)
       if (imageBytes == null) {
         binder.bind(v1 = precomputedCacheKey.toLong(), v2 = 0, v3 = kind, v4 = theme)
       }
@@ -100,14 +100,22 @@ class SvgCacheManager(dbFile: Path) {
     }
   }
 
+  private fun themeDigestToDbValue(themeDigest: LongArray): Long {
+    return when (themeDigest.size) {
+      0 -> 0
+      1 -> themeDigest.first()
+      else -> Xxh3.hashLongs(themeDigest)
+    }
+  }
+
   fun storeLoadedImage(precomputedCacheKey: Int,
-                       themeDigest: ByteArray,
+                       themeDigest: LongArray,
                        imageBytes: ByteArray,
                        mapper: SvgCacheMapper,
                        image: BufferedImage) {
     insertStatementPool.use { statement, binder ->
       val kind = mapper.key.toLong()
-      val theme = Xxh3.hash(themeDigest)
+      val theme = themeDigestToDbValue(themeDigest)
       val key1 = if (precomputedCacheKey == 0) Xxh3.hash(imageBytes) else precomputedCacheKey
       val key2 = if (precomputedCacheKey == 0) Xxh3.seededHash(imageBytes, SEED) else 0
       val data = writeImage(image)

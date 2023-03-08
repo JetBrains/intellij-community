@@ -8,8 +8,8 @@ import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.ui.loadIconCustomVersionOrScale
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ToolWindowEventSource
@@ -115,7 +115,7 @@ private fun createPresentation(toolWindow: ToolWindowImpl): Presentation {
 
 private fun scaleIcon(presentation: Presentation) {
   val iconSize = JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
-  presentation.icon = IconLoader.loadCustomVersionOrScale(presentation.icon as ScalableIcon, iconSize)
+  presentation.icon = loadIconCustomVersionOrScale(icon = presentation.icon as ScalableIcon, size = iconSize)
 }
 
 private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {

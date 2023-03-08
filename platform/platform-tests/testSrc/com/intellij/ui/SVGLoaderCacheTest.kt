@@ -19,7 +19,7 @@ class SVGLoaderCacheTest {
   fun testNoEntry(@TempDir dir: Path) {
     val cache = createCache(dir)
     try {
-      assertThat(cache.loadFromCache(0, byteArrayOf(), byteArrayOf(), SvgCacheMapper(1f))).isNull()
+      assertThat(cache.loadFromCache(0, byteArrayOf(), longArrayOf(), SvgCacheMapper(1f))).isNull()
     }
     finally {
       cache.close()
@@ -34,7 +34,7 @@ class SVGLoaderCacheTest {
       i.setRGB(0, 0, 0xff00ff)
       i.setRGB(0, 1, 0x00ff00)
       val imageBytes = byteArrayOf(1, 2, 3)
-      val theme = byteArrayOf()
+      val theme = longArrayOf()
       val svgCacheMapper = SvgCacheMapper(1f)
       cache.storeLoadedImage(0, theme, imageBytes, svgCacheMapper, i)
       cache.close()
@@ -43,7 +43,7 @@ class SVGLoaderCacheTest {
       assertThat(copy!!.width).isEqualTo(10)
       assertThat(copy.height).isEqualTo(10)
       ImageComparator.compareAndAssert(AASmootherComparator(0.1, 0.1, Color(0, 0, 0, 0)), i, copy, null)
-      assertThat(cache.loadFromCache(0, imageBytes, byteArrayOf(123), SvgCacheMapper(1f, false, false))).isNull()
+      assertThat(cache.loadFromCache(0, imageBytes, longArrayOf(123), SvgCacheMapper(1f, false, false))).isNull()
       assertThat(cache.loadFromCache(0, byteArrayOf(6, 7), theme, SvgCacheMapper(1f, false, false))).isNull()
       assertThat(cache.loadFromCache(0, imageBytes, theme, SvgCacheMapper(2f, false, false))).isNull()
     }
@@ -51,10 +51,9 @@ class SVGLoaderCacheTest {
       cache.close()
     }
   }
-
-  companion object {
-    private fun createCache(dir: Path): SvgCacheManager {
-      return SvgCacheManager(dir.resolve("db.db"))
-    }
-  }
 }
+
+private fun createCache(dir: Path): SvgCacheManager {
+  return SvgCacheManager(dir.resolve("db.db"))
+}
+

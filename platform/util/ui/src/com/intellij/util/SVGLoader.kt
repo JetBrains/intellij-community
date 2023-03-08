@@ -17,6 +17,7 @@ import com.intellij.util.text.CharSequenceReader
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.xml.dom.createXmlStreamReader
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.xxh3.Xxh3
 import org.w3c.dom.Element
 import java.awt.*
 import java.awt.image.BufferedImage
@@ -24,8 +25,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.StringWriter
 import java.net.URL
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.file.Path
 import javax.swing.Icon
 import javax.xml.parsers.DocumentBuilderFactory
@@ -43,7 +42,7 @@ private const val MAX_SCALE_TO_CACHE = 4
 private var selectionColorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null
 
 @JvmField
-internal val DEFAULT_THEME_DIGEST: ByteArray = ArrayUtilRt.EMPTY_BYTE_ARRAY
+internal val DEFAULT_THEME_DIGEST: LongArray = ArrayUtilRt.EMPTY_LONG_ARRAY
 
 internal val iconMaxSize: Float by lazy {
   var maxSize = Integer.MAX_VALUE.toFloat()
@@ -191,7 +190,7 @@ object SVGLoader {
     hash.update(resultColor.alpha)
     val digest = hash.build()
     return object : SvgElementColorPatcherProvider {
-      override fun forPath(path: String?): SvgElementColorPatcher? {
+      override fun attributeForPath(path: String?): SvgAttributePatcher? {
         return newPatcher(digest = digest, newPalette = map + backgroundColors.associateWith { "#00000000" }, alphas = alpha)
       }
 
@@ -206,22 +205,13 @@ object SVGLoader {
       IconLoader.clearCache()
     }
 
-  fun newPatcher(digest: LongArray?, newPalette: Map<String, String>, alphas: Map<String, Int>): SvgElementColorPatcher? {
+  fun newPatcher(digest: LongArray?, newPalette: Map<String, String>, alphas: Map<String, Int>): SvgAttributePatcher? {
     if (newPalette.isEmpty()) {
       return null
     }
 
-    val byteDigest = if (digest == null) {
-      null
-    }
-    else {
-      val buffer = ByteBuffer.allocate(digest.size * Long.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN)
-      buffer.asLongBuffer().put(digest)
-      buffer.array()
-    }
-
-    return object : SvgElementColorPatcher {
-      override fun digest(): ByteArray? = byteDigest
+    return object : SvgAttributePatcher {
+      override fun digest(): LongArray? = digest
 
       override fun patchColors(attributes: MutableMap<String, String>) {
         patchColorAttribute(attributes = attributes, attributeName = "fill")
@@ -276,12 +266,7 @@ object SVGLoader {
   }
 
   interface SvgElementColorPatcher {
-    @Deprecated("Implement patchColors")
     fun patchColors(svg: Element) {
-    }
-
-    fun patchColors(attributes: MutableMap<String, String>) {
-      throw UnsupportedOperationException()
     }
 
     /**
@@ -291,6 +276,8 @@ object SVGLoader {
   }
 
   interface SvgElementColorPatcherProvider {
+    @Suppress("DeprecatedCallableAddReplaceWith")
+    @Deprecated("Implement attributeForPath")
     fun forPath(path: String?): SvgElementColorPatcher? {
       return null
     }
@@ -315,6 +302,22 @@ private fun toCanonicalColor(color: String): String {
   return s
 }
 
+internal fun loadSvgAndCacheIfApplicable(path: String?,
+                                         scale: Float,
+                                         compoundCacheKey: SvgCacheMapper,
+                                         colorPatcher: SvgAttributePatcher?,
+                                         deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
+                                         dataProvider: () -> ByteArray?): BufferedImage? {
+  return loadAndCacheIfApplicable(path = path,
+                                  precomputedCacheKey = 0,
+                                  scale = scale,
+                                  compoundCacheKey = compoundCacheKey,
+                                  colorPatcher = colorPatcher,
+                                  deprecatedColorPatcher = deprecatedColorPatcher,
+                                  cache = SVGLoader.cache,
+                                  dataProvider = dataProvider)
+}
+
 private inline fun loadAndCacheIfApplicable(path: String?,
                                             precomputedCacheKey: Int,
                                             scale: Float,
@@ -322,11 +325,34 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                                             colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?,
                                             @Suppress("SameParameterValue") cache: SvgCacheManager?,
                                             dataProvider: () -> ByteArray?): BufferedImage? {
-  val colorPatcher = colorPatcherProvider?.forPath(path)
-  val colorPatcherDigest = colorPatcher?.digest()
+  @Suppress("DEPRECATION")
+  return loadAndCacheIfApplicable(path = path,
+                                  precomputedCacheKey = precomputedCacheKey,
+                                  scale = scale,
+                                  compoundCacheKey = compoundCacheKey,
+                                  colorPatcher = colorPatcherProvider?.attributeForPath(path),
+                                  deprecatedColorPatcher = colorPatcherProvider?.forPath(path),
+                                  cache = cache,
+                                  dataProvider = dataProvider)
+}
 
-  if (cache == null || (colorPatcher != null && colorPatcherDigest == null) || scale > MAX_SCALE_TO_CACHE) {
-    return renderImage(colorPatcher = colorPatcher, data = dataProvider() ?: return null, scale = scale, path = path)
+private inline fun loadAndCacheIfApplicable(path: String?,
+                                            precomputedCacheKey: Int,
+                                            scale: Float,
+                                            compoundCacheKey: SvgCacheMapper = SvgCacheMapper(scale = scale),
+                                            colorPatcher: SvgAttributePatcher?,
+                                            deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
+                                            @Suppress("SameParameterValue") cache: SvgCacheManager?,
+                                            dataProvider: () -> ByteArray?): BufferedImage? {
+  val colorPatcherDigest = colorPatcher?.digest() ?: deprecatedColorPatcher?.digest()?.let { longArrayOf(Xxh3.hash(it)) }
+  if (cache == null ||
+      (colorPatcherDigest == null && (colorPatcher != null || deprecatedColorPatcher != null)) ||
+      scale > MAX_SCALE_TO_CACHE) {
+    return renderImage(colorPatcher = colorPatcher,
+                       deprecatedColorPatcher = deprecatedColorPatcher,
+                       data = dataProvider() ?: return null,
+                       scale = scale,
+                       path = path)
   }
 
   val data = if (precomputedCacheKey == 0) (dataProvider() ?: return null) else null
@@ -349,7 +375,8 @@ private inline fun loadAndCacheIfApplicable(path: String?,
     logger<SVGLoader>().error("cannot load from icon cache (path=$path, precomputedCacheKey=$precomputedCacheKey)", e)
   }
 
-  return renderAndCache(colorPatcher = colorPatcher,
+  return renderAndCache(deprecatedColorPatcher = deprecatedColorPatcher,
+                        colorPatcher = colorPatcher,
                         data = data ?: dataProvider() ?: return null,
                         scale = scale,
                         compoundCacheKey = compoundCacheKey,
@@ -359,15 +386,17 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                         cache = cache)
 }
 
-private fun renderAndCache(colorPatcher: SVGLoader.SvgElementColorPatcher?,
+private fun renderAndCache(deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
+                           colorPatcher: SvgAttributePatcher?,
                            data: ByteArray,
                            scale: Float,
                            compoundCacheKey: SvgCacheMapper,
                            path: String?,
                            precomputedCacheKey: Int,
-                           themeDigest: ByteArray,
+                           themeDigest: LongArray,
                            @Suppress("SameParameterValue") cache: SvgCacheManager): BufferedImage {
-  val image = renderImage(colorPatcher = colorPatcher, data = data, scale = scale, path = path)
+  val image = renderImage(colorPatcher = colorPatcher, deprecatedColorPatcher = deprecatedColorPatcher, data = data, scale = scale,
+                          path = path)
   try {
     val cacheWriteStart = StartUpMeasurer.getCurrentTimeIfEnabled()
     cache.storeLoadedImage(precomputedCacheKey = precomputedCacheKey,
@@ -383,16 +412,23 @@ private fun renderAndCache(colorPatcher: SVGLoader.SvgElementColorPatcher?,
   return image
 }
 
-private fun renderImage(colorPatcher: SVGLoader.SvgElementColorPatcher?, data: ByteArray, scale: Float, path: String?): BufferedImage {
+private fun renderImage(colorPatcher: SvgAttributePatcher?,
+                        deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
+                        data: ByteArray,
+                        scale: Float,
+                        path: String?): BufferedImage {
   val decodingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-  val jsvgDocument = if (colorPatcher == null) {
-    createJSvgDocument(data)
+  val jsvgDocument = if (deprecatedColorPatcher == null) {
+    if (colorPatcher == null) {
+      createJSvgDocument(data)
+    }
+    else {
+      createJSvgDocument(createXmlStreamReader(data), colorPatcher::patchColors)
+    }
   }
   else {
-    //colorPatcher.patchColors()
-
     val documentElement = DocumentBuilderFactory.newDefaultNSInstance().newDocumentBuilder().parse(data.inputStream()).documentElement
-    colorPatcher.patchColors(documentElement)
+    deprecatedColorPatcher.patchColors(documentElement)
 
     val writer = StringWriter()
     TransformerFactory.newDefaultInstance().newTransformer().transform(DOMSource(documentElement), StreamResult(writer))
@@ -407,7 +443,8 @@ private fun renderImage(colorPatcher: SVGLoader.SvgElementColorPatcher?, data: B
 }
 
 interface SvgAttributePatcher {
-  fun patchColors(attributes: MutableMap<String, String>)
+  fun patchColors(attributes: MutableMap<String, String>) {
+  }
 
   /**
    * @return hash code of the current SVG color patcher or null to disable rendered SVG images caching

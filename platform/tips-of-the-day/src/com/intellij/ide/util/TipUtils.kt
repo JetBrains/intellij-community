@@ -18,16 +18,13 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Trinity
-import com.intellij.ui.icons.LoadIconParameters
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil.scale
-import com.intellij.util.ImageLoader
 import com.intellij.util.ImageLoader.loadFromUrl
 import com.intellij.util.ResourceUtil
-import com.intellij.util.loadImage
+import com.intellij.util.loadImageByClassLoader
 import com.intellij.util.ui.JBImageIcon
-import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jsoup.Jsoup
@@ -228,23 +225,7 @@ private fun loadImages(tipContent: Element,
       }
     }
     else {
-      var flags = ImageLoader.USE_SVG or ImageLoader.ALLOW_FLOAT_SCALING or ImageLoader.USE_CACHE
-      val isDark = StartupUiUtil.isUnderDarcula()
-      if (isDark) {
-        flags = flags or ImageLoader.USE_DARK
-      }
-      val context = ScaleContext.create(contextComponent)
-      val parameters = LoadIconParameters(filters = emptyList(),
-                                          scaleContext = context,
-                                          isDark = isDark,
-                                          colorPatcher = null,
-                                          isStroke = false)
-      image = loadImage(path = tipsPath + path,
-                        parameters = parameters,
-                        resourceClass = null,
-                        classLoader = loader,
-                        flags = flags,
-                        isUpScaleNeeded = !path.endsWith(".svg"))
+      image = loadImageByClassLoader(path = "$tipsPath$path", classLoader = loader, scaleContext = ScaleContext.create(contextComponent))
     }
     if (image != null) {
       var icon: Icon = JBImageIcon(image)

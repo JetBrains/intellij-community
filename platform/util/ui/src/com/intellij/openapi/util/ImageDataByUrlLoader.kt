@@ -1,133 +1,138 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.util;
+package com.intellij.openapi.util
 
-import com.intellij.ui.icons.IconTransform;
-import com.intellij.ui.icons.ImageDataLoader;
-import com.intellij.ui.icons.LoadIconParameters;
-import com.intellij.util.ImageLoader;
-import com.intellij.util.ImageLoaderKt;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.IconLoader.createNewResolverIfNeeded
+import com.intellij.ui.icons.IconTransform
+import com.intellij.ui.icons.ImageDataLoader
+import com.intellij.ui.icons.LoadIconParameters
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.loadImage
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Image
+import java.net.URL
 
-import java.awt.*;
-import java.net.MalformedURLException;
-import java.net.URL;
+private val UNRESOLVED_URL = URL("file:///unresolved")
 
 @ApiStatus.Internal
-public final class ImageDataByUrlLoader implements ImageDataLoader {
-  private static final URL UNRESOLVED_URL;
-
-  static {
-    try {
-      UNRESOLVED_URL = new URL("file:///unresolved");
-    }
-    catch (MalformedURLException e) {
-      throw new RuntimeException(e);
-    }
+class ImageDataByUrlLoader private constructor(
+  private val ownerClass: Class<*>? = null,
+  private val classLoader: ClassLoader? = null,
+  private val useCacheOnLoad: Boolean = true,
+  private val overriddenPath: String? = null,
+  override val url: URL,
+) : ImageDataLoader {
+  init {
   }
 
-  private final @Nullable Class<?> ownerClass;
-  private final @Nullable ClassLoader classLoader;
-  private final @Nullable String overriddenPath;
-  private final @NotNull HandleNotFound handleNotFound;
+  internal constructor(url: URL, classLoader: ClassLoader?, useCacheOnLoad: Boolean) :
+    this(classLoader = classLoader, useCacheOnLoad = useCacheOnLoad, overriddenPath = null, url = url)
 
-  private volatile URL url;
+  constructor(url: URL, path: String, classLoader: ClassLoader?) : this(overriddenPath = path, classLoader = classLoader, url = url)
 
-  private final boolean useCacheOnLoad;
-
-  ImageDataByUrlLoader(@NotNull URL url, @Nullable ClassLoader classLoader, boolean useCacheOnLoad) {
-    ownerClass = null;
-    overriddenPath = null;
-    this.classLoader = classLoader;
-    this.url = url;
-    handleNotFound = HandleNotFound.IGNORE;
-    this.useCacheOnLoad = useCacheOnLoad;
-  }
-
-  public ImageDataByUrlLoader(@NotNull URL url, @NotNull String path, @Nullable ClassLoader classLoader, boolean useCacheOnLoad) {
-    ownerClass = null;
-    overriddenPath = path;
-    this.classLoader = classLoader;
-    this.url = url;
-    handleNotFound = HandleNotFound.IGNORE;
-    this.useCacheOnLoad = useCacheOnLoad;
-  }
-
-  ImageDataByUrlLoader(@NotNull String path,
-                       @Nullable Class<?> ownerClass,
-                       @Nullable ClassLoader classLoader,
-                       @NotNull HandleNotFound handleNotFound,
-                       boolean useCacheOnLoad) {
-    overriddenPath = path;
-    this.ownerClass = ownerClass;
-    this.classLoader = classLoader;
-    this.handleNotFound = handleNotFound;
-    this.useCacheOnLoad = useCacheOnLoad;
-    url = UNRESOLVED_URL;
-  }
-
-  @Override
-  public @Nullable Image loadImage(@NotNull LoadIconParameters parameters) {
-    int flags = ImageLoader.USE_SVG | ImageLoader.ALLOW_FLOAT_SCALING;
-    if (useCacheOnLoad) {
-      flags |= ImageLoader.USE_CACHE;
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
+    var path = overriddenPath
+    if (path == null || ownerClass == null && (classLoader == null || !path.startsWith('/'))) {
+      path = url.toString()
     }
-    if (parameters.isDark) {
-      flags |= ImageLoader.USE_DARK;
-    }
+    return loadImage(path = path,
+                     parameters = parameters,
+                     resourceClass = ownerClass,
+                     classLoader = classLoader,
+                     isDark = parameters.isDark,
+                     useCache = useCacheOnLoad,
+                     scaleContext = scaleContext)
+  }
 
-    String path = overriddenPath;
-    if (path == null || (ownerClass == null && (classLoader == null || path.charAt(0) != '/'))) {
-      URL url = getUrl();
-      if (url == null) {
-        return null;
+  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
+    return createNewResolverIfNeeded(originalClassLoader = classLoader, originalPath = originalPath, transform = transform)
+  }
+
+  override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
+
+  override fun toString(): String {
+    return "UrlResolver(ownerClass=${ownerClass?.name}, classLoader=$classLoader, overriddenPath=$overriddenPath, url=$url, useCacheOnLoad=$useCacheOnLoad)"
+  }
+}
+
+internal class ImageDataByPathResourceLoader(
+  private val ownerClass: Class<*>? = null,
+  private val classLoader: ClassLoader? = null,
+  private val handleNotFound: HandleNotFound,
+  private val path: String,
+) : ImageDataLoader {
+  @Volatile
+  override var url: URL? = UNRESOLVED_URL
+    get() {
+      var result = field
+      if (result === UNRESOLVED_URL) {
+        result = try {
+          resolveUrl(path = path, classLoader = classLoader, ownerClass = ownerClass, handleNotFound = handleNotFound)
+        }
+        finally {
+          field = result
+        }
       }
-      path = url.toString();
+      return result
     }
-    return ImageLoaderKt.loadImage(path, parameters, ownerClass, classLoader, flags, !path.endsWith(".svg"));
+
+  override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
+    return loadImage(path = path,
+                     parameters = parameters,
+                     resourceClass = ownerClass,
+                     classLoader = classLoader,
+                     isDark = parameters.isDark,
+                     useCache = false,
+                     scaleContext = scaleContext)
   }
 
-  /**
-   * Resolves the URL if it's not yet resolved.
-   */
-  public void resolve() {
-    getUrl();
+  override fun patch(originalPath: String, transform: IconTransform): ImageDataLoader? {
+    return createNewResolverIfNeeded(originalClassLoader = classLoader, originalPath = originalPath, transform = transform)
   }
 
-  @Override
-  public @Nullable URL getUrl() {
-    URL result = this.url;
-    if (result == UNRESOLVED_URL) {
-      result = null;
-      try {
-        result = IconLoader.INSTANCE.doResolve$intellij_platform_util_ui(overriddenPath, classLoader, ownerClass, handleNotFound);
-      }
-      finally {
-        this.url = result;
-      }
+  override fun isMyClassLoader(classLoader: ClassLoader): Boolean = this.classLoader === classLoader
+
+  override fun toString(): String = "UrlResolver(ownerClass=${ownerClass?.name}, classLoader=$classLoader, path=$path)"
+}
+
+private fun resolveUrl(path: String?,
+                       classLoader: ClassLoader?,
+                       ownerClass: Class<*>?,
+                       handleNotFound: HandleNotFound): URL? {
+  var effectivePath = path
+  var url: URL? = null
+  if (effectivePath != null) {
+    if (classLoader != null) {
+      // paths in ClassLoader getResource must not start with "/"
+      effectivePath = effectivePath.removePrefix("/")
+      url = findUrl(path = effectivePath, urlProvider = classLoader::getResource)
     }
-    return result;
+    if (url == null && ownerClass != null) {
+      // some plugins use findIcon("icon.png",IconContainer.class)
+      url = findUrl(path = effectivePath, urlProvider = ownerClass::getResource)
+    }
+  }
+  if (url == null) {
+    handleNotFound.handle("Can't find icon in '$effectivePath' near $classLoader")
+  }
+  return url
+}
+
+private inline fun findUrl(path: String, urlProvider: (String) -> URL?): URL? {
+  urlProvider(path)?.let {
+    return it
   }
 
-  @Override
-  public @Nullable ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
-    return IconLoader.INSTANCE.createNewResolverIfNeeded(classLoader, originalPath, transform);
+  // Find either PNG or SVG icon.
+  // The icon will then be wrapped into CachedImageIcon,
+  // which will load a proper icon version depending on the context - UI theme, DPI.
+  // SVG version, when present, has more priority than PNG.
+  // See for details: com.intellij.util.ImageLoader.ImageDescList#create
+  var effectivePath = path
+  when {
+    effectivePath.endsWith(".png") -> effectivePath = effectivePath.substring(0, effectivePath.length - 4) + ".svg"
+    effectivePath.endsWith(".svg") -> effectivePath = effectivePath.substring(0, effectivePath.length - 4) + ".png"
+    else -> logger<ImageDataLoader>().debug("unexpected path: ", effectivePath)
   }
-
-  @Override
-  public boolean isMyClassLoader(@NotNull ClassLoader classLoader) {
-    return this.classLoader == classLoader;
-  }
-
-  @Override
-  public String toString() {
-    return "UrlResolver{" +
-           "ownerClass=" + (ownerClass == null ? "null" : ownerClass.getName()) +
-           ", classLoader=" + classLoader +
-           ", overriddenPath='" + overriddenPath + '\'' +
-           ", url=" + url +
-           ", useCacheOnLoad=" + useCacheOnLoad +
-           '}';
-  }
+  return urlProvider(effectivePath)
 }

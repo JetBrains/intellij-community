@@ -578,7 +578,7 @@ final class PainterHelper implements Painter.Listener {
         return ImageLoader.INSTANCE.convertImage(
           image,
           flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
-          ImageLoader.ALLOW_FLOAT_SCALING, ScaleContext.create(),
+          ScaleContext.create(),
           false, // we scale and handle HiDPI later
           false,
           1,
