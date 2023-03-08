@@ -126,17 +126,17 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
            });
   }
 
- /* public void testRemovingExcludedRootFromCustomWorkspaceEntity() throws Exception {
-    registerWorkspaceFileIndexContributor((entity, registrar) -> {
-      for (VirtualFileUrl root : entity.getRoots()) {
-        registrar.registerFileSet(root, WorkspaceFileKind.EXTERNAL, entity, null);
-      }
-      for (VirtualFileUrl root : entity.getExcludedRoots()) {
-        registrar.registerExcludedRoot(root, entity);
-      }
-    });
-    File root = createTempDir("customRoot");
-    VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
+ public void testRemovingExcludedRootFromCustomWorkspaceEntity() throws Exception {
+   registerWorkspaceFileIndexContributor((entity, registrar) -> {
+     for (VirtualFileUrl root : entity.getRoots()) {
+       registrar.registerFileSet(root, WorkspaceFileKind.EXTERNAL, entity, null);
+     }
+     for (VirtualFileUrl root : entity.getExcludedRoots()) {
+       registrar.registerExcludedRoot(root, entity);
+     }
+   });
+   File root = createTempDir("customRoot");
+   VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
     VirtualFile excluded = WriteAction.compute(() -> virtualRoot.createChildDirectory(this, "excluded"));
     VirtualFileUrlManager fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, myProject);
     VirtualFileUrl url = fileUrlManager.fromUrl(virtualRoot.getUrl());
@@ -154,12 +154,11 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
       });
       return createdEntity;
     }, (entity) -> {
-    //todo[lene] fix to avoid reindexing included root
       return IndexableEntityProviderMethods.INSTANCE.createExternalEntityIterators(entity.createReference(),
                                                                                    Collections.singletonList(excluded),
                                                                                    Collections.emptyList());
     });
-  }*/
+ }
 
   public void testRemovingCustomWorkspaceEntityWithExcludedRoot() throws Exception {
     registerWorkspaceFileIndexContributor((entity, registrar) -> {
