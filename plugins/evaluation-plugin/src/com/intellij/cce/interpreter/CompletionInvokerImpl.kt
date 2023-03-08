@@ -1,6 +1,7 @@
 package com.intellij.cce.interpreter
 
 import com.intellij.cce.actions.CompletionGolfEmulation
+import com.intellij.cce.actions.TextRange
 import com.intellij.cce.actions.UserEmulator
 import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.*
@@ -32,12 +33,14 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.ui.icons.CachedImageIcon
 import java.io.File
+import kotlin.random.Random
 
 class CompletionInvokerImpl(private val project: Project,
                             private val language: Language,
                             completionType: com.intellij.cce.actions.CompletionType,
                             userEmulationSettings: UserEmulator.Settings?,
                             private val completionGolfSettings: CompletionGolfEmulation.Settings?) : CompletionInvoker {
+  private val benchmarkRandom = Random(completionGolfSettings?.randomSeed ?: 0)
   private companion object {
     val LOG = Logger.getInstance(CompletionInvokerImpl::class.java)
     const val LOG_MAX_LENGTH = 50
@@ -184,12 +187,41 @@ class CompletionInvokerImpl(private val project: Project,
     return session
   }
 
-  override fun emulateCompletionGolfSession(expectedLine: String, completableRanges: List<com.intellij.cce.actions.TextRange>, offset: Int): Session {
+  override fun emulateCompletionGolfSession(expectedLine: String, completableRanges: List<TextRange>, offset: Int): Session {
     val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
-    val invokeOnEachChar = completionGolfSettings?.invokeOnEachChar ?: false
+    val isBenchmark = completionGolfSettings?.isBenchmark ?: false
     val session = Session(offset, expectedLine, completableRanges.sumOf { it.end - it.start }, null, TokenProperties.UNKNOWN)
-    var currentString = ""
+    if (isBenchmark) {
+      session.benchmark(expectedLine, completableRanges, offset, emulator)
+    } else {
+      session.emulateCG(expectedLine, completableRanges, offset, emulator)
+    }
+    return session
+  }
 
+  private fun Session.benchmark(expectedLine: String, completableRanges: List<TextRange>, offset: Int, emulator: CompletionGolfEmulation) {
+    var currentString = ""
+    for (range in completableRanges) {
+      val prefixLength = benchmarkRandom.nextInt(range.end - range.start)
+      if (prefixLength > 0 || currentString.length < range.start - offset) {
+        val toAdd = expectedLine.substring(currentString.length, range.start - offset + prefixLength)
+        printText(toAdd)
+        currentString += toAdd
+      }
+      val lookup = callCompletion(expectedLine, null)
+      emulator.pickBestSuggestion(currentString, lookup, this).also {
+        LookupManager.hideActiveLookup(project)
+        addLookup(it)
+      }
+    }
+    if (currentString != expectedLine) {
+      printText(expectedLine.substring(currentString.length))
+    }
+  }
+
+  private fun Session.emulateCG(expectedLine: String, completableRanges: List<TextRange>, offset: Int, emulator: CompletionGolfEmulation) {
+    val invokeOnEachChar = completionGolfSettings?.invokeOnEachChar ?: false
+    var currentString = ""
     while (currentString != expectedLine) {
       val nextChar = expectedLine[currentString.length].toString()
       if (!completableRanges.any { offset + currentString.length >= it.start && offset + currentString.length < it.end }) {
@@ -200,7 +232,7 @@ class CompletionInvokerImpl(private val project: Project,
 
       val lookup = callCompletion(expectedLine, null)
 
-      emulator.pickBestSuggestion(currentString, lookup, session).also {
+      emulator.pickBestSuggestion(currentString, lookup, this).also {
         if (invokeOnEachChar) {
           LookupManager.hideActiveLookup(project)
         }
@@ -217,10 +249,9 @@ class CompletionInvokerImpl(private val project: Project,
             LookupManager.hideActiveLookup(project)
           }
         }
-        session.addLookup(it)
+        addLookup(it)
       }
     }
-    return session
   }
 
   private fun positionToString(offset: Int): String {
@@ -304,4 +335,3 @@ class CompletionInvokerImpl(private val project: Project,
     return features["ml_full_line_score"]?.toDoubleOrNull()
   }
 }
-

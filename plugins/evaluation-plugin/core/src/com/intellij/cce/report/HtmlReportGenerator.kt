@@ -1,5 +1,6 @@
 package com.intellij.cce.report
 
+import com.intellij.cce.actions.CompletionGolfEmulation
 import com.intellij.cce.metric.MetricInfo
 import com.intellij.cce.metric.MetricValueType
 import com.intellij.cce.metric.SuggestionsComparator
@@ -27,7 +28,7 @@ class HtmlReportGenerator(
   suggestionsComparators: List<SuggestionsComparator>,
   featuresStorages: List<FeaturesStorage>,
   fullLineStorages: List<FullLineLogsStorage>,
-  isCompletionGolfEvaluation: Boolean
+  completionGolfSettings: CompletionGolfEmulation.Settings?
 ) : FullReportGenerator {
   companion object {
     private const val globalReportName = "index.html"
@@ -53,8 +54,8 @@ class HtmlReportGenerator(
 
   private val dirs = GeneratorDirectories.create(outputDir, type, filterName, comparisonFilterName)
 
-  private var fileGenerator: FileReportGenerator = if (isCompletionGolfEvaluation) {
-    CompletionGolfFileReportGenerator(filterName, comparisonFilterName, featuresStorages, fullLineStorages, dirs)
+  private var fileGenerator: FileReportGenerator = if (completionGolfSettings != null) {
+    CompletionGolfFileReportGenerator(completionGolfSettings, filterName, comparisonFilterName, featuresStorages, fullLineStorages, dirs)
   }
   else {
     BasicFileReportGenerator(suggestionsComparators, filterName, comparisonFilterName, featuresStorages, dirs)
@@ -68,7 +69,7 @@ class HtmlReportGenerator(
 
   init {
     resources.forEach { copyResources(it) }
-    if (isCompletionGolfEvaluation) {
+    if (completionGolfSettings != null) {
       downloadV2WebFiles()
     }
   }

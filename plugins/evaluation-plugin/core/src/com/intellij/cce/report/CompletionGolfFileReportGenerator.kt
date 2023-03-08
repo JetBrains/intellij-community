@@ -1,5 +1,6 @@
 package com.intellij.cce.report
 
+import com.intellij.cce.actions.CompletionGolfEmulation
 import com.intellij.cce.actions.selectedWithoutPrefix
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
@@ -18,6 +19,7 @@ import java.nio.file.Path
 import java.text.DecimalFormat
 
 class CompletionGolfFileReportGenerator(
+  private val settings: CompletionGolfEmulation.Settings,
   filterName: String,
   comparisonFilterName: String,
   featuresStorages: List<FeaturesStorage>,
@@ -257,7 +259,7 @@ class CompletionGolfFileReportGenerator(
       else -> "cg-none"
     }
 
-    val text = lookup.selectedWithoutPrefix() ?: expectedText[offset].toString()
+    val text = settings.isBenchmark.takeUnless { it }?.let { lookup.selectedWithoutPrefix() } ?: expectedText[offset].toString()
 
     span("code-span completion $kindClass $delimiter") {
       attributes["data-cl"] = "$columnId"
