@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 public class PyOverrideTest extends PyTestCase {
@@ -31,7 +30,7 @@ public class PyOverrideTest extends PyTestCase {
 
   private void doTest() {
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
-    PyFunction toOverride = getTopLevelClass(0).getMethods() [0];
+    PyFunction toOverride = getTopLevelClass(0).getMethods()[0];
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(1),
                                             Collections.singletonList(new PyMethodMember(toOverride)), false);
     myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
@@ -42,7 +41,7 @@ public class PyOverrideTest extends PyTestCase {
   }
 
   private PyClass getTopLevelClass(int index) {
-    PyFile file = (PyFile) myFixture.getFile();
+    PyFile file = (PyFile)myFixture.getFile();
     return file.getTopLevelClasses().get(index);
   }
 
@@ -206,7 +205,6 @@ public class PyOverrideTest extends PyTestCase {
                                               Collections.singletonList(new PyMethodMember(toOverride)), false);
       myFixture.checkResultByFile(resultFilePath, true);
     });
-
   }
 
   public void testSingleStar() {  // PY-6455
