@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
+import com.intellij.util.SlowOperations
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.ide.WorkspaceModel
@@ -121,6 +122,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   }
 
   private fun ensureIsUpToDate() {
+    SlowOperations.assertSlowOperationsAreAllowed()
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }
