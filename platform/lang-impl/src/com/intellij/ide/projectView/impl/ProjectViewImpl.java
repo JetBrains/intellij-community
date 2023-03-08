@@ -1810,7 +1810,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     void selectInCurrentTarget(boolean requestFocus) {
       SelectInTarget target = getCurrentSelectInTarget();
       if (target != null && getPsiFile() != null) {
-        selectIn(target, requestFocus);
+        target.selectIn(this, requestFocus);
       }
     }
 
