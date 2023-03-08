@@ -218,16 +218,20 @@ private class ModuleStateTrackerImpl : KtModuleStateTracker {
     private val modificationCount = AtomicLong()
 
     @Volatile
-    private var _isValid = true
+    override var isValid: Boolean = true
+        private set
 
     fun incModificationCount() {
-        modificationCount.incrementAndGet()
+        if (isValid) {
+            modificationCount.incrementAndGet()
+        }
     }
 
     fun invalidate() {
-        _isValid = false
+        incModificationCount()
+        isValid = false
     }
 
-    override val isValid: Boolean get() = _isValid
-    override val rootModificationCount: Long get() = modificationCount.get()
+    override val rootModificationCount: Long
+        get() = modificationCount.get()
 }
