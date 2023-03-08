@@ -6,5 +6,5 @@ class A(object):
 class B(A):
     @classmethod
     def m(cls):
-        <selection>super(B, cls).m()</selection>
+        <selection>super().m()</selection>
 
