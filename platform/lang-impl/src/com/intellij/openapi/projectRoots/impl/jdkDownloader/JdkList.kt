@@ -206,22 +206,22 @@ data class JdkPlatform(
 )
 
 data class JdkPredicate(
-  private val ideBuildNumber: BuildNumber,
+  private val ideBuildNumber: BuildNumber?,
   private val supportedPlatforms: Set<JdkPlatform>,
 ) {
 
   companion object {
-    fun none() = JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, emptySet())
+    fun none() = JdkPredicate(null, emptySet())
 
     fun default() = createInstance(forWsl = false)
-    fun forWSL() = createInstance(forWsl = true)
+    fun forWSL(buildNumber: BuildNumber? = ApplicationInfoImpl.getShadowInstance().build) = createInstance(forWsl = true, buildNumber)
 
     /**
      * Selects only JDKs that are for the same OS and CPU arch as the current Java process.
      */
-    fun forCurrentProcess() = JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, setOf(JdkPlatform(currentOS, currentArch)))
+    fun forCurrentProcess() = JdkPredicate(null, setOf(JdkPlatform(currentOS, currentArch)))
 
-    private fun createInstance(forWsl: Boolean = false): JdkPredicate {
+    private fun createInstance(forWsl: Boolean = false, buildNumber: BuildNumber? = ApplicationInfoImpl.getShadowInstance().build): JdkPredicate {
       val x86_64 = "x86_64"
       val defaultPlatform = JdkPlatform(currentOS, x86_64)
       val platforms = when {
@@ -233,7 +233,7 @@ data class JdkPredicate(
         else -> listOf(defaultPlatform)
       }
 
-      return JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, platforms.toSet())
+      return JdkPredicate(buildNumber, platforms.toSet())
     }
 
     val currentOS = when {
@@ -306,7 +306,7 @@ data class JdkPredicate(
       return filter["value"]?.asBoolean()
     }
 
-    if (type == "build_number_range") {
+    if (type == "build_number_range" && ideBuildNumber != null) {
       val fromBuild = filter["since"]?.asText()
       val untilBuild = filter["until"]?.asText()
 
