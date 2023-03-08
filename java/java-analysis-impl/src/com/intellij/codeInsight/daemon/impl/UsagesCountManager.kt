@@ -69,10 +69,9 @@ private class FileUsagesCache {
     val methodMembers = if (member is PsiMethod) DeepestSuperMethodsSearch.search(member).findAll().toList() else emptyList()
     val superMembers = methodMembers.ifEmpty { listOf(member) }
     val localScope = GlobalSearchScope.fileScope(file)
+    //external usages should be counted first to ensure heavy cases are skipped and to avoid freezes in ScopeOptimizer
+    //CompilerReferenceServiceBase#getScopeWithCodeReferences method invokes kotlin resolve and can be very slow
     val externalScope = GlobalSearchScope.notScope(localScope)
-
-    val internalUsages = usagesCounter.countUsages(file, superMembers, localScope)
-    if (internalUsages < 0) return internalUsages
     val key = QualifiedNameProviderUtil.getQualifiedName(member)
     val externalUsages = if (key != null) {
       externalUsagesCache.getOrPut(key) { usagesCounter.countUsages(file, superMembers, externalScope) }
@@ -81,6 +80,8 @@ private class FileUsagesCache {
       usagesCounter.countUsages(file, superMembers, externalScope)
     }
     if (externalUsages < 0) return externalUsages
-    return externalUsages + internalUsages
+    val localUsages = usagesCounter.countUsages(file, superMembers, localScope)
+    if (localUsages < 0) return localUsages
+    return externalUsages + localUsages
   }
 }
