@@ -136,7 +136,6 @@
       "editorConfig.svg": "nodes/editorconfig.svg",
       "diagram.svg": "fileTypes/diagram.svg",
       "freemaker.svg": "icons/freemarker-icon.svg",
-      "go.svg": "icons/go.svg",
       "gradle.svg": [
         "icons/gradle.svg",
         "icons/gradleFile.svg"
