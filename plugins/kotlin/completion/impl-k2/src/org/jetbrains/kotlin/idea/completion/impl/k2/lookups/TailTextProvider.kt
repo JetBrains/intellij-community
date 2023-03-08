@@ -4,10 +4,6 @@ package org.jetbrains.kotlin.idea.completion.lookups
 
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.KtTypeParametersRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
@@ -30,18 +26,12 @@ internal object TailTextProvider {
             }
         }
 
-        symbol.callableIdIfNonLocal
-            ?.takeIf { it.className == null }
-            ?.let { callableId ->
-                append(" (")
-                append(callableId.packageName.asStringForTailText())
-                append(")")
-            }
-
         symbol.receiverType?.let { receiverType ->
             val renderedType = receiverType.render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT)
             append(KotlinCompletionImplK2Bundle.message("presentation.tail.for.0", renderedType))
         }
+
+        symbol.getContainerPresentation()?.let { append(it) }
     }
 
     fun KtAnalysisSession.getTailText(
@@ -60,6 +50,23 @@ internal object TailTextProvider {
             append(" (")
             append(fqName.asStringForTailText())
             append(")")
+        }
+    }
+
+    context(KtAnalysisSession)
+    private fun KtCallableSymbol.getContainerPresentation(): String? {
+        val callableId = callableIdIfNonLocal ?: return null
+        val className = callableId.className
+
+        val packagePresentation = callableId.packageName.asStringForTailText()
+        return when {
+            !isExtension && className != null -> null
+            !isExtension -> " ($packagePresentation)"
+
+            else -> {
+                val containerPresentation = className?.asString() ?: packagePresentation
+                KotlinCompletionImplK2Bundle.message("presentation.tail.in.0", containerPresentation)
+            }
         }
     }
 
