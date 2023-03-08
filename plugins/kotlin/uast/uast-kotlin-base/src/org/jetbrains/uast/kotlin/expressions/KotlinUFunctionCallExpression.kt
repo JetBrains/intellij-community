@@ -213,7 +213,7 @@ class KotlinUFunctionCallExpression(
         return false
     }
 
-    override fun methodNameCanBeOneOf(names: Collection<String>): Boolean {
+    fun methodNameCanBeOneOf(names: Collection<String>): Boolean {
         if (isMethodNameOneOfWithoutConsideringImportAliases(names)) return true
         val ktFile = sourcePsi.containingKtFile
         val aliasedNames = collectAliasedNamesForName(ktFile, names)

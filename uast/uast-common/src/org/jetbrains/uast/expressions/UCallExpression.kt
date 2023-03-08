@@ -116,9 +116,8 @@ interface UCallExpression : UExpression, UResolvable {
   /**
    * Tries to perform optimized name checking for cases when [methodName] requires reference resolution.
    *
-   * May perform some heavy resolution inside for some languages (e.g., for Kotlin). For a lightweight check (with weaker guaranties), see [methodNameCanBeOneOf].
+   * May perform some heavy resolution inside for some languages (e.g., for Kotlin).
    *
-   * @see methodNameCanBeOneOf
    * @see methodName
    */
   @ApiStatus.Experimental
@@ -126,22 +125,6 @@ interface UCallExpression : UExpression, UResolvable {
     return names.contains(methodName ?: return false)
   }
 
-  /**
-   * Tries to check if the call can be resolved to some method with name from [names].
-   *
-   * It may return false-positive results, so an additional resolution check is needed in the case of [methodNameCanBeOneOf] returns `true`.
-   *
-   * Usually do not perform heavy resolution at the cost of sacrificing accuracy (may return false-positive results). For an accurate version which may perform heavy resolve see [isMethodNameOneOf].
-   *
-   * @param names list of method names we want to check it the call can be resolved to
-   * @return `false` if the call can definitely not be resolved to the method with name from [names]. Returns `true` if the call is resolved to the method with name from [names] or this is a false-positive result.
-   * @see isMethodNameOneOf
-   * @see methodName
-   */
-  @ApiStatus.Experimental
-  fun methodNameCanBeOneOf(names: Collection<String>): Boolean {
-    return isMethodNameOneOf(names)
-  }
 }
 
 @Deprecated("useless since IDEA 2019.2, because getArgumentForParameter moved to UCallExpression", ReplaceWith("UCallExpression"))

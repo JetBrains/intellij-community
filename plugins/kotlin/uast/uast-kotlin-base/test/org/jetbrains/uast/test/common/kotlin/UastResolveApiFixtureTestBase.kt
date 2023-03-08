@@ -1381,7 +1381,8 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             "Call should be present in the test"
         }
         TestCase.assertTrue(call is KotlinUFunctionCallExpression)
-        TestCase.assertTrue("expected method name to be one of ${names}", call!!.methodNameCanBeOneOf(names))
+        val ktCall = call as KotlinUFunctionCallExpression
+        TestCase.assertTrue("expected method name to be one of ${names}", ktCall.methodNameCanBeOneOf(names))
     }
 
 }
