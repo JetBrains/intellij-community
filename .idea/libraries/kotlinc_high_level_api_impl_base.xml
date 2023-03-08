@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.high-level-api-impl-base" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-for-ide:1.8.20-Beta-30" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:high-level-api-impl-base-for-ide:1.8.20-RC-release-288" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-for-ide/1.8.20-Beta-30/high-level-api-impl-base-for-ide-1.8.20-Beta-30.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-for-ide/1.8.20-RC-release-288/high-level-api-impl-base-for-ide-1.8.20-RC-release-288.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-for-ide/1.8.20-Beta-30/high-level-api-impl-base-for-ide-1.8.20-Beta-30-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/high-level-api-impl-base-for-ide/1.8.20-RC-release-288/high-level-api-impl-base-for-ide-1.8.20-RC-release-288-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
