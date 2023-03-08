@@ -5,16 +5,16 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
+import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
+import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.readText
-import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsImportedEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
-import com.intellij.platform.workspaceModel.jps.JpsProjectFileEntitySource
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectSerializersImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.createProjectSerializers
 import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAllEntities
@@ -63,7 +63,7 @@ class ImlCreationPropertyTest {
 
     val configurationManager = ExternalStorageConfigurationManager.getInstance(projectModel.project)
     configurationManager.isEnabled = true
-    val rootFolder = tempDir.resolve("testProject" + UUID.randomUUID().hashCode())
+    val rootFolder = tempDir.resolve("testProjectX" + UUID.randomUUID().hashCode())
     val info = createProjectSerializers(rootFolder.toFile(), virtualFileManager, configurationManager)
     serializers = info.first
     configLocation = info.second
@@ -73,7 +73,7 @@ class ImlCreationPropertyTest {
   fun createAndSave() {
     PropertyChecker.checkScenarios {
       ImperativeCommand { env ->
-        tempDir.toFile().listFiles()?.forEach { it.deleteRecursively() }
+        configLocation.baseDirectoryUrl.toPath().toFile().listFiles()?.forEach { it.deleteRecursively() }
         val workspace = env.generateValue(newEmptyWorkspace, "Generate empty workspace")
         env.executeCommands(Generator.constant(CreateAndSave(workspace)))
       }
