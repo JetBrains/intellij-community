@@ -4,10 +4,14 @@ package com.intellij.java.codeInsight.codeVision
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.JavaCodeInsightTestCase
 import com.intellij.codeInsight.daemon.impl.UsagesCountManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMember
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
+import java.util.concurrent.atomic.AtomicInteger
 
 class JavaCodeVisionCacheTest : JavaCodeInsightTestCase() {
 
@@ -55,8 +59,37 @@ class JavaCodeVisionCacheTest : JavaCodeInsightTestCase() {
     require(currentUsages == 4)
   }
 
+  fun testUsagesNotRecomputed() {
+    val externalComputations = AtomicInteger(0)
+    val localComputations = AtomicInteger(0)
+    val testUsagesCounter = object : UsagesCountManager.UsagesCounter {
+      override fun countUsages(file: PsiFile, members: List<PsiMember>, scope: SearchScope): Int {
+        if (scope.contains(file.virtualFile)) {
+          localComputations.incrementAndGet()
+        }
+        else {
+          externalComputations.incrementAndGet()
+        }
+        return 0
+      }
+    }
+    val usagesCountManager = UsagesCountManager(project, testUsagesCounter)
+    Disposer.register(testRootDisposable, usagesCountManager)
+    require(localComputations.get() == 0)
+    require(externalComputations.get() == 0)
+    configureAndOpenLocalFile()
+    val testMember = findTestMember()
+    usagesCountManager.countMemberUsages(testMember.containingFile, testMember)
+    require(localComputations.get() == 1)
+    require(externalComputations.get() == 1)
+    typeAndCommit("test();")
+    usagesCountManager.countMemberUsages(testMember.containingFile, testMember)
+    require(localComputations.get() == 2)
+    require(externalComputations.get() == 1)
+  }
+
   private fun configureAndOpenLocalFile() {
-    configureByFiles(null, "${getTestDirectory()}/Test.java", "${getTestDirectory()}/ExternalUsage.java", )
+    configureByFiles(null, "${getTestDirectory()}/Test.java", "${getTestDirectory()}/ExternalUsage.java")
   }
 
   private fun configureAndOpenExternalFile() {
