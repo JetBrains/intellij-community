@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -144,55 +143,22 @@ public class IndexingRootsCollectionUtil {
 
   @NotNull
   public static Collection<IndexableIteratorBuilder> createBuildersFromRootsDescriptions(@NotNull IndexingRootsDescriptions descriptions) {
-    return doCreateBuilders(descriptions, null);
-  }
-
-  @NotNull
-  private static ArrayList<IndexableIteratorBuilder> doCreateBuilders(@NotNull IndexingRootsDescriptions descriptions,
-                                                                      @Nullable VirtualFile root) {
     ArrayList<IndexableIteratorBuilder> builders = new ArrayList<>();
     for (ModuleRootsDescription moduleRootsDescription : descriptions.moduleRoots()) {
-      if (root == null || VfsUtilCore.isUnderFiles(root, moduleRootsDescription.roots)) {
-        builders.addAll(INSTANCE.forModuleRootsFileBased(((ModuleBridge)moduleRootsDescription.module()).getModuleEntityId(),
-                                                         root == null ? moduleRootsDescription.roots() : Collections.singletonList(root)));
-      }
+      builders.addAll(INSTANCE.forModuleRootsFileBased(((ModuleBridge)moduleRootsDescription.module()).getModuleEntityId(),
+                                                       moduleRootsDescription.roots()));
     }
     for (LibraryRootsDescription libraryRoot : descriptions.libraryRoots()) {
-      if (root == null ||
-          VfsUtilCore.isUnderFiles(root, libraryRoot.classRoots) ||
-          VfsUtilCore.isUnderFiles(root, libraryRoot.sourceRoots)) {
-        builders.addAll(INSTANCE.forLibraryEntity(libraryRoot.library().getSymbolicId(), false,
-                                                  libraryRoot.classRoots(), libraryRoot.sourceRoots()));
-      }
-      else if (VfsUtilCore.isUnderFiles(root, libraryRoot.classRoots)) {
-        builders.addAll(INSTANCE.forLibraryEntity(libraryRoot.library().getSymbolicId(), false,
-                                                  Collections.singletonList(root), Collections.emptyList()));
-      }
-      else if (VfsUtilCore.isUnderFiles(root, libraryRoot.sourceRoots)) {
-        builders.addAll(INSTANCE.forLibraryEntity(libraryRoot.library().getSymbolicId(), false,
-                                                  Collections.emptyList(), Collections.singletonList(root)));
-      }
+      builders.addAll(INSTANCE.forLibraryEntity(libraryRoot.library().getSymbolicId(), false,
+                                                libraryRoot.classRoots(), libraryRoot.sourceRoots()));
     }
 
     for (EntityContentRootsDescription description : descriptions.contentEntityRoots()) {
-      if (root == null || VfsUtilCore.isUnderFiles(root, description.roots)) {
-        builders.addAll(INSTANCE.forModuleUnawareContentEntity(description.entityReference(),
-                                                               root == null ? description.roots() : Collections.singletonList(root)));
-      }
+      builders.addAll(INSTANCE.forModuleUnawareContentEntity(description.entityReference(), description.roots()));
     }
 
     for (EntityRootsDescription description : descriptions.externalEntityRoots()) {
-      if (root == null) {
-        builders.addAll(INSTANCE.forExternalEntity(description.entityReference(), description.roots(), description.sourceRoots()));
-      }
-      else if (VfsUtilCore.isUnderFiles(root, description.roots)) {
-        builders.addAll(INSTANCE.forExternalEntity(description.entityReference(),
-                                                   Collections.singletonList(root), Collections.emptyList()));
-      }
-      else if (VfsUtilCore.isUnderFiles(root, description.sourceRoots)) {
-        builders.addAll(INSTANCE.forExternalEntity(description.entityReference(),
-                                                   Collections.emptyList(), Collections.singletonList(root)));
-      }
+      builders.addAll(INSTANCE.forExternalEntity(description.entityReference(), description.roots(), description.sourceRoots()));
     }
     return builders;
   }
