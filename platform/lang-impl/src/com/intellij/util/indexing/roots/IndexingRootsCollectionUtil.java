@@ -77,11 +77,6 @@ public class IndexingRootsCollectionUtil {
 
   public static class IndexingRootsCollectionSettings {
     public @Nullable Condition<? super WorkspaceFileIndexContributor<?>> retainCondition = null;
-    public boolean collectModuleAwareContent = true;
-    public @Nullable Condition<ModuleContentOrSourceRootData> retainModuleContentCondition = null;
-    public boolean collectModuleUnawareContent = true;
-    public boolean collectExternalEntities = true;
-    public boolean collectExternalSourceEntities = true;
   }
 
   @NotNull
@@ -217,22 +212,6 @@ public class IndexingRootsCollectionUtil {
       mySettings = ObjectUtils.notNull(settings, new IndexingRootsCollectionSettings());
     }
 
-    private boolean shouldIgnore(@NotNull WorkspaceFileKind kind, @Nullable WorkspaceFileSetData data) {
-      if (data instanceof ModuleContentOrSourceRootData) {
-        if (!mySettings.collectModuleAwareContent) return true;
-
-        if (mySettings.retainModuleContentCondition != null &&
-            !mySettings.retainModuleContentCondition.value((ModuleContentOrSourceRootData)data)) {
-          return true;
-        }
-      }
-      return switch (kind) {
-        case CONTENT, TEST_CONTENT -> !mySettings.collectModuleUnawareContent;
-        case EXTERNAL -> !mySettings.collectExternalEntities;
-        case EXTERNAL_SOURCE -> !mySettings.collectExternalSourceEntities;
-      };
-    }
-
     public void clearNonModuleAwareMaps() {
       myContentRoots.clear();
       myLibraryRoots.clear();
@@ -355,7 +334,6 @@ public class IndexingRootsCollectionUtil {
                                   @NotNull WorkspaceEntity entity,
                                   @Nullable WorkspaceFileSetData customData) {
         if (rootsToCollect != RootType.Included) return;
-        if (shouldIgnore(kind, customData)) return;
         VirtualFile file = VirtualFileUrls.getVirtualFile(root);
         if (file != null) {
           doRegisterFileSet(file, kind, entity, customData);
@@ -368,7 +346,6 @@ public class IndexingRootsCollectionUtil {
                                   @NotNull WorkspaceEntity entity,
                                   @Nullable WorkspaceFileSetData customData) {
         if (rootsToCollect != RootType.Included) return;
-        if (shouldIgnore(kind, customData)) return;
         doRegisterFileSet(root, kind, entity, customData);
       }
 
