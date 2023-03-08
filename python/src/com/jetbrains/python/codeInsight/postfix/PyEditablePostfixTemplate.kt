@@ -8,9 +8,9 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Conditions
 import com.intellij.psi.PsiElement
 
-class PyEditablePostfixTemplate(templateId: String, templateName: String, liveTemplate: TemplateImpl, example: String,
-                                conditions: Set<PyPostfixTemplateExpressionCondition?>, topmost: Boolean, provider: PostfixTemplateProvider,
-                                private val myBuiltin: Boolean) : EditablePostfixTemplateWithMultipleExpressions<PyPostfixTemplateExpressionCondition?>(
+open class PyEditablePostfixTemplate(templateId: String, templateName: String, liveTemplate: TemplateImpl, example: String,
+                                     conditions: Set<PyPostfixTemplateExpressionCondition?>, topmost: Boolean, provider: PostfixTemplateProvider,
+                                     private val builtin: Boolean) : EditablePostfixTemplateWithMultipleExpressions<PyPostfixTemplateExpressionCondition?>(
   templateId, templateName, liveTemplate, example, conditions, topmost, provider) {
 
   constructor(templateId: String, templateName: String, templateText: String, example: String,
@@ -25,9 +25,7 @@ class PyEditablePostfixTemplate(templateId: String, templateName: String, liveTe
     return expressions.filter { condition.value(it) }
   }
 
-  override fun isBuiltin(): Boolean {
-    return myBuiltin
-  }
+  override fun isBuiltin(): Boolean = builtin
 
   override fun isEditable(): Boolean {
     return expressionConditions.all {
