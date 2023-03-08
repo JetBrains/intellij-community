@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
+import com.intellij.execution.Location
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
@@ -95,6 +96,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
     PlatformCoreDataKeys.MODULE.`is`(dataId) -> selectedNode?.module
+    Location.DATA_KEY.`is`(dataId) -> selectedNode?.location
     PlatformDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
       val selectedNodes = selectedNodes
       DataProvider { slowDataId -> getSlowData(slowDataId, selectedNodes) }
