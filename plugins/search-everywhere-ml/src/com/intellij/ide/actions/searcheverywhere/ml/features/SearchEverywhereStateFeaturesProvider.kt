@@ -85,13 +85,5 @@ class SearchEverywhereStateFeaturesProvider {
     return false
   }
 
-  private fun CharSequence.containsAbbreviations(): Boolean {
-    this.forEachIndexed { index, c ->
-      if (index > 0 && c.isUpperCase() && this[index - 1].isUpperCase()) {
-        return true
-      }
-    }
-
-    return false
-  }
+  private fun CharSequence.containsAbbreviations(): Boolean = this.filter { it.isLetter() }.all { it.isUpperCase() }
 }
