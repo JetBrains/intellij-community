@@ -31,6 +31,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             runTest("../idea/tests/testData/quickfix/autoImports/invisible/annotation.before.Main.kt");
         }
 
+        @TestMetadata("assignmentOperator.before.Main.kt")
+        public void testAssignmentOperator() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/invisible/assignmentOperator.before.Main.kt");
+        }
+
         @TestMetadata("class.before.Main.kt")
         public void testClass() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/invisible/class.before.Main.kt");

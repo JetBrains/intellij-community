@@ -237,5 +237,8 @@
     <module name="kotlin.navigation"/>
     <module name="kotlin.code-insight.line-markers-k2"/>
     <module name="kotlin.highlighting"/>
+
+    <module name="kotlin.compiler-reference-index"/>
+    <module name="kotlin.compiler-plugins.assignment.common-k2"/>
   </content>
 </idea-plugin>
