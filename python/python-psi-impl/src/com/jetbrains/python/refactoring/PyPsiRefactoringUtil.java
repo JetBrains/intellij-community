@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.QualifiedName;
@@ -385,5 +386,14 @@ public final class PyPsiRefactoringUtil {
     }
 
     addSuperClassExpressions(project, clazz, superClassNames, null);
+  }
+
+  public static boolean shouldCopyAnnotations(@NotNull PsiElement copiedElement, @NotNull PsiFile destFile) {
+    if (LanguageLevel.forElement(copiedElement).isPython2() ||
+        (PyiUtil.isInsideStub(copiedElement) && !PyiUtil.isPyiFileOfPackage(destFile))) {
+      return false;
+    }
+    VirtualFile virtualFile = copiedElement.getContainingFile().getVirtualFile();
+    return virtualFile != null && ProjectScope.getProjectScope(copiedElement.getProject()).contains(virtualFile);
   }
 }

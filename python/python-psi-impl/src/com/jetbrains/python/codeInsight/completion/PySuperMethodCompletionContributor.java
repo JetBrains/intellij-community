@@ -26,10 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameterList;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,8 +71,16 @@ public class PySuperMethodCompletionContributor extends CompletionContributor im
                  StringBuilder builder = new StringBuilder();
                  builder.append(superMethod.getName());
                  if (!(nextElement instanceof PyParameterList)) {
-                   builder.append(superMethod.getParameterList().getText());
-                   if (superMethod.getAnnotation() != null) {
+                   PyParameterList parameterList;
+                   boolean copyAnnotations = PyPsiRefactoringUtil.shouldCopyAnnotations(superMethod, parameters.getOriginalFile());
+                   if (copyAnnotations) {
+                     parameterList = superMethod.getParameterList();
+                   }
+                   else {
+                     parameterList = stripAnnotations(superMethod.getParameterList());
+                   }
+                   builder.append(parameterList.getText());
+                   if (superMethod.getAnnotation() != null && copyAnnotations) {
                      builder.append(" ")
                        .append(superMethod.getAnnotation().getText())
                        .append(":");
@@ -93,5 +98,16 @@ public class PySuperMethodCompletionContributor extends CompletionContributor im
                }
              }
            });
+  }
+
+  private static <T extends PsiElement> @NotNull T stripAnnotations(@NotNull T element) {
+    @SuppressWarnings("unchecked") T result = (T)element.copy();
+    result.accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyAnnotation(@NotNull PyAnnotation node) {
+        node.delete();
+      }
+    });
+    return result;
   }
 }
