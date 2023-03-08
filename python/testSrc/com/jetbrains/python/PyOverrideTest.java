@@ -29,11 +29,11 @@ public class PyOverrideTest extends PyTestCase {
   }
 
   private void doTest() {
-    myFixture.configureByFile("override/" + getTestName(true) + ".py");
+    myFixture.configureByFile(getTestName(true) + ".py");
     PyFunction toOverride = getTopLevelClass(0).getMethods()[0];
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(1),
                                             Collections.singletonList(new PyMethodMember(toOverride)), false);
-    myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
   }
 
   private void doTest3k() {
@@ -81,49 +81,49 @@ public class PyOverrideTest extends PyTestCase {
   }
 
   public void testInnerClass() {  // PY-10976
-    myFixture.configureByFile("override/" + getTestName(true) + ".py");
+    myFixture.configureByFile(getTestName(true) + ".py");
     PyFunction toOverride = getTopLevelClass(0).getMethods()[0];
     PyClass pyClass = getTopLevelClass(1).getNestedClasses()[0];
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), pyClass,
                                             Collections.singletonList(new PyMethodMember(toOverride)), false);
-    myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
   }
 
   public void testInnerFunctionClass() {
-    myFixture.configureByFile("override/" + getTestName(true) + ".py");
+    myFixture.configureByFile(getTestName(true) + ".py");
     PyFunction toOverride = getTopLevelClass(0).getMethods()[0];
     final PsiElement element = myFixture.getElementAtCaret();
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), PsiTreeUtil.getParentOfType(element, PyClass.class, false),
                                             Collections.singletonList(new PyMethodMember(toOverride)), false);
-    myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
   }
 
   public void testQualified() {  // PY-2171
-    myFixture.configureByFile("override/" + getTestName(true) + ".py");
+    myFixture.configureByFile(getTestName(true) + ".py");
     PyClass cls = PyClassNameIndex.findClass("turtle.TurtleScreenBase", myFixture.getProject());
     assertNotNull(cls);
     PyFunction initMethod = cls.findMethodByName(PyNames.INIT, false, null);
     assertNotNull(initMethod);
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(0),
                                             Collections.singletonList(new PyMethodMember(initMethod)), false);
-    myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
   }
 
   public void testImplement() {
-    myFixture.configureByFile("override/" + getTestName(true) + ".py");
+    myFixture.configureByFile(getTestName(true) + ".py");
     PyFunction toImplement = getTopLevelClass(0).getMethods()[1];
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(1),
                                             Collections.singletonList(new PyMethodMember(toImplement)), true);
-    myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
   }
 
   // PY-4418
   public void testProperty() {
-    myFixture.configureByFile("override/" + getTestName(true) + ".py");
+    myFixture.configureByFile(getTestName(true) + ".py");
     PyFunction toImplement = getTopLevelClass(0).getMethods()[0];
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), getTopLevelClass(1),
                                             Collections.singletonList(new PyMethodMember(toImplement)), false);
-    myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
   }
 
   // PY-11127
@@ -138,7 +138,7 @@ public class PyOverrideTest extends PyTestCase {
 
   // PY-25906
   public void testImplementationOrder() {
-    myFixture.configureByFile("override/" + getTestName(true) + ".py");
+    myFixture.configureByFile(getTestName(true) + ".py");
 
     final PyFunction[] toImplement = getTopLevelClass(0).getMethods();
     assertEquals(Arrays.asList("foo", "bar"), ContainerUtil.map(toImplement, PyFunction::getName));
@@ -148,7 +148,7 @@ public class PyOverrideTest extends PyTestCase {
                                             ContainerUtil.map(toImplement, PyMethodMember::new),
                                             true);
 
-    myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
   }
 
   public void testPy3k() {
@@ -194,9 +194,9 @@ public class PyOverrideTest extends PyTestCase {
   private void testImportsForTypeAnnotations(String testName, int orderOfClassToOverride) {
 
     runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
-      final String initialFilePath = String.format("override/%s.py", testName);
-      final String importFilePath = String.format("override/%s_import.py", testName);
-      final String resultFilePath = String.format("override/%s_after.py", testName);
+      final String initialFilePath = String.format("%s.py", testName);
+      final String importFilePath = String.format("%s_import.py", testName);
+      final String resultFilePath = String.format("%s_after.py", testName);
 
       List<PyFile> pyFiles = ContainerUtil.map(myFixture.configureByFiles(initialFilePath, importFilePath), PyFile.class::cast);
 
@@ -225,12 +225,12 @@ public class PyOverrideTest extends PyTestCase {
 
   // PY-10229
   public void testInstanceCheck() {
-    myFixture.configureByFile("override/" + getTestName(true) + ".py");
+    myFixture.configureByFile(getTestName(true) + ".py");
     final PyClass cls = getTopLevelClass(0);
     final PyFunction method = cls.findMethodByName("__instancecheck__", true, null);
     assertNotNull(method);
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), cls, Collections.singletonList(new PyMethodMember(method)), false);
-    myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
   }
 
   // PY-19312
@@ -243,7 +243,7 @@ public class PyOverrideTest extends PyTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
-        myFixture.configureByFile("override/" + getTestName(true) + ".py");
+        myFixture.configureByFile(getTestName(true) + ".py");
 
         PyOverrideImplementUtil.overrideMethods(
           myFixture.getEditor(),
@@ -252,7 +252,7 @@ public class PyOverrideTest extends PyTestCase {
           false
         );
 
-        myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+        myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
       }
     );
   }
@@ -263,8 +263,8 @@ public class PyOverrideTest extends PyTestCase {
       LanguageLevel.PYTHON35,
       () -> {
         final PsiFile[] files = myFixture.configureByFiles(
-          "override/" + getTestName(true) + ".py",
-          "override/" + getTestName(true) + "_parent.py"
+          getTestName(true) + ".py",
+          getTestName(true) + "_parent.py"
         );
 
         PyOverrideImplementUtil.overrideMethods(
@@ -274,7 +274,7 @@ public class PyOverrideTest extends PyTestCase {
           false
         );
 
-        myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
+        myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
       }
     );
   }
@@ -282,5 +282,10 @@ public class PyOverrideTest extends PyTestCase {
   // PY-35512
   public void testPositionalOnlyParameters() {
     runWithLanguageLevel(LanguageLevel.PYTHON38, this::doTest);
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/override";
   }
 }
