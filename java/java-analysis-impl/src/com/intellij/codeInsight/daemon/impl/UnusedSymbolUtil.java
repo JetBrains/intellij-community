@@ -203,9 +203,30 @@ public final class UnusedSymbolUtil {
     //System.out.println(s);
   }
 
+  @NotNull
+  public static SearchScope getUseScope(@NotNull PsiMember member) {
+    Project project = member.getProject();
+    SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(member);
+    // some classes may have references from within XML outside dependent modules, e.g. our actions
+    if (useScope instanceof GlobalSearchScope globalUseScope && member instanceof PsiClass) {
+      useScope = GlobalSearchScope.projectScope(project).uniteWith(globalUseScope);
+    }
+    return useScope;
+  }
+
   // return false if can't process usages (weird member of too may usages) or processor returned false
   public static boolean processUsages(@NotNull Project project,
                                       @NotNull PsiFile containingFile,
+                                      @NotNull PsiMember member,
+                                      @NotNull ProgressIndicator progress,
+                                      @Nullable PsiFile ignoreFile,
+                                      @NotNull Processor<? super UsageInfo> usageInfoProcessor) {
+    return processUsages(project, containingFile, getUseScope(member), member, progress, ignoreFile, usageInfoProcessor);
+  }
+
+  public static boolean processUsages(@NotNull Project project,
+                                      @NotNull PsiFile containingFile,
+                                      @NotNull final SearchScope useScope,
                                       @NotNull PsiMember member,
                                       @NotNull ProgressIndicator progress,
                                       @Nullable PsiFile ignoreFile,
@@ -215,13 +236,8 @@ public final class UnusedSymbolUtil {
       log("* "+member.getName()+" no name; false");
       return false;
     }
-    SearchScope useScope = PsiSearchHelper.getInstance(project).getUseScope(member);
     PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(project);
     if (useScope instanceof GlobalSearchScope) {
-      // some classes may have references from within XML outside dependent modules, e.g. our actions
-      if (member instanceof PsiClass) {
-        useScope = GlobalSearchScope.projectScope(project).uniteWith((GlobalSearchScope)useScope);
-      }
 
       PsiSearchHelper.SearchCostResult cheapEnough = searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, ignoreFile, progress);
       if (cheapEnough == PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
