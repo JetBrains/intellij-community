@@ -247,7 +247,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return consoleView;
   }
 
-  protected void addTracebackFilter(Project project, ConsoleView consoleView, ProcessHandler processHandler) {
+  protected void addTracebackFilter(@NotNull Project project, @NotNull ConsoleView consoleView, @NotNull ProcessHandler processHandler) {
     // TODO workaround
     if (PythonSdkUtil.isRemote(myConfig.getSdk()) && processHandler instanceof ProcessControlWithMappings) {
       consoleView
