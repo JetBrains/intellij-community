@@ -50,6 +50,15 @@ internal class MacToolbarFrameHeader(private val frame: JFrame,
     return toolbar
   }
 
+  override fun updateUI() {
+    super.updateUI()
+
+    if (parent != null) {
+      updateToolbar()
+      updateBorders()
+    }
+  }
+
   override fun initToolbar() {
     var tb = toolbar
     if (tb == null) {
