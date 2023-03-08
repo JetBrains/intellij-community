@@ -124,7 +124,10 @@ private class MyActionToolbarImpl(group: ActionGroup) : ActionToolbarImpl(Action
   override fun createCustomComponent(action: CustomComponentAction, presentation: Presentation): JComponent {
     val component = super.createCustomComponent(action, presentation)
     if (action is ComboBoxAction) {
-      findComboButton(component)?.setUI(MainToolbarComboBoxButtonUI())
+      findComboButton(component)?.apply {
+        setUI(MainToolbarComboBoxButtonUI())
+        addPropertyChangeListener("UI") { evt -> if (evt.newValue !is MainToolbarComboBoxButtonUI) setUI(MainToolbarComboBoxButtonUI())}
+      }
     }
     return component
   }
