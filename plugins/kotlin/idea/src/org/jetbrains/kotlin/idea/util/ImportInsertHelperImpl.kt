@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.util
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -431,7 +432,11 @@ class ImportInsertHelperImpl(private val project: Project) : ImportInsertHelper(
 
         private fun addImport(fqName: FqName, allUnder: Boolean, aliasName: Name? = null): KtImportDirective {
             return runAction(runImmediately) {
-                addImport(project, file, fqName, allUnder, aliasName)
+                if (file.isPhysical) {
+                    runWriteAction { addImport(project, file, fqName, allUnder, aliasName) }
+                } else {
+                    addImport(project, file, fqName, allUnder, aliasName)
+                }
             }
         }
     }
