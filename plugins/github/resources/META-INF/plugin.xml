@@ -103,6 +103,8 @@
     <action id="Github.PullRequest.Details.Reload"
             class="org.jetbrains.plugins.github.pullrequest.action.GHPRReloadDetailsAction"
             use-shortcut-of="Refresh"/>
+    <action id="Github.PullRequest.Timeline.Show"
+            class="org.jetbrains.plugins.github.pullrequest.action.GHPROpenPullRequestTimelineAction"/>
     <group id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GHOpenInBrowserActionGroup">
       <override-text place="EditorTabPopup"/>
       <override-text place="ProjectViewPopup" use-text-of-place="EditorTabPopup"/>
