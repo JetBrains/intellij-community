@@ -7,7 +7,12 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 
 /**
- * Use [ProjectActivity]
+ * ### Obsolescence notice
+ * This interface is obsolete in favor of [ProjectActivity].
+ * Main reason: all activities should be executed in background regardless of smart mode status.
+ * It's the responsibility of the implementation to schedule tasks in smart mode, or to dispatch some work to EDT,
+ * and with `suspend` in [ProjectActivity.execute] it's quite easy do to so.
+ * For more info see [IJPL-90](https://youtrack.jetbrains.com/issue/IJPL-90)
  */
 @Obsolete
 interface StartupActivity {
@@ -23,9 +28,15 @@ interface StartupActivity {
    */
   interface RequiredForSmartMode : StartupActivity
 
+  /**
+   * See **obsolescence notice** on [StartupActivity].
+   */
   @Obsolete
   interface DumbAware : StartupActivity, com.intellij.openapi.project.DumbAware
 
+  /**
+   * See **obsolescence notice** on [StartupActivity].
+   */
   @Deprecated("Use ProjectPostStartupActivity")
   interface Background : StartupActivity, com.intellij.openapi.project.DumbAware
 }
