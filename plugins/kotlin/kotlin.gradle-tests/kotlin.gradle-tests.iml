@@ -14,6 +14,6 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.project-wizard.gradle" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.project-wizard.tests" scope="RUNTIME" />
   </component>
 </module>
