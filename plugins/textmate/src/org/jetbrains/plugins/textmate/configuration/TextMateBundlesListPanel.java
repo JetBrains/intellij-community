@@ -21,15 +21,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateBundle;
 import org.jetbrains.plugins.textmate.TextMateService;
+import org.jetbrains.plugins.textmate.TextMateServiceImpl;
 import org.jetbrains.plugins.textmate.bundles.TextMateBundleReader;
 
 import javax.swing.*;
 import java.util.*;
 
-import static com.intellij.ui.ToolbarDecorator.createDecorator;
-import static org.jetbrains.plugins.textmate.TextMateServiceImpl.BUNDLED_BUNDLES_PATH;
-
-public class TextMateBundlesListPanel implements Disposable {
+public final class TextMateBundlesListPanel implements Disposable {
   private static final String TEXTMATE_LAST_ADDED_BUNDLE = "textmate.last.added.bundle";
 
   private final CheckBoxList<BundleConfigBean> myBundlesList;
@@ -58,7 +56,7 @@ public class TextMateBundlesListPanel implements Disposable {
 
   private static boolean isBuiltin(BundleConfigBean bean) {
     String path = bean != null ? bean.getPath() : null;
-    return path != null && path.startsWith(BUNDLED_BUNDLES_PATH);
+    return path != null && path.startsWith(TextMateServiceImpl.getBundledBundlePath());
   }
 
   public @NotNull Collection<BundleConfigBean> getState() {
@@ -77,7 +75,7 @@ public class TextMateBundlesListPanel implements Disposable {
   }
 
   public JPanel createMainComponent() {
-    return createDecorator(myBundlesList)
+    return ToolbarDecorator.createDecorator(myBundlesList)
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
