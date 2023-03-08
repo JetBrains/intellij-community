@@ -86,8 +86,8 @@ object TraceManager {
       metricExporters.add(exporter)
 
       if (connectionMetricsFlag != null) {
-        val writeMetricsTo = MetricsExporterUtils.generateFileForMetrics(MetricsExporterUtils.connectionMetricsPath)
-        val connectionExporter = FilteredMetricsExporter(CsvGzippedMetricsExporter(writeMetricsTo)) { metric ->
+        val connectionExporter = FilteredMetricsExporter(
+          CsvGzippedMetricsExporter(CsvGzippedMetricsExporter.generateFileForConnectionMetrics())) { metric ->
           metric.name.contains("rdct")
         }
         connectionMetricsReader = PeriodicMetricReader.builder(connectionExporter)
