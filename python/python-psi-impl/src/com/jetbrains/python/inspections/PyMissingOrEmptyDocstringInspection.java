@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.DocstringQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -19,7 +20,8 @@ public class PyMissingOrEmptyDocstringInspection extends PyBaseDocstringInspecti
   @NotNull
   @Override
   public Visitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    return new Visitor(holder, PyInspectionVisitor.getContext(session)) {
+    TypeEvalContext context = PyInspectionVisitor.getContext(session);
+    return new Visitor(holder, context) {
       @Override
       protected void checkDocString(@NotNull PyDocStringOwner node) {
         final PyStringLiteralExpression docStringExpression = node.getDocStringExpression();
@@ -47,11 +49,16 @@ public class PyMissingOrEmptyDocstringInspection extends PyBaseDocstringInspecti
             return;
           }
           if (marker == null) marker = node;
-          if (node instanceof PyFunction || (node instanceof PyClass && ((PyClass)node).findInitOrNew(false, null) != null)) {
+          if (node instanceof PyFunction pyFunction && !superFunctionHasDoc(pyFunction, context)) {
             registerProblem(marker, PyPsiBundle.message("INSP.no.docstring"), new DocstringQuickFix(null, null));
           }
-          else {
-            registerProblem(marker, PyPsiBundle.message("INSP.no.docstring"));
+          else if (node instanceof PyClass pyClass && !superClassHasDoc(pyClass, context)) {
+            if (pyClass.findInitOrNew(false, null) != null) {
+              registerProblem(marker, PyPsiBundle.message("INSP.no.docstring"), new DocstringQuickFix(null, null));
+            }
+            else {
+              registerProblem(marker, PyPsiBundle.message("INSP.no.docstring"));
+            }
           }
         }
         else if (StringUtil.isEmptyOrSpaces(docStringExpression.getStringValue())) {
@@ -59,5 +66,27 @@ public class PyMissingOrEmptyDocstringInspection extends PyBaseDocstringInspecti
         }
       }
     };
+  }
+
+  private static boolean superClassHasDoc(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
+    for (PyClass ancestor : pyClass.getAncestorClasses(context)) {
+      if (!StringUtil.isEmpty(ancestor.getDocStringValue())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean superFunctionHasDoc(@NotNull PyFunction pyFunction, @NotNull TypeEvalContext context) {
+    PyClass containingClass = pyFunction.getContainingClass();
+    if (containingClass == null) return false;
+
+    for (PyClass ancestor : containingClass.getAncestorClasses(context)) {
+      PyFunction superFunction = ancestor.findMethodByName(pyFunction.getName(), false, context);
+      if (superFunction != null && !StringUtil.isEmpty(superFunction.getDocStringValue())) {
+        return true;
+      }
+    }
+    return false;
   }
 }
