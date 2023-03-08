@@ -139,12 +139,23 @@ fun main() {
 
 fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
   val projectHome = resolvedProjectHome
-  if (projectHome.toFile().name == "intellij-community-master" && !(projectHome / "android").toFile().exists()) {
+  if (projectHome.toFile().name.startsWith("intellij-community") && !(projectHome / "android").toFile().exists()) {
     val scriptName = "getPlugins.sh"
 
     val script = (projectHome / scriptName).toFile()
     assert(script.exists()) { "File $script does not exist" }
-    val scriptContent = script.readText()
+    val scriptContent = script.readText().replace("clone", "clone --depth 1")
+    val commandLineArgs = scriptContent.split(" ")
+    val adjustedCommandLineArgs = when (communityUrlSuffix.second) {
+      "master" -> commandLineArgs
+      else -> {
+        val listOfArgs = commandLineArgs.toMutableList()
+        listOfArgs.add(2, "-b")
+        listOfArgs.add(3, communityUrlSuffix.second)
+        listOfArgs.add(4, "--single-branch")
+        listOfArgs
+      }
+    }
 
     val stdout = ExecOutputRedirect.ToString()
     val stderr = ExecOutputRedirect.ToString()
@@ -152,7 +163,7 @@ fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
     ProcessExecutor(
       "git-clone-android-plugin",
       workDir = projectHome, timeout = 10.minutes,
-      args = scriptContent.split(" "),
+      args = adjustedCommandLineArgs,
       stdoutRedirect = stdout,
       stderrRedirect = stderr
     ).start()
@@ -162,3 +173,16 @@ fun IDETestContext.downloadAndroidPluginProject(): IDETestContext {
   return this
 }
 
+val communityUrlSuffix = communityUrlSuffix(com.intellij.ide.starter.utils.Git.getDefaultBranch)
+fun communityUrlSuffix(branch: String): Pair<String, String> {
+  val majorVersion = branch.substringBefore(".")
+  return when (majorVersion.isNumeric() && majorVersion.length == 3) {
+    true -> "refs/heads/$majorVersion" to majorVersion
+    false -> "master" to "master"
+  }
+}
+
+private fun String.isNumeric(): Boolean {
+  val regex = "-?[0-9]+(\\.[0-9]+)?".toRegex()
+  return matches(regex)
+}
