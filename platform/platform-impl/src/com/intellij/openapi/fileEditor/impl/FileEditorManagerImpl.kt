@@ -979,10 +979,7 @@ open class FileEditorManagerImpl(
         catch (e: CancellationException) {
           throw e
         }
-        catch (e: Exception) {
-          LOG.error(e)
-        }
-        catch (e: AssertionError) {
+        catch (e: Throwable) {
           LOG.error(e)
         }
       }
