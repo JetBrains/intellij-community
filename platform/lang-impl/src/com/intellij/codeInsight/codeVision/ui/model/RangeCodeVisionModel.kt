@@ -1,22 +1,21 @@
 package com.intellij.codeInsight.codeVision.ui.model
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+import com.intellij.codeInsight.codeVision.CodeVisionBundle
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
-
 import com.jetbrains.rd.util.reactive.IProperty
+import org.jetbrains.annotations.Nls
 
 class RangeCodeVisionModel(
   val project: Project,
   val editor: Editor,
   lensMap: Map<CodeVisionAnchorKind, List<CodeVisionEntry>>,
   val anchoringRange: TextRange,
-  @NlsSafe
-  val name: String = "Code Vision"
+  @Nls val name: String = CodeVisionBundle.message("codeLens.more.popup.header")
 ) {
 
   enum class InlayState {
