@@ -55,15 +55,12 @@ final class JavaCoverageOptions extends CoverageOptions {
     private final JPanel myPanel = new JPanel(new VerticalFlowLayout());
     private final JCheckBox myImplicitCheckBox =
       new JCheckBox(JavaCoverageBundle.message("settings.coverage.java.ignore.implicitly.declared.default.constructors"), true);
-    private final JCheckBox myEmptyCheckBox =
-      new JCheckBox(JavaCoverageBundle.message("settings.coverage.java.ignore.empty.private.constructors.of.utility.classes"), true);
 
     private final AnnotationsPanel myExcludeAnnotationsPanel;
 
     JavaCoverageOptionsEditor(Project project, JavaCoverageOptionsProvider coverageOptionsProvider) {
       myPanel.setBorder(IdeBorderFactory.createTitledBorder(JavaCoverageBundle.message("settings.coverage.java.java.coverage")));
       myPanel.add(myImplicitCheckBox);
-      myPanel.add(myEmptyCheckBox);
       myExcludeAnnotationsPanel = new AnnotationsPanel(
         project, "Exclude", "",
         coverageOptionsProvider.getExcludeAnnotationPatterns(),
@@ -85,19 +82,16 @@ final class JavaCoverageOptions extends CoverageOptions {
 
     public boolean isModified(JavaCoverageOptionsProvider provider) {
       return myImplicitCheckBox.isSelected() != provider.ignoreImplicitConstructors() ||
-             myEmptyCheckBox.isSelected() != provider.ignoreEmptyPrivateConstructors() ||
              !Arrays.equals(myExcludeAnnotationsPanel.getAnnotations(), ArrayUtil.toStringArray(provider.getExcludeAnnotationPatterns()));
     }
 
     public void apply(JavaCoverageOptionsProvider provider) {
       provider.setIgnoreImplicitConstructors(myImplicitCheckBox.isSelected());
-      provider.setIgnoreEmptyPrivateConstructors(myEmptyCheckBox.isSelected());
       provider.setExcludeAnnotationPatterns(Arrays.asList(myExcludeAnnotationsPanel.getAnnotations()));
     }
 
     public void reset(JavaCoverageOptionsProvider provider) {
       myImplicitCheckBox.setSelected(provider.ignoreImplicitConstructors());
-      myEmptyCheckBox.setSelected(provider.ignoreEmptyPrivateConstructors());
       myExcludeAnnotationsPanel.resetAnnotations(provider.getExcludeAnnotationPatterns());
     }
   }

@@ -44,14 +44,6 @@ public final class JavaCoverageOptionsProvider implements PersistentStateCompone
     myState.myIgnoreImplicitConstructors = state;
   }
 
-  public void setIgnoreEmptyPrivateConstructors(boolean state) {
-    myState.myIgnoreEmptyPrivateConstructors = state;
-  }
-
-  public boolean ignoreEmptyPrivateConstructors() {
-    return myState.myIgnoreEmptyPrivateConstructors;
-  }
-
   void setExcludeAnnotationPatterns(List<String> patterns) {
     myState.myExcludeAnnotationPatterns = patterns;
   }
@@ -76,7 +68,6 @@ public final class JavaCoverageOptionsProvider implements PersistentStateCompone
 
   @Override
   public void loadState(@NotNull JavaCoverageOptionsProvider.State state) {
-    myState.myIgnoreEmptyPrivateConstructors = state.myIgnoreEmptyPrivateConstructors;
     myState.myIgnoreImplicitConstructors = state.myIgnoreImplicitConstructors;
     myState.myExcludeAnnotationPatterns = listWithDefaultAnnotations(state.myExcludeAnnotationPatterns);
   }
@@ -90,7 +81,6 @@ public final class JavaCoverageOptionsProvider implements PersistentStateCompone
 
 
   public static class State {
-    public boolean myIgnoreEmptyPrivateConstructors = true;
     public boolean myIgnoreImplicitConstructors = true;
     public List<String> myExcludeAnnotationPatterns = getDefaultExcludeAnnotationPatterns();
   }

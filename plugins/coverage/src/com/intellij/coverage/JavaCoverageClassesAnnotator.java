@@ -50,7 +50,6 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
 
     final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(myProject);
     myPackageAnnotator = new PackageAnnotator(suite, project, myProjectData, this,
-                                              optionsProvider.ignoreEmptyPrivateConstructors(),
                                               optionsProvider.ignoreImplicitConstructors());
   }
 

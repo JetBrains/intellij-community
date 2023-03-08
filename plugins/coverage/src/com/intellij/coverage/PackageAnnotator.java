@@ -43,7 +43,6 @@ public final class PackageAnnotator {
   private final Project myProject;
   private final ProjectData myProjectData;
   private final JavaCoverageClassesAnnotator myAnnotator;
-  private final boolean myIgnoreEmptyPrivateConstructors;
   private final boolean myIgnoreImplicitConstructor;
   private final ProjectData myUnloadedClassesProjectData = new ProjectData();
   private JavaCoverageRunner myRunner;
@@ -52,13 +51,11 @@ public final class PackageAnnotator {
                           Project project,
                           ProjectData projectData,
                           JavaCoverageClassesAnnotator annotator,
-                          boolean ignoreEmptyPrivateConstructors,
                           boolean ignoreImplicitConstructor) {
     mySuite = suite;
     myProject = project;
     myProjectData = projectData;
     myAnnotator = annotator;
-    myIgnoreEmptyPrivateConstructors = ignoreEmptyPrivateConstructors;
     myIgnoreImplicitConstructor = ignoreImplicitConstructor;
     IDEACoverageRunner.setExcludeAnnotations(project, myProjectData);
     IDEACoverageRunner.setExcludeAnnotations(project, myUnloadedClassesProjectData);
@@ -385,7 +382,7 @@ public final class PackageAnnotator {
     catch (IOException e) {
       return null;
     }
-    UnloadedUtil.appendUnloadedClass(projectData, className, new ClassReader(content), mySuite.isTracingEnabled(), false, myIgnoreEmptyPrivateConstructors);
+    UnloadedUtil.appendUnloadedClass(projectData, className, new ClassReader(content), mySuite.isTracingEnabled(), false);
     return projectData.getClassData(className);
   }
 }
