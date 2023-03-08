@@ -9,7 +9,7 @@ internal class SearchEverywhereCommonFeaturesProviderTest
   fun testPriority() {
     val priority = 10101
 
-    checkThatFeature(PRIORITY_DATA_KEY.name)
+    checkThatFeature(PRIORITY_DATA_KEY)
       .ofElement(Any())
       .withPriority(priority)
       .isEqualTo(priority)
