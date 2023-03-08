@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.ColorPicker;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -34,7 +34,7 @@ public class ChangeBackgroundAction extends DumbAwareAction {
     Component component = e.getInputEvent().getComponent();
     ImageComponentDecorator decorator = ImageEditorActionUtil.getImageComponentDecorator(e);
     if (component != null && decorator != null) {
-      ColorPicker.showColorPickerPopup(e.getProject(), null, null, new ColorListener() {
+      ColorChooserService.getInstance().showPopup(e.getProject(), null, null, new ColorListener() {
         @Override
         public void colorChanged(Color color, Object source) {
           myIcon.color = color;

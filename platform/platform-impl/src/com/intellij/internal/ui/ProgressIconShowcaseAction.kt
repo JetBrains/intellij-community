@@ -4,7 +4,7 @@ package com.intellij.internal.ui
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.ui.ColorPicker
+import com.intellij.ui.ColorChooserService
 import com.intellij.ui.SpinningProgressIcon
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.panel
@@ -22,7 +22,7 @@ internal class ProgressIconShowcaseAction : DumbAwareAction() {
       row {
         icon(icon)
         link("Change color") {
-          ColorPicker.showColorPickerPopup(null, icon.getIconColor()) { color, _ -> color?.let { icon.setIconColor(it) } }
+          ColorChooserService.instance.showPopup(null, icon.getIconColor(), { color, _ -> color?.let { icon.setIconColor(it) } })
         }
       }
     }

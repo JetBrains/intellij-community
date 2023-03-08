@@ -106,7 +106,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
         }
         if (realValue instanceof Color) {
           Rectangle cellRect = table.getCellRect(row, column, true);
-          ColorPicker.showColorPickerPopup(null, (Color)realValue, new ColorListener() {
+          ColorChooserService.getInstance().showPopup(null, (Color)realValue, new ColorListener() {
             @Override
             public void colorChanged(Color color, Object source) {
               if (component != null) {

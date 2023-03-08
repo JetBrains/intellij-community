@@ -3,7 +3,7 @@ package com.intellij.ui.tabs;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.ColorPicker;
+import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
@@ -117,7 +117,7 @@ public class ColorSelectionComponent extends JPanel {
           CustomColorButton.this.repaint();
         }
       };
-      ColorPicker.showColorPickerPopup(null, myColor, listener, location);
+      ColorChooserService.getInstance().showPopup(null, myColor, listener, location);
     }
 
     @Override
