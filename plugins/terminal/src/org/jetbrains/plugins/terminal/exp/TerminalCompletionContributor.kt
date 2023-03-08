@@ -21,10 +21,12 @@ class TerminalCompletionContributor : CompletionContributor() {
       return
     }
 
-    val command = parameters.editor.document.getText(TextRange(0, parameters.offset))
-    if (command.isBlank()) {
+    val rawCommand = parameters.editor.document.getText(TextRange(0, parameters.offset))
+    if (rawCommand.isBlank()) {
       return
     }
+    // remove explicit terminal line breaks
+    val command = rawCommand.replace("\\\n", "")
 
     val resultSet = result.caseInsensitive()
     val promptText = session.model.withLock { session.model.getAllText() }.replace("\n", "")
