@@ -109,6 +109,20 @@ public final class BreakpointComment {
   }
 
   /**
+   * Reads a named integer property of the breakpoint.
+   */
+  public @Nullable Integer readIntValue(@NotNull String name) {
+    String value = readValue(name);
+    if (value == null) return null;
+    try {
+      return Integer.parseInt(value);
+    }
+    catch (NumberFormatException e) {
+      throw error("Invalid integer value '" + value + "' for '" + name + "'", index.get(name));
+    }
+  }
+
+  /**
    * Parses a string like {@code "Included,-ExceptionTest,-com.intellij.rt.*"} into
    * two lists of included and excluded class filters.
    */

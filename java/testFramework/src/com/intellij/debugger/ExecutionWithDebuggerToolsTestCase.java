@@ -446,10 +446,10 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           systemPrintln("LogExpression = " + logExpression);
         }
 
-        String passCount = comment.readValue("Pass count");
+        Integer passCount = comment.readIntValue("Pass count");
         if (passCount != null) {
           breakpoint.setCountFilterEnabled(true);
-          breakpoint.setCountFilter(Integer.parseInt(passCount));
+          breakpoint.setCountFilter(passCount);
           systemPrintln("Pass count = " + passCount);
         }
 
