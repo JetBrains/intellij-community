@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.libraries.Library
@@ -54,9 +55,16 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
     val libraryTableId = LibraryTableId.ProjectLibraryTableId
 
+    val libraryId = LibraryId(name, libraryTableId)
+    if (libraryId in diff) {
+      // We log the error, but don't break the execution as technically project model can handle this case.
+      // The existing library entity will be replaced with the new created one.
+      LOG.error("Project library with name '$name' already exists.")
+    }
+
     val libraryEntity = diff.addLibraryEntity(
       roots = emptyList(),
-      tableId = LibraryTableId.ProjectLibraryTableId,
+      tableId = libraryTableId,
       name = name,
       excludedRoots = emptyList(),
       source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)
@@ -73,7 +81,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
     val library = LibraryBridgeImpl(
       libraryTable = libraryTable,
       project = project,
-      initialId = LibraryId(name, libraryTableId),
+      initialId = libraryId,
       initialEntityStorage = entityStorageOnDiff,
       targetBuilder = this.diff
     )
@@ -136,4 +144,8 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   }
 
   override fun isChanged(): Boolean = diff.hasChanges()
+
+  companion object {
+    val LOG = logger<ProjectModifiableLibraryTableBridgeImpl>()
+  }
 }
