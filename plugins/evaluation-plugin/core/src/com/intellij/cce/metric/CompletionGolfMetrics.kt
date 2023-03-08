@@ -16,7 +16,7 @@ internal fun createCompletionGolfMetrics(): List<Metric> =
     Precision(),
     RecallAt(1),
     RecallAt(5),
-    RecallAt(null)
+    RecallAt(null, showByDefault = false)
   )
 
 internal abstract class CompletionGolfMetric<T : Number> : Metric {
@@ -143,6 +143,7 @@ internal class MatchedRatio : Metric {
 
   override val name = "Matched Ratio"
   override val valueType = MetricValueType.DOUBLE
+  override val showByDefault: Boolean = false
   override val value: Double
     get() = totalMatched.toDouble() / totalExpected
 
@@ -204,7 +205,7 @@ internal class Precision : Metric {
   }
 }
 
-internal class RecallAt(private val n: Int?) : Metric {
+internal class RecallAt(private val n: Int?, override val showByDefault: Boolean = true) : Metric {
   private val sample = Sample()
   override val name = n?.let { "RecallAt$n" } ?: "Recall"
   override val valueType = MetricValueType.DOUBLE

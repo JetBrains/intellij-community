@@ -50,6 +50,7 @@ class ReportGenerationStep(
     val fullLineStorages = workspaces.map { it.fullLineLogsStorage }
     val iterationsCount = sessionsFilters.size * comparisonStorages.size
     val completionGolfSettings = configs.firstOrNull { it.actions.strategy.completionGolf != null }?.interpret?.completionGolfSettings
+    val defaultMetrics = configs.firstOrNull()?.reports?.defaultMetrics
     var iteration = 0
     for (filter in sessionsFilters) {
       val sessionStorages = workspaces.map { FilteredSessionsStorage(filter, it.sessionsStorage) }
@@ -68,6 +69,7 @@ class ReportGenerationStep(
             workspace.reportsDirectory(),
             filter.name,
             comparisonStorage.reportName,
+            defaultMetrics,
             suggestionsComparators,
             featuresStorages,
             fullLineStorages,

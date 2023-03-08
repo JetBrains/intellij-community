@@ -25,6 +25,7 @@ class HtmlReportGenerator(
   outputDir: String,
   private val filterName: String,
   private val comparisonFilterName: String,
+  private val defaultMetrics: List<String>?,
   suggestionsComparators: List<SuggestionsComparator>,
   featuresStorages: List<FeaturesStorage>,
   fullLineStorages: List<FullLineLogsStorage>,
@@ -187,9 +188,9 @@ class HtmlReportGenerator(
         |columns:[{title:'File Report',field:'file',formatter:'html'${if (manyTypes) ",width:'120'" else ""}},
         |${
       uniqueMetricsInfo.joinToString(",\n") { metric ->
-        "{title:'${metric.name}',visible:${if (metric.showByDefault) "true" else "false"},columns:[${
+        "{title:'${metric.name}',visible:${metric.visible()},columns:[${
           evaluationTypes.joinToString(",") { type ->
-            "{title:'$type',field:'${metric.name.filter { it.isLetterOrDigit() }}$type',sorter:'number',align:'right',headerVertical:${manyTypes},visible:${if (metric.showByDefault) "true" else "false"}}"
+            "{title:'$type',field:'${metric.name.filter { it.isLetterOrDigit() }}$type',sorter:'number',align:'right',headerVertical:${manyTypes},visible:${metric.visible()}}"
           }
         }]}"
       }
@@ -198,6 +199,8 @@ class HtmlReportGenerator(
         |dataLoaded:function(){this.getRows()[0].freeze();this.setFilter(myFilter)}});
         """.trimMargin()
   }
+
+  private fun MetricInfo.visible(): Boolean = if (defaultMetrics != null) name in defaultMetrics else showByDefault
 
   private fun formatMetricValue(value: Double, type: MetricValueType): String = when {
     value.isNaN() -> "—"
@@ -242,7 +245,7 @@ class HtmlReportGenerator(
             li {
               input(InputType.checkBox) {
                 id = metric.name.filter { it.isLetterOrDigit() }
-                checked = metric.showByDefault
+                checked = metric.visible()
                 onClick = "updateCols()"
                 +metric.name
               }
