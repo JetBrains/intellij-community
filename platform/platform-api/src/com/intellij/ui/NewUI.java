@@ -6,8 +6,10 @@ package com.intellij.ui;
  *
  * @author Konstantin Bulenkov
  */
-public class NewUI {
+public final class NewUI {
   public static boolean isEnabled() {
     return ExperimentalUI.isNewUI();
   }
+
+  private NewUI() {}
 }
