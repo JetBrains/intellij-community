@@ -110,6 +110,16 @@ private fun initLuxIfNeeded(args: List<String>) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
 
+  val luxToolkitClass = AppStarter::class.java.classLoader.loadClass("com.jetbrains.rdserver.lux.toolkit.LuxToolkit")
+  val toolkit = luxToolkitClass.constructors[0].newInstance()
+
+  Toolkit::class.java.getDeclaredField("toolkit").apply {
+    this.isAccessible = true
+
+    set(null, toolkit)
+  }
+  System.setProperty("awt.toolkit", toolkit::class.java.canonicalName)
+
   System.setProperty("awt.nativeDoubleBuffering", false.toString())
   System.setProperty("swing.bufferPerWindow", true.toString())
 }
