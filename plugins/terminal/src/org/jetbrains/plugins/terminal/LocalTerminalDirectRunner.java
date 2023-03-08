@@ -7,6 +7,7 @@ import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.*;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,6 +37,7 @@ import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.exp.TerminalWidgetImpl;
 import org.jetbrains.plugins.terminal.util.TerminalEnvironment;
 
 import java.io.File;
@@ -156,6 +159,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       }
     }
     return envs;
+  }
+
+  @Override
+  protected @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent, @NotNull ShellStartupOptions startupOptions) {
+    if (Registry.is("ide.experimental.ui.new.terminal", false)) {
+      return new TerminalWidgetImpl(myProject, getSettingsProvider(), parent);
+    }
+    return super.createShellTerminalWidget(parent, startupOptions);
   }
 
   private static void setupWslEnv(@NotNull Map<String, String> userEnvs, @NotNull Map<String, String> resultEnvs) {

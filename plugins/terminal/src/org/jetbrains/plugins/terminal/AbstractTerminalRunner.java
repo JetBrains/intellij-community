@@ -175,9 +175,6 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   protected @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent, @NotNull ShellStartupOptions startupOptions) {
-    if (Registry.is("ide.experimental.ui.new.terminal", false)) {
-      return new TerminalWidgetImpl(myProject, mySettingsProvider, parent);
-    }
     return new ShellTerminalWidget(myProject, mySettingsProvider, parent).asNewWidget();
   }
 
