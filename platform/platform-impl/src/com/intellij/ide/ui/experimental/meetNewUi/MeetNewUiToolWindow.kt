@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.ui.Gray
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.JBGaps
@@ -55,8 +56,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
     private val CLEAN = IconLoader.getIcon("expui/meetNewUi/densityDefault.svg", MeetNewUiToolWindow::class.java.classLoader)
     private val COMPACT = IconLoader.getIcon("expui/meetNewUi/densityCompact.svg", MeetNewUiToolWindow::class.java.classLoader)
 
-    @Suppress("UseJBColor")
-    private val BANNER_BACKGROUND = Color(0x010101)
+    private val BANNER_BACKGROUND = Gray.x01
     private const val BANNER_HEIGHT = 231
   }
 
