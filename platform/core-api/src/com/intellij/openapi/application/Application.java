@@ -53,10 +53,23 @@ import java.util.concurrent.Future;
  * See also <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>.
  */
 public interface Application extends ComponentManager {
+
+  /**
+   * <h3>Obsolescence notice</h3>
+   * <p>
+   * This method is obsolete because there will be no such thing as <i>write thread</i>,
+   * and any thread will be able to hold the write lock.
+   * For more info follow <a href="https://youtrack.jetbrains.com/issue/IJPL-53">IJPL-53</a>.
+   * </p>
+   */
   @ApiStatus.Obsolete
   void invokeLaterOnWriteThread(@NotNull Runnable action);
 
   /**
+   * <p>
+   * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
+   * </p>
+   *
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * when IDE is in the specified modality state (or a state with less modal dialogs open).
    *
@@ -67,6 +80,10 @@ public interface Application extends ComponentManager {
   void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal);
 
   /**
+   * <p>
+   * See <b>obsolescence notice</b> on {@link #invokeLaterOnWriteThread(Runnable)}.
+   * </p>
+   *
    * Causes {@code runnable} to be executed asynchronously under Write Intent lock on some thread,
    * when IDE is in the specified modality state (or a state with less modal dialogs open)
    * - unless the expiration condition is fulfilled.
