@@ -65,28 +65,28 @@ public class PySuperMethodCompletionContributor extends CompletionContributor im
                seenNames.addAll(PyNames.getBuiltinMethods(languageLevel).keySet());
                for (PyClass ancestor : containingClass.getAncestorClasses(null)) {
                  for (PyFunction superMethod : ancestor.getMethods()) {
-                   if (!seenNames.contains(superMethod.getName())) {
-                     StringBuilder builder = new StringBuilder();
-                     builder.append(superMethod.getName());
-                     if (!(nextElement instanceof PyParameterList)) {
-                       builder.append(superMethod.getParameterList().getText());
-                       if (superMethod.getAnnotation() != null) {
-                         builder.append(" ")
-                           .append(superMethod.getAnnotation().getText())
-                           .append(":");
-                       }
-                       else if (superMethod.getTypeComment() != null) {
-                         builder.append(":  ")
-                           .append(superMethod.getTypeComment().getText());
-                       }
-                       else {
-                         builder.append(":");
-                       }
-                     }
-                     LookupElementBuilder element = LookupElementBuilder.create(builder.toString());
-                     result.addElement(TailTypeDecorator.withTail(element, TailType.NONE));
-                     seenNames.add(superMethod.getName());
+                   if (!seenNames.add(superMethod.getName())) {
+                     continue;
                    }
+                   StringBuilder builder = new StringBuilder();
+                   builder.append(superMethod.getName());
+                   if (!(nextElement instanceof PyParameterList)) {
+                     builder.append(superMethod.getParameterList().getText());
+                     if (superMethod.getAnnotation() != null) {
+                       builder.append(" ")
+                         .append(superMethod.getAnnotation().getText())
+                         .append(":");
+                     }
+                     else if (superMethod.getTypeComment() != null) {
+                       builder.append(":  ")
+                         .append(superMethod.getTypeComment().getText());
+                     }
+                     else {
+                       builder.append(":");
+                     }
+                   }
+                   LookupElementBuilder element = LookupElementBuilder.create(builder.toString());
+                   result.addElement(TailTypeDecorator.withTail(element, TailType.NONE));
                  }
                }
              }
