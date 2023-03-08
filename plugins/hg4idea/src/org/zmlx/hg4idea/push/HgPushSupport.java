@@ -51,12 +51,14 @@ public class HgPushSupport extends PushSupport<HgRepository, HgPushSource, HgTar
   }
 
   @Override
-  public @Nullable HgTarget getDefaultTarget(@NotNull HgRepository repository, @NotNull HgPushSource source) {return getDefaultTarget(repository);}
+  public @Nullable HgTarget getDefaultTarget(@NotNull HgRepository repository, @NotNull HgPushSource source) {
+    return getDefaultTarget(repository);
+  }
 
   @Override
-  public @NotNull HgPushSource getSource(@NotNull HgRepository repository) {
+  public HgPushSource getSource(@NotNull HgRepository repository) {
     String localBranch = repository.getCurrentBranchName();
-    assert localBranch != null;
+    if (localBranch == null) return null;
     return new HgPushSource(localBranch);
   }
 

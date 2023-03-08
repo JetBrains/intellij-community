@@ -19,7 +19,6 @@ import git4idea.repo.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
 import java.util.Set;
 
 import static git4idea.GitUtil.findRemoteBranch;
@@ -131,11 +130,14 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
   }
 
   @Override
-  public @NotNull GitPushSource getSource(@NotNull GitRepository repository) {
+  public @Nullable GitPushSource getSource(@NotNull GitRepository repository) {
     GitLocalBranch currentBranch = repository.getCurrentBranch();
-    return currentBranch != null
-           ? GitPushSource.create(currentBranch)
-           : GitPushSource.createDetached(Objects.requireNonNull(repository.getCurrentRevision())); // fresh repository is on branch
+    if (currentBranch != null) GitPushSource.create(currentBranch);
+
+    String currentRevision = repository.getCurrentRevision();
+    if (currentRevision != null) return GitPushSource.createDetached(currentRevision);
+
+    return null;
   }
 
   @Override

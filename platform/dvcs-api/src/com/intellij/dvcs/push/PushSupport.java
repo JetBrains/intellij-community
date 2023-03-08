@@ -60,7 +60,7 @@ public abstract class PushSupport<Repo extends Repository, Source extends PushSo
   /**
    * @return current source(branch) for repository
    */
-  @NotNull
+  @Nullable
   public abstract Source getSource(@NotNull Repo repository);
 
   /**
