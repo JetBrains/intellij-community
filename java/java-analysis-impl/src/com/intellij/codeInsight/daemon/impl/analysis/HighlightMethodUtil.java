@@ -1972,7 +1972,7 @@ public final class HighlightMethodUtil {
       ChangeTypeArgumentsFix.registerIntentions(results, list, builder, aClass, fixRange);
     }
     else if (aClass.isEnum()) {
-      ConstructorParametersFixer.registerEnumConstantFixActions(aClass, constructorCall, builder, fixRange);
+      ConstructorParametersFixer.registerFixActions(aClass, PsiSubstitutor.EMPTY, constructorCall, builder, fixRange);
     }
     ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, builder, fixRange);
     IntentionAction action = QUICK_FIX_FACTORY.createSurroundWithArrayFix(constructorCall, null);
