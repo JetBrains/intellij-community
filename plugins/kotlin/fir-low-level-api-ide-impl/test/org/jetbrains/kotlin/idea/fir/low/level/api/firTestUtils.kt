@@ -2,18 +2,14 @@
 
 package org.jetbrains.kotlin.idea.fir.low.level.api
 
+import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirResolveSessionService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.LLFirResolveSession
-import org.jetbrains.kotlin.analysis.low.level.api.fir.createFirResolveSessionForNoCaching
-import org.jetbrains.kotlin.analysis.low.level.api.fir.sessions.LLFirSession
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.psi.KtElement
 
-internal inline fun <R> resolveWithClearCaches(
-    context: KtElement,
-    noinline configureSession: LLFirSession.() -> Unit = {},
-    action: (LLFirResolveSession) -> R,
-): R {
+internal inline fun <R> resolveWithClearCaches(context: KtElement, action: (LLFirResolveSession) -> R): R {
     val project = context.project
-    val firResolveSession = createFirResolveSessionForNoCaching(context.getKtModule(project), project, configureSession)
-    return action(firResolveSession)
+    val module = context.getKtModule(project)
+    val resolveSession = LLFirResolveSessionService.getInstance(project).getFirResolveSessionNoCaching(module)
+    return action(resolveSession)
 }
