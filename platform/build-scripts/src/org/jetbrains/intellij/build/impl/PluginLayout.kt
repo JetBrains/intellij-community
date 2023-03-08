@@ -49,6 +49,9 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
   var pathsToScramble: PersistentList<String> = persistentListOf()
     private set
 
+  var scrambleSkipStatements: PersistentList<Pair<String, String>> = persistentListOf()
+    private set
+
   var scrambleClasspathPlugins: PersistentList<Pair<String /*plugin name*/, String /*relative path*/>> = persistentListOf()
     private set
 
@@ -332,6 +335,18 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
      */
     fun filterScrambleClasspath(filter: (BuildContext, Path) -> Boolean) {
       layout.scrambleClasspathFilter = filter
+    }
+
+    /**
+     * Adds a "skip" element to the open statement. See: [Open Statement documentation](https://www.zelix.com/klassmaster/docs/openStatement.html)
+     *
+     * Note: zkm open statement for the jar must be declared.
+     *
+     * @param jar - name of the jar file
+     * @param classFilter - in the following format: `com/mycompany/MyClass.class`
+     */
+    fun scrambleSkip(jar: String, classFilter: String) {
+      layout.scrambleSkipStatements += Pair(jar, classFilter)
     }
 
     /**
