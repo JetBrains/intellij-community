@@ -24,7 +24,6 @@ import com.intellij.lang.jvm.JvmModifiersOwner
 import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind
 import com.intellij.lang.jvm.types.JvmType
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
@@ -43,7 +42,6 @@ import com.intellij.util.asSafely
 import com.siyeh.ig.junit.JUnitCommonClassNames.*
 import com.siyeh.ig.psiutils.TestUtils
 import com.siyeh.ig.psiutils.TypeUtils
-import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 import java.util.*
@@ -242,11 +240,12 @@ private class JUnitMalformedSignatureVisitor(
         it is UClassLiteralExpression && InheritanceUtil.isInheritor(it.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
       }
     }
-    return hasPotentialAutomaticParameterResolver(ModuleUtilCore.findModuleForPsiElement(this) ?: return false)
+    return hasPotentialAutomaticParameterResolver(this)
   }
 
-  private fun hasPotentialAutomaticParameterResolver(module: Module): Boolean {
-    val resourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)
+  private fun hasPotentialAutomaticParameterResolver(element: PsiElement): Boolean {
+    val module = ModuleUtilCore.findModuleForPsiElement(element) ?: return false
+    val resourceRoots = ModuleRootManager.getInstance(module).getSourceRoots(TestUtils.isInTestCode(element))
     for (resourceRoot in resourceRoots) {
       val directory = PsiManager.getInstance(module.project).findDirectory(resourceRoot)
       val serviceFile = directory
