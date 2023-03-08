@@ -2,10 +2,13 @@
 
 package com.intellij.diagnostic.telemetry
 
+import com.intellij.diagnostic.telemetry.MetricsExporterUtils.Companion.csvHeadersLines
 import java.io.File
 import java.util.zip.GZIPOutputStream
+import kotlin.collections.ArrayList
 
 class LinesStorage(val writeToFile: File) {
+
   private var bufferedWriter = GZIPOutputStream(writeToFile.outputStream(), true).bufferedWriter()
   private val lines = ArrayList<String>()
 
@@ -14,11 +17,13 @@ class LinesStorage(val writeToFile: File) {
     bufferedWriter = GZIPOutputStream(newFilePath.outputStream(), true).bufferedWriter()
   }
 
-  fun getLines(): ArrayList<String> {
-    return lines
+  fun getLines(): List<String> {
+    synchronized(lines) {
+      return lines.toList()
+    }
   }
 
-  fun emptyStorage() {
+  fun clearStorage() {
     synchronized(lines) {
       lines.clear()
     }
@@ -32,6 +37,12 @@ class LinesStorage(val writeToFile: File) {
   fun appendLine(line: String) {
     synchronized(lines) {
       lines.add(line)
+    }
+  }
+
+  fun appendHeaderLines() {
+    synchronized(lines) {
+      lines.addAll(csvHeadersLines())
     }
   }
 

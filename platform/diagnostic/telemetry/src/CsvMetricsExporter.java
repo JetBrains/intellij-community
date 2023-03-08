@@ -36,7 +36,7 @@ import static java.nio.file.StandardOpenOption.*;
  * TODO no support for attributes now, see .toCSVLine()
  */
 @ApiStatus.Internal
-public final class CsvMetricsExporter extends BasicCsvMetricsExporter implements MetricExporter {
+public final class CsvMetricsExporter implements MetricExporter {
   private static final Logger LOG = Logger.getInstance(CsvMetricsExporter.class);
 
   private static final String HTML_PLOTTER_NAME = "open-telemetry-metrics-plotter.html";
@@ -56,7 +56,7 @@ public final class CsvMetricsExporter extends BasicCsvMetricsExporter implements
       }
     }
     if (!Files.exists(writeToFile) || Files.size(writeToFile) == 0) {
-      Files.write(writeToFile, BasicCsvMetricsExporter.Companion.csvHeadersLines(), CREATE, WRITE);
+      Files.write(writeToFile, MetricsExporterUtils.csvHeadersLines(), CREATE, WRITE);
     }
 
     copyHtmlPlotterToOutputDir(writeToFile.getParent());
@@ -90,7 +90,7 @@ public final class CsvMetricsExporter extends BasicCsvMetricsExporter implements
 
     final CompletableResultCode result = new CompletableResultCode();
     final List<String> lines = metrics.stream()
-      .flatMap(BasicCsvMetricsExporter.Companion::toCsvStream)
+      .flatMap(MetricsExporterUtils::toCsvStream)
       .toList();
 
     try {
