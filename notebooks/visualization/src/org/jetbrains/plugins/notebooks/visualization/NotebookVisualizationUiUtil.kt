@@ -97,8 +97,8 @@ val NotebookCellLines.Interval.lastContentLine: Int
 val NotebookCellLines.Interval.contentLines: IntRange
   get() = firstContentLine .. lastContentLine
 
-fun makeMarkersFromIntervals(document: Document, intervals: Iterable<NotebookCellLines.Interval>): List<NotebookCellLines.Marker> {
-  val markers = ArrayList<NotebookCellLines.Marker>()
+fun makeMarkersFromIntervals(document: Document, intervals: Iterable<NotebookCellLines.Interval>): List<NotebookCellLinesLexer.Marker> {
+  val markers = ArrayList<NotebookCellLinesLexer.Marker>()
 
   fun addMarker(line: Int, type: NotebookCellLines.CellType) {
     val startOffset = document.getLineStartOffset(line)
@@ -106,7 +106,7 @@ fun makeMarkersFromIntervals(document: Document, intervals: Iterable<NotebookCel
       if (line + 1 < document.lineCount) document.getLineStartOffset(line + 1)
       else document.getLineEndOffset(line)
     val length = endOffset - startOffset
-    markers.add(NotebookCellLines.Marker(markers.size, type, startOffset, length))
+    markers.add(NotebookCellLinesLexer.Marker(markers.size, type, startOffset, length))
   }
 
   for (interval in intervals) {

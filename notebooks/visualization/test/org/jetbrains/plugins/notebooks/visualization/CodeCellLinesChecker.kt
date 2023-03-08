@@ -5,7 +5,7 @@ import org.assertj.core.api.Assertions.assertThat
 
 class CodeCellLinesChecker(private val description: String,
                            private val editorGetter: () -> EditorImpl) : (CodeCellLinesChecker.() -> Unit) -> Unit {
-  private var markers: MutableList<NotebookCellLines.Marker>? = null
+  private var markers: MutableList<NotebookCellLinesLexer.Marker>? = null
   private var intervals: MutableList<NotebookCellLines.Interval>? = null
   private var markersStartOffset: Int = 0
   private var markersStartOrdinal: Int = 0
@@ -19,7 +19,7 @@ class CodeCellLinesChecker(private val description: String,
 
     fun marker(cellType: NotebookCellLines.CellType, offset: Int, length: Int) {
       markers!!.add(
-        NotebookCellLines.Marker(ordinal = markers!!.size + markersStartOrdinal, type = cellType, offset = offset, length = length))
+        NotebookCellLinesLexer.Marker(ordinal = markers!!.size + markersStartOrdinal, type = cellType, offset = offset, length = length))
     }
   }
 

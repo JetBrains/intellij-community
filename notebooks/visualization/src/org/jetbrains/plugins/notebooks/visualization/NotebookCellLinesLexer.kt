@@ -8,14 +8,22 @@ import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines.MarkersAt
 import kotlin.math.max
 
 interface NotebookCellLinesLexer {
-  fun markerSequence(chars: CharSequence, ordinalIncrement: Int, offsetIncrement: Int): Sequence<NotebookCellLines.Marker>
+  fun markerSequence(chars: CharSequence, ordinalIncrement: Int, offsetIncrement: Int): Sequence<Marker>
 
+  data class Marker(
+    val ordinal: Int,
+    val type: CellType,
+    val offset: Int,
+    val length: Int
+  ) : Comparable<Marker> {
+    override fun compareTo(other: Marker): Int = offset - other.offset
+  }
   companion object {
     fun defaultMarkerSequence(underlyingLexerFactory: () -> Lexer,
                               tokenToCellType: (IElementType) -> CellType?,
                               chars: CharSequence,
                               ordinalIncrement: Int,
-                              offsetIncrement: Int): Sequence<NotebookCellLines.Marker> = sequence {
+                              offsetIncrement: Int): Sequence<Marker> = sequence {
       val lexer = underlyingLexerFactory()
       lexer.start(chars, 0, chars.length)
       var ordinal = 0
@@ -23,7 +31,7 @@ interface NotebookCellLinesLexer {
         val tokenType = lexer.tokenType ?: break
         val cellType = tokenToCellType(tokenType)
         if (cellType != null) {
-          yield(NotebookCellLines.Marker(
+          yield(Marker(
             ordinal = ordinal++ + ordinalIncrement,
             type = cellType,
             offset = lexer.currentPosition.offset + offsetIncrement,
@@ -34,7 +42,7 @@ interface NotebookCellLinesLexer {
       }
     }
 
-    private fun defaultIntervals(document: Document, markers: List<NotebookCellLines.Marker>): List<NotebookCellLines.Interval> {
+    private fun defaultIntervals(document: Document, markers: List<Marker>): List<NotebookCellLines.Interval> {
       val intervals = toIntervalsInfo(document, markers)
 
       val result = mutableListOf<NotebookCellLines.Interval>()
@@ -54,7 +62,7 @@ interface NotebookCellLinesLexer {
   }
 }
 
-private fun toIntervalsInfo(document: Document, markers: List<NotebookCellLines.Marker>): List<Triple<Int, CellType, MarkersAtLines>> {
+private fun toIntervalsInfo(document: Document, markers: List<NotebookCellLinesLexer.Marker>): List<Triple<Int, CellType, MarkersAtLines>> {
   val m = mutableListOf<Triple<Int, CellType, MarkersAtLines>>()
 
   // add first if necessary
