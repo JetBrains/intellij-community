@@ -877,7 +877,6 @@
                 factoryClass="com.intellij.notification.impl.NotificationsToolWindowFactory"/>
 
     <toolWindow id="Meet New UI" anchor="right" secondary="true"
-                icon="AllIcons.Toolwindows.MeetNewUi"
                 factoryClass="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiToolWindowFactory"/>
 
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
