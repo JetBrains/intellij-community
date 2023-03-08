@@ -41,6 +41,7 @@ public final class VcsContentAnnotationImpl implements VcsContentAnnotation {
     if (vcs == null) return null;
     if (vcs.getDiffProvider() instanceof DiffMixin) {
       final VcsRevisionDescription description = ((DiffMixin)vcs.getDiffProvider()).getCurrentRevisionDescription(vf);
+      if (description == null) return null;
       final Date date = description.getRevisionDate();
       return isRecent(date) ? description.getRevisionNumber() : null;
     }
