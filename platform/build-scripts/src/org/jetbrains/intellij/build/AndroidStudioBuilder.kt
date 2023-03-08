@@ -22,12 +22,12 @@ import org.jetbrains.intellij.build.impl.BuildContextImpl
  * Based on IdeaCommunityBuilder, but simplified a bit since we build fewer things
  * (for example, no intellij-core distribution)
  */
-class AndroidStudioBuilder {
+class AndroidStudioBuilder(home: BuildDependenciesCommunityRoot) {
   private val buildContext: BuildContext
 
-  constructor(home: BuildDependenciesCommunityRoot, options: BuildOptions = BuildOptions()) {
-    val properties = AndroidStudioProperties(home.communityRoot, options)
-    buildContext = BuildContextImpl.createContextBlocking(home, home.communityRoot, properties, ProprietaryBuildTools.DUMMY, options)
+  init {
+    val properties = AndroidStudioProperties(home.communityRoot)
+    buildContext = BuildContextImpl.createContextBlocking(home, home.communityRoot, properties, ProprietaryBuildTools.DUMMY)
   }
 
   fun compileModules() {

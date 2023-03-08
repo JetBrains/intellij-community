@@ -15,7 +15,7 @@
  */
 package org.jetbrains.intellij.build
 
-import kotlinx.collections.immutable.toPersistentList
+import kotlinx.collections.immutable.putAll
 import org.jetbrains.intellij.build.CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -29,7 +29,7 @@ import java.util.function.BiPredicate
 // Consider switching from AI to AS code
 // Restore a lot of the custom logic from studio_properties
 // TODO: Use separate bundle identifier for EAP and non-EAP
-class AndroidStudioProperties : BaseIdeaProperties {
+class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
 
   companion object {
     private val INHERITED_PLUGINS = IDEA_BUNDLED_PLUGINS + "intellij.javaFX.community"
@@ -71,7 +71,7 @@ class AndroidStudioProperties : BaseIdeaProperties {
 
   override val baseFileName: String = "studio"
 
-  constructor(home: Path, buildOptions: BuildOptions) {
+  init {
     platformPrefix = "AndroidStudio"
     productCode = "AI"
     applicationInfoModule = "intellij.android.adt.branding"
@@ -79,12 +79,12 @@ class AndroidStudioProperties : BaseIdeaProperties {
     additionalIDEPropertiesFilePaths = listOf(home.resolve("build/conf/ideaCE.properties"))
     toolsJarRequired = true
     scrambleMainJar = false
-    buildSourcesArchive = true;
+    buildSourcesArchive = true
     buildCrossPlatformDistribution = true
 
     allLibraryLicenses += AndroidStudioLibraryLicenses.LICENSES_LIST
     includeIntoSourcesArchiveFilter = BiPredicate { _, _ -> true }
-    customJvmMemoryOptions = customJvmMemoryOptions.putAll(mapOf("-Xms" to "256m", "-Xmx" to "1280m"))
+    customJvmMemoryOptions = customJvmMemoryOptions.putAll(arrayOf("-Xms" to "256m", "-Xmx" to "1280m"))
     additionalIdeJvmArguments = mutableListOf("-XX:FlightRecorderOptions=stackdepth=256")
 
     productLayout.productApiModules = JAVA_IDE_API_MODULES
@@ -106,31 +106,30 @@ class AndroidStudioProperties : BaseIdeaProperties {
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false
 
-    val inheritedPluginLayouts = COMMUNITY_REPOSITORY_PLUGINS.toMutableList()
-    // Remove plugin layouts that reference modules that do not exist in our fork.
-    inheritedPluginLayouts.removeAll {
+    val inheritedPluginLayouts = COMMUNITY_REPOSITORY_PLUGINS.removeAll {
+      // Remove plugin layouts that reference modules that do not exist in our fork.
       it.mainModule in EXCLUDED_PLUGINS || it.mainModule == "intellij.python.community.plugin"
     }
-    productLayout.pluginLayouts = inheritedPluginLayouts.toPersistentList().addAll(listOf(
+    productLayout.pluginLayouts = inheritedPluginLayouts.addAll(listOf(
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin(),
-      plugin("intellij.cidr.debugger.plugin") {
-        it.withModule("intellij.cidr.debugger", it.mainJarName)
-        it.withModule("intellij.cidr.debugger.backend", it.mainJarName)
-        it.withModule("intellij.cidr.debugger.commandInterpreterLang", it.mainJarName)
-        it.withModule("intellij.cidr.core", it.mainJarName)
-        it.withModule("intellij.cidr.util.execution", it.mainJarName)
+      plugin("intellij.cidr.debugger.plugin") { spec ->
+        spec.withModule("intellij.cidr.debugger", spec.mainJarName)
+        spec.withModule("intellij.cidr.debugger.backend", spec.mainJarName)
+        spec.withModule("intellij.cidr.debugger.commandInterpreterLang", spec.mainJarName)
+        spec.withModule("intellij.cidr.core", spec.mainJarName)
+        spec.withModule("intellij.cidr.util.execution", spec.mainJarName)
       },
-      plugin("intellij.cidr.base.plugin") {
-        it.withModule("intellij.c.dfa", it.mainJarName)
-        it.withModule("intellij.cidr.base", it.mainJarName)
-        it.withModule("intellij.cidr.projectModel", it.mainJarName)
-        it.withModule("intellij.cidr.workspaceModel", it.mainJarName)
-        it.withModule("intellij.cidr.lang.base", it.mainJarName)
-        it.withModule("intellij.cidr.execution", it.mainJarName)
-        it.withModule("intellij.cidr.util", it.mainJarName)
-        it.withModule("intellij.cidr.util.serializer", it.mainJarName)
-        it.withModule("intellij.cidr.util.ui", it.mainJarName)
+      plugin("intellij.cidr.base.plugin") { spec ->
+        spec.withModule("intellij.c.dfa", spec.mainJarName)
+        spec.withModule("intellij.cidr.base", spec.mainJarName)
+        spec.withModule("intellij.cidr.projectModel", spec.mainJarName)
+        spec.withModule("intellij.cidr.workspaceModel", spec.mainJarName)
+        spec.withModule("intellij.cidr.lang.base", spec.mainJarName)
+        spec.withModule("intellij.cidr.execution", spec.mainJarName)
+        spec.withModule("intellij.cidr.util", spec.mainJarName)
+        spec.withModule("intellij.cidr.util.serializer", spec.mainJarName)
+        spec.withModule("intellij.cidr.util.ui", spec.mainJarName)
         // Note the following are in CLionProperties.groovy but we don't include them since
         // they were never shipped with Android Studio before.
         //   * intellij.cidr.toolchains
@@ -139,51 +138,51 @@ class AndroidStudioProperties : BaseIdeaProperties {
         // The following are not in CLionProperties.groovy for this plugin. Instead they
         // are put under plugin "intellij.clion" or IDE implementation. We put them under
         // this base plugin so that they will still be shipped.
-        it.withModule("intellij.cidr.psi.base", it.mainJarName)
-        it.withModule("intellij.cidr.resources", it.mainJarName)
-        it.withModule("intellij.cidr.common", it.mainJarName)
-        it.withModule("intellij.cidr.runner", it.mainJarName)
-        it.withModule("intellij.cmake.psi", it.mainJarName)
+        spec.withModule("intellij.cidr.psi.base", spec.mainJarName)
+        spec.withModule("intellij.cidr.resources", spec.mainJarName)
+        spec.withModule("intellij.cidr.common", spec.mainJarName)
+        spec.withModule("intellij.cidr.runner", spec.mainJarName)
+        spec.withModule("intellij.cmake.psi", spec.mainJarName)
       },
-      plugin("intellij.c.plugin") {
-        it.withModule("intellij.c", it.mainJarName)
-        it.withModule("intellij.c.debugger", it.mainJarName)
-        it.withModule("intellij.c.doxygen", it.mainJarName)
-        it.withModule("intellij.c.testing", it.mainJarName)
-        it.withModule("intellij.cidr.modulemap.language", it.mainJarName)
+      plugin("intellij.c.plugin") { spec ->
+        spec.withModule("intellij.c", spec.mainJarName)
+        spec.withModule("intellij.c.debugger", spec.mainJarName)
+        spec.withModule("intellij.c.doxygen", spec.mainJarName)
+        spec.withModule("intellij.c.testing", spec.mainJarName)
+        spec.withModule("intellij.cidr.modulemap.language", spec.mainJarName)
       },
       PluginLayout.simplePlugin("intellij.c.clangd"),
       PluginLayout.simplePlugin("intellij.c.clangdBridge"),
     ))
   }
 
-  override suspend fun copyAdditionalFiles(buildContext: BuildContext, targetDirectory: String) {
-    FileSet(buildContext.paths.communityHomeDir)
+  override suspend fun copyAdditionalFiles(context: BuildContext, targetDirectory: String) {
+    FileSet(context.paths.communityHomeDir)
       .include("LICENSE.txt")
       .include("NOTICE.txt")
       .copyToDir(Path.of(targetDirectory))
-    FileSet(buildContext.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"))
+    FileSet(context.paths.communityHomeDir.resolve("build/conf/ideaCE/common/bin"))
       .includeAll()
       .copyToDir(Path.of(targetDirectory, "bin"))
-    FileSet(buildContext.paths.communityHomeDir.resolve("../../tools/vendor/intellij/cidr/cidr-debugger/bin/lldb/helpers"))
+    FileSet(context.paths.communityHomeDir.resolve("../../tools/vendor/intellij/cidr/cidr-debugger/bin/lldb/helpers"))
       .includeAll()
       .copyToDir(Path.of(targetDirectory, "bin/lldb/helpers"))
-    FileSet(buildContext.paths.communityHomeDir.resolve("../../tools/vendor/intellij/cidr/cidr-debugger/bin/helpers"))
+    FileSet(context.paths.communityHomeDir.resolve("../../tools/vendor/intellij/cidr/cidr-debugger/bin/helpers"))
       .includeAll()
       .copyToDir(Path.of(targetDirectory, "bin/helpers"))
 
     // Android Studio: copy CIDR license to CIRR plugins
-    FileSet(buildContext.paths.communityHomeDir)
+    FileSet(context.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
       .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/lib/LICENSE.txt"))
-    FileSet(buildContext.paths.communityHomeDir)
+    FileSet(context.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
       .copyToDir(Path.of(targetDirectory, "plugins/c-plugin/lib/LICENSE.txt"))
-    FileSet(buildContext.paths.communityHomeDir)
+    FileSet(context.paths.communityHomeDir)
       .include("CIDR_LICENSE.txt")
       .copyToDir(Path.of(targetDirectory, "plugins/cidr-base-plugin/lib/LICENSE.txt"))
 
-    return super.copyAdditionalFiles(buildContext, targetDirectory)
+    return super.copyAdditionalFiles(context, targetDirectory)
   }
 
   override fun createWindowsCustomizer(projectHome: String): WindowsDistributionCustomizer {
@@ -196,18 +195,18 @@ class AndroidStudioProperties : BaseIdeaProperties {
         fileAssociations = listOf(".java", ".groovy", ".kt")
       }
 
-      override fun getFullNameIncludingEdition(applicationInfo: ApplicationInfoProperties): String = "Android Studio"
+      override fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties): String = "Android Studio"
 
-      override fun getFullNameIncludingEditionAndVendor(applicationInfo: ApplicationInfoProperties): String = "Android Studio"
+      override fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String = "Android Studio"
 
-      override fun getRootDirectoryName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String = "android-studio"
+      override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "android-studio"
 
-      override fun getUninstallFeedbackPageUrl(applicationInfo: ApplicationInfoProperties): String {
-        return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${applicationInfo.majorVersion}.${applicationInfo.minorVersion}"
+      override fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String {
+        return "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
       }
 
-      override fun copyAdditionalFilesBlocking(buildContext: BuildContext, targetDirectory: String) {
-        FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win/x64"))
+      override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: String) {
+        FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win/x64"))
           .includeAll()
           .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/win/x64"))
       }
@@ -223,18 +222,18 @@ class AndroidStudioProperties : BaseIdeaProperties {
         iconPngPathForEAP = "$projectHome/adt-branding/src/artwork/preview/icon_AS_128.png"
       }
 
-      override fun getRootDirectoryName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String = "android-studio"
+      override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "android-studio"
 
-      override fun copyAdditionalFiles(buildContext: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
-        FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/linux/x64"))
+      override fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
+        FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/linux/x64"))
           .includeAll()
-          .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/linux/x64"))
+          .copyToDir(targetDir.resolve("plugins/c-clangd/bin/clang/linux/x64"))
       }
     }
   }
 
-  class StudioMacDistributionCustomizer : MacDistributionCustomizer {
-    constructor(projectHome: String) {
+  class StudioMacDistributionCustomizer(projectHome: String) : MacDistributionCustomizer() {
+    init {
       urlSchemes = listOf("idea")
       associateIpr = true
       bundleIdentifier = "com.google.android.studio"
@@ -246,12 +245,12 @@ class AndroidStudioProperties : BaseIdeaProperties {
       icnsPathForEAP = "$projectHome/adt-branding/src/artwork/preview/AndroidStudio.icns"
     }
 
-    override fun getRootDirectoryName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
-      return if (applicationInfo.isEAP) "Android Studio Preview.app" else "Android Studio.app"
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
+      return if (appInfo.isEAP) "Android Studio Preview.app" else "Android Studio.app"
     }
 
-    override fun copyAdditionalFilesBlocking(buildContext: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
-      FileSet(buildContext.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
+    override fun copyAdditionalFilesBlocking(context: BuildContext, targetDirectory: Path, arch: JvmArchitecture) {
+      FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/mac"))
         .includeAll()
         .copyToDir(targetDirectory.resolve("plugins/c-clangd/bin/clang/mac"))
     }
@@ -261,10 +260,10 @@ class AndroidStudioProperties : BaseIdeaProperties {
     return StudioMacDistributionCustomizer(projectHome)
   }
 
-  override fun getSystemSelector(applicationInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "AndroidStudio${if (applicationInfo.isEAP) "Preview" else ""}${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
+  override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
+    "AndroidStudio${if (appInfo.isEAP) "Preview" else ""}${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
 
-  override fun getBaseArtifactName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String = "android-studio-$buildNumber"
+  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "android-studio-$buildNumber"
 
-  override fun getOutputDirectoryName(applicationInfo: ApplicationInfoProperties): String = "studio"
+  override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties): String = "studio"
 }
