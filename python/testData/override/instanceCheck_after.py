@@ -1,3 +1,6 @@
+from typing import Any
+
+
 class MyType(type):
-    def __instancecheck__(self, instance):
-        <selection>return super(MyType, self).__instancecheck__(instance)</selection>
+    def __instancecheck__(self, __instance: Any) -> bool:
+        <selection>return super().__instancecheck__(__instance)</selection>

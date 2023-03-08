@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.override.PyMethodMember;
@@ -22,11 +21,6 @@ import java.util.List;
 
 
 public class PyOverrideTest extends PyTestCase {
-
-  @Override
-  protected @Nullable LightProjectDescriptor getProjectDescriptor() {
-    return ourPy2Descriptor;
-  }
 
   private void doTest() {
     doTest(null);
@@ -64,10 +58,6 @@ public class PyOverrideTest extends PyTestCase {
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), subClass, ContainerUtil.map(implToOverride, PyMethodMember::new), false);
   }
 
-  private void doTest3k() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
-  }
-
   /**
    * Ensures loops in class hierarchy does not lead to SO
    */
@@ -75,8 +65,8 @@ public class PyOverrideTest extends PyTestCase {
     doTest();
   }
 
-  public void testSimple() {
-    doTest();
+  public void testOldStyleClassInPython2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   public void testClassmethod() {
@@ -87,8 +77,8 @@ public class PyOverrideTest extends PyTestCase {
     doTest();
   }
 
-  public void testNewStyle() {
-    doTest();
+  public void testNewStyleClassInPython2() {
+    runWithLanguageLevel(LanguageLevel.PYTHON27, this::doTest);
   }
 
   public void testReturnValue() {  // PY-1537
@@ -140,17 +130,17 @@ public class PyOverrideTest extends PyTestCase {
   }
 
   public void testPy3k() {
-    doTest3k();
+    doTest();
   }
 
   // PY-15629
   public void testStaticMethodPy3k() {
-    doTest3k();
+    doTest();
   }
 
   // PY-15629
   public void testDunderNewPy3k() {
-    doTest3k();
+    doTest();
   }
 
   // PY-15629
@@ -159,11 +149,11 @@ public class PyOverrideTest extends PyTestCase {
   }
 
   public void testTypeAnnotations() {  // PY-2547
-    doTest3k();
+    doTest();
   }
 
   public void testReturnAnnotation() {  // PY-2690
-    doTest3k();
+    doTest();
   }
 
   // PY-18553
@@ -180,23 +170,21 @@ public class PyOverrideTest extends PyTestCase {
   }
 
   private void doTestImportsForTypeAnnotations() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
-      myFixture.configureByFiles(getTestName(true) + ".py", getTestName(true) + "_import.py");
-      doOverride(null);
-      myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
-    });
+    myFixture.configureByFiles(getTestName(true) + ".py", getTestName(true) + "_import.py");
+    doOverride(null);
+    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
   }
 
   public void testSingleStar() {  // PY-6455
-    doTest3k();
+    doTest();
   }
 
   public void testStarArgs() {  // PY-6455
-    doTest3k();
+    doTest();
   }
 
   public void testKwargs() {  // PY-7401
-    doTest3k();
+    doTest();
   }
 
   public void testDocstring() {
@@ -210,26 +198,24 @@ public class PyOverrideTest extends PyTestCase {
 
   // PY-19312
   public void testAsyncMethod() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+    doTest();
   }
 
   // PY-30287
   public void testMethodWithOverloadsInTheSameFile() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+    doTest();
   }
 
   // PY-30287
   public void testMethodWithOverloadsInAnotherFile() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> {
-      myFixture.configureByFiles(getTestName(true) + ".py", getTestName(true) + "_parent.py");
-      doOverride(null);
-      myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
-    });
+    myFixture.configureByFiles(getTestName(true) + ".py", getTestName(true) + "_parent.py");
+    doOverride("B");
+    myFixture.checkResultByFile(getTestName(true) + "_after.py", true);
   }
 
   // PY-35512
   public void testPositionalOnlyParameters() {
-    runWithLanguageLevel(LanguageLevel.PYTHON38, () -> doTest("B"));
+    doTest("B");
   }
 
   @Override

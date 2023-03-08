@@ -4,4 +4,4 @@ class Dialog:
 class B(Dialog):
 
     def validate(self):
-        <selection>Dialog.validate(self)</selection>
+        <selection>super().validate()</selection>
