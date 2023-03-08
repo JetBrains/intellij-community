@@ -67,7 +67,7 @@ internal object GitLabMergeRequestDetailsCommitsComponentFactory {
         selectedCommit?.shortId ?: CollaborationToolsBundle.message("review.details.commits.popup.text", commits.size)
       })
       bindDisabled(scope, commitsVm.reviewCommits.map { commits ->
-        commits.size == 1
+        commits.size <= 1
       })
 
       addActionListener { event ->
