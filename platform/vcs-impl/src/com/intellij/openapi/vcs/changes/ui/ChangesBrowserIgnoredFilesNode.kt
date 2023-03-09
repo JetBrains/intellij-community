@@ -68,5 +68,5 @@ class ChangesBrowserIgnoredFilesNode(private val project: Project,
 
   override fun getSortWeight(): Int = ChangesBrowserNode.IGNORED_SORT_WEIGHT
 
-  private fun List<FilePath>.getVcs(): AbstractVcs? = mapNotNull { file -> VcsUtil.getVcsFor(project, file) }.firstOrNull()
+  private fun List<FilePath>.getVcs(): AbstractVcs? = firstNotNullOfOrNull { file -> VcsUtil.getVcsFor(project, file) }
 }
