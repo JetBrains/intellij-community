@@ -13,11 +13,9 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -25,19 +23,18 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public final class PyOverrideImplementUtil {
 
@@ -169,14 +166,14 @@ public final class PyOverrideImplementUtil {
     final TypeEvalContext context = TypeEvalContext.userInitiated(cls.getProject(), cls.getContainingFile());
 
     final PyFunction function = buildOverriddenFunction(cls, baseFunction, implement).addFunctionAfter(statementList, anchor);
-    addImports(baseFunction, function);
+    PyClassRefactoringUtil.transplantImportsFromSignature(baseFunction, function);
 
     PyiUtil
       .getOverloads(baseFunction, context)
       .forEach(
         baseOverload -> {
           final PyFunction overload = (PyFunction)statementList.addBefore(baseOverload, function);
-          addImports(baseOverload, overload);
+          PyClassRefactoringUtil.transplantImportsFromSignature(baseOverload, overload);
         }
       );
 
@@ -328,86 +325,5 @@ public final class PyOverrideImplementUtil {
       }
     }
     return toClass.getName();
-  }
-
-  /**
-   * Adds imports for type hints and decorators in overridden function.
-   *
-   * @param baseFunction base function used to resolve types
-   * @param function overridden function
-   */
-  private static void addImports(@NotNull PyFunction baseFunction, @NotNull PyFunction function) {
-    UnresolvedExpressionVisitor unresolvedExpressionVisitor = new UnresolvedExpressionVisitor() {
-      @Override
-      public void visitPyStatementList(@NotNull PyStatementList node) {
-      }
-    };
-    function.accept(unresolvedExpressionVisitor);
-
-    ResolveExpressionVisitor resolveExpressionVisitor = new ResolveExpressionVisitor(unresolvedExpressionVisitor.getUnresolved()) {
-      @Override
-      public void visitPyStatementList(@NotNull PyStatementList node) {
-      }
-    };
-    baseFunction.accept(resolveExpressionVisitor);
-  }
-
-  /**
-   * Collects unresolved {@link PyReferenceExpression} objects.
-   */
-  private static class UnresolvedExpressionVisitor extends PyRecursiveElementVisitor {
-
-    private final List<PyReferenceExpression> myUnresolved = new ArrayList<>();
-
-    @Override
-    public void visitPyReferenceExpression(final @NotNull PyReferenceExpression referenceExpression) {
-      super.visitPyReferenceExpression(referenceExpression);
-      final var context = TypeEvalContext.codeInsightFallback(referenceExpression.getProject());
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
-      if (referenceExpression.getReference(resolveContext).multiResolve(false).length == 0) {
-        myUnresolved.add(referenceExpression);
-      }
-    }
-
-    /**
-     * Get list of {@link PyReferenceExpression} that left myUnresolved after function override.
-     *
-     * @return list of {@link PyReferenceExpression} elements.
-     */
-    @NotNull
-    List<PyReferenceExpression> getUnresolved() {
-      return Collections.unmodifiableList(myUnresolved);
-    }
-  }
-
-  /**
-   * Resolves reference expressions by name and adds imports for them using references being visited.
-   */
-  private static class ResolveExpressionVisitor extends PyRecursiveElementVisitor {
-
-    private final Map<String, PyReferenceExpression> myExpressionsToResolve;
-
-    /**
-     * {@link PyReferenceExpression} objects to resolve.
-     *
-     * @param toResolve collection of references to resolve.
-     */
-    ResolveExpressionVisitor(@NotNull Collection<PyReferenceExpression> toResolve) {
-      myExpressionsToResolve = StreamEx.of(toResolve)
-              .toMap(PyReferenceExpression::getName, Function.identity(),
-                     (expression1, expression2) -> expression2);
-    }
-
-    @Override
-    public void visitPyReferenceExpression(final @NotNull PyReferenceExpression referenceExpression) {
-      super.visitPyReferenceExpression(referenceExpression);
-
-      if (myExpressionsToResolve.containsKey(referenceExpression.getName())) {
-        PyClassRefactoringUtil.rememberNamedReferences(referenceExpression);
-        PyClassRefactoringUtil.restoreReference(referenceExpression,
-                                                myExpressionsToResolve.get(referenceExpression.getName()),
-                                                PsiElement.EMPTY_ARRAY);
-      }
-    }
   }
 }

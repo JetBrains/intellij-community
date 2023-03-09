@@ -236,9 +236,9 @@ public final class PyClassRefactoringUtil {
   }
 
 
-  public static void restoreReference(@NotNull PsiElement sourceNode,
-                                      @NotNull PsiElement targetNode,
-                                      PsiElement @NotNull [] otherMovedElements) {
+  private static void restoreReference(@NotNull PsiElement sourceNode,
+                                       @NotNull PsiElement targetNode,
+                                       PsiElement @NotNull [] otherMovedElements) {
     try {
       if (sourceNode instanceof PyReferenceExpression) {
         doRestoreReference((PyReferenceExpression)sourceNode, targetNode, otherMovedElements);
@@ -553,6 +553,45 @@ public final class PyClassRefactoringUtil {
         "refactoring.move.module.members.error.cannot.place.elements.into.nonpython.file"));
     }
     return (PyFile)psi;
+  }
+
+  /**
+   * Transfer necessary imports for references in the signature of one function to another.
+   */
+  public static void transplantImportsFromSignature(@NotNull PyFunction sourceFunction, @NotNull PyFunction targetFunction) {
+    Map<String, PyReferenceExpression> unresolvedNames = new HashMap<>();
+
+    targetFunction.accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression referenceExpression) {
+        super.visitPyReferenceExpression(referenceExpression);
+        if (!referenceExpression.isQualified() && referenceExpression.getReference().multiResolve(false).length == 0) {
+          unresolvedNames.put(referenceExpression.getName(), referenceExpression);
+        }
+      }
+
+      @Override
+      public void visitPyStatementList(@NotNull PyStatementList pruned) {
+      }
+    });
+
+    sourceFunction.accept(new PyRecursiveElementVisitor() {
+      @Override
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression referenceExpression) {
+        super.visitPyReferenceExpression(referenceExpression);
+        if (!referenceExpression.isQualified()) {
+          PyReferenceExpression unresolvedReference = unresolvedNames.get(referenceExpression.getName());
+          if (unresolvedReference != null) {
+            rememberNamedReferences(referenceExpression);
+            restoreReference(referenceExpression, unresolvedReference, PsiElement.EMPTY_ARRAY);
+          }
+        }
+      }
+
+      @Override
+      public void visitPyStatementList(@NotNull PyStatementList pruned) {
+      }
+    });
   }
 
   private static final class DynamicNamedElement extends LightElement implements PsiNamedElement {
