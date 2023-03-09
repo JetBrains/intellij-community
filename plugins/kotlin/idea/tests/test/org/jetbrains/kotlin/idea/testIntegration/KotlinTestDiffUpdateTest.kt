@@ -68,6 +68,44 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         )
     }
 
+    fun `test accept string literal diff with actual call`() {
+        checkAcceptFullDiff(
+            """
+            import org.junit.Assert
+            import org.junit.Test
+                  
+            class MyJUnitTest {
+                @Test
+                fun testFoo() {
+                    Assert.assertEquals("expected", getActual(getActual(getActual("actual"))))
+                }
+            
+                private fun getActual(str: String): String {
+                    return str
+                }
+            }
+        """.trimIndent(), """
+            import org.junit.Assert
+            import org.junit.Test
+                  
+            class MyJUnitTest {
+                @Test
+                fun testFoo() {
+                    Assert.assertEquals("actual", getActual(getActual(getActual("actual"))))
+                }
+            
+                private fun getActual(str: String): String {
+                    return str
+                }
+            }
+        """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+            at org.junit.Assert.assertEquals(Assert.java:117)
+            at org.junit.Assert.assertEquals(Assert.java:146)
+            at MyJUnitTest.testFoo(MyJUnitTest.kt:7)
+        """.trimIndent()
+        )
+    }
+
     fun `test accept diff is not available when expected is not a string literal`() {
         checkHasNoDiff(
             """

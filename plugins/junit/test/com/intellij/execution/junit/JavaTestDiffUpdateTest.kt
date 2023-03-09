@@ -6,8 +6,6 @@ import org.intellij.lang.annotations.Language
 
 @Suppress("AssertBetweenInconvertibleTypes", "NewClassNamingConvention", "SameParameterValue")
 class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
-  private val fileExt = "java"
-
   @Suppress("SameParameterValue")
   private fun checkHasNoDiff(
     @Language("Java") before: String,
@@ -89,6 +87,42 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         public void testFoo() {
           Assert.assertEquals("actual", "actual");
         }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent())
+  }
+
+  fun `test accept string literal diff with actual call`() {
+    checkAcceptFullDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
+        
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+              Assert.assertEquals("expected", getActual(getActual(getActual("actual"))));
+          }
+      
+          private static String getActual(String str) {
+              return str;
+          }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.Test;
+        
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+              Assert.assertEquals("actual", getActual(getActual(getActual("actual"))));
+          }
+      
+          private static String getActual(String str) {
+              return str;
+          }
       }
     """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
       at org.junit.Assert.assertEquals(Assert.java:117)
