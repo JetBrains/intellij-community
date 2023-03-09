@@ -64,7 +64,7 @@ class ChangesBrowserIgnoredFilesNode(private val project: Project,
   }
 
   @Nls
-  override fun getTextPresentation(): String = getUserObject().toString()
+  override fun getTextPresentation(): String = getUserObject().toString() //NON-NLS
 
   override fun getSortWeight(): Int = ChangesBrowserNode.IGNORED_SORT_WEIGHT
 
