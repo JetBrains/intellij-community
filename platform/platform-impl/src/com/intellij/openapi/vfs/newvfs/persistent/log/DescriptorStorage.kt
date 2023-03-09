@@ -22,6 +22,13 @@ interface DescriptorStorage {
   fun readAt(position: Long): DescriptorReadResult
 
   /**
+   * Only reads and deserializes content of operations, that are contained in [toReadMask].
+   * If tag is not contained in [toReadMask], then [DescriptorReadResult.Incomplete] is returned.
+   * @see readAt
+   */
+  fun readAtFiltered(position: Long, toReadMask: VfsOperationTagsMask): DescriptorReadResult
+
+  /**
    * Tries to read the whole storage in a sequential manner.
    * In case [DescriptorReadResult.Invalid] was read, it will be the last item to be passed to [action].
    * @param action return true to continue reading, false to stop.

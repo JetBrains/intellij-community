@@ -48,3 +48,10 @@ val VfsOperationTag.isRecordOperation get() = VfsOperationTag.REC_ALLOC <= this 
 val VfsOperationTag.isAttributeOperation get() = VfsOperationTag.ATTR_WRITE_ATTR <= this && this <= VfsOperationTag.ATTR_SET_VERSION
 val VfsOperationTag.isContentOperation get() = VfsOperationTag.CONTENT_WRITE_BYTES <= this && this <= VfsOperationTag.CONTENT_SET_VERSION
 val VfsOperationTag.isVFileEventOperation get() = VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE <= this && this <= VfsOperationTag.VFILE_EVENT_END
+
+@JvmInline
+value class VfsOperationTagsMask(val mask: Long) {
+  constructor(vararg tags: VfsOperationTag): this(tags.map { 1L shl it.ordinal }.fold(0L, Long::or))
+
+  fun contains(tag: VfsOperationTag) = (mask and (1L shl tag.ordinal)) != 0L
+}
