@@ -20,7 +20,8 @@ public class SnippetMarkupTest {
       """
         Hello!!!
         World!!!""", """
-        PlainText[range=(0,8), content=Hello!!!]
+        PlainText[range=(0,9), content=Hello!!!
+        ]
         PlainText[range=(9,17), content=World!!!]""");
   }
 
@@ -42,21 +43,29 @@ public class SnippetMarkupTest {
           // @end
         }
         """, """
-        PlainText[range=(0,16), content=public class X {]
-        StartRegion[range=(23,40), region=test]
-        PlainText[range=(41,56), content=  void main() {]
-        Replace[range=(94,133), substring=Hello, regex=null, region=null, replacement=...]
-        PlainText[range=(57,90), content=    System.out.println("Hello"); ]
-        Highlight[range=(142,169), substring=Hello, regex=null, region=null, type=HIGHLIGHTED]
-        PlainText[range=(170,202), content=    System.out.println("Hello");]
-        Highlight[range=(211,228), substring=null, regex=null, region=, type=HIGHLIGHTED]
-        PlainText[range=(229,262), content=    System.out.println("Hello1");]
-        Link[range=(301,344), substring=null, regex=H\\w+, region=null, target=Hello, linkType=LINKPLAIN]
-        PlainText[range=(263,297), content=    System.out.println("Hello2"); ]
-        EndRegion[range=(353,356), region=null]
-        PlainText[range=(357,360), content=  }]
-        EndRegion[range=(367,370), region=null]
-        PlainText[range=(371,372), content=}]
+        PlainText[range=(0,17), content=public class X {
+        ]
+        StartRegion[range=(23,41), region=test]
+        PlainText[range=(41,57), content=  void main() {
+        ]
+        Replace[range=(94,134), substring=Hello, regex=null, region=null, replacement=...]
+        PlainText[range=(57,90), content=    System.out.println("Hello");\s
+        ]
+        Highlight[range=(142,170), substring=Hello, regex=null, region=null, type=HIGHLIGHTED]
+        PlainText[range=(170,203), content=    System.out.println("Hello");
+        ]
+        Highlight[range=(211,229), substring=null, regex=null, region=, type=HIGHLIGHTED]
+        PlainText[range=(229,263), content=    System.out.println("Hello1");
+        ]
+        Link[range=(301,345), substring=null, regex=H\\w+, region=null, target=Hello, linkType=LINKPLAIN]
+        PlainText[range=(263,297), content=    System.out.println("Hello2");\s
+        ]
+        EndRegion[range=(353,357), region=null]
+        PlainText[range=(357,361), content=  }
+        ]
+        EndRegion[range=(367,371), region=null]
+        PlainText[range=(371,373), content=}
+        ]
         PlainText[range=(373,373), content=]""");
   }
 
@@ -74,23 +83,29 @@ public class SnippetMarkupTest {
           // @end test
         }
         """, """
-        PlainText[range=(0,16), content=public class X {]
-        ErrorMarkup[range=(23,28), message=@start: missing 'region' attribute]
-        PlainText[range=(29,44), content=  void main() {]
-        Replace[range=(82,128), substring=Hello, regex=null, region=null, replacement=]
+        PlainText[range=(0,17), content=public class X {
+        ]
+        ErrorMarkup[range=(23,29), message=@start: missing 'region' attribute]
+        PlainText[range=(29,45), content=  void main() {
+        ]
+        Replace[range=(82,129), substring=Hello, regex=null, region=null, replacement=]
         ErrorMarkup[range=(108,128), message=Unsupported attribute: 'substring2']
-        ErrorMarkup[range=(82,128), message=@replace: missing 'replacement' attribute]
-        PlainText[range=(45,78), content=    System.out.println("Hello"); ]
-        Highlight[range=(137,161), substring=null, regex=null, region=null, type=HIGHLIGHTED]
+        ErrorMarkup[range=(82,129), message=@replace: missing 'replacement' attribute]
+        PlainText[range=(45,78), content=    System.out.println("Hello");\s
+        ]
+        Highlight[range=(137,162), substring=null, regex=null, region=null, type=HIGHLIGHTED]
         ErrorMarkup[range=(147,161), message=Unknown type 'underline'; only 'bold', 'italic', and 'highlighted' are supported]
-        Link[range=(199,213), substring=null, regex=null, region=null, target=, linkType=LINK]
-        ErrorMarkup[range=(199,213), message=@link: missing 'target' attribute]
+        Link[range=(199,214), substring=null, regex=null, region=null, target=, linkType=LINK]
+        ErrorMarkup[range=(199,214), message=@link: missing 'target' attribute]
         ErrorMarkup[range=(204,213), message=Unknown type 'pfff'; only 'link' and 'linkplain' are supported]
-        PlainText[range=(162,195), content=    System.out.println("Hello"); ]
-        PlainText[range=(214,217), content=  }]
-        EndRegion[range=(224,232), region=null]
+        PlainText[range=(162,195), content=    System.out.println("Hello");\s
+        ]
+        PlainText[range=(214,218), content=  }
+        ]
+        EndRegion[range=(224,233), region=null]
         ErrorMarkup[range=(228,232), message=Unsupported attribute: 'test']
-        PlainText[range=(233,234), content=}]
+        PlainText[range=(233,235), content=}
+        ]
         PlainText[range=(235,235), content=]""");
   }
   
@@ -100,9 +115,9 @@ public class SnippetMarkupTest {
       public class Hello {
         // @start region=main
         public static void main(String[] args) {
-          code: // @replace regex='code:' replacement="..."
-          // @highlight substring="Hello"
-          System.out.println("Hello");
+          code: // @replace regex='code:' replacement=""
+          // @highlight substring="Hello World"
+          System.out.println("Hello World");
           // @highlight region substring="idx"
           for(int idx=0; idx<10; idx++) {
             System.out.println(idx);
@@ -113,43 +128,71 @@ public class SnippetMarkupTest {
       }
       """;
     testParsing(text, """
-      PlainText[range=(0,20), content=public class Hello {]
-      StartRegion[range=(27,44), region=main]
-      PlainText[range=(45,87), content=  public static void main(String[] args) {]
-      Replace[range=(102,141), substring=null, regex=code:, region=null, replacement=...]
-      PlainText[range=(88,98), content=    code: ]
-      Highlight[range=(150,177), substring=Hello, regex=null, region=null, type=HIGHLIGHTED]
-      PlainText[range=(178,210), content=    System.out.println("Hello");]
-      Highlight[range=(219,251), substring=idx, regex=null, region=, type=HIGHLIGHTED]
-      PlainText[range=(252,287), content=    for(int idx=0; idx<10; idx++) {]
-      PlainText[range=(288,318), content=      System.out.println(idx);]
-      PlainText[range=(319,324), content=    }]
-      EndRegion[range=(333,336), region=null]
-      PlainText[range=(337,340), content=  }]
-      EndRegion[range=(347,350), region=null]
-      PlainText[range=(351,352), content=}]
-      PlainText[range=(353,353), content=]""");
+      PlainText[range=(0,21), content=public class Hello {
+      ]
+      StartRegion[range=(27,45), region=main]
+      PlainText[range=(45,88), content=  public static void main(String[] args) {
+      ]
+      Replace[range=(102,139), substring=null, regex=code:, region=null, replacement=]
+      PlainText[range=(88,98), content=    code:\s
+      ]
+      Highlight[range=(147,181), substring=Hello World, regex=null, region=null, type=HIGHLIGHTED]
+      PlainText[range=(181,220), content=    System.out.println("Hello World");
+      ]
+      Highlight[range=(228,261), substring=idx, regex=null, region=, type=HIGHLIGHTED]
+      PlainText[range=(261,297), content=    for(int idx=0; idx<10; idx++) {
+      ]
+      PlainText[range=(297,328), content=      System.out.println(idx);
+      ]
+      PlainText[range=(328,334), content=    }
+      ]
+      EndRegion[range=(342,346), region=null]
+      PlainText[range=(346,350), content=  }
+      ]
+      EndRegion[range=(356,360), region=null]
+      PlainText[range=(360,362), content=}
+      ]
+      PlainText[range=(362,362), content=]""");
     testVisitor(text, null, """
       public class Hello {
         public static void main(String[] args) {
-          code:  // [Replace[range=(102,141), substring=null, regex=code:, region=null, replacement=...]]
-          System.out.println("Hello"); // [Highlight[range=(150,177), substring=Hello, regex=null, region=null, type=HIGHLIGHTED]]
-          for(int idx=0; idx<10; idx++) { // [Highlight[range=(219,251), substring=idx, regex=null, region=, type=HIGHLIGHTED]]
-            System.out.println(idx); // [Highlight[range=(219,251), substring=idx, regex=null, region=, type=HIGHLIGHTED]]
-          } // [Highlight[range=(219,251), substring=idx, regex=null, region=, type=HIGHLIGHTED]]
+      // [Replace[range=(102,139), substring=null, regex=code:, region=null, replacement=]]
+          code:\s
+      // [Highlight[range=(147,181), substring=Hello World, regex=null, region=null, type=HIGHLIGHTED]]
+          System.out.println("Hello World");
+      // [Highlight[range=(228,261), substring=idx, regex=null, region=, type=HIGHLIGHTED]]
+          for(int idx=0; idx<10; idx++) {
+      // [Highlight[range=(228,261), substring=idx, regex=null, region=, type=HIGHLIGHTED]]
+            System.out.println(idx);
+      // [Highlight[range=(228,261), substring=idx, regex=null, region=, type=HIGHLIGHTED]]
+          }
         }
       }
-      
       """);
     testVisitor(text, "main", """
         public static void main(String[] args) {
-          code:  // [Replace[range=(102,141), substring=null, regex=code:, region=null, replacement=...]]
-          System.out.println("Hello"); // [Highlight[range=(150,177), substring=Hello, regex=null, region=null, type=HIGHLIGHTED]]
-          for(int idx=0; idx<10; idx++) { // [Highlight[range=(219,251), substring=idx, regex=null, region=, type=HIGHLIGHTED]]
-            System.out.println(idx); // [Highlight[range=(219,251), substring=idx, regex=null, region=, type=HIGHLIGHTED]]
-          } // [Highlight[range=(219,251), substring=idx, regex=null, region=, type=HIGHLIGHTED]]
+      // [Replace[range=(102,139), substring=null, regex=code:, region=null, replacement=]]
+          code:\s
+      // [Highlight[range=(147,181), substring=Hello World, regex=null, region=null, type=HIGHLIGHTED]]
+          System.out.println("Hello World");
+      // [Highlight[range=(228,261), substring=idx, regex=null, region=, type=HIGHLIGHTED]]
+          for(int idx=0; idx<10; idx++) {
+      // [Highlight[range=(228,261), substring=idx, regex=null, region=, type=HIGHLIGHTED]]
+            System.out.println(idx);
+      // [Highlight[range=(228,261), substring=idx, regex=null, region=, type=HIGHLIGHTED]]
+          }
         }
       """);
+    assertEquals("""
+                     public static void main(String[] args) {
+                       code:\s
+                       System.out.println("Hello World");
+                       for(int idx=0; idx<10; idx++) {
+                         System.out.println(idx);
+                       }
+                     }
+                   """, SnippetMarkup.parse(text).getTextWithoutMarkup("main"));
+    
   }
 
   @Test
@@ -167,36 +210,53 @@ public class SnippetMarkupTest {
       // @end region="r2"
       """;
     testParsing(text, """
-      Highlight[range=(4,51), substring=xxx, regex=null, region=r1, type=BOLD]
-      PlainText[range=(52,64), content=r1 start xxx]
-      Highlight[range=(69,118), substring=yyy, regex=null, region=r2, type=ITALIC]
-      PlainText[range=(119,131), content=r2 start yyy]
-      Highlight[range=(136,179), substring=zzz, regex=null, region=null, type=HIGHLIGHTED]
-      PlainText[range=(180,210), content=one line with zzz highlighting]
-      PlainText[range=(211,220), content=r1+r2 xxx]
-      EndRegion[range=(225,240), region=r1]
-      PlainText[range=(241,257), content=r2 continues yyy]
-      EndRegion[range=(262,277), region=r2]
+      Highlight[range=(4,52), substring=xxx, regex=null, region=r1, type=BOLD]
+      PlainText[range=(52,65), content=r1 start xxx
+      ]
+      Highlight[range=(69,119), substring=yyy, regex=null, region=r2, type=ITALIC]
+      PlainText[range=(119,132), content=r2 start yyy
+      ]
+      Highlight[range=(136,180), substring=zzz, regex=null, region=null, type=HIGHLIGHTED]
+      PlainText[range=(180,211), content=one line with zzz highlighting
+      ]
+      PlainText[range=(211,221), content=r1+r2 xxx
+      ]
+      EndRegion[range=(225,241), region=r1]
+      PlainText[range=(241,258), content=r2 continues yyy
+      ]
+      EndRegion[range=(262,278), region=r2]
       PlainText[range=(278,278), content=]""");
     testVisitor(text, null, """
-      r1 start xxx // [Highlight[range=(4,51), substring=xxx, regex=null, region=r1, type=BOLD]]
-      r2 start yyy // [Highlight[range=(4,51), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,118), substring=yyy, regex=null, region=r2, type=ITALIC]]
-      one line with zzz highlighting // [Highlight[range=(4,51), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,118), substring=yyy, regex=null, region=r2, type=ITALIC], Highlight[range=(136,179), substring=zzz, regex=null, region=null, type=HIGHLIGHTED]]
-      r1+r2 xxx // [Highlight[range=(4,51), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,118), substring=yyy, regex=null, region=r2, type=ITALIC]]
-      r2 continues yyy // [Highlight[range=(69,118), substring=yyy, regex=null, region=r2, type=ITALIC]]
-
+      // [Highlight[range=(4,52), substring=xxx, regex=null, region=r1, type=BOLD]]
+      r1 start xxx
+      // [Highlight[range=(4,52), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,119), substring=yyy, regex=null, region=r2, type=ITALIC]]
+      r2 start yyy
+      // [Highlight[range=(4,52), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,119), substring=yyy, regex=null, region=r2, type=ITALIC], Highlight[range=(136,180), substring=zzz, regex=null, region=null, type=HIGHLIGHTED]]
+      one line with zzz highlighting
+      // [Highlight[range=(4,52), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,119), substring=yyy, regex=null, region=r2, type=ITALIC]]
+      r1+r2 xxx
+      // [Highlight[range=(69,119), substring=yyy, regex=null, region=r2, type=ITALIC]]
+      r2 continues yyy
       """);
     testVisitor(text, "r1", """
-      r1 start xxx // [Highlight[range=(4,51), substring=xxx, regex=null, region=r1, type=BOLD]]
-      r2 start yyy // [Highlight[range=(4,51), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,118), substring=yyy, regex=null, region=r2, type=ITALIC]]
-      one line with zzz highlighting // [Highlight[range=(4,51), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,118), substring=yyy, regex=null, region=r2, type=ITALIC], Highlight[range=(136,179), substring=zzz, regex=null, region=null, type=HIGHLIGHTED]]
-      r1+r2 xxx // [Highlight[range=(4,51), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,118), substring=yyy, regex=null, region=r2, type=ITALIC]]
+      // [Highlight[range=(4,52), substring=xxx, regex=null, region=r1, type=BOLD]]
+      r1 start xxx
+      // [Highlight[range=(4,52), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,119), substring=yyy, regex=null, region=r2, type=ITALIC]]
+      r2 start yyy
+      // [Highlight[range=(4,52), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,119), substring=yyy, regex=null, region=r2, type=ITALIC], Highlight[range=(136,180), substring=zzz, regex=null, region=null, type=HIGHLIGHTED]]
+      one line with zzz highlighting
+      // [Highlight[range=(4,52), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,119), substring=yyy, regex=null, region=r2, type=ITALIC]]
+      r1+r2 xxx
       """);
     testVisitor(text, "r2", """
-      r2 start yyy // [Highlight[range=(4,51), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,118), substring=yyy, regex=null, region=r2, type=ITALIC]]
-      one line with zzz highlighting // [Highlight[range=(4,51), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,118), substring=yyy, regex=null, region=r2, type=ITALIC], Highlight[range=(136,179), substring=zzz, regex=null, region=null, type=HIGHLIGHTED]]
-      r1+r2 xxx // [Highlight[range=(4,51), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,118), substring=yyy, regex=null, region=r2, type=ITALIC]]
-      r2 continues yyy // [Highlight[range=(69,118), substring=yyy, regex=null, region=r2, type=ITALIC]]
+      // [Highlight[range=(4,52), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,119), substring=yyy, regex=null, region=r2, type=ITALIC]]
+      r2 start yyy
+      // [Highlight[range=(4,52), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,119), substring=yyy, regex=null, region=r2, type=ITALIC], Highlight[range=(136,180), substring=zzz, regex=null, region=null, type=HIGHLIGHTED]]
+      one line with zzz highlighting
+      // [Highlight[range=(4,52), substring=xxx, regex=null, region=r1, type=BOLD], Highlight[range=(69,119), substring=yyy, regex=null, region=r2, type=ITALIC]]
+      r1+r2 xxx
+      // [Highlight[range=(69,119), substring=yyy, regex=null, region=r2, type=ITALIC]]
+      r2 continues yyy
       """);
   }
   
@@ -211,11 +271,10 @@ public class SnippetMarkupTest {
       @Override
       public void visitPlainText(@NotNull PlainText plainText,
                                  @NotNull List<@NotNull LocationMarkupNode> activeNodes) {
-        sb.append(plainText.content());
         if (!activeNodes.isEmpty()) {
-          sb.append(" // ").append(activeNodes);
+          sb.append("// ").append(activeNodes).append("\n");
         }
-        sb.append("\n");
+        sb.append(plainText.content());
       }
 
       @Override

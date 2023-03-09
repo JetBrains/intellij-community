@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiSnippetAttribute extends PsiElement {
   String CLASS_ATTRIBUTE = "class";
   String FILE_ATTRIBUTE = "file";
+  String REGION_ATTRIBUTE = "region";
   String SNIPPETS_FOLDER = "snippet-files";
   
   PsiSnippetAttribute[] EMPTY_ARRAY = new PsiSnippetAttribute[0];

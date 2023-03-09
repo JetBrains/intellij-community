@@ -6,10 +6,14 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,11 +25,13 @@ import java.util.stream.Stream;
 
 public class SnippetMarkup {
   private final @NotNull List<@NotNull MarkupNode> myNodes;
+  private final @NotNull Map<@NotNull String, @NotNull MarkupNode> myRegionStarts;
+  private final @NotNull BitSet myTextOffsets = new BitSet();
   
   // \\S+ = language-dependent comment start token, like "//" or "#"
   private static final Pattern MARKUP_TAG = Pattern.compile("\\S+\\s*@(start|end|highlight|replace|link)\\s*(\\S.+?)?\\s*(:?)\\s*$");
 
-  private static final Pattern ATTRIBUTE = Pattern.compile("(\\w+)\\s*(=\\s*(['\"]?)(\\S+)\\3)?");
+  private static final Pattern ATTRIBUTE = Pattern.compile("(\\w+)\\s*(=\\s*('([^']*)'|\"([^\"]*)\"|(\\S*)))?");
 
   private static final Map<String, Set<String>> ALLOWED_ATTRS =
     Map.of(
@@ -38,6 +44,70 @@ public class SnippetMarkup {
 
   private SnippetMarkup(@NotNull List<@NotNull MarkupNode> nodes) { 
     myNodes = nodes;
+    myRegionStarts = StreamEx.of(nodes)
+      .mapToEntry(n -> n instanceof StartRegion start ? start.region() :
+        n instanceof LocationMarkupNode node ? node.region() :
+        null, Function.identity())
+      .removeKeys(k -> k == null || k.isEmpty())
+      .distinctKeys()
+      .toMap();
+    StreamEx.of(nodes)
+      .select(PlainText.class)
+      .forEach(text -> myTextOffsets.set(text.range().getStartOffset(), text.range().getEndOffset()));
+  }
+
+  /**
+   * @param region region to test; null for the whole snippet
+   * @return true if any of {@code @replacement}, {@code @highlight}, or {@code @link} tags exist within the region
+   */
+  public boolean hasMarkup(@Nullable String region) {
+    var visitor = new SnippetVisitor() {
+      boolean hasMarkup = false;
+      
+      @Override
+      public void visitPlainText(@NotNull PlainText plainText, @NotNull List<@NotNull LocationMarkupNode> activeNodes) {
+        hasMarkup |= !activeNodes.isEmpty();
+      }
+    };
+    visitSnippet(region, visitor);
+    return visitor.hasMarkup;
+  }
+
+  public @Nullable TextRange getRegionRange(@Nullable String region) {
+    var visitor = new SnippetVisitor() {
+      TextRange myRange = null;
+
+      @Override
+      public void visitPlainText(@NotNull PlainText plainText, @NotNull List<@NotNull LocationMarkupNode> activeNodes) {
+        myRange = myRange == null ? plainText.range() : myRange.union(plainText.range());
+      }
+    };
+    visitSnippet(region, visitor);
+    return visitor.myRange;
+  }
+
+  /**
+   * @param range range to test
+   * @return true if the range completely or partially contains plain text chunk(s) to display
+   */
+  public boolean isTextPart(@NotNull TextRange range) {
+    int nextSetBit = myTextOffsets.nextSetBit(range.getStartOffset());
+    return nextSetBit != -1 && nextSetBit < range.getEndOffset();
+  }
+
+  /**
+   * @param region region to extract; null for the whole snippet
+   * @return text of a given region, ignoring markup
+   */
+  public String getTextWithoutMarkup(@Nullable String region) {
+    StringBuilder result = new StringBuilder();
+    visitSnippet(region, new SnippetVisitor() {
+      @Override
+      public void visitPlainText(@NotNull PlainText plainText, @NotNull List<@NotNull LocationMarkupNode> activeNodes) {
+        result.append(plainText.content());
+      }
+    });
+    return result.toString();
   }
 
   /**
@@ -63,6 +133,7 @@ public class SnippetMarkup {
     /**
      * @return range in the parent PSI element that corresponds to this element
      */
+    @Contract(pure = true)
     @NotNull TextRange range();
   }
 
@@ -73,17 +144,20 @@ public class SnippetMarkup {
     /**
      * @return substring text to which this node is applicable
      */
+    @Contract(pure = true)
     @Nullable String substring();
 
     /**
      * @return regular expression, so this node is applicable to the matching substrings
      */
+    @Contract(pure = true)
     @Nullable String regex();
 
     /**
      * @return if present, defines a region name to which this tag is applicable. If null, then the tag is applicable to the next 
      * {@link PlainText} node.
      */
+    @Contract(pure = true)
     @Nullable String region();
   }
 
@@ -93,21 +167,6 @@ public class SnippetMarkup {
    * @param content text content (excluding the final linebreak)
    */
   public record PlainText(@NotNull TextRange range, @NotNull String content) implements MarkupNode {
-    public PlainText {
-      if (range.getLength() != content.length()) {
-        throw new IllegalArgumentException();
-      }
-    }
-
-    /**
-     * @param start start offset of substring
-     * @param end end offset of substring
-     * @return PlainText object that corresponds to the substring of this object
-     */
-    @NotNull PlainText substring(@SuppressWarnings("SameParameterValue") int start, int end) {
-      int offset = range().getStartOffset();
-      return new PlainText(TextRange.create(offset + start, offset + end), content.substring(start, end));
-    }
   }
 
   private record Attribute(@NotNull TextRange range, @NotNull String key, @Nullable String value) implements MarkupNode {
@@ -167,6 +226,10 @@ public class SnippetMarkup {
   public static @NotNull SnippetMarkup parse(@NotNull String text) {
     return parse(preparse(text));
   }
+  
+  public static @NotNull SnippetMarkup forFile(@NotNull PsiFile file) {
+    return CachedValuesManager.getCachedValue(file, () -> new CachedValueProvider.Result<>(parse(file.getText()), file));
+  }
 
   public static @NotNull SnippetMarkup parse(@NotNull PsiSnippetDocTagBody body) {
     return parse(preparse(body));
@@ -182,7 +245,7 @@ public class SnippetMarkup {
         break;
       }
       else {
-        output.add(new PlainText(TextRange.create(pos, nextPos), text.substring(pos, nextPos)));
+        output.add(new PlainText(TextRange.create(pos, nextPos + 1), text.substring(pos, nextPos + 1)));
         pos = nextPos + 1;
       }
     }
@@ -206,13 +269,14 @@ public class SnippetMarkup {
     Matcher matcher = MARKUP_TAG.matcher(content);
     if (!matcher.find()) return Stream.of(text);
     int start = matcher.start();
-    PlainText prev = text.substring(0, start);
+    int offset = text.range().getStartOffset();
+    PlainText prev = new PlainText(TextRange.create(offset, offset + start), text.content.substring(0, start) + "\n");
     String tagName = matcher.group(1);
     List<MarkupNode> attrs = parseAttributes(text.range().getStartOffset() + matcher.start(2), matcher.group(2),
                                              ALLOWED_ATTRS.get(tagName));
     List<ErrorMarkup> errors = new ArrayList<>(ContainerUtil.filterIsInstance(attrs, ErrorMarkup.class));
     Map<String, String> attrValues = StreamEx.of(attrs).select(Attribute.class).toMap(Attribute::key, Attribute::value);
-    TextRange range = TextRange.create(matcher.start(1), matcher.end()).shiftRight(text.range().getStartOffset());
+    TextRange range = TextRange.create(matcher.start(1), matcher.end()).shiftRight(offset);
     boolean hasColon = !matcher.group(3).isEmpty();
     MarkupNode node = switch (tagName) {
       case "start" -> {
@@ -302,7 +366,11 @@ public class SnippetMarkup {
         result.add(new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.duplicate.attribute", key)));
       }
       else {
-        result.add(new Attribute(range, key, Objects.requireNonNullElse(matcher.group(4), "")));
+        String value = matcher.group(4);
+        if (value == null) value = matcher.group(5);
+        if (value == null) value = matcher.group(6);
+        if (value == null) value = "";
+        result.add(new Attribute(range, key, value));
       }
       pos = matcher.end();
     }
@@ -310,11 +378,26 @@ public class SnippetMarkup {
   }
   
   public interface SnippetVisitor {
+    /**
+     * Called for every plain text chunk
+     * @param plainText text chunk
+     * @param activeNodes active markup nodes to apply to this chunk
+     */
     void visitPlainText(@NotNull PlainText plainText, @NotNull List<@NotNull LocationMarkupNode> activeNodes);
 
-    void visitError(@NotNull ErrorMarkup errorMarkup);
+    /**
+     * Called for every markup error visited
+     * @param errorMarkup error information
+     */
+    default void visitError(@NotNull ErrorMarkup errorMarkup) {}
   }
 
+  /**
+   * Visit elements of the snippet within given region
+   * 
+   * @param region region to visit
+   * @param visitor visitor to use
+   */
   public void visitSnippet(@Nullable String region, SnippetVisitor visitor) {
     Stack<String> regions = new Stack<>();
     Map<String, List<LocationMarkupNode>> active = new LinkedHashMap<>();

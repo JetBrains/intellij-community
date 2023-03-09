@@ -128,6 +128,9 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testInlineTagSnippetWithoutBody() { doTestClass(); }
   public void testExternalSnippet() {
     createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("Region");
+    verifyJavadocFor("RegionNoMarkup");
+    verifyJavadocFor("NoRegion");
     verifyJavadocFor("Main");
     verifyJavadocFor("TextFile");
     verifyJavadocFor("Unresolved");
