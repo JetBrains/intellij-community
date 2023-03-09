@@ -73,8 +73,14 @@ public final class GCWatcher {
   public boolean tryCollect(int timeoutMs) {
     return LowMemoryWatcher.runWithNotificationsSuppressed(() -> {
       long startTime = System.currentTimeMillis();
-      GCUtil.allocateTonsOfMemory(new StringBuilder(), EmptyRunnable.getInstance(),
-                                  () -> isEverythingCollected() || System.currentTimeMillis() - startTime > timeoutMs);
+      try {
+        GCUtil.allocateTonsOfMemory(new StringBuilder(), EmptyRunnable.getInstance(),
+                                    () -> isEverythingCollected() || System.currentTimeMillis() - startTime > timeoutMs);
+      } catch (OutOfMemoryError e) {
+        // IDEA-310426
+        // Ignore possible OOME that can raise during GC forcing
+        // It's already been logged within GCUtil in case it appears.
+      }
       return isEverythingCollected();
     });
   }
