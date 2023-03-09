@@ -110,6 +110,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     }
   }
 
+  @ApiStatus.Internal
   public static void openWhatsNewPage(@NotNull Project project, @NotNull String url, @Nullable HTMLEditorProvider.JsQueryHandler queryHandler) {
     if (!JBCefApp.isSupported()) {
       throw new IllegalStateException("JCEF is not supported on this system");
