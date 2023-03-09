@@ -29,6 +29,10 @@ import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
  * @author tav
  */
 public class SvgIconPaintTest {
+  static {
+    System.setProperty("idea.ui.icons.svg.disk.cache", "false");
+  }
+
   @ClassRule
   public static final ExternalResource manageState = new RestoreScaleRule();
 
@@ -45,7 +49,7 @@ public class SvgIconPaintTest {
     icon.updateScaleContext(ScaleContext.create(SYS_SCALE.of(1)));
     BufferedImage iconImage = ImageUtil.toBufferedImage(IconUtil.toImage(icon));
 
-    //saveImage(iconImage, getGoldImagePath()); // uncomment to save gold image
+    //saveImage(iconImage, getGoldImagePath().toString()); // uncomment to save gold image
 
     BufferedImage goldImage = loadImage(getGoldImagePath());
 

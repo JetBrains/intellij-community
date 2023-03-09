@@ -9,14 +9,14 @@ import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.TestScaleHelper.loadImage
 import com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled
 import com.intellij.ui.svg.getSvgDocumentSize
+import com.intellij.ui.svg.renderSvgWithSize
 import com.intellij.util.SVGLoader
-import com.intellij.util.SVGLoader.load
-import com.intellij.util.ui.ImageUtil
 import junit.framework.TestCase
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.ClassRule
 import org.junit.Test
 import org.junit.rules.ExternalResource
-import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -24,7 +24,6 @@ import java.nio.file.Path
  */
 class SvgIconSizeTest {
   @Test
-  @Throws(IOException::class)
   fun test() {
     setUserScaleFactor(1f)
     overrideJreHiDPIEnabled(true)
@@ -42,33 +41,36 @@ class SvgIconSizeTest {
     /*
      * Test overridden size.
      */
-    var url = getSvgIconPath("20x10").toUri().toURL()
-    val ctx = ScaleContext.create(ScaleType.SYS_SCALE.of(2.0))
-    val pixScale = ctx.getScale(DerivedScaleType.PIX_SCALE)
-    var image = load(url, url.openStream(), ctx, 25.0, 15.0)
-    TestCase.assertNotNull(image)
-    image = ImageUtil.toBufferedImage(image)
-    TestCase.assertEquals("wrong image width", pixScale * 25, image.getWidth(null).toDouble())
-    TestCase.assertEquals("wrong image height", pixScale * 15, image.getHeight(null).toDouble())
+    val file = getSvgIconPath("20x10")
+    val scaleContext = ScaleContext.create(ScaleType.SYS_SCALE.of(2.0))
+    val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE)
+    val data = Files.readAllBytes(file)
+    val image = renderSvgWithSize(inputStream = data.inputStream(), width = 25f, height = 15f, scale = pixScale.toFloat())
+    assertThat(image).isNotNull()
+    assertThat(image.width.toDouble()).isEqualTo(pixScale * 25)
+    assertThat(image.height.toDouble()).isEqualTo(pixScale * 15)
 
     /*
      * Test SVGLoader.getDocumentSize for SVG starting with <svg.
-     */url = getSvgIconPath("20x10").toUri().toURL()
-    var size = getSvgDocumentSize(url.openStream().readAllBytes())
+     */
+    var size = getSvgDocumentSize(data)
     TestCase.assertEquals("wrong svg doc width", 20.0, size.getWidth())
     TestCase.assertEquals("wrong svg doc height", 10.0, size.getHeight())
 
     /*
      * Test SVGLoader.getDocumentSize for SVG starting with <?xml.
-     */url = getSvgIconPath("xml_20x10").toUri().toURL()
-    size = getSvgDocumentSize(url.openStream().readAllBytes())
+     */
+    val file2 = getSvgIconPath("xml_20x10")
+    size = getSvgDocumentSize(Files.readAllBytes(file2))
     TestCase.assertEquals("wrong svg doc width", 20.0, size.getWidth())
     TestCase.assertEquals("wrong svg doc height", 10.0, size.getHeight())
   }
 
   companion object {
     @ClassRule
+    @JvmField
     val manageState: ExternalResource = RestoreScaleRule()
+
     private fun test(ctx: ScaleContext) {
       val scale = ctx.getScale(ScaleType.SYS_SCALE).toInt()
 

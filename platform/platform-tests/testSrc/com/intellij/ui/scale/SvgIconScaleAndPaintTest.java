@@ -68,7 +68,8 @@ public class SvgIconScaleAndPaintTest {
     try {
       g.scale(SYSTEM_SCALE, SYSTEM_SCALE);
       StartupUiUtil.drawImage(g, ((JBImageIcon)scaledIcon).getImage(), 0, 0, null);
-    } finally {
+    }
+    finally {
       g.dispose();
     }
 

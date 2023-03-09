@@ -237,7 +237,7 @@ private fun createRasterizedImageDataLoader(path: String, classLoader: ClassLoad
 
 private fun findIconDescription(path: String): String? {
   val pathWithoutExt = path.removeSuffix(".svg")
-  val key = "icon." + (if (pathWithoutExt.startsWith("/")) pathWithoutExt.substring(1) else pathWithoutExt).replace('/', '.') + ".tooltip"
+  val key = "icon." + (if (pathWithoutExt.startsWith('/')) pathWithoutExt.substring(1) else pathWithoutExt).replace('/', '.') + ".tooltip"
   var result: String? = null
   IconDescriptionBundleEP.EP_NAME.processWithPluginDescriptor { ep, descriptor ->
     val classLoader = descriptor.pluginClassLoader ?: CoreIconManager::class.java.classLoader

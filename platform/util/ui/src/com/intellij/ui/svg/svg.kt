@@ -1,11 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ui.svg
 
-import com.github.weisj.jsvg.attributes.font.SVGFont
-import com.github.weisj.jsvg.geometry.size.FloatSize
-import com.github.weisj.jsvg.geometry.size.MeasureContext
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorUtil
@@ -132,46 +129,34 @@ fun newSvgPatcher(digest: LongArray?, newPalette: Map<String, String>, alphas: M
 private fun toCanonicalColor(color: String): String {
   var s = color.lowercase()
   //todo[kb]: add support for red, white, black, and other named colors
-  if (s.startsWith("#") && s.length < 7) {
+  if (s.startsWith('#') && s.length < 7) {
     s = "#" + ColorUtil.toHex(ColorUtil.fromHex(s))
   }
   return s
 }
 
 @ApiStatus.Internal
-fun renderSvg(inputStream: InputStream, scale: Float = JBUIScale.sysScale(), uri: String? = null): BufferedImage {
-  return renderUsingJSvg(scale = scale, path = uri, document = createJSvgDocument(inputStream))
+fun renderSvg(inputStream: InputStream, scale: Float = JBUIScale.sysScale(), path: String? = null): BufferedImage {
+  return renderSvg(scale = scale, path = path, document = createJSvgDocument(inputStream))
 }
 
 @ApiStatus.Internal
-fun renderSvg(inputStream: InputStream,
-              scale: Float = JBUIScale.sysScale(),
-              baseWidth: Float,
-              baseHeight: Float): BufferedImage {
-  return renderUsingJSvg(scale = scale,
-                         document = createJSvgDocument(inputStream),
-                         baseWidth = baseWidth,
-                         baseHeight = baseHeight)
-
+fun renderSvgWithSize(inputStream: InputStream, width: Float, height: Float, scale: Float = JBUIScale.sysScale()): BufferedImage {
+  return renderSvgWithSize(document = createJSvgDocument(inputStream), width = width * scale, height = height * scale)
 }
 
 @ApiStatus.Internal
 @JvmOverloads
 @Throws(IOException::class)
 fun renderSvg(data: ByteArray, scale: Float = JBUIScale.sysScale()): BufferedImage {
-  return renderUsingJSvg(scale = scale, document = createJSvgDocument(data = data))
+  return renderSvg(scale = scale, document = createJSvgDocument(data = data))
 }
 
 @ApiStatus.Internal
 fun getSvgDocumentSize(data: ByteArray): Rectangle2D.Float {
-  val document = createJSvgDocument(data = data)
-
-  @Suppress("DuplicatedCode")
-  val defaultEm = SVGFont.defaultFontSize()
-  val topLevelContext = MeasureContext.createInitial(FloatSize(16f, 16f), defaultEm, SVGFont.exFromEm(defaultEm))
-  val w = document.width.orElseIfUnspecified(16f).resolveWidth(topLevelContext)
-  val h = document.height.orElseIfUnspecified(16f).resolveHeight(topLevelContext)
-  return Rectangle2D.Float(0f, 0f, w, h)
+  return withSvgSize(document = createJSvgDocument(data = data), baseWidth = 16f, baseHeight = 16f) { w, h ->
+    Rectangle2D.Float(0f, 0f, w, h)
+  }
 }
 
 internal fun loadSvgAndCacheIfApplicable(path: String?,
@@ -309,7 +294,7 @@ private fun renderImage(colorPatcher: SvgAttributePatcher?,
     createJSvgDocument(createXmlStreamReader(CharSequenceReader(writer.buffer)))
   }
 
-  val bufferedImage = renderUsingJSvg(scale = scale, path = path, document = jsvgDocument)
+  val bufferedImage = renderSvg(scale = scale, path = path, document = jsvgDocument)
   if (decodingStart != -1L) {
     IconLoadMeasurer.svgDecoding.end(decodingStart)
   }

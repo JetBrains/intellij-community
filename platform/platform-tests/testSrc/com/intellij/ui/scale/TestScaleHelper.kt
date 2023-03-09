@@ -10,7 +10,7 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.setSystemScaleFactor
 import com.intellij.ui.scale.JBUIScale.setUserScaleFactor
 import com.intellij.ui.scale.JBUIScale.sysScale
-import com.intellij.util.SVGLoader
+import com.intellij.ui.svg.renderSvg
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.inputStream
 import com.intellij.util.loadPng
@@ -63,7 +63,9 @@ object TestScaleHelper {
 
   @JvmStatic
   fun setSystemProperty(name: String, value: String?) {
-    if (originalSysProps[name] == null) originalSysProps[name] = System.getProperty(name)
+    if (originalSysProps[name] == null) {
+      originalSysProps[name] = System.getProperty(name)
+    }
     SystemProperties.setProperty(name, value)
   }
 
@@ -143,11 +145,14 @@ object TestScaleHelper {
   @JvmStatic
   fun loadImage(file: Path, scaleContext: ScaleContext = ScaleContext.createIdentity()): BufferedImage {
     val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-    if (file.toString().endsWith(".svg")) {
-      return SVGLoader.load(file.toUri().toURL(), file.inputStream(), scale)
-    }
-    else {
-      return loadPng(stream = file.inputStream(), scale = scale)
+    val path = file.toString()
+    file.inputStream().use { inputStream ->
+      if (path.endsWith(".svg")) {
+        return renderSvg(inputStream = inputStream, scale = scale, path = path)
+      }
+      else {
+        return loadPng(stream = file.inputStream(), scale = scale)
+      }
     }
   }
 

@@ -225,7 +225,7 @@ public abstract class UsefulTestCase extends TestCase {
     if (isIconRequired()) {
       // ensure that IconLoader will not use fake empty icon
       try {
-        IconManager.activate(new CoreIconManager());
+        IconManager.Companion.activate(new CoreIconManager());
       }
       catch (Exception e) {
         throw e;
@@ -289,7 +289,7 @@ public abstract class UsefulTestCase extends TestCase {
     new RunAll(
       () -> {
         if (isIconRequired()) {
-          IconManager.deactivate();
+          IconManager.Companion.deactivate();
           IconLoader.clearCacheInTests();
         }
       },

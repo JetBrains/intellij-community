@@ -1,296 +1,198 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui;
+@file:Suppress("LiftReturnOrAssignment")
 
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.ScalableIcon;
-import com.intellij.ui.icons.IconReplacer;
-import com.intellij.ui.icons.RowIcon;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+package com.intellij.ui
 
-import javax.swing.*;
-import java.awt.*;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
+import com.intellij.openapi.util.DummyIcon
+import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.ScalableIcon
+import com.intellij.ui.icons.IconReplacer
+import com.intellij.ui.icons.RowIcon
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import java.awt.*
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
+import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.function.Function
+import javax.swing.Icon
 
-public interface IconManager {
-  static @NotNull IconManager getInstance() {
-    IconManager result = IconManagerHelper.instance;
-    return result == null ? DummyIconManager.INSTANCE : result;
+interface IconManager {
+  companion object {
+    private val isActivated = AtomicBoolean()
+    @Volatile
+    private var instance: IconManager? = null
+
+    @JvmStatic
+    fun getInstance(): IconManager = instance ?: DummyIconManager
+
+    // icon Loader is quite heavy, better to not instantiate class unless required
+    fun activate(manager: IconManager?) {
+      if (!isActivated.compareAndSet(false, true)) {
+        return
+      }
+
+      if (manager == null) {
+        val implClass = IconManager::class.java.classLoader.loadClass("com.intellij.ui.icons.CoreIconManager")
+        instance = MethodHandles.lookup().findConstructor(implClass, MethodType.methodType(Void.TYPE)).invoke() as IconManager
+      }
+      else {
+        instance = manager
+      }
+    }
+
+    @TestOnly
+    fun deactivate() {
+      if (isActivated.compareAndSet(true, false)) {
+        instance = null
+      }
+    }
   }
 
-  // Icon Loader is quite heavy, better to not instantiate class unless required
-  static void activate(@Nullable IconManager impl) throws Throwable {
-    IconManagerHelper.activate(impl);
-  }
+  fun getPlatformIcon(id: PlatformIcons): Icon
 
-  @TestOnly
-  static void deactivate() {
-    IconManagerHelper.deactivate();
-  }
-
-  @NotNull Icon getPlatformIcon(@NotNull PlatformIcons id);
-
-  @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass);
+  fun getIcon(path: String, aClass: Class<*>): Icon
 
   /**
-   * Path must be specified without a leading slash, in a format for {@link ClassLoader#getResourceAsStream(String)}
+   * Path must be specified without a leading slash, in a format for [ClassLoader.getResourceAsStream]
    */
   @ApiStatus.Internal
-  @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, int cacheKey, int flags);
+  fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
 
-  default @NotNull Icon createEmptyIcon(@NotNull Icon icon) {
-    return icon;
-  }
+  fun createEmptyIcon(icon: Icon): Icon = icon
 
-  default @NotNull Icon createOffsetIcon(@NotNull Icon icon) {
-    return icon;
-  }
+  fun createOffsetIcon(icon: Icon): Icon = icon
 
-  @NotNull Icon createLayered(Icon @NotNull ... icons);
+  fun createLayered(vararg icons: Icon): Icon
 
-  default @NotNull Icon colorize(Graphics2D g, @NotNull Icon source, @NotNull Color color) {
-    return source;
-  }
+  fun colorize(g: Graphics2D, source: Icon, color: Color): Icon = source
 
   /**
    * @param param Unique key that WILL BE USED to cache the icon instance.
-   *              Prefer passing unique objects over {@link String} or {@link Integer} to avoid accidental clashes with another module.
+   * Prefer passing unique objects over [String] or [Integer] to avoid accidental clashes with another module.
    */
-  @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> iconProducer);
+  fun <T> createDeferredIcon(base: Icon?, param: T, iconProducer: Function<in T, out Icon?>): Icon
 
-  @NotNull RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags);
+  fun createLayeredIcon(instance: Iconable, icon: Icon, flags: Int): RowIcon
 
-  default @NotNull RowIcon createRowIcon(int iconCount) {
-    return createRowIcon(iconCount, RowIcon.Alignment.TOP);
-  }
+  fun createRowIcon(iconCount: Int): RowIcon = createRowIcon(iconCount = iconCount, alignment = RowIcon.Alignment.TOP)
 
-  @NotNull RowIcon createRowIcon(int iconCount, RowIcon.Alignment alignment);
+  fun createRowIcon(iconCount: Int, alignment: RowIcon.Alignment): RowIcon
 
-  @NotNull RowIcon createRowIcon(Icon @NotNull ... icons);
+  fun createRowIcon(vararg icons: Icon): RowIcon
 
-  void registerIconLayer(int flagMask, @NotNull Icon icon);
+  fun registerIconLayer(flagMask: Int, icon: Icon)
 
-  @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon);
+  fun tooltipOnlyIfComposite(icon: Icon): Icon
 
   /**
    * @param icon the icon to which the colored badge should be added
    * @return an icon that paints the given icon with the colored badge
    */
-  default @NotNull Icon withIconBadge(@NotNull Icon icon, @NotNull Paint color) {
-    return icon;
+  fun withIconBadge(icon: Icon, color: Paint): Icon = icon
+}
+
+private object DummyIconManager : IconManager {
+  override fun getPlatformIcon(id: PlatformIcons): Icon = DummyIconImpl(id.testId ?: id.name)
+
+  override fun getIcon(path: String, aClass: Class<*>): Icon = DummyIconImpl(path)
+
+  override fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon = DummyIconImpl(path)
+
+  override fun createLayeredIcon(instance: Iconable, icon: Icon, flags: Int): RowIcon {
+    val icons = arrayOfNulls<Icon>(2)
+    icons[0] = icon
+    return DummyRowIcon(icons)
+  }
+
+  override fun registerIconLayer(flagMask: Int, icon: Icon) {
+  }
+
+  override fun tooltipOnlyIfComposite(icon: Icon): Icon = icon
+
+  override fun <T> createDeferredIcon(base: Icon?, param: T, iconProducer: Function<in T, out Icon?>): Icon = base!!
+
+  override fun createRowIcon(iconCount: Int, alignment: RowIcon.Alignment): RowIcon = DummyRowIcon(iconCount)
+
+  override fun createLayered(vararg icons: Icon): Icon {
+    @Suppress("UNCHECKED_CAST")
+    return DummyRowIcon(icons as Array<Icon?>?)
+  }
+
+  override fun createRowIcon(vararg icons: Icon): RowIcon {
+    @Suppress("UNCHECKED_CAST")
+    return DummyRowIcon(icons as Array<Icon?>?)
   }
 }
 
-final class IconManagerHelper {
-  private static final AtomicBoolean isActivated = new AtomicBoolean();
-  static volatile IconManager instance;
+private class DummyRowIcon : DummyIconImpl, RowIcon {
+  private var icons: Array<Icon?>?
 
-  static void activate(@Nullable IconManager impl) throws Throwable {
-    if (!isActivated.compareAndSet(false, true)) {
-      return;
+  constructor(iconCount: Int) : super("<DummyRowIcon>") {
+    icons = arrayOfNulls(iconCount)
+  }
+
+  constructor(icons: Array<Icon?>?) : super("<DummyRowIcon>") {
+    this.icons = icons
+  }
+
+  override fun getIconCount(): Int = if (icons == null) 0 else icons!!.size
+
+  override fun getIcon(index: Int): Icon? = icons!![index]
+
+  override fun setIcon(icon: Icon, i: Int) {
+    if (icons == null) {
+      icons = arrayOfNulls(4)
     }
+    icons!![i] = icon
+  }
 
-    if (impl == null) {
-      Class<?> implClass = IconManagerHelper.class.getClassLoader().loadClass("com.intellij.ui.CoreIconManager");
-      instance = (IconManager)MethodHandles.lookup().findConstructor(implClass, MethodType.methodType(void.class)).invoke();
+  override fun getDarkIcon(isDark: Boolean): Icon = this
+
+  override fun getAllIcons(): List<Icon> {
+    val list = ArrayList<Icon>()
+    for (element in icons!!) {
+      if (element != null) {
+        list.add(element)
+      }
+    }
+    return list
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) {
+      return true
     }
     else {
-      instance = impl;
+      return other is DummyRowIcon && Arrays.equals(icons, other.icons)
     }
   }
 
-  static void deactivate() {
-    if (isActivated.compareAndSet(true, false)) {
-      instance = null;
-    }
-  }
+  override fun hashCode(): Int = if (icons!!.isNotEmpty()) icons!![0].hashCode() else 0
+
+  override fun toString(): String = "Row icon. myIcons=$icons"
+
+  override fun replaceBy(replacer: IconReplacer): Icon = this
 }
 
-final class DummyIconManager implements IconManager {
-  static final IconManager INSTANCE = new DummyIconManager();
-
-  private DummyIconManager() {
+private open class DummyIconImpl(private val path: String) : ScalableIcon, DummyIcon {
+  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
   }
 
-  @Override
-  public @NotNull Icon getPlatformIcon(@NotNull PlatformIcons id) {
-    String path = id.testId;
-    if (path == null) {
-      path = id.name();
-    }
-    return new DummyIcon(path);
+  override fun getIconWidth(): Int = 16
+
+  override fun getIconHeight(): Int = 16
+
+  override fun hashCode(): Int = path.hashCode()
+
+  override fun equals(other: Any?): Boolean {
+    return this === other || other is DummyIconImpl && other.path == path
   }
 
-  @Override
-  public @NotNull Icon getIcon(@NotNull String path, @NotNull Class<?> aClass) {
-    return new DummyIcon(path);
-  }
+  override fun toString(): String = path
 
-  @Override
-  public @NotNull Icon loadRasterizedIcon(@NotNull String path, @NotNull ClassLoader classLoader, int cacheKey, int flags) {
-    return new DummyIcon(path);
-  }
+  override fun getScale(): Float = 1f
 
-  @Override
-  public @NotNull RowIcon createLayeredIcon(@NotNull Iconable instance, Icon icon, int flags) {
-    Icon[] icons = new Icon[2];
-    icons[0] = icon;
-    return new DummyRowIcon(icons);
-  }
-
-  @Override
-  public void registerIconLayer(int flagMask, @NotNull Icon icon) {
-  }
-
-  @Override
-  public @NotNull Icon tooltipOnlyIfComposite(@NotNull Icon icon) {
-    return icon;
-  }
-
-  @Override
-  public @NotNull <T> Icon createDeferredIcon(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> iconProducer) {
-    return base;
-  }
-
-  @Override
-  public @NotNull RowIcon createRowIcon(int iconCount, RowIcon.Alignment alignment) {
-    return new DummyRowIcon(iconCount);
-  }
-
-  @Override
-  public @NotNull Icon createLayered(Icon @NotNull ... icons) {
-    return new DummyRowIcon(icons);
-  }
-
-  @Override
-  public @NotNull RowIcon createRowIcon(Icon @NotNull ... icons) {
-    return new DummyRowIcon(icons);
-  }
-
-  private static class DummyIcon implements ScalableIcon, com.intellij.openapi.util.DummyIcon {
-    private final String path;
-
-    private DummyIcon(@NotNull String path) {
-      this.path = path;
-    }
-
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-    }
-
-    @Override
-    public int getIconWidth() {
-      return 16;
-    }
-
-    @Override
-    public int getIconHeight() {
-      return 16;
-    }
-
-    @Override
-    public int hashCode() {
-      return path.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return this == obj || (obj instanceof DummyIcon && Objects.equals(((DummyIcon)obj).path, path));
-    }
-
-    @Override
-    public String toString() {
-      return path;
-    }
-
-    @Override
-    public float getScale() {
-      return 1;
-    }
-
-    @Override
-    public @NotNull Icon scale(float scaleFactor) {
-      return this;
-    }
-  }
-
-  private static final class DummyRowIcon extends DummyIcon implements RowIcon {
-    private Icon[] icons;
-
-    DummyRowIcon(int iconCount) {
-      super("<DummyRowIcon>");
-      icons = new Icon[iconCount];
-    }
-
-    DummyRowIcon(Icon[] icons) {
-      super("<DummyRowIcon>");
-      this.icons = icons;
-    }
-
-    @Override
-    public int getIconCount() {
-      return icons == null ? 0 : icons.length;
-    }
-
-    @Override
-    public Icon getIcon(int index) {
-      return icons[index];
-    }
-
-    @Override
-    public void setIcon(Icon icon, int i) {
-      if (icons == null) {
-        icons = new Icon[4];
-      }
-      icons[i] = icon;
-    }
-
-    @Override
-    public @NotNull Icon getDarkIcon(boolean isDark) {
-      return this;
-    }
-
-    @Override
-    public @NotNull List<Icon> getAllIcons() {
-      List<Icon> list = new ArrayList<>();
-      for (Icon element : icons) {
-        if (element != null) {
-          list.add(element);
-        }
-      }
-      return list;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      return o instanceof DummyRowIcon && Arrays.equals(icons, ((DummyRowIcon)o).icons);
-    }
-
-    @Override
-    public int hashCode() {
-      return icons.length > 0 ? icons[0].hashCode() : 0;
-    }
-
-    @Override
-    public String toString() {
-      return "Row icon. myIcons=" + Arrays.asList(icons);
-    }
-
-    @Override
-    public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
-      return this;
-    }
-  }
+  override fun scale(scaleFactor: Float): Icon = this
 }

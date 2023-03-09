@@ -65,10 +65,9 @@ object SVGLoader {
   @JvmStatic
   fun load(@Suppress("UNUSED_PARAMETER") url: URL?, stream: InputStream, scaleContext: ScaleContext, width: Double, height: Double): Image {
     val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE)
-    return renderUsingJSvg(scale = 1f,
-                           document = createJSvgDocument(stream),
-                           baseWidth = (width * scale).toFloat(),
-                           baseHeight = (height * scale).toFloat())
+    return renderSvgWithSize(document = createJSvgDocument(stream),
+                             width = (width * scale).toFloat(),
+                             height = (height * scale).toFloat())
   }
 
   /**

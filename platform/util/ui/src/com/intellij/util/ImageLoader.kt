@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.icons.ImageDescriptor
 import com.intellij.ui.scale.DerivedScaleType
-import com.intellij.ui.scale.JBUIScale.isHiDPI
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.*
 import com.intellij.util.ImageCache.ioMissCache
@@ -446,7 +445,7 @@ private fun createImageDescriptorList(path: String, isDark: Boolean, scaleContex
 
   val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
   val isSvg = path.endsWith(".svg")
-  val isRetina = isHiDPI(pixScale.toDouble())
+  val isRetina = pixScale != 1f
 
   val list = ArrayList<ImageDescriptor>()
   if (!isSvg) {

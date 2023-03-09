@@ -34,7 +34,8 @@ value class SvgCacheClassifier(internal val key: Int) {
 @get:ApiStatus.Internal
 val svgCache: SvgCacheManager? by lazy {
   try {
-    if (java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"))) {
+    if (java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true")) &&
+        !System.getProperty("java.awt.headless", "false").toBoolean()) {
       SvgCacheManager(Path.of(PathManager.getSystemPath(), "icon-v8.db"))
     }
     else {
@@ -42,7 +43,7 @@ val svgCache: SvgCacheManager? by lazy {
     }
   }
   catch (e: Exception) {
-    logger<SVGLoader>().error(e)
+    logger<SVGLoader>().error("Cannot open SVG cache", e)
     null
   }
 }
@@ -57,8 +58,16 @@ class SvgCacheManager(dbFile: Path) {
   private val insertPrecomputedStatementPool: SqlStatementPool<ObjectBinder>
 
   init {
-    val isNew = Files.notExists(dbFile)
-    connection = SqliteConnection(dbFile)
+    var isNew = Files.notExists(dbFile)
+    connection = try {
+      SqliteConnection(dbFile)
+    }
+    catch (e: Exception) {
+      logger<SvgCacheManager>().warn(e)
+      Files.deleteIfExists(dbFile)
+      isNew = true
+      SqliteConnection(dbFile)
+    }
     if (isNew) {
       connection.execute(TABLE_SCHEMA)
     }
