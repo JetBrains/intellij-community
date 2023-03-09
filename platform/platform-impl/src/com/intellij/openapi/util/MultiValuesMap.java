@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.util.containers.MultiMap;
@@ -13,7 +13,6 @@ import java.util.*;
  * <p></p>On migration please note that MultiMap has few differences:<ul>
  * <li>{@link MultiMap#get(Object)} method returns non-null value. In case there is no value for the key - empty collection is returned.</li>
  * <li>{@link MultiMap#values} method returns a real values collection, not a copy. Be careful with modifications.</li>
- * <li>Default implementations of {@link MultiMap} may not permit null keys and/or null values</li>
  * </ul></p>
  */
 @Debug.Renderer(text = "\"size = \" + myDelegate.size()", hasChildren = "!isEmpty()", childrenArray = "entrySet().toArray()")
