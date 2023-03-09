@@ -15,7 +15,7 @@ import org.w3c.dom.parsing.XMLSerializer
 val nodeToLastValidHtml = mutableMapOf<Element, String>()
 
 private fun handleFailedRender(block: HTMLElement, exception: Throwable) {
-  val blockParent = block.findCodeBlockContainer()
+  val blockParent = block.findParentDivContainer()
   val lastValidRenderResult = nodeToLastValidHtml[blockParent] ?: ""
   // language=HTML
   val html = """<div class="error-text">${exception.message}</div>$lastValidRenderResult"""
@@ -26,8 +26,7 @@ private fun handleFailedRender(block: HTMLElement, exception: Throwable) {
 suspend fun renderBlock(
   block: HTMLElement,
   cacheId: String,
-  content: String,
-  addExplicitDimensions: Boolean = true
+  content: String
 ): Node? {
   val id = "mermaid-generated-$cacheId"
   try {
@@ -38,12 +37,11 @@ suspend fun renderBlock(
     renderResult.appendTo(block)
     val node = block.findSvgElement()
     checkNotNull(node) { "Failed to find svg node after append" }
-    if (addExplicitDimensions) {
-      addExplicitDimensionsAttributes(node.unsafeCast<HTMLElement>())
-    }
-    updatePieDiagramViewBox(node)
 
-    nodeToLastValidHtml[block.findCodeBlockContainer()] = block.innerHTML
+    node.updatePieDiagramViewBox()
+    block.findParentDivContainer().addStyleAttributeFromElement(node)
+
+    nodeToLastValidHtml[block.findParentDivContainer()] = block.innerHTML
     return node
   } catch (exception: Throwable) {
     console.error("Error while generating blocks:\n", exception)
@@ -53,39 +51,33 @@ suspend fun renderBlock(
 }
 
 private fun HTMLElement.findSvgElement(): Element? {
-  return childNodes.asList().filterIsInstance<Element>().firstOrNull { it.nodeName == "svg" }
+  return findChildElement { it.nodeName == "svg" }
 }
 
-private fun HTMLElement.findCodeBlockContainer(): Element {
+private fun Element.findParentDivContainer(): Element {
   val parentElement = parentElement
   checkNotNull(parentElement)
-  check(parentElement.className == "language-mermaid")
+  check(parentElement.nodeName == "DIV")
   return parentElement
 }
 
-private fun updatePieDiagramViewBox(element: Element) {
-  element.apply {
-    if (getAttribute("aria-roledescription") != "pie") return
+private fun Element.updatePieDiagramViewBox() {
+  if (getAttribute("aria-roledescription") != "pie") return
 
-    childNodes.asList()
-      .filterIsInstance<Element>()
-      .firstOrNull { it.nodeName == "g" && it.hasAttribute("transform") }
-      ?.let {
-        removeAttribute("viewBox")
-        val rect = it.getBoundingClientRect()
-        setAttribute("viewBox", "0 0 ${rect.right} ${rect.bottom}")
-      }
-  }
+  val childElement = findChildElement { it.nodeName == "g" && it.hasAttribute("transform") } ?: return
+
+  removeAttribute("viewBox")
+  val rect = childElement.getBoundingClientRect()
+  setAttribute("viewBox", "0 0 ${rect.right} ${rect.bottom}")
 }
 
-private fun addExplicitDimensionsAttributes(element: Element) {
-  val rect = element.getBoundingClientRect()
-  val width = rect.width
-  val height = rect.height
-  element.apply {
-    setAttribute("width", "${width}px")
-    setAttribute("height", "${height}px")
-  }
+private fun Element.addStyleAttributeFromElement(svgElement: Element) {
+  val styleValue = svgElement.getAttribute("style") ?: return
+  setAttribute("style", styleValue)
+}
+
+private fun Element.findChildElement(predicate: (Element) -> Boolean): Element? {
+  return childNodes.asList().filterIsInstance<Element>().firstOrNull(predicate)
 }
 
 fun cacheBlock(cacheId: String, block: Node) {
@@ -102,7 +94,7 @@ suspend fun processBlock(block: HTMLElement): Node? {
   val content = block.getAttribute("data-actual-fence-content")
   checkNotNull(content) { "data-actual-fence-content was not set for block" }
   val actualContent = decode(content)
-  val generated = renderBlock(block, cacheId, actualContent, addExplicitDimensions = true) ?: return null
+  val generated = renderBlock(block, cacheId, actualContent) ?: return null
   cacheBlock(cacheId, generated)
   return generated
 }

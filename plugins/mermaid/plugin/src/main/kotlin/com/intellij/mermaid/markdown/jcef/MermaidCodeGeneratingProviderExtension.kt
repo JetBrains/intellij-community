@@ -27,8 +27,8 @@ internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFen
     val hash = MarkdownUtil.md5(text, "") + determineTheme()
     val key = getUniqueFile("mermaid", hash, "svg").toFile()
     return when {
-      key.exists() -> "<img src=\"${key.toURI()}\"/>"
-      else -> createRawContentElement(hash, text)
+      key.exists() -> "<div><img src=\"${key.toURI()}\"/></div>"
+      else -> "<div>${createRawContentElement(hash, text)}</div>"
     }
   }
 

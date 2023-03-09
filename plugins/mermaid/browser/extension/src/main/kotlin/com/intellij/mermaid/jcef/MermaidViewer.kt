@@ -2,7 +2,10 @@ package com.intellij.mermaid.jcef
 
 import com.intellij.mermaid.jcef.impl.decode
 import kotlinx.browser.window
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.Event
 import org.w3c.dom.events.EventTarget
@@ -15,7 +18,7 @@ suspend fun viewerMain() {
 private suspend fun performViewUpdate(content: String) {
   val document = window.document
   val container = document.getElementById("diagram-container") as HTMLElement
-  renderBlock(container, "", content, addExplicitDimensions = false)
+  renderBlock(container, "", content)
 }
 
 private data class UpdateViewRequest(val content: String)
