@@ -244,6 +244,13 @@ public class PyOverrideTest extends PyTestCase {
     });
   }
 
+  public void testImportForParameterDefaultValue() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    myFixture.configureByFile("main.py");
+    doOverride(null);
+    myFixture.checkResultByFile(getTestName(false) + "/main_after.py", true);
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/override";
