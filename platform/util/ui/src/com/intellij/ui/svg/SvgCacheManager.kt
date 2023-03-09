@@ -4,7 +4,10 @@
 package com.intellij.ui.svg
 
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.util.SVGLoader
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.sqlite.*
@@ -26,6 +29,22 @@ value class SvgCacheClassifier(internal val key: Int) {
 
   constructor(scale: Float, isDark: Boolean, isStroke: Boolean) :
     this((scale + (if (isDark) 1_000 else 0) + (if (isStroke) 1_100 else 0)).toBits())
+}
+
+@get:ApiStatus.Internal
+val svgCache: SvgCacheManager? by lazy {
+  try {
+    if (java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"))) {
+      SvgCacheManager(Path.of(PathManager.getSystemPath(), "icon-v8.db"))
+    }
+    else {
+      null
+    }
+  }
+  catch (e: Exception) {
+    logger<SVGLoader>().error(e)
+    null
+  }
 }
 
 @Suppress("SqlResolve")

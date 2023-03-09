@@ -14,8 +14,7 @@ import com.intellij.ui.icons.ImageDescriptor
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale.isHiDPI
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.svg.SvgCacheClassifier
-import com.intellij.ui.svg.renderSvg
+import com.intellij.ui.svg.*
 import com.intellij.util.ImageCache.ioMissCache
 import com.intellij.util.ImageLoader.convertImage
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
@@ -225,7 +224,7 @@ object ImageLoader {
     stream.use {
       if (useSvg) {
         val compoundCacheKey = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = false)
-        return SVGLoader.load(path = path, stream = stream, scale = scale, compoundCacheKey = compoundCacheKey, colorPatcherProvider = null)
+        return loadSvg(path = path, stream = stream, scale = scale, compoundCacheKey = compoundCacheKey, colorPatcherProvider = null)
       }
       else {
         return loadPng(stream = stream, scale = scale, originalUserSize = originalUserSize)

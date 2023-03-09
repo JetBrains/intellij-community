@@ -3,8 +3,8 @@ package com.intellij.ui
 
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.svg.loadSvg
 import com.intellij.util.IconUtil
-import com.intellij.util.SVGLoader
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
@@ -77,7 +77,7 @@ open class SpinningProgressIcon : AnimatedIcon() {
     val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
     for ((index, _) in iconCache.withIndex()) {
       val svg = generateSvgIcon(index)
-      val image = SVGLoader.loadSvg(data = svg, scale = scale)
+      val image = loadSvg(data = svg, scale = scale)
       iconCache[index] = IconUtil.toRetinaAwareIcon(image as BufferedImage)
     }
 

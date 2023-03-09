@@ -8,8 +8,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.SvgCacheClassifier
+import com.intellij.ui.svg.loadSvgFromClassResource
 import com.intellij.util.ImageLoader
-import com.intellij.util.SVGLoader
 import org.intellij.lang.annotations.MagicConstant
 import java.awt.Image
 import java.io.IOException
@@ -168,7 +168,7 @@ private fun loadRasterized(path: String,
     }
   }
   val image = if (isSvg) {
-    SVGLoader.loadFromClassResource(
+    loadSvgFromClassResource(
       classLoader = classLoader,
       path = effectivePath,
       precomputedCacheKey = rasterizedCacheKey,
@@ -215,14 +215,14 @@ private fun loadPatched(name: String,
 
   for (descriptor in descriptors) {
     val image = if (isSvg) {
-      SVGLoader.loadFromClassResource(classLoader = classLoader,
-                                      path = descriptor.name,
-                                      precomputedCacheKey = 0,
-                                      scale = descriptor.scale,
-                                      compoundCacheKey = SvgCacheClassifier(scale = descriptor.scale,
-                                                                            isDark = isEffectiveDark,
-                                                                            isStroke = parameters.isStroke),
-                                      colorPatcherProvider = parameters.colorPatcher)
+      loadSvgFromClassResource(classLoader = classLoader,
+                               path = descriptor.name,
+                               precomputedCacheKey = 0,
+                               scale = descriptor.scale,
+                               compoundCacheKey = SvgCacheClassifier(scale = descriptor.scale,
+                                                                     isDark = isEffectiveDark,
+                                                                     isStroke = parameters.isStroke),
+                               colorPatcherProvider = parameters.colorPatcher)
     }
     else {
       ImageLoader.loadPngFromClassResource(path = descriptor.name, classLoader = classLoader, scale = descriptor.scale)

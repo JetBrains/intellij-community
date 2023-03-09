@@ -11,10 +11,11 @@ import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.icons.ImageDataByPathLoader;
+import com.intellij.ui.svg.SvgAttributePatcher;
+import com.intellij.ui.svg.SvgKt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.InsecureHashBuilder;
 import com.intellij.util.SVGLoader;
-import com.intellij.util.SvgAttributePatcher;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -244,7 +245,7 @@ public final class UITheme {
             .stringMap(colors)
             .stringIntMap(alpha)
             .update(scope == null ? ArrayUtilRt.EMPTY_LONG_ARRAY : scope.digest());
-          return SVGLoader.INSTANCE.newPatcher(hash.build(), colors, alpha);
+          return SvgKt.newSvgPatcher(hash.build(), colors, alpha);
         }
       };
     }
@@ -321,7 +322,7 @@ public final class UITheme {
           @Override
           public SvgAttributePatcher attributeForPath(@Nullable String path) {
             PaletteScope scope = paletteScopeManager.getScopeByPath(path);
-            return scope == null ? null : SVGLoader.INSTANCE.newPatcher(scope.digest(), scope.newPalette, scope.alphas);
+            return scope == null ? null : SvgKt.newSvgPatcher(scope.digest(), scope.newPalette, scope.alphas);
           }
         };
       }
