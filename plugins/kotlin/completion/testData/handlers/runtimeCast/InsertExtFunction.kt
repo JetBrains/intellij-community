@@ -10,3 +10,4 @@ class Derived: Base()
 fun Derived.funInDerived() { }
 
 // RUNTIME_TYPE: Derived
+// AUTOCOMPLETE_SETTING: true
