@@ -62,6 +62,7 @@ fun checkSuperTypes(objClass: ObjClass<*>, reporter: ProblemReporter) {
 
 private fun checkSymbolicId(objClass: ObjClass<*>, reporter: ProblemReporter) {
   if (!objClass.isEntityWithSymbolicId) return
+  if (objClass.openness == ObjClass.Openness.abstract) return
   if (objClass.fields.none { it.name == "symbolicId" }) {
     reporter.reportProblem(GenerationProblem("Class extends '${WorkspaceEntityWithSymbolicId::class.simpleName}' but " +
                                              "doesn't override 'WorkspaceEntityWithSymbolicId.getSymbolicId' property",
