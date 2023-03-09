@@ -385,7 +385,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   @Override
   public double getWeight() {
-    return 0;
+    return (this.getClass().hashCode() % Integer.MAX_VALUE) / (double) Integer.MAX_VALUE;
   }
 
   protected @Nullable @IntentionName String getIntentionActionText() {
