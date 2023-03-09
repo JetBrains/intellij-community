@@ -15,35 +15,34 @@ import java.util.concurrent.ConcurrentHashMap
 
 class ShortNamesCacheService(private val project: Project) {
 
-  @Volatile
-  private var shortNamesCache =
-    CachedValuesManager.getManager(project).createCachedValue(
-      {
-        CachedValueProvider.Result.create(
-          ConcurrentHashMap<String, Set<String>>(),
-          LibraryModificationTracker.getInstance(project),
-          ProjectRootModificationTracker.getInstance(project),
-          KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+    private val shortNamesCache =
+        CachedValuesManager.getManager(project).createCachedValue(
+            {
+                CachedValueProvider.Result.create(
+                    ConcurrentHashMap<String, Set<String>>(),
+                    LibraryModificationTracker.getInstance(project),
+                    ProjectRootModificationTracker.getInstance(project),
+                    KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+                )
+            },
+            /* trackValue = */ false
         )
-      },
-      /* trackValue = */ false
-    )
 
-  fun getShortNameCandidates(name: String): Set<String> =
-    shortNamesCache.value.computeIfAbsent(name) {
-      val scope = GlobalSearchScope.everythingScope(project)
-      val fqNames = mutableSetOf<String>()
-      FileBasedIndex.getInstance().processValues(
-        KotlinShortClassNameFileIndex.NAME, name, null,
-        FileBasedIndex.ValueProcessor { _, names ->
-          fqNames += names
-          true
-        }, scope
-      )
-      fqNames
+    fun getShortNameCandidates(name: String): Set<String> =
+        shortNamesCache.value.getOrPut(name) {
+            val scope = GlobalSearchScope.everythingScope(project)
+            val fqNames = hashSetOf<String>()
+            FileBasedIndex.getInstance().processValues(
+                KotlinShortClassNameFileIndex.NAME, name, null,
+                FileBasedIndex.ValueProcessor { _, names ->
+                    fqNames += names
+                    true
+                }, scope
+            )
+            fqNames
+        }
+
+    companion object {
+        fun getInstance(project: Project): ShortNamesCacheService = project.service()
     }
-
-  companion object {
-    fun getInstance(project: Project): ShortNamesCacheService = project.service()
-  }
 }
