@@ -20,7 +20,6 @@ import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import java.awt.GraphicsEnvironment
-import java.awt.Toolkit
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -139,7 +138,7 @@ private fun bootstrap(startupTimings: MutableList<Any>) {
   initClassLoader(AppMode.isRemoteDevHost())
 }
 
-private fun initClassLoader(addCwmLibs: Boolean) {
+fun initClassLoader(addCwmLibs: Boolean) {
   val distDir = Path.of(PathManager.getHomePath())
   val classLoader = AppMode::class.java.classLoader as? PathClassLoader
                     ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
