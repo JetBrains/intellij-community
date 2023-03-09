@@ -86,7 +86,8 @@ object CodeWriter {
             indicator.fraction = 0.2 * i / generatedCode.size
             if (code.target.name in SKIPPED_TYPES) return@forEachIndexed
 
-            val apiInterfaceName = code.target.javaFullName.decoded
+            val target = code.target
+            val apiInterfaceName = "${target.module.name}.${target.name}"
             val apiClass = ktClasses[apiInterfaceName] ?: error("Cannot find API class by $apiInterfaceName")
             val apiFile = apiClass.containingKtFile
             val apiImports = importsByFile.getValue(apiFile)

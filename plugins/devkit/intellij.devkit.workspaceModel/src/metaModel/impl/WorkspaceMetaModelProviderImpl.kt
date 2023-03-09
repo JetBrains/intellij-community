@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.testSourceInfo
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.resolve.DescriptorUtils.isInterface
@@ -39,7 +40,7 @@ class WorkspaceMetaModelProviderImpl : WorkspaceMetaModelProvider {
   }
 
   override fun getObjModule(packageName: String, module: Module): CompiledObjModule {
-    val sourceInfo = module.productionSourceInfo ?: error("No production sources in ${module.name}")
+    val sourceInfo = module.productionSourceInfo ?: module.testSourceInfo ?: error("No production sources in ${module.name}")
     val resolutionFacade = KotlinCacheService.getInstance(module.project).getResolutionFacadeByModuleInfo(sourceInfo, sourceInfo.platform)!!
     val moduleDescriptor = resolutionFacade.moduleDescriptor
     return getObjModule(packageName, moduleDescriptor)
