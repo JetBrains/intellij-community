@@ -1035,8 +1035,15 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     private val lafGroups: ActionGroup
       get() {
         val allLaFs =
-          if (ExperimentalUI.isNewUI()) getLafListForTargetUI(TargetUIType.NEW) + getLafListForTargetUI(TargetUIType.CLASSIC)
-          else getLafListForTargetUI(TargetUIType.CLASSIC)
+          if (ExperimentalUI.isNewUI()) {
+            getLafListForTargetUI(TargetUIType.NEW) +
+            getLafListForTargetUI(TargetUIType.CLASSIC) +
+            getLafListForTargetUI(TargetUIType.UNSPECIFIED)
+          }
+          else{
+            getLafListForTargetUI(TargetUIType.CLASSIC) +
+            getLafListForTargetUI(TargetUIType.UNSPECIFIED)
+          }
 
         val lightLaFs = ArrayList<LookAndFeelInfo>()
         val darkLaFs = ArrayList<LookAndFeelInfo>()
