@@ -28,7 +28,7 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
 
   private fun getFirstEnabledConfigurable() = EP_NAME.extensions.firstOrNull { it.isEnabled() }
 
-  override fun createPanel(): DialogPanel {
+  final override fun createPanel(): DialogPanel {
     val conf = getFirstEnabledConfigurable()
     if (conf != null) {
       return conf.createPanelInternal()
@@ -77,18 +77,15 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
   open fun getMainChangesAndKnownIssuesUrl() = "https://youtrack.jetbrains.com/articles/IDEA-A-156/Main-changes-and-known-issues"
   open fun getMainChangesAndKnowIssuesLabel() = IdeBundle.message("new.ui.blog.changes.and.issues")
   open fun onSubmitFeedback() = NewUIFeedbackDialog(null, false).show()
+  open fun getRedefinedHelpTopic(): String? = null
+  open fun onApply() {}
 
-
-  override fun getHelpTopic(): String? {
-    val conf = getFirstEnabledConfigurable()
-    if (conf != null) {
-      return conf.helpTopic
-    }
-    return null
+  final override fun getHelpTopic(): String? {
+    return getFirstEnabledConfigurable()?.getRedefinedHelpTopic()
   }
 
-  override fun apply() {
-    getFirstEnabledConfigurable()?.apply()
+  final override fun apply() {
+    getFirstEnabledConfigurable()?.onApply()
     val uiSettingsChanged = isModified
     super.apply()
     if (uiSettingsChanged) {
