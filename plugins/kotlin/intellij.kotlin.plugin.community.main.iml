@@ -192,5 +192,6 @@
     <orderEntry type="module" module-name="kotlin.searching.base" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" exported="" />
+    <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" exported="" />
   </component>
 </module>
