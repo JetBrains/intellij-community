@@ -2,6 +2,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.ui.icons.IconReplacer;
+import com.intellij.ui.icons.IconWithToolTip;
 import com.intellij.ui.scale.ScaleType;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBCachingScalableIcon;

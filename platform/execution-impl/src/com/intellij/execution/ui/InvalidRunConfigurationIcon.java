@@ -3,8 +3,8 @@ package com.intellij.execution.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.IconReplacer;
-import com.intellij.ui.IconWithOverlay;
+import com.intellij.ui.icons.IconReplacer;
+import com.intellij.ui.icons.IconWithOverlay;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -5,9 +5,9 @@ import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
-import com.intellij.ui.loadIconCustomVersionOrScale
 import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.openapi.wm.impl.headertoolbar.isDarkHeader
+import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil

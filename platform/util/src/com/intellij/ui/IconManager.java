@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.ui.icons.IconReplacer;
 import com.intellij.ui.icons.RowIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -287,9 +288,8 @@ final class DummyIconManager implements IconManager {
       return "Row icon. myIcons=" + Arrays.asList(icons);
     }
 
-    @NotNull
     @Override
-    public Icon replaceBy(@NotNull IconReplacer replacer) {
+    public @NotNull Icon replaceBy(@NotNull IconReplacer replacer) {
       return this;
     }
   }

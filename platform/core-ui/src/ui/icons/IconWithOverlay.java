@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.icons;
 
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;

@@ -7,14 +7,14 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.ui.ImageDataByPathLoader.Companion.findIcon
-import com.intellij.openapi.util.CachedImageIcon.Companion.pathTransform
-import com.intellij.openapi.util.CachedImageIcon.Companion.pathTransformGlobalModCount
 import com.intellij.openapi.util.IconLoader.getReflectiveIcon
 import com.intellij.openapi.util.IconLoader.isReflectivePath
 import com.intellij.openapi.util.IconLoader.patchPath
 import com.intellij.ui.*
 import com.intellij.ui.icons.*
+import com.intellij.ui.icons.CachedImageIcon.Companion.pathTransform
+import com.intellij.ui.icons.CachedImageIcon.Companion.pathTransformGlobalModCount
+import com.intellij.ui.icons.ImageDataByPathLoader.Companion.findIcon
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale.sysScale
@@ -212,13 +212,13 @@ object IconLoader {
   @TestOnly
   @JvmStatic
   fun activate() {
-    com.intellij.openapi.util.CachedImageIcon.isActivated = true
+    com.intellij.ui.icons.CachedImageIcon.isActivated = true
   }
 
   @TestOnly
   @JvmStatic
   fun deactivate() {
-    com.intellij.openapi.util.CachedImageIcon.isActivated = false
+    com.intellij.ui.icons.CachedImageIcon.isActivated = false
   }
 
   /**
@@ -272,7 +272,7 @@ object IconLoader {
   @JvmStatic
   fun findResolvedIcon(path: String, classLoader: ClassLoader): Icon? {
     val icon = findIcon(originalPath = path, originalClassLoader = classLoader, cache = iconCache)
-    return if (icon is com.intellij.openapi.util.CachedImageIcon && icon.getRealIcon() === com.intellij.openapi.util.CachedImageIcon.EMPTY_ICON) null else icon
+    return if (icon is com.intellij.ui.icons.CachedImageIcon && icon.getRealIcon() === com.intellij.ui.icons.CachedImageIcon.EMPTY_ICON) null else icon
   }
 
   @JvmOverloads
@@ -283,7 +283,7 @@ object IconLoader {
     if (effectiveIcon is RetrievableIcon) {
       effectiveIcon = getOrigin(effectiveIcon)
     }
-    if (effectiveIcon is com.intellij.openapi.util.CachedImageIcon) {
+    if (effectiveIcon is com.intellij.ui.icons.CachedImageIcon) {
       effectiveIcon = effectiveIcon.getRealIcon(effectiveScaleContext)
     }
     if (effectiveIcon is ImageIcon) {
@@ -370,7 +370,7 @@ object IconLoader {
 
   @ApiStatus.Internal
   fun getDisabledIcon(icon: Icon, disableFilter: (() -> RGBImageFilter)?): Icon {
-    if (!com.intellij.openapi.util.CachedImageIcon.isActivated) {
+    if (!com.intellij.ui.icons.CachedImageIcon.isActivated) {
       return icon
     }
 
@@ -389,11 +389,11 @@ object IconLoader {
   }
 
   @ApiStatus.Internal
-  fun patchColorsInCacheImageIcon(imageIcon: com.intellij.openapi.util.CachedImageIcon, colorPatcher: SvgElementColorPatcherProvider, isDark: Boolean?): Icon {
+  fun patchColorsInCacheImageIcon(imageIcon: com.intellij.ui.icons.CachedImageIcon, colorPatcher: SvgElementColorPatcherProvider, isDark: Boolean?): Icon {
     var result = imageIcon
     if (isDark != null) {
       val variant = result.getDarkIcon(isDark)
-      if (variant is com.intellij.openapi.util.CachedImageIcon) {
+      if (variant is com.intellij.ui.icons.CachedImageIcon) {
         result = variant
       }
     }
@@ -426,7 +426,7 @@ object IconLoader {
    * Creates a new icon with the low-level CachedImageIcon changing
    */
   @ApiStatus.Internal
-  fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (com.intellij.openapi.util.CachedImageIcon) -> Icon): Icon? {
+  fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (com.intellij.ui.icons.CachedImageIcon) -> Icon): Icon? {
     val replacer: IconReplacer = object : IconReplacer {
       override fun replaceIcon(icon: Icon?): Icon? {
         return when {
@@ -434,9 +434,9 @@ object IconLoader {
           icon is LazyIcon -> replaceIcon(icon.getOrComputeIcon())
           icon is ReplaceableIcon -> icon.replaceBy(this)
           !checkIconSize(icon) -> {
-            com.intellij.openapi.util.CachedImageIcon.EMPTY_ICON
+            com.intellij.ui.icons.CachedImageIcon.EMPTY_ICON
           }
-          icon is com.intellij.openapi.util.CachedImageIcon -> cachedImageIconReplacer(icon)
+          icon is com.intellij.ui.icons.CachedImageIcon -> cachedImageIconReplacer(icon)
           else -> icon
         }
       }
@@ -450,13 +450,13 @@ object IconLoader {
   fun filterIcon(icon: Icon, filterSupplier: () -> RGBImageFilter): Icon {
     val effectiveIcon = if (icon is LazyIcon) icon.getOrComputeIcon() else icon
     if (!checkIconSize(effectiveIcon)) {
-      return com.intellij.openapi.util.CachedImageIcon.EMPTY_ICON
+      return com.intellij.ui.icons.CachedImageIcon.EMPTY_ICON
     }
-    return if (effectiveIcon is com.intellij.openapi.util.CachedImageIcon) {
+    return if (effectiveIcon is com.intellij.ui.icons.CachedImageIcon) {
       effectiveIcon.createWithFilter(filterSupplier)
     }
     else {
-      FilteredIcon(effectiveIcon, filterSupplier)
+      FilteredIcon(baseIcon = effectiveIcon, filterSupplier = filterSupplier)
     }
   }
 
@@ -532,7 +532,7 @@ object IconLoader {
    */
   @JvmStatic
   fun getIconSnapshot(icon: Icon): Icon {
-    return if (icon is com.intellij.openapi.util.CachedImageIcon) {
+    return if (icon is com.intellij.ui.icons.CachedImageIcon) {
       icon.getRealIcon()
     }
     else icon
@@ -565,7 +565,7 @@ object IconLoader {
   }
 
   fun detachClassLoader(classLoader: ClassLoader) {
-    iconCache.entries.removeIf { (key, icon): Map.Entry<Pair<String, ClassLoader?>, com.intellij.openapi.util.CachedImageIcon> ->
+    iconCache.entries.removeIf { (key, icon): Map.Entry<Pair<String, ClassLoader?>, com.intellij.ui.icons.CachedImageIcon> ->
       icon.detachClassLoader(classLoader) || key.second === classLoader
     }
   }
@@ -589,7 +589,7 @@ object IconLoader {
      localFilterSupplier: (() -> RGBImageFilter)? = null,
      colorPatcher: SvgElementColorPatcherProvider? = null,
      useStroke: Boolean = false
-  ) : com.intellij.openapi.util.CachedImageIcon(
+  ) : com.intellij.ui.icons.CachedImageIcon(
     originalPath = originalPath,
     resolver = resolver,
     isDarkOverridden = isDarkOverridden,
@@ -699,18 +699,6 @@ private fun findIcon(originalPath: String,
     IconLoadMeasurer.findIcon.end(startTime)
   }
   return icon
-}
-
-internal enum class HandleNotFound {
-  THROW_EXCEPTION {
-    override fun handle(message: String) {
-      throw RuntimeException(message)
-    }
-  },
-  IGNORE;
-
-  open fun handle(message: String) {
-  }
 }
 
 private abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, RetrievableIcon {

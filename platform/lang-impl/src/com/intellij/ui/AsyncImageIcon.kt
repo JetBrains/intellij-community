@@ -10,7 +10,6 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.UserScaleContext
 import com.intellij.util.IconUtil
 import com.intellij.util.childScope
-import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope

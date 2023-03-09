@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.icons
 
 import com.intellij.openapi.util.ScalableIcon
-import com.intellij.ui.icons.ReplaceableIcon
 import com.intellij.util.ui.JBScalableIcon
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*

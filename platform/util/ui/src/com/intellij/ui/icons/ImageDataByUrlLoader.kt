@@ -1,11 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.util
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.icons
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader.createNewResolverIfNeeded
-import com.intellij.ui.icons.IconTransform
-import com.intellij.ui.icons.ImageDataLoader
-import com.intellij.ui.icons.LoadIconParameters
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.loadImage
 import org.jetbrains.annotations.ApiStatus
@@ -13,6 +10,18 @@ import java.awt.Image
 import java.net.URL
 
 private val UNRESOLVED_URL = URL("file:///unresolved")
+
+internal enum class HandleNotFound {
+  THROW_EXCEPTION {
+    override fun handle(message: String) {
+      throw RuntimeException(message)
+    }
+  },
+  IGNORE;
+
+  open fun handle(message: String) {
+  }
+}
 
 @ApiStatus.Internal
 class ImageDataByUrlLoader private constructor(
@@ -22,9 +31,6 @@ class ImageDataByUrlLoader private constructor(
   private val overriddenPath: String? = null,
   override val url: URL,
 ) : ImageDataLoader {
-  init {
-  }
-
   internal constructor(url: URL, classLoader: ClassLoader?, useCacheOnLoad: Boolean) :
     this(classLoader = classLoader, useCacheOnLoad = useCacheOnLoad, overriddenPath = null, url = url)
 

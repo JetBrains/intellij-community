@@ -1,15 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.ui
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.icons
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.util.CachedImageIcon
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.ImageDataByUrlLoader
 import com.intellij.openapi.util.Pair
-import com.intellij.ui.icons.IconLoadMeasurer
-import com.intellij.ui.icons.IconTransform
-import com.intellij.ui.icons.ImageDataLoader
-import com.intellij.ui.icons.LoadIconParameters
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.loadImage
 import org.jetbrains.annotations.ApiStatus
@@ -18,7 +12,6 @@ import java.awt.Image
 import java.net.URL
 import javax.swing.Icon
 
-@Suppress("HardCodedStringLiteral")
 @ApiStatus.Internal
 class ImageDataByPathLoader private constructor(private val path: String,
                                                 private val classLoader: ClassLoader,

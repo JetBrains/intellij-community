@@ -12,7 +12,7 @@ import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.loadIconCustomVersionOrScale
+import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.ui.JBUI
 import java.awt.Dimension

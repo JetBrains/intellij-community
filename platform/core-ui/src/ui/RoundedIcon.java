@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.icons.DarkIconProvider;
+import com.intellij.ui.icons.IconWithToolTip;
 import com.intellij.util.IconUtil;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;

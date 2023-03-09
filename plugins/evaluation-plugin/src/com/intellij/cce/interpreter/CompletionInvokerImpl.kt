@@ -27,11 +27,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.CachedImageIcon
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.TestModeFlags
+import com.intellij.ui.icons.CachedImageIcon
 import java.io.File
 
 class CompletionInvokerImpl(private val project: Project,

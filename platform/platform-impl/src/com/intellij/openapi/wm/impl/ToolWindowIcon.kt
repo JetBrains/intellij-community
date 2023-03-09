@@ -3,10 +3,10 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
-import com.intellij.ui.IconReplacer
 import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.MenuBarIconProvider
-import com.intellij.ui.scaleIconOrLoadCustomVersion
+import com.intellij.ui.icons.scaleIconOrLoadCustomVersion
 import java.awt.Component
 import java.awt.Graphics
 import javax.swing.Icon

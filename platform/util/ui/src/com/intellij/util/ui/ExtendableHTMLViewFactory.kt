@@ -131,8 +131,10 @@ class ExtendableHTMLViewFactory internal constructor(
 
       private fun getIcon(src: String): Icon? {
         val existingIcon = existingIconsProvider(src)
-        if (existingIcon != null) return existingIcon
-        return IconLoader.findIcon(src, ExtendableHTMLViewFactory::class.java, true, false)
+        if (existingIcon != null) {
+          return existingIcon
+        }
+        return IconLoader.findIcon(path = src, aClass = ExtendableHTMLViewFactory::class.java, deferUrlResolve = true, strict = false)
       }
 
       /**

@@ -26,7 +26,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
@@ -42,7 +45,7 @@ import com.intellij.ui.content.*
 import com.intellij.ui.content.Content.CLOSE_LISTENER_KEY
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.docking.DockManager
-import com.intellij.ui.loadIconCustomVersionOrScale
+import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI

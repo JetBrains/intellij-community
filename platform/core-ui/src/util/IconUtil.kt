@@ -23,9 +23,8 @@ import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WritingAccessProvider
 import com.intellij.ui.*
-import com.intellij.ui.icons.CompositeIcon
-import com.intellij.ui.icons.CopyableIcon
-import com.intellij.ui.icons.ImageDescriptor
+import com.intellij.ui.RowIcon
+import com.intellij.ui.icons.*
 import com.intellij.ui.paint.alignToInt
 import com.intellij.ui.scale.*
 import com.intellij.ui.scale.JBUIScale.getFontScale
@@ -43,7 +42,6 @@ import java.awt.geom.AffineTransform
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.awt.image.RGBImageFilter
-import java.lang.ref.WeakReference
 import java.util.*
 import java.util.function.Supplier
 import java.util.function.ToIntFunction
@@ -770,62 +768,6 @@ private fun filterFileIconFlags(file: VirtualFile, @IconFlags flags: Int): Int {
   val fileTypeFlagIgnoreMask = ICON_FLAG_IGNORE_MASK.get(fileTypeDataHolder, 0)
   val flagIgnoreMask = ICON_FLAG_IGNORE_MASK.get(file, fileTypeFlagIgnoreMask)
   return flags and flagIgnoreMask.inv()
-}
-
-class TextIcon(val text: String, component: Component, val fontSize: Float) : JBScalableIcon() {
-  private var font: Font? = null
-  private var metrics: FontMetrics? = null
-  private val componentRef = WeakReference(component)
-
-  init {
-    isIconPreScaled = false
-    scaleContext.addUpdateListener { update() }
-    update()
-  }
-
-  // x,y is in USR_SCALE
-  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    val customG = g.create()
-    try {
-      GraphicsUtil.setupAntialiasing(customG)
-      customG.font = font
-      UIUtil.drawStringWithHighlighting(customG,
-                                        this.text,
-                                        scaleVal(x.toDouble(), ScaleType.OBJ_SCALE).toInt() + scaleVal(2.0).toInt(),
-                                        scaleVal(y.toDouble(), ScaleType.OBJ_SCALE).toInt() + iconHeight - scaleVal(1.0).toInt(),
-                                        JBColor.foreground(),
-                                        JBColor.background())
-    }
-    finally {
-      customG.dispose()
-    }
-  }
-
-  override fun getIconWidth(): Int = metrics!!.stringWidth(this.text) + scaleVal(4.0).toInt()
-
-  override fun getIconHeight(): Int = metrics!!.height
-
-  private fun update() {
-    // fontSize is in USR_SCALE
-    font = JBFont.create(JBFont.label().deriveFont(scaleVal(fontSize.toDouble(), ScaleType.OBJ_SCALE).toFloat()))
-    metrics = (componentRef.get() ?: object : Component() {}).getFontMetrics(font)
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is TextIcon) return false
-    if (this.text != other.text) return false
-    return font == other.font
-  }
-
-  override fun hashCode(): Int {
-    var result = text.hashCode()
-    result = 31 * result + fontSize.hashCode()
-    result = 31 * result + (font?.hashCode() ?: 0)
-    result = 31 * result + (metrics?.hashCode() ?: 0)
-    result = 31 * result + componentRef.hashCode()
-    return result
-  }
 }
 
 private fun clampScale(scale: Double): Double = scale.coerceIn(0.1, 32.0)

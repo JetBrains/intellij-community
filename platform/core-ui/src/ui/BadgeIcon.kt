@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.ui.icons.HoledIcon
+import com.intellij.ui.icons.IconReplacer
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 import java.awt.Paint

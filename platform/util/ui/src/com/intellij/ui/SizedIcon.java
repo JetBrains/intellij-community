@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.icons.DarkIconProvider;
+import com.intellij.ui.icons.IconReplacer;
 import com.intellij.ui.icons.MenuBarIconProvider;
 import com.intellij.util.ui.JBCachingScalableIcon;
 import org.jetbrains.annotations.NotNull;

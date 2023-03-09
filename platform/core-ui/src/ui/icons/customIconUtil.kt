@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui
+package com.intellij.ui.icons
 
-import com.intellij.openapi.util.CachedImageIcon
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.IconUtil
 import org.jetbrains.annotations.ApiStatus

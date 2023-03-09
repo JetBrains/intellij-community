@@ -3,6 +3,7 @@ package com.intellij.ui.scale;
 
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RestoreScaleRule;
+import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.ui.scale.paint.ImageComparator;
 import com.intellij.ui.scale.paint.ImageComparator.AASmootherComparator;
 import com.intellij.util.IconUtil;
@@ -40,7 +41,7 @@ public class SvgIconPaintTest {
     JBUIScale.setUserScaleFactor((float)2);
     overrideJreHiDPIEnabled(false);
 
-    var icon = new com.intellij.openapi.util.CachedImageIcon(new File(getSvgIconPath()).toURI().toURL(), false);
+    var icon = new CachedImageIcon(new File(getSvgIconPath()).toURI().toURL(), false);
     icon.updateScaleContext(ScaleContext.create(SYS_SCALE.of(1)));
     BufferedImage iconImage = ImageUtil.toBufferedImage(IconUtil.toImage(icon));
 

@@ -5,8 +5,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionStubBase
-import com.intellij.openapi.util.CachedImageIcon
 import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.Nls
 import java.io.IOException

@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.icons
 
 import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
@@ -11,8 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.icons.IconLoadMeasurer
-import com.intellij.ui.icons.ImageDataLoader
+import com.intellij.ui.*
+import com.intellij.ui.RowIcon
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.util.BitUtil
 import com.intellij.util.IconUtil
@@ -91,7 +91,8 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
   override fun getIcon(path: String, aClass: Class<*>): Icon {
     val icon = IconLoader.getIcon(path, aClass)
     val tooltip = IconDescriptionLoader(path)
-    return if (icon is ScalableIcon) ScalableIconWrapperWithToolTip(icon, tooltip) else IconWrapperWithToolTip(icon, tooltip)
+    return if (icon is ScalableIcon) ScalableIconWrapperWithToolTip(icon, tooltip) else IconWrapperWithToolTip(
+      icon, tooltip)
   }
 
   override fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon {

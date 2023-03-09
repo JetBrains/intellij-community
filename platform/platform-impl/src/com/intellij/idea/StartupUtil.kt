@@ -30,9 +30,9 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AppUIUtil
-import com.intellij.ui.CoreIconManager
 import com.intellij.ui.IconManager
 import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.mac.MacOSApplicationProvider
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext

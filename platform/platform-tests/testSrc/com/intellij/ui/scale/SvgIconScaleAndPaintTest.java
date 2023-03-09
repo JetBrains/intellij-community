@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
-import com.intellij.openapi.util.CachedImageIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RestoreScaleRule;
+import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.ui.scale.paint.ImageComparator;
 import com.intellij.ui.scale.paint.ImageComparator.AASmootherComparator;
 import com.intellij.util.IconUtil;
