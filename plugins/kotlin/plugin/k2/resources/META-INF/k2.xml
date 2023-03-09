@@ -80,6 +80,11 @@
                  defaultValue="false"
                  restartRequired="true"/>
 
+    <registryKey key="kotlin.k2.only.bundled.compiler.plugins.enabled"
+                 description="Allow only bundled K2 compiler plugins to be used"
+                 defaultValue="true"
+                 restartRequired="false"/>
+
     <completion.contributor language="kotlin"
                             id="KotlinCompletionContributor"
                             order="first"
