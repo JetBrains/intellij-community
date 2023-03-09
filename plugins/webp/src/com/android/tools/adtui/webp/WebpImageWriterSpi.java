@@ -35,7 +35,7 @@ import java.util.Locale;
  * Encoder for WebP. This needs the webp jni library loaded to function.
  */
 public class WebpImageWriterSpi extends ImageWriterSpi {
-  WebpImageWriterSpi() {
+  public WebpImageWriterSpi() {
     vendorName = WebpMetadata.WEBP_VENDOR;
     version = WebpNativeLibHelper.getEncoderVersion();
     suffixes = WebpMetadata.WEBP_SUFFIXES;

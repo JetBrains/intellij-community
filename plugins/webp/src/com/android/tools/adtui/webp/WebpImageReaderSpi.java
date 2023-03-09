@@ -47,7 +47,7 @@ public class WebpImageReaderSpi extends ImageReaderSpi {
 
   private static final int MAX_FILE_SIZE = 0x06400000;  // 100 MiBs
 
-  WebpImageReaderSpi() {
+  public WebpImageReaderSpi() {
     vendorName = WebpMetadata.WEBP_VENDOR;
     version = WebpNativeLibHelper.getDecoderVersion();
     suffixes = WebpMetadata.WEBP_SUFFIXES;

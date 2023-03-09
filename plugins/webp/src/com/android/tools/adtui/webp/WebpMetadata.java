@@ -20,9 +20,6 @@ import org.w3c.dom.Node;
 import javax.imageio.metadata.IIOInvalidTreeException;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.metadata.IIOMetadataNode;
-import javax.imageio.spi.IIORegistry;
-import javax.imageio.spi.ImageReaderSpi;
-import javax.imageio.spi.ImageWriterSpi;
 
 public final class WebpMetadata extends IIOMetadata {
   public static final String WEBP_FORMAT_LOWER_CASE = "webp";
@@ -34,21 +31,6 @@ public final class WebpMetadata extends IIOMetadata {
   public static final String WEBP_VENDOR = "Google LLC";
   public static final float DEFAULT_ENCODING_QUALITY = 0.75f;
   public static final boolean DEFAULT_LOSSLESS = true;
-
-  static final class WebpMetadataRegistrar {
-    private WebpMetadataRegistrar() {
-      ensureWebpRegistered();
-    }
-  }
-
-  /**
-   * Ensures that service providers are registered.
-   */
-  public static void ensureWebpRegistered() {
-    IIORegistry defaultInstance = IIORegistry.getDefaultInstance();
-    defaultInstance.registerServiceProvider(new WebpImageReaderSpi(), ImageReaderSpi.class);
-    defaultInstance.registerServiceProvider(new WebpImageWriterSpi(), ImageWriterSpi.class);
-  }
 
   @Override
   public boolean isReadOnly() {
