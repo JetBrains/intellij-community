@@ -48,7 +48,7 @@ internal class RetrievingLightServiceInspection : DevKitUastInspectionBase() {
 
   data class MismatchReceivingChecker(val retrievingClassName: String,
                                       val level: Level,
-                                      val mismatchRetrievingKey: @PropertyKey(resourceBundle = "messages.DevKitBundle") String) {
+                                      val mismatchRetrievingKey: @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String) {
     fun check(actualLevel: Level, receiverType: PsiType, toHighlight: PsiElement, holder: ProblemsHolder): Boolean {
       if (receiverType.isInheritorOf(retrievingClassName) && actualLevel == level) {
         val retrievingMessage = DevKitBundle.message(mismatchRetrievingKey)
