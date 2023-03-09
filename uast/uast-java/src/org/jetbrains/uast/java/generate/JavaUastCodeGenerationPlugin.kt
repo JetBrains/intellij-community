@@ -133,6 +133,8 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     }
     return statement.toUElementOfType()
   }
+
+  override fun changeLabel(returnExpression: UReturnExpression, context: PsiElement) = null
 }
 
 private fun PsiElementFactory.createExpressionStatement(expression: PsiExpression): PsiStatement? {

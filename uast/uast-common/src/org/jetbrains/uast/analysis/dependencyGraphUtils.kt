@@ -11,7 +11,7 @@ internal fun UExpression.extractBranchesResultAsDependency(): Dependency {
   return Dependency.CommonDependency(branchResults.firstOrNull() ?: this)
 }
 
-private fun UExpression.accumulateBranchesResult(results: MutableSet<UExpression>) {
+fun UExpression.accumulateBranchesResult(results: MutableSet<UExpression>) {
   when (this) {
     is UIfExpression -> {
       thenExpression?.lastExpression?.accumulateBranchesResult(results)

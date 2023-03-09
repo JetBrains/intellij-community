@@ -13,7 +13,9 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
+import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -139,6 +141,13 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
 
         body.addBefore(assignmentExpression, body.rBrace)
         return assignmentExpression.toUElementOfType()
+    }
+
+    override fun changeLabel(returnExpression: UReturnExpression, context: PsiElement): UReturnExpression? {
+        if (returnExpression is KotlinUImplicitReturnExpression) return null
+        val factory = getElementFactory(context.project)
+
+        return factory.createReturnExpression(expression = returnExpression.returnExpression, inLambda = true, context)
     }
 }
 
@@ -357,16 +366,6 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return KotlinUReturnExpression(returnExpression, null)
     }
 
-    private fun getParentLambdaLabelName(context: PsiElement): String? {
-        val lambdaExpression = context.getNonStrictParentOfType<KtLambdaExpression>() ?: return null
-        lambdaExpression.parentAs<KtLabeledExpression>()?.let { return it.getLabelName() }
-        val callExpression = lambdaExpression.getStrictParentOfType<KtCallExpression>() ?: return null
-        callExpression.valueArguments.find {
-            it.getArgumentExpression()?.unpackFunctionLiteral(allowParentheses = false) === lambdaExpression
-        } ?: return null
-        return callExpression.getCallNameExpression()?.text
-    }
-
     @Deprecated("use version with context parameter")
     fun createBinaryExpression(
         leftOperand: UExpression,
@@ -548,4 +547,15 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
 private fun usedNamesFilter(context: KtElement): (String) -> Boolean {
     val scope = context.getResolutionScope()
     return { name: String -> scope.findClassifier(Name.identifier(name), NoLookupLocation.FROM_IDE) == null }
+}
+
+
+private fun getParentLambdaLabelName(context: PsiElement): String? {
+    val lambdaExpression = context.getNonStrictParentOfType<KtLambdaExpression>() ?: return null
+    lambdaExpression.parentAs<KtLabeledExpression>()?.let { return it.getLabelName() }
+    val callExpression = lambdaExpression.getStrictParentOfType<KtCallExpression>() ?: return null
+    callExpression.valueArguments.find {
+        it.getArgumentExpression()?.unpackFunctionLiteral(allowParentheses = false) === lambdaExpression
+    } ?: return null
+    return callExpression.getCallNameExpression()?.text
 }
