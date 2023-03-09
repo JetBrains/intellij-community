@@ -42,12 +42,13 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         logger<PyVirtualEnvTerminalCustomizer>().warn("Can't find $condaPath, will not activate conda")
         condaActivationCommand = PyTerminalBundle.message("powershell.conda.not.activated", "conda")
       }
-      return arrayOf("powershell.exe", "-NoExit", "-Command", condaActivationCommand)
+      // To activate conda we need to allow code execution
+      return arrayOf("powershell.exe", "-ExecutionPolicy", "RemoteSigned", "-NoExit", "-Command", condaActivationCommand)
     }
 
     // Activate convenient virtualenv
     val virtualEnvProfile = sdkHomePath.parent.findChild("activate.ps1") ?: return null
-    return if (virtualEnvProfile.exists()) arrayOf("powershell.exe", "-NoExit", "-File", virtualEnvProfile.path) else null
+    return if (virtualEnvProfile.exists()) arrayOf("powershell.exe", "-ExecutionPolicy", "RemoteSigned", "-NoExit", "-File", virtualEnvProfile.path) else null
   }
 
   /**
