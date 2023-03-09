@@ -18,11 +18,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.IdeUICustomization;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
+import com.intellij.ui.content.*;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
@@ -43,6 +44,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
   private final @NotNull Project myProject;
 
+  private ToolWindow myToolWindow;
   private ContentManager myContentManager;
   private TodoPanel myAllTodos;
   @Nullable
@@ -176,6 +178,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     Disposer.register(this, myScopeBasedTodosPanel);
     scopeBasedTodoContent.setComponent(myScopeBasedTodosPanel);
 
+    myToolWindow = toolWindow;
     myContentManager = toolWindow.getContentManager();
 
     myContentManager.addContent(allTodosContent);
@@ -203,6 +206,10 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
     myPanels.add(myCurrentFileTodosPanel);
     myPanels.add(myScopeBasedTodosPanel);
+
+    MyVisibilityListener visibilityListener = new MyVisibilityListener();
+    myProject.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, visibilityListener);
+    toolWindow.addContentManagerListener(visibilityListener);
   }
 
   protected @NotNull AllTodosTreeBuilder createAllTodoBuilder(@NotNull JTree tree,
@@ -234,6 +241,25 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     @Override
     public void fileTypesChanged(@NotNull FileTypeEvent e) {
       refresh();
+    }
+  }
+
+  private final class MyVisibilityListener implements ToolWindowManagerListener, ContentManagerListener {
+    @Override
+    public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
+      visibilityChanged();
+    }
+
+    @Override
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
+      visibilityChanged();
+    }
+  }
+
+  private void visibilityChanged() {
+    if (myProject.isOpen()) {
+      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(
+        () -> myPanels.forEach(p -> p.updateVisibility(myToolWindow)));
     }
   }
 
