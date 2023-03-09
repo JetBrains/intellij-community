@@ -26,9 +26,9 @@ public class AndroidStudioSystemHealthMonitorAdapter {
 
   private static EventsListener ourListener;
 
-  public static void countActionInvocation(Class<? extends AnAction> aClass, Presentation presentation, AnActionEvent event) {
+  public static void countActionInvocation(AnAction anAction, Presentation presentation, AnActionEvent event) {
     if (ourListener != null) {
-      ourListener.countActionInvocation(aClass, presentation, event);
+      ourListener.countActionInvocation(anAction, presentation, event);
     }
   }
 
@@ -48,7 +48,7 @@ public class AndroidStudioSystemHealthMonitorAdapter {
   }
 
   public interface EventsListener {
-    void countActionInvocation(Class<? extends AnAction> aClass, Presentation presentation, AnActionEvent event);
+    void countActionInvocation(AnAction aClass, Presentation presentation, AnActionEvent event);
 
     boolean handleExceptionEvent(IdeaLoggingEvent event, VMOptions.MemoryKind memoryKind);
   }

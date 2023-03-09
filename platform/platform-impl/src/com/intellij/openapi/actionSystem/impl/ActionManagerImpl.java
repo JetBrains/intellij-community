@@ -1534,7 +1534,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
   @Override
   public void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
       if (!ourActionsExcludedFromTracking.containsKey(action.getClass())) {
-        AndroidStudioSystemHealthMonitorAdapter.countActionInvocation(action.getClass(), action.getTemplatePresentation(), event);
+        AndroidStudioSystemHealthMonitorAdapter.countActionInvocation(action, action.getTemplatePresentation(), event);
       }
     myPrevPerformedActionId = myLastPreformedActionId;
     myLastPreformedActionId = getId(action);
