@@ -44,8 +44,17 @@ interface DescriptorStorage {
   /**
    * Size of storage in bytes. The range [0, size) of storage is guaranteed to contain only descriptors
    * for which their write procedures have been finished already.
+   * The following holds: [persistentSize] <= [size] <= [emergingSize]
+   * @see [persistentSize]
+   * @see [emergingSize]
    */
   fun size(): Long
+
+  /**
+   * Similar to [size], but the range [0, emergingSize) may contain descriptors for which their write
+   * procedures are not finished yet (but space is already allocated).
+   */
+  fun emergingSize(): Long
 
   /**
    * Similar to [size], but in addition there is a guarantee that [flush] has happened and before its

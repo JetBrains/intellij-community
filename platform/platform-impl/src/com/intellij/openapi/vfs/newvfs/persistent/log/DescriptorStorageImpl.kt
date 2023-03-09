@@ -208,6 +208,7 @@ class DescriptorStorageImpl(
     VfsOperation.deserialize(tag, data, stringEnumerator)
 
   override fun size(): Long = position.getReadyPosition()
+  override fun emergingSize(): Long = position.getCurrentAdvancePosition()
   override fun persistentSize() = persistentSize ?: 0L
 
   override fun begin(): DescriptorStorage.VfsLogIterator = IteratorImpl(0L)
