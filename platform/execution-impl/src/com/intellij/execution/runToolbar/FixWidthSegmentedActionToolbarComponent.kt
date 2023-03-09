@@ -7,8 +7,10 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.ComparatorUtil
 import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.TimerUtil
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Rectangle
@@ -16,7 +18,7 @@ import javax.swing.JComponent
 
 open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionGroup) : SegmentedActionToolbarComponent(place, group) {
 
-  private var project: Project? = null
+  protected var project: Project? = null
   private var runWidgetWidthHelper: RunWidgetWidthHelper? = null
 
   private val listener = object : UpdateWidth {
@@ -25,24 +27,34 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
     }
   }
 
+  private var timer = TimerUtil.createNamedTimer("project checker", 50).apply {
+    isRepeats = false
+    addActionListener {
+      checkProject()
+    }
+  }
 
   override fun addNotify() {
     super.addNotify()
+    checkProject()
+  }
 
-
-    CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this))?.let {
-      project = it
-
-      runWidgetWidthHelper = RunWidgetWidthHelper.getInstance(it).apply {
-        addListener(listener)
+  private fun checkProject() {
+      CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(this))?.let {
+        updateProject(it)
+        runWidgetWidthHelper = RunWidgetWidthHelper.getInstance(it).apply {
+          addListener(listener)
+        }
+      } ?: kotlin.run {
+        timer.start()
       }
-    }
   }
 
 
   override fun removeNotify() {
     runWidgetWidthHelper?.removeListener(listener)
-    project = null
+    removeProject()
+    timer.stop()
     super.removeNotify()
   }
 
@@ -51,6 +63,19 @@ open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionG
     preferredSize
     revalidate()
     repaint()
+  }
+
+  protected open fun updateProject(value: Project) {
+    if(project == value) return
+
+    project = value
+    Disposer.register(value) {
+      removeProject()
+    }
+  }
+
+  protected open fun removeProject() {
+    project = null
   }
 
   override fun calculateBounds(size2Fit: Dimension, bounds: MutableList<Rectangle>) {

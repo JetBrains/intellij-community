@@ -11,7 +11,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -104,7 +104,7 @@ public class JsonSchemaComplianceChecker {
       if (processed) continue;
 
       ranges.add(range);
-      entries.add(ContainerUtil.newArrayList(entry));
+      entries.add(new SmartList<>(entry));
     }
 
     // for each set of intersecting ranges, compute the best errors to show

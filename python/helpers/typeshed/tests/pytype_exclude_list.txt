@@ -108,3 +108,6 @@ stubs/SQLAlchemy/sqlalchemy/sql/functions.pyi
 stubs/SQLAlchemy/sqlalchemy/sql/lambdas.pyi
 stubs/SQLAlchemy/sqlalchemy/sql/schema.pyi
 stubs/SQLAlchemy/sqlalchemy/sql/selectable.pyi
+stubs/Flask-SQLAlchemy/flask_sqlalchemy/__init__.pyi
+stubs/Flask-SQLAlchemy/flask_sqlalchemy/model.pyi
+stubs/Flask-SQLAlchemy/flask_sqlalchemy/utils.pyi

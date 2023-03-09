@@ -1,7 +1,7 @@
 import argparse
 import ast
 from collections.abc import Iterable, Iterator
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, overload
 from typing_extensions import TypeAlias
 
 FLAKE8_ERROR: TypeAlias = tuple[int, int, str, type[Any]]
@@ -18,7 +18,10 @@ class Error:
 
 class Visitor(ast.NodeVisitor, Generic[TConfig]):
     errors: list[Error]
-    def __init__(self, config: TConfig | None = ...) -> None: ...
+    @overload
+    def __init__(self, config: None = ...) -> None: ...
+    @overload
+    def __init__(self, config: TConfig) -> None: ...
     @property
     def config(self) -> TConfig: ...
     def error_from_node(self, error: type[Error], node: ast.AST, **kwargs: Any) -> None: ...

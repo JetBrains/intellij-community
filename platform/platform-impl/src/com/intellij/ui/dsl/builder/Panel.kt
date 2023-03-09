@@ -31,8 +31,10 @@ interface Panel : CellBase<Panel> {
 
   override fun enabledIf(predicate: ComponentPredicate): Panel
 
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Panel
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): Panel
 
   override fun align(align: Align): Panel
@@ -132,7 +134,7 @@ interface Panel : CellBase<Panel> {
 
   /**
    * Adds collapsible panel with independent grid, title and some vertical space above (except the group in the parents first row)
-   * and below (except the group in the parents last row) the group.
+   * and below (except the group in the parents last row) the group. The group title is focusable via the Tab key and supports mnemonics.
    * To change gaps around the group use [Row.topGap] and [Row.bottomGap] for the method result
    *
    * @param indent true if left indent is needed
@@ -153,6 +155,12 @@ interface Panel : CellBase<Panel> {
    * @param indent true if left indent is needed. By default, true if title exists and false otherwise
    */
   fun buttonsGroup(@NlsContexts.BorderTitle title: String? = null, indent: Boolean = title != null, init: Panel.() -> Unit): ButtonsGroup
+
+  /**
+   * Creates [Placeholder] and [K] identified components for it.
+   * These components can be switched using [PlaceholderGroup].
+   */
+  fun <K> placeholderGroup(init: PlaceholderGroup<K>.() -> Unit): PlaceholderGroup<K>
 
   /**
    * Registers [callback] that will be called from [DialogPanel.apply] method

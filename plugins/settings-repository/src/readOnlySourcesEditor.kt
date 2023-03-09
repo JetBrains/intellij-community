@@ -8,7 +8,7 @@ import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.progressSink
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.dialog
@@ -17,13 +17,13 @@ import com.intellij.util.Function
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import com.intellij.util.text.nullize
 import com.intellij.util.text.trimMiddle
 import com.intellij.util.ui.table.TableModelEditor
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.progressMonitor
+import kotlin.io.path.exists
 import kotlin.properties.Delegates.notNull
 
 private val COLUMNS = arrayOf(object : TableModelEditor.EditableColumnInfo<ReadonlySource, Boolean>() {
@@ -103,7 +103,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         return
       }
 
-      runBlockingModal(ModalTaskOwner.guess(), icsMessage ("task.sync.title")) {
+      runBlockingModalWithRawProgressReporter(ModalTaskOwner.guess(), icsMessage ("task.sync.title")) {
         val root = icsManager.readOnlySourcesManager.rootDir
 
         if (toDelete.isNotEmpty()) {

@@ -3,9 +3,10 @@ package com.theoryinpractice.testng.configuration;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.rt.testng.IDEATestNGRemoteListener;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.junit.ComparisonFailure;
 import org.junit.Test;
 import org.testng.*;
@@ -18,10 +19,7 @@ import org.testng.xml.XmlTest;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class TestNGTreeHierarchyTest {
 
@@ -239,13 +237,27 @@ public class TestNGTreeHierarchyTest {
     final String className = "a.ATest";
     AssertionError throwable = new AssertionError("expected [expected\nnewline] but found [actual\nnewline]");
     MockTestNGResult foo = new MockTestNGResult(className, "testFoo",
-                                                throwable, new Object[0]);
+                                                throwable, ArrayUtil.EMPTY_OBJECT_ARRAY);
     listener.onTestFailure(foo);
     String message = buf.toString();
     String expectedFailureMessage =
       "##teamcity[testFailed name='ATest.testFoo' message='java.lang.AssertionError:' expected='expected|nnewline' actual='actual|nnewline'";
     Assert.assertTrue(message, message.contains(expectedFailureMessage));
-    
+  }
+
+  @Test
+  public void testComparisonFailureWithMessage() {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    final String className = "a.ATest";
+    AssertionError throwable = new AssertionError("expected a new line expected [expected\nnewline] but found [actual\nnewline]");
+    MockTestNGResult foo = new MockTestNGResult(className, "testFoo",
+                                                throwable, ArrayUtil.EMPTY_OBJECT_ARRAY);
+    listener.onTestFailure(foo);
+    String message = buf.toString();
+    String expectedFailureMessage =
+      "##teamcity[testFailed name='ATest.testFoo' message='java.lang.AssertionError: expected a new line' expected='expected|nnewline' actual='actual|nnewline'";
+    Assert.assertTrue(message, message.contains(expectedFailureMessage));
   }
   
   @Test
@@ -255,13 +267,12 @@ public class TestNGTreeHierarchyTest {
     final String className = "a.ATest";
     AssertionError throwable = new ComparisonFailure("[there is an unexpected value]", "1", "0");
     MockTestNGResult foo = new MockTestNGResult(className, "testFoo",
-                                                throwable, new Object[0]);
+                                                throwable, ArrayUtil.EMPTY_OBJECT_ARRAY);
     listener.onTestFailure(foo);
     String message = buf.toString();
     String expectedFailureMessage =
       "##teamcity[testFailed name='ATest.testFoo' message='org.junit.ComparisonFailure: |[there is an unexpected value|] ' expected='1' actual='0' ";
     Assert.assertTrue(message, message.contains(expectedFailureMessage));
-
   }
 
   @Test
@@ -454,7 +465,7 @@ public class TestNGTreeHierarchyTest {
 
       if (!myClassName.equals(result.myClassName)) return false;
       if (!myMethodName.equals(result.myMethodName)) return false;
-      if (myThrowable != null ? !myThrowable.equals(result.myThrowable) : result.myThrowable != null) return false;
+      if (!Objects.equals(myThrowable, result.myThrowable)) return false;
       // Probably incorrect - comparing Object[] arrays with Arrays.equals
       if (!Arrays.equals(myParams, result.myParams)) return false;
 
@@ -473,6 +484,11 @@ public class TestNGTreeHierarchyTest {
 
   public static class MyTestTestResult implements ITestResult {
     private final TestResult empty = TestResult.newEmptyTestResult();
+
+    @Override
+    public String id() {
+      return empty.id();
+    }
 
     @Override
     public void setEndMillis(long millis) {

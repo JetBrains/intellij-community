@@ -7,7 +7,7 @@ buildscript {
         {{kts_kotlin_plugin_repositories}}
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:3.6.4")
+        classpath("com.android.tools.build:gradle:{{android_gradle_plugin_version}}")
     }
 }
 

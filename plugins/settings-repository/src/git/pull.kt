@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SmartList
-import com.intellij.util.containers.hash.LinkedHashMap
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import org.eclipse.jgit.api.MergeCommand.FastForwardMode

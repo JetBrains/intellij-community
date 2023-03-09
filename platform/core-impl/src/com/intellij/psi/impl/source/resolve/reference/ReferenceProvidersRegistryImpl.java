@@ -60,7 +60,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
         private void registerContributorForLanguageAndDialects(Language language, PsiReferenceContributor instance) {
           Set<Language> languageAndDialects = LanguageUtil.getAllDerivedLanguages(language);
           for (Language languageOrDialect : languageAndDialects) {
-            final PsiReferenceRegistrarImpl registrar = myRegistrars.get(languageOrDialect);
+            PsiReferenceRegistrarImpl registrar = myRegistrars.get(languageOrDialect);
             if (registrar != null) {
               registerContributedReferenceProviders(registrar, instance);
             }
@@ -144,7 +144,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
       return PsiReference.EMPTY_ARRAY;
     }
 
-    final List<PsiReference> result = new SmartList<>();
+    List<PsiReference> result = new SmartList<>();
     double maxPriority = Math.max(PsiReferenceRegistrar.LOWER_PRIORITY, ArrayUtil.max(allReferencesMap.keySet().toDoubleArray()));
     List<PsiReference> maxPriorityRefs = collectReferences(allReferencesMap.get(maxPriority));
 
@@ -160,7 +160,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
                                                                                                     @NotNull List<? extends ProviderBinding.ProviderInfo<ProcessingContext>> providers) {
     Double2ObjectMap<List<PsiReference[]>> map = new Double2ObjectOpenHashMap<>();
     for (ProviderBinding.ProviderInfo<ProcessingContext> trinity : providers) {
-      final PsiReference[] refs = getReferences(context, trinity);
+      PsiReference[] refs = getReferences(context, trinity);
       if (refs.length > 0) {
         List<PsiReference[]> list = map.get(trinity.priority);
         if (list == null) {

@@ -1,39 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection
 
-import com.intellij.codeInspection.InspectionManager
-import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.util.containers.map2Array
-import org.jetbrains.plugins.gradle.service.resolve.DECLARATION_ALTERNATIVES
-import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionsContributor
-import org.jetbrains.plugins.groovy.intentions.GrReplaceMethodCallQuickFix
-import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import com.intellij.psi.PsiElementVisitor
 
-class GradleDeprecatedConfigurationInspection : GradleBaseInspection() {
+class GradleDeprecatedConfigurationInspection : LocalInspectionTool() {
 
-  override fun buildGroovyVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): GroovyElementVisitor {
-
-    return object : GroovyElementVisitor() {
-      override fun visitReferenceExpression(referenceExpression: GrReferenceExpression) {
-        val referenceNameElement = referenceExpression.referenceNameElement ?: return
-        val resolved = referenceExpression.resolve() ?: return
-        val alternatives = resolved.getUserData(DECLARATION_ALTERNATIVES)?.takeIf { it.isNotEmpty() } ?: return
-
-        val knownConfigurations = GradleExtensionsContributor.getExtensionsFor(referenceExpression)?.configurations?.keys ?: emptyList()
-
-        val descriptor = InspectionManager.getInstance(referenceExpression.project)
-          .createProblemDescriptor(
-            referenceNameElement,
-            GradleInspectionBundle.message("inspection.message.configuration.is.deprecated", referenceNameElement.text),
-            false,
-            alternatives.filter { it in knownConfigurations }.map2Array { GrReplaceMethodCallQuickFix(referenceNameElement.text, it) },
-            ProblemHighlightType.LIKE_DEPRECATED)
-
-        holder.registerProblem(descriptor)
-      }
-
-    }
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+    val language = holder.file.language
+    val inspectionProvider = GradleDslInspectionProvider.INSTANCE.forLanguage(language) ?: return PsiElementVisitor.EMPTY_VISITOR
+    return inspectionProvider.getDeprecatedConfigurationInspectionVisitor(holder, isOnTheFly)
   }
 }

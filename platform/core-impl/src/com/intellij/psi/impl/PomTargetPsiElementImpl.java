@@ -70,7 +70,7 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
   public Icon getIcon() {
     for (IconProvider iconProvider : IconProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       if (iconProvider instanceof PomIconProvider) {
-        final Icon icon = ((PomIconProvider)iconProvider).getIcon(myTarget, 0);
+        Icon icon = ((PomIconProvider)iconProvider).getIcon(myTarget, 0);
         if (icon != null) {
           return icon;
         }

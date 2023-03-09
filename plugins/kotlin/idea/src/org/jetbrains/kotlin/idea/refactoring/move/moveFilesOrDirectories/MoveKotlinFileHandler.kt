@@ -59,13 +59,7 @@ class MoveKotlinFileHandler : MoveFileHandler() {
         return ContainerChangeInfo(ContainerInfo.Package(oldPackageName), ContainerInfo.Package(newPackageName))
     }
 
-    fun initMoveProcessor(
-        psiFile: PsiFile,
-        newParent: PsiDirectory?,
-        withConflicts: Boolean,
-        searchInCommentsAndStrings: Boolean = true,
-        searchInNonCode: Boolean = true,
-    ): MoveKotlinDeclarationsProcessor? {
+    fun initMoveProcessor(psiFile: PsiFile, newParent: PsiDirectory?, withConflicts: Boolean): MoveKotlinDeclarationsProcessor? {
         if (psiFile !is KtFile) return null
         val packageNameInfo = psiFile.getPackageNameInfo(newParent, false) ?: return null
 
@@ -92,9 +86,7 @@ class MoveKotlinFileHandler : MoveFileHandler() {
                 moveTarget = moveTarget,
                 delegate = MoveDeclarationsDelegate.TopLevel,
                 allElementsToMove = psiFile.allElementsToMove,
-                analyzeConflicts = withConflicts,
-                searchInCommentsAndStrings = searchInCommentsAndStrings,
-                searchInNonCode = searchInNonCode,
+                analyzeConflicts = withConflicts
             )
         )
     }
@@ -110,26 +102,18 @@ class MoveKotlinFileHandler : MoveFileHandler() {
         searchInComments: Boolean,
         searchInNonJavaFiles: Boolean
     ): List<UsageInfo> {
-        return findUsages(
-            psiFile,
-            newParent,
-            withConflicts = true,
-            searchInCommentsAndStrings = searchInComments,
-            searchInNonJavaFiles = searchInNonJavaFiles,
-        )
+        return findUsages(psiFile, newParent, true)
     }
 
     fun findUsages(
         psiFile: PsiFile,
         newParent: PsiDirectory?,
-        withConflicts: Boolean,
-        searchInCommentsAndStrings: Boolean,
-        searchInNonJavaFiles: Boolean,
+        withConflicts: Boolean
     ): List<UsageInfo> {
         if (psiFile !is KtFile) return emptyList()
 
         val usages = arrayListOf<UsageInfo>(FileInfo(psiFile))
-        initMoveProcessor(psiFile, newParent, withConflicts, searchInCommentsAndStrings, searchInNonJavaFiles)?.let {
+        initMoveProcessor(psiFile, newParent, withConflicts)?.let {
             usages += it.findUsages()
             usages += it.getConflictsAsUsages()
         }

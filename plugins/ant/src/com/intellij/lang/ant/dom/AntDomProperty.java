@@ -106,10 +106,7 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
     }
 
     if (domTarget != null) {
-      final PsiElement psi = PomService.convertToPsi(domTarget);
-      if (psi != null) {
-        return psi;
-      }
+      return PomService.convertToPsi(domTarget);
     }
 
     final PsiFileSystemItem psiFile = getFile().getValue();
@@ -202,20 +199,18 @@ public abstract class AntDomProperty extends AntDomClasspathComponent implements
         final String resource = getResource().getStringValue();
         if (resource != null) {
           final ClassLoader loader = getClassLoader();
-          if (loader != null) {
-            final InputStream stream = loader.getResourceAsStream(resource);
-            if (stream != null) {
-              try {
-                // todo: Remote file can be XmlPropertiesFile
-                final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream,
-                                                                                                            PropertiesFileType.INSTANCE);
-                result = new HashMap<>();
-                for (final IProperty property : propFile.getProperties()) {
-                  result.put(property.getUnescapedKey(), property.getUnescapedValue());
-                }
+          final InputStream stream = loader.getResourceAsStream(resource);
+          if (stream != null) {
+            try {
+              // todo: Remote file can be XmlPropertiesFile
+              final PropertiesFile propFile = (PropertiesFile)CustomAntElementsRegistry.loadContentAsFile(getXmlTag().getProject(), stream,
+                                                                                                          PropertiesFileType.INSTANCE);
+              result = new HashMap<>();
+              for (final IProperty property : propFile.getProperties()) {
+                result.put(property.getUnescapedKey(), property.getUnescapedValue());
               }
-              catch (IOException ignored) {
-              }
+            }
+            catch (IOException ignored) {
             }
           }
         }

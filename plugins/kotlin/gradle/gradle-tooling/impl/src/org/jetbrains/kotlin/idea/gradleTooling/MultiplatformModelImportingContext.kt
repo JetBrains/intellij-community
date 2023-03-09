@@ -3,6 +3,9 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
+import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.ENABLE_KGP_DEPENDENCY_RESOLUTION
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinMultiplatformImportReflection
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
@@ -18,6 +21,9 @@ interface MultiplatformModelImportingContext : KotlinSourceSetContainer, HasDepe
     val project: Project
     val kotlinGradlePluginVersion: KotlinGradlePluginVersion?
     val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper
+
+    val importReflection: KotlinMultiplatformImportReflection?
+    val kotlinExtensionReflection: KotlinExtensionReflection
 
     val targets: Collection<KotlinTarget>
     val compilations: Collection<KotlinCompilation>
@@ -71,19 +77,26 @@ internal fun Project.getProperty(property: GradleImportProperties): Boolean {
 internal enum class GradleImportProperties(val id: String, val defaultValue: Boolean) {
     IS_HMPP_ENABLED("kotlin.mpp.enableGranularSourceSetsMetadata", false),
     COERCE_ROOT_SOURCE_SETS_TO_COMMON("kotlin.mpp.coerceRootSourceSetsToCommon", true),
-    BUILD_METADATA_DEPENDENCIES("build_metadata_dependencies_for_actualised_source_sets", true),
     IMPORT_ORPHAN_SOURCE_SETS("import_orphan_source_sets", true),
-    INCLUDE_ANDROID_DEPENDENCIES("kotlin.include.android.dependencies", false)
+    INCLUDE_ANDROID_DEPENDENCIES("kotlin.include.android.dependencies", false),
+    ENABLE_KGP_DEPENDENCY_RESOLUTION("kotlin.mpp.import.enableKgpDependencyResolution", false)
     ;
 }
 
+internal fun MultiplatformModelImportingContext.useKgpDependencyResolution(): Boolean {
+    return this.importReflection != null && getProperty(ENABLE_KGP_DEPENDENCY_RESOLUTION)
+}
 
 internal class MultiplatformModelImportingContextImpl(
     override val project: Project,
+    override val importReflection: KotlinMultiplatformImportReflection?,
+    override val kotlinExtensionReflection: KotlinExtensionReflection,
     override val kotlinGradlePluginVersion: KotlinGradlePluginVersion?,
     override val compilerArgumentsCacheMapper: CompilerArgumentsCacheMapper,
     modelBuilderContext: ModelBuilderContext
 ) : MultiplatformModelImportingContext {
+
+
     /** see [initializeSourceSets] */
     override lateinit var sourceSetsByName: Map<String, KotlinSourceSetImpl>
         private set
@@ -112,7 +125,10 @@ internal class MultiplatformModelImportingContextImpl(
         this.sourceSetsByName = sourceSetsByNames
     }
 
-    @OptIn(ExperimentalGradleToolingApi::class)
+    internal fun initializeSourceSets(sourceSets: List<KotlinSourceSetImpl>) {
+        initializeSourceSets(sourceSets.associateBy { it.name })
+    }
+
     internal fun initializeCompilations(compilations: Collection<KotlinCompilation>) {
         require(!this::compilations.isInitialized) { "Attempt to re-initialize compilations for $this. Previous value: ${this.compilations}" }
         this.compilations = compilations

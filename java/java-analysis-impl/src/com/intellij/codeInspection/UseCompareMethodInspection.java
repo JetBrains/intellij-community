@@ -2,7 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -23,21 +23,22 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean suggestFloatingCompare = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return InspectionOptionsPanel.singleCheckBox(
-      this, JavaAnalysisBundle.message("inspection.use.compare.method.option.double"), "suggestFloatingCompare");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("suggestFloatingCompare", JavaAnalysisBundle.message("inspection.use.compare.method.option.double")));
   }
 
   @NotNull

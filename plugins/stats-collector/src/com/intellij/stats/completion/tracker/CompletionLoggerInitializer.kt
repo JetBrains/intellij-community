@@ -42,7 +42,7 @@ class CompletionLoggerInitializer : LookupTracker() {
       "javascript" to 0.2,
       "typescript" to 0.5,
       "c/c++" to 0.5,
-      "c#" to 0.1,
+      "c#" to 0.05,
       "go" to 0.4
     )
 

@@ -6,7 +6,7 @@ import lombok.experimental.Accessors;
 public class FindUsageAccessors {
   private int mFoo;
 
-  @Accessors(prefix = "_")
+  @Accessors(prefix = "_", fluent = false)
   private String _<caret>Bar;
 
   private String bMar;

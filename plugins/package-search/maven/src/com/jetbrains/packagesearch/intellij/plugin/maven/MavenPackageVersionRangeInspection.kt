@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyDeclarationIndexes
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageVersionRangeInspection
+import org.jetbrains.idea.maven.utils.MavenUtil
 
 internal class MavenPackageVersionRangeInspection : PackageVersionRangeInspection() {
 
@@ -27,6 +28,5 @@ internal class MavenPackageVersionRangeInspection : PackageVersionRangeInspectio
     override fun selectPsiElementIndex(dependencyDeclarationIndexes: DependencyDeclarationIndexes) =
         dependencyDeclarationIndexes.versionStartIndex
 
-    override fun shouldCheckFile(file: PsiFile) =
-        MavenProjectModuleOperationProvider.hasSupportFor(file.project, file)
+    override fun shouldCheckFile(file: PsiFile) = MavenUtil.isPomFile(file.project, file.virtualFile)
 }

@@ -97,14 +97,14 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
   }
 
   @Override
-  public void process(IdeModifiableModelsProvider modifiableModelsProvider,
-                      Module module,
-                      MavenRootModelAdapter rootModel,
-                      MavenProjectsTree mavenModel,
-                      MavenProject mavenProject,
-                      MavenProjectChanges changes,
-                      Map<MavenProject, String> mavenProjectToModuleName,
-                      List<MavenProjectsProcessorTask> postTasks) {
+  public void process(@NotNull IdeModifiableModelsProvider modifiableModelsProvider,
+                      @NotNull Module module,
+                      @NotNull MavenRootModelAdapter rootModel,
+                      @NotNull MavenProjectsTree mavenModel,
+                      @NotNull MavenProject mavenProject,
+                      @NotNull MavenProjectChanges changes,
+                      @NotNull Map<MavenProject, String> mavenProjectToModuleName,
+                      @NotNull List<MavenProjectsProcessorTask> postTasks) {
     Element config = getConfig(mavenProject, "annotationProcessorPaths");
     if (config == null) return;
 

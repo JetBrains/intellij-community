@@ -16,7 +16,8 @@ data class KotlinLambdaInfo(
     val isNoinline: Boolean,
     val isNameMangledInBytecode: Boolean,
     val methodName: String,
-    val callerMethodInfo: CallableMemberInfo
+    val callerMethodInfo: CallableMemberInfo,
+    val isSamSuspendMethod: Boolean
 ) {
     val isInline = callerMethodInfo.isInline && !isNoinline && !isSam
 
@@ -25,19 +26,38 @@ data class KotlinLambdaInfo(
         parameterDescriptor: ValueParameterDescriptor,
         callerMethodOrdinal: Int,
         isNameMangledInBytecode: Boolean,
-        isSam: Boolean = false,
-        methodName: String = OperatorNameConventions.INVOKE.asString()
     ) : this(
-            parameterDescriptor.name.asString(),
-            callerMethodOrdinal,
-            countParameterIndex(callerMethodDescriptor, parameterDescriptor),
-            parameterDescriptor.hasSuspendFunctionType,
-            isSam,
-            parameterDescriptor.isNoinline,
-            isNameMangledInBytecode,
-            methodName,
-            CallableMemberInfo(callerMethodDescriptor)
+        parameterName = parameterDescriptor.name.asString(),
+        callerMethodOrdinal = callerMethodOrdinal,
+        parameterIndex = countParameterIndex(callerMethodDescriptor, parameterDescriptor),
+        isSuspend = parameterDescriptor.hasSuspendFunctionType,
+        isSam = false,
+        isNoinline = parameterDescriptor.isNoinline,
+        isNameMangledInBytecode = isNameMangledInBytecode,
+        methodName = OperatorNameConventions.INVOKE.asString(),
+        callerMethodInfo = CallableMemberInfo(callerMethodDescriptor),
+        isSamSuspendMethod = false
         )
+
+    constructor(
+        callerMethodDescriptor: CallableMemberDescriptor,
+        parameterDescriptor: ValueParameterDescriptor,
+        callerMethodOrdinal: Int,
+        isNameMangledInBytecode: Boolean,
+        methodName: String,
+        isSamSuspendMethod: Boolean,
+    ) : this(
+        parameterName = parameterDescriptor.name.asString(),
+        callerMethodOrdinal = callerMethodOrdinal,
+        parameterIndex = countParameterIndex(callerMethodDescriptor, parameterDescriptor),
+        isSuspend = parameterDescriptor.hasSuspendFunctionType,
+        isSam = true,
+        isNoinline = parameterDescriptor.isNoinline,
+        isNameMangledInBytecode = isNameMangledInBytecode,
+        methodName = methodName,
+        callerMethodInfo = CallableMemberInfo(callerMethodDescriptor),
+        isSamSuspendMethod = isSamSuspendMethod
+    )
 
     fun getLabel() =
         "${callerMethodInfo.name}: $parameterName.$methodName()"

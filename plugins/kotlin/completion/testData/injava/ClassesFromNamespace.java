@@ -9,7 +9,7 @@ public class Testing {
 // note: "NUMBER" check also assures that FooPackage$src$ classes are not visible
 
 // EXIST: LibClass
-// EXIST: LibTrait
+// EXIST: LibInterface
 // EXIST: LibEnum
 // EXIST: LibObject
 // EXIST: MainKt

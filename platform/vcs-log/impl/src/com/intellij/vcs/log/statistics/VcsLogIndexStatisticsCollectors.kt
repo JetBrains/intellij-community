@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -35,8 +35,8 @@ internal class VcsLogIndexApplicationStatisticsCollector : ApplicationUsagesColl
     }
 
     getBigRepositoriesList()?.let { bigRepositoriesList ->
-      if (bigRepositoriesList.repositoriesCount > 0) {
-        metricEvents.add(BIG_REPOSITORIES.metric(bigRepositoriesList.repositoriesCount))
+      if (bigRepositoriesList.repositoryCount > 0) {
+        metricEvents.add(BIG_REPOSITORIES.metric(bigRepositoriesList.repositoryCount))
       }
     }
 

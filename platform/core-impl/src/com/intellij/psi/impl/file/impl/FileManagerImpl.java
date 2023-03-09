@@ -637,7 +637,7 @@ public final class FileManagerImpl implements FileManager {
       FileViewProvider recreated = createFileViewProvider(file, true);
       tempProviders.put(file, recreated);
       return areViewProvidersEquivalent(viewProvider, recreated) &&
-             !ContainerUtil.exists(((AbstractFileViewProvider)viewProvider).getCachedPsiFiles(), FileManagerImpl::hasInvalidOriginal);
+             ContainerUtil.all(((AbstractFileViewProvider)viewProvider).getCachedPsiFiles(), FileManagerImpl::isValidOriginal);
     }
     finally {
       FileViewProvider temp = tempProviders.remove(file);
@@ -647,8 +647,8 @@ public final class FileManagerImpl implements FileManager {
     }
   }
 
-  private static boolean hasInvalidOriginal(@NotNull PsiFile file) {
+  private static boolean isValidOriginal(@NotNull PsiFile file) {
     PsiFile original = file.getOriginalFile();
-    return original != file && !original.isValid();
+    return original == file || original.isValid();
   }
 }

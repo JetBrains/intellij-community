@@ -2,32 +2,34 @@
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeInspection.GlobalInspectionTool
+import com.intellij.codeInspection.GlobalSimpleInspectionTool
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 
-class InspectionBasicGroupProvider: InspectionGroupProvider {
+private object AllGroup : YamlInspectionGroup {
+  override val groupId: String = "ALL"
+  override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean = true
+}
 
-  private fun createAllGroup() = object: YamlInspectionGroup {
-    override val groupId: String = "ALL"
-    override fun includesInspection(tool: InspectionToolWrapper<*,*>): Boolean = true
+private object GlobalGroup : YamlInspectionGroup {
+  override val groupId: String = "GLOBAL"
+  override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
+    val inspection = tool.tool
+    return inspection is GlobalInspectionTool && inspection !is GlobalSimpleInspectionTool
   }
+}
 
-  private fun createGlobalGroup() = object: YamlInspectionGroup {
-    override val groupId: String = "GLOBAL"
-    override fun includesInspection(tool: InspectionToolWrapper<*,*>): Boolean {
-      return tool.tool is GlobalInspectionTool
-    }
+private object LocalGroup : YamlInspectionGroup {
+  override val groupId: String = "LOCAL"
+  override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
+    val inspection = tool.tool
+    return inspection is LocalInspectionTool || inspection is GlobalSimpleInspectionTool
   }
+}
 
-  private fun createLocalGroup() = object: YamlInspectionGroup {
-    override val groupId: String = "LOCAL"
-    override fun includesInspection(tool: InspectionToolWrapper<*,*>): Boolean {
-      return tool.tool is LocalInspectionTool
-    }
-  }
-
+class InspectionBasicGroupProvider : InspectionGroupProvider {
   private val commonGroups: Map<String, YamlInspectionGroup> by lazy {
-    listOf(createLocalGroup(), createGlobalGroup(), createAllGroup()).associateBy { it.groupId }
+    listOf(LocalGroup, GlobalGroup, AllGroup).associateBy(YamlInspectionGroup::groupId)
   }
 
   override fun findGroup(groupId: String): YamlInspectionGroup? {

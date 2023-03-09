@@ -149,12 +149,6 @@ abstract class OverrideImplementMethodAction extends AnAction {
     Collection<MethodSignature> allOriginalSignatures = toImplement
                                                         ? OverrideImplementExploreUtil.getMethodSignaturesToImplement(psiClass)
                                                         : OverrideImplementExploreUtil.getMethodSignaturesToOverride(psiClass);
-    for (MethodSignature originalSignature : allOriginalSignatures) {
-      if (originalSignature.equals(signature)) {
-        return true;
-      }
-    }
-
-    return false;
+    return allOriginalSignatures.contains(signature);
   }
 }

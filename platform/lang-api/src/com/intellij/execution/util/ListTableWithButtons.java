@@ -244,7 +244,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
   @NotNull
   protected List<T> getSelection() {
     int[] selection = myTableView.getComponent().getSelectedRows();
-    if (selection.length == 0) {
+    if (selection.length == 0 || myElements.isEmpty()) {
       return Collections.emptyList();
     }
     else {

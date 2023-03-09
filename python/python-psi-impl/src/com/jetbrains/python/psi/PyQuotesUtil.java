@@ -10,7 +10,7 @@ import java.util.Collection;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyQuotesUtil {
+public final class PyQuotesUtil {
   public static boolean canBeConverted(@NotNull PyStringElement stringElement, boolean checkContainingFString) {
     if (stringElement.isTripleQuoted() || !stringElement.isTerminated()) return false;
     if (checkContainingFString) {

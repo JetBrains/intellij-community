@@ -6,12 +6,14 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.liveTemplates.macro.AbstractSuggestVariableNameMacro
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
 
-class SymbolBasedSuggestVariableNameMacro : AbstractSuggestVariableNameMacro() {
+class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = null) : AbstractSuggestVariableNameMacro() {
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun suggestNames(declaration: KtCallableDeclaration): Collection<String> {
         if (declaration is KtDeclarationWithInitializer) {
@@ -19,8 +21,16 @@ class SymbolBasedSuggestVariableNameMacro : AbstractSuggestVariableNameMacro() {
             if (initializer != null) {
                 allowAnalysisOnEdt {
                     analyze(initializer) {
+                        val nameValidator = KotlinDeclarationNameValidator(
+                            declaration,
+                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                            this
+                        )
+
                         with(NAME_SUGGESTER) {
-                            return suggestExpressionNames(initializer).toList()
+                            return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + suggestExpressionNames(initializer))
+                                .filter(nameValidator)
+                                .toList()
                         }
                     }
                 }
@@ -31,8 +41,15 @@ class SymbolBasedSuggestVariableNameMacro : AbstractSuggestVariableNameMacro() {
             analyze(declaration) {
                 val symbol = declaration.getSymbolOfTypeSafe<KtVariableLikeSymbol>()
                 if (symbol != null) {
+                    val nameValidator = KotlinDeclarationNameValidator(
+                        declaration,
+                        KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                        this
+                    )
                     with(NAME_SUGGESTER) {
-                        return suggestTypeNames(symbol.returnType).toList()
+                        return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + suggestTypeNames(symbol.returnType))
+                            .filter(nameValidator)
+                            .toList()
                     }
                 }
             }

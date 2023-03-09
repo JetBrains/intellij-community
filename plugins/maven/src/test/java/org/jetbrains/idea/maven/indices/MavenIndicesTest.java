@@ -67,7 +67,6 @@ public class MavenIndicesTest extends CodeInsightFixtureTestCase {
 
     myContext = new MavenIndices.RepositoryDiffContext(
       Mockito.mock(MavenIndexerWrapper.class),
-      Mockito.mock(MavenSearchIndex.IndexListener.class),
       localM3.getParent().getParent().toNioPath().toFile());
   }
 

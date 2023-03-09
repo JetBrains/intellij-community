@@ -32,7 +32,7 @@ class SimplifyCallChainFix(
     override fun getFamilyName() = name
 
     fun apply(qualifiedExpression: KtQualifiedExpression) {
-        val factory = KtPsiFactory(qualifiedExpression)
+        val psiFactory = KtPsiFactory(qualifiedExpression.project)
         val firstExpression = qualifiedExpression.receiverExpression
 
         val operationSign = if (removeReceiverOfFirstCall) "" else when (firstExpression) {
@@ -45,7 +45,7 @@ class SimplifyCallChainFix(
             if (!removeReceiverOfFirstCall && firstExpression is KtQualifiedExpression) firstExpression.receiverExpression.text else ""
 
         val firstCallExpression = AbstractCallChainChecker.getCallExpression(firstExpression) ?: return
-        factory.modifyArguments(firstCallExpression)
+        psiFactory.modifyArguments(firstCallExpression)
         val firstCallArgumentList = firstCallExpression.valueArgumentList
 
         val secondCallExpression = qualifiedExpression.selectorExpression as? KtCallExpression ?: return
@@ -70,7 +70,7 @@ class SimplifyCallChainFix(
         ).joinToString(separator = ",")
 
         val newCallText = conversion.replacement
-        val newQualifiedOrCallExpression = factory.createExpression(
+        val newQualifiedOrCallExpression = psiFactory.createExpression(
             "$receiverExpressionOrEmptyString$operationSign$newCallText($argumentsText)"
         )
 
@@ -88,10 +88,10 @@ class SimplifyCallChainFix(
         }
         if (secondCallTrailingComma != null && !firstCallHasArguments) {
             val call = result.safeAs<KtQualifiedExpression>()?.callExpression ?: result.safeAs<KtCallExpression>()
-            call?.valueArgumentList?.arguments?.lastOrNull()?.add(factory.createComma())
+            call?.valueArgumentList?.arguments?.lastOrNull()?.add(psiFactory.createComma())
         }
         if (conversion.addNotNullAssertion) {
-            result = result.replaced(factory.createExpressionByPattern("$0!!", result))
+            result = result.replaced(psiFactory.createExpressionByPattern("$0!!", result))
         }
         if (conversion.removeNotNullAssertion) {
             val parent = result.parent

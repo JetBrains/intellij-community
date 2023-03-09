@@ -28,6 +28,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UClass;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -130,9 +131,9 @@ public class ExceptionWorkerTest extends LightJavaCodeInsightFixtureTestCase {
     ExceptionInfoCache cache = new ExceptionInfoCache(getProject(), GlobalSearchScope.projectScope(getProject()));
     ExceptionLineParser worker = ExceptionLineParserFactory.getInstance().create(cache);
     worker.execute(line, line.length());
-    PsiClass aClass = worker.getPsiClass();
+    UClass aClass = worker.getUClass();
     assertNotNull(aClass);
-    assertEquals(psiClass, aClass);
+    assertEquals(psiClass, aClass.getSourcePsi());
   }
 
   public void testNonClassInTheLine() {

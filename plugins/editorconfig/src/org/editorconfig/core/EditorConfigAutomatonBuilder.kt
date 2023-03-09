@@ -9,6 +9,7 @@ import com.intellij.psi.util.CachedValuesManager
 import dk.brics.automaton.Automaton
 import dk.brics.automaton.RegExp
 import dk.brics.automaton.RunAutomaton
+import org.editorconfig.configmanagement.GlobVisibilityWorkaround
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.psi.EditorConfigPattern
 import org.editorconfig.language.util.EditorConfigPresentationUtil
@@ -59,6 +60,7 @@ object EditorConfigAutomatonBuilder {
       CachedValueProvider.Result.create(automaton, pattern)
     }
 
+  // TODO except for the last line, this is taken from EditorConfig.filenameMatches
   fun sanitizeGlob(text: String, path: String): String {
     var source = text.replace(File.separatorChar, '/')
     source = source.replace("\\\\#", "#")
@@ -70,7 +72,7 @@ object EditorConfigAutomatonBuilder {
     else {
       source = "**/$source"
     }
-    source = EditorConfig.convertGlobToRegEx(source, arrayListOf())
+    source = GlobVisibilityWorkaround.globToRegEx(source)
     return source.replace("(?:", "(")
   }
 

@@ -24,6 +24,13 @@ interface GraphProperty<T> : ObservableClearableProperty<T> {
   }
 
   /**
+   * @see PropertyGraph.dependsOn
+   */
+  fun dependsOn(parent: ObservableProperty<*>, deleteWhenModified: Boolean, update: () -> T) {
+    logger<GraphProperty<*>>().error("Please, implement this method directly.")
+  }
+
+  /**
    * @see PropertyGraph.afterPropagation
    */
   fun afterPropagation(listener: () -> Unit)

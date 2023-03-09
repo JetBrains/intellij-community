@@ -10,7 +10,6 @@ import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCor
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.insertColumn
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
-import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal abstract class MarkdownInsertTableColumnIntention(private val insertAfter: Boolean): PsiElementBaseIntentionAction() {
   override fun getFamilyName(): String {
@@ -18,9 +17,6 @@ internal abstract class MarkdownInsertTableColumnIntention(private val insertAft
   }
 
   override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
-    if (!MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
-      return false
-    }
     val cell = TableUtils.findCell(element)
     return cell != null && editor != null && cell.parentTable?.hasCorrectBorders() == true
   }

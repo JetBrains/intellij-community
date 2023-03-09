@@ -3,6 +3,7 @@ package com.intellij.maven.testFramework;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import org.apache.maven.wrapper.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -10,9 +11,10 @@ import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MavenWrapperTestFixture {
   private final static String DISTRIBUTION_URL_PATTERN =
@@ -42,7 +44,15 @@ public class MavenWrapperTestFixture {
     configuration.setDistribution(createURI());
     configuration.setDistributionBase(PathAssembler.MAVEN_USER_HOME_STRING);
     configuration.setZipBase(PathAssembler.MAVEN_USER_HOME_STRING);
-    return installer.createDist(configuration);
+
+    try {
+      return installer.createDist(configuration);
+    }
+    catch (SocketException | SocketTimeoutException e) {
+      ExternalResourcesChecker.reportUnavailability("Maven Wrapper", e);
+
+      throw new IllegalStateException(); // should never happen
+    }
   }
 
   @NotNull

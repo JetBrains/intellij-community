@@ -92,34 +92,51 @@ public final class DfaPsiUtil {
     if (owner instanceof PsiEnumConstant) {
       return Nullability.NOT_NULL;
     }
-    if (owner instanceof PsiMethod && isEnumPredefinedMethod((PsiMethod)owner)) {
-      return Nullability.NOT_NULL;
-    }
 
     NullabilityAnnotationInfo fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
     if (fromAnnotation != null) {
       return fromAnnotation.getNullability();
     }
 
-    if (owner instanceof PsiMethod && isMapMethodWithUnknownNullity((PsiMethod)owner)) {
-      return getTypeNullability(resultType) == Nullability.NULLABLE ? Nullability.NULLABLE : Nullability.UNKNOWN;
+    if (owner instanceof PsiMethod method) {
+      if (isEnumPredefinedMethod(method)) {
+        return Nullability.NOT_NULL;
+      }
+      if (isMapMethodWithUnknownNullity(method)) {
+        return getTypeNullability(resultType) == Nullability.NULLABLE ? Nullability.NULLABLE : Nullability.UNKNOWN;
+      }
     }
 
     Nullability fromType = getTypeNullability(resultType);
-    if (fromType != Nullability.UNKNOWN) return fromType;
-
-    if (owner instanceof PsiParameter) {
-      return inferParameterNullability((PsiParameter)owner);
+    if (fromType != Nullability.UNKNOWN) {
+      if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
+        return Nullability.UNKNOWN;
+      }
+      return fromType;
     }
 
-    if (owner instanceof PsiMethod && ((PsiMethod)owner).getParameterList().isEmpty()) {
-      PsiField field = PropertyUtil.getFieldOfGetter((PsiMethod)owner);
+    if (owner instanceof PsiParameter parameter) {
+      return inferParameterNullability(parameter);
+    }
+
+    if (owner instanceof PsiMethod method && method.getParameterList().isEmpty()) {
+      PsiField field = PropertyUtil.getFieldOfGetter(method);
       if (field != null && getElementNullability(resultType, field) == Nullability.NULLABLE) {
         return Nullability.NULLABLE;
       }
     }
 
     return Nullability.UNKNOWN;
+  }
+
+  private static boolean hasNullContract(@NotNull PsiModifierListOwner owner) {
+    if (owner instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiMethod method) {
+      int index = method.getParameterList().getParameterIndex(parameter);
+      List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
+      return ContainerUtil.exists(contracts, 
+                               c -> c.getParameterConstraint(index) == StandardMethodContract.ValueConstraint.NULL_VALUE);
+    }
+    return false;
   }
 
   private static @Nullable NullabilityAnnotationInfo getNullabilityFromAnnotation(@NotNull PsiModifierListOwner owner,

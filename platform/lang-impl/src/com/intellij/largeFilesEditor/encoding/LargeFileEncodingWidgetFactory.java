@@ -4,13 +4,12 @@ package com.intellij.largeFilesEditor.encoding;
 import com.intellij.largeFilesEditor.editor.LargeFileEditor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory;
 import org.jetbrains.annotations.NotNull;
 
-public class LargeFileEncodingWidgetFactory extends StatusBarEditorBasedWidgetFactory {
+final class LargeFileEncodingWidgetFactory extends StatusBarEditorBasedWidgetFactory {
   @Override
   public @NotNull String getId() {
     return LargeFileEncodingWidget.WIDGET_ID;
@@ -29,11 +28,6 @@ public class LargeFileEncodingWidgetFactory extends StatusBarEditorBasedWidgetFa
   @Override
   public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
     return new LargeFileEncodingWidget(project);
-  }
-
-  @Override
-  public void disposeWidget(@NotNull StatusBarWidget widget) {
-    Disposer.dispose(widget);
   }
 
   @Override

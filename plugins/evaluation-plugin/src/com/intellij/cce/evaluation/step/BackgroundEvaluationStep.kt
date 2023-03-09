@@ -6,6 +6,7 @@ import com.intellij.cce.evaluation.UIEvaluationAbortHandler
 import com.intellij.cce.util.CommandLineProgress
 import com.intellij.cce.util.IdeaProgress
 import com.intellij.cce.util.Progress
+import com.intellij.cce.util.TeamcityProgress
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -26,9 +27,9 @@ abstract class BackgroundEvaluationStep(protected val project: Project, private 
     val result = FutureResult<EvaluationWorkspace?>()
     val task = object : Task.Backgroundable(project, name, true) {
       override fun run(indicator: ProgressIndicator) {
-        indicator.text = this.title
-        indicator.isIndeterminate = false
-        result.set(runInBackground(workspace, createProgress(indicator)))
+        createProgress(indicator, title).wrapWithProgress {
+          result.set(runInBackground(workspace, it))
+        }
       }
 
       override fun onCancel() {
@@ -45,9 +46,11 @@ abstract class BackgroundEvaluationStep(protected val project: Project, private 
     return result.get()
   }
 
-  private val evaluationAbortedHandler =
-    if (isHeadless) HeadlessEvaluationAbortHandler() else UIEvaluationAbortHandler(project)
+  private val evaluationAbortedHandler = if (isHeadless) HeadlessEvaluationAbortHandler() else UIEvaluationAbortHandler(project)
 
-  private fun createProgress(indicator: ProgressIndicator) =
-    if (isHeadless) CommandLineProgress(indicator.text) else IdeaProgress(indicator)
+  private fun createProgress(indicator: ProgressIndicator, title: String) = when {
+    System.getenv("TEAMCITY_VERSION") != null -> TeamcityProgress(title)
+    isHeadless -> CommandLineProgress(title)
+    else -> IdeaProgress(indicator, title)
+  }
 }

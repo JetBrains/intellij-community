@@ -171,7 +171,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     });
   }
 
-  private static void addCommitMessage(@NotNull ArrayList<String> recentMessages, @NotNull String comment) {
+  private static void addCommitMessage(@NotNull List<? super String> recentMessages, @NotNull String comment) {
     if (recentMessages.size() >= MAX_STORED_MESSAGES) {
       recentMessages.remove(0);
     }
@@ -192,7 +192,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     myLastCommitMessages = new ArrayList<>(messages);
   }
 
-  private void updateRecentMessages(@NotNull Consumer<ArrayList<String>> modification) {
+  private void updateRecentMessages(@NotNull Consumer<? super ArrayList<String>> modification) {
     ArrayList<String> messages = getRecentMessages();
     modification.accept(messages);
     setRecentMessages(messages);

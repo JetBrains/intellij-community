@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.plaf.FontUIResource;
+import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -154,20 +155,30 @@ public final class RelativeFont implements PropertyChangeListener {
    * @return a new font, or the specified one if a change is not needed
    */
   public Font derive(Font font) {
-    if (font != null) {
-      if (null != myFamily && !myFamily.equals(font.getFamily(ENGLISH))) {
-        int style = null != myStyle ? myStyle : font.getStyle();
-        font = new Font(myFamily, style, font.getSize());
-      }
-      else if (null != myStyle && myStyle != font.getStyle()) {
-        return mySize != null
-               ? font.deriveFont(myStyle, Math.max(mySize * font.getSize2D(), myMinimumSize))
-               : font.deriveFont(myStyle);
-      }
-      if (mySize != null) {
-        return font.deriveFont(Math.max(mySize * font.getSize2D(), myMinimumSize));
-      }
+    if (font == null) return null;
+
+    boolean isSizeConsidered = false;
+    boolean isOriginalFontUIResource = font instanceof UIResource;
+
+    if (null != myFamily && !myFamily.equals(font.getFamily(ENGLISH))) {
+      int style = null != myStyle ? myStyle : font.getStyle();
+      font = new Font(myFamily, style, font.getSize());
     }
+    else if (null != myStyle && myStyle != font.getStyle()) {
+      isSizeConsidered = true;
+      font = mySize != null
+             ? font.deriveFont(myStyle, Math.max(mySize * font.getSize2D(), myMinimumSize))
+             : font.deriveFont(myStyle);
+    }
+
+    if (mySize != null && !isSizeConsidered) {
+      font = font.deriveFont(Math.max(mySize * font.getSize2D(), myMinimumSize));
+    }
+
+    if (font != null && isOriginalFontUIResource && !(font instanceof UIResource)) {
+      font = new FontUIResource(font);
+    }
+
     return font;
   }
 

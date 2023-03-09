@@ -2,7 +2,7 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -25,10 +25,12 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Bas Leijdekkers
@@ -43,9 +45,10 @@ public class CommentedOutCodeInspection extends BaseInspection {
   }
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("inspection.commented.out.code.min.lines.options"),
-                                              this, "minLines");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("minLines", InspectionGadgetsBundle.message("inspection.commented.out.code.min.lines.options"), 1,
+             1000));
   }
 
   @Override
@@ -64,7 +67,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiComment)) {
         return;
@@ -97,7 +100,7 @@ public class CommentedOutCodeInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiComment)) {
         return;

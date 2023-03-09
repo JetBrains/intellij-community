@@ -13,27 +13,27 @@ import java.util.List;
 /**
  * @author Sergey Evdokimov
  */
-class JavaFindJarFix extends FindJarFix<PsiQualifiedReferenceElement> {
-  JavaFindJarFix(PsiQualifiedReferenceElement ref) {
+class JavaFindJarFix extends FindJarFix {
+  JavaFindJarFix(@NotNull PsiQualifiedReferenceElement ref) {
     super(ref);
   }
 
   @Override
   protected Collection<String> getFqns(@NotNull PsiQualifiedReferenceElement ref) {
-    final PsiImportStatementBase importStatement = PsiTreeUtil.getParentOfType(ref.getElement(), PsiImportStatementBase.class);
+    PsiImportStatementBase importStatement = PsiTreeUtil.getParentOfType(ref.getElement(), PsiImportStatementBase.class);
 
     //from static imports
     if (importStatement != null) {
       if (importStatement instanceof PsiImportStatement) {
-        final String importFQN = ((PsiImportStatement)importStatement).getQualifiedName();
+        String importFQN = ((PsiImportStatement)importStatement).getQualifiedName();
         if (importFQN != null && !importFQN.endsWith("*")) {
           return Collections.singleton(importFQN);
         }
       }
       else if (importStatement instanceof PsiImportStaticStatementImpl) {
-        final PsiJavaCodeReferenceElement classRef = ((PsiImportStaticStatementImpl)importStatement).getClassReference();
+        PsiJavaCodeReferenceElement classRef = ((PsiImportStaticStatementImpl)importStatement).getClassReference();
         if (classRef != null) {
-          final String importFQN = classRef.getQualifiedName();
+          String importFQN = classRef.getQualifiedName();
           if (importFQN != null) {
             return Collections.singleton(importFQN);
           }
@@ -42,20 +42,20 @@ class JavaFindJarFix extends FindJarFix<PsiQualifiedReferenceElement> {
       return Collections.emptyList();
     }
 
-    final PsiElement qualifier = ref.getQualifier();
+    PsiElement qualifier = ref.getQualifier();
     if (qualifier instanceof PsiQualifiedReference) {
       //PsiQualifiedReference r = (PsiQualifiedReference)qualifier;
       //TODO[kb] get fqn from expressions like org.unresolvedPackage.MyClass.staticMethodCall(...);
       return Collections.emptyList();
     }
-    final String className = ref.getReferenceName();
+    String className = ref.getReferenceName();
     PsiFile file = ref.getContainingFile().getOriginalFile();
     if (className != null && file instanceof PsiJavaFile) {
-      final PsiImportList importList = ((PsiJavaFile)file).getImportList();
+      PsiImportList importList = ((PsiJavaFile)file).getImportList();
       if (importList != null) {
-        final PsiImportStatementBase statement = importList.findSingleImportStatement(className);
+        PsiImportStatementBase statement = importList.findSingleImportStatement(className);
         if (statement instanceof PsiImportStatement) {
-          final String importFQN = ((PsiImportStatement)statement).getQualifiedName();
+          String importFQN = ((PsiImportStatement)statement).getQualifiedName();
           if (importFQN != null) {
             return Collections.singleton(importFQN);
           }

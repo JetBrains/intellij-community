@@ -86,7 +86,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val left = binaryExpression.left ?: return
             val property = left.mainReference?.resolve() as? KtProperty ?: return
             ChangeToMutableCollectionFix.applyFix(property, type)
-            property.valOrVarKeyword.replace(KtPsiFactory(property).createValKeyword())
+            property.valOrVarKeyword.replace(KtPsiFactory(project).createValKeyword())
             binaryExpression.findExistingEditor()?.caretModel?.moveToOffset(property.endOffset)
         }
 
@@ -107,7 +107,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val binaryExpression = operationReference.parent as? KtBinaryExpression ?: return
             val left = binaryExpression.left ?: return
             val right = binaryExpression.right ?: return
-            val psiFactory = KtPsiFactory(operationReference)
+            val psiFactory = KtPsiFactory(project)
             operationReference.replace(psiFactory.createOperationName(KtTokens.EQ.value))
             right.replace(psiFactory.createExpressionByPattern("$0.filter { it !in $1 }", left, right))
         }
@@ -128,7 +128,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val operationReference = descriptor.psiElement as? KtOperationReferenceExpression ?: return
-            val psiFactory = KtPsiFactory(operationReference)
+            val psiFactory = KtPsiFactory(project)
             operationReference.replace(psiFactory.createOperationName(KtTokens.EQ.value))
         }
 
@@ -174,7 +174,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val property = left.mainReference?.resolve() as? KtProperty ?: return
             val initializer = property.initializer ?: return
 
-            val psiFactory = KtPsiFactory(operationReference)
+            val psiFactory = KtPsiFactory(project)
             val newOp = if (op == KtTokens.PLUSEQ) KtTokens.PLUS else KtTokens.MINUS
             val replaced = initializer.replaced(psiFactory.createExpressionByPattern("$0 $1 $2", initializer, newOp.value, right))
             binaryExpression.delete()

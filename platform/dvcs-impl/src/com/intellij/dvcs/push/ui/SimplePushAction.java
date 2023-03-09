@@ -24,6 +24,17 @@ public final class SimplePushAction extends PushActionBase {
     return dialog.canPush();
   }
 
+  @Nls
+  @Override
+  protected @NotNull String getText(@NotNull VcsPushUi dialog, boolean enabled) {
+    if (dialog.hasWarnings()) {
+      return DvcsBundle.message("action.push.anyway");
+    }
+    else {
+      return DvcsBundle.message("action.complex.push");
+    }
+  }
+
   @Override
   protected @Nls @Nullable String getDescription(@NotNull VcsPushUi dialog, boolean enabled) {
     return null;

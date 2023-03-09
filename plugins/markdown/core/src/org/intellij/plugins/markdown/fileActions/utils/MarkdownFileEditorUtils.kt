@@ -24,7 +24,7 @@ object MarkdownFileEditorUtils {
   @JvmStatic
   fun findMarkdownPreviewEditor(project: Project, file: VirtualFile, requireOpenedPreview: Boolean): MarkdownPreviewFileEditor? {
     val editor = findEditor(project, file, MarkdownFileEditorUtils::findMarkdownPreviewEditor)
-    if (requireOpenedPreview && editor?.getUserData(PREVIEW_BROWSER) == null) {
+    if (requireOpenedPreview && editor?.getUserData(PREVIEW_BROWSER)?.get() == null) {
       return null
     }
     return editor

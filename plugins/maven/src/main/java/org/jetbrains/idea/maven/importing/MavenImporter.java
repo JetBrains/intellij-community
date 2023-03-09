@@ -148,15 +148,15 @@ public abstract class MavenImporter {
    *
    * @param postTasks is deprecated, use {@link org.jetbrains.idea.maven.project.MavenImportListener} instead
    */
-  public void process(IdeModifiableModelsProvider modifiableModelsProvider,
-                      Module module,
-                      MavenRootModelAdapter rootModel,
-                      MavenProjectsTree mavenModel,
-                      MavenProject mavenProject,
-                      MavenProjectChanges changes,
-                      Map<MavenProject, String> mavenProjectToModuleName,
+  public void process(@NotNull IdeModifiableModelsProvider modifiableModelsProvider,
+                      @NotNull Module module,
+                      @NotNull MavenRootModelAdapter rootModel,
+                      @NotNull MavenProjectsTree mavenModel,
+                      @NotNull MavenProject mavenProject,
+                      @NotNull MavenProjectChanges changes,
+                      @NotNull Map<MavenProject, String> mavenProjectToModuleName,
                       @Deprecated // use {@link org.jetbrains.idea.maven.project.MavenImportListener} instead
-                      List<MavenProjectsProcessorTask> postTasks) { }
+                      @NotNull List<MavenProjectsProcessorTask> postTasks) { }
 
   /**
    * Import post process callback.

@@ -11,7 +11,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Value;
 
-public class ThisDescriptorImpl extends ValueDescriptorImpl{
+public class ThisDescriptorImpl extends ValueDescriptorImpl {
 
   public ThisDescriptorImpl(Project project) {
     super(project);

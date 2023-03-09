@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties;
 
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
@@ -13,10 +13,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.UastInjectionHostReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.uast.UElement;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UPolyadicExpression;
-import org.jetbrains.uast.UastBinaryOperator;
+import org.jetbrains.uast.*;
 
 class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider {
 
@@ -37,7 +34,10 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
                                                                 @NotNull PsiLanguageInjectionHost host,
                                                                 @NotNull ProcessingContext context) {
     UExpression parent = StringFlowUtil.goUp(element, false, NlsInfo.factory());
-    if (!canBePropertyKeyRef(parent)) {
+    UElement gParent = parent.getUastParent();
+    if (gParent instanceof UPolyadicExpression uPolyadicExpression &&
+        uPolyadicExpression.getOperator() != UastBinaryOperator.ASSIGN &&
+        (!(uPolyadicExpression instanceof UBinaryExpression) || ((UBinaryExpression)uPolyadicExpression).resolveOperator() == null)) {
       return PsiReference.EMPTY_ARRAY;
     }
     Object value = element.evaluate();
@@ -63,15 +63,13 @@ class UastPropertiesReferenceProvider extends UastInjectionHostReferenceProvider
       }
     }
     else {
+      if (gParent instanceof UBinaryExpression) {
+        return PsiReference.EMPTY_ARRAY;
+      }
       soft = myDefaultSoft;
       bundleName = null;
     }
     PsiReference reference = new PropertyReference(text, host, bundleName, soft);
     return new PsiReference[]{reference};
-  }
-
-  private static boolean canBePropertyKeyRef(@NotNull UExpression element) {
-    UElement parent = element.getUastParent();
-    return !(parent instanceof UPolyadicExpression) || ((UPolyadicExpression)parent).getOperator() == UastBinaryOperator.ASSIGN;
   }
 }

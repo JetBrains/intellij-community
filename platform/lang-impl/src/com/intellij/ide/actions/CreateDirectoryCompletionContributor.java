@@ -2,6 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.psi.PsiDirectory;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ public interface CreateDirectoryCompletionContributor {
   /**
    * @return completion subdirectory variant for the selected directory
    */
+  @RequiresReadLock
   @NotNull
   Collection<Variant> getVariants(@NotNull PsiDirectory directory);
 

@@ -1,56 +1,45 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class CachedSingletonsRegistry {
   @SuppressWarnings("InstantiationOfUtilityClass")
   private static final Object LOCK = new CachedSingletonsRegistry();
 
-  private static final List<Class<?>> ourRegisteredClasses = new ArrayList<>();
-  private static final List<ClearableLazyValue<?>> ourRegisteredLazyValues = new ArrayList<>();
+  private static final List<SynchronizedClearableLazy<?>> ourRegisteredLazyValues = new ArrayList<>();
 
   private CachedSingletonsRegistry() {}
 
-  @Nullable
-  public static <T> T markCachedField(@NotNull Class<T> klass) {
+  public static @NotNull <T> Supplier<T> lazy(@NotNull Supplier<? extends T> supplier) {
+    SynchronizedClearableLazy<T> result = new SynchronizedClearableLazy<>(supplier::get);
     synchronized (LOCK) {
-      ourRegisteredClasses.add(klass);
+      ourRegisteredLazyValues.add(result);
     }
-    return null;
+    return result;
   }
 
-  @NotNull
-  public static <T> ClearableLazyValue<T> markLazyValue(@NotNull ClearableLazyValue<T> lazyValue) {
-    synchronized (LOCK) {
-      ourRegisteredLazyValues.add(lazyValue);
-    }
-    return lazyValue;
+  /**
+   * @deprecated Do not use.
+   */
+  @Deprecated
+  public static @Nullable <T> T markCachedField(@SuppressWarnings("unused") @NotNull Class<T> klass) {
+    return null;
   }
 
   public static void cleanupCachedFields() {
     synchronized (LOCK) {
-      for (Class<?> aClass : ourRegisteredClasses) {
-        try {
-          cleanupClass(aClass);
-        }
-        catch (Exception e) {
-          // Ignore cleanup failed. In some cases we cannot find ourInstance field if idea.jar is scrambled and names of the private fields changed
-        }
-      }
-      for (ClearableLazyValue<?> value : ourRegisteredLazyValues) {
+      for (SynchronizedClearableLazy<?> value : ourRegisteredLazyValues) {
         value.drop();
       }
     }
-  }
-
-  private static void cleanupClass(Class<?> aClass) {
-    ReflectionUtil.resetField(aClass, null, "ourInstance");
   }
 }

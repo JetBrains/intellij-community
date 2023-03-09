@@ -37,7 +37,7 @@ public interface Unwrapper {
    * @param toExtract the elements that will be extracted
    * @return TextRange the whole affected code structure (the code that will be removed)
    */
-  PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract);
+  PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract);
 
   @NotNull
   List<PsiElement> unwrap(@NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;

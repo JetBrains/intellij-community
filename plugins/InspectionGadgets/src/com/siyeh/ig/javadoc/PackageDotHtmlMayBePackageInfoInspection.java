@@ -68,7 +68,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof XmlFile)) {
         return;
@@ -92,7 +92,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(final Project project, ProblemDescriptor descriptor) {
+    protected void doFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof XmlFile)) {
         return;

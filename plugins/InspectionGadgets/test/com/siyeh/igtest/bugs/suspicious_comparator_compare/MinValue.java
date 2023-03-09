@@ -18,6 +18,6 @@ class Test implements Comparable<Test> {
 
   @Override
   public int compareTo(Test o) {
-    return x < o.x ? <warning descr="Returning Integer.MIN_VALUE from comparison method is discouraged">Integer.MIN_VALUE</warning> : x == o.x ? 0 : Integer.MAX_VALUE;
+    return x < o.x ? <warning descr="Returning Integer.MIN_VALUE from a comparison function is discouraged">Integer.MIN_VALUE</warning> : x == o.x ? 0 : Integer.MAX_VALUE;
   }
 }

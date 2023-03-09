@@ -38,7 +38,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   private final ModalityState myModality;
   private Boolean myHasPty;
   private boolean myDestroyRecursively = true;
-  private final Set<File> myFilesToDelete;
+  private final @Nullable Set<? extends File> myFilesToDelete;
 
   public OSProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(startProcess(commandLine), commandLine.getCommandLineString(), commandLine.getCharset());
@@ -72,7 +72,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   /**
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
-  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset, @Nullable Set<File> filesToDelete) {
+  public OSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset, @Nullable Set<? extends File> filesToDelete) {
     super(process, commandLine, charset);
     myFilesToDelete = filesToDelete;
     myHasErrorStream = true;
@@ -164,7 +164,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     }
   }
 
-  private static void deleteTempFiles(Set<File> tempFiles) {
+  private static void deleteTempFiles(Set<? extends File> tempFiles) {
     if (tempFiles != null) {
       try {
         for (File file : tempFiles) {

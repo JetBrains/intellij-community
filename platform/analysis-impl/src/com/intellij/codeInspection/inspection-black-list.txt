@@ -2,7 +2,6 @@ com.intellij.codeInspection.canBeFinal.CanBeFinalInspection
 com.intellij.codeInspection.dataFlow.DataFlowInspection
 com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 com.intellij.codeInspection.defUse.DefUseInspection
-com.intellij.codeInspection.duplicatePropertyInspection.DuplicatePropertyInspection
 com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection
 com.intellij.codeInspection.emptyMethod.EmptyMethodInspection
 com.intellij.codeInspection.htmlInspections.HtmlUnknownAttributeInspection

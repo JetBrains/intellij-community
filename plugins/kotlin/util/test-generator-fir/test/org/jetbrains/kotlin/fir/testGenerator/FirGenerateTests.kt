@@ -6,13 +6,11 @@ import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightT
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractIdeKotlinAnnotationsResolverTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.sessions.AbstractSessionsInvalidationTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.trackers.AbstractProjectWideOutOfBlockKotlinModificationTrackerTest
-import org.jetbrains.kotlin.idea.fir.completion.AbstractFirKeywordCompletionTest
-import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelJvmBasicCompletionTest
-import org.jetbrains.kotlin.idea.fir.completion.AbstractHighLevelMultiFileJvmBasicCompletionTest
-import org.jetbrains.kotlin.idea.fir.completion.AbstractK2MultiPlatformCompletionTest
+import org.jetbrains.kotlin.idea.fir.completion.*
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractFirKeywordCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelBasicCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractHighLevelJavaCompletionHandlerTest
+import org.jetbrains.kotlin.idea.fir.completion.test.handlers.AbstractK2CompletionCharFilterTest
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
 import org.jetbrains.kotlin.idea.fir.documentation.AbstractFirQuickDocTest
 import org.jetbrains.kotlin.idea.fir.findUsages.AbstractFindUsagesFirTest
@@ -24,7 +22,7 @@ import org.jetbrains.kotlin.idea.fir.low.level.api.AbstractFirLibraryModuleDecla
 import org.jetbrains.kotlin.idea.fir.parameterInfo.AbstractFirParameterInfoTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFileTest
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
-import org.jetbrains.kotlin.idea.fir.refactoring.rename.AbstractFirSimpleRenameTest
+import org.jetbrains.kotlin.idea.k2.refactoring.rename.AbstractFirRenameTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
 import org.jetbrains.kotlin.idea.fir.search.AbstractHLImplementationSearcherTest
 import org.jetbrains.kotlin.idea.fir.shortenRefs.AbstractFirShortenRefsTest
@@ -169,6 +167,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("multiPlatform", isRecursive = false, pattern = DIRECTORY)
         }
 
+        testClass<AbstractK2CompletionCharFilterTest> {
+            model("handlers/charFilter", pattern = KT_WITHOUT_DOT_AND_FIR_PREFIX)
+        }
+
         testClass<AbstractFirKeywordCompletionTest> {
             model("keywords", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
             model(
@@ -178,11 +180,14 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                 pattern = KT_WITHOUT_FIR_PREFIX
             )
         }
+        testClass<AbstractFirWithLibBasicCompletionTest> {
+            model("basic/withLib", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
+        }
     }
 
-    testGroup("refactorings/rename.k2") {
-        testClass<AbstractFirSimpleRenameTest> {
-            model("refactoring/rename", pattern = KT_WITHOUT_DOTS)
+    testGroup("refactorings/rename.k2", testDataPath = "../../idea/tests/testData") {
+        testClass<AbstractFirRenameTest> {
+            model("refactoring/rename", pattern = Patterns.TEST, flatten = true)
         }
     }
 
@@ -251,5 +256,4 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("")
         }
     }
-
 }

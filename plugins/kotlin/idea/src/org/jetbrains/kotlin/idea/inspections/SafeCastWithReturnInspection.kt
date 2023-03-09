@@ -58,7 +58,7 @@ private class ReplaceWithIfFix : LocalQuickFix {
         val safeCastExpression = KtPsiUtil.deparenthesize(elvisExpression.left) as? KtBinaryExpressionWithTypeRHS ?: return
         val typeReference = safeCastExpression.right ?: return
         elvisExpression.replace(
-            KtPsiFactory(elvisExpression).createExpressionByPattern(
+            KtPsiFactory(project).createExpressionByPattern(
                 "if ($0 !is $1) $2",
                 safeCastExpression.left,
                 typeReference,

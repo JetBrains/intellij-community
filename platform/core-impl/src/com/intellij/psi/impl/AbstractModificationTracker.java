@@ -46,7 +46,7 @@ public abstract class AbstractModificationTracker implements PsiTreeChangePrepro
   }
 
   @Override
-  public void treeChanged(@NotNull final PsiTreeChangeEventImpl event) {
+  public void treeChanged(@NotNull PsiTreeChangeEventImpl event) {
     boolean changedInsideCodeBlock = false;
 
     switch (event.getCode()) {
@@ -89,7 +89,7 @@ public abstract class AbstractModificationTracker implements PsiTreeChangePrepro
     }
   }
 
-  protected void processOutOfCodeBlockModification(final PsiTreeChangeEventImpl event) {
+  protected void processOutOfCodeBlockModification(PsiTreeChangeEventImpl event) {
     myModificationTracker.incOutOfCodeBlockModificationCounter();
   }
 }

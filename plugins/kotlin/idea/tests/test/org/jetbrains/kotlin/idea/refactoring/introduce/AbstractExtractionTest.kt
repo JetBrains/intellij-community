@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.completion.JavaCompletionUtil
 import com.intellij.ide.DataManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
@@ -26,6 +27,7 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -410,6 +412,13 @@ fun checkExtract(files: ExtractTestFiles, checkAdditionalAfterdata: Boolean = fa
     val afterFile = files.afterFile
 
     try {
+        runInEdtAndWait {
+            runReadAction {
+                // To make extraction work in `kotlin.scripts.as.entities=true` mode it's crucial to load dependencies in advance
+                ScriptConfigurationManager.updateScriptDependenciesSynchronously(files.mainFile)
+            }
+        }
+
         action(files.mainFile)
 
         assert(!conflictFile.exists()) { "Conflict file $conflictFile should not exist" }

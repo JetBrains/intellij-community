@@ -5,7 +5,6 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
-import org.jetbrains.kotlin.idea.statistics.GradleStatisticsEventGroups
 import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
@@ -140,4 +139,18 @@ class KotlinGradleFUSCollector : CounterUsagesCollector() {
     }
 }
 
+enum class GradleStatisticsEventGroups {
+    All,
+    Environment,
+    Kapt,
+    CompilerPlugins,
+    MPP,
+    JS,
+    Libraries,
+    GradleConfiguration,
+    ComponentVersions,
+    KotlinFeatures,
+    GradlePerformance,
+    UseScenarios
+}
 

@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressSink
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
-import com.intellij.util.io.exists
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
@@ -28,6 +27,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 
 @RunWith(Parameterized::class)
@@ -78,8 +78,8 @@ class PyAddCondaPanelModelTest {
     model.condaActionCreateNewEnvRadioRwProp.set(true)
     model.condaActionUseExistingEnvRadioRwProp.set(false)
 
-      MatcherAssert.assertThat("No 3.9 suggested", model.languageLevels, hasItem(LanguageLevel.PYTHON39))
-      MatcherAssert.assertThat("2.6 suggested", model.languageLevels, not(hasItem(LanguageLevel.PYTHON26)))
+    MatcherAssert.assertThat("No 3.9 suggested", model.languageLevels, hasItem(LanguageLevel.PYTHON39))
+    MatcherAssert.assertThat("2.6 suggested", model.languageLevels, not(hasItem(LanguageLevel.PYTHON26)))
     model.newEnvLanguageLevelRwProperty.set(LanguageLevel.PYTHON38)
     Assert.assertNotNull("Empty conda env name didn't lead to validation", model.getValidationError())
     model.newEnvNameRwProperty.set("d     f --- ")
@@ -92,6 +92,7 @@ class PyAddCondaPanelModelTest {
     Assert.assertEquals("Wrong conda name", condaName, newName)
     Assert.assertTrue("No output provided for sink", mockSink.out.toString().isNotEmpty())
   }
+
   @Test
   fun testCondaCantUseNameUsedAlready(): Unit = runTest {
     val name = "cond_env_" + Math.random().toString().replace('.', '_')
@@ -133,8 +134,12 @@ class PyAddCondaPanelModelTest {
     Assert.assertNotNull("No validation error, even though path not set", model.getValidationError())
 
     Assert.assertFalse(model.showCondaPathSetOkButtonRoProp.get())
-    model.condaPathTextBoxRwProp.set("Some random path that doesn't exist")
-    Assert.assertTrue(model.showCondaPathSetOkButtonRoProp.get())
+    model.condaPathTextBoxRwProp.set("Some random path that doesn't exist and doesn't contain conda")
+    Assert.assertFalse("Wrong path, but button not disabled", model.showCondaPathSetOkButtonRoProp.get())
+
+    model.condaPathTextBoxRwProp.set("foo/conda")
+    Assert.assertTrue("Path that passes regex, but button disabled", model.showCondaPathSetOkButtonRoProp.get())
+
     model.onLoadEnvsClicked(coroutineContext)
     Assert.assertNotNull("No validation error, but path is incorrect", model.getValidationError())
 

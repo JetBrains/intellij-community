@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.model;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,13 +24,14 @@ import java.util.List;
 import java.util.Objects;
 
 public class MavenResource implements Serializable {
+  @NotNull
   private final String myDirectory;
   private final boolean myFiltered;
   private final String myTargetPath;
   private final List<String> myIncludes;
   private final List<String> myExcludes;
 
-  public MavenResource(String directory, boolean filtered, String targetPath, List<String> includes, List<String> excludes) {
+  public MavenResource(@NotNull String directory, boolean filtered, String targetPath, List<String> includes, List<String> excludes) {
     myDirectory = directory;
     myFiltered = filtered;
     myTargetPath = targetPath;
@@ -36,6 +39,7 @@ public class MavenResource implements Serializable {
     myExcludes = excludes == null ? Collections.emptyList() : new ArrayList<String>(excludes);
   }
 
+  @NotNull
   public String getDirectory() {
     return myDirectory;
   }
@@ -74,7 +78,7 @@ public class MavenResource implements Serializable {
 
   @Override
   public int hashCode() {
-    int result = myDirectory != null ? myDirectory.hashCode() : 0;
+    int result = myDirectory.hashCode();
     result = 31 * result + (myFiltered ? 1 : 0);
     result = 31 * result + (myTargetPath != null ? myTargetPath.hashCode() : 0);
     result = 31 * result + myIncludes.hashCode();

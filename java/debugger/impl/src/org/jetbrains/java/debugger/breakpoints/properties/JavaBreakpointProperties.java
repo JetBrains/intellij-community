@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.debugger.breakpoints.properties;
 
 import com.intellij.debugger.InstanceFilter;
@@ -13,22 +13,22 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extends XBreakpointProperties<T> {
-  private boolean COUNT_FILTER_ENABLED     = false;
+  private boolean COUNT_FILTER_ENABLED = false;
   private int COUNT_FILTER = 0;
 
-  private boolean CLASS_FILTERS_ENABLED    = false;
+  private boolean CLASS_FILTERS_ENABLED = false;
   private ClassFilter[] myClassFilters;
   private ClassFilter[] myClassExclusionFilters;
 
   private boolean INSTANCE_FILTERS_ENABLED = false;
   private InstanceFilter[] myInstanceFilters;
 
-  private boolean CALLER_FILTERS_ENABLED    = false;
+  private boolean CALLER_FILTERS_ENABLED = false;
   private ClassFilter[] myCallerFilters;
   private ClassFilter[] myCallerExclusionFilters;
 
   private boolean TRACING_START = false;
-  private boolean TRACING_END   = false;
+  private boolean TRACING_END = false;
 
   @XCollection(propertyElementName = "instance-filters")
   public InstanceFilter[] getInstanceFilters() {
@@ -44,7 +44,7 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   public void addInstanceFilter(long l) {
     InstanceFilter newFilter = InstanceFilter.create(l);
     if (myInstanceFilters == null) {
-      myInstanceFilters = new InstanceFilter[] {newFilter};
+      myInstanceFilters = new InstanceFilter[]{newFilter};
     }
     else {
       myInstanceFilters = ArrayUtil.append(myInstanceFilters, newFilter);

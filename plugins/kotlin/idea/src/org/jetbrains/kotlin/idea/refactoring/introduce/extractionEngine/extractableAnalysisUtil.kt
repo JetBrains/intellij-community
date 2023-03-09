@@ -383,7 +383,7 @@ fun ExtractionData.createTemporaryDeclaration(pattern: String): KtNamedDeclarati
     val newTargetSibling = PsiTreeUtil.releaseMark(tmpFile, targetSiblingMarker)!!
     val newTargetParent = newTargetSibling.parent
 
-    val declaration = KtPsiFactory(originalFile).createDeclarationByPattern<KtNamedDeclaration>(
+    val declaration = KtPsiFactory(project).createDeclarationByPattern<KtNamedDeclaration>(
         pattern,
         PsiChildRange(originalElements.firstOrNull(), originalElements.lastOrNull())
     )

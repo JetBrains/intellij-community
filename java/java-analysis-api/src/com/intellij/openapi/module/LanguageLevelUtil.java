@@ -22,7 +22,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-public class LanguageLevelUtil {
+public final class LanguageLevelUtil {
   /**
    * Returns explicitly specified custom language level for {@code module}, or {@code null} if the module uses 'Project default' language level
    */

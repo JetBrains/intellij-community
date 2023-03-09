@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports methods with a <code>boolean</code> return type that are used only in a negated context.
-<p>The quick-fix makes it possible to rename and invert the method.
-  Due to performance reasons, some methods might not be highlighted in the editor.</p>
+Reports methods with a <code>boolean</code> return type that are always negated when called.
+<p>A quick-fix is provided to invert and optionally rename the method.
+  For performance reasons, not all problematic methods may be highlighted in the editor.</p>
 <p>Example:</p>
 <pre><code>
   class C {

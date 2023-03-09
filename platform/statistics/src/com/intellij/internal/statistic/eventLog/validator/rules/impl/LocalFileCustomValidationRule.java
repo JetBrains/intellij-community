@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class LocalFileCustomValidationRule extends CustomValidationRule {
-  private final AllowedItemsResourceStorageBase storage;
+  private final AllowedItemsResourceWeakRefStorage storage;
   private final String ruleId;
 
   protected LocalFileCustomValidationRule(@NotNull String ruleId, @NotNull Class<?> resource, @NotNull String path) {
@@ -14,7 +14,7 @@ public abstract class LocalFileCustomValidationRule extends CustomValidationRule
     storage = new AllowedItemsResourceWeakRefStorage(resource, path);
   }
 
-  protected LocalFileCustomValidationRule(@NotNull String ruleId, @NotNull AllowedItemsResourceStorageBase storage) {
+  protected LocalFileCustomValidationRule(@NotNull String ruleId, @NotNull AllowedItemsResourceWeakRefStorage storage) {
     this.ruleId = ruleId;
     this.storage = storage;
   }

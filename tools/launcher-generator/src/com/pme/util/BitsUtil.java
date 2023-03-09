@@ -25,7 +25,7 @@ import java.io.IOException;
  * Date: Mar 30, 2006
  * Time: 7:10:10 PM
  */
-public class BitsUtil {
+public final class BitsUtil {
   public static String intToHexString( long value ){
     return String.format("0x%08x", (int)value);
   }

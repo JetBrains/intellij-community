@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.importing
 
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
@@ -22,10 +21,10 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdk
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.replaceService
-import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder.Companion.groovy
 import org.jetbrains.plugins.gradle.service.project.open.linkAndRefreshGradleProject
+import org.jetbrains.plugins.gradle.testFramework.util.buildSettings
+import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.util.isSupported
 import org.jetbrains.plugins.gradle.util.waitForProjectReload
 
@@ -133,7 +132,7 @@ abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 
 
   fun createGradleSubProject() {
-    createProjectSubFile("settings.gradle", groovy { assign("rootProject.name", "project") })
-    createProjectSubFile("build.gradle", createBuildScriptBuilder().withJavaPlugin().generate())
+    createProjectSubFile("settings.gradle", buildSettings { setProjectName("project") })
+    createProjectSubFile("build.gradle", buildscript { withJavaPlugin() })
   }
 }

@@ -14,8 +14,6 @@ from MySQLdb._mysql import (
     ProgrammingError as ProgrammingError,
     Warning as Warning,
     debug as debug,
-    escape as escape,
-    escape_string as escape_string,
     get_client_info as get_client_info,
     string_literal as string_literal,
 )

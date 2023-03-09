@@ -3,7 +3,9 @@
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -11,10 +13,10 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.adjustLineIndent
 import org.jetbrains.kotlin.idea.core.setType
-import org.jetbrains.kotlin.idea.formatter.adjustLineIndent
 import org.jetbrains.kotlin.idea.util.resultingWhens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.siblings
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
@@ -53,26 +55,35 @@ class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody
     companion object {
         fun convert(declaration: KtDeclarationWithBody, withReformat: Boolean = false): KtDeclarationWithBody {
             val body = declaration.bodyExpression!!
+            val prevComments = body.comments(next = false)
+            val nextComments = body.comments(next = true)
 
             fun generateBody(returnsValue: Boolean): KtExpression {
                 val bodyType = body.analyze().getType(body)
-                val factory = KtPsiFactory(declaration)
-                if (bodyType != null && bodyType.isUnit() && body is KtNameReferenceExpression) return factory.createEmptyBody()
+                val psiFactory = KtPsiFactory(declaration.project)
+                if (bodyType != null && bodyType.isUnit() && body is KtNameReferenceExpression) return psiFactory.createEmptyBody()
                 val unitWhenAsResult = (bodyType == null || bodyType.isUnit()) && body.resultingWhens().isNotEmpty()
                 val needReturn = returnsValue && (bodyType == null || (!bodyType.isUnit() && !bodyType.isNothing()))
-                return if (needReturn || unitWhenAsResult) {
+                val newBody = if (needReturn || unitWhenAsResult) {
                     val annotatedExpr = body as? KtAnnotatedExpression
                     val returnedExpr = annotatedExpr?.baseExpression ?: body
-                    val block = factory.createSingleStatementBlock(factory.createExpressionByPattern("return $0", returnedExpr))
+                    val block = psiFactory.createSingleStatementBlock(psiFactory.createExpressionByPattern("return $0", returnedExpr))
                     val statement = block.firstStatement
                     annotatedExpr?.annotationEntries?.forEach {
                         block.addBefore(it, statement)
-                        block.addBefore(factory.createNewLine(), statement)
+                        block.addBefore(psiFactory.createNewLine(), statement)
                     }
                     block
                 } else {
-                    factory.createSingleStatementBlock(body)
+                    psiFactory.createSingleStatementBlock(body)
                 }
+                prevComments
+                    .dropWhile { it is PsiWhiteSpace }
+                    .forEach { newBody.addAfter(it, newBody.lBrace) }
+                nextComments
+                    .reversed()
+                    .forEach { newBody.addAfter(it, newBody.firstStatement) }
+                return newBody
             }
 
             val newBody = when (declaration) {
@@ -98,6 +109,8 @@ class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody
             }
 
             declaration.equalsToken!!.delete()
+            prevComments.filterIsInstance<PsiComment>().forEach { it.delete() }
+            nextComments.forEach { it.delete() }
             val replaced = body.replace(newBody)
             if (withReformat) {
                 declaration.containingKtFile.adjustLineIndent(replaced.startOffset, replaced.endOffset)
@@ -113,5 +126,13 @@ class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody
             ) return returnType.makeNotNullable()
             return returnType
         }
+
+        private fun KtExpression.comments(next: Boolean): List<PsiElement> = siblings(forward = next, withItself = false)
+            .takeWhile { it is PsiWhiteSpace || it is PsiComment }
+            .takeIf { it.hasComment() }
+            .orEmpty()
+            .toList()
+
+        private fun Sequence<PsiElement>.hasComment(): Boolean = any { it is PsiComment }
     }
 }

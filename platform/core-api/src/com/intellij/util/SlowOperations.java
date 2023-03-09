@@ -17,16 +17,25 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A utility to enforce "slow operation on EDT" assertion.
+ * <p/>
+ * That assertion is a tool we use now to split IntelliJ Platform into "frontend" and "backend" parts
+ * to avoid UI freezes caused by inherently slow operations like indexes access, slow I/O, etc.
+ *
+ * @see #assertSlowOperationsAreAllowed()
+ */
 public final class SlowOperations {
   private static final Logger LOG = Logger.getInstance(SlowOperations.class);
 
-  public static final String ACTION_UPDATE = "action.update";
-  public static final String ACTION_PERFORM = "action.perform";
-  public static final String RENDERING = "rendering";
-  public static final String GENERIC = "generic";
-  public static final String FORCE_ASSERT = "  force assert  ";
-  public static final String FAST_TRACK = "  fast track  ";
-  public static final String RESET = "  reset  ";
+  public static final String ACTION_UPDATE = "action.update";     // action update in menus, toolbars and popups
+  public static final String ACTION_PERFORM = "action.perform";   // user triggered actions
+  public static final String RENDERING = "rendering";             // UI rendering
+  public static final String GENERIC = "generic";                 // generic activity
+
+  public static final String FORCE_ASSERT = "  force assert  ";   // assertion is thrown even if disabled
+  public static final String FAST_TRACK = "  fast track  ";       // assertion is turned into PCE
+  public static final String RESET = "  reset  ";                 // resets the section stack in modal dialogs
 
   /**
    * VM property, set to {@code true} if running in plugin development sandbox.
@@ -39,15 +48,17 @@ public final class SlowOperations {
   private SlowOperations() {}
 
   /**
-   * If you get an exception from this method, then you need to move the computation to the background
-   * while also trying to avoid blocking the UI thread as well. It's okay if the API changes in the process,
-   * e.g. instead of wrapping implementation of some extension into {@link #allowSlowOperations},
-   * it's better to admit that the EP semantic as a whole requires index access,
+   * If you get an exception from this method, then you need to move the computation to a background thread (BGT)
+   * and to avoid blocking the UI thread (EDT).
+   * <p/>
+   * It's okay if the API changes in the process. For example, instead of wrapping an implementation of some extension
+   * with deprecated {@link #allowSlowOperations} methods, it is better to admit that the EP semantic as a whole requires index access,
    * and then move the iteration over all extensions to the background on the platform-side.
    * <p/>
-   * In cases when it's impossible to do so, the computation can be wrapped in a {@link #allowSlowOperations} section explicitly.
-   * Sections are named and can be enabled/disabled via Registry keys, e.g. {@link #ACTION_UPDATE}, {@link #RENDERING}, etc.
-   * These sections are a temporary solution, they are tracked and solved in future.
+   * To temporarily mute the assertion in cases when it's difficult to rework the code timely,
+   * the computation can be wrapped in a named section {@link #startSection}.
+   * The assertion inside named sections is turned on/off separately via Registry keys {@code ide.slow.operations.assertion.<sectionName>}
+   * (sections {@link #GENERIC}, {@link #ACTION_PERFORM}, {@link #RENDERING}, ...).
    * <p/>
    * Action Subsystem<br><br>
    * <l>
@@ -78,7 +89,7 @@ public final class SlowOperations {
     if (!EDT.isCurrentThreadEdt()) {
       return;
     }
-    if (isInsideActivity(FAST_TRACK)) {
+    if (isInSection(FAST_TRACK)) {
       if (Cancellation.isInNonCancelableSection()) {
         reportNonCancellableSectionInFastTrack();
       }
@@ -89,7 +100,7 @@ public final class SlowOperations {
     if (isAlwaysAllowed()) {
       return;
     }
-    boolean forceAssert = isInsideActivity(FORCE_ASSERT);
+    boolean forceAssert = isInSection(FORCE_ASSERT);
     if (!forceAssert && !Registry.is("ide.slow.operations.assertion", true)) {
       return;
     }
@@ -121,13 +132,13 @@ public final class SlowOperations {
   }
 
   @ApiStatus.Internal
-  public static boolean isInsideActivity(@NotNull String activityName) {
+  public static boolean isInSection(@NotNull String sectionName) {
     EDT.assertIsEdt();
     for (String activity : ourStack) {
       if (RESET.equals(activity)) {
         break;
       }
-      if (activityName.equals(activity)) {
+      if (sectionName.equals(activity)) {
         return true;
       }
     }
@@ -156,25 +167,71 @@ public final class SlowOperations {
     return result;
   }
 
+  /**
+   * @deprecated To resolve EDT freezes, "slow operations" will soon be banned from EDT.
+   * Consider reworking the code and the UX that needs to mute the assertion, and moving it to BGT.
+   * <p/>
+   * <b>DO NOT JUST CONVERT TO {@link #startSection(String)}.
+   * Keep using the deprecated method if your intent is to postpone fixing the assertion for real.</b>
+   */
+  @Deprecated
   public static <T, E extends Throwable> T allowSlowOperations(@NotNull ThrowableComputable<T, E> computable) throws E {
-    try (AccessToken ignore = allowSlowOperations(GENERIC)) {
+    try (AccessToken ignore = startSection(GENERIC)) {
       return computable.compute();
     }
   }
 
+  /**
+   * @deprecated To resolve EDT freezes, "slow operations" will soon be banned from EDT.
+   * Consider reworking the code and the UX that needs to mute the assertion, and moving it to BGT.
+   * <p/>
+   * <b>DO NOT JUST CONVERT TO {@link #startSection(String)}.
+   * Keep using the deprecated method if your intent is to postpone fixing the assertion for real.</b>
+   */
+  @Deprecated
   public static <E extends Throwable> void allowSlowOperations(@NotNull ThrowableRunnable<E> runnable) throws E {
-    try (AccessToken ignore = allowSlowOperations(GENERIC)) {
+    try (AccessToken ignore = startSection(GENERIC)) {
       runnable.run();
     }
   }
 
+  /**
+   * @deprecated To resolve EDT freezes, "slow operations" will soon be banned from EDT.
+   * Consider reworking the code and the UX that needs to mute the assertion, and moving it to BGT.
+   * <p/>
+   * <b>DO NOT JUST CONVERT TO {@link #startSection(String)}.
+   * Keep using the deprecated method if your intent is to postpone fixing the assertion for real.</b>
+   *
+   * @param activityName see {@link #startSection(String)} javadoc
+   */
+  @Deprecated
   public static @NotNull AccessToken allowSlowOperations(@NotNull @NonNls String activityName) {
+    return startSection(activityName);
+  }
+
+  /**
+   * Starts a named logical section. Logical sections are a tool to tackle the frontend/backend splitting part-by-part,
+   * and not to be overwhelmed by all that needs to be reworked all at once. Some sections have additional, hard-coded
+   * semantics, like {@link #FAST_TRACK}, {@link #FORCE_ASSERT}, and {@link #RESET}.
+   * <p/>
+   * <b>This method is not for muting the assertion in places. It is intended for the common platform code.
+   * USE DEPRECATED {@link #allowSlowOperations} METHODS IF YOUR INTENT IS TO POSTPONE FIXING THE ASSERTION FOR REAL.</b>
+   *
+   * @param sectionName reuse {@link #GENERIC} and other existing section names as much as possible.
+   * <p/>
+   * Use a new name <b>iff</b> you need a dedicated on/off switch for the assertion inside.
+   * In that case, do not forget to add the corresponding {@code ide.slow.operations.assertion.<sectionName>} Registry key.
+   *
+   * @see Registry
+   */
+  @ApiStatus.Internal
+  public static @NotNull AccessToken startSection(@NotNull @NonNls String sectionName) {
     if (!EDT.isCurrentThreadEdt()) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
     FList<String> prev = ourStack;
-    ourStack = prev.prepend(activityName);
+    ourStack = prev.prepend(sectionName);
     return new AccessToken() {
       @Override
       public void finish() {

@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
@@ -24,7 +25,7 @@ import javax.swing.event.HyperlinkListener
 abstract class ToolWindowManager {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): ToolWindowManager = project.getService(ToolWindowManager::class.java)
+    fun getInstance(project: Project): ToolWindowManager = project.service<ToolWindowManager>()
   }
 
   abstract val focusManager: IdeFocusManager
@@ -97,7 +98,7 @@ abstract class ToolWindowManager {
   }
 
   /**
-   * does nothing if tool window with specified isn't registered.
+   * does nothing if a tool window with specified isn't registered.
    */
   @Deprecated("Use ToolWindowFactory and toolWindow extension point")
   abstract fun unregisterToolWindow(id: String)
@@ -105,7 +106,7 @@ abstract class ToolWindowManager {
   abstract fun activateEditorComponent()
 
   /**
-   * @return `true` if and only if editor component is active.
+   * @return `true` if and only if an editor component is active.
    */
   abstract val isEditorComponentActive: Boolean
 
@@ -135,12 +136,11 @@ abstract class ToolWindowManager {
   abstract fun getToolWindow(@NonNls id: String?): ToolWindow?
 
   /**
-   * Puts specified runnable to the tail of current command queue.
+   * Puts specified runnable to the tail of the current command queue.
    */
   abstract fun invokeLater(runnable: Runnable)
 
   fun notifyByBalloon(toolWindowId: String, type: MessageType, @NlsContexts.NotificationContent htmlBody: String) {
-    @Suppress("SSBasedInspection")
     notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId, type, htmlBody))
   }
 
@@ -149,7 +149,6 @@ abstract class ToolWindowManager {
                       @NlsContexts.PopupContent htmlBody: String,
                       icon: Icon?,
                       listener: HyperlinkListener?) {
-    @Suppress("SSBasedInspection")
     notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId, type, htmlBody, icon, listener))
   }
 

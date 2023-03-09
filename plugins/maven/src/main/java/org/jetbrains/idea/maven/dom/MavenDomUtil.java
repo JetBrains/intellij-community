@@ -341,9 +341,6 @@ public final class MavenDomUtil {
         if (!resource.isFiltered()) continue;
 
         String resourceDirectory = resource.getDirectory();
-        if (resourceDirectory == null) {
-          continue;
-        }
         VirtualFile resourceDir = LocalFileSystem.getInstance().findFileByPath(resourceDirectory);
         if (resourceDir == null) continue;
 

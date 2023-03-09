@@ -11,6 +11,7 @@ import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereModelP
 import com.intellij.ide.actions.searcheverywhere.ml.performance.PerformanceTracker
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.NonUrgentExecutor
 import java.util.concurrent.atomic.AtomicReference
@@ -50,12 +51,14 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
       val searchReason = if (prevState == null) SearchRestartReason.SEARCH_STARTED else reason
       val nextSearchIndex = (prevState?.searchIndex ?: 0) + 1
       val experimentGroup = experimentStrategy.experimentGroup
+      val projectIsDumb = project?.let { DumbService.isDumb(it) }
       performanceTracker.start()
 
       SearchEverywhereMlSearchState(
         sessionStartTime, startTime, nextSearchIndex, searchReason,
         tabId, experimentGroup, orderByMl,
-        keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache
+        keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache,
+        projectIsDumb
       )
     }
 

@@ -820,7 +820,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                     boolean passParentEnvs,
                                     @NotNull List<Function<TargetEnvironment, String>> pathList,
                                     @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    TargetedPythonPaths.initPythonPath(pythonScript.getEnvs(), passParentEnvs, pathList, targetEnvironmentRequest);
+    TargetedPythonPaths.initPythonPath(pythonScript.getEnvs(), passParentEnvs, pathList, targetEnvironmentRequest, true);
   }
 
   @NotNull

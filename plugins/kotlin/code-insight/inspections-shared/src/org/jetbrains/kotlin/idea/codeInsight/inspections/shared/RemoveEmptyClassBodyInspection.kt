@@ -53,7 +53,7 @@ class RemoveEmptyClassBodyInspection : AbstractApplicabilityBasedInspection<KtCl
     }
 
     private fun PsiElement.addSemicolon(): PsiElement {
-        val semicolon = KtPsiFactory(this).createSemicolon()
+        val semicolon = KtPsiFactory(project).createSemicolon()
         return if (this is KtEnumEntry) {
             add(semicolon)
         } else {

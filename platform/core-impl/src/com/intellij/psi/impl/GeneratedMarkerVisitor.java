@@ -28,7 +28,7 @@ public class GeneratedMarkerVisitor extends RecursiveTreeElementWalkingVisitor {
     super.visitNode(element);
   }
 
-  public static void markGenerated(final PsiElement element) {
+  public static void markGenerated(PsiElement element) {
     ((TreeElement)element.getNode()).acceptTree(new GeneratedMarkerVisitor());
   }
 }

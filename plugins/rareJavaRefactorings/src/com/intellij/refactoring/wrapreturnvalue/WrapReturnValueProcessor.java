@@ -112,7 +112,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   }
 
   @Override
-  public void findUsages(@NotNull List<FixableUsageInfo> usages) {
+  public void findUsages(@NotNull List<? super FixableUsageInfo> usages) {
     findUsagesForMethod(myMethod, usages);
     for (PsiMethod overridingMethod : OverridingMethodsSearch.search(myMethod)) {
       findUsagesForMethod(overridingMethod, usages);

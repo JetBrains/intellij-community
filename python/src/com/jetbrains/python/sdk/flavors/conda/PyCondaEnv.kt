@@ -7,17 +7,16 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.google.gson.Gson
 import com.intellij.execution.processTools.getResultStdoutStr
 import com.intellij.execution.processTools.mapFlat
+import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.createProcessWithResult
-import com.intellij.util.io.exists
-import com.intellij.execution.target.FullPathOnTarget
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.flavors.conda.CondaPathFix.Companion.shouldBeFixed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.exists
 
 /**
  * @see [com.jetbrains.env.conda.PyCondaTest]
@@ -105,10 +104,7 @@ data class PyCondaEnv(val envIdentity: PyCondaEnvIdentity,
           addParameter(identity.envName)
         }
       }
-
-      if (targetedCommandLineBuilder.shouldBeFixed) {
-        CondaPathFix.ByCondaFullPath(Path.of(fullCondaPathOnTarget)).fix(targetedCommandLineBuilder)
-      }
+      targetedCommandLineBuilder.fixCondaPathEnvIfNeeded(fullCondaPathOnTarget)
     }
   }
 

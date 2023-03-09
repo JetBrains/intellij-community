@@ -71,7 +71,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
   @JvmOverloads
   fun turnOn(beforeIndexTasksStarted: Runnable? = null) {
-    LOG.assertTrue(ApplicationManager.getApplication().isWriteThread)
+    LOG.assertTrue(ApplicationManager.getApplication().isWriteIntentLockAcquired)
     nestedLevelCount--
     if (nestedLevelCount == 0) {
       try {

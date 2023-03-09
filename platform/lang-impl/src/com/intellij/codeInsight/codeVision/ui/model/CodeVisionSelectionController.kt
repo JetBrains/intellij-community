@@ -21,7 +21,6 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.rd.util.asProperty
 import com.jetbrains.rd.util.debounceNotNull
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.lifetime.onTermination
 import com.jetbrains.rd.util.reactive.adviseWithPrev
 import com.jetbrains.rd.util.reactive.map
 import com.jetbrains.rd.util.reactive.viewNotNull
@@ -37,8 +36,8 @@ class CodeVisionSelectionController private constructor(val lifetime: Lifetime,
                                                         val projectModel: ProjectCodeVisionModel) {
 
   companion object {
-    val map: HashMap<Editor, CodeVisionSelectionController> = HashMap<Editor, CodeVisionSelectionController>()
-    val logger: Logger = logger<CodeVisionSelectionController>()
+    private val map: HashMap<Editor, CodeVisionSelectionController> = HashMap<Editor, CodeVisionSelectionController>()
+    private val logger: Logger = logger<CodeVisionSelectionController>()
 
     fun install(editor: EditorImpl, projectModel: ProjectCodeVisionModel) {
       var controller = map[editor]

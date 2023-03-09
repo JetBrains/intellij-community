@@ -19,7 +19,6 @@ import com.intellij.psi.codeStyle.arrangement.ModifierAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.TypeAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
-import com.intellij.util.containers.ContainerUtil;
 import org.jmock.Expectations;
 import org.jmock.Mockery;
 import org.jmock.integration.junit4.JMock;
@@ -29,6 +28,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Set;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
@@ -65,9 +66,9 @@ public class StandardArrangementEntryMatcherTest {
     final TypeAwareArrangementEntry classEntry = myMockery.mock(TypeAwareArrangementEntry.class, "class");
     final ModifierAwareArrangementEntry publicEntry = myMockery.mock(ModifierAwareArrangementEntry.class, "public");
     myMockery.checking(new Expectations() {{
-      allowing(fieldEntry).getTypes(); will(returnValue(ContainerUtil.newHashSet(FIELD)));
-      allowing(classEntry).getTypes(); will(returnValue(ContainerUtil.newHashSet(CLASS)));
-      allowing(publicEntry).getModifiers(); will(returnValue(ContainerUtil.newHashSet(PUBLIC)));
+      allowing(fieldEntry).getTypes(); will(returnValue(Set.of(FIELD)));
+      allowing(classEntry).getTypes(); will(returnValue(Set.of(CLASS)));
+      allowing(publicEntry).getModifiers(); will(returnValue(Set.of(PUBLIC)));
     }});
     
     assertTrue(matcher.isMatched(fieldEntry));
@@ -91,21 +92,21 @@ public class StandardArrangementEntryMatcherTest {
     final TypeAndModifierAware publicFieldEntry = myMockery.mock(TypeAndModifierAware.class, "public field");
     final TypeAndModifierAware publicStaticFieldEntry = myMockery.mock(TypeAndModifierAware.class, "public static field");
     myMockery.checking(new Expectations() {{
-      allowing(fieldEntry).getTypes(); will(returnValue(ContainerUtil.newHashSet(FIELD)));
+      allowing(fieldEntry).getTypes(); will(returnValue(Set.of(FIELD)));
       
-      allowing(publicEntry).getModifiers(); will(returnValue(ContainerUtil.newHashSet(PUBLIC)));
+      allowing(publicEntry).getModifiers(); will(returnValue(Set.of(PUBLIC)));
       
-      allowing(privateFieldEntry).getTypes(); will(returnValue(ContainerUtil.newHashSet(FIELD)));
-      allowing(privateFieldEntry).getModifiers(); will(returnValue(ContainerUtil.newHashSet(PRIVATE)));
+      allowing(privateFieldEntry).getTypes(); will(returnValue(Set.of(FIELD)));
+      allowing(privateFieldEntry).getModifiers(); will(returnValue(Set.of(PRIVATE)));
       
-      allowing(publicMethodEntry).getTypes(); will(returnValue(ContainerUtil.newHashSet(METHOD)));
-      allowing(publicMethodEntry).getModifiers(); will(returnValue(ContainerUtil.newHashSet(PUBLIC)));
+      allowing(publicMethodEntry).getTypes(); will(returnValue(Set.of(METHOD)));
+      allowing(publicMethodEntry).getModifiers(); will(returnValue(Set.of(PUBLIC)));
       
-      allowing(publicFieldEntry).getTypes(); will(returnValue(ContainerUtil.newHashSet(FIELD)));
-      allowing(publicFieldEntry).getModifiers(); will(returnValue(ContainerUtil.newHashSet(PUBLIC)));
+      allowing(publicFieldEntry).getTypes(); will(returnValue(Set.of(FIELD)));
+      allowing(publicFieldEntry).getModifiers(); will(returnValue(Set.of(PUBLIC)));
 
-      allowing(publicStaticFieldEntry).getTypes(); will(returnValue(ContainerUtil.newHashSet(FIELD)));
-      allowing(publicStaticFieldEntry).getModifiers(); will(returnValue(ContainerUtil.newHashSet(PUBLIC, STATIC)));
+      allowing(publicStaticFieldEntry).getTypes(); will(returnValue(Set.of(FIELD)));
+      allowing(publicStaticFieldEntry).getModifiers(); will(returnValue(Set.of(PUBLIC, STATIC)));
     }});
     
     assertFalse(matcher.isMatched(fieldEntry));

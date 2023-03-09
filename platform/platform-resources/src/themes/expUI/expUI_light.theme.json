@@ -487,7 +487,10 @@
       "background": "Grey2",
       "borderColor": "Grey2",
       "foreground": "Grey9",
+      "stepForeground": "Grey7",
       "Header.foreground": "Grey13",
+      "shortcutForeground": "Grey13",
+      "shortcutBackground": "Grey5",
       "linkForeground": "Blue9",
       "Button": {
         "foreground": "Grey13",

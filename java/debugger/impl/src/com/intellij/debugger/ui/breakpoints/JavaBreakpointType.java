@@ -22,6 +22,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 
 /**
  * Base class for all Java breakpoint types
+ *
  * @author egor
  */
 public interface JavaBreakpointType<P extends JavaBreakpointProperties> {

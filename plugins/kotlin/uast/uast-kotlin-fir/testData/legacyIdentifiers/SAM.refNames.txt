@@ -38,6 +38,11 @@ lang -> USimpleNameReferenceExpression (identifier = lang) from KtDotQualifiedEx
 java -> USimpleNameReferenceExpression (identifier = java) from KtNameReferenceExpression
 lang -> USimpleNameReferenceExpression (identifier = lang) from KtNameReferenceExpression
 Runnable -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
+Runnable -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
+Runnable -> USimpleNameReferenceExpression (identifier = Runnable) from KtLabelReferenceExpression
+Runnable -> UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) from KtNameReferenceExpression
+l -> USimpleNameReferenceExpression (identifier = l) from KtLabelReferenceExpression
+l -> USimpleNameReferenceExpression (identifier = l) from KtLabelReferenceExpression
 java -> USimpleNameReferenceExpression (identifier = java) from KtNameReferenceExpression
 lang -> USimpleNameReferenceExpression (identifier = lang) from KtNameReferenceExpression
 Runnable -> USimpleNameReferenceExpression (identifier = Runnable) from KtNameReferenceExpression

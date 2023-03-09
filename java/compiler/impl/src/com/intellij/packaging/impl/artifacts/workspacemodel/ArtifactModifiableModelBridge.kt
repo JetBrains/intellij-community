@@ -98,7 +98,7 @@ class ArtifactModifiableModelBridge(
     return artifacts
   }
 
-  override fun getAllArtifactsIncludingInvalid(): MutableList<out Artifact> {
+  override fun getAllArtifactsIncludingInvalid(): List<Artifact> {
     val newBridges = mutableListOf<ArtifactBridge>()
     val artifacts = diff
       .entities(ArtifactEntity::class.java)

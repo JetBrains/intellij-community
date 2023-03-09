@@ -95,7 +95,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
                 }, defaultName = "receiver").first() to it
             }
 
-            val factory = KtPsiFactory(element)
+            val psiFactory = KtPsiFactory(element.project)
             val targetName = reference.text
             val lambdaParameterNamesAndTypes = if (acceptsReceiverAsParameter)
                 listOf(receiverNameAndType!!) + parameterNamesAndTypes
@@ -119,7 +119,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
                     "$receiverPrefix$targetName(${if (matchingParameterIsExtension) "this" else "it"})"
                 }
 
-                factory.createLambdaExpression(parameters = "", body = body)
+                psiFactory.createLambdaExpression(parameters = "", body = body)
             } else {
                 val isExtension = matchingParameterIsExtension && resolvedCall?.resultingDescriptor?.isExtension == true
                 val (params, args) = if (isExtension) {
@@ -129,7 +129,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
                     lambdaParameterNamesAndTypes to parameterNamesAndTypes.map { it.first }
                 }
 
-                factory.createLambdaExpression(
+                psiFactory.createLambdaExpression(
                     parameters = params.joinToString(separator = ", ") {
                         if (valueArgumentParent != null) it.first
                         else it.first + ": " + SOURCE_RENDERER.renderType(it.second)
@@ -148,7 +148,7 @@ class ConvertReferenceToLambdaIntention : SelfTargetingOffsetIndependentIntentio
             }
 
             val wrappedExpression = if (needParentheses)
-                factory.createExpressionByPattern("($0)", lambdaExpression)
+                psiFactory.createExpressionByPattern("($0)", lambdaExpression)
             else
                 lambdaExpression
 

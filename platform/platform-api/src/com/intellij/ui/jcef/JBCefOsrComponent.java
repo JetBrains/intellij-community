@@ -8,7 +8,6 @@ import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.util.Alarm;
-import com.intellij.util.AlarmFactory;
 import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,7 +73,7 @@ class JBCefOsrComponent extends JPanel {
   public void addNotify() {
     super.addNotify();
     myDisposable = Disposer.newDisposable();
-    myAlarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
     if (!JBCefBrowserBase.isCefBrowserCreated(myBrowser)) {
       myBrowser.createImmediately();
     }

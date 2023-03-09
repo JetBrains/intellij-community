@@ -3,8 +3,8 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
 
 interface BaseKotlinUastResolveProviderService {
@@ -96,11 +96,11 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getType(ktDeclaration: KtDeclaration, containingLightDeclaration: PsiModifierListOwner?): PsiType?
 
-    fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType?
+    fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType?
 
     fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType?
 
-    fun nullability(psiElement: PsiElement): TypeNullability?
+    fun nullability(psiElement: PsiElement): KtTypeNullability?
 
     // ----------
     // Evaluation

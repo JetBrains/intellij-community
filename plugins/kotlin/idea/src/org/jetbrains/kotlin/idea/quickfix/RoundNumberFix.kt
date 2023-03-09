@@ -45,7 +45,7 @@ class RoundNumberFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val replaced = element.replaced(KtPsiFactory(file).createExpressionByPattern("$0.$roundFunction()", element))
+        val replaced = element.replaced(KtPsiFactory(project).createExpressionByPattern("$0.$roundFunction()", element))
         file.resolveImportReference(FqName("kotlin.math.$roundFunction")).firstOrNull()?.also {
             ImportInsertHelper.getInstance(project).importDescriptor(file, it)
         }

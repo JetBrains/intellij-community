@@ -10,7 +10,7 @@ interface OpenProjectMethodProvider {
     private val EP_NAME = ExtensionPointName.create<OpenProjectMethodProvider>("com.intellij.cce.openProjectMethodProvider")
 
     fun find(): OpenProjectMethodProvider? {
-      return EP_NAME.getExtensionList().singleOrNull()
+      return EP_NAME.extensionList.singleOrNull()
     }
   }
 }

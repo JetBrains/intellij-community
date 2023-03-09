@@ -88,8 +88,8 @@ public final class VirtualFilePointerTracker {
       leaked.removeAll(storedPointers);
 
       for (VirtualFilePointer pointer : leaked) {
-        ((VirtualFilePointerImpl)pointer).throwDisposalError("Virtual pointer '" + pointer +
-                                                                 "' hasn't been disposed: " + ((VirtualFilePointerImpl)pointer).getStackTrace());
+        ((VirtualFilePointerImpl)pointer).throwDisposalError("Virtual pointer '" + pointer + "' hasn't been disposed:\n" +
+                                                             ((VirtualFilePointerImpl)pointer).getStackTrace());
       }
     }
     finally {

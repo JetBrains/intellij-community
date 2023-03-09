@@ -7,23 +7,22 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
+import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.BindingContext.FUNCTION
 import org.jetbrains.kotlin.resolve.BindingContext.REFERENCE_TARGET
 import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.types.KotlinType
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
 
@@ -63,6 +62,8 @@ class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
 
         private fun KotlinType.allSupertypes(): Set<KotlinType> = constructor.supertypes.flatMapTo(HashSet()) { it.allSupertypes() } + this
 
+        private fun KtLambdaExpression.descriptor(context: BindingContext): SimpleFunctionDescriptor? = context[FUNCTION, functionLiteral]
+
         private abstract class ReferenceTreeVisitor : KtTreeVisitorVoid() {
             var referenced = false
                 protected set
@@ -74,59 +75,32 @@ class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
             }
         }
 
-        private class ParameterReferenceTreeVisitor(name: String?) : ReferenceTreeVisitor() {
-            val name = name ?: "it"
-            override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-                if (expression.getReferencedName() == name) referenced = true
-            }
+        private class ParameterReferenceTreeVisitor(
+            lambdaDescriptor: SimpleFunctionDescriptor,
+            val context: BindingContext
+        ) : ReferenceTreeVisitor() {
+            val lambdaParameter = lambdaDescriptor.valueParameters.singleOrNull()
 
-            override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {
-                // Do not parse reference when name is shadowed in lambda
-                if (lambdaExpression.valueParameters.none { it.name == name })
-                    super.visitLambdaExpression(lambdaExpression)
+            override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                if (referenced) return
+
+                if (expression.getResolvedCall(context)?.resultingDescriptor == lambdaParameter) {
+                    referenced = true
+                }
             }
         }
 
-        private class ImplicitThisReferenceVisitor(
-            val matchType: KotlinType,
-            val context: BindingContext,
-            val thisTypes: List<KotlinType> = emptyList()
+        private class ThisReferenceVisitor(
+            val lambdaDescriptor: SimpleFunctionDescriptor,
+            val context: BindingContext
         ) : ReferenceTreeVisitor() {
-            fun KotlinType.typeMatchesOutermostThis(): Boolean {
-                if (!this.isAssignableFrom(matchType)) return false
-                return thisTypes.none { this.isAssignableFrom(it) }
-            }
+            override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
+                if (referenced) return
 
-            override fun visitThisExpression(expression: KtThisExpression) {
-                if (expression.labelQualifier == null)
-                    referenced = true // Be safe to prevent false positives
-            }
-
-            override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {
-                run label@{
-                    val thisExpression = expression.receiverExpression as? KtThisExpression ?: return@label
-                    val callExpression = expression.selectorExpression as? KtCallExpression ?: return@label
-                    if (thisExpression.labelQualifier != null) return@label
-                    if (callExpression.getReceiverType(context)?.typeMatchesOutermostThis() == true) return
+                val receiver = expression.getResolvedCall(context)?.let { it.extensionReceiver ?: it.dispatchReceiver }
+                if (receiver?.getReceiverTargetDescriptor(context) == lambdaDescriptor) {
+                    referenced = true
                 }
-
-                super.visitDotQualifiedExpression(expression)
-            }
-
-            override fun visitCallExpression(expression: KtCallExpression) {
-                if (expression.getStrictParentOfType<KtDotQualifiedExpression>() == null) {
-                    if (expression.getReceiverType(context)?.typeMatchesOutermostThis() == true) referenced = true
-                }
-                expression.singleLambdaExpression()?.let { lambdaExpression ->
-                    val lambdaReceiverType = lambdaExpression.getType(context)?.getReceiverTypeFromFunctionType()
-                    val visitor = ImplicitThisReferenceVisitor(
-                        matchType,
-                        context,
-                        thisTypes.let { if (lambdaReceiverType != null) it.plus(lambdaReceiverType) else it }
-                    )
-                    lambdaExpression.bodyExpression?.acceptChildren(visitor)
-                    if (visitor.referenced) referenced = true
-                } ?: super.visitCallExpression(expression)
             }
         }
     }
@@ -162,9 +136,12 @@ class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
                     val parameterName = lambdaExpression.valueParameters.singleOrNull()?.name ?: "it"
                     if (!receiverExpression.textMatches(parameterName)) return
 
-                    if (forEachLambda != null && (forEachLambda.valueParameters.singleOrNull()?.name ?: "it") == parameterName)
+                    if (forEachLambda != null && (forEachLambda.valueParameters.singleOrNull()?.name ?: "it") == parameterName) {
                         null // Parameter from outer lambda is shadowed
-                    else ParameterReferenceTreeVisitor(parameterName)
+                    } else {
+                        val lambdaDescriptor = lambdaExpression.descriptor(context) ?: return
+                        ParameterReferenceTreeVisitor(lambdaDescriptor, context)
+                    }
                 }
                 "apply" -> {
                     val receiverType = innerCallExpression.getReceiverType(context) ?: return
@@ -175,8 +152,8 @@ class SimplifyNestedEachInScopeFunctionInspection : AbstractKotlinInspection() {
                         val labelName = receiverExpression.getLabelName()
                         if (labelName != null && labelName != (labelExpression?.getLabelName() ?: scopeFunctionShortName)) return
                     }
-
-                    ImplicitThisReferenceVisitor(lambdaType, context)
+                    val lambdaDescriptor = lambdaExpression.descriptor(context) ?: return
+                    ThisReferenceVisitor(lambdaDescriptor, context)
                 }
                 else -> return
             }

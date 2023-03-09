@@ -36,4 +36,4 @@ fun UClass.isLocal(): Boolean {
   return if (parent is UClass) parent.isLocal() else false
 }
 
-fun PsiType.isInheritorOf(baseClassName: String) = InheritanceUtil.isInheritor(this, baseClassName)
+fun PsiType.isInheritorOf(vararg baseClassNames: String) = baseClassNames.any { InheritanceUtil.isInheritor(this, it) }

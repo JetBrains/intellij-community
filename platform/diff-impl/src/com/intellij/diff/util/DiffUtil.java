@@ -22,7 +22,6 @@ import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
-import com.intellij.diff.util.MergeConflictType.Type;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.lang.Language;
@@ -169,24 +168,39 @@ public final class DiffUtil {
 
   @Nullable
   public static EditorHighlighter createEditorHighlighter(@Nullable Project project, @NotNull DocumentContent content) {
-    FileType type = content.getContentType();
-    VirtualFile file = content.getHighlightFile();
-    Language language = content.getUserData(DiffUserDataKeys.LANGUAGE);
-
     EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
+
+    VirtualFile file = FileDocumentManager.getInstance().getFile(content.getDocument());
+    FileType contentType = content.getContentType();
+    VirtualFile highlightFile = content.getHighlightFile();
+    Language language = content.getUserData(DiffUserDataKeys.LANGUAGE);
+    boolean hasContentType = contentType != null &&
+                             contentType != PlainTextFileType.INSTANCE &&
+                             contentType != UnknownFileType.INSTANCE;
+
     if (language != null) {
-      SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file);
+      SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, highlightFile);
       return highlighterFactory.createEditorHighlighter(syntaxHighlighter, EditorColorsManager.getInstance().getGlobalScheme());
     }
+
+    if (highlightFile != null && highlightFile.isValid()) {
+      if (!hasContentType ||
+          FileTypeRegistry.getInstance().isFileOfType(highlightFile, contentType) ||
+          highlightFile instanceof LightVirtualFile) {
+        return highlighterFactory.createEditorHighlighter(project, highlightFile);
+      }
+    }
+
     if (file != null && file.isValid()) {
-      if ((type == null || type == PlainTextFileType.INSTANCE) ||
-          FileTypeRegistry.getInstance().isFileOfType(file, type) ||
-          file instanceof LightVirtualFile) {
+      FileType type = file.getFileType();
+      boolean hasFileType = !type.isBinary() && type != PlainTextFileType.INSTANCE;
+      if (!hasContentType || hasFileType) {
         return highlighterFactory.createEditorHighlighter(project, file);
       }
     }
-    if (type != null) {
-      return highlighterFactory.createEditorHighlighter(project, type);
+
+    if (contentType != null) {
+      return highlighterFactory.createEditorHighlighter(project, contentType);
     }
     return null;
   }
@@ -617,7 +631,8 @@ public final class DiffUtil {
     if (content instanceof DocumentContent) {
       Document document = ((DocumentContent)content).getDocument();
       if (FileDocumentManager.getInstance().isPartialPreviewOfALargeFile(document)) {
-        components.add(wrapEditorNotificationComponent(DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded"))));
+        components.add(wrapEditorNotificationComponent(
+          DiffNotifications.createNotification(DiffBundle.message("error.file.is.too.large.only.preview.is.loaded"))));
       }
     }
 
@@ -1546,13 +1561,13 @@ public final class DiffUtil {
 
   @NotNull
   private static List<JComponent> createNotifications(@Nullable DiffViewer viewer,
-                                                      @NotNull List<DiffNotificationProvider> providers) {
+                                                      @NotNull List<? extends DiffNotificationProvider> providers) {
     List<JComponent> notifications = ContainerUtil.mapNotNull(providers, it -> it.createNotification(viewer));
     return wrapEditorNotificationBorders(notifications);
   }
 
   @NotNull
-  public static List<JComponent> wrapEditorNotificationBorders(@NotNull List<JComponent> notifications) {
+  public static List<JComponent> wrapEditorNotificationBorders(@NotNull List<? extends JComponent> notifications) {
     return ContainerUtil.map(notifications, component -> wrapEditorNotificationComponent(component));
   }
 

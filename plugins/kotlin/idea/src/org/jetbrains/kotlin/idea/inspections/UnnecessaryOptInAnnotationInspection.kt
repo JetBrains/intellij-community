@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -21,7 +20,6 @@ import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.core.OLD_EXPERIMENTAL_FQ_NAME
 import org.jetbrains.kotlin.idea.core.OPT_IN_FQ_NAMES
 import org.jetbrains.kotlin.idea.core.getDirectlyOverriddenDeclarations
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
@@ -41,10 +39,6 @@ import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.constants.ArrayValue
 import org.jetbrains.kotlin.resolve.constants.KClassValue
 import org.jetbrains.kotlin.resolve.constants.StringValue
-import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
-import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -63,6 +57,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  * or the entire unnecessary `@OptIn` annotation if it contains a single marker.
  */
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.CanSealedSubClassBeObjectInspection.Companion.asKtClass
+import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.resolve.descriptorUtil.*
 
 class UnnecessaryOptInAnnotationInspection : AbstractKotlinInspection() {
 
@@ -171,6 +168,26 @@ private class MarkerCollector(private val resolutionFacade: ResolutionFacade) {
      * @return true if no marked names was found during the check, false if there is at least one marked name
      */
     fun isUnused(marker: FqName): Boolean = marker !in foundMarkers
+
+    /**
+     * Collect experimental markers for a declaration and add them to [foundMarkers].
+     *
+     * Find a class whose superclass is annotated with @SubclassOptInRequired
+     * and add the experimental marker to [foundMarkers].
+     *
+     * @param declaration the declaration to process
+     */
+
+    fun collectMarkers(declaration: KtClassOrObject?) {
+        if (declaration == null) return
+        for (superTypeEntry in declaration.superTypeListEntries) {
+            val superClassDescriptor = superTypeEntry.asKtClass()?.descriptor ?: continue
+            val superClassAnnotation = superClassDescriptor.annotations.findAnnotation(OptInNames.SUBCLASS_OPT_IN_REQUIRED_FQ_NAME) ?: continue
+            val markerFqName = superClassAnnotation.allValueArguments[OptInNames.OPT_IN_ANNOTATION_CLASS]
+                ?.safeAs<KClassValue>()?.getArgumentType(superClassDescriptor.module)?.fqName
+            markerFqName?.let { foundMarkers += it }
+        }
+    }
 
     /**
      * Collect experimental markers for a declaration and add them to [foundMarkers].
@@ -322,6 +339,11 @@ private class OptInMarkerVisitor : KtTreeVisitor<MarkerCollector>() {
     override fun visitReferenceExpression(expression: KtReferenceExpression, markerCollector: MarkerCollector): Void? {
         markerCollector.collectMarkers(expression)
         return super.visitReferenceExpression(expression, markerCollector)
+    }
+
+    override fun visitClassOrObject(expression: KtClassOrObject, markerCollector: MarkerCollector): Void? {
+        markerCollector.collectMarkers(expression)
+        return super.visitClassOrObject(expression, markerCollector)
     }
 }
 

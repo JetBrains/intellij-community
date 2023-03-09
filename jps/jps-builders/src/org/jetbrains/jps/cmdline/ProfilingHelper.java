@@ -15,8 +15,12 @@
  */
 package org.jetbrains.jps.cmdline;
 
+import com.intellij.openapi.diagnostic.Logger;
+
 @SuppressWarnings("ALL")
 class ProfilingHelper {
+  private static final Logger LOG = Logger.getInstance(ProfilingHelper.class);
+
   private final Class<?> myControllerClass;
   private final Object myController;
 
@@ -28,24 +32,32 @@ class ProfilingHelper {
     myController = builderClass.getMethod("build").invoke(builderClass.getMethod("self").invoke(builder));
   }
 
-  public void startProfiling() {
-    try {
-      final Class<?> settingsClass = Class.forName("com.yourkit.api.controller.CpuProfilingSettings");
-      myControllerClass.getMethod("startSampling", settingsClass).invoke(myController, new Object[] {settingsClass.newInstance()});
-    }
-    catch (Throwable e) {
-      e.printStackTrace();
-    }
+  private void startProfiling(String startMethod) throws Exception {
+    final Class<?> settingsClass = Class.forName("com.yourkit.api.controller.CpuProfilingSettings");
+    myControllerClass.getMethod(startMethod, settingsClass).invoke(myController, new Object[]{settingsClass.newInstance()});
+  }
+
+  public void startSamplingProfiling() throws Exception{
+    startProfiling("startSampling");
+  }
+
+  public void startTracingProfiling() throws Exception{
+    startProfiling("startTracing");
   }
 
   public void stopProfiling() {
     try {
       final String path = (String)myControllerClass.getMethod("capturePerformanceSnapshot").invoke(myController);
-      System.err.println("CPU Snapshot captured: " + path);
+
+      String message = "CPU Snapshot captured: " + path;
+      LOG.warn(message);
+      System.err.println(message);
+
       myControllerClass.getMethod("stopCpuProfiling").invoke(myController);
     }
     catch (Throwable e) {
       e.printStackTrace();
+      LOG.error(e);
     }
   }
 }

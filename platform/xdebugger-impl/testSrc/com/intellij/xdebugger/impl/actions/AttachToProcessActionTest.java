@@ -43,7 +43,7 @@ public class AttachToProcessActionTest extends HeavyPlatformTestCase {
   }
 
   private List<AttachToProcessItem> fixtureCollectAttachItems(ProcessInfo[] infos, XAttachDebuggerProvider @NotNull ... providers) {
-    List<ProcessInfo> infoList = ContainerUtil.newArrayList(infos);
+    List<ProcessInfo> infoList = List.of(infos);
     return doCollectAttachProcessItems(getProject(), LocalAttachHost.INSTANCE, infoList, DumbProgressIndicator.INSTANCE, Arrays.asList(providers));
   }
 

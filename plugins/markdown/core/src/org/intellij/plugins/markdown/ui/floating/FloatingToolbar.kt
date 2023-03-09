@@ -203,7 +203,7 @@ open class FloatingToolbar(val editor: Editor, private val actionGroupId: String
       onUpdated: (ActionToolbar) -> Unit
     ): ActionToolbar {
       val toolbar = object : ActionToolbarImpl(place, group, horizontal) {
-        override fun actionsUpdated(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {
+        override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
           val firstTime = forced && !hasVisibleActions()
           super.actionsUpdated(forced, newVisibleActions)
           if (firstTime) {

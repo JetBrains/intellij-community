@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.*
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.TYPE_RENDERING_OPTIONS
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
@@ -42,9 +41,8 @@ internal class FunctionLookupElementFactory {
         )
 
         val builder = LookupElementBuilder.create(lookupObject, symbol.name.asString())
-            .withTypeText(substitutor.substitute(symbol.returnType).render(TYPE_RENDERING_OPTIONS))
             .withTailText(getTailText(symbol, substitutor))
-            .let { withSymbolInfo(symbol, it) }
+            .let { withSymbolInfo(symbol, it, substitutor) }
 
         return updateLookupElementBuilder(options, builder)
     }

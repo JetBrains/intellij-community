@@ -128,7 +128,7 @@ object FindTransformationMatcher : TransformationMatcher {
         }
 
         override fun generateExpressionToReplaceLoopAndCheckErrors(resultCallChain: KtExpression): KtExpression {
-            return KtPsiFactory(resultCallChain).createExpressionByPattern("return $0", resultCallChain, reformat = false)
+            return KtPsiFactory(resultCallChain.project).createExpressionByPattern("return $0", resultCallChain, reformat = false)
         }
 
         override fun convertLoop(resultCallChain: KtExpression, commentSavingRangeHolder: CommentSavingRangeHolder): KtExpression {
@@ -254,7 +254,7 @@ object FindTransformationMatcher : TransformationMatcher {
                 return object : FindOperationGenerator(this) {
                     override fun generate(chainedCallGenerator: ChainedCallGenerator): KtExpression {
                         val generated = this@useElvisOperatorIfNeeded.generate(chainedCallGenerator)
-                        return KtPsiFactory(generated).createExpressionByPattern(
+                        return KtPsiFactory(generated.project).createExpressionByPattern(
                             "$0\n ?: $1", generated, valueIfNotFound,
                             reformat = chainedCallGenerator.reformat
                         )
@@ -323,7 +323,7 @@ object FindTransformationMatcher : TransformationMatcher {
                     return object : FindOperationGenerator(generator) {
                         override fun generate(chainedCallGenerator: ChainedCallGenerator): KtExpression {
                             val chainedCall = generator.generate(chainedCallGenerator)
-                            return KtPsiFactory(chainedCall).createExpressionByPattern(
+                            return KtPsiFactory(chainedCall.project).createExpressionByPattern(
                                 "if ($0) $1 else $2", chainedCall, valueIfFound, valueIfNotFound,
                                 reformat = chainedCallGenerator.reformat
                             )

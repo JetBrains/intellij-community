@@ -105,7 +105,8 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     if (!mySuggestSuperTypes) return QuickFixBundle.message("fix.return.type.text", myDisplayName, myCanonicalText);
     PsiType type = Objects.requireNonNull(myReturnTypePointer.getType());
     boolean hasPredecessor = type.getSuperTypes().length != 0;
-    return QuickFixBundle.message(hasPredecessor ? "fix.return.type.or.predecessor.text" : "fix.return.type.text", myDisplayName, myCanonicalText);
+    return QuickFixBundle.message(hasPredecessor ? "fix.return.type.or.predecessor.text" : "fix.return.type.text",
+                                  myDisplayName, myCanonicalText);
   }
 
   @Override
@@ -119,16 +120,15 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    final PsiMethod myMethod = (PsiMethod)startElement;
+    final PsiMethod method = (PsiMethod)startElement;
 
-    final PsiType myReturnType = myReturnTypePointer.getType();
-    if (BaseIntentionAction.canModify(myMethod) &&
-        myReturnType != null &&
-        myReturnType.isValid()) {
-      final PsiType returnType = myMethod.getReturnType();
+    final PsiType newType = myReturnTypePointer.getType();
+    if (BaseIntentionAction.canModify(method) && newType != null && newType.isValid()) {
+      final PsiType returnType = method.getReturnType();
       if (returnType == null) return true;
-      if (returnType.isValid() && !Comparing.equal(myReturnType, returnType)) {
-        return PsiTypesUtil.allTypeParametersResolved(myMethod, myReturnType);
+      if (returnType.isValid() && !Comparing.equal(newType, returnType)) {
+        if (!mySuggestSuperTypes && newType.getCanonicalText().equals(returnType.getCanonicalText())) return false;
+        return PsiTypesUtil.allTypeParametersResolved(method, newType);
       }
     }
     return false;
@@ -140,27 +140,47 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                      Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    final PsiMethod myMethod = (PsiMethod)startElement;
+    final PsiMethod method = (PsiMethod)startElement;
 
-    if (!FileModificationService.getInstance().prepareFileForWrite(myMethod.getContainingFile())) return;
-    PsiType returnType = myReturnTypePointer.getType();
-    if (returnType == null) return;
-    boolean isNullType = TypeConversionUtil.isNullType(returnType);
-    PsiType myReturnType = isNullType ? PsiType.getJavaLangObject(myMethod.getManager(), myMethod.getResolveScope()) : returnType;
-    PsiTypeElement typeElement = myMethod.getReturnTypeElement();
+    if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return;
+    PsiType newType = myReturnTypePointer.getType();
+    if (newType == null) return;
+    boolean isNullType = TypeConversionUtil.isNullType(newType);
+    PsiType returnType = isNullType ? PsiType.getJavaLangObject(method.getManager(), method.getResolveScope()) : newType;
+    PsiTypeElement typeElement = method.getReturnTypeElement();
     if (typeElement == null) {
       WriteCommandAction.runWriteCommandAction(project, QuickFixBundle.message("fix.return.type.family"), null,
-                                               () -> addReturnType(project, myMethod, myReturnType));
+                                               () -> addReturnType(project, method, returnType));
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     }
-    PsiType[] superTypes = mySuggestSuperTypes ? myReturnType.getSuperTypes() : PsiType.EMPTY_ARRAY;
+    PsiType[] superTypes = mySuggestSuperTypes ? returnType.getSuperTypes() : PsiType.EMPTY_ARRAY;
     if ((!isNullType && superTypes.length == 0) || editor == null || ApplicationManager.getApplication().isUnitTestMode()) {
-      changeReturnType(project, file, editor, myMethod, myReturnType);
-      return;
+      changeReturnType(project, file, editor, method, returnType);
     }
-    List<PsiType> returnTypes = getReturnTypes(superTypes, myReturnType);
-    if (returnTypes.isEmpty()) return;
-    selectReturnType(project, file, editor, returnTypes, myReturnType, myMethod);
+    else {
+      Set<PsiType> allSuperTypes = collectSuperTypes(returnType, startElement, new LinkedHashSet<>());
+      List<PsiType> returnTypes = getReturnTypes(allSuperTypes.toArray(PsiType.EMPTY_ARRAY), returnType);
+      final PsiType currentType = method.getReturnType();
+      assert currentType != null;
+      returnTypes.removeIf(e -> e.getCanonicalText().equals(currentType.getCanonicalText()));
+      if (returnTypes.isEmpty()) return;
+      selectReturnType(project, file, editor, returnTypes, returnType, method);
+    }
+  }
+
+  private static Set<PsiType> collectSuperTypes(PsiType type, PsiElement context, Set<PsiType> result) {
+    final PsiType[] superTypes = type.getSuperTypes();
+    if (superTypes.length == 0 && type instanceof PsiArrayType) {
+      final Project project = context.getProject();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      result.add(factory.createTypeFromText(CommonClassNames.JAVA_IO_SERIALIZABLE, context));
+      result.add(factory.createTypeFromText(CommonClassNames.JAVA_LANG_CLONEABLE, context));
+      result.add(factory.createTypeFromText(CommonClassNames.JAVA_LANG_OBJECT, context));
+    }
+    for (PsiType superType : superTypes) {
+      if (result.add(superType)) collectSuperTypes(superType, context, result);
+    }
+    return result;
   }
 
   private static void addReturnType(@NotNull Project project, @NotNull PsiMethod myMethod, @NotNull PsiType myReturnType) {
@@ -170,7 +190,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
   @NotNull
   private static List<PsiType> getReturnTypes(PsiType @NotNull [] types, @NotNull PsiType defaultType) {
-    Map<String, PsiType> map = new HashMap<>();
+    Map<String, PsiType> map = new LinkedHashMap<>();
     String defaultTypeKey = serialize(defaultType);
     map.put(defaultTypeKey, defaultType);
     Arrays.stream(types).forEach(t -> map.put(serialize(t), t));
@@ -196,12 +216,12 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return TypeConversionUtil.erasure(type).getCanonicalText();
   }
 
-  void selectReturnType(@NotNull Project project,
-                        @NotNull PsiFile file,
-                        @NotNull Editor editor,
-                        @NotNull List<PsiType> returnTypes,
-                        @NotNull PsiType myReturnType,
-                        @NotNull PsiMethod myMethod) {
+  private void selectReturnType(@NotNull Project project,
+                                @NotNull PsiFile file,
+                                @NotNull Editor editor,
+                                @NotNull List<PsiType> returnTypes,
+                                @NotNull PsiType myReturnType,
+                                @NotNull PsiMethod myMethod) {
     PsiTypeElement typeElement = myMethod.getReturnTypeElement();
     if (typeElement == null) return;
     TemplateBuilderImpl builder = new TemplateBuilderImpl(typeElement);
@@ -224,35 +244,35 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   private void changeReturnType(@NotNull Project project,
                                 @NotNull PsiFile file,
                                 Editor editor,
-                                @NotNull PsiMethod myMethod,
-                                @NotNull PsiType myReturnType) {
+                                @NotNull PsiMethod method,
+                                @NotNull PsiType returnType) {
     if (myFixWholeHierarchy) {
-      final PsiMethod superMethod = myMethod.findDeepestSuperMethod();
+      final PsiMethod superMethod = method.findDeepestSuperMethod();
       final PsiType superReturnType = superMethod == null ? null : superMethod.getReturnType();
       if (superReturnType != null &&
-          !Comparing.equal(myReturnType, superReturnType) &&
-          !changeClassTypeArgument(myMethod, project, superReturnType, superMethod.getContainingClass(), editor, myReturnType)) {
+          !Comparing.equal(returnType, superReturnType) &&
+          !changeClassTypeArgument(method, project, superReturnType, superMethod.getContainingClass(), editor, returnType)) {
         return;
       }
     }
 
-    final List<PsiMethod> affectedMethods = changeReturnType(myMethod, myReturnType);
+    final List<PsiMethod> affectedMethods = changeReturnType(method, returnType);
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiReturnStatement statementToSelect = null;
-    if (!PsiType.VOID.equals(myReturnType)) {
-      final ReturnStatementAdder adder = new ReturnStatementAdder(factory, myReturnType);
+    if (!PsiType.VOID.equals(returnType)) {
+      final ReturnStatementAdder adder = new ReturnStatementAdder(factory, returnType);
 
       for (PsiMethod affectedMethod : affectedMethods) {
         PsiReturnStatement statement = adder.addReturnForMethod(file, affectedMethod);
-        if (statement != null && affectedMethod == myMethod) {
+        if (statement != null && affectedMethod == method) {
           statementToSelect = statement;
         }
       }
     }
 
     if (statementToSelect != null) {
-      Editor editorForMethod = getEditorForMethod(myMethod, project, editor, file);
+      Editor editorForMethod = getEditorForMethod(method, project, editor, file);
       if (editorForMethod != null) {
         selectInEditor(statementToSelect.getReturnValue(), editorForMethod);
       }
@@ -264,12 +284,12 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     @NotNull private final PsiElementFactory factory;
     @NotNull private final PsiType myTargetType;
 
-    private ReturnStatementAdder(@NotNull final PsiElementFactory factory, @NotNull final PsiType targetType) {
+    private ReturnStatementAdder(@NotNull PsiElementFactory factory, @NotNull PsiType targetType) {
       this.factory = factory;
       myTargetType = targetType;
     }
 
-    private PsiReturnStatement addReturnForMethod(final PsiFile file, final PsiMethod method) {
+    private PsiReturnStatement addReturnForMethod(PsiFile file, PsiMethod method) {
       final PsiModifierList modifiers = method.getModifierList();
       if (modifiers.hasModifierProperty(PsiModifier.ABSTRACT) || method.getBody() == null) {
         return null;
@@ -307,7 +327,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     }
   }
 
-  private static Editor getEditorForMethod(PsiMethod myMethod, @NotNull final Project project, final Editor editor, final PsiFile file) {
+  private static Editor getEditorForMethod(PsiMethod myMethod, @NotNull Project project, Editor editor, PsiFile file) {
 
     PsiFile containingFile = myMethod.getContainingFile();
     if (containingFile != file) {
@@ -317,7 +337,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     return editor;
   }
 
-  private static PsiType getHierarchyAdjustedReturnType(final PsiMethod method, @NotNull PsiType returnType) {
+  private static PsiType getHierarchyAdjustedReturnType(PsiMethod method, @NotNull PsiType returnType) {
     for (PsiMethod superMethod : method.findDeepestSuperMethods()) {
       PsiType superMethodReturnType = superMethod.getReturnType();
       if (superMethodReturnType != null && superMethodReturnType.isAssignableFrom(returnType)) {
@@ -331,7 +351,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @NotNull
-  private List<PsiMethod> changeReturnType(final PsiMethod method, @NotNull PsiType returnType) {
+  private List<PsiMethod> changeReturnType(PsiMethod method, @NotNull PsiType returnType) {
     PsiMethod[] methods = new PsiMethod[] {method};
     if (myFixWholeHierarchy) {
       PsiType type = getHierarchyAdjustedReturnType(method, returnType);
@@ -427,7 +447,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @Nullable
-  private static PsiReferenceParameterList findTypeArgumentsList(final PsiClass superClass, final PsiClass derivedClass) {
+  private static PsiReferenceParameterList findTypeArgumentsList(PsiClass superClass, PsiClass derivedClass) {
     PsiReferenceParameterList referenceParameterList = null;
     if (derivedClass instanceof PsiAnonymousClass) {
       referenceParameterList = ((PsiAnonymousClass)derivedClass).getBaseClassReference().getParameterList();
@@ -447,8 +467,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   @Nullable
-  private static PsiReferenceParameterList extractReferenceParameterList(final PsiClass superClass,
-                                                                         final PsiReferenceList extendsList) {
+  private static PsiReferenceParameterList extractReferenceParameterList(PsiClass superClass, PsiReferenceList extendsList) {
     for (PsiJavaCodeReferenceElement referenceElement : extendsList.getReferenceElements()) {
       final PsiElement element = referenceElement.resolve();
       if (element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, superClass, true)) {

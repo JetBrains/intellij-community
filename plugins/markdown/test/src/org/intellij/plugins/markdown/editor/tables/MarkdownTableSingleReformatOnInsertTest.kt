@@ -104,6 +104,54 @@ class MarkdownTableSingleReformatOnInsertTest: LightPlatformCodeInsightTestCase(
     doTest(before, after)
   }
 
+  fun `test reformatting is not confused by escaped pipe`() {
+    // language=Markdown
+    val before = """
+    | none |
+    | :---:  |
+    | A\|B<caret> |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    | none |
+    |:----:|
+    | A\|B<caret> |
+    """.trimIndent()
+    doTest(before, after)
+  }
+
+  fun `test reformatting is not confused by escaped pipe in table with multiple columns`() {
+    // language=Markdown
+    val before = """
+    | none |    A\|B |
+    | :---:  |  ---: |
+    | A\|B<caret> | A\|B\|\|\|B<caret> |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    | none |        A\|B |
+    |:----:|------------:|
+    | A\|B<caret> | A\|B\|\|\|B<caret> |
+    """.trimIndent()
+    doTest(before, after)
+  }
+
+  fun `test reformatting is not confused by escaped pipe inside code span`() {
+    // language=Markdown
+    val before = """
+    | none |
+    | :---:  |
+    | `A\|B`<caret> |
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    |  none  |
+    |:------:|
+    | `A\|B`<caret> |
+    """.trimIndent()
+    doTest(before, after)
+  }
+
   private fun doTest(before: String, after: String, trimToMaxContent: Boolean = false) {
     configureFromFileText("some.md", before)
     val table = TableUtils.findTable(file, 0)!!

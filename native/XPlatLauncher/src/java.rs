@@ -110,7 +110,7 @@ unsafe fn prepare_jni_env(
     debug!("Create VM result={create_jvm_result}");
 
     match create_jvm_result {
-        jni_sys::JNI_OK => { }
+        jni_sys::JNI_OK => { debug!("JNI_OK: succesfully created JNI env") }
         jni_sys::JNI_ERR => bail!("JNI_ERR: unknown error"),
         jni_sys::JNI_EDETACHED => bail!("JNI_EDETACHED: thread is not attached to JVM"),
         jni_sys::JNI_EVERSION => bail!("JNI_EVERSION: wrong JNI version"),
@@ -140,7 +140,9 @@ pub fn call_intellij_main(jni_env: jni::JNIEnv<'_>, args: Vec<String>) -> Result
         jni_env.set_object_array_element(main_args, i as jni_sys::jsize, j_string)?;
     }
 
-    let method_call_args = vec![JValue::from(main_args)];
+    let method_call_args = unsafe {
+        vec![JValue::from(JObject::from_raw(main_args))]
+    };
 
     let args_string = args.join(", ");
     debug!("Calling IntelliJ main, args: {args_string}");

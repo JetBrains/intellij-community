@@ -6,9 +6,9 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
 
-interface <lineMarker descr="Is implemented by NotATest NotATest2 NotATest3  Click or press ... to navigate">Some</lineMarker>
+interface <lineMarker descr="Is implemented by NotATest (testing) NotATest2 (testing) NotATest3 (testing) Press ... to navigate">Some</lineMarker>
 
-open class <lineMarker descr="Is subclassed by NotATest2 NotATest3  Click or press ... to navigate">NotATest</lineMarker>: Some {
+open class <lineMarker descr="Is subclassed by NotATest2 (testing) NotATest3 (testing) Press ... to navigate">NotATest</lineMarker>: Some {
 
 }
 
@@ -30,11 +30,11 @@ class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg
 
 class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest2</lineMarker>: TestCase() {
 
-    override fun <lineMarker descr="Overrides function in 'TestCase'">setUp</lineMarker>() {
+    override fun <lineMarker descr="Overrides function in TestCase (junit.framework) Press ... to navigate">setUp</lineMarker>() {
         super.setUp()
     }
 
-    override fun <lineMarker descr="Overrides function in 'TestCase'">tearDown</lineMarker>() {
+    override fun <lineMarker descr="Overrides function in TestCase (junit.framework) Press ... to navigate">tearDown</lineMarker>() {
         super.tearDown()
     }
 }

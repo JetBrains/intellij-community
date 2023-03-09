@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.GlobalUndoableAction;
@@ -23,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.Consumer;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +35,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class AttachDirectoryUtils {
+public final class AttachDirectoryUtils {
   public static void chooseAndAddDirectoriesWithUndo(@NotNull Project project, @Nullable Consumer<? super List<VirtualFile>> callback) {
     Module module = getAttachTargetModule(project);
     FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createAllButJarContentsDescriptor();
@@ -43,21 +45,23 @@ public class AttachDirectoryUtils {
     });
   }
 
-  public static void addDirectoriesWithUndo(@NotNull Project project, @NotNull List<VirtualFile> roots) {
+  public static void addDirectoriesWithUndo(@NotNull Project project, @NotNull List<? extends VirtualFile> roots) {
     Module module = getAttachTargetModule(project);
     if (module == null) return;
     addAndSelectDirectoriesWithUndo(project, module, roots);
   }
 
-  private static void addAndSelectDirectoriesWithUndo(@NotNull Project project, @Nullable Module module, @NotNull List<VirtualFile> roots) {
+  private static void addAndSelectDirectoriesWithUndo(@NotNull Project project, @Nullable Module module, @NotNull List<? extends VirtualFile> roots) {
     addRemoveEntriesWithUndo(project, module, roots, true);
     VirtualFile file = ContainerUtil.getFirstItem(roots);
     if (file != null) {
-      ProjectViewSelectInTarget.select(project, file, ProjectViewPane.ID, null, file, true);
+      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), () ->
+        ProjectViewSelectInTarget.select(project, file, ProjectViewPane.ID, null, file, true)
+      );
     }
   }
 
-  public static void addRemoveEntriesWithUndo(@NotNull Project project, @Nullable Module module, @NotNull List<VirtualFile> roots, boolean add) {
+  public static void addRemoveEntriesWithUndo(@NotNull Project project, @Nullable Module module, @NotNull List<? extends VirtualFile> roots, boolean add) {
     List<VirtualFile> adjustedRoots = ContainerUtil.newArrayList(JBIterable.from(roots)
       .filter(o -> add == (ModuleUtilCore.findModuleForFile(o, project) == null))
       .filterMap(o -> o.isDirectory() ? o : o.getParent())
@@ -87,13 +91,13 @@ public class AttachDirectoryUtils {
     });
   }
 
-  public static void excludeEntriesWithUndo(@NotNull Project project, @NotNull List<VirtualFile> roots, boolean exclude) {
+  public static void excludeEntriesWithUndo(@NotNull Project project, @NotNull List<? extends VirtualFile> roots, boolean exclude) {
     Module module = getAttachTargetModule(project);
     if (module != null) {
       excludeEntriesWithUndo(module, roots, exclude);
     }
   }
-  public static void excludeEntriesWithUndo(@NotNull Module module, @NotNull List<VirtualFile> roots, boolean exclude) {
+  public static void excludeEntriesWithUndo(@NotNull Module module, @NotNull List<? extends VirtualFile> roots, boolean exclude) {
     if (roots.isEmpty()) return;
     Project project = module.getProject();
 
@@ -118,12 +122,12 @@ public class AttachDirectoryUtils {
     });
   }
 
-  public static String getDisplayName(@NotNull List<VirtualFile> roots) {
+  public static String getDisplayName(@NotNull List<? extends VirtualFile> roots) {
     return roots.size() == 1 ? "directory '" + roots.get(0).getName() + "'" :
            roots.size() + " " + StringUtil.pluralize("directory", roots.size());
   }
 
-  private static void addRemoveEntriesInner(@NotNull Project project, @Nullable Module module, @NotNull List<VirtualFile> files, boolean add) {
+  private static void addRemoveEntriesInner(@NotNull Project project, @Nullable Module module, @NotNull List<? extends VirtualFile> files, boolean add) {
     if (module == null) module = getAttachTargetModule(project);
     if (module == null) module = createDefaultModule(project);
     ModuleRootModificationUtil.updateModel(module, model -> {
@@ -142,7 +146,7 @@ public class AttachDirectoryUtils {
     });
   }
 
-  private static void excludeEntriesInner(@NotNull Module module, @NotNull List<VirtualFile> files, boolean exclude) {
+  private static void excludeEntriesInner(@NotNull Module module, @NotNull List<? extends VirtualFile> files, boolean exclude) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       for (ContentEntry entry : model.getContentEntries()) {
         VirtualFile root = entry.getFile();

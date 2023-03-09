@@ -1,6 +1,7 @@
 // "Specify super type 'I' explicitly" "false"
 // ACTION: Convert to block body
 // ACTION: Go To Super Method
+// ACTION: Introduce local variable
 // ACTION: Specify supertype
 // ERROR: Many supertypes available, please specify the one you mean in angle brackets, e.g. 'super<Foo>'
 

@@ -10,10 +10,9 @@ import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocTag
 import com.intellij.psi.javadoc.PsiDocToken
 import com.intellij.psi.javadoc.PsiInlineDocTag
-import com.intellij.psi.xml.XmlFile
-import com.intellij.psi.xml.XmlTag
-import com.intellij.psi.xml.XmlText
-import com.intellij.psi.xml.XmlTokenType
+import com.intellij.psi.xml.*
+import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 object IdeaDocCommentConverter : DocCommentConverter {
     override fun convertDocComment(docComment: PsiDocComment): String {
@@ -157,8 +156,8 @@ object IdeaDocCommentConverter : DocCommentConverter {
                 }
                 XmlTokenType.XML_CHAR_ENTITY_REF -> {
                     appendPendingText()
-                    val grandParent = element.parent.parent
-                    if (grandParent is HtmlTag && (grandParent.name == "code" || grandParent.name == "literal"))
+                    val grandParent = element.parentsWithSelf.match(XmlToken::class, XmlText::class, last = HtmlTag::class)
+                    if (grandParent?.name == "code" || grandParent?.name == "literal")
                         markdownBuilder.append(StringUtil.unescapeXmlEntities(element.text))
                     else
                         markdownBuilder.append(element.text)

@@ -5,6 +5,9 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.UUID
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -40,6 +43,9 @@ interface SampleEntity : WorkspaceEntity {
   }
 
   companion object : Type<SampleEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(booleanProperty: Boolean,
                         stringProperty: String,
                         stringListProperty: List<String>,
@@ -80,6 +86,9 @@ interface ChildSampleEntity : WorkspaceEntity {
   }
 
   companion object : Type<ChildSampleEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildSampleEntity {
       val builder = builder()
       builder.data = data
@@ -124,6 +133,9 @@ interface SecondSampleEntity : WorkspaceEntity {
   }
 
   companion object : Type<SecondSampleEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(intProperty: Int, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SecondSampleEntity {
       val builder = builder()
       builder.intProperty = intProperty
@@ -154,6 +166,9 @@ interface SourceEntity : WorkspaceEntity {
   }
 
   companion object : Type<SourceEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SourceEntity {
       val builder = builder()
       builder.data = data
@@ -184,6 +199,9 @@ interface ChildSourceEntity : WorkspaceEntity {
   }
 
   companion object : Type<ChildSourceEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ChildSourceEntity {
       val builder = builder()
       builder.data = data
@@ -216,6 +234,9 @@ interface SymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<SymbolicIdEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SymbolicIdEntity {
       val builder = builder()
       builder.data = data

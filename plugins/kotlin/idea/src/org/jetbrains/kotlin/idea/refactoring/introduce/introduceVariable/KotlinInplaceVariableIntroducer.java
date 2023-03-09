@@ -344,10 +344,10 @@ public class KotlinInplaceVariableIntroducer<D extends KtCallableDeclaration> ex
 
     @Override
     protected boolean buildTemplateAndStart(
-            Collection<PsiReference> refs,
-            Collection<Pair<PsiElement, TextRange>> stringUsages,
-            PsiElement scope,
-            PsiFile containingFile
+      @NotNull Collection<PsiReference> refs,
+      @NotNull Collection<Pair<PsiElement, TextRange>> stringUsages,
+      @NotNull PsiElement scope,
+      @NotNull PsiFile containingFile
     ) {
         myEditor.putUserData(INTRODUCE_RESTART, false);
         //noinspection ConstantConditions

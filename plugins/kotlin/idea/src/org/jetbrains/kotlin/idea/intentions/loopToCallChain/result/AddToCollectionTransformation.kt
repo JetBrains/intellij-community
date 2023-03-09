@@ -68,7 +68,7 @@ class AddToCollectionTransformation(
         get() = 0
 
     override fun generateCode(chainedCallGenerator: ChainedCallGenerator): KtExpression {
-        return KtPsiFactory(loop).createExpressionByPattern(
+        return KtPsiFactory(loop.project).createExpressionByPattern(
             "$0 += $1", targetCollection, chainedCallGenerator.receiver,
             reformat = chainedCallGenerator.reformat
         )

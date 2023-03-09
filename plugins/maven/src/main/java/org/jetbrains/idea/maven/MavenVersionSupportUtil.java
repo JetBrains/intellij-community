@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 
-public class MavenVersionSupportUtil {
+public final class MavenVersionSupportUtil {
   public static final String MAVEN_2_PLUGIN_ID = "org.jetbrains.idea.maven.maven2-support";
 
   public static @Nullable MavenVersionAwareSupportExtension getExtensionFor(MavenDistribution distribution) {

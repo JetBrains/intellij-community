@@ -193,7 +193,7 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
       // can be such requirements removed or not
       if (rootDescriptor === dep) {
         if (rootDescriptor.pluginId != PluginManagerCore.CORE_ID) {
-          PluginManagerCore.getLogger().error("Plugin $rootDescriptor depends on self")
+          PluginManagerCore.getLogger().error("Plugin $rootDescriptor depends on self (${dependency})")
         }
       }
       else {

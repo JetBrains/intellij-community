@@ -24,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Alexej Kubarev
  */
-public class LombokProjectValidatorActivity implements StartupActivity.DumbAware {
-
+final class LombokProjectValidatorActivity implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
     // enable annotationProcessing check

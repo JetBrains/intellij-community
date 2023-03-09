@@ -40,7 +40,7 @@ public interface PsiTodoSearchHelper {
   /**
    * Processes all files in the project which have to do items.
    */
-  boolean processFilesWithTodoItems(@NotNull Processor<? super PsiFile> processor);
+  boolean processFilesWithTodoItems(@NotNull Processor<? super @NotNull PsiFile> processor);
 
   /**
    * Searches the specified file for to do items.
@@ -61,6 +61,7 @@ public interface PsiTodoSearchHelper {
   TodoItem @NotNull [] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset);
 
   TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file);
+
   TodoItem @NotNull [] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset);
 
   /**

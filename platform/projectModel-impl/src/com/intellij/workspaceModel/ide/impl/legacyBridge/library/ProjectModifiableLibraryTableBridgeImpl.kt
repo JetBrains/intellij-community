@@ -36,7 +36,11 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   private val librariesArrayValue = CachedValue<Array<Library>> { storage ->
     storage.entities(LibraryEntity::class.java).filter { it.tableId == LibraryTableId.ProjectLibraryTableId }
-      .mapNotNull { storage.libraryMap.getDataByEntity(it) }
+      .mapNotNull { entity ->
+        val libraryBridge = storage.libraryMap.getDataByEntity(entity)
+        (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
+        libraryBridge
+      }
       .toList().toTypedArray()
   }
 
@@ -91,6 +95,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
     val libraryEntity = entityStorageOnDiff.current.findLibraryEntity(library as LibraryBridge)
     if (libraryEntity != null) {
+      (library as LibraryBridgeImpl).clearTargetBuilder()
       diff.removeEntity(libraryEntity)
       if (myAddedLibraries.remove(library)) {
         Disposer.dispose(library)
@@ -103,6 +108,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
     WorkspaceModel.getInstance(project).updateProjectModel("Project library table commit") {
       it.addDiff(diff)
     }
+    librariesArray.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }
 
   override fun prepareForCommit() {
@@ -124,7 +130,9 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
   override fun getLibraryByName(name: String): Library? {
     val libraryEntity = diff.resolve(LibraryId(name, LibraryTableId.ProjectLibraryTableId)) ?: return null
-    return diff.libraryMap.getDataByEntity(libraryEntity)
+    val libraryBridge = diff.libraryMap.getDataByEntity(libraryEntity)
+    (libraryBridge as LibraryBridgeImpl).setTargetBuilder(this.diff)
+    return libraryBridge
   }
 
   override fun getLibraries(): Array<Library> = librariesArray
@@ -134,6 +142,7 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
     myAddedLibraries.forEach { Disposer.dispose(it) }
     myAddedLibraries.clear()
+    librariesArray.forEach { library -> (library as LibraryBridgeImpl).clearTargetBuilder() }
   }
 
   override fun isChanged(): Boolean = diff.hasChanges()

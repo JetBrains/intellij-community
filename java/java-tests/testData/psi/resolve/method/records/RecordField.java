@@ -2,7 +2,7 @@ import java.lang.annotation.Target;
 
 import static java.lang.annotation.ElementType.*;
 
-record A(@F @M int value) {
+record A(@F @M @T int value) {
     void test(){
         <caret>value
     }
@@ -13,3 +13,6 @@ record A(@F @M int value) {
 
 @Target(value={METHOD})
 @interface M{}
+
+@Target(value={TYPE_USE})
+@interface T{}

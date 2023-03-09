@@ -33,7 +33,7 @@ fun PsiElement?.toValVar(): KotlinValVar = when {
 }
 
 fun KtParameter.setValOrVar(valOrVar: KotlinValVar): PsiElement? {
-    val newKeyword = valOrVar.createKeyword(KtPsiFactory(this))
+    val newKeyword = valOrVar.createKeyword(KtPsiFactory(project))
     val currentKeyword = valOrVarKeyword
 
     if (currentKeyword != null) {

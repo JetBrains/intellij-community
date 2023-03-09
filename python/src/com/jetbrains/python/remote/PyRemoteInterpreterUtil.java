@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.remote;
 
 import com.google.common.collect.Lists;
@@ -24,7 +25,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-public class PyRemoteInterpreterUtil {
+public final class PyRemoteInterpreterUtil {
   /**
    * @param nullForUnparsableVersion if version returns by python can't be parsed -- return null instead of exception
    * @return version or null if sdk does not have flavor / version can't be parsed etc

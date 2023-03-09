@@ -520,7 +520,7 @@ public final class PyPsiUtils {
     return attr;
   }
 
-  public static List<PyExpression> getAttributeValuesFromFile(@NotNull PyFile file, @NotNull String name) {
+  public static @NotNull List<PyExpression> getAttributeValuesFromFile(@NotNull PyFile file, @NotNull String name) {
     List<PyExpression> result = new ArrayList<>();
     final PyTargetExpression attr = file.findTopLevelAttribute(name);
     if (attr != null) {

@@ -2,13 +2,14 @@
 package org.jetbrains.plugins.github.api.data
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import com.intellij.openapi.util.NlsSafe
 
 @GraphQLFragment("/graphql/fragment/commitShort.graphql")
 open class GHCommitShort(id: String,
                          oid: String,
                          abbreviatedOid: String,
                          val url: String,
-                         val messageHeadlineHTML: String,
+                         val messageHeadlineHTML: @NlsSafe String,
                          val author: GHGitActor?)
   : GHCommitHash(id, oid, abbreviatedOid) {
 }

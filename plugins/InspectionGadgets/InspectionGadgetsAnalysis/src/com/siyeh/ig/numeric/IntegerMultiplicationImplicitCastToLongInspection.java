@@ -20,7 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -43,10 +43,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspection implements CleanupLocalInspectionTool {
   private static final CallMatcher JUNIT4_ASSERT_EQUALS =
@@ -93,10 +95,10 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "integer.multiplication.implicit.cast.to.long.option"),
-                                          this, "ignoreNonOverflowingCompileTimeConstants");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreNonOverflowingCompileTimeConstants", InspectionGadgetsBundle.message(
+        "integer.multiplication.implicit.cast.to.long.option")));
   }
 
   @Override
@@ -163,7 +165,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiPolyadicExpression expression = (PsiPolyadicExpression)descriptor.getPsiElement();
 
       final PsiExpression[] operands = expression.getOperands();

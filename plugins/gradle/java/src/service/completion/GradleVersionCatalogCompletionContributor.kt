@@ -12,13 +12,13 @@ import com.intellij.util.asSafely
 import icons.GradleIcons
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames
 import org.jetbrains.plugins.gradle.service.resolve.GradleDependencyHandlerContributor.Companion.DEPENDENCY_NOTATION
-import org.jetbrains.plugins.gradle.service.resolve.GradleExtensionProperty
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyBase
 
 class GradleVersionCatalogCompletionContributor {
 
@@ -35,7 +35,7 @@ class GradleVersionCatalogCompletionContributor {
     }
     val resolvedQualifier = position.parent.asSafely<GrReferenceExpression>()?.qualifier?.asSafely<GrReferenceElement<*>>()?.resolve() ?: return
     val longNames = when (resolvedQualifier) {
-      is GradleExtensionProperty -> {
+      is GroovyPropertyBase -> {
         val type = resolvedQualifier.propertyType as? PsiClassType ?: return
         if (!type.className.startsWith("LibrariesFor")) {
           return

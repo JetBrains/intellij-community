@@ -13,8 +13,4 @@ class ConfigurePluginUpdatesAction : DumbAwareAction() {
         val project = e.getData(CommonDataKeys.PROJECT)
         ShowSettingsUtilImpl.showSettingsDialog(project, KotlinLanguageConfiguration.ID, "")
     }
-
-    companion object {
-        val ACTION_ID = "KotlinConfigureUpdates"
-    }
 }

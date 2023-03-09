@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.Ref;
@@ -21,8 +21,7 @@ import java.util.stream.IntStream;
 
 public final class IntCollectionUtil {
 
-  @Nullable
-  public static IntSet intersect(IntSet @NotNull ... sets) {
+  public static @Nullable IntSet intersect(IntSet @NotNull ... sets) {
     Arrays.sort(sets, (set1, set2) -> {
       if (set1 == null) return -1;
       if (set2 == null) return 1;
@@ -49,8 +48,7 @@ public final class IntCollectionUtil {
   }
 
   @Contract("null, null -> null; !null, _ -> !null; _, !null -> !null")
-  @Nullable
-  public static IntSet intersect(@Nullable IntSet set1, @Nullable IntSet set2) {
+  public static @Nullable IntSet intersect(@Nullable IntSet set1, @Nullable IntSet set2) {
     if (set1 == null) return set2;
     if (set2 == null) return set1;
 
@@ -74,8 +72,7 @@ public final class IntCollectionUtil {
     }
   }
 
-  @NotNull
-  public static IntSet union(@NotNull Collection<? extends IntSet> sets) {
+  public static @NotNull IntSet union(@NotNull Collection<? extends IntSet> sets) {
     IntSet result = new IntOpenHashSet();
     for (IntSet set : sets) {
       result.addAll(set);
@@ -83,13 +80,11 @@ public final class IntCollectionUtil {
     return result;
   }
 
-  @NotNull
-  public static <T> List<T> map2List(@NotNull IntSet set, @NotNull IntFunction<? extends T> function) {
+  public static @NotNull <T> List<T> map2List(@NotNull IntSet set, @NotNull IntFunction<? extends T> function) {
     return set.intStream().mapToObj(function).collect(Collectors.toList());
   }
 
-  @NotNull
-  public static <T> IntSet map2IntSet(@NotNull Collection<? extends T> collection, @NotNull ToIntFunction<? super T> function) {
+  public static @NotNull <T> IntSet map2IntSet(@NotNull Collection<? extends T> collection, @NotNull ToIntFunction<? super T> function) {
     IntOpenHashSet result = new IntOpenHashSet();
     for (T t : collection) {
       result.add(function.applyAsInt(t));
@@ -97,8 +92,7 @@ public final class IntCollectionUtil {
     return result;
   }
 
-  @NotNull
-  public static <T> Map<T, IntSet> groupByAsIntSet(@NotNull IntCollection collection, @NotNull IntFunction<? extends T> function) {
+  public static @NotNull <T> Map<T, IntSet> groupByAsIntSet(@NotNull IntCollection collection, @NotNull IntFunction<? extends T> function) {
     Map<T, IntSet> result = new HashMap<>();
     collection.forEach((IntConsumer)(it) -> {
       T key = function.apply(it);

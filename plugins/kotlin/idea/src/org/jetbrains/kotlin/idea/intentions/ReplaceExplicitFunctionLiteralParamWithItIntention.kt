@@ -50,7 +50,7 @@ class ReplaceExplicitFunctionLiteralParamWithItIntention : PsiElementBaseIntenti
                 ?: newCallOrQualified as? KtCallExpression
                 ?: return false
             val newArgument = newCall.valueArguments.getOrNull(argumentIndex) ?: newCall.lambdaArguments.singleOrNull() ?: return false
-            newArgument.replace(KtPsiFactory(element).createLambdaExpression("", "TODO()"))
+            newArgument.replace(KtPsiFactory(project).createLambdaExpression("", "TODO()"))
             val newContext = newCallOrQualified.analyzeAsReplacement(callOrQualified, callOrQualified.analyze(BodyResolveMode.PARTIAL))
             if (newCallOrQualified.getResolvedCall(newContext)?.resultingDescriptor == null) return false
         }

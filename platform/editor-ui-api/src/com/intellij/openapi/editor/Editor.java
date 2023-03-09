@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -381,6 +382,15 @@ public interface Editor extends UserDataHolder {
    * @return the project instance, or {@code null} if the editor is not related to any project.
    */
   @Nullable Project getProject();
+
+  /**
+   * Returns the file being edited.
+   *
+   * @return file or {@code null} if the editor has not underlying virtual file.
+   */
+  default VirtualFile getVirtualFile() {
+    return null;
+  }
 
   /**
    * Returns the insert/overwrite mode for the editor.

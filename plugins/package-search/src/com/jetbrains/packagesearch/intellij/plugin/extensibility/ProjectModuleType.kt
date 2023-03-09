@@ -17,18 +17,15 @@
 package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.openapi.project.Project
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import javax.swing.Icon
 
-enum class ProjectModuleTypeTerm {
-    SCOPE
-}
 
 interface ProjectModuleType {
 
     val icon: Icon?
     val packageIcon: Icon?
-    fun terminologyFor(term: ProjectModuleTypeTerm): String
 
-    fun userDefinedScopes(project: Project): List<String>
-    fun defaultScope(project: Project): String
+    fun userDefinedScopes(project: Project): List<PackageScope>
+    fun defaultScope(project: Project): PackageScope
 }

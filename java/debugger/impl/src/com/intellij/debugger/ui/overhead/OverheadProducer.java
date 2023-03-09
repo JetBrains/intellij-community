@@ -5,7 +5,9 @@ import com.intellij.ui.SimpleColoredComponent;
 
 public interface OverheadProducer {
   boolean isEnabled();
+
   void setEnabled(boolean enabled);
+
   void customizeRenderer(SimpleColoredComponent renderer);
 
   default boolean isObsolete() {

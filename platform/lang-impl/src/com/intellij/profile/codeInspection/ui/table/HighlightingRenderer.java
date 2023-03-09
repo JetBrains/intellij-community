@@ -16,12 +16,12 @@ import java.util.List;
 
 public abstract class HighlightingRenderer extends ComboBoxTableRenderer<TextAttributesKey> {
 
-  private final List<Pair<TextAttributesKey, @Nls String>> myEditorAttributesKey;
+  private final List<? extends Pair<TextAttributesKey, @Nls String>> myEditorAttributesKey;
 
   public static final TextAttributesKey EDIT_HIGHLIGHTING = TextAttributesKey.createTextAttributesKey("-");
 
 
-  public HighlightingRenderer(List<Pair<TextAttributesKey, @Nls String>> editorAttributesKey) {
+  public HighlightingRenderer(@NotNull List<? extends Pair<TextAttributesKey, @Nls String>> editorAttributesKey) {
     super(editorAttributesKey.stream().map(pair -> pair.first).toArray(TextAttributesKey[]::new));
     myEditorAttributesKey = editorAttributesKey;
   }

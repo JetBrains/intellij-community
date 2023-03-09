@@ -40,7 +40,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
     if (!(element instanceof PsiFile) || quick || !isFoldingsOn()) {
-      return FoldingDescriptor.EMPTY;
+      return FoldingDescriptor.EMPTY_ARRAY;
     }
     final PsiFile file = (PsiFile)element;
     final List<FoldingDescriptor> result = new ArrayList<>();
@@ -68,7 +68,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
       }
     });
 
-    return result.toArray(FoldingDescriptor.EMPTY);
+    return result.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
   private static boolean isFoldingsOn() {

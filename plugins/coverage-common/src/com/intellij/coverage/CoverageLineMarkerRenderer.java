@@ -40,6 +40,7 @@ import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,6 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
@@ -98,8 +98,8 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     }
     if (bgColor != null) {
       g.setColor(bgColor);
+      g.fillRect(r.x, r.y, r.width, r.height);
     }
-    g.fillRect(r.x, r.y, r.width, r.height);
     final LineData lineData = getLineData(getCurrentLineNumber(editor, new Point(0, r.y)));
     if (lineData != null && lineData.isCoveredByOneTest()) {
       AllIcons.Gutter.Unique.paintIcon(editor.getComponent(), g, r.x, r.y);
@@ -233,7 +233,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     final LineData lineData = getLineData(lineNumber);
     if (myCoverageByTestApplicable) {
-      group.add(new ShowCoveringTestsAction(myClassName, lineData));
+      group.add(new ShowCoveringTestsAction(editor.getProject(), myClassName, lineData));
     }
     final AnAction byteCodeViewAction = ActionManager.getInstance().getAction("ByteCodeViewer");
     if (byteCodeViewAction != null) {
@@ -243,6 +243,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     group.add(new HideCoverageInfoAction());
 
     final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CoverageHintToolbar", group, true);
+    toolbar.setTargetComponent(editorComponent);
     final JComponent toolbarComponent = toolbar.getComponent();
 
     final Color background = ((EditorEx)editor).getBackgroundColor();
@@ -345,8 +346,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     @Nullable
     private Integer getLineEntry() {
-      final ArrayList<Integer> list = new ArrayList<>(myLines.keySet());
-      Collections.sort(list);
+      List<Integer> list = ContainerUtil.sorted(myLines.keySet());
       int size = list.size();
       final LineData data = getLineData(myLineNumber);
       final int currentStatus = data != null ? data.getStatus() : LineCoverage.NONE;

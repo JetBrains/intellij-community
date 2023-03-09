@@ -112,8 +112,8 @@ class ObjectLiteralToLambdaIntention : SelfTargetingRangeIntention<KtObjectLiter
 
         val body = singleFunction.bodyExpression!!
 
-        val factory = KtPsiFactory(element)
-        val newExpression = factory.buildExpression {
+        val psiFactory = KtPsiFactory(element.project)
+        val newExpression = psiFactory.buildExpression {
             appendFixedText(IdeDescriptorRenderers.SOURCE_CODE.renderType(baseType))
 
             appendFixedText("{")

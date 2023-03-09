@@ -21,6 +21,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -39,12 +41,13 @@ import java.util.*;
 import java.util.stream.Stream;
 
 @State(name = "HighlightingSettingsPerFile", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class HighlightingSettingsPerFile extends HighlightingLevelManager implements PersistentStateComponent<Element> {
+public class HighlightingSettingsPerFile extends HighlightingLevelManager implements PersistentStateComponent<Element>, ModificationTracker {
   @NonNls private static final String SETTING_TAG = "setting";
   @NonNls private static final String ROOT_ATT_PREFIX = "root";
   @NonNls private static final String FILE_ATT = "file";
   private final MessageBus myBus;
   private final Set<String> vcsIgnoreFileNames;
+  private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<>();
 
@@ -132,10 +135,9 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
       myHighlightSettings.put(virtualFile, defaults);
     }
 
+    incModificationCount();
     myBus.syncPublisher(FileHighlightingSettingListener.SETTING_CHANGE).settingChanged(root, setting);
-
-    InspectionWidgetUsageCollector.HIGHLIGHT_LEVEL_CHANGED.log(
-      root.getProject(), root.getLanguage(), FileHighlightingSetting.toInspectionsLevel(setting));
+    InspectionWidgetUsageCollector.HIGHLIGHT_LEVEL_CHANGED.log(root.getProject(), root.getLanguage(), FileHighlightingSetting.toInspectionsLevel(setting));
   }
 
   @Override
@@ -155,6 +157,7 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
         myHighlightSettings.put(fileByUrl, settings.toArray(new FileHighlightingSetting[0]));
       }
     }
+    incModificationCount();
   }
 
   @Override
@@ -227,5 +230,13 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     public EventLogGroup getGroup() {
       return GROUP;
     }
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myModificationTracker.getModificationCount();
+  }
+  private void incModificationCount() {
+    myModificationTracker.incModificationCount();
   }
 }

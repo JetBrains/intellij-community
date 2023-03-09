@@ -2,13 +2,16 @@
 package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -27,6 +30,8 @@ import javax.swing.*;
 import java.io.File;
 import java.util.Set;
 
+import static com.intellij.util.ObjectUtils.coalesce;
+
 @InternalIgnoreDependencyViolation
 public class DefaultModuleRendererFactory extends ModuleRendererFactory {
 
@@ -41,10 +46,11 @@ public class DefaultModuleRendererFactory extends ModuleRendererFactory {
   }
 
   private @Nullable TextWithIcon elementLocation(@NotNull PsiElement element) {
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
+    Project project = element.getProject();
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
     if (vFile != null && fileIndex.isInLibrary(vFile)) {
-      return libraryLocation(fileIndex, vFile);
+      return libraryLocation(project, fileIndex, vFile);
     }
     else {
       Module module = ModuleUtilCore.findModuleForPsiElement(element);
@@ -79,8 +85,9 @@ public class DefaultModuleRendererFactory extends ModuleRendererFactory {
   }
 
   @ApiStatus.Internal
-  public @NotNull TextWithIcon libraryLocation(@NotNull ProjectFileIndex fileIndex, @NotNull VirtualFile vFile) {
+  public @NotNull TextWithIcon libraryLocation(@NotNull Project project, @NotNull ProjectFileIndex fileIndex, @NotNull VirtualFile vFile) {
     String text = orderEntryText(fileIndex, vFile);
+    Icon icon = AllIcons.Nodes.PpLibFolder;
 
     if (StringUtil.isEmpty(text) && Registry.is("index.run.configuration.jre")) {
       for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
@@ -94,12 +101,20 @@ public class DefaultModuleRendererFactory extends ModuleRendererFactory {
       }
     }
 
+    if (StringUtil.isEmpty(text)) {
+      SyntheticLibrary library = syntheticLibrary(project, fileIndex, vFile);
+      if (library instanceof ItemPresentation presentation) {
+        text = coalesce(presentation.getPresentableText(), "");
+        icon = presentation.getIcon(false);
+      }
+    }
+
     text = text.substring(text.lastIndexOf(File.separatorChar) + 1);
     VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(vFile);
     if (jar != null && !text.equals(jar.getName())) {
       text += " (" + jar.getName() + ")";
     }
-    return new TextWithIcon(text, AllIcons.Nodes.PpLibFolder);
+    return new TextWithIcon(text, icon);
   }
 
   private @Nls @NotNull String orderEntryText(@NotNull ProjectFileIndex fileIndex, @NotNull VirtualFile vFile) {
@@ -113,5 +128,29 @@ public class DefaultModuleRendererFactory extends ModuleRendererFactory {
 
   protected @Nls @NotNull String getPresentableName(OrderEntry order, VirtualFile vFile) {
     return order.getPresentableName();
+  }
+
+  private static @Nullable SyntheticLibrary syntheticLibrary(@NotNull Project project,
+                                                             @NotNull ProjectFileIndex fileIndex,
+                                                             @NotNull VirtualFile vFile) {
+    VirtualFile sourceRoot = fileIndex.getSourceRootForFile(vFile);
+    if (sourceRoot == null) {
+      return null;
+    }
+
+    for (AdditionalLibraryRootsProvider provider : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
+      for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(project)) {
+        if (!library.getSourceRoots().contains(sourceRoot)) {
+          continue;
+        }
+
+        Condition<VirtualFile> excludeFileCondition = library.getUnitedExcludeCondition();
+        if (excludeFileCondition == null || !excludeFileCondition.value(vFile)) {
+          return library;
+        }
+      }
+    }
+
+    return null;
   }
 }

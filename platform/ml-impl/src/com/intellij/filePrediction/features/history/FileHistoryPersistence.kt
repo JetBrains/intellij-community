@@ -9,10 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.PathUtil
 import com.intellij.util.io.delete
-import com.intellij.util.io.exists
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
 
 object FileHistoryPersistence {
   private val LOG: Logger = Logger.getInstance(FileHistoryPersistence::class.java)

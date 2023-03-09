@@ -32,7 +32,7 @@ import java.awt.event.KeyEvent;
 import java.util.Enumeration;
 import java.util.NoSuchElementException;
 
-public class ThreadsPanel extends DebuggerTreePanel{
+public class ThreadsPanel extends DebuggerTreePanel {
   @NonNls private static final String POPUP_ACTION_NAME = "Debugger.ThreadsPanelPopup";
   @NonNls private static final String HELP_ID = "debugging.debugThreads";
   private final Alarm myUpdateLabelsAlarm = new Alarm();
@@ -96,6 +96,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
                       reschedule();
                     }
                   }
+
                   @Override
                   protected void commandCancelled() {
                     reschedule();
@@ -119,7 +120,6 @@ public class ThreadsPanel extends DebuggerTreePanel{
           myUpdateLabelsAlarm.addRequest(this, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
         }
       }
-      
     }, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
   }
 
@@ -145,7 +145,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
     catch (NoSuchElementException ignored) { // children have changed - just skip
     }
   }
-  
+
   @Override
   protected DebuggerTree createTreeView() {
     return new ThreadsDebuggerTree(getProject());
@@ -164,7 +164,8 @@ public class ThreadsPanel extends DebuggerTreePanel{
     }
     return super.getData(dataId);
   }
+
   public ThreadsDebuggerTree getThreadsTree() {
-    return (ThreadsDebuggerTree) getTree();
+    return (ThreadsDebuggerTree)getTree();
   }
 }

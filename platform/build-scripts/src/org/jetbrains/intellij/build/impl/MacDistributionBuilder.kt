@@ -96,7 +96,6 @@ class MacDistributionBuilder(override val context: BuildContext,
       "# macOS-specific system properties",
       "#---------------------------------------------------------------------",
       "com.apple.mrj.application.live-resize=false",
-      "apple.laf.useScreenMenuBar=true",
       "jbScreenMenuBar.enabled=true",
       "apple.awt.fileDialogForDirectories=true",
       "apple.awt.graphics.UseQuartz=true",
@@ -117,13 +116,8 @@ class MacDistributionBuilder(override val context: BuildContext,
       copyDistFiles(context = context, newDir = macDistDir, os = OsFamily.MACOS, arch = arch)
     }
 
-    customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir.toString())
+    customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir)
     customizer.copyAdditionalFiles(context = context, targetDirectory = macDistDir, arch = arch)
-
-    generateUnixScripts(distBinDir = macDistDir.resolve("bin"),
-                        os = OsFamily.MACOS,
-                        arch = arch,
-                        context = context)
   }
 
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
@@ -142,6 +136,7 @@ class MacDistributionBuilder(override val context: BuildContext,
           context.signFiles(binariesToSign.map(osAndArchSpecificDistPath::resolve), MAC_CODE_SIGN_OPTIONS)
         }
       }
+      setLastModifiedTime(osAndArchSpecificDistPath, context)
       val macZip = (if (publishZipOnly) context.paths.artifactDir else context.paths.tempDir).resolve("$baseName.mac.${arch.name}.zip")
       val macZipWithoutRuntime = macZip.resolveSibling(macZip.nameWithoutExtension + "-no-jdk.zip")
       val zipRoot = getMacZipRoot(customizer, context)
@@ -187,24 +182,14 @@ class MacDistributionBuilder(override val context: BuildContext,
         }
       }
       else {
-        buildAndSignDmgFromZip(macZip = macZip,
-                               macZipWithoutRuntime = macZipWithoutRuntime,
-                               arch = arch,
-                               builtinModule = context.builtinModule)
+        buildForArch(builtinModule = context.builtinModule,
+                     arch = arch,
+                     macZip = macZip,
+                     macZipWithoutRuntime = macZipWithoutRuntime,
+                     customizer = customizer,
+                     context = context)
       }
     }
-  }
-
-  suspend fun buildAndSignDmgFromZip(macZip: Path,
-                                     macZipWithoutRuntime: Path?,
-                                     arch: JvmArchitecture,
-                                     builtinModule: BuiltinModulesFileData?) {
-    buildForArch(builtinModule = builtinModule,
-                 arch = arch,
-                 macZip = macZip,
-                 macZipWithoutRuntime = macZipWithoutRuntime,
-                 customizer = customizer,
-                 context = context)
   }
 
   private fun layoutMacApp(ideaPropertiesFile: Path,
@@ -361,9 +346,13 @@ class MacDistributionBuilder(override val context: BuildContext,
       "bin/fsnotifier",
       "bin/printenv",
       "bin/restarter",
-      "bin/repair",
       "MacOS/*"
     )
+
+    if (!context.isStepSkipped(BuildOptions.REPAIR_UTILITY_BUNDLE_STEP)) {
+      executableFilePatterns = executableFilePatterns.add("bin/repair")
+    }
+
     if (includeRuntime) {
       executableFilePatterns = executableFilePatterns.addAll(context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS))
     }
@@ -468,19 +457,16 @@ internal fun generateMacProductJson(builtinModule: BuiltinModulesFileData?,
   return generateMultiPlatformProductJson(
     relativePathToBin = "../bin",
     builtinModules = builtinModule,
-    launch = listOf(
-      ProductInfoLaunchData(
-        os = OsFamily.MACOS.osName,
-        arch = arch.dirName,
-        launcherPath = "../MacOS/${executable}",
-        javaExecutablePath = javaExecutablePath,
-        vmOptionsFilePath = "../bin/${executable}.vmoptions",
-        startupWmClass = null,
-        bootClassPathJarNames = context.bootClassPathJarNames,
-        additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch)
-      )
-    ), context = context
-  )
+    launch = listOf(ProductInfoLaunchData(
+      os = OsFamily.MACOS.osName,
+      arch = arch.dirName,
+      launcherPath = "../MacOS/${executable}",
+      javaExecutablePath = javaExecutablePath,
+      vmOptionsFilePath = "../bin/${executable}.vmoptions",
+      startupWmClass = null,
+      bootClassPathJarNames = context.bootClassPathJarNames,
+      additionalJvmArguments = context.getAdditionalJvmArguments(OsFamily.MACOS, arch))),
+    context = context)
 }
 
 private fun MacDistributionBuilder.buildMacZip(targetFile: Path,

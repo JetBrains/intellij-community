@@ -5,8 +5,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
@@ -312,14 +312,7 @@ public final class CustomizationUtil {
   @NotNull
   public static MouseListener installPopupHandler(@NotNull JComponent component, @NotNull String groupId, @NotNull String place) {
     Supplier<ActionGroup> actionGroupSupplier = () -> (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
-    PopupHandler popupHandler = PopupHandler.installPopupMenu(
-      component, new ActionGroup() {
-        @Override
-        public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-          ActionGroup group = actionGroupSupplier.get();
-          return group == null ? EMPTY_ARRAY : group.getChildren(e);
-        }
-      }, place);
+    PopupHandler popupHandler = PopupHandler.installPopupMenu(component, new PopupComputableActionGroup(actionGroupSupplier), place);
     PopupMenuPreloader.install(component, place, popupHandler, actionGroupSupplier);
     return popupHandler;
   }
@@ -473,10 +466,10 @@ public final class CustomizationUtil {
     return installToolbarCustomizationHandler(actionGroup, groupID, toolbar.getComponent(), toolbar.getPlace());
   }
 
-    @Nullable
+  @Nullable
   public static PopupHandler installToolbarCustomizationHandler(@NotNull ActionGroup actionGroup,
                                                                 String groupID, JComponent component, String place) {
-      if (groupID != null) {
+    if (groupID != null) {
       final String groupName = getGroupName(actionGroup, groupID);
       if (groupName == null) return null;
 
@@ -492,7 +485,6 @@ public final class CustomizationUtil {
                                      setTitle(IdeBundle.message("dialog.title.customize.0", groupName));
                                      init();
                                      setSize(600, 600);
-                                     setOKButtonText(ActionsBundle.message("apply.toolbar.customization"));
                                    }
 
                                    @Override
@@ -557,13 +549,7 @@ public final class CustomizationUtil {
 
   @Nullable
   private static String getGroupID(ActionGroup actionGroup) {
-    AnAction actionForId = actionGroup;
-    if (actionGroup instanceof ActionWithDelegate) {
-      Object delegate = ((ActionWithDelegate<?>)actionGroup).getDelegate();
-      if (delegate instanceof AnAction) {
-        actionForId = (AnAction)delegate;
-      }
-    }
+    AnAction actionForId = ActionUtil.getDelegateChainRootAction(actionGroup);
     return ActionManager.getInstance().getId(actionForId);
   }
 
@@ -611,6 +597,7 @@ public final class CustomizationUtil {
           updateLocalSchema(cleanScheme);
           e.getPresentation().setEnabled(mySelectedSchema.isModified(cleanScheme));
         }
+
         @Override
         public @NotNull ActionUpdateThread getActionUpdateThread() {
           return ActionUpdateThread.EDT;
@@ -664,6 +651,7 @@ public final class CustomizationUtil {
 
     @Override
     protected void patchActionsTreeCorrespondingToSchema(DefaultMutableTreeNode root) {
+      //noinspection ConstantValue -- can be called from superclass constructor
       if (myGroupID == null) return;
       fillTreeFromActions(root, (ActionGroup)ActionManager.getInstance().getAction(myGroupID));
     }
@@ -702,5 +690,24 @@ public final class CustomizationUtil {
 
   public interface CustomPresentationConsumer {
     void accept(@NotNull @Nls String text, @Nullable @Nls String description, @Nullable Icon icon);
+  }
+
+  private static class PopupComputableActionGroup extends ActionGroup implements ActionWithDelegate<ActionGroup> {
+    private final Supplier<? extends @Nullable ActionGroup> myActionGroupSupplier;
+
+    PopupComputableActionGroup(Supplier<? extends @Nullable ActionGroup> actionGroupSupplier) {
+      myActionGroupSupplier = actionGroupSupplier;
+    }
+
+    @Override
+    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+      ActionGroup group = myActionGroupSupplier.get();
+      return group == null ? EMPTY_ARRAY : group.getChildren(e);
+    }
+
+    @Override
+    public @NotNull ActionGroup getDelegate() {
+      return ObjectUtils.notNull(myActionGroupSupplier.get(), ActionGroup.EMPTY_GROUP);
+    }
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -67,10 +69,15 @@ public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLoc
   private static PsiVariable findReplacement(@NotNull PsiMethod method,
                                              @NotNull PsiVariable castedVar,
                                              @NotNull PsiTypeCastExpression expression) {
-    final TextRange expressionTextRange = expression.getTextRange();
     if (InstanceOfUtils.isUncheckedCast(expression)) return null;
-    PsiExpression operand = Objects.requireNonNull(PsiUtil.skipParenthesizedExprDown(expression.getOperand()));
-    PsiType castType = Objects.requireNonNull(expression.getCastType()).getType();
+    PsiTypeElement expressionCastType = expression.getCastType();
+    if (expressionCastType == null) return null;
+    final PsiCodeBlock methodBody = method.getBody();
+    if (methodBody == null) return null;
+    final TextRange expressionTextRange = expression.getTextRange();
+    PsiExpression operand = PsiUtil.skipParenthesizedExprDown(expression.getOperand());
+    if (operand == null) return null;
+    PsiType castType = expressionCastType.getType();
     List<PsiTypeCastExpression> found =
       SyntaxTraverser.psiTraverser(method)
         .filter(PsiTypeCastExpression.class)
@@ -81,8 +88,6 @@ public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLoc
         })
         .toList();
     PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(method.getProject());
-    final PsiCodeBlock methodBody = method.getBody();
-    if (methodBody == null) return null;
     for (PsiTypeCastExpression occurrence : found) {
       ProgressIndicatorProvider.checkCanceled();
       final TextRange occurrenceTextRange = occurrence.getTextRange();
@@ -118,9 +123,11 @@ public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLoc
                                           @NotNull final PsiElement scope,
                                           @NotNull final PsiElement start,
                                           @NotNull final PsiElement end) {
-    if (variable.hasModifierProperty(PsiModifier.FINAL)) {
+    if (variable.hasModifierProperty(PsiModifier.FINAL) || HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) {
       return false;
     }
+
+    PsiElement broadEnd = getBroadEnd(scope, start, end);
 
     ControlFlow controlFlow;
     try {
@@ -130,8 +137,32 @@ public class CastCanBeReplacedWithVariableInspection extends AbstractBaseJavaLoc
       controlFlow = ControlFlow.EMPTY;
     }
     int startOffset = controlFlow.getEndOffset(start) + 1;
-    int endOffset = controlFlow.getEndOffset(end);
+    int endOffset = controlFlow.getEndOffset(broadEnd);
     return ControlFlowUtil.getWrittenVariables(controlFlow, startOffset, endOffset, true).contains(variable);
+  }
+
+  @NotNull
+  private static PsiElement getBroadEnd(@NotNull PsiElement scope, @NotNull PsiElement start, @NotNull PsiElement end) {
+    List<PsiElement> parentsOfStart = new ArrayList<>();
+    PsiElement currentElement = start.getParent();
+
+    while (currentElement != null && currentElement != scope) {
+      parentsOfStart.add(currentElement);
+      currentElement = currentElement.getParent();
+    }
+
+    PsiElement broadEnd = end;
+    currentElement = end.getParent();
+
+    while (currentElement != null && currentElement != scope && !parentsOfStart.contains(currentElement)) {
+      if (currentElement instanceof PsiLoopStatement) {
+        broadEnd = currentElement;
+      }
+
+      currentElement = currentElement.getParent();
+    }
+
+    return broadEnd;
   }
 
   @Nullable

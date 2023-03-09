@@ -39,10 +39,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-public class PyCythonExtensionWarning {
+public final class PyCythonExtensionWarning {
   private static final Logger LOG = Logger.getInstance(PyCythonExtensionWarning.class);
 
   private static final String CYTHON_WARNING_GROUP_ID = "CythonWarning";

@@ -1,6 +1,5 @@
 // "Generate 'equals()'" "true"
 // WITH_STDLIB
-// ERROR: Abstract member cannot be accessed directly
 
 interface I
 

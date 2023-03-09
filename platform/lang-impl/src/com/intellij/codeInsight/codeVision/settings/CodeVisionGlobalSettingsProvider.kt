@@ -8,7 +8,11 @@ import com.intellij.codeInsight.hints.settings.InlayGroupSettingProvider
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.JBIntSpinner
+import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.SimpleListCellRenderer.Customizer
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.panel
+import javax.swing.JList
 
 class CodeVisionGlobalSettingsProvider : InlayGroupSettingProvider {
 
@@ -34,7 +38,16 @@ class CodeVisionGlobalSettingsProvider : InlayGroupSettingProvider {
   override val component: DialogPanel = panel {
     row {
       label(CodeVisionBundle.message("CodeLensGlobalSettingsProvider.defaultPosition.description"))
-      defaultPositionComboBox = comboBox(defaultAnchors).component
+
+      defaultPositionComboBox = comboBox(defaultAnchors,  object: SimpleListCellRenderer<CodeVisionAnchorKind>() {
+        override fun customize(list: JList<out CodeVisionAnchorKind>,
+                               value: CodeVisionAnchorKind,
+                               index: Int,
+                               selected: Boolean,
+                               hasFocus: Boolean) {
+          text = CodeVisionBundle.message(value.key)
+        }
+      }).component
     }
     row {
       label(CodeVisionBundle.message("CodeLensGlobalSettingsProvider.visibleMetricsAbove.description"))

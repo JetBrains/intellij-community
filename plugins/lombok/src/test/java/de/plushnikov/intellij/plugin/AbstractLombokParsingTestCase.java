@@ -11,6 +11,7 @@ import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -28,6 +29,10 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
 
   protected String annotationToComparePattern() {
     return ".*";
+  }
+
+  protected Collection<String> annotationsToIgnoreList() {
+    return Set.of("java.lang.SuppressWarnings", "java.lang.Override","com.fasterxml.jackson.databind.annotation.JsonDeserialize");
   }
 
   protected boolean shouldCompareCodeBlocks() {
@@ -182,10 +187,14 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
       Collection<String> beforeAnnotations = Arrays.stream(beforeModifierList.getAnnotations())
         .map(PsiAnnotation::getQualifiedName)
         .filter(Pattern.compile("lombok.*").asPredicate().negate().or(LombokClassNames.NON_NULL::equals))
-        .filter(Pattern.compile(annotationToComparePattern()).asPredicate()).toList();
+        .filter(Pattern.compile(annotationToComparePattern()).asPredicate())
+        .filter(Predicate.not(annotationsToIgnoreList()::contains))
+        .toList();
       Collection<String> afterAnnotations = Arrays.stream(afterModifierList.getAnnotations())
         .map(PsiAnnotation::getQualifiedName)
-        .filter(Pattern.compile(annotationToComparePattern()).asPredicate()).toList();
+        .filter(Pattern.compile(annotationToComparePattern()).asPredicate())
+        .filter(Predicate.not(annotationsToIgnoreList()::contains))
+        .toList();
 
       assertTrue("Annotations are different for " + afterModifierList.getParent() + ": " + beforeAnnotations + "/" + afterAnnotations,
                  beforeAnnotations.size() == afterAnnotations.size()

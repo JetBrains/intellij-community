@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 class MyFileA
 class MyFileB
 class MyFileC

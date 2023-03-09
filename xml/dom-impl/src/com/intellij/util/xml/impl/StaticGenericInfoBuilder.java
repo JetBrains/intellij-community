@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.serialization.ClassUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -149,7 +150,7 @@ public final class StaticGenericInfoBuilder {
     if (tagName == null) return false;
 
     final Type type = myCollectionChildrenTypes.get(tagName);
-    if (type == null || !ReflectionUtil.getRawType(type).isAssignableFrom(method.getReturnType())) return false;
+    if (type == null || !ClassUtil.getRawType(type).isAssignableFrom(method.getReturnType())) return false;
 
     if (method.getParameterCount() == 0) return true;
 
@@ -171,7 +172,7 @@ public final class StaticGenericInfoBuilder {
   }
 
   private static boolean isDomElement(final Type type) {
-    return type != null && DomElement.class.isAssignableFrom(ReflectionUtil.getRawType(type));
+    return type != null && DomElement.class.isAssignableFrom(ClassUtil.getRawType(type));
   }
 
   private boolean processGetterMethod(final JavaMethod method) {
@@ -299,7 +300,7 @@ public final class StaticGenericInfoBuilder {
 
   @NotNull
   private DomNameStrategy getNameStrategy(boolean isAttribute) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(myClass), isAttribute);
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ClassUtil.getRawType(myClass), isAttribute);
     return strategy != null ? strategy : DomNameStrategy.HYPHEN_STRATEGY;
   }
 

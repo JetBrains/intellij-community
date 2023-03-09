@@ -92,8 +92,7 @@ public class ParagraphFillHandler {
   private int getStartOffset(@NotNull final PsiElement element, @NotNull final Editor editor) {
     if (isBunchOfElement(element)) {
       final PsiElement firstElement = getFirstElement(element);
-      return firstElement != null? firstElement.getTextRange().getStartOffset()
-                                        : element.getTextRange().getStartOffset();
+      return firstElement.getTextRange().getStartOffset();
     }
     final int offset = editor.getCaretModel().getOffset();
     final int elementTextOffset = element.getTextOffset();
@@ -124,8 +123,7 @@ public class ParagraphFillHandler {
   private int getEndOffset(@NotNull final PsiElement element, @NotNull final Editor editor) {
     if (isBunchOfElement(element)) {
       final PsiElement next = getLastElement(element);
-      return next != null? next.getTextRange().getEndOffset()
-                         : element.getTextRange().getEndOffset();
+      return next.getTextRange().getEndOffset();
     }
     final int offset = editor.getCaretModel().getOffset();
     final int elementTextOffset = element.getTextRange().getEndOffset();

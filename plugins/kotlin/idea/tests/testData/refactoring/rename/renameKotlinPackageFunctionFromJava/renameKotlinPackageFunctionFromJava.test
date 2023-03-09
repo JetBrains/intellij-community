@@ -2,5 +2,6 @@
   "type": "JAVA_METHOD",
   "classId": "testing/rename/RenameKotlinPackageFunctionFromJavaKt",
   "methodSignature": "int foo()",
-  "newName": "bar"
+  "newName": "bar",
+  "enabledInK2": true
 }

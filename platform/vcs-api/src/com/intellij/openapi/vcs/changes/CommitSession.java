@@ -17,7 +17,7 @@ public interface CommitSession {
    */
   CommitSession VCS_COMMIT = new CommitSession() {
     @Override
-    public void execute(@NotNull Collection<Change> changes, @Nullable @NlsSafe String commitMessage) {
+    public void execute(@NotNull Collection<? extends Change> changes, @Nullable @NlsSafe String commitMessage) {
     }
   };
 
@@ -37,18 +37,18 @@ public interface CommitSession {
    * @see com.intellij.openapi.vcs.changes.ui.SessionDialog
    */
   @Nullable
-  default JComponent getAdditionalConfigurationUI(@NotNull Collection<Change> changes, @Nullable @NlsSafe String commitMessage) {
+  default JComponent getAdditionalConfigurationUI(@NotNull Collection<? extends Change> changes, @Nullable @NlsSafe String commitMessage) {
     return getAdditionalConfigurationUI();
   }
 
   /**
    * Whether OK action is enabled for the {@link #getAdditionalConfigurationUI} dialog.
    */
-  default boolean canExecute(Collection<Change> changes, @NlsSafe String commitMessage) {
+  default boolean canExecute(Collection<? extends Change> changes, @NlsSafe String commitMessage) {
     return true;
   }
 
-  void execute(@NotNull Collection<Change> changes, @Nullable @NlsSafe String commitMessage);
+  void execute(@NotNull Collection<? extends Change> changes, @Nullable @NlsSafe String commitMessage);
 
   /**
    * Called if commit operation was cancelled.

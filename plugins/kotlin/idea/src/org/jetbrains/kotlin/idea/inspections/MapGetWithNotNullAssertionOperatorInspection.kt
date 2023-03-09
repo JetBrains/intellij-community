@@ -44,7 +44,7 @@ class MapGetWithNotNullAssertionOperatorInspection : AbstractKotlinInspection() 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val expression = descriptor.psiElement.parent as? KtPostfixExpression ?: return
             val (reference, index) = expression.getReplacementData() ?: return
-            val replaced = expression.replaced(KtPsiFactory(expression).createExpressionByPattern("$0.getValue($1)", reference, index))
+            val replaced = expression.replaced(KtPsiFactory(project).createExpressionByPattern("$0.getValue($1)", reference, index))
             replaced.findExistingEditor()?.caretModel?.moveToOffset(replaced.endOffset)
         }
     }
@@ -55,7 +55,7 @@ class MapGetWithNotNullAssertionOperatorInspection : AbstractKotlinInspection() 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val expression = descriptor.psiElement.parent as? KtPostfixExpression ?: return
             val (reference, index) = expression.getReplacementData() ?: return
-            val replaced = expression.replaced(KtPsiFactory(expression).createExpressionByPattern("$0.getOrElse($1){}", reference, index))
+            val replaced = expression.replaced(KtPsiFactory(project).createExpressionByPattern("$0.getOrElse($1){}", reference, index))
 
             val editor = replaced.findExistingEditor() ?: return
             val offset = (replaced as KtQualifiedExpression).callExpression?.lambdaArguments?.firstOrNull()?.startOffset ?: return
@@ -72,7 +72,7 @@ class MapGetWithNotNullAssertionOperatorInspection : AbstractKotlinInspection() 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val expression = descriptor.psiElement.parent as? KtPostfixExpression ?: return
             val (reference, index) = expression.getReplacementData() ?: return
-            val replaced = expression.replace(KtPsiFactory(expression).createExpressionByPattern("$0[$1] ?: error(\"\")", reference, index))
+            val replaced = expression.replace(KtPsiFactory(project).createExpressionByPattern("$0[$1] ?: error(\"\")", reference, index))
 
             val editor = replaced.findExistingEditor() ?: return
             val offset = (replaced as? KtBinaryExpression)?.right?.endOffset ?: return

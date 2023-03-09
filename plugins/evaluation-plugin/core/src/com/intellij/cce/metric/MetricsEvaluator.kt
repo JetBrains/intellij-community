@@ -7,27 +7,22 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
   companion object {
     fun withDefaultMetrics(evaluationType: String, strategy: CompletionStrategy): MetricsEvaluator {
       val evaluator = MetricsEvaluator(evaluationType)
-      evaluator.registerDefaultMetrics(strategy)
+
+      if (strategy.completionGolf) {
+        evaluator.registerCompletionGolfMetrics()
+      }
+      else {
+        evaluator.registerDefaultMetrics()
+      }
       return evaluator
     }
   }
 
   private val metrics = mutableListOf<Metric>()
 
-  fun registerDefaultMetrics(strategy: CompletionStrategy) {
-    if (strategy.completionGolf) {
-      registerMetric(CompletionGolfMovesSumMetric())
-      registerMetric(CompletionGolfMovesCountNormalised())
-      registerMetric(CompletionGolfPerfectLine())
-      registerMetric(MeanLatencyMetric())
-      registerMetric(MaxLatencyMetric())
-      registerMetric(SessionsCountMetric())
-
-      return
-    }
-
-    registerMetric(FoundAtMetric(1))
-    registerMetric(FoundAtMetric(5))
+  fun registerDefaultMetrics() {
+    registerMetric(RecallAtMetric(1))
+    registerMetric(RecallAtMetric(5))
     registerMetric(RecallMetric())
     registerMetric(MeanLatencyMetric())
     registerMetric(MaxLatencyMetric())
@@ -35,15 +30,23 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
     registerMetric(SessionsCountMetric())
   }
 
-  private fun registerMetric(metric: Metric) {
-    metrics.add(metric)
+  fun registerCompletionGolfMetrics() {
+    registerMetrics(createCompletionGolfMetrics())
+    registerMetric(MeanLatencyMetric(true))
+    registerMetric(MaxLatencyMetric())
+    registerMetric(TotalLatencyMetric())
+    registerMetric(SessionsCountMetric())
   }
 
+  private fun registerMetric(metric: Metric) = metrics.add(metric)
+
+  private fun registerMetrics(metrics: Collection<Metric>) = this.metrics.addAll(metrics)
+
   fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator = SuggestionsComparator.DEFAULT): List<MetricInfo> {
-    return metrics.map { MetricInfo(it.name, it.evaluate(sessions, comparator).toDouble(), evaluationType, it.valueType) }
+    return metrics.map { MetricInfo(it.name, it.evaluate(sessions, comparator).toDouble(), evaluationType, it.valueType, it.showByDefault) }
   }
 
   fun result(): List<MetricInfo> {
-    return metrics.map { MetricInfo(it.name, it.value, evaluationType, it.valueType) }
+    return metrics.map { MetricInfo(it.name, it.value, evaluationType, it.valueType, it.showByDefault) }
   }
 }

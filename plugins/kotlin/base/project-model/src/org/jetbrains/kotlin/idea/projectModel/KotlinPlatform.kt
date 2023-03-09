@@ -5,6 +5,7 @@ enum class KotlinPlatform(val id: String) {
     COMMON("common"), // this platform is left only for compatibility with NMPP (should not be used in HMPP)
     JVM("jvm"),
     JS("js"),
+    WASM("wasm"),
     NATIVE("native"),
     ANDROID("androidJvm");
 

@@ -83,7 +83,6 @@ fun Repository.disableAutoCrLf(): Repository {
 fun Repository.commit(@NonNls message: String? = null, @NonNls reflogComment: String? = null, author: PersonIdent? = null, committer: PersonIdent? = null): RevCommit {
   val commitCommand = CommitCommand(this).setAuthor(author).setCommitter(committer)
   if (message != null) {
-    @Suppress("UsePropertyAccessSyntax")
     commitCommand.setMessage(message)
   }
   if (reflogComment != null) {

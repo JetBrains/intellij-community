@@ -16,7 +16,7 @@ public interface LayoutViewOptions {
 
   String STARTUP = "startup";
 
-  LayoutViewOptions setTitleProducer(@Nullable Producer<@NotNull Pair<@Nullable Icon, @NotNull String>> titleProducer);
+  LayoutViewOptions setTitleProducer(@Nullable Producer<? extends @NotNull Pair<@Nullable Icon, @NotNull String>> titleProducer);
 
   /**
    * @deprecated use {@link #setTopLeftToolbar(ActionGroup, String)}

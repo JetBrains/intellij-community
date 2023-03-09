@@ -8,9 +8,6 @@ import java.util.List;
 public interface VirtualFileUrl {
   String getUrl();
 
-  @ApiStatus.Internal
-  List<String> getUrlSegments();
-
   default String getUrlWithoutTrailingSlash() {
     String url = getUrl();
     if (!url.isEmpty() && url.charAt(url.length() -1) == '/') {

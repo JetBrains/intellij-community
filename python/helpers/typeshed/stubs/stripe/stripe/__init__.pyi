@@ -4,7 +4,7 @@ from stripe.api_resources import *
 from stripe.oauth import OAuth as OAuth
 from stripe.webhook import Webhook as Webhook, WebhookSignature as WebhookSignature
 
-api_key: Any
+api_key: str | None
 client_id: Any
 api_base: str
 connect_api_base: str

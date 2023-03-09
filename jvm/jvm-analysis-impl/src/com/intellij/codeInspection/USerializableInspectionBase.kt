@@ -16,9 +16,11 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 abstract class USerializableInspectionBase(vararg hint: Class<out UElement>) : AbstractBaseUastLocalInspectionTool(*hint) {
+  @JvmField
   var ignoreAnonymousInnerClasses = false
 
-  private var superClassString: @NonNls String = "java.awt.Component"
+  @JvmField
+  var superClassString: @NonNls String = "java.awt.Component"
 
   private val superClassList: MutableList<String> = mutableListOf()
 
@@ -40,11 +42,10 @@ abstract class USerializableInspectionBase(vararg hint: Class<out UElement>) : A
         InspectionGadgetsBundle.message("choose.class")
       )
       UiUtils.setComponentSize(chooserList, 7, 25)
-      add(chooserList, "growx, wrap")
+      addGrowing(chooserList)
       val additionalOptions = createAdditionalOptions()
       for (additionalOption in additionalOptions) {
-        val constraints = if (additionalOption is JPanel) "grow, wrap" else "growx, wrap"
-        add(additionalOption, constraints)
+        if (additionalOption is JPanel) addGrowing(additionalOption) else addGrowingX(additionalOption)
       }
       addCheckbox(InspectionGadgetsBundle.message("ignore.anonymous.inner.classes"), "ignoreAnonymousInnerClasses")
     }

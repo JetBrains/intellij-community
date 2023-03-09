@@ -38,13 +38,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource;
 import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,6 +86,8 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
       return;
     }
 
+    final SourceFolderManager sourceFolderManager = SourceFolderManager.getInstance(project);
+
     boolean isNewlyImportedProject = project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) == Boolean.TRUE;
     boolean forceDirectoriesCreation = false;
     DataNode<ProjectData> projectDataNode = ExternalSystemApiUtil.findParent(toImport.iterator().next(), ProjectKeys.PROJECT);
@@ -111,7 +110,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
         ));
         continue;
       }
-      importData(project, modelsProvider, entry.getValue(), module, forceDirectoriesCreation, projectData == null ? null : projectData.getOwner());
+      importData(modelsProvider, sourceFolderManager, entry.getValue(), module, forceDirectoriesCreation, projectData == null ? null : projectData.getOwner());
       if (forceDirectoriesCreation ||
           (isNewlyImportedProject &&
            projectData != null &&
@@ -138,13 +137,12 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     }
   }
 
-  private static void importData(@NotNull Project project,
-                                  @NotNull IdeModifiableModelsProvider modelsProvider,
+  private static void importData(@NotNull IdeModifiableModelsProvider modelsProvider,
+                                 @NotNull SourceFolderManager sourceFolderManager,
                                  @NotNull final Collection<? extends DataNode<ContentRootData>> data,
                                  @NotNull final Module module, boolean forceDirectoriesCreation,
                                  @Nullable ProjectSystemId owner) {
     logUnitTest("Import data for module [" + module.getName() + "], data size [" + data.size() + "]");
-    final SourceFolderManager sourceFolderManager = SourceFolderManager.getInstance(project);
     final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
     final ContentEntry[] contentEntries = modifiableRootModel.getContentEntries();
     final Map<String, ContentEntry> contentEntriesMap = new HashMap<>();
@@ -161,7 +159,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
       final ContentEntry contentEntry = findOrCreateContentRoot(modifiableRootModel, contentRoot);
       if (!importedContentEntries.contains(contentEntry)) {
         removeSourceFoldersIfAbsent(contentEntry, contentRoot);
-        removeImportedExcludeFolders(contentEntry, modelsProvider, owner, project);
+        removeImportedExcludeFolders(contentEntry, modelsProvider, owner);
         importedContentEntries.add(contentEntry);
       }
       logDebug("Importing content root '%s' for module '%s' forceDirectoriesCreation=[%b]",
@@ -199,7 +197,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
 
   private static void removeImportedExcludeFolders(@NotNull ContentEntry contentEntry,
                                                    @NotNull IdeModifiableModelsProvider modelsProvider,
-                                                   @Nullable ProjectSystemId owner, @NotNull Project project) {
+                                                   @Nullable ProjectSystemId owner) {
     if (owner == null) {
       return; // can not remove imported exclude folders is source is not known
     }
@@ -207,12 +205,11 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
       MutableEntityStorage diff = impl.getActualStorageBuilder();
       List<VirtualFileUrl> toRemove = new ArrayList<>();
 
-      VirtualFileUrl vfu = project.getService(VirtualFileUrlManager.class).fromUrl(contentEntry.getUrl());
-      Pair<WorkspaceEntity, String> result = ContainerUtil.find(diff.getVirtualFileUrlIndex().findEntitiesByUrl(vfu).iterator(), pair -> {
-        return "url".equals(pair.component2()) && pair.component1() instanceof ContentRootEntity;
+      ContentRootEntity contentRootEntity = ContainerUtil.find(diff.entities(ContentRootEntity.class).iterator(), entity -> {
+        return entity.getUrl().getUrl().equals(contentEntry.getUrl());
       });
 
-      if (result != null && result.component1() instanceof ContentRootEntity contentRootEntity) {
+      if (contentRootEntity != null) {
         for (ExcludeUrlEntity excludeEntity : contentRootEntity.getExcludedUrls()) {
           if (isImportedEntity(owner, excludeEntity)) {
             toRemove.add(excludeEntity.getUrl());

@@ -35,7 +35,6 @@ public class GroupDescriptor {
 
   public void readExternal(Element element) {
     myId = element.getAttributeValue(ID_ATTR);
-    myDisplayName = FeatureStatisticsBundle.message(GROUP_PREFIX + myId);
   }
 
   public String getId() {
@@ -44,6 +43,9 @@ public class GroupDescriptor {
 
   @Nls
   public String getDisplayName() {
+    if (myDisplayName == null) {
+      myDisplayName = FeatureStatisticsBundle.message(GROUP_PREFIX + myId);
+    }
     return myDisplayName;
   }
 }

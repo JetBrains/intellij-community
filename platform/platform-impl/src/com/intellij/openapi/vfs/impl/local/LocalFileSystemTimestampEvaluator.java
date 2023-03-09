@@ -7,9 +7,16 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+
 @ApiStatus.Internal
 public interface LocalFileSystemTimestampEvaluator {
   ExtensionPointName<LocalFileSystemTimestampEvaluator> EP_NAME = ExtensionPointName.create("com.intellij.localFileSystemTimestampEvaluator");
 
   @Nullable Long getTimestamp(@NotNull VirtualFile file);
+
+  /**
+   * Can be used when VirtualFile for the path has not been loaded yet.
+   */
+  @Nullable Long getTimestamp(@NotNull Path file);
 }

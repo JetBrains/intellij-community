@@ -30,6 +30,9 @@ interface SimpleSymbolicIdEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<SimpleSymbolicIdEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(version: Int,
                         name: String,
                         related: SimpleId,

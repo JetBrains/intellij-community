@@ -37,6 +37,11 @@ public class DfNullConstantType extends DfConstantType<Object> implements DfRefe
     return DfTypes.OBJECT_OR_NULL;
   }
 
+  @Override
+  public @NotNull DfReferenceType convert(TypeConstraints.@NotNull TypeConstraintFactory factory) {
+    return this;
+  }
+
   @NotNull
   @Override
   public DfType join(@NotNull DfType other) {

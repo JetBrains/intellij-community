@@ -207,17 +207,8 @@ public class MultiThreadSearchTest extends BasePlatformTestCase {
     };
   }
 
-  private static class Scenario {
-    private final Map<SearchEverywhereContributor<Object>, Integer> contributorsAndLimits;
-    private final Map<String, List<String>> results;
-    private final String description;
-
-    Scenario(Map<SearchEverywhereContributor<Object>, Integer> contributorsAndLimits,
-                    Map<String, List<String>> results, String description) {
-      this.contributorsAndLimits = contributorsAndLimits;
-      this.results = results;
-      this.description = description;
-    }
+  private record Scenario(Map<SearchEverywhereContributor<Object>, Integer> contributorsAndLimits, Map<String, List<String>> results,
+                          String description) {
   }
 
   private static class SearchResultsCollector implements SearchListener {

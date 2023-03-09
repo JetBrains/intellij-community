@@ -79,7 +79,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
       }
 
       String text = combo.getText();
-      if (!StringUtil.isEmpty(text)) {
+      if (!StringUtil.isEmpty(text) && maxTextWidth > 0) {
         g2.setColor(c.getForeground());
         Rectangle textRect = new Rectangle(paintRect.x, paintRect.y, maxTextWidth, paintRect.height);
         drawText(c, text, g2, textRect);
@@ -97,7 +97,9 @@ public class ToolbarComboWidgetUI extends ComponentUI {
         doClip(paintRect, SEPARATOR_WIDTH + ELEMENTS_GAP);
       }
 
-      paintIcons(Collections.singletonList(EXPAND_ICON), combo, g2, paintRect, 0); // no gap for single icon
+      if (combo.isExpandable()) {
+        paintIcons(Collections.singletonList(EXPAND_ICON), combo, g2, paintRect, 0); // no gap for single icon
+      }
     }
     finally {
       g2.dispose();
@@ -167,12 +169,13 @@ public class ToolbarComboWidgetUI extends ComponentUI {
     if (right > 0) right += ELEMENTS_GAP;
 
     int separator = isSeparatorShown(c) ? ELEMENTS_GAP + SEPARATOR_WIDTH : 0;
+    int expandButton = c.isExpandable() ? ELEMENTS_GAP + EXPAND_ICON.getIconWidth() : 0;
 
-    int otherElementsWidth = left + right + separator + ELEMENTS_GAP + EXPAND_ICON.getIconWidth();
+    int otherElementsWidth = left + right + separator + expandButton;
     return paintRect.width - otherElementsWidth;
   }
 
-  private static int calcIconsWidth(List<Icon> icons, int gapBetweenIcons) {
+  private static int calcIconsWidth(List<? extends Icon> icons, int gapBetweenIcons) {
     int res = 0;
     for (Icon icon : icons) {
       if (res > 0) res += gapBetweenIcons;
@@ -182,10 +185,10 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   }
 
   private static void doClip(Rectangle bounds, int shift) {
-    bounds.setBounds(bounds.x + shift, bounds.y, bounds.width - shift, bounds.height);
+    bounds.setBounds(bounds.x + shift, bounds.y, Math.max(bounds.width - shift, 0), bounds.height);
   }
 
-  private static Rectangle paintIcons(List<Icon> icons, JComponent c, Graphics g, Rectangle bounds, int gapBetweenIcons) {
+  private static Rectangle paintIcons(List<? extends Icon> icons, JComponent c, Graphics g, Rectangle bounds, int gapBetweenIcons) {
     if (icons.isEmpty()) return new Rectangle();
 
     int maxHeight = 0;
@@ -234,9 +237,11 @@ public class ToolbarComboWidgetUI extends ComponentUI {
       res.width += SEPARATOR_WIDTH;
     }
 
-    if (res.width > 0) res.width += ELEMENTS_GAP;
-    res.width += EXPAND_ICON.getIconWidth();
-    res.height = Math.max(res.height, EXPAND_ICON.getIconHeight());
+    if (combo.isExpandable()) {
+      if (res.width > 0) res.width += ELEMENTS_GAP;
+      res.width += EXPAND_ICON.getIconWidth();
+      res.height = Math.max(res.height, EXPAND_ICON.getIconHeight());
+    }
 
     Insets insets = c.getInsets();
     res.height += insets.top + insets.bottom;
@@ -246,11 +251,8 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   }
 
   private static boolean isSeparatorShown(ToolbarComboWidget widget) {
-    return !widget.getPressListeners().isEmpty();
+    return !widget.getPressListeners().isEmpty() && widget.isExpandable();
   }
-
-  //todo minimum size
-  //todo baseline
 
   private static abstract class MyMouseTracker extends MouseAdapter {
     protected ToolbarComboWidget comp;
@@ -316,6 +318,11 @@ public class ToolbarComboWidgetUI extends ComponentUI {
 
     @Override
     public void mouseClicked(MouseEvent e) {
+      if (!comp.isExpandable()) {
+        notifyPressListeners(e);
+        return;
+      }
+
       if (!isSeparatorShown(comp)) {
         comp.doExpand(e);
         return;

@@ -53,7 +53,7 @@ public class UnifiedDiffModel {
 
   public void setChanges(@NotNull List<UnifiedDiffChange> changes,
                          boolean isContentsEqual,
-                         @NotNull List<RangeMarker> guardedBlocks,
+                         @NotNull List<? extends RangeMarker> guardedBlocks,
                          @NotNull LineNumberConvertor convertor1,
                          @NotNull LineNumberConvertor convertor2,
                          @NotNull List<HighlightRange> ranges) {

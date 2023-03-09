@@ -173,7 +173,7 @@ class KotlinParameterInfo(
         val originalParameter = getOriginalParameter(inheritedCallable)
             ?: return buildNewParameter(inheritedCallable, parameterIndex)
 
-        val psiFactory = KtPsiFactory(originalParameter)
+        val psiFactory = KtPsiFactory(originalParameter.project)
         val newParameter = originalParameter.copied()
 
         modifierList?.let { newParameter.setModifierList(it) }

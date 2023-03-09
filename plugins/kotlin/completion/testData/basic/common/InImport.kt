@@ -8,5 +8,5 @@ class Test {
 
 }
 
-// EXIST: Unit, Nothing, collections
-// EXIST_JAVA_ONLY: assert, concurrent
+// EXIST: Unit, Nothing, collections, concurrent
+// EXIST_JAVA_ONLY: assert

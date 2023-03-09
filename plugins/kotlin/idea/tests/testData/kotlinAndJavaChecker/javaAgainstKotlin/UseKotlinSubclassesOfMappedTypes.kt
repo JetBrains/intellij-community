@@ -4,7 +4,7 @@ class KotlinComparableTest : Comparable<Int> {
     }
 }
 
-class KotlinIterableTraitTest : Iterable<String> {
+class KotlinIterableInterfaceTest : Iterable<String> {
     override fun iterator(): Iterator<String> {
         throw UnsupportedOperationException()
     }

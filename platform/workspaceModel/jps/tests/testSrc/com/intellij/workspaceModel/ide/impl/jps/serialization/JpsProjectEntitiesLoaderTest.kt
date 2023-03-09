@@ -15,9 +15,6 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.getModuleLibraries
-import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
-import com.intellij.workspaceModel.storage.bridgeEntities.sourceRoots
 import com.intellij.workspaceModel.storage.checkConsistency
 import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -167,10 +164,12 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     assertEquals(5, innerChildren.size)
     assertNotNull(innerChildren.find { it is LibraryFilesPackagingElementEntity && it.library?.resolve(storage) == log4jModuleLibrary })
     assertNotNull(innerChildren.find { it is LibraryFilesPackagingElementEntity && it.library?.resolve(storage) == junitProjectLibrary })
-    assertEquals(File(projectDir, "main.iml").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<FileCopyPackagingElementEntity>().single().filePath!!.url))
-    assertEquals(File(projectDir, "lib/junit-anno").absolutePath, JpsPathUtil.urlToOsPath(innerChildren.filterIsInstance<DirectoryCopyPackagingElementEntity>().single().filePath!!.url))
+    assertEquals(File(projectDir, "main.iml").absolutePath, JpsPathUtil.urlToOsPath(
+      innerChildren.filterIsInstance<FileCopyPackagingElementEntity>().single().filePath.url))
+    assertEquals(File(projectDir, "lib/junit-anno").absolutePath, JpsPathUtil.urlToOsPath(
+      innerChildren.filterIsInstance<DirectoryCopyPackagingElementEntity>().single().filePath.url))
     innerChildren.filterIsInstance<ExtractedDirectoryPackagingElementEntity>().single().let {
-      assertEquals(File(projectDir, "lib/junit.jar").absolutePath, JpsPathUtil.urlToOsPath(it.filePath!!.url))
+      assertEquals(File(projectDir, "lib/junit.jar").absolutePath, JpsPathUtil.urlToOsPath(it.filePath.url))
       assertEquals("/junit/", it.pathInArchive)
     }
 
@@ -210,7 +209,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val projectDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel/jps/tests/testData/serialization/facets/facets.ipr")
     val storage = loadProject(projectDir)
     val modules = storage.entities(ModuleEntity::class.java).associateBy { it.name }
-    val single = modules.getValue("single").facets?.single() ?: error("")
+    val single = modules.getValue("single").facets.single()
     assertEquals("foo", single.facetType)
     assertEquals("Foo", single.name)
     assertEquals("""
@@ -218,13 +217,13 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
                       <data />
                     </configuration>""".trimIndent(), single.configurationXmlTag)
 
-    val two = modules.getValue("two").facets?.toList() ?: emptyList()
+    val two = modules.getValue("two").facets.toList()
     assertEquals(setOf("a", "b"), two.mapTo(HashSet()) { it.name })
 
-    val twoReversed = modules.getValue("two.reversed").facets?.toList() ?: emptyList()
+    val twoReversed = modules.getValue("two.reversed").facets.toList()
     assertEquals(setOf("a", "b"), twoReversed.mapTo(HashSet()) { it.name })
 
-    val subFacets = modules.getValue("subFacets").facets?.sortedBy { it.name }?.toList() ?: emptyList()
+    val subFacets = modules.getValue("subFacets").facets.sortedBy { it.name }.toList()
     assertEquals(listOf("Bar", "Foo"), subFacets.map { it.name })
     val (bar, foo) = subFacets
     assertEquals("Foo", bar.underlyingFacet!!.name)

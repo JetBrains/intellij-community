@@ -49,7 +49,7 @@ class ConvertToIsArrayOfCallFix(element: KtIsExpression, lhsType: KotlinType, ar
             else ->
                 if (isNegated) "!($0 is Array<*> && $0.$isArrayOfCall)" else "$0 is Array<*> && $0.$isArrayOfCall"
         }
-        val replaced = isExpression.replaced(KtPsiFactory(isExpression).createExpressionByPattern(newPattern, isExpression.leftHandSide))
+        val replaced = isExpression.replaced(KtPsiFactory(project).createExpressionByPattern(newPattern, isExpression.leftHandSide))
         ShortenReferences.DEFAULT.process(replaced)
     }
 

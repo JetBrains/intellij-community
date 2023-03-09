@@ -5,10 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -442,16 +439,16 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
       throw new PyDebuggerException("Documentation in Python Console shouldn't be called from Dispatch Thread!");
     }
 
-    return executeBackgroundTask(
-      () ->
-      {
+    ProgressManager progressManager = ProgressManager.getInstance();
+    ProgressIndicator indicator = progressManager.hasProgressIndicator() ? progressManager.getProgressIndicator() : new EmptyProgressIndicator();
+    indicator.setText(createRuntimeMessage(PyBundle.message("console.getting.documentation")));
+    return ApplicationUtil.runWithCheckCanceled(
+      () -> {
         final String resultDescription = getPythonConsoleBackendClient().getDescription(text);
         myPrevNameToDescription = Pair.create(text, resultDescription);
         return resultDescription;
       },
-      true,
-      createRuntimeMessage(PyBundle.message("console.getting.documentation")),
-      "Error when Getting Description in Python Console: ");
+      indicator);
   }
 
   /**
@@ -551,22 +548,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
   }
 
-  public PyDebugValue evaluateCommand(String expression, boolean doTrunc) throws TException {
-    if (!isCommunicationClosed()) {
-      List<DebugValue> debugValues = getPythonConsoleBackendClient().evaluate(expression, doTrunc);
-      return createPyDebugValue(debugValues.iterator().next(), this);
-    }
-    else {
-      return null;
-    }
-  }
-
   @Nullable
   @Override
   public XValueChildrenList loadFrame(@Nullable XStackFrame contextFrame) throws PyDebuggerException {
     return loadFrame(() -> {
       List<DebugValue> frame = getPythonConsoleBackendClient().getFrame(ProcessDebugger.GROUP_TYPE.DEFAULT.ordinal());
-      return parseVars(frame, null, this);
+      XValueChildrenList frameValues = parseVars(frame, null, this);
+      notifyVariablesLoaded(frameValues);
+      return frameValues;
     });
   }
 
@@ -800,9 +789,16 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
   }
 
+  private void notifyVariablesLoaded(XValueChildrenList values) {
+    for (PyFrameListener listener : myFrameListeners) {
+      listener.updateVariables(this, values);
+    }
+  }
+
   private void notifySessionStopped() {
     for (PyFrameListener listener : myFrameListeners) {
       listener.sessionStopped();
+      listener.sessionStopped(this);
     }
   }
 

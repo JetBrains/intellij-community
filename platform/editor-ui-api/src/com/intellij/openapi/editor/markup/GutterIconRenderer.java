@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.CachedImageIcon;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.util.ui.accessibility.SimpleAccessible;
@@ -146,8 +146,8 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
       }
       return b.toString();
     }
-    if (icon instanceof IconLoader.CachedImageIcon) {
-      String path = ((IconLoader.CachedImageIcon)icon).getOriginalPath();
+    if (icon instanceof CachedImageIcon) {
+      String path = ((CachedImageIcon)icon).getOriginalPath();
       if (path != null) {
         String[] split = path.split(Pattern.quote("/") + "|" + Pattern.quote("\\"));
         String name = split[split.length - 1];

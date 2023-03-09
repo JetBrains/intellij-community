@@ -8,13 +8,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vcs.impl.VcsInitObject
-import com.intellij.openapi.vcs.impl.VcsStartupActivity
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.ObjectUtils
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
@@ -22,6 +23,7 @@ import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.config.GitConfigUtil
 import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
@@ -83,10 +85,12 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(this) { processEvents(events) }
   }
 
-  private fun start() {
-    BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).loadingStarted()
-    GitUtil.getRepositories(project).forEach(::trackCommitTemplate)
+  @VisibleForTesting
+  @RequiresBackgroundThread
+  fun start() {
     if (started.compareAndSet(false, true)) {
+      BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).loadingStarted()
+      GitUtil.getRepositories(project).forEach(::trackCommitTemplate)
       BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).loadingFinished()
     }
   }
@@ -103,18 +107,18 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
         val watchedTemplatePath = template.watchedRoot.rootPath
 
         var templateChanged = false
-          if (isEventToStopTracking(event, watchedTemplatePath)) {
-            synchronized(this) {
-              stopTrackCommitTemplate(repository)
-            }
-            templateChanged = true
+        if (isEventToStopTracking(event, watchedTemplatePath)) {
+          synchronized(this) {
+            stopTrackCommitTemplate(repository)
           }
-          else if (isEventToReloadTemplateContent(event, watchedTemplatePath)) {
-            synchronized(this) {
-              reloadCommitTemplateContent(repository)
-            }
-            templateChanged = true
+          templateChanged = true
+        }
+        else if (isEventToReloadTemplateContent(event, watchedTemplatePath)) {
+          synchronized(this) {
+            reloadCommitTemplateContent(repository)
           }
+          templateChanged = true
+        }
 
         if (templateChanged) {
           BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).notifyCommitTemplateChanged(repository)
@@ -198,6 +202,7 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
     return null
   }
 
+  @RequiresBackgroundThread
   private fun trackCommitTemplate(repository: GitRepository) {
     val newTemplatePath = resolveCommitTemplatePath(repository)
     val templateChanged = synchronized(this) {
@@ -260,13 +265,12 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
     }
   }
 
-  internal class GitCommitTemplateTrackerStartupActivity : VcsStartupActivity {
-
-    override fun runActivity(project: Project) {
-      project.service<GitCommitTemplateTracker>().start()
+  internal class GitCommitTemplateTrackerStartupActivity : ProjectPostStartupActivity {
+    override suspend fun execute(project: Project) {
+      ProjectLevelVcsManager.getInstance(project).runAfterInitialization {
+        project.service<GitCommitTemplateTracker>().start()
+      }
     }
-
-    override fun getOrder(): Int = VcsInitObject.AFTER_COMMON.order
   }
 
   companion object {

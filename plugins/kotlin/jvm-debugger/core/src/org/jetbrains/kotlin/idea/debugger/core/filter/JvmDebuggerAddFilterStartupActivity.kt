@@ -4,14 +4,14 @@ package org.jetbrains.kotlin.idea.debugger.core.filter
 
 import com.intellij.debugger.settings.DebuggerSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.ui.classFilter.ClassFilter
 
 private const val KOTLIN_STDLIB_FILTER = "kotlin.*"
 private const val COMPOSE_RUNTIME_FILTER = "androidx.compose.runtime.*"
 
-class JvmDebuggerAddFilterStartupActivity : StartupActivity.DumbAware {
-    override fun runActivity(project: Project) {
+private class JvmDebuggerAddFilterStartupActivity : ProjectPostStartupActivity {
+    override suspend fun execute(project: Project) {
         val settings = DebuggerSettings.getInstance() ?: return
         settings.addSteppingFilterIfNeeded(KOTLIN_STDLIB_FILTER)
         settings.addSteppingFilterIfNeeded(COMPOSE_RUNTIME_FILTER)

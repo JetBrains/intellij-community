@@ -188,7 +188,7 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
     }
 
     if (!shouldCollectCoverageInsideLibraryDirs()) {
-      if (index.isInLibrary(dir)) {
+      if (ReadAction.compute(() -> index.isInLibrary(dir))) {
         return null;
       }
     }

@@ -1,5 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.Disposable;
@@ -16,12 +15,10 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public final class IdeGlassPaneUtil {
-
   private IdeGlassPaneUtil() {
   }
 
-  @NotNull
-  public static IdeGlassPane find(@NotNull Component component) {
+  public static @NotNull IdeGlassPane find(@NotNull Component component) {
     if (!(component instanceof JComponent)) {
       throw new IllegalArgumentException("Component must be instance of JComponent");
     }

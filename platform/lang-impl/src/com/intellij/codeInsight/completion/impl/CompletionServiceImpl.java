@@ -14,8 +14,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.patterns.ElementPattern;
@@ -47,7 +46,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   public CompletionServiceImpl() {
     super();
     SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         List<ClientId> clientIds = new ArrayList<>(clientId2Holders.keySet());  // original set might be modified during iteration
@@ -207,15 +206,15 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   private static void assertPhase(@NotNull ClientId clientId,
                                   @NotNull CompletionPhaseHolder phaseHolder,
                                   Class<? extends CompletionPhase> @NotNull ... possibilities) {
-    if (!isPhase(phaseHolder.getPhase(), possibilities)) {
+    if (!isPhase(phaseHolder.phase(), possibilities)) {
       reportPhase(clientId, phaseHolder);
     }
   }
 
   private static void reportPhase(@NotNull ClientId clientId, @NotNull CompletionPhaseHolder phaseHolder) {
-    Throwable phaseTrace = phaseHolder.getPhaseTrace();
+    Throwable phaseTrace = phaseHolder.phaseTrace();
     String traceText = phaseTrace != null ? "; set at " + ExceptionUtil.getThrowableText(phaseTrace) : "";
-    LOG.error(phaseHolder.getPhase() + "; " + clientId + traceText);
+    LOG.error(phaseHolder.phase() + "; " + clientId + traceText);
   }
 
   @SafeVarargs
@@ -287,7 +286,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   }
 
   private static @NotNull CompletionPhase getCompletionPhase(@NotNull ClientId clientId) {
-    return getCompletionPhaseHolder(clientId).getPhase();
+    return getCompletionPhaseHolder(clientId).phase();
   }
 
   private static @NotNull CompletionPhaseHolder getCompletionPhaseHolder(@NotNull ClientId clientId) {
@@ -319,6 +318,7 @@ public final class CompletionServiceImpl extends BaseCompletionService {
   protected void getVariantsFromContributor(CompletionParameters params, CompletionContributor contributor, CompletionResultSet result) {
     runWithSpan(myCompletionTracer, contributor.getClass().getSimpleName(), span -> {
       super.getVariantsFromContributor(params, contributor, result);
+      span.setAttribute("avoid_null_value", true);
     });
   }
 
@@ -341,21 +341,6 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     });
   }
 
-  private static class CompletionPhaseHolder {
-    private final @NotNull CompletionPhase ourPhase;
-    private final @Nullable Throwable ourPhaseTrace;
-
-    CompletionPhaseHolder(@NotNull CompletionPhase phase, @Nullable Throwable phaseTrace) {
-      ourPhase = phase;
-      ourPhaseTrace = phaseTrace;
-    }
-
-    @NotNull CompletionPhase getPhase() {
-      return ourPhase;
-    }
-
-    @Nullable Throwable getPhaseTrace() {
-      return ourPhaseTrace;
-    }
+  private record CompletionPhaseHolder(@NotNull CompletionPhase phase, @Nullable Throwable phaseTrace) {
   }
 }

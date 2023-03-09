@@ -2,7 +2,7 @@ from _typeshed import Self, SupportsRead
 from collections.abc import Sequence
 from typing import Any
 
-from .builder import TreeBuilder
+from .builder import ParserRejectedMarkup as ParserRejectedMarkup, TreeBuilder, XMLParsedAsHTMLWarning as XMLParsedAsHTMLWarning
 from .element import (
     CData as CData,
     Comment as Comment,
@@ -72,7 +72,16 @@ class BeautifulSoup(Tag):
     def pushTag(self, tag) -> None: ...
     def endData(self, containerClass: Any | None = ...) -> None: ...
     def object_was_parsed(self, o, parent: Any | None = ..., most_recent_element: Any | None = ...) -> None: ...
-    def handle_starttag(self, name, namespace, nsprefix, attrs, sourceline: Any | None = ..., sourcepos: Any | None = ...): ...
+    def handle_starttag(
+        self,
+        name,
+        namespace,
+        nsprefix,
+        attrs,
+        sourceline: Any | None = ...,
+        sourcepos: Any | None = ...,
+        namespaces: dict[str, str] | None = ...,
+    ): ...
     def handle_endtag(self, name, nsprefix: Any | None = ...) -> None: ...
     def handle_data(self, data) -> None: ...
     def decode(  # type: ignore[override]

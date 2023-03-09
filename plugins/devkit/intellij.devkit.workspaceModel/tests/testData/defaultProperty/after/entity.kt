@@ -27,6 +27,9 @@ interface DefaultFieldEntity : WorkspaceEntity {
   }
 
   companion object : Type<DefaultFieldEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(version: Int, data: TestData, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): DefaultFieldEntity {
       val builder = builder()
       builder.version = version

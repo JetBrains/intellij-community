@@ -40,7 +40,9 @@ interface JpsFileEntitiesSerializer<E : WorkspaceEntity> {
   val internalEntitySource: JpsFileEntitySource
   val fileUrl: VirtualFileUrl
   val mainEntityClass: Class<E>
-  fun loadEntities(builder: MutableEntityStorage, reader: JpsFileContentReader, errorReporter: ErrorReporter,
+  fun loadEntities(builder: MutableEntityStorage,
+                   reader: JpsFileContentReader,
+                   errorReporter: ErrorReporter,
                    virtualFileManager: VirtualFileUrlManager)
   fun saveEntities(mainEntities: Collection<E>,
                    entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
@@ -115,8 +117,12 @@ interface JpsProjectSerializers {
     }
   }
 
-  suspend fun loadAll(reader: JpsFileContentReader, builder: MutableEntityStorage, unloadedEntityBuilder: MutableEntityStorage,
-                      unloadedModuleNames: Set<String>, errorReporter: ErrorReporter, project: Project?): List<EntitySource>
+  suspend fun loadAll(reader: JpsFileContentReader,
+                      builder: MutableEntityStorage,
+                      unloadedEntityBuilder: MutableEntityStorage,
+                      unloadedModuleNames: Set<String>,
+                      errorReporter: ErrorReporter,
+                      project: Project?): List<EntitySource>
 
   fun reloadFromChangedFiles(change: JpsConfigurationFilesChange,
                              reader: JpsFileContentReader,

@@ -592,7 +592,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   }
 
   @Override
-  public JComponent getContainerComponent() {
+  public @NotNull JComponent getContainerComponent() {
     initUi();
     return myManager.getComponent();
   }

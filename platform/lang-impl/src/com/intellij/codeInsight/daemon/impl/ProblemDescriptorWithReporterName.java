@@ -7,8 +7,7 @@ import org.jetbrains.annotations.NotNull;
 public class ProblemDescriptorWithReporterName extends ProblemDescriptorBase {
   private final String myReportingToolName;
 
-  public ProblemDescriptorWithReporterName(@NotNull ProblemDescriptorBase pd,
-                                           @NotNull String reportingToolName) {
+  public ProblemDescriptorWithReporterName(@NotNull ProblemDescriptorBase pd, @NotNull String reportingToolName) {
     super(pd.getStartElement(), pd.getEndElement(), pd.getDescriptionTemplate(), pd.getFixes(),
           pd.getHighlightType(), pd.isAfterEndOfLine(), pd.getTextRangeInElement(), pd.showTooltip(), pd.isOnTheFly());
     myReportingToolName = reportingToolName;

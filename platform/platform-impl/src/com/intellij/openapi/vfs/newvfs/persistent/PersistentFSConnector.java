@@ -6,8 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.OffsetBasedNonStrictStringsEnumerator;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.StreamlinedBlobStorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -134,7 +134,6 @@ final class PersistentFSConnector {
                                                CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
                                                SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
                                                  "FSRecords Content Write Pool"),
-                                               FSRecords.useCompressionUtil,
                                                useContentHashes);
 
       // sources usually zipped with 4x ratio
@@ -222,12 +221,12 @@ final class PersistentFSConnector {
       final PagedFileStorage pagedStorage = new PagedFileStorage(
         attributesFile,
         PERSISTENT_FS_STORAGE_CONTEXT,
-        PagedFileStorage.DEFAULT_PAGE_SIZE,
+        PageCacheUtils.DEFAULT_PAGE_SIZE,
         true,
         true
       );
       return new AttributesStorageOnTheTopOfBlobStorage(
-        new StreamlinedBlobStorage(
+        new SmallStreamlinedBlobStorage(
           pagedStorage,
           //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2 minCapacity
           new DataLengthPlusFixedPercentStrategy(128, 64, 30)
@@ -257,9 +256,9 @@ final class PersistentFSConnector {
       LOG.info("VFS uses non-strict names enumerator");
       final ResizeableMappedFile mappedFile = new ResizeableMappedFile(
         namesFile,
-        10 * PagedFileStorage.MB,
+        10 * IOUtil.MiB,
         PERSISTENT_FS_STORAGE_CONTEXT,
-        PagedFileStorage.MB,
+        IOUtil.MiB,
         false
       );
       return new OffsetBasedNonStrictStringsEnumerator(mappedFile);

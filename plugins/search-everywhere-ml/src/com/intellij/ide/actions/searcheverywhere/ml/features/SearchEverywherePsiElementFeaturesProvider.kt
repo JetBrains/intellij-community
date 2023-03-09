@@ -37,12 +37,6 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
     private val LANGUAGE_USED_IN_LAST_MONTH = EventFields.Boolean("langUsedInLastMonth")
     private val LANGUAGE_NEVER_USED_DATA_KEY = EventFields.Boolean("langNeverUsed")
     private val LANGUAGE_IS_SAME_AS_OPENED_FILE = EventFields.Boolean("langSameAsOpenedFile")
-
-    fun getPsiElement(element: Any) = when (element) {
-      is PsiItemWithPresentation -> element.item
-      is PsiElement -> element
-      else -> null
-    }
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> = listOf(
@@ -57,7 +51,7 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
-    val psiElement = getPsiElement(element) ?: return emptyList()
+    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element) ?: return emptyList()
     return getLanguageFeatures(psiElement, cache) + getNameFeatures(element, searchQuery)
   }
 
@@ -104,6 +98,14 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
   private fun getElementName(element: Any) = when (element) {
     is PsiItemWithPresentation -> element.presentation.presentableText
     is PsiNamedElement -> ReadAction.compute<String, Nothing> { element.name }
+    else -> null
+  }
+}
+
+object SearchEverywherePsiElementFeaturesProviderUtils {
+  fun getPsiElement(element: Any) = when (element) {
+    is PsiItemWithPresentation -> element.item
+    is PsiElement -> element
     else -> null
   }
 }

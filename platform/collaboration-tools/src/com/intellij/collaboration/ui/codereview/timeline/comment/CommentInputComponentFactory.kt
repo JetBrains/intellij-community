@@ -1,39 +1,35 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.timeline.comment
 
-import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.util.ui.InlineIconButton
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.CancelActionConfig
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.ScrollOnChangePolicy
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.SubmitActionConfig
-import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory.getEditorTextFieldVerticalOffset
-import com.intellij.icons.AllIcons
+import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.ui.util.JComponentOverlay
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextField
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
-import icons.CollaborationToolsIcons
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
-import java.awt.Dimension
-import java.awt.Rectangle
-import java.awt.event.*
+import org.jetbrains.annotations.Nls
+import java.awt.*
+import java.awt.event.ActionEvent
+import java.awt.event.ActionListener
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.JLayeredPane
 import javax.swing.JPanel
-import javax.swing.border.EmptyBorder
+import kotlin.math.max
+import kotlin.math.min
 
 object CommentInputComponentFactory {
   val defaultSubmitShortcut: ShortcutSet = CommonShortcuts.CTRL_ENTER
@@ -47,50 +43,40 @@ object CommentInputComponentFactory {
     textField.installSubmitAction(model, config.submitConfig)
     textField.installCancelAction(config.cancelConfig)
 
-    val contentComponent = JPanel(null).apply {
-      isOpaque = false
-      layout = MigLayout(
-        LC()
-          .gridGap("0", "0")
-          .insets("0", "0", "0", "0")
-          .fillX()
-      )
-      border = JBUI.Borders.empty()
-    }
-
     val busyLabel = JLabel(AnimatedIcon.Default())
-    val submitButton = createSubmitButton(model, config.submitConfig)
+    val textFieldWithOverlay = JComponentOverlay.createCentered(textField, busyLabel)
+    updateUiOnModelChanges(textFieldWithOverlay, model, textField, busyLabel)
+    installScrollIfChangedController(textFieldWithOverlay, model, config.scrollOnChange)
 
-    val cancelButton = createCancelButton(config.cancelConfig)
-
-    updateUiOnModelChanges(contentComponent, model, textField, busyLabel, submitButton)
-
-    installScrollIfChangedController(contentComponent, model, config.scrollOnChange)
-
-    val textFieldWithOverlay = createTextFieldWithOverlay(textField, submitButton, busyLabel)
-    contentComponent.add(textFieldWithOverlay, CC().grow().pushX())
-    cancelButton?.let { contentComponent.add(it, CC().alignY("top")) }
-
-    return contentComponent
+    return textFieldWithOverlay
   }
 
-  fun getEditorTextFieldVerticalOffset() = if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) 6 else 4
+  fun <T> addIconLeft(componentType: CodeReviewChatItemUIUtil.ComponentType, item: JComponent,
+                      iconProvider: IconsProvider<T>, iconKey: T, iconTooltip: @Nls String? = null): JComponent {
+    val iconLabel = JLabel(iconProvider.getIcon(iconKey, componentType.iconSize)).apply {
+      toolTipText = iconTooltip
+    }
+
+    return JPanel(CommentFieldWithIconLayout(componentType.iconGap - CollaborationToolsUIUtil.getFocusBorderInset())).apply {
+      isOpaque = false
+      add(CommentFieldWithIconLayout.ICON, iconLabel)
+      add(CommentFieldWithIconLayout.ITEM, item)
+    }
+  }
 
   data class Config(
     val scrollOnChange: ScrollOnChangePolicy = ScrollOnChangePolicy.ScrollToField,
-    val submitConfig: SubmitActionConfig,
-    val cancelConfig: CancelActionConfig?
+    val submitConfig: SubmitActionConfig = SubmitActionConfig(),
+    val cancelConfig: CancelActionConfig? = null
   )
 
   data class SubmitActionConfig(
-    val iconConfig: ActionButtonConfig?,
-    val shortcut: SingleValueModel<ShortcutSet> = SingleValueModel(defaultSubmitShortcut)
+    val shortcut: ShortcutSet = defaultSubmitShortcut
   )
 
   data class CancelActionConfig(
-    val iconConfig: ActionButtonConfig?,
     val shortcut: ShortcutSet = defaultCancelShortcut,
-    val action: () -> Unit
+    val action: ActionListener
   )
 
   sealed class ScrollOnChangePolicy {
@@ -98,8 +84,6 @@ object CommentInputComponentFactory {
     object ScrollToField : ScrollOnChangePolicy()
     class ScrollToComponent(val component: JComponent) : ScrollOnChangePolicy()
   }
-
-  data class ActionButtonConfig(val name: @NlsContexts.Tooltip String)
 }
 
 private fun installScrollIfChangedController(
@@ -142,42 +126,6 @@ private fun installScrollIfChangedController(
   })
 }
 
-private fun createSubmitButton(
-  model: CommentTextFieldModel,
-  actionConfig: SubmitActionConfig
-): InlineIconButton? {
-  val iconConfig = actionConfig.iconConfig ?: return null
-
-  val button = InlineIconButton(
-    CollaborationToolsIcons.Send, CollaborationToolsIcons.SendHovered,
-    tooltip = iconConfig.name
-  ).apply {
-    putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-    actionListener = ActionListener { model.submitWithCheck() }
-  }
-
-  actionConfig.shortcut.addAndInvokeListener {
-    button.shortcut = it
-  }
-  return button
-}
-
-private fun createCancelButton(actionConfig: CancelActionConfig?): InlineIconButton? {
-  if (actionConfig == null) {
-    return null
-  }
-  val iconConfig = actionConfig.iconConfig ?: return null
-  return InlineIconButton(
-    AllIcons.Actions.Close, AllIcons.Actions.CloseHovered,
-    tooltip = iconConfig.name,
-    shortcut = actionConfig.shortcut
-  ).apply {
-    border = JBUI.Borders.empty(getEditorTextFieldVerticalOffset(), 0)
-    putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
-    actionListener = ActionListener { actionConfig.action() }
-  }
-}
-
 private fun EditorTextField.installSubmitAction(
   model: CommentTextFieldModel,
   submitConfig: SubmitActionConfig
@@ -185,11 +133,7 @@ private fun EditorTextField.installSubmitAction(
   val submitAction = object : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) = model.submitWithCheck()
   }
-
-  submitConfig.shortcut.addAndInvokeListener {
-    submitAction.unregisterCustomShortcutSet(this)
-    submitAction.registerCustomShortcutSet(it, this)
-  }
+  submitAction.registerCustomShortcutSet(submitConfig.shortcut, this)
 }
 
 private fun EditorTextField.installCancelAction(cancelConfig: CancelActionConfig?) {
@@ -198,7 +142,9 @@ private fun EditorTextField.installCancelAction(cancelConfig: CancelActionConfig
   }
   object : DumbAwareAction() {
     override fun actionPerformed(e: AnActionEvent) {
-      cancelConfig.action()
+      cancelConfig.action.actionPerformed(
+        ActionEvent(this@installCancelAction, e.inputEvent.id, "cancel", e.inputEvent.`when`, e.inputEvent.modifiersEx)
+      )
     }
   }.registerCustomShortcutSet(cancelConfig.shortcut, this)
 }
@@ -207,12 +153,10 @@ private fun updateUiOnModelChanges(
   parent: JComponent,
   model: CommentTextFieldModel,
   textField: EditorTextField,
-  busyLabel: JComponent,
-  submitButton: InlineIconButton?
+  busyLabel: JComponent
 ) {
   fun update() {
     busyLabel.isVisible = model.isBusy
-    submitButton?.isEnabled = model.isSubmitAllowed()
   }
 
   textField.addDocumentListener(object : DocumentListener {
@@ -235,57 +179,101 @@ private fun CommentTextFieldModel.submitWithCheck() {
 }
 
 /**
- * Returns a component with [busyLabel] in center and [button] in bottom-right corner
+ * Lays out the field with an icon on the left.
+ * Icon is aligned to the top of its column except when min height of the field is less than that of an icon,
+ * in this case avatar is centered along that min height.
+ * Same thing the other way around.
  */
-private fun createTextFieldWithOverlay(textField: EditorTextField, button: JComponent?, busyLabel: JComponent?): JComponent {
-  if (button != null) {
-    val bordersListener = object : ComponentAdapter(), HierarchyListener {
-      override fun componentResized(e: ComponentEvent?) {
-        val scrollPane = (textField.editor as? EditorEx)?.scrollPane ?: return
-        val buttonSize = button.size
-        JBInsets.removeFrom(buttonSize, button.insets)
-        scrollPane.viewportBorder = JBUI.Borders.emptyRight(buttonSize.width)
-        scrollPane.viewport.revalidate()
-      }
+private class CommentFieldWithIconLayout(
+  private val gap: Int
+) : LayoutManager {
 
-      override fun hierarchyChanged(e: HierarchyEvent?) {
-        val scrollPane = (textField.editor as? EditorEx)?.scrollPane ?: return
-        button.border = EmptyBorder(scrollPane.border.getBorderInsets(scrollPane))
-        componentResized(null)
-      }
-    }
-
-    textField.addHierarchyListener(bordersListener)
-    button.addComponentListener(bordersListener)
+  companion object {
+    const val ICON = "ICON"
+    const val ITEM = "ITEM"
   }
 
-  val layeredPane = object : JLayeredPane() {
-    override fun getPreferredSize(): Dimension {
-      return textField.preferredSize
-    }
+  private var iconComponent: Component? = null
+  private var itemComponent: Component? = null
 
-    override fun doLayout() {
-      super.doLayout()
-      textField.setBounds(0, 0, width, height)
-      if (button != null) {
-        val preferredButtonSize = button.preferredSize
-        button.setBounds(width - preferredButtonSize.width, height - preferredButtonSize.height,
-                         preferredButtonSize.width, preferredButtonSize.height)
-      }
-      if (busyLabel != null) {
-        busyLabel.bounds = SingleComponentCenteringLayout.getBoundsForCentered(textField, busyLabel)
-      }
+  override fun addLayoutComponent(name: String, comp: Component?) {
+    when (name) {
+      ICON -> iconComponent = comp
+      ITEM -> itemComponent = comp
+      else -> error("Incorrect name $name")
     }
   }
-  layeredPane.add(textField, JLayeredPane.DEFAULT_LAYER, 0)
-  var index = 1
-  if (busyLabel != null) {
-    layeredPane.add(busyLabel, JLayeredPane.POPUP_LAYER, index)
-    index++
-  }
-  if (button != null) {
-    layeredPane.add(button, JLayeredPane.POPUP_LAYER, index)
+
+  override fun removeLayoutComponent(comp: Component) {
+    if (iconComponent == comp) iconComponent = null
+    if (itemComponent == comp) itemComponent = null
   }
 
-  return layeredPane
+  override fun preferredLayoutSize(parent: Container): Dimension = getSize(parent, Component::getPreferredSize)
+  override fun minimumLayoutSize(parent: Container): Dimension = getSize(parent, Component::getMinimumSize)
+
+  private fun getSize(parent: Container, sizeGetter: (Component) -> Dimension?): Dimension {
+    val iconSize = iconComponent?.takeIf { it.isVisible }?.let(sizeGetter) ?: Dimension(0, 0)
+    val itemSize = itemComponent?.takeIf { it.isVisible }?.let(sizeGetter) ?: Dimension(0, 0)
+
+    val gap = JBUIScale.scale(gap)
+    val i = parent.insets
+
+    return Dimension(i.left + iconSize.width + gap + itemSize.width + i.right,
+                     i.top + max(iconSize.height, itemSize.height) + i.bottom)
+  }
+
+  override fun layoutContainer(parent: Container) {
+    val bounds = Rectangle(Point(0, 0), parent.size)
+    JBInsets.removeFrom(bounds, parent.insets)
+    var x = bounds.x
+    val y = bounds.y
+    var contentWidth = bounds.width
+    val contentHeight = bounds.height
+
+    val iconHeight = iconComponent?.takeIf { it.isVisible }?.preferredSize?.height ?: 0
+    val itemMinHeight = itemComponent?.takeIf { it.isVisible }?.minimumSize?.height ?: 0
+
+    iconComponent?.takeIf { it.isVisible }?.apply {
+      val prefSize = preferredSize
+      val width = min(contentWidth, prefSize.width)
+      setBounds(x, y + max(0, (itemMinHeight - iconHeight) / 2), width, min(contentHeight, prefSize.height))
+      x += prefSize.width
+      x += JBUIScale.scale(gap)
+
+      contentWidth -= width
+      contentWidth -= JBUIScale.scale(gap)
+    }
+
+    itemComponent?.takeIf { it.isVisible }?.apply {
+      val maxSize = maximumSize
+      val minSize = minimumSize
+
+      val width = if (contentWidth >= maxSize.width) {
+        maxSize.width
+      }
+      else {
+        if (contentWidth >= minSize.width) {
+          contentWidth
+        }
+        else {
+          minSize.width
+        }
+      }
+
+      val height = if (contentHeight >= maxSize.height) {
+        maxSize.height
+      }
+      else {
+        if (contentHeight >= minSize.height) {
+          contentHeight
+        }
+        else {
+          minSize.height
+        }
+      }
+
+      setBounds(x, y + max(0, (iconHeight - itemMinHeight) / 2), width, height)
+    }
+  }
 }

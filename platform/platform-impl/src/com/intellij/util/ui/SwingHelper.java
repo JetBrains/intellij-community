@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -63,7 +63,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
-public class SwingHelper {
+public final class SwingHelper {
 
   private static final Logger LOG = Logger.getInstance(SwingHelper.class);
   private static final String DIALOG_RESIZED_TO_FIT_TEXT = "INTELLIJ_DIALOG_RESIZED_TO_FIT_TEXT";
@@ -423,8 +423,14 @@ public class SwingHelper {
                                                        @NotNull @Nls(capitalization = Nls.Capitalization.Title) String browseDialogTitle,
                                                        @NotNull FileChooserDescriptor fileChooserDescriptor,
                                                        @NotNull TextComponentAccessor<T> textComponentAccessor) {
-    ComponentsKt.installFileCompletionAndBrowseDialog(project, componentWithBrowseButton, textField, browseDialogTitle,
-                                                      fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix), textComponentAccessor);
+    ComponentsKt.installFileCompletionAndBrowseDialog(
+      project,
+      componentWithBrowseButton,
+      textField,
+      browseDialogTitle,
+      fileChooserDescriptor.withShowHiddenFiles(SystemInfo.isUnix),
+      textComponentAccessor
+    );
   }
 
   /**

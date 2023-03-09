@@ -2,12 +2,11 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.async.CompletableFutureUtil
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.icons.AllIcons
 import com.intellij.ui.CardLayoutPanel
 import com.intellij.ui.components.JBOptionButton
-import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.NamedColorUtil
 import icons.CollaborationToolsIcons
 import net.miginfocom.layout.CC
@@ -63,7 +62,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
 
       val actionsPanel = JPanel(null).apply {
         isOpaque = false
-        layout = MigLayout(LC().fill().flowY().gridGap("${JBUIScale.scale(5)}", "0").insets("0"))
+        layout = MigLayout(LC().fill().flowY().gridGap("5", "0").insets("0"))
 
         add(buttonsPanel)
         add(errorComponent, CC().minWidth("0"))
@@ -71,7 +70,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
 
       return JPanel(null).apply {
         isOpaque = false
-        layout = MigLayout(LC().fill().flowY().gridGap("${JBUIScale.scale(4)}", "0").insets("0"))
+        layout = MigLayout(LC().fill().flowY().gridGap("4", "0").insets("0"))
 
         add(statusComponent)
         add(actionsPanel)
@@ -107,8 +106,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
             icon = AllIcons.RunConfigurations.TestError
             text = GithubBundle.message("pull.request.repo.access.required")
           }
-          JPanel(VerticalLayout(STATUSES_GAP)).apply {
-            isOpaque = false
+          VerticalListPanel(STATUSES_GAP).apply {
             add(stateLabel)
             add(accessDeniedLabel)
           }
@@ -147,8 +145,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
         val stateLabel = JLabel(GithubBundle.message("pull.request.loading.status"), AllIcons.RunConfigurations.TestNotRan,
                                 SwingConstants.LEFT)
         val accessDeniedLabel = createAccessDeniedLabel(isDraft)
-        return JPanel(VerticalLayout(STATUSES_GAP, SwingConstants.LEFT)).apply {
-          isOpaque = false
+        return VerticalListPanel(STATUSES_GAP).apply {
           add(stateLabel)
           add(accessDeniedLabel)
         }
@@ -198,8 +195,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
 
         val accessDeniedLabel = createAccessDeniedLabel(isDraft)
 
-        return JPanel(VerticalLayout(STATUSES_GAP, SwingConstants.LEFT)).apply {
-          isOpaque = false
+        return VerticalListPanel(STATUSES_GAP).apply {
           add(statusChecks)
           add(requiredReviewsLabel)
           add(conflictsLabel)

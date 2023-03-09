@@ -36,7 +36,7 @@ import java.util.zip.GZIPInputStream;
  *
  * @author <a href="maito:jdesbonnet@gmail.com">Joe Desbonnet</a>
  */
-public class JBPatch {
+public final class JBPatch {
   private static final int BLOCK_SIZE = 2 * 1024 * 1024;
 
   public static void bspatch(InputStream oldFileIn, OutputStream newFileOut, InputStream diffFileIn) throws IOException {

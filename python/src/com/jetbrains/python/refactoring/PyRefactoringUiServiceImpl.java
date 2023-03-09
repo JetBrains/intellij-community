@@ -32,7 +32,7 @@ public class PyRefactoringUiServiceImpl extends PyRefactoringUiService {
   public void showIntroduceTargetChooser(IntroduceOperation operation,
                                          Editor editor,
                                          List<PyExpression> expressions,
-                                         Consumer<IntroduceOperation> callback) {
+                                         Consumer<? super IntroduceOperation> callback) {
     IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
       @Override
       public void pass(PyExpression pyExpression) {
@@ -43,7 +43,7 @@ public class PyRefactoringUiServiceImpl extends PyRefactoringUiService {
   }
 
   @Override
-  public void showOccurrencesChooser(IntroduceOperation operation, Editor editor, Consumer<IntroduceOperation> callback) {
+  public void showOccurrencesChooser(IntroduceOperation operation, Editor editor, Consumer<? super IntroduceOperation> callback) {
     OccurrencesChooser.simpleChooser(editor).showChooser(operation.getElement(), operation.getOccurrences(), new Pass<>() {
       @Override
       public void pass(OccurrencesChooser.ReplaceChoice replaceChoice) {
@@ -56,7 +56,7 @@ public class PyRefactoringUiServiceImpl extends PyRefactoringUiService {
   @Override
   public void performIntroduceWithDialog(IntroduceOperation operation,
                                          @NlsContexts.DialogTitle String dialogTitle,
-                                         IntroduceValidator validator, String id, Consumer<IntroduceOperation> performRefactoringCallback) {
+                                         IntroduceValidator validator, String id, Consumer<? super IntroduceOperation> performRefactoringCallback) {
     PyIntroduceHandlerUi.performIntroduceWithDialog(operation, dialogTitle, validator, id, performRefactoringCallback);
   }
 

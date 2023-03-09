@@ -47,7 +47,7 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
   val isNone: Boolean get() = _groupingKeys.isEmpty()
   val isDirectory: Boolean get() = this[DIRECTORY_GROUPING]
 
-  fun setGroupingKeysOrSkip(newGroupingKeys: Set<String>) {
+  fun setGroupingKeysOrSkip(newGroupingKeys: Collection<String>) {
     _groupingKeys.clear()
     _groupingKeys += newGroupingKeys.filter { groupingKey -> isAvailable(groupingKey) }
   }
@@ -71,6 +71,10 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
       }
       return result
     }
+  }
+
+  class Disabled(project: Project, source: Any) : ChangesGroupingSupport(project, source, false) {
+    override fun isAvailable(groupingKey: String): Boolean = false
   }
 
   companion object {

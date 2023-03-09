@@ -7,7 +7,10 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.jetbrains.env.*;
+import com.jetbrains.env.PyAbstractTestProcessRunner;
+import com.jetbrains.env.PyEnvTestCase;
+import com.jetbrains.env.PyProcessWithConsoleTestTask;
+import com.jetbrains.env.SMRootTestsCounter;
 import com.jetbrains.python.testing.tox.PyToxConfiguration;
 import com.jetbrains.python.testing.tox.PyToxConfigurationFactory;
 import com.jetbrains.python.testing.tox.PyToxTestTools;
@@ -213,7 +216,7 @@ public final class PyToxTest extends PyEnvTestCase {
             @Override
             protected void configurationCreatedAndWillLaunch(@NotNull final PyToxConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
-              PyToxTestTools.setArguments(configuration, "--", "arg1");
+              PyToxTestTools.setArguments(configuration, "arg1");
             }
           };
         }

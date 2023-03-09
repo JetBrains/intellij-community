@@ -24,7 +24,7 @@ public class FacetBasedDetectedFrameworkDescriptionInWizard<F extends Facet, C e
   public FacetBasedDetectedFrameworkDescriptionInWizard(@NotNull ModuleDescriptor moduleDescriptor,
                                                         FacetBasedFrameworkDetector<F, C> detector,
                                                         @NotNull C configuration,
-                                                        Set<VirtualFile> files) {
+                                                        Set<? extends VirtualFile> files) {
     super(detector, configuration, files);
     myModuleDescriptor = moduleDescriptor;
   }

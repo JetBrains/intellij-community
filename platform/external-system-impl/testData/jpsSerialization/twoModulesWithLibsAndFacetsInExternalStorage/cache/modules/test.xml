@@ -6,9 +6,6 @@
     <facet __external-system-id="GRADLE" type="MockFacetId" name="imported">
       <configuration />
     </facet>
-    <facet __external-system-id="GRADLE" type="MockFacetId" name="regular">
-      <configuration />
-    </facet>
   </component>
   <component name="ExternalSystem" externalSystem="GRADLE" externalSystemModuleGroup="group" externalSystemModuleVersion="42.0" linkedProjectId="test" linkedProjectPath="$MODULE_DIR$" rootProjectPath="$MODULE_DIR$" />
   <component name="NewModuleRootManager" inherit-compiler-output="true">

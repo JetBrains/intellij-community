@@ -108,12 +108,17 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
       Ref<List<CommonProblemDescriptor[]>> descriptors = Ref.create();
       Set<VirtualFile> readOnlyFiles = new HashSet<>();
       TreePath[] paths = tree.getSelectionPaths();
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
-        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        indicator.setText(InspectionsBundle.message("quick.fix.action.checking.problem.progress"));
-        descriptors.set(tree.getSelectedDescriptorPacks(true, readOnlyFiles, false, paths));
-      }), InspectionsBundle.message("preparing.for.apply.fix"), true, e.getProject())) {
-        return;
+      if (paths == null) {
+        descriptors.set(List.of());
+      }
+      else {
+        if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
+          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+          indicator.setText(InspectionsBundle.message("quick.fix.action.checking.problem.progress"));
+          descriptors.set(tree.getSelectedDescriptorPacks(true, readOnlyFiles, false, paths));
+        }), InspectionsBundle.message("preparing.for.apply.fix"), true, e.getProject())) {
+          return;
+        }
       }
       if (isProblemDescriptorsAcceptable() && !descriptors.get().isEmpty()) {
         doApplyFix(view.getProject(), descriptors.get(), readOnlyFiles, tree.getContext());

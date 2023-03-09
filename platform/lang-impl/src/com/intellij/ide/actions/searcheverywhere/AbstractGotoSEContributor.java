@@ -46,6 +46,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -341,14 +343,24 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
         return true;
       }
 
-      PsiElement psiElement = preparePsi((PsiElement)selected, modifiers, searchText);
-      Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
-      if (extNavigatable != null && extNavigatable.canNavigate()) {
-        extNavigatable.navigate(true);
-        return true;
-      }
+      calcAsyncAndProcess(
+        () -> {
+          PsiElement psiElement = preparePsi((PsiElement)selected, modifiers, searchText);
+          Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
+          return new Pair<>(psiElement, extNavigatable);
+        },
+        pair -> {
+          Navigatable extNavigatable = pair.second;
+          PsiElement psiElement = pair.first;
+          if (extNavigatable != null && extNavigatable.canNavigate()) {
+            extNavigatable.navigate(true);
+          }
+          else {
+            NavigationUtil.activateFileWithPsiElement(psiElement, true);
+          }
+        }
+      );
 
-      NavigationUtil.activateFileWithPsiElement(psiElement, true);
     }
     else {
       EditSourceUtil.navigate(((NavigationItem)selected), true, false);
@@ -427,6 +439,18 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     }
 
     return new Pair<>(line, column);
+  }
+
+  private static <T> void calcAsyncAndProcess(Callable<T> task, Consumer<T> processor) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        T res = task.call();
+        SwingUtilities.invokeLater(() -> processor.accept(res));
+      }
+      catch (Exception e) {
+        LOG.error("Cannot process item", e);
+      }
+    });
   }
 
   private static int getLineAndColumnRegexpGroup(String text, int groupNumber) {

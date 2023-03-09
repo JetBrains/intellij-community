@@ -110,6 +110,25 @@ public class SemicolonFixer implements Fixer {
         insertionOffset += "()".length();
       }
 
+      // Like:
+      // assert x instanceof Type
+      // String s = "hello";
+      // Here, String is parsed as name of the pattern variable, and we have an assignment, instead of declaration 
+      if (psiElement.getLastChild() instanceof PsiErrorElement error &&
+          error.getPrevSibling() instanceof PsiInstanceOfExpression instanceOf &&
+          instanceOf.getLastChild() instanceof PsiTypeTestPattern typePattern &&
+          typePattern.getPatternVariable() != null &&
+          PsiTreeUtil.skipWhitespacesForward(psiElement) instanceof PsiExpressionStatement exprStmt &&
+          exprStmt.getExpression() instanceof PsiAssignmentExpression assignment &&
+          assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
+        PsiPatternVariable variable = typePattern.getPatternVariable();
+        PsiIdentifier identifier = variable.getNameIdentifier();
+        if (identifier.getPrevSibling() instanceof PsiWhiteSpace ws && ws.getText().contains("\n") &&
+            editor.getCaretModel().getOffset() < identifier.getTextRange().getStartOffset()) {
+          insertionOffset = ws.getTextRange().getStartOffset();
+        }
+      }
+
       if (!StringUtil.endsWithChar(text, ';')) {
         PsiElement parent = psiElement.getParent();
         String toInsert = ";";

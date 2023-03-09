@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.descriptors.*
@@ -223,7 +224,7 @@ private fun buildAnnotationProvider(ktType: KotlinType, context: PsiElement): Ty
 
 internal fun KtTypeReference?.toPsiType(source: UElement, boxed: Boolean = false): PsiType {
     if (this == null) return UastErrorType
-    return (analyze()[BindingContext.TYPE, this] ?: return UastErrorType).toPsiType(source, this, this.typeOwnerKind, boxed)
+    return (getType() ?: return UastErrorType).toPsiType(source, this, this.typeOwnerKind, boxed)
 }
 
 internal fun KtElement.analyze(): BindingContext {
@@ -236,6 +237,9 @@ internal fun KtExpression.getExpectedType(): KotlinType? = analyze()[BindingCont
 
 internal fun KtTypeReference.getType(): KotlinType? = analyze()[BindingContext.TYPE, this]
 
+internal fun KtCallableDeclaration.getReturnType(): KotlinType? =
+    (analyze()[BindingContext.DECLARATION_TO_DESCRIPTOR, this] as? CallableDescriptor)?.returnType
+
 internal fun KotlinType.getFunctionalInterfaceType(
     source: UElement,
     element: KtElement,
@@ -244,7 +248,12 @@ internal fun KotlinType.getFunctionalInterfaceType(
     takeIf { it.isInterface() && !it.isBuiltinFunctionalTypeOrSubtype }?.toPsiType(source, element, typeOwnerKind, false)
 
 internal fun KotlinULambdaExpression.getFunctionalInterfaceType(): PsiType? {
-    val parent = sourcePsi.parent
+    val parent = if (sourcePsi.parent is KtLabeledExpression) {
+        // lambda -> labeled expression -> lambda argument (value argument)
+        sourcePsi.parent.parent
+    } else {
+        sourcePsi.parent
+    }
     if (parent is KtBinaryExpressionWithTypeRHS)
         return parent.right?.getType()?.getFunctionalInterfaceType(this, sourcePsi, parent.right!!.typeOwnerKind)
     if (parent is KtValueArgument) run {
@@ -305,6 +314,13 @@ internal fun resolveToPsiMethod(
             return UastFakeLightPrimaryConstructor(source, lightClass)
         }
         return null
+    }
+
+    // FunctionN::invoke
+    if (descriptor is FunctionInvokeDescriptor) {
+        return resolveToPsiClass({ null }, descriptor.containingDeclaration, context)
+            ?.methods
+            ?.singleOrNull() // FunctionN is SAM!
     }
 
     return when (source) {

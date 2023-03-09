@@ -18,13 +18,13 @@ internal class ExpressionsSmartcastHighlighter(
     context(KtAnalysisSession)
     override fun highlight(element: KtElement) {
         when (element) {
-            is KtExpression -> higlightExpression(element)
+            is KtExpression -> highlightExpression(element)
             else -> {}
         }
     }
 
     context(KtAnalysisSession)
-    private fun higlightExpression(expression: KtExpression) {
+    private fun highlightExpression(expression: KtExpression) {
         expression.getImplicitReceiverSmartCast().forEach {
             val receiverName = when (it.kind) {
                 KtImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")

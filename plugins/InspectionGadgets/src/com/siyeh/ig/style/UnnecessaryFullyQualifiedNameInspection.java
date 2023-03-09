@@ -19,7 +19,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -29,6 +29,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
@@ -39,13 +42,11 @@ import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
@@ -64,10 +65,10 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     return InspectionGadgetsBundle.message("unnecessary.fully.qualified.name.problem.descriptor1");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.in.module.statements.option"), this, "ignoreInModuleStatements");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInModuleStatements", InspectionGadgetsBundle.message("ignore.in.module.statements.option")));
   }
 
   @Override
@@ -98,7 +99,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       final PsiJavaCodeReferenceElement referenceElement;
       if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
@@ -217,8 +218,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (element != null && !(element instanceof PsiAnnotation)) {
         return;
       }
-      final PsiFile containingFile = reference.getContainingFile();
-      if (!(containingFile instanceof PsiJavaFile)) {
+      if (!(reference.getContainingFile() instanceof PsiJavaFile containingFile)) {
         return;
       }
       final PsiElement target = reference.resolve();
@@ -229,12 +229,12 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
       boolean reportAsInformationInsideJavadoc = false;
       if (containingComment != null) {
-        if (acceptFqnInJavadoc((PsiJavaFile)containingFile, styleSettings)) {
+        if (acceptFqnInJavadoc(containingFile, styleSettings)) {
           return;
         }
         JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
         if (javaSettings.CLASS_NAMES_IN_JAVADOC == JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED) {
-          reportAsInformationInsideJavadoc = !ImportHelper.isAlreadyImported((PsiJavaFile)containingFile, reference.getQualifiedName());
+          reportAsInformationInsideJavadoc = !ImportHelper.isAlreadyImported(containingFile, reference.getQualifiedName());
         }
       }
       final PsiJavaCodeReferenceElement qualifierReference = (PsiJavaCodeReferenceElement)qualifier;
@@ -267,10 +267,16 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         }
         final PsiElement qualifier1 = aReference.getQualifier();
         if (qualifier1 != null) {
+          Set<String> nonUniqueReferences = getNonUniqueReferencesFromCache(containingFile);
+          if (nonUniqueReferences.contains(aReference.getReferenceName())) {
+            continue;
+          }
+
           PsiElement elementToHighlight = qualifier1;
           final ProblemHighlightType highlightType;
           if (reportAsInformationInsideJavadoc ||
-              ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null ||
+              ignoreInModuleStatements &&
+              PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null ||
               InspectionProjectProfileManager.isInformationLevel(getShortName(), aReference) && isOnTheFly()) {
             if (!isOnTheFly()) return;
             highlightType = ProblemHighlightType.INFORMATION;
@@ -281,14 +287,15 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
           }
 
           final boolean inSameFile = aClass.getContainingFile() == containingFile ||
-                                     ImportHelper.isAlreadyImported((PsiJavaFile)containingFile, qualifiedName);
+                                     ImportHelper.isAlreadyImported(containingFile, qualifiedName);
           registerError(elementToHighlight, highlightType, inSameFile);
         }
         break;
       }
     }
 
-    private void collectInnerClassNames(PsiJavaCodeReferenceElement reference, List<? super PsiJavaCodeReferenceElement> references) {
+    private static void collectInnerClassNames(PsiJavaCodeReferenceElement reference,
+                                               List<? super PsiJavaCodeReferenceElement> references) {
       PsiElement rParent = reference.getParent();
       while (rParent instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement parentReference = (PsiJavaCodeReferenceElement)rParent;
@@ -300,11 +307,63 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       }
     }
 
-    private boolean acceptFqnInJavadoc(PsiJavaFile javaFile, CodeStyleSettings styleSettings) {
+    private static boolean acceptFqnInJavadoc(PsiJavaFile javaFile, CodeStyleSettings styleSettings) {
       if ("package-info.java".equals(javaFile.getName())) {
         return true;
       }
       return styleSettings.getCustomSettings(JavaCodeStyleSettings.class).useFqNamesInJavadocAlways();
+    }
+  }
+
+  private static Set<String> getNonUniqueReferencesFromCache(PsiJavaFile file) {
+    return CachedValuesManager.getCachedValue(file, () -> {
+      ReferenceCollector referenceCollector = new ReferenceCollector();
+      file.accept(referenceCollector);
+      return CachedValueProvider.Result.create(referenceCollector.getNonUniqueReferences(), PsiModificationTracker.MODIFICATION_COUNT);
+    });
+  }
+
+  private static class ReferenceCollector extends JavaRecursiveElementWalkingVisitor {
+    private final Map<String, String> referenceByFirstVisitName = new HashMap<>();
+    private final Set<String> nonUniqueReferences = new HashSet<>();
+
+    @Override
+    public void visitImportList(@NotNull PsiImportList list) { }
+
+    @Override
+    public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
+      super.visitReferenceElement(reference);
+
+      if (!reference.isQualified()) {
+        return;
+      }
+      final PsiElement target = reference.resolve();
+      if (!(target instanceof final PsiClass aClass)) {
+        return;
+      }
+      String qualifiedName = aClass.getQualifiedName();
+      String referenceName = reference.getReferenceName();
+      if (qualifiedName == null || referenceName == null) {
+        return;
+      }
+      referenceByFirstVisitName.compute(referenceName, (k, element) -> {
+        if (element == null) {
+          return qualifiedName;
+        }
+        if (!qualifiedName.equals(element)) {
+          nonUniqueReferences.add(referenceName);
+        }
+        return element;
+      });
+    }
+
+    @Override
+    public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
+      visitReferenceElement(expression);
+    }
+
+    public Set<String> getNonUniqueReferences() {
+      return nonUniqueReferences;
     }
   }
 }

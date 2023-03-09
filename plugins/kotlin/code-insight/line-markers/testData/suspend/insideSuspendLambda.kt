@@ -1,11 +1,11 @@
 suspend fun test() {
     coroutine {
-        <lineMarker text="Suspend function call &apos;foo()&apos;">foo</lineMarker>()
+        <lineMarker text="Suspend function call 'foo()'">foo</lineMarker>()
     }
 }
 
 fun coroutine(block: suspend () -> Unit) {
-    block()
+    <lineMarker text="Suspend operator call 'invoke()'">block</lineMarker>()
 }
 
 suspend fun foo() {}

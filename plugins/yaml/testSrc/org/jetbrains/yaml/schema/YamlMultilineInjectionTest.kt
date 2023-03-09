@@ -1013,7 +1013,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     val pos = myFixture.file.text.indexOf("key$half: val$half") + "key$half: val$half".length
     myFixture.editor.caretModel.moveToOffset(pos)
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
-    PlatformTestUtil.startPerformanceTest("Typing in injected", 30 * size * size) {
+    PlatformTestUtil.startPerformanceTest("Typing in injected", 24 * size * size) {
       for (i in 0..size) {
         myFixture.type("newkey$i: val$i")
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
@@ -1027,6 +1027,30 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     |  
     ${((half + 1)..size).map { i -> "|  key$i: val$i" }.joinToString("\n")}
     |  
+    |""".trimMargin())
+  }
+
+  fun testLargeInjectionReformattingPerformance() {
+    val size = 2000
+    val rootsDepth = 10
+    val rootsDepthSpace = " ".repeat(rootsDepth)
+    myFixture.configureByText("test.yaml", """
+      ${(0 until rootsDepth).map { i -> "|${" ".repeat(i)}root$i:" }.joinToString("\n")}
+      |${rootsDepthSpace}#language=YAML
+      |${rootsDepthSpace}myyaml: |
+      |$rootsDepthSpace  root:
+      ${(0..size).map { i -> "|    ${rootsDepthSpace}key$i: ${" ".repeat(i)}val$i" }.joinToString("\n")}
+      |
+      |""".trimMargin())
+
+    PlatformTestUtil.startPerformanceTest("Reformatting large", 30 * size) {
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_REFORMAT)
+    }.attempts(1)
+      .assertTiming()
+
+    myInjectionFixture.assertInjectedContent("""root:
+    ${(0..size).map { i -> "|  key$i: val$i" }.joinToString("\n")}
+    |
     |""".trimMargin())
   }
 

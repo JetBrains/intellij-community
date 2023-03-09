@@ -15,5 +15,5 @@
  */
 package com.intellij.debugger.engine.jdi;
 
-public interface LocalVariableProxy extends ObjectReferenceProxy{
+public interface LocalVariableProxy extends ObjectReferenceProxy {
 }

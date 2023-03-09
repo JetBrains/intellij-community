@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.leavesAroundOffset
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  * Entry point for obtaining target symbols by [offset] in a [file].
@@ -70,7 +71,8 @@ internal fun declaredReferencedData(file: PsiFile, offset: Int): DeclaredReferen
   )
 }
 
-internal sealed class DeclarationOrReference {
+@Internal
+sealed class DeclarationOrReference {
 
   abstract val rangeWithOffset: TextRange
 

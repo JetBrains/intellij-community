@@ -1,0 +1,10 @@
+fragment member on ProjectMember {
+  id
+  user {
+    ...user
+  }
+
+  accessLevel {
+    stringValue
+  }
+}

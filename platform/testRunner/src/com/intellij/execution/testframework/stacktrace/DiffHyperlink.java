@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework.stacktrace;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfoBase;
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Printable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
@@ -35,7 +36,7 @@ public class DiffHyperlink implements Printable {
   private final boolean myPrintOneLine;
   private final HyperlinkInfo myDiffHyperlink = new DiffHyperlinkInfo();
   private final static int ourMaxExpectedLength = Registry.intValue("test.console.expected.actual.max.length", 255);
-  private @NlsSafe String myTestProxyName;
+  private AbstractTestProxy myTestProxy;
 
 
   public DiffHyperlink(@NotNull String expected, @NotNull String actual, String filePath) {
@@ -54,12 +55,16 @@ public class DiffHyperlink implements Printable {
     myPrintOneLine = printOneLine;
   }
 
-  public void setTestProxyName(@NlsSafe String name) {
-    myTestProxyName = name;
+  public void setTestProxy(AbstractTestProxy testProxy) {
+    myTestProxy = testProxy;
   }
 
   public HyperlinkInfo getInfo() {
     return myDiffHyperlink;
+  }
+
+  public AbstractTestProxy getTestProxy() {
+    return myTestProxy;
   }
 
   private static String normalizeSeparators(String filePath) {
@@ -67,8 +72,8 @@ public class DiffHyperlink implements Printable {
   }
 
   protected @NlsContexts.DialogTitle String getTitle() {
-    return myTestProxyName != null
-           ? ExecutionBundle.message("strings.equal.failed.with.test.name.dialog.title", myTestProxyName)
+    return myTestProxy != null
+           ? ExecutionBundle.message("strings.equal.failed.with.test.name.dialog.title", myTestProxy)
            : ExecutionBundle.message("strings.equal.failed.dialog.title");
   }
 
@@ -78,7 +83,7 @@ public class DiffHyperlink implements Printable {
 
   @Nullable
   public @NlsSafe String getTestName() {
-    return myTestProxyName;
+    return myTestProxy.getName();
   }
 
   @NotNull

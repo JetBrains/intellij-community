@@ -471,12 +471,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
         }
 
         val dummyOriginalFile = runReadAction {
-            KtPsiFactory(project)
-                .createAnalyzableFile(
-                    "dummy-original.$extension",
-                    "$dummyOrigFileProlog${transferableData.sourceText}",
-                    ctxFile
-                )
+            KtPsiFactory.contextual(ctxFile).createFile("dummy-original.$extension", "$dummyOrigFileProlog${transferableData.sourceText}")
         }
 
         if (script) {
@@ -547,13 +542,16 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
 
         val project = file.project
         val dummyImportsFile = runReadAction {
-            KtPsiFactory(project)
-                .createAnalyzableFile(
+            KtPsiFactory.contextual(ctxFile)
+                .createFile(
                     "dummy-imports.kt",
-                    "package $fakePkgName\n" +
-                            "${joinLines(fakePkgImports)}\n" +
-                            transferableData.sourceText,
-                    ctxFile
+                    buildString {
+                        appendLine("package $fakePkgName")
+                        for (pkgImport in fakePkgImports) {
+                            appendLine(pkgImport)
+                        }
+                        append(transferableData.sourceText)
+                    }
                 )
         }
 

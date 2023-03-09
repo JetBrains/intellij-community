@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Ref;
@@ -55,8 +55,7 @@ public interface VcsLogStorage {
    *
    * @return matching commit or null if no commit matches the given condition
    */
-  @Nullable
-  default CommitId findCommitId(@NotNull Predicate<? super CommitId> condition) {
+  default @Nullable CommitId findCommitId(@NotNull Predicate<? super CommitId> condition) {
     Ref<CommitId> hashRef = Ref.create();
     iterateCommits(commitId -> {
       boolean matches = condition.test(commitId);

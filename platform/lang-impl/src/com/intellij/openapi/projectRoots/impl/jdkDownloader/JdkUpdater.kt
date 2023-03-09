@@ -5,7 +5,8 @@ import com.intellij.ProjectTopics
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -179,8 +180,12 @@ internal class JdkUpdatesCollector(
         it.suggestedSdkName == actualItem.suggestedSdkName && it.arch == actualItem.arch && it.os == actualItem.os
       } ?: continue
 
-      //internal versions are not considered here (JBRs?)
-      if (VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion) <= 0) continue
+      if (feedItem.jdkVendorVersion != null && actualItem.jdkVendorVersion != null) {
+        if (VersionComparatorUtil.compare(feedItem.jdkVendorVersion, actualItem.jdkVendorVersion) <= 0) continue
+      }
+      else if (VersionComparatorUtil.compare(feedItem.jdkVersion, actualItem.jdkVersion) <= 0) {
+        continue
+      }
 
       notifications.showNotification(jdk, actualItem, feedItem)
       noUpdatesFor -= jdk

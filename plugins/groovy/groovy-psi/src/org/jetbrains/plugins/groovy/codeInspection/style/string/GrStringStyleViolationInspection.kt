@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.groovy.codeInspection.style.string
 
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.layout.*
-import com.intellij.util.ui.CheckBox
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.*
+import com.intellij.openapi.util.NlsContexts
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
@@ -15,13 +15,6 @@ import org.jetbrains.plugins.groovy.codeInspection.style.string.GrStringStyleVio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil
-import java.awt.GridBagConstraints
-import java.awt.GridBagLayout
-import javax.swing.JComboBox
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import kotlin.reflect.KMutableProperty
 import org.jetbrains.plugins.groovy.lang.psi.util.StringKind as OuterStringKind
 
 
@@ -54,28 +47,6 @@ class GrStringStyleViolationInspection : BaseInspection() {
     private val ESCAPED_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SINGLE_QUOTED, SLASHY, TRIPLE_QUOTED, TRIPLE_DOUBLE_QUOTED, DOLLAR_SLASHY_QUOTED)
     private val INTERPOLATED_STRING_OPTIONS = arrayOf(DOUBLE_QUOTED, SLASHY, TRIPLE_DOUBLE_QUOTED, DOLLAR_SLASHY_QUOTED)
 
-    private fun JPanel.addStringKindComboBox(@Nls description: String,
-                                             field: KMutableProperty<InspectionStringQuotationKind>,
-                                             values: Array<InspectionStringQuotationKind>,
-                                             id: Int,
-                                             constraints: GridBagConstraints) {
-      constraints.gridy = id
-      constraints.gridx = 0
-      add(JLabel(description), constraints)
-      val comboBox: JComboBox<InspectionStringQuotationKind> = ComboBox(values).apply {
-        renderer = SimpleListCellRenderer.create("") { it.representation() }
-        selectedItem = field.getter.call()
-        addItemListener { e ->
-          val selectedItem = e.item
-          if (field.getter.call() != selectedItem) {
-            field.setter.call(selectedItem)
-          }
-        }
-      }
-      constraints.gridx = 1
-      add(comboBox, constraints)
-    }
-
     private fun getActualKind(kind: InspectionStringQuotationKind): OuterStringKind? = when (kind) {
       UNDEFINED -> null
       DOUBLE_QUOTED -> OuterStringKind.DOUBLE_QUOTED
@@ -102,28 +73,25 @@ class GrStringStyleViolationInspection : BaseInspection() {
   @Volatile
   internal var inspectGradle: Boolean = true
 
-  private fun generateComboBoxes(): JPanel = JPanel(GridBagLayout()).apply {
-    val constraints = GridBagConstraints().apply {
-      weightx = 1.0; weighty = 1.0; fill = GridBagConstraints.HORIZONTAL; anchor = GridBagConstraints.WEST
-    }
-    addStringKindComboBox(GroovyBundle.message("string.sort.default"), ::plainStringQuotation, PLAIN_STRING_OPTIONS, 0, constraints)
-    addStringKindComboBox(GroovyBundle.message("string.sort.strings.with.escaping"), ::escapedStringQuotation,
-                          arrayOf(UNDEFINED, *ESCAPED_STRING_OPTIONS), 1, constraints)
-    addStringKindComboBox(GroovyBundle.message("string.sort.strings.with.interpolation"), ::interpolatedStringQuotation,
-                          arrayOf(UNDEFINED, *INTERPOLATED_STRING_OPTIONS), 2, constraints)
-    addStringKindComboBox(GroovyBundle.message("string.sort.multiline.string"), ::multilineStringQuotation,
-                          arrayOf(UNDEFINED, *MULTILINE_STRING_OPTIONS), 3, constraints)
-  }
-
-  override fun createGroovyOptionsPanel(): JComponent {
-    return panel {
-      titledRow(GroovyBundle.message("separator.preferable.string.kind")) {
-        row { generateComboBoxes()() }
-      }
-      titledRow(GroovyBundle.message("separator.domain.of.inspection.usage")) {
-        row { CheckBox(GroovyBundle.message("checkbox.inspect.gradle.files"), this@GrStringStyleViolationInspection, "inspectGradle")() }
-      }
-    }
+  override fun getGroovyOptionsPane(): OptPane {
+    fun combobox(@Language("jvm-field-name") bindId: String,
+                 splitLabel: @NlsContexts.Label String,
+                 values: Array<InspectionStringQuotationKind>) = 
+      dropdown(bindId, splitLabel, values.asList(), InspectionStringQuotationKind::name, InspectionStringQuotationKind::representation)
+    
+    return pane(
+      group(GroovyBundle.message("separator.preferable.string.kind"),
+            combobox("plainStringQuotation", GroovyBundle.message("string.sort.default"), PLAIN_STRING_OPTIONS),
+            combobox("escapedStringQuotation", GroovyBundle.message("string.sort.strings.with.escaping"),
+                     arrayOf(UNDEFINED, *ESCAPED_STRING_OPTIONS)),
+            combobox("interpolatedStringQuotation", GroovyBundle.message("string.sort.strings.with.interpolation"),
+                     arrayOf(UNDEFINED, *INTERPOLATED_STRING_OPTIONS)),
+            combobox("multilineStringQuotation", GroovyBundle.message("string.sort.multiline.string"),
+                     arrayOf(UNDEFINED, *MULTILINE_STRING_OPTIONS))
+      ),
+      group(GroovyBundle.message("separator.domain.of.inspection.usage"),
+            checkbox("inspectGradle", GroovyBundle.message("checkbox.inspect.gradle.files")))
+    )
   }
 
   private enum class StringUsageKind {

@@ -22,6 +22,9 @@ interface SimpleEntity : WorkspaceEntity {
   }
 
   companion object : Type<SimpleEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(version: Int,
                         name: String,
                         isSimple: Boolean,

@@ -27,6 +27,9 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
 
   fun create(scope: CoroutineScope): JComponent {
     val accountDetailsProvider = GHAccountsDetailsProvider(scope, accountManager)
+    val errorPresenter = GHSelectorErrorStatusPresenter(project) {
+      vm.submitSelection()
+    }
 
     return RepositoryAndAccountSelectorComponentFactory(vm)
       .create(scope = scope,
@@ -36,9 +39,9 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
               },
               detailsProvider = accountDetailsProvider,
               accountsPopupActionsSupplier = { createPopupLoginActions(it) },
-              credsMissingText = GithubBundle.message("account.token.missing"),
               submitActionText = GithubBundle.message("pull.request.view.list"),
-              loginButtons = createLoginButtons(scope))
+              loginButtons = createLoginButtons(scope),
+              errorPresenter = errorPresenter)
   }
 
   private fun createLoginButtons(scope: CoroutineScope): List<JButton> {
@@ -63,8 +66,8 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
         }
       }.apply {
 
-        bindVisibility(scope, vm.githubLoginAvailableState)
         autoHideOnDisable = false
+        bindVisibility(scope, vm.githubLoginAvailableState)
         bindDisabled(scope, vm.busyState)
       },
       JButton(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")).apply {

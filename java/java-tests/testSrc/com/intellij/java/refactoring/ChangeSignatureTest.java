@@ -541,13 +541,35 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       };
     }, false);
   }
-  
+
+  public void testRecordHeaderDeleteRename2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(1).withName("p2").withType(pointType)
+      };
+    }, false);
+  }
+
   public void testRecordCanonicalConstructorRename() {
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("y").withType(PsiType.INT),
         ParameterInfoImpl.create(1).withName("z").withType(PsiType.INT),
         ParameterInfoImpl.create(2).withName("x").withType(PsiType.INT)
+      };
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorRename2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("point2").withType(pointType),
+        ParameterInfoImpl.create(1).withName("point1").withType(pointType),
+        ParameterInfoImpl.create(2).withName("i").withType(PsiType.INT)
       };
     }, false);
   }
@@ -561,12 +583,36 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
       };
     }, false);
   }
-  
+
+  public void testRecordCanonicalConstructorReorder2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(2).withName("i").withType(PsiType.INT),
+        ParameterInfoImpl.create(1).withName("point2").withType(pointType),
+        ParameterInfoImpl.create(0).withName("point1").withType(pointType),
+      };
+    }, false);
+  }
+
   public void testRecordCanonicalConstructorAddParameter() {
     doTest(null, null, null, method -> {
       return new ParameterInfoImpl[]{
         ParameterInfoImpl.create(0).withName("x").withType(PsiType.INT),
         ParameterInfoImpl.create(-1).withName("y").withType(PsiType.INT)
+      };
+    }, false);
+  }
+
+  public void testRecordCanonicalConstructorAddParameter2() {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    final PsiType pointType = facade.getElementFactory().createTypeFromText("Point", null);
+    doTest(null, null, null, method -> {
+      return new ParameterInfoImpl[]{
+        ParameterInfoImpl.create(0).withName("point1").withType(pointType),
+        ParameterInfoImpl.create(1).withName("point2").withType(pointType),
+        ParameterInfoImpl.create(-1).withName("i").withType(PsiType.INT)
       };
     }, false);
   }

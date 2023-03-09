@@ -79,7 +79,7 @@ public class NSDeclTracker implements ModificationTracker {
         final Iterator<XmlAttribute> it = list.iterator();
         while (it.hasNext()) {
             final XmlAttribute attribute = it.next();
-            if (!attribute.isNamespaceDeclaration()) it.remove();
+            if (!attribute.isNamespaceDeclaration() || !attribute.isValid()) it.remove();
             if (updateModCount) {
                 attribute.putUserData(MOD_COUNT, attribute.getContainingFile().getModificationStamp());
             }

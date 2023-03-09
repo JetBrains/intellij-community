@@ -29,6 +29,11 @@ public abstract class BaseUnivocityTest extends AbstractApplyAndRevertTestCase {
     CompilerTestUtil.saveApplicationSettings();
   }
 
+  @Override
+  protected void setUpModule() {
+    // skip: module already exists in Univocity project
+  }
+
   @NotNull
   protected LanguageLevel projectLanguageLevel() {
     return LanguageLevel.JDK_1_8;

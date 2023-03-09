@@ -47,13 +47,17 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
   public void testRefreshingActionsOnImport() {
     assertTrue(getProjectActions().isEmpty());
 
-    VirtualFile p1 = createModulePom("p1", "<groupId>test</groupId>" +
-                                           "<artifactId>p1</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile p1 = createModulePom("p1", """
+      <groupId>test</groupId>
+      <artifactId>p1</artifactId>
+      <version>1</version>
+      """);
 
-    VirtualFile p2 = createModulePom("p2", "<groupId>test</groupId>" +
-                                           "<artifactId>p2</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile p2 = createModulePom("p2", """
+      <groupId>test</groupId>
+      <artifactId>p2</artifactId>
+      <version>1</version>
+      """);
     importProjects(p1, p2);
 
     assertEmptyKeymap();
@@ -61,54 +65,60 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
 
   @Test
   public void testRefreshingOnProjectRead() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     assertEmptyKeymap();
     String goal = "clean";
     assignShortcut(myProjectPom, goal, "alt shift X");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-surefire-plugin</artifactId>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-surefire-plugin</artifactId>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     assertKeymapContains(myProjectPom, goal);
   }
 
   @Test
   public void testRefreshingOnPluginResolve() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     assertEmptyKeymap();
 
     String goal = "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test";
     assignShortcut(myProjectPom, goal, "alt shift X");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-surefire-plugin</artifactId>" +
-                  "      <version>2.4.3</version>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-surefire-plugin</artifactId>
+                          <version>2.4.3</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
     resolvePlugins();
 
     assertKeymapContains(myProjectPom, goal);
@@ -116,28 +126,31 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
 
   @Test
   public void testActionWhenSeveralSimilarPlugins() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-surefire-plugin</artifactId>" +
-                  "      <version>2.4.3</version>" +
-                  "    </plugin>" +
-                  "    <plugin>" +
-                  "      <groupId>org.apache.maven.plugins</groupId>" +
-                  "      <artifactId>maven-surefire-plugin</artifactId>" +
-                  "      <version>2.4.3</version>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-surefire-plugin</artifactId>
+                          <version>2.4.3</version>
+                        </plugin>
+                        <plugin>
+                          <groupId>org.apache.maven.plugins</groupId>
+                          <artifactId>maven-surefire-plugin</artifactId>
+                          <version>2.4.3</version>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
     String goal = "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test";
     assignShortcut(myProjectPom, goal, "alt shift X");
     resolvePlugins();
@@ -147,24 +160,30 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
 
   @Test
   public void testRefreshingOnProjectAddition() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
-    VirtualFile m = createModulePom("module", "<groupId>test</groupId>" +
-                                              "<artifactId>module</artifactId>" +
-                                              "<version>1</version>");
+    VirtualFile m = createModulePom("module", """
+      <groupId>test</groupId>
+      <artifactId>module</artifactId>
+      <version>1</version>
+      """);
 
     String goal = "clean";
     assertKeymapDoesNotContain(m, goal);
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-                     "<modules>" +
-                     "  <module>module</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>module</module>
+                       </modules>
+                       """);
 
     importProject();
 
@@ -175,13 +194,17 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
 
   @Test
   public void testDeletingActionOnProjectRemoval() throws IOException {
-    final VirtualFile p1 = createModulePom("p1", "<groupId>test</groupId>" +
-                                                 "<artifactId>p1</artifactId>" +
-                                                 "<version>1</version>");
+    final VirtualFile p1 = createModulePom("p1", """
+      <groupId>test</groupId>
+      <artifactId>p1</artifactId>
+      <version>1</version>
+      """);
 
-    VirtualFile p2 = createModulePom("p2", "<groupId>test</groupId>" +
-                                           "<artifactId>p2</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile p2 = createModulePom("p2", """
+      <groupId>test</groupId>
+      <artifactId>p2</artifactId>
+      <version>1</version>
+      """);
 
     importProjects(p1, p2);
 
@@ -208,13 +231,17 @@ public class MavenShortcutsManagerTest extends MavenMultiVersionImportingTestCas
 
   @Test
   public void testRefreshingActionsOnChangingIgnoreFlag() {
-    VirtualFile p1 = createModulePom("p1", "<groupId>test</groupId>" +
-                                           "<artifactId>p1</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile p1 = createModulePom("p1", """
+      <groupId>test</groupId>
+      <artifactId>p1</artifactId>
+      <version>1</version>
+      """);
 
-    VirtualFile p2 = createModulePom("p2", "<groupId>test</groupId>" +
-                                           "<artifactId>p2</artifactId>" +
-                                           "<version>1</version>");
+    VirtualFile p2 = createModulePom("p2", """
+      <groupId>test</groupId>
+      <artifactId>p2</artifactId>
+      <version>1</version>
+      """);
     importProjects(p1, p2);
 
     assertEmptyKeymap();

@@ -17,7 +17,7 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.switchToSdk
 
-class PySdkFromEnvironmentVariableConfigurator(private val project: Project) : JpsProjectLoadedListener {
+internal class PySdkFromEnvironmentVariableConfigurator(private val project: Project) : JpsProjectLoadedListener {
 
   companion object {
     private val LOGGER: Logger = logger<PySdkFromEnvironmentVariableConfigurator>()

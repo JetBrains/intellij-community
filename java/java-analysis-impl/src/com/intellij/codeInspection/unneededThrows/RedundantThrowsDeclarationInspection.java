@@ -8,6 +8,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection.ThrowRefType;
@@ -36,15 +37,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspectionTool {
   public boolean IGNORE_ENTRY_POINTS = false;
 
   private final RedundantThrowsDeclarationLocalInspection myLocalInspection = new RedundantThrowsDeclarationLocalInspection(this);
 
-  @NotNull
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("ignore.exceptions.thrown.by.entry.points.methods"), this, "IGNORE_ENTRY_POINTS");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_ENTRY_POINTS", JavaAnalysisBundle.message("ignore.exceptions.thrown.by.entry.points.methods")));
   }
 
   @Override

@@ -357,7 +357,7 @@ final class ITNProxy {
             byte[] digest = DigestUtil.sha1().digest(ca.getEncoded());
             StringBuilder fp = new StringBuilder(2 * digest.length);
             for (byte b : digest) fp.append(Integer.toHexString(b & 0xFF));
-            if (JB_CA_CN.equals(cn) && JB_CA_FP.equals(fp.toString())) {
+            if (JB_CA_CN.equals(cn) && JB_CA_FP.contentEquals(fp)) {
               return true;
             }
           }

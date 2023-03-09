@@ -84,9 +84,9 @@ public class DarculaEditorTextFieldBorder extends DarculaTextBorder implements V
         g2.setColor(c.getBackground());
         g2.fill(outer);
 
-        Object op = editorTextField.getClientProperty("JComponent.outline");
+        Outline op = getOutline(editorTextField);
         if (editorTextField.isEnabled() && op != null) {
-          paintOutlineBorder(g2, r.width, r.height, 0, true, hasFocus, Outline.valueOf(op.toString()));
+          paintOutlineBorder(g2, r.width, r.height, 0, true, hasFocus, op);
         }
         else if (editorTextField.isEnabled() && editorTextField.isVisible()) {
           if (hasFocus) {

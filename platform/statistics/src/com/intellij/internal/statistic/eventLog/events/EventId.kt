@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import java.util.function.Consumer
 
 abstract class BaseEventId @JvmOverloads constructor(val eventId: String, val recorder: String = "FUS") {
   internal fun getLogger(): StatisticsEventLogger = StatisticsEventLogProviderUtil.getEventLogProvider(recorder).logger
@@ -119,7 +120,7 @@ class EventId3<in T1, in T2, in T3>(
   override fun getFields(): List<EventField<*>> = listOf(field1, field2, field3)
 }
 
-class EventDataCollector() : ArrayList<EventPair<*>>() {
+class EventDataCollector : ArrayList<EventPair<*>>() {
   var skipped = false
 
   fun skip() {
@@ -149,6 +150,13 @@ class VarargEventId internal constructor(
 
   fun log(project: Project?, pairs: List<EventPair<*>>) {
     getLogger().logAsync(group, eventId, buildUsageData(pairs).addProject(project).build(), false)
+  }
+
+  /**
+   * Introduced to simplify usage from java
+   * */
+  fun log(project: Project?, dataBuilder: Consumer<List<EventPair<*>>>) {
+    log(project, dataBuilder::accept)
   }
 
   fun log(project: Project?, dataBuilder: EventDataCollector.() -> Unit) {

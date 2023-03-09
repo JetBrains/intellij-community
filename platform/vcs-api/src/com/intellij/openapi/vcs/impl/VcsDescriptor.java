@@ -54,13 +54,12 @@ public class VcsDescriptor {
   }
 
   public boolean probablyUnderVcs(final VirtualFile file) {
-    if (file == null || !file.isDirectory() || !file.isValid()) return false;
     if (myAdministrativePatterns.isEmpty()) return false;
-
     return ReadAction.compute(() -> matchesVcsDirPattern(file));
   }
 
-  private boolean matchesVcsDirPattern(@NotNull VirtualFile file) {
+  private boolean matchesVcsDirPattern(@Nullable VirtualFile file) {
+    if (file == null || !file.isDirectory() || !file.isValid()) return false;
     for (String pattern : myAdministrativePatterns) {
       VirtualFile child = file.findChild(pattern);
       if (child != null) return true;

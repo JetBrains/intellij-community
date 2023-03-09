@@ -15,7 +15,7 @@ class GitCheckoutAction
   override val disabledForCurrent = true
 
   override fun actionPerformed(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
-    if(branch.isRemote) {
+    if (branch.isRemote) {
       GitBranchPopupActions.RemoteBranchActions.CheckoutRemoteBranchAction.checkoutRemoteBranch(project, repositories, branch.name)
     } else {
       GitBrancher.getInstance(e.project!!).checkout(branch.name, false, repositories, null)

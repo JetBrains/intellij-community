@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.vcs.commit.CommitSessionCollector
 import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitOption
 import com.intellij.vcs.commit.commitProperty
@@ -54,7 +54,11 @@ private class GitSkipHooksConfigurationPanel(
     }
   }
 
-  override fun getComponent(): JComponent = JBUI.Panels.simplePanel(runHooks)
+  override fun getComponent(): JComponent = panel {
+    row {
+      cell(runHooks)
+    }
+  }
 
   private fun refreshAvailability() {
     runHooks.isVisible = repositoryManager.repositories.any { it.hasCommitHooks() }

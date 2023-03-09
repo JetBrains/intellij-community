@@ -15,13 +15,12 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptRegularComponent;
 import com.intellij.psi.*;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 public class LocalVariableNamingConventionInspection extends ConventionInspection {
 
@@ -37,10 +36,10 @@ public class LocalVariableNamingConventionInspection extends ConventionInspectio
   public boolean m_ignoreCatchParameters = false;
 
   @Override
-  public JComponent @NotNull [] createExtraOptions() {
-    return new JComponent[] {
-      new CheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.option"), this, "m_ignoreForLoopParameters"),
-      new CheckBox(InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.catch.option"), this, "m_ignoreCatchParameters")
+  public OptRegularComponent @NotNull [] createExtraOptions() {
+    return new OptRegularComponent[] {
+      OptPane.checkbox("m_ignoreForLoopParameters", InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.option")),
+      OptPane.checkbox("m_ignoreCatchParameters", InspectionGadgetsBundle.message("local.variable.naming.convention.ignore.catch.option"))
     };
   }
 

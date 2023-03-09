@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
   @Override
   public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull Ref<Integer> caretOffsetRef,
-                                @NotNull final Ref<Integer> caretAdvanceRef, @NotNull final DataContext dataContext,
+                                final @NotNull Ref<Integer> caretAdvanceRef, @NotNull final DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
     final Language language = EnterHandler.getLanguage(dataContext);
     if (language == null) return Result.Continue;

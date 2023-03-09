@@ -82,11 +82,7 @@ public abstract class AbstractExternalSystemConfigurable<
       SystemSettings settings = getSettings();
       prepareSystemSettings(settings);
       prepareProjectSettings(settings);
-
-      JComponent component = ScrollPaneFactory.createScrollPane(myComponent, true);
-      component.setSize(myComponent.getPreferredSize());
-      myComponent.setPreferredSize(myComponent.getMinimumSize());
-      return component;
+      return myComponent;
     }
     return myComponent;
   }

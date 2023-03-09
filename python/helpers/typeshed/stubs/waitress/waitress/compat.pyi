@@ -7,9 +7,6 @@ WIN: bool
 string_types: tuple[str]
 integer_types: tuple[int]
 class_types: tuple[type]
-text_type = str
-binary_type = bytes
-long = int
 
 def unquote_bytes_to_wsgi(bytestring: bytes) -> str: ...
 def text_(s: str, encoding: str = ..., errors: str = ...) -> str: ...

@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.TemplateLanguageFileType;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +40,7 @@ class FileTypePatternDialog {
     if (fileType instanceof TemplateLanguageFileType) {
       DefaultComboBoxModel<Language> model = (DefaultComboBoxModel<Language>)myLanguageCombo.getModel();
       model.addElement(null);
-      List<Language> languages = TemplateDataLanguageMappings.getTemplateableLanguages();
-      languages.sort(Comparator.comparing(Language::getID));
+      List<Language> languages = ContainerUtil.sorted(TemplateDataLanguageMappings.getTemplateableLanguages(), Comparator.comparing(Language::getID));
       for (Language language : languages) {
         model.addElement(language);
       }

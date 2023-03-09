@@ -150,8 +150,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       buttonPanel.add(myNextButton);
       principalTouchbarButtons.add(myNextButton);
 
-      if (SystemInfo.isMac)
-        Touchbar.setButtonActions(panel, touchbarButtons, principalTouchbarButtons, myNextButton);
+      Touchbar.setButtonActions(panel, touchbarButtons, principalTouchbarButtons, myNextButton);
     }
     else {
       panel.add(buttonPanel, BorderLayout.CENTER);

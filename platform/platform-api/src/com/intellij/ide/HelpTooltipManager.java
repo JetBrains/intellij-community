@@ -1,24 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ui.ClientProperty;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.util.function.Supplier;
 
 /**
  * @author Alexander Lobas
  */
 public final class HelpTooltipManager extends HelpTooltip {
-  public static final String SHORTCUT_PROPERTY = "helptooltip.shortcut";
+  public static final Key<Supplier<@NlsSafe String>> SHORTCUT_PROPERTY = Key.create("help-tooltip-shortcut");
 
   public HelpTooltipManager() {
     createMouseListeners();
   }
 
   public void showTooltip(@NotNull JComponent component, @NotNull MouseEvent event) {
-    initPopupBuilder(new HelpTooltip().setTitle(component.getToolTipText(event)).
-      setShortcut((String)component.getClientProperty(SHORTCUT_PROPERTY)));
+    setTitle(component.getToolTipText(event));
+    Supplier<String> shortcutSupplier = ClientProperty.get(component, SHORTCUT_PROPERTY);
+    setShortcut(shortcutSupplier == null ? null : shortcutSupplier.get());
 
     if (event.getID() == MouseEvent.MOUSE_ENTERED) {
       myMouseListener.mouseEntered(event);
@@ -30,6 +35,5 @@ public final class HelpTooltipManager extends HelpTooltip {
 
   public void hideTooltip() {
     hidePopup(true);
-    myPopupBuilder = null;
   }
 }

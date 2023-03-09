@@ -3,8 +3,10 @@ package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.openapi.project.Project
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.PROFILE_DIR
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
@@ -26,7 +28,7 @@ class YamlGroupConfigImpl(override val group: String,
                           override val ignore: List<String>) : YamlGroupConfig
 
 class YamlInspectionGroupImpl(override val groupId: String, val inspections: Set<String>) : YamlInspectionGroup {
-  override fun includesInspection(tool: InspectionToolWrapper<*,*>): Boolean {
+  override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
     return tool.shortName in inspections
   }
 }
@@ -36,10 +38,10 @@ class YamlCompositeGroupImpl(override val groupId: String,
                              private val groupRules: List<String>) : YamlInspectionGroup {
   override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
     for (groupRule in groupRules.asReversed()) {
-      val isExcluded = groupRule.startsWith("!")
-      val groupId = if (isExcluded) groupRule.drop(1) else groupRule
-      val matches = groupProvider.findGroup(groupId).includesInspection(tool)
-      if (matches) return !isExcluded
+      val groupId = groupRule.removePrefix("!")
+      if (groupProvider.findGroup(groupId).includesInspection(tool)) {
+        return groupId == groupRule
+      }
     }
     return false
   }
@@ -53,12 +55,17 @@ class CompositeGroupProvider : InspectionGroupProvider {
     providers.add(groupProvider)
   }
 
-  override fun findGroup(groupId: String): YamlInspectionGroup? {
-    return providers.asSequence().map { provider -> provider.findGroup(groupId) }.find { group -> group != null }
+  override fun findGroup(groupId: String): YamlInspectionGroup {
+    return object: YamlInspectionGroup {
+      override val groupId: String = groupId
+      override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
+        return providers.any { it.findGroup(groupId)?.includesInspection(tool) == true }
+      }
+    }
   }
 }
 
-class YamlInspectionProfileImpl private constructor(override val profileName: String,
+class YamlInspectionProfileImpl private constructor(override val profileName: String?,
                                                     override val baseProfile: InspectionProfileImpl,
                                                     override val configurations: List<YamlBaseConfig>,
                                                     override val groups: List<YamlInspectionGroup>,
@@ -66,15 +73,17 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
 
   companion object {
     @JvmStatic
-    fun loadFrom(project: Project, filepath: String = "${getDefaultProfileDirectory(project)}/profile.yaml"): YamlInspectionProfileImpl {
+    fun loadFrom(project: Project,
+                 filepath: String = "${getDefaultProfileDirectory(project)}/profile.yaml",
+                 profileManager: InspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
+    ): YamlInspectionProfileImpl {
       val profile = readConfig(project, filepath)
-      val baseProfile = ProjectInspectionProfileManager.getInstance(project).getProfile(profile.baseProfile, false)
-                        ?: InspectionProfileImpl("Default")
+      val baseProfile = findBaseProfile(profileManager, profile.baseProfile)
       val configurations = profile.inspections.map(::createInspectionConfig)
       val groupProvider = CompositeGroupProvider()
       groupProvider.addProvider(InspectionGroupProvider.createDynamicGroupProvider())
-      val groups = profile.groups.map{ group -> createGroup(groupProvider, group) }
-      val customGroupProvider = object: InspectionGroupProvider {
+      val groups = profile.groups.map { group -> createGroup(groupProvider, group) }
+      val customGroupProvider = object : InspectionGroupProvider {
         val groupMap = groups.associateBy { group -> group.groupId }
         override fun findGroup(groupId: String): YamlInspectionGroup? {
           return groupMap[groupId]
@@ -84,16 +93,23 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       return YamlInspectionProfileImpl(profile.name, baseProfile, configurations, groups, groupProvider)
     }
 
+    private fun findBaseProfile(profileManager: InspectionProfileManager, profileName: String?): InspectionProfileImpl {
+      return profileName
+        ?.let { profileManager.getProfile(profileName, false) }
+        ?: InspectionProfileImpl("Default")
+    }
+
     @JvmStatic
     fun isYamlFile(filepath: String): Boolean {
-      val extension = File(filepath).extension.lowercase()
+      val extension = File(filepath).extension
       return extension == "yaml" || extension == "yml"
     }
 
     private fun createGroup(groupProvider: InspectionGroupProvider, group: YamlInspectionGroupRaw): YamlInspectionGroup {
       return if (group.groups.isNotEmpty()) {
         YamlCompositeGroupImpl(group.groupId, groupProvider, group.groups)
-      } else {
+      }
+      else {
         YamlInspectionGroupImpl(group.groupId, group.inspections.toSet())
       }
     }
@@ -115,16 +131,19 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
   }
 
   fun buildEffectiveProfile(): InspectionProfileImpl {
-    val effectiveProfile: InspectionProfileImpl = InspectionProfileImpl(profileName).also { profile ->
-      profile.copyFrom(baseProfile)
-      profile.name = profileName
+    val effectiveProfile: InspectionProfileImpl = InspectionProfileImpl("Default", InspectionToolRegistrar.getInstance(), baseProfile)
+      .also { profile ->
+        profile.initInspectionTools()
+        profile.copyFrom(baseProfile)
+        profile.name = profileName ?: "Default"
     }
     configurations.forEach { configuration ->
       val tools = findTools(configuration)
       val scopes = configuration.ignore.map { pattern ->
         if (pattern.startsWith("!")) {
           Pair(NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(pattern.drop(1))), true)
-        } else {
+        }
+        else {
           Pair(NamedScope.UnnamedScope(PackageSetFactory.getInstance().compile(pattern)), false)
         }
       }
@@ -132,10 +151,13 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
         val enabled = configuration.enabled
         if (enabled != null) {
           inspectionTools.isEnabled = enabled
+          inspectionTools.defaultState.isEnabled = enabled
         }
         val severity = HighlightDisplayLevel.find(configuration.severity)
         if (severity != null) {
-          inspectionTools.level = severity
+          inspectionTools.tools.forEach {
+            it.level = severity
+          }
         }
         val options = (configuration as? YamlInspectionConfig)?.options
         if (options != null) {
@@ -144,7 +166,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
           inspectionTools.defaultState.tool.tool.readSettings(element)
         }
         scopes.forEach { (scope, enabled) ->
-            inspectionTools.prependTool(scope, inspectionTools.defaultState.tool, enabled, inspectionTools.level)
+          inspectionTools.prependTool(scope, inspectionTools.defaultState.tool, enabled, inspectionTools.level)
         }
       }
     }
@@ -152,7 +174,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
   }
 
   private fun findTools(configuration: YamlBaseConfig): List<InspectionToolWrapper<*, *>> {
-    return when(configuration) {
+    return when (configuration) {
       is YamlGroupConfig -> baseProfile.getInspectionTools(null).filter { findGroup(configuration.group).includesInspection(it) }
       is YamlInspectionConfig -> listOfNotNull(baseProfile.getInspectionTool(configuration.inspection, null as PsiElement?))
     }

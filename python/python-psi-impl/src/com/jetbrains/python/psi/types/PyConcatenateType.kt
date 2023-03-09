@@ -15,7 +15,7 @@ class PyConcatenateType(val firstTypes: List<PyType?>, val paramSpec: PyParamSpe
   override fun resolveMember(name: String,
                              location: PyExpression?,
                              direction: AccessDirection,
-                             resolveContext: PyResolveContext): MutableList<out RatedResolveResult>? {
+                             resolveContext: PyResolveContext): List<RatedResolveResult>? {
     return null
   }
 

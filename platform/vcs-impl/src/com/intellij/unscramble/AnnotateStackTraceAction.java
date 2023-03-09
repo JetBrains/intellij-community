@@ -197,7 +197,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
 
   @Nullable
   @RequiresReadLock
-  private static VirtualFile getHyperlinkVirtualFile(@NotNull List<RangeHighlighter> links) {
+  private static VirtualFile getHyperlinkVirtualFile(@NotNull List<? extends RangeHighlighter> links) {
     RangeHighlighter key = ContainerUtil.getLastItem(links);
     if (key == null) return null;
     HyperlinkInfo info = EditorHyperlinkSupport.getHyperlinkInfo(key);

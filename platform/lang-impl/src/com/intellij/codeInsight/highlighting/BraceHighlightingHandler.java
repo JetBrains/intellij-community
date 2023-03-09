@@ -125,8 +125,8 @@ public class BraceHighlightingHandler {
 
     BraceHighlightingAndNavigationContext context = BraceMatchingUtil.computeHighlightingAndNavigationContext(myEditor, myPsiFile);
     if (context != null) {
-      doHighlight(context.currentBraceOffset, context.isCaretAfterBrace);
-      offset = context.currentBraceOffset;
+      doHighlight(context.currentBraceOffset(), context.isCaretAfterBrace());
+      offset = context.currentBraceOffset();
     }
     else if (offset > 0 && offset < chars.length()) {
       // There is a possible case that there are paired braces nearby the caret position and the document contains only white
@@ -142,8 +142,8 @@ public class BraceHighlightingHandler {
       if (backwardNonSpaceEndOffset > 0 && backwardNonSpaceEndOffset < offset) {
         context = BraceMatchingUtil.computeHighlightingAndNavigationContext(myEditor, myPsiFile, backwardNonSpaceEndOffset);
         if (context != null) {
-          doHighlight(context.currentBraceOffset, true);
-          offset = context.currentBraceOffset;
+          doHighlight(context.currentBraceOffset(), true);
+          offset = context.currentBraceOffset();
           searchForward = false;
         }
       }
@@ -154,8 +154,8 @@ public class BraceHighlightingHandler {
         if (nextNonSpaceCharOffset > offset) {
           context = BraceMatchingUtil.computeHighlightingAndNavigationContext(myEditor, myPsiFile, nextNonSpaceCharOffset);
           if (context != null) {
-            doHighlight(context.currentBraceOffset, true);
-            offset = context.currentBraceOffset;
+            doHighlight(context.currentBraceOffset(), true);
+            offset = context.currentBraceOffset();
           }
         }
       }

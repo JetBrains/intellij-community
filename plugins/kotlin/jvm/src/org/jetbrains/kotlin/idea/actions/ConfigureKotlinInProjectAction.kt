@@ -12,7 +12,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.util.PlatformUtils
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.configuration.*
-import org.jetbrains.kotlin.platform.js.isJs
+import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 abstract class ConfigureKotlinInProjectAction : AnAction() {

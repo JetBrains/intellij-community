@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.inspections.migration
 
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.migration.MigrationInfo
@@ -17,5 +18,6 @@ class OverrideDeprecatedMigrationInspection :
         sinceNewVersion = LanguageVersion.KOTLIN_1_7,
     )
 
-    override val diagnosticFactory: DiagnosticFactoryWithPsiElement<KtNamedDeclaration, *> get() = Errors.OVERRIDE_DEPRECATION
+    override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<KtNamedDeclaration, *> =
+        Errors.OVERRIDE_DEPRECATION
 }

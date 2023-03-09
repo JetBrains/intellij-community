@@ -12,7 +12,7 @@ object ProfileMigrationUtils {
     }
   }
 
-  fun writeXmlOptions(element: Element, options: Map<String, *>){
+  fun writeXmlOptions(element: Element, options: Map<String, *>) {
     options.forEach { (key, value) ->
       val child = Element("option")
       element.addContent(child)

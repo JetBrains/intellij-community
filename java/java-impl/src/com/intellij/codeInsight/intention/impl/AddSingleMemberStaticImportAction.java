@@ -21,6 +21,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,7 +193,8 @@ public class AddSingleMemberStaticImportAction extends BaseElementAtCaretIntenti
   }
 
   public static void invoke(PsiFile file, final PsiElement element) {
-    final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
+    final PsiJavaCodeReferenceElement refExpr = ObjectUtils.tryCast(element.getParent(), PsiJavaCodeReferenceElement.class);
+    if (refExpr == null) return;
     final String referenceName = refExpr.getReferenceName();
     final JavaResolveResult[] targets = refExpr.multiResolve(false);
     for (JavaResolveResult target : targets) {

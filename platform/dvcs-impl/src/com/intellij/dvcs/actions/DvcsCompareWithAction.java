@@ -93,7 +93,7 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
   @NotNull
   protected static JBPopup createPopup(@NotNull @NlsContexts.PopupTitle String title,
                                        @NotNull List<String> options,
-                                       @NotNull Consumer<String> onChosen) {
+                                       @NotNull Consumer<? super String> onChosen) {
     return JBPopupFactory.getInstance()
       .createPopupChooserBuilder(options)
       .setTitle(title)

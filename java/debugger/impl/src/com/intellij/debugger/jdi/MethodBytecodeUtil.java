@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -50,7 +50,9 @@ public final class MethodBytecodeUtil {
     try (DataOutputStream dos = new DataOutputStream(bytes)) {
       writeClassHeader(dos, type.constantPoolCount(), type.constantPool());
     }
-    catch (IOException e) { throw new RuntimeException(e); }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     ClassReader reader = new ClassReader(bytes.getInternalBuffer(), 0, bytes.size());
 
     ClassWriter writer = new ClassWriter(reader, 0);
@@ -164,7 +166,9 @@ public final class MethodBytecodeUtil {
       generator.consume(dos);
       end = dos.size();
     }
-    catch (IOException e) { throw new RuntimeException(e); }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
 
     ClassReader reader = new ClassReader(bytes.getInternalBuffer(), 0, bytes.size());
     return new Attribute(name) {

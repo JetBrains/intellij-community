@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
 import org.jetbrains.kotlin.idea.migration.MigrationInfo
 import org.jetbrains.kotlin.idea.migration.isLanguageVersionUpdate
@@ -20,7 +21,7 @@ class ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigrationInspection :
         return migrationInfo.isLanguageVersionUpdate(LanguageVersion.KOTLIN_1_3, LanguageVersion.KOTLIN_1_4)
     }
 
-    override val diagnosticFactory: DiagnosticFactoryWithPsiElement<KtAnnotationEntry, *>
-        get() = ErrorsJvm.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR.errorFactory
+    override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<KtAnnotationEntry, *> =
+        with(ErrorsJvm.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR) { languageVersionSettings.chooseFactory() }
 }
 

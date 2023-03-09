@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -26,7 +26,8 @@ import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class UnnecessaryContinueInspection extends BaseInspection {
 
@@ -45,8 +46,9 @@ public class UnnecessaryContinueInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.return.option"), this, "ignoreInThenBranch");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInThenBranch", InspectionGadgetsBundle.message("unnecessary.return.option")));
   }
 
   @Override
@@ -78,6 +80,9 @@ public class UnnecessaryContinueInspection extends BaseInspection {
         return;
       }
       if (ignoreInThenBranch && UnnecessaryReturnInspection.isInThenBranch(statement)) {
+        return;
+      }
+      if (ControlFlowUtils.isInFinallyBlock(statement, continuedStatement)) {
         return;
       }
       if (body instanceof PsiBlockStatement) {

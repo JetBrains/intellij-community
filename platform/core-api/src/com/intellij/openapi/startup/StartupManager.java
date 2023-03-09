@@ -45,6 +45,7 @@ public abstract class StartupManager {
    *
    * @see StartupActivity#POST_STARTUP_ACTIVITY
    */
+  @ApiStatus.Internal
   public abstract void runAfterOpened(@NotNull Runnable runnable);
 
   public abstract boolean postStartupActivityPassed();

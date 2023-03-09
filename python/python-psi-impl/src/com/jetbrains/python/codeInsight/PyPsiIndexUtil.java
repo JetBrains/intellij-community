@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PyPsiIndexUtil {
+public final class PyPsiIndexUtil {
   @NotNull
   public static List<UsageInfo> findUsages(@NotNull PsiNamedElement element, boolean forHighlightUsages) {
     final List<UsageInfo> usages = new ArrayList<>();

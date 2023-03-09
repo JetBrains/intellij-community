@@ -56,7 +56,7 @@ class ReplaceWithEnumMapInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val call = descriptor.psiElement as? KtCallExpression ?: return
-            val factory = KtPsiFactory(call)
+            val factory = KtPsiFactory(project)
             val file = call.containingKtFile
             val enumMapDescriptor = file.resolveImportReference(FqName("java.util.EnumMap")).firstOrNull() ?: return
             ImportInsertHelper.getInstance(project).importDescriptor(call.containingKtFile, enumMapDescriptor)

@@ -31,7 +31,7 @@ class Outer {
     }
     object NestedObj {
     }
-    interface NestedTrait {
+    interface NestedInterface {
     }
     annotation class NestedAnnotation
 }

@@ -4,6 +4,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -19,6 +20,8 @@ import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * @author Bas Leijdekkers
@@ -38,11 +41,10 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "unnecessarily.qualified.inner.class.access.option"),
-      this, "ignoreReferencesNeedingImport");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreReferencesNeedingImport", InspectionGadgetsBundle.message(
+        "unnecessarily.qualified.inner.class.access.option")));
   }
 
   @Override
@@ -60,7 +62,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiJavaCodeReferenceElement)) {

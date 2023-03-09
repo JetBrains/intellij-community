@@ -19,17 +19,19 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ClassWithTooManyTransitiveDependentsInspection extends BaseGlobalInspection {
 
@@ -64,9 +66,9 @@ public class ClassWithTooManyTransitiveDependentsInspection extends BaseGlobalIn
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message("class.with.too.many.transitive.dependents.max.option"),
-      this, "limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("limit", InspectionGadgetsBundle.message("class.with.too.many.transitive.dependents.max.option"), 1,
+             10000));
   }
 }

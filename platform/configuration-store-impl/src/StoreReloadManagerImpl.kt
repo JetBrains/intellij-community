@@ -51,14 +51,16 @@ internal class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
   private val changedFilesRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
+  @Suppress("DEPRECATION")
   @OptIn(FlowPreview::class)
-  private val job = ApplicationManager.getApplication().coroutineScope.launch {
-    changedFilesRequests
-      .debounce(300.milliseconds)
-      .collect {
-        doReload()
-      }
-  }
+  private val job = ApplicationManager.getApplication().coroutineScope
+    .launch(CoroutineName("configuration store reload request flow processing")) {
+      changedFilesRequests
+        .debounce(300.milliseconds)
+        .collect {
+          doReload()
+        }
+    }
 
   private suspend fun doReload() {
     if (isReloadBlocked() || !tryToReloadApplication()) {

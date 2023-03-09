@@ -52,7 +52,7 @@ class ReplaceIntRangeStartWithFirstQuickFix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as KtDotQualifiedExpression
         val selector = element.selectorExpression ?: return
-        selector.replace(KtPsiFactory(element).createExpression("first"))
+        selector.replace(KtPsiFactory(project).createExpression("first"))
     }
 }
 
@@ -64,6 +64,6 @@ class ReplaceIntRangeEndInclusiveWithLastQuickFix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as KtDotQualifiedExpression
         val selector = element.selectorExpression ?: return
-        selector.replace(KtPsiFactory(element).createExpression("last"))
+        selector.replace(KtPsiFactory(project).createExpression("last"))
     }
 }

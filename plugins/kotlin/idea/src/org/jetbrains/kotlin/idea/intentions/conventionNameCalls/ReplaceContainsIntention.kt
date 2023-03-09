@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.appendSemicolonBeforeLambdaContainingElement
 import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -46,7 +47,7 @@ class ReplaceContainsIntention : SelfTargetingRangeIntention<KtDotQualifiedExpre
         val argument = element.callExpression!!.valueArguments.single().getArgumentExpression()!!
         val receiver = element.receiverExpression
 
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
 
         val prefixExpression = element.parent as? KtPrefixExpression
         val expression = if (prefixExpression != null && prefixExpression.operationToken == KtTokens.EXCL) {

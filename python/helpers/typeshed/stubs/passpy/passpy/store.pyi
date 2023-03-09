@@ -1,6 +1,6 @@
 from _typeshed import StrPath
 from collections.abc import Iterator
-from typing import Match
+from re import Match
 
 class Store:
     def __init__(

@@ -92,10 +92,9 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
     return FileUtil.toSystemDependentName(getPath());
   }
 
-  @NlsSafe
   @NotNull
   @Override
-  public String getPresentableName() {
+  public @Nls String getPresentableName() {
     if (myShelvedChange == null) {
       return getRequestName();
     }

@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,13 +52,15 @@ public interface WhiteSpaceFormattingStrategy {
   /**
    * Checks if given sub-sequence of the given text contains symbols that may be treated as white spaces.
    *
-   * @param start     start offset to use with the given text (inclusive)
-   * @param end       end offset to use with the given text (exclusive)
-   * @return          offset of the first symbol that belongs to {@code [startOffset; endOffset)} range
-   *                  and is not treated as white space by the current strategy <b>or</b> value that is greater
-   *                  or equal to the given {@code 'end'} parameter if all target sub-sequence symbols
-   *                  can be treated as white spaces
+   * @param startElementLanguage specifies Language at the start offset
+   * @param start                start offset to use with the given text (inclusive)
+   * @param end                  end offset to use with the given text (exclusive)
+   * @return offset of the first symbol that belongs to {@code [startOffset; endOffset)} range
+   * and is not treated as white space by the current strategy <b>or</b> value that is greater
+   * or equal to the given {@code 'end'} parameter if all target sub-sequence symbols
+   * can be treated as white spaces
    */
+  @ApiStatus.Experimental
   default int check(@Nullable Language startElementLanguage, @NotNull CharSequence text, int start, int end) {
     return check(text, start, end);
   }

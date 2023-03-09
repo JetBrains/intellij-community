@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
@@ -49,6 +50,7 @@ class MinimapService : Disposable {
 
   private fun getEditorImpl(editor: Editor): EditorImpl? {
     val editorImpl = editor as? EditorImpl ?: return null
+    if (editorImpl.editorKind != EditorKind.MAIN_EDITOR) return null
     val virtualFile = editorImpl.virtualFile ?: FileDocumentManager.getInstance().getFile(editor.document) ?: return null
     if (settings.state.fileTypes.isNotEmpty() && !settings.state.fileTypes.contains(virtualFile.fileType.defaultExtension)) return null
     return editorImpl

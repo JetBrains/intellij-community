@@ -29,7 +29,7 @@ class AddToStringFix(element: KtExpression, private val useSafeCallOperator: Boo
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         val pattern = if (useSafeCallOperator) "$0?.toString()" else "$0.toString()"
-        val expressionToInsert = KtPsiFactory(file).createExpressionByPattern(pattern, element)
+        val expressionToInsert = KtPsiFactory(project).createExpressionByPattern(pattern, element)
         val newExpression = element.replaced(expressionToInsert)
         editor?.caretModel?.moveToOffset(newExpression.endOffset)
     }

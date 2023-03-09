@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +26,7 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, V
 
   FileTypeMapReduceIndex(@NotNull FileBasedIndexExtension<FileType, Void> extension,
                          @NotNull VfsAwareIndexStorageLayout<FileType, Void> layout) throws IOException {
-    super(extension, layout, null);
+    super(extension, layout);
     myFileTypeNameEnumerator = createFileTypeNameEnumerator();
   }
 
@@ -65,7 +65,7 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, V
   protected void doClear() throws StorageException, IOException {
     super.doClear();
     IOUtil.closeSafe(LOG, myFileTypeNameEnumerator);
-    IOUtil.deleteAllFilesStartingWith(getFileTypeNameEnumeratorPath().toFile());
+    IOUtil.deleteAllFilesStartingWith(getFileTypeNameEnumeratorPath());
     myFileTypeNameEnumerator = createFileTypeNameEnumerator();
   }
 

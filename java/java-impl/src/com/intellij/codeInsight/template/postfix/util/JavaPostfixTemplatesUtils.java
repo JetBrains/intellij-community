@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.util;
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector;
@@ -207,7 +207,7 @@ public final class JavaPostfixTemplatesUtils {
   public static Function<PsiElement, String> getRenderer() {
     return element -> {
       assert element instanceof PsiExpression;
-      return new PsiExpressionTrimRenderer.RenderFunction().fun((PsiExpression)element);
+      return PsiExpressionTrimRenderer.render((PsiExpression)element);
     };
   }
 

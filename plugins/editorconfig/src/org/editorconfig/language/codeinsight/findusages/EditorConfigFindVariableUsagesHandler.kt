@@ -21,13 +21,9 @@ import org.editorconfig.language.util.EditorConfigVfsUtil
 class EditorConfigFindVariableUsagesHandler(element: EditorConfigDescribableElement) : FindUsagesHandler(element) {
   override fun processElementUsages(element: PsiElement, processor: Processor<in UsageInfo>, options: FindUsagesOptions) =
     runReadAction {
-      val id = getId(element) ?: return@runReadAction false
-      findAllUsages(element, id).map(::UsageInfo).forEach {
-        val shouldContinue = processor.process(it)
-        if (!shouldContinue) return@runReadAction false
-      }
-
-      return@runReadAction true
+      getId(element)?.let { id -> findAllUsages(element, id) }
+        ?.map(::UsageInfo)
+        ?.all(processor::process) == true
     }
 
   override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope) =

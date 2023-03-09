@@ -97,7 +97,7 @@ public abstract class AttachableProjectViewPane extends ProjectViewPane {
     };
   }
 
-  protected void processDroppedDirectories(@NotNull List<VirtualFile> dirs) {
+  protected void processDroppedDirectories(@NotNull List<? extends VirtualFile> dirs) {
     if (dirs.isEmpty()) return;
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     if (modules.length == 0) return;

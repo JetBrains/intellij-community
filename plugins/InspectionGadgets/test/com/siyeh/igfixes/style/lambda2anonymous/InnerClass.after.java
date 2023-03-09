@@ -1,11 +1,11 @@
 import java.io.Serializable;
 
-public abstract class LambdaRefInnerClass<T extends Serializable> {
+public abstract class LambdaRefInnerClass {
     public abstract class Holder { }
 
-    public static final LongKey<LambdaRefInnerClass.Holder> func = new LongKey<LambdaRefInnerClass.Holder>() {
+    public static final LongKey<Holder> func = new LongKey<Holder>() {
         @Override
-        public Long getKey(LambdaRefInnerClass.Holder value) {
+        public Long getKey(Holder value) {
             return 0L;
         }
     };

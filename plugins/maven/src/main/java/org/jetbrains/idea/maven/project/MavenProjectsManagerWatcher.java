@@ -83,7 +83,7 @@ public final class MavenProjectsManagerWatcher {
 
   @TestOnly
   public synchronized void enableAutoImportInTests() {
-    AutoImportProjectTracker.getInstance(myProject).enableAutoImportInTests();
+    AutoImportProjectTracker.enableAutoReloadInTests(myDisposable);
   }
 
   public synchronized void stop() {

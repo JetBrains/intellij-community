@@ -15,3 +15,4 @@ class Test {
 }
 
 // CRI_IGNORE
+// FIR_COMPARISON

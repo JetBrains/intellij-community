@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
+import com.intellij.debugger.engine.DebugProcessEvents
+import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -48,10 +50,7 @@ class GroovyDebuggerTest extends GroovyCompilerTestCase implements DebuggerMetho
   }
 
   private void enableDebugLogging() {
-    TestLoggerFactory.enableDebugLogging(myFixture.testRootDisposable,
-                                         "#com.intellij.debugger.engine.DebugProcessImpl",
-                                         "#com.intellij.debugger.engine.DebugProcessEvents",
-                                         "#org.jetbrains.plugins.groovy.compiler.GroovyDebuggerTest")
+    TestLoggerFactory.enableDebugLogging(myFixture.testRootDisposable, DebugProcessImpl.class, DebugProcessEvents.class, GroovyDebuggerTest.class)
     LOG.info(getTestStartedLogMessage())
   }
 

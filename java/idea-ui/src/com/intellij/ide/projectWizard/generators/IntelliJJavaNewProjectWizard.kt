@@ -5,13 +5,14 @@ import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.INTELLIJ
 import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.addSampleCode
 import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.contentRoot
+import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.javaData
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
-import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.dsl.builder.Panel
 import java.nio.file.Paths
 
 class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
@@ -27,9 +28,13 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     BuildSystemJavaNewProjectWizardData by parent,
     IntelliJJavaNewProjectWizardData {
 
-    override fun setupProject(project: Project) {
-      super.setupProject(project)
+    override fun setupSettingsUI(builder: Panel) {
+      setupJavaSdkUI(builder)
+      setupSampleCodeUI(builder)
+      setupSampleCodeWithOnBoardingTipsUI(builder)
+    }
 
+    override fun setupProject(project: Project) {
       val builder = JavaModuleBuilder()
       val moduleFile = Paths.get(moduleFileLocation, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
 
@@ -55,14 +60,19 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
   }
 
-  private class AssetsStep(parent: Step) : AssetsNewProjectWizardStep(parent) {
+  private class AssetsStep(parent: Step) : AssetsJavaNewProjectWizardStep(parent) {
     override fun setupAssets(project: Project) {
       outputDirectory = contentRoot
-      if (gitData?.git == true) {
-        addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
-      }
+      addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
       if (addSampleCode) {
-        withJavaSampleCodeAsset("src", "")
+        withJavaSampleCodeAsset("src", "", javaData.generateOnboardingTips)
+      }
+    }
+
+    override fun setupProject(project: Project) {
+      super.setupProject(project)
+      if (javaData.generateOnboardingTips) {
+        prepareTipsInEditor(project)
       }
     }
   }

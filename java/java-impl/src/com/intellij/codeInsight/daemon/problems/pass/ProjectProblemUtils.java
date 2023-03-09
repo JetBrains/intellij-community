@@ -4,12 +4,7 @@ package com.intellij.codeInsight.daemon.problems.pass;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector;
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.problems.Problem;
-import com.intellij.codeInsight.hints.presentation.InlayPresentation;
-import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation;
-import com.intellij.codeInsight.hints.presentation.PresentationFactory;
-import com.intellij.codeInsight.hints.presentation.WithAttributesPresentation;
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.java.JavaBundle;
@@ -53,21 +48,6 @@ public final class ProjectProblemUtils {
   public static final Key<Boolean> ourTestingProjectProblems = Key.create("TestingProjectProblems");
   private static final Key<Map<PsiMember, Set<Problem>>> PROBLEMS_KEY = Key.create("project.problems.problem.key");
   private static final Key<Long> MODIFICATION_COUNT = Key.create("ProjectProblemModificationCount");
-
-  static @NotNull InlayPresentation getPresentation(@NotNull Project project,
-                                                    @NotNull Editor editor,
-                                                    @NotNull PresentationFactory factory,
-                                                    @NotNull PsiMember member,
-                                                    @NotNull Set<Problem> relatedProblems) {
-    InlayPresentation textPresentation = factory.smallText(JavaBundle.message("project.problems.hint.text", relatedProblems.size()));
-    InlayPresentation errorTextPresentation =
-      new WithAttributesPresentation(textPresentation, CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES, editor,
-                                     new WithAttributesPresentation.AttributesFlags());
-    InlayPresentation problemsPresentation =
-      factory.referenceOnHover(errorTextPresentation, (e, p) -> showProblems(editor, member));
-
-    return new MenuOnClickPresentation(problemsPresentation, project, () -> ProjectProblemHintProvider.getPopupActions());
-  }
 
   /**
    * Show broken usages in tool window. If there's only one broken usage - just navigate to it.
@@ -157,14 +137,12 @@ public final class ProjectProblemUtils {
     TextAttributes attributes = new TextAttributes(null, null, textColor, null, Font.PLAIN);
     String memberName = UsageViewUtil.getLongName(member);
 
-    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING)
       .range(identifier.getTextRange())
       .textAttributes(attributes)
       .descriptionAndTooltip(JavaBundle.message("project.problems.fix.description", memberName))
+      .registerFix(new ShowRelatedProblemsAction(), null, null, null, null)
       .createUnconditionally();
-
-    QuickFixAction.registerQuickFixAction(info, new ShowRelatedProblemsAction());
-    return info;
   }
 
   static boolean isProjectUpdated(@NotNull PsiJavaFile psiJavaFile, @NotNull Editor editor) {
@@ -186,7 +164,7 @@ public final class ProjectProblemUtils {
 
     @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-      return ProjectProblemHintProvider.hintsEnabled();
+      return ProjectProblemCodeVisionProvider.hintsEnabled(project);
     }
 
     @Override

@@ -37,8 +37,8 @@ public class JsonParser implements PsiParser, LightPsiParser {
 
   public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
     create_token_set_(ARRAY, BOOLEAN_LITERAL, LITERAL, NULL_LITERAL,
-      NUMBER_LITERAL, OBJECT, PARAMETER_LITERAL, REFERENCE_EXPRESSION,
-      STRING_LITERAL, VALUE),
+      NUMBER_LITERAL, OBJECT, REFERENCE_EXPRESSION, STRING_LITERAL,
+      VALUE),
   };
 
   /* ********************************************************** */
@@ -127,7 +127,7 @@ public class JsonParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // string_literal | number_literal | boolean_literal | null_literal | parameter_literal
+  // string_literal | number_literal | boolean_literal | null_literal
   public static boolean literal(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "literal")) return false;
     boolean r;
@@ -136,7 +136,6 @@ public class JsonParser implements PsiParser, LightPsiParser {
     if (!r) r = number_literal(b, l + 1);
     if (!r) r = boolean_literal(b, l + 1);
     if (!r) r = null_literal(b, l + 1);
-    if (!r) r = parameter_literal(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
@@ -262,18 +261,6 @@ public class JsonParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _AND_);
     r = consumeToken(b, R_CURLY);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // PARAMETER
-  public static boolean parameter_literal(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "parameter_literal")) return false;
-    if (!nextTokenIs(b, PARAMETER)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, PARAMETER);
-    exit_section_(b, m, PARAMETER_LITERAL, r);
     return r;
   }
 

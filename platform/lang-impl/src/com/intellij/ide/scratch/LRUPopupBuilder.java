@@ -146,7 +146,7 @@ public abstract class LRUPopupBuilder<T> {
 
   @NotNull
   public ListPopup buildPopup() {
-    List<String> ids = ContainerUtil.newArrayList(restoreLRUItems());
+    List<String> ids = new ArrayList<>(restoreLRUItems());
     if (mySelection != null) {
       ids.add(getStorageId(mySelection));
     }
@@ -233,7 +233,7 @@ public abstract class LRUPopupBuilder<T> {
       nameLen = Math.max(nameLen, step.getTextFor(v).length());
     }
     if (values.size() > MAX_VISIBLE_SIZE) {
-      Dimension size = new JLabel(StringUtil.repeatSymbol('a', nameLen), EmptyIcon.ICON_16, SwingConstants.LEFT).getPreferredSize();
+      Dimension size = new JLabel(StringUtil.repeatSymbol('a', nameLen), EmptyIcon.ICON_16, SwingConstants.LEFT).getPreferredSize(); //NON-NLS
       size.width += 20;
       size.height *= MAX_VISIBLE_SIZE;
       popup.setSize(size);

@@ -2,11 +2,14 @@
 
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.intellij.openapi.application.assertWriteAccessAllowed
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.Topic.BroadcastDirection
 import com.intellij.util.xmlb.Accessor
@@ -58,6 +61,7 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
 
     var settings: T
         get() = _settings
+        @Deprecated("use update()")
         set(value) {
             val oldSettings = _settings
             validateNewSettings(value)
@@ -72,6 +76,7 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
         }
 
     fun update(changer: T.() -> Unit) {
+        @Suppress("DEPRECATION")
         settings = settings.unfrozen().apply { changer() }
     }
 
@@ -100,12 +105,14 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
             XmlSerializer.deserializeInto(this, state)
         }
 
-        KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
+        runReadAction {
+            KotlinCompilerSettingsTracker.getInstance(project).incModificationCount()
 
-        project.messageBus.syncPublisher(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
-            oldSettings = null,
-            newSettings = settings,
-        )
+            project.messageBus.syncPublisher(KotlinCompilerSettingsListener.TOPIC).settingsChanged(
+                oldSettings = null,
+                newSettings = settings,
+            )
+        }
     }
 
     public override fun clone(): Any = super.clone()

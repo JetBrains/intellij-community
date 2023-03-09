@@ -1,4 +1,4 @@
-// "Create method 'f'" "true"
+// "Create method 'f'" "true-preview"
 class Test {
     {
         long l = f(1) + f(2);

@@ -22,6 +22,7 @@ import com.intellij.util.ui.AbstractTableCellEditor
 import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ActionsColumn.ActionViewModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
@@ -34,7 +35,7 @@ import javax.swing.table.TableCellRenderer
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackageActionsTableCellRendererAndEditor(
-    private val actionPerformedCallback: (ActionViewModel) -> Unit
+    private val actionPerformedCallback: (PackageManagementOperationExecutor.() -> Unit) -> Unit
 ) : AbstractTableCellEditor(), TableCellRenderer {
 
     private var lastEditorValue: ActionViewModel? = null
@@ -54,7 +55,7 @@ internal class PackageActionsTableCellRendererAndEditor(
 
     override fun getTableCellEditorComponent(table: JTable, value: Any, isSelected: Boolean, row: Int, column: Int): JComponent? {
         check(value is ActionViewModel) { "The Actions column value must be an ActionsViewModel, but was ${value::class.simpleName}" }
-        actionPerformedCallback(value)
+        actionPerformedCallback(value.operations)
         lastEditorValue = value
         table.cellEditor?.stopCellEditing()
         return null // This should cause editing to stop immediately (see JBTable#prepareEditor)

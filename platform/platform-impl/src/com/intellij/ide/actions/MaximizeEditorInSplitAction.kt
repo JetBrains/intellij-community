@@ -18,17 +18,17 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.DrawUtil
-import com.intellij.util.SmartList
 import com.intellij.util.animation.JBAnimator
 import com.intellij.util.animation.animation
-import com.intellij.util.ui.UIUtil
 import java.awt.Component
 
-class MaximizeEditorInSplitAction : DumbAwareAction() {
-  private val myActiveAnimators = SmartList<JBAnimator>()
+internal class MaximizeEditorInSplitAction : DumbAwareAction() {
+  private val myActiveAnimators = mutableListOf<JBAnimator>()
+
   init {
     templatePresentation.text = IdeBundle.message("action.maximize.editor") + "/" +IdeBundle.message("action.normalize.splits")
   }
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project == null) return
@@ -94,11 +94,11 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
     fun getSplittersToMaximize(project: Project, editorComponent: Component?): Set<Pair<Splitter, Boolean>> {
       val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return emptySet()
       val set = HashSet<Pair<Splitter, Boolean>>()
-      var comp = editorComponent
-      while (comp != editorManager.mainSplitters && comp != null) {
-        val parent = comp.parent
+      var component = editorComponent
+      while (component != editorManager.component && component != null) {
+        val parent = component.parent
         if (parent is Splitter && ClientProperty.isTrue(parent, EditorsSplitters.SPLITTER_KEY)) {
-          if (parent.firstComponent == comp) {
+          if (parent.firstComponent == component) {
             if (parent.proportion < parent.maximumProportion) {
               set.add(Pair(parent, true))
             }
@@ -109,7 +109,7 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
             }
           }
         }
-        comp = parent
+        component = parent
       }
       return set
     }
@@ -142,8 +142,8 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
         splitters = candidate ?: break
       }
       if (splitters != null) {
-        val splitterList = UIUtil.findComponentsOfType(splitters, Splitter::class.java)
-        splitterList.removeIf { !UIUtil.isClientPropertyTrue(it, EditorsSplitters.SPLITTER_KEY) }
+        val splitterList = ComponentUtil.findComponentsOfType(splitters, Splitter::class.java)
+        splitterList.removeIf { !ClientProperty.isTrue(it, EditorsSplitters.SPLITTER_KEY) }
         set.addAll(splitterList)
       }
       return set

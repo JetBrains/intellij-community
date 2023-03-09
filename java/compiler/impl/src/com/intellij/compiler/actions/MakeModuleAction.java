@@ -31,8 +31,9 @@ public class MakeModuleAction extends CompileActionBase {
   private static final Logger LOG = Logger.getInstance(MakeModuleAction.class);
 
   @Override
-  protected void doAction(DataContext dataContext, Project project) {
+  protected void doAction(@NotNull AnActionEvent event, Project project) {
     try {
+      final DataContext dataContext = event.getDataContext();
       final Module[] modules = dataContext.getData(LangDataKeys.MODULE_CONTEXT_ARRAY);
       if (modules != null) {
         ProjectTaskManager.getInstance(project).build(modules);

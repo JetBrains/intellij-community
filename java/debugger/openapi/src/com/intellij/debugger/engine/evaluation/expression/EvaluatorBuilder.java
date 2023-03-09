@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Main interface to extend evaluation for different JVM languages.
+ *
  * @see com.intellij.debugger.engine.evaluation.CodeFragmentFactory
  */
 public interface EvaluatorBuilder {

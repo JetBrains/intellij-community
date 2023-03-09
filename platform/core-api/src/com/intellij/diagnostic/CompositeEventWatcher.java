@@ -31,9 +31,10 @@ public class CompositeEventWatcher implements EventWatcher, Disposable {
   public void runnableTaskFinished(final @NotNull Runnable runnable,
                                    final long waitedInQueueNs,
                                    final int queueSize,
-                                   final long executionDurationNs) {
+                                   final long executionDurationNs,
+                                   final boolean wasInSkippedItems) {
     for (EventWatcher watcher : watchers) {
-      watcher.runnableTaskFinished(runnable, waitedInQueueNs, queueSize, executionDurationNs);
+      watcher.runnableTaskFinished(runnable, waitedInQueueNs, queueSize, executionDurationNs, wasInSkippedItems);
     }
   }
 

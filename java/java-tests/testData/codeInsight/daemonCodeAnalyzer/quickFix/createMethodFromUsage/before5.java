@@ -1,4 +1,4 @@
-// "Create method 'test'" "true"
+// "Create method 'test'" "true-preview"
 public class Test {
     static void test(int i) {}
     public Test() {

@@ -1,4 +1,5 @@
 // FIR_COMPARISON
+// FIR_IDENTICAL
 // RUNTIME
 class A {
     fun fooA() {

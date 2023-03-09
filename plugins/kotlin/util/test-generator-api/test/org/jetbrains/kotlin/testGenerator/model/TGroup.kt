@@ -34,7 +34,7 @@ class TGroupImpl(
     override val kotlinRoot = KotlinRoot.DIR
     override val moduleRoot = File(kotlinRoot, modulePath)
     override val testSourcesRoot = File(moduleRoot, testSourcesPath)
-    override val testDataRoot = if (testDataPath.startsWith("/")) File(testDataPath) else File(moduleRoot, testDataPath)
+    override val testDataRoot = File(testDataPath).takeIf { it.isAbsolute } ?: File(moduleRoot, testDataPath)
     override val suites = mutableListOf<TSuite>()
 }
 

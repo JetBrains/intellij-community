@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class MethodBreakpoint
@@ -205,8 +205,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       return;
     }
     StreamEx<Method> methods = lambdaMethod != null
-                       ? StreamEx.of(lambdaMethod)
-                       : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
+                               ? StreamEx.of(lambdaMethod)
+                               : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
     boolean found = false;
     for (Method method : methods) {
       found = true;
@@ -233,6 +233,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         if (breakpoint.isWatchExit()) {
           MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
             int myLastLine = 0;
+
             @Override
             public void visitLineNumber(int line, Label start) {
               myLastLine = line;
@@ -290,7 +291,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
       }
 
-      if(!hasMethod) {
+      if (!hasMethod) {
         debugProcess.getRequestsManager().setInvalid(
           this, JavaDebuggerBundle.message("error.invalid.breakpoint.method.not.found", classType.name())
         );
@@ -354,7 +355,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     String locationFileName = DebuggerUtilsEx.getSourceName(location, e -> defaultFileName);
     int locationLine = location.lineNumber();
     return JavaDebuggerBundle.message(entry ? "status.method.entry.breakpoint.reached" : "status.method.exit.breakpoint.reached",
-                                  method.declaringType().name() + "." + method.name() + "()",
+                                      method.declaringType().name() + "." + method.name() + "()",
                                       locationQName,
                                       locationFileName,
                                       locationLine
@@ -389,13 +390,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   @Override
   public String getDisplayName() {
     final @Nls StringBuilder buffer = new StringBuilder();
-    if(isValid()) {
+    if (isValid()) {
       final String className = getClassName();
       final boolean classNameExists = className != null && className.length() > 0;
       if (classNameExists) {
         buffer.append(className);
       }
-      if(getMethodName() != null) {
+      if (getMethodName() != null) {
         if (classNameExists) {
           buffer.append(".");
         }
@@ -462,7 +463,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       }
 
       final PsiIdentifier identifier = method.getNameIdentifier();
-      int methodNameOffset = identifier != null? identifier.getTextOffset() : methodOffset;
+      int methodNameOffset = identifier != null ? identifier.getTextOffset() : methodOffset;
       final MethodDescriptor res =
         new MethodDescriptor();
       res.methodName = JVMNameUtil.getJVMMethodName(method);
@@ -492,11 +493,13 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     super.readExternal(breakpointNode);
     try {
       getProperties().WATCH_ENTRY = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_ENTRY"));
-    } catch (Exception ignored) {
+    }
+    catch (Exception ignored) {
     }
     try {
       getProperties().WATCH_EXIT = Boolean.parseBoolean(JDOMExternalizerUtil.readField(breakpointNode, "WATCH_EXIT"));
-    } catch (Exception ignored) {
+    }
+    catch (Exception ignored) {
     }
   }
 

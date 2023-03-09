@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.moveCaret
@@ -12,7 +13,6 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.core.unblockDocument
 import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection.Companion.invertSelectorFunction
-import org.jetbrains.kotlin.idea.refactoring.getLineNumber
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.matches
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -71,7 +71,7 @@ class InvertIfConditionIntention : SelfTargetingIntention<KtIfExpression>(
     }
 
     private fun handleStandardCase(ifExpression: KtIfExpression, newCondition: KtExpression): KtIfExpression {
-        val psiFactory = KtPsiFactory(ifExpression)
+        val psiFactory = KtPsiFactory(ifExpression.project)
 
         val thenBranch = ifExpression.then!!
         val elseBranch = ifExpression.`else` ?: psiFactory.createEmptyBody()
@@ -106,7 +106,7 @@ class InvertIfConditionIntention : SelfTargetingIntention<KtIfExpression>(
         val elseBranch = ifExpression.`else`
         if (elseBranch != null) return null
 
-        val factory = KtPsiFactory(ifExpression)
+        val psiFactory = KtPsiFactory(ifExpression.project)
 
         val thenBranch = ifExpression.then!!
         val lastThenStatement = thenBranch.lastBlockStatementOrThis()
@@ -131,7 +131,7 @@ class InvertIfConditionIntention : SelfTargetingIntention<KtIfExpression>(
                         } else {
                             PsiChildRange(first, last).trimWhiteSpaces()
                         }
-                        val newIf = factory.createExpressionByPattern("if ($0) { $1 }", newCondition, newThenRange) as KtIfExpression
+                        val newIf = psiFactory.createExpressionByPattern("if ($0) { $1 }", newCondition, newThenRange) as KtIfExpression
 
                         // remove statements after if as they are moving under if
                         block.deleteChildRange(first, last)
@@ -163,7 +163,7 @@ class InvertIfConditionIntention : SelfTargetingIntention<KtIfExpression>(
         val exitStatement = exitStatementExecutedAfter(ifExpression) ?: return null
 
         val updatedIf = copyThenBranchAfter(ifExpression)
-        val newIf = factory.createExpressionByPattern("if ($0) $1", newCondition, exitStatement)
+        val newIf = psiFactory.createExpressionByPattern("if ($0) $1", newCondition, exitStatement)
         return updatedIf.replace(newIf) as KtIfExpression
     }
 
@@ -171,13 +171,13 @@ class InvertIfConditionIntention : SelfTargetingIntention<KtIfExpression>(
         statement is KtReturnExpression && statement.returnedExpression == null && statement.labeledExpression == null
 
     private fun copyThenBranchAfter(ifExpression: KtIfExpression): KtIfExpression {
-        val factory = KtPsiFactory(ifExpression)
+        val psiFactory = KtPsiFactory(ifExpression.project)
         val thenBranch = ifExpression.then ?: return ifExpression
 
         val parent = ifExpression.parent
         if (parent !is KtBlockExpression) {
             assert(parent is KtContainerNode)
-            val block = factory.createEmptyBody()
+            val block = psiFactory.createEmptyBody()
             block.addAfter(ifExpression, block.lBrace)
             val newBlock = ifExpression.replaced(block)
             val newIf = newBlock.statements.single() as KtIfExpression
@@ -189,11 +189,11 @@ class InvertIfConditionIntention : SelfTargetingIntention<KtIfExpression>(
             val range = thenBranch.contentRange()
             if (!range.isEmpty) {
                 parent.addRangeAfter(range.first, range.last, ifExpression)
-                parent.addAfter(factory.createNewLine(), ifExpression)
+                parent.addAfter(psiFactory.createNewLine(), ifExpression)
             }
         } else if (thenBranch !is KtContinueExpression) {
             parent.addAfter(thenBranch, ifExpression)
-            parent.addAfter(factory.createNewLine(), ifExpression)
+            parent.addAfter(psiFactory.createNewLine(), ifExpression)
         }
         return ifExpression
     }
@@ -219,14 +219,14 @@ class InvertIfConditionIntention : SelfTargetingIntention<KtIfExpression>(
                     if (!parent.hasBlockBody()) return null
                     val returnType = parent.resolveToDescriptorIfAny()?.returnType
                     if (returnType == null || !returnType.isUnit()) return null
-                    return KtPsiFactory(expression).createExpression("return")
+                    return KtPsiFactory(expression.project).createExpression("return")
                 }
             }
 
             is KtContainerNode -> when (val pparent = parent.parent) {
                 is KtLoopExpression -> {
                     if (expression == pparent.body) {
-                        return KtPsiFactory(expression).createExpression("continue")
+                        return KtPsiFactory(expression.project).createExpression("continue")
                     }
                 }
 

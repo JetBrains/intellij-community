@@ -38,7 +38,7 @@ abstract class OneStateFilter(@Nls val name: Supplier<String>, @Nls val label: S
         myTable.matchVariable?.putAdditionalConstraint(constraintName, null)
     }
 
-    override fun isApplicable(nodes: MutableList<out PsiElement>, completePattern: Boolean, target: Boolean): Boolean =
+    override fun isApplicable(nodes: List<PsiElement>, completePattern: Boolean, target: Boolean): Boolean =
         myTable.variable is MatchVariableConstraint
                 && myTable.profile!!.isApplicableConstraint(constraintName, nodes, completePattern, target)
 

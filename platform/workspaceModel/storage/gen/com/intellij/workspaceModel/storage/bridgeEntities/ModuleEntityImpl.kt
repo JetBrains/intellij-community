@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntityInformation
 import com.intellij.workspaceModel.storage.EntitySource
@@ -25,6 +26,10 @@ import com.intellij.workspaceModel.storage.impl.indices.WorkspaceMutableIndex
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -47,6 +52,9 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
     internal val EXMODULEOPTIONS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
                                                                                    ExternalSystemModuleOptionsEntity::class.java,
                                                                                    ConnectionId.ConnectionType.ONE_TO_ONE, false)
+    internal val TESTPROPERTIES_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java,
+                                                                                  TestModulePropertiesEntity::class.java,
+                                                                                  ConnectionId.ConnectionType.ONE_TO_ONE, false)
     internal val FACETS_CONNECTION_ID: ConnectionId = ConnectionId.create(ModuleEntity::class.java, FacetEntity::class.java,
                                                                           ConnectionId.ConnectionType.ONE_TO_MANY, false)
 
@@ -56,6 +64,7 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
       GROUPPATH_CONNECTION_ID,
       JAVASETTINGS_CONNECTION_ID,
       EXMODULEOPTIONS_CONNECTION_ID,
+      TESTPROPERTIES_CONNECTION_ID,
       FACETS_CONNECTION_ID,
     )
 
@@ -84,6 +93,9 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
 
   override val exModuleOptions: ExternalSystemModuleOptionsEntity?
     get() = snapshot.extractOneToOneChild(EXMODULEOPTIONS_CONNECTION_ID, this)
+
+  override val testProperties: TestModulePropertiesEntity?
+    get() = snapshot.extractOneToOneChild(TESTPROPERTIES_CONNECTION_ID, this)
 
   override val facets: List<FacetEntity>
     get() = snapshot.extractOneToManyChildren<FacetEntity>(FACETS_CONNECTION_ID, this)!!.toList()
@@ -175,8 +187,7 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.type != dataSource?.type) this.type = dataSource.type
       if (this.dependencies != dataSource.dependencies) this.dependencies = dataSource.dependencies.toMutableList()
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -410,6 +421,41 @@ open class ModuleEntityImpl(val dataSource: ModuleEntityData) : ModuleEntity, Wo
           this.entityLinks[EntityLink(true, EXMODULEOPTIONS_CONNECTION_ID)] = value
         }
         changedProperty.add("exModuleOptions")
+      }
+
+    override var testProperties: TestModulePropertiesEntity?
+      get() {
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToOneChild(TESTPROPERTIES_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
+                                                                                                        TESTPROPERTIES_CONNECTION_ID)] as? TestModulePropertiesEntity
+        }
+        else {
+          this.entityLinks[EntityLink(true, TESTPROPERTIES_CONNECTION_ID)] as? TestModulePropertiesEntity
+        }
+      }
+      set(value) {
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            value.entityLinks[EntityLink(false, TESTPROPERTIES_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+          _diff.addEntity(value)
+        }
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
+          _diff.updateOneToOneChildOfParent(TESTPROPERTIES_CONNECTION_ID, this, value)
+        }
+        else {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            value.entityLinks[EntityLink(false, TESTPROPERTIES_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+
+          this.entityLinks[EntityLink(true, TESTPROPERTIES_CONNECTION_ID)] = value
+        }
+        changedProperty.add("testProperties")
       }
 
     // List of non-abstract referenced types

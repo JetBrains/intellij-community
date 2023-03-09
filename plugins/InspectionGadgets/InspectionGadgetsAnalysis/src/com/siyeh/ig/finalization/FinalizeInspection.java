@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.finalization;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiMethod;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -23,7 +23,8 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class FinalizeInspection extends BaseInspection {
 
@@ -44,10 +45,9 @@ public class FinalizeInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("ignore.trivial.finalizers.option"), this,
-      "ignoreTrivialFinalizers");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreTrivialFinalizers", InspectionGadgetsBundle.message("ignore.trivial.finalizers.option")));
   }
 
   @Override

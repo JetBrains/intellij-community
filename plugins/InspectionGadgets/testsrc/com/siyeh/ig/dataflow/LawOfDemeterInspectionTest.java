@@ -69,7 +69,6 @@ public class LawOfDemeterInspectionTest extends LightJavaInspectionTestCase {
            "  void x() {" +
            "    new Inner().foo().foo();" +
            "  }" +
-           "" +
            "  class Inner {" +
            "    Inner2 foo() {" +
            "      return null;" +

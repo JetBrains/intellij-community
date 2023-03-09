@@ -25,7 +25,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -51,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.*;
+import java.util.function.BiPredicate;
 
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isPlusPlusOrMinusMinus;
 
@@ -66,16 +66,12 @@ public abstract class GroovyRefactoringUtil {
 
   public static PsiElement[] getExpressionOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope) {
     ArrayList<PsiElement> occurrences = new ArrayList<>();
-    Comparator<PsiElement> comparator = (element1, element2) -> {
-      if (element1 != null && element1.equals(element2)) return 0;
+    BiPredicate<PsiElement, PsiElement> comparator = (element1, element2) -> {
+      if (element1 != null && element1.equals(element2)) return true;
 
-      if (element1 instanceof GrParameter &&
-          element2 instanceof GrParameter) {
-        final String name1 = ((GrParameter) element1).getName();
-        final String name2 = ((GrParameter) element2).getName();
-        return name1.compareTo(name2);
-      }
-      return 1;
+      return element1 instanceof GrParameter param1 &&
+             element2 instanceof GrParameter param2 && 
+             param1.getName().equals(param2.getName());
     };
 
     if (scope instanceof GrLoopStatement) {
@@ -92,14 +88,14 @@ public abstract class GroovyRefactoringUtil {
   }
 
 
-  private static void collectOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<? super PsiElement> acc, Comparator<? super PsiElement> comparator, boolean goIntoInner) {
+  private static void collectOccurrences(@NotNull PsiElement expr, @NotNull PsiElement scope, @NotNull ArrayList<? super PsiElement> acc, BiPredicate<PsiElement, PsiElement> comparator, boolean goIntoInner) {
     if (scope.equals(expr)) {
       acc.add(expr);
       return;
     }
     for (PsiElement child : scope.getChildren()) {
       if (goIntoInner || !(child instanceof GrTypeDefinition) && !(child instanceof GrMethod && scope instanceof GroovyFileBase)) {
-        if (PsiEquivalenceUtil.areElementsEquivalent(child, expr, comparator, false)) {
+        if (PsiEquivalenceUtil.areEquivalent(child, expr, comparator, false)) {
           acc.add(child);
         } else {
           collectOccurrences(expr, child, acc, comparator, goIntoInner);
@@ -144,26 +140,6 @@ public abstract class GroovyRefactoringUtil {
       highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), 
                                          EditorColors.SEARCH_RESULT_ATTRIBUTES, false, highlighters);
     }
-  }
-
-  public static void trimSpacesAndComments(Editor editor, PsiFile file, boolean trimComments) {
-    int start = editor.getSelectionModel().getSelectionStart();
-    int end = editor.getSelectionModel().getSelectionEnd();
-    while (file.findElementAt(start) instanceof PsiWhiteSpace ||
-        (file.findElementAt(start) instanceof PsiComment && trimComments) ||
-        (file.findElementAt(start) != null &&
-            GroovyTokenTypes.mNLS.equals(file.findElementAt(start).getNode().getElementType()))) {
-      start++;
-    }
-    while (file.findElementAt(end - 1) instanceof PsiWhiteSpace ||
-        (file.findElementAt(end - 1) instanceof PsiComment && trimComments) ||
-        (file.findElementAt(end - 1) != null &&
-            (GroovyTokenTypes.mNLS.equals(file.findElementAt(end - 1).getNode().getElementType()) ||
-                GroovyTokenTypes.mSEMI.equals(file.findElementAt(end - 1).getNode().getElementType())))) {
-      end--;
-    }
-
-    editor.getSelectionModel().setSelection(start, end);
   }
 
   public static PsiElement @NotNull [] findStatementsInRange(PsiFile file, int startOffset, int endOffset, boolean strict) {
@@ -372,9 +348,6 @@ public abstract class GroovyRefactoringUtil {
     GrVariableDeclaration decl =
       factory.createVariableDeclaration(modifiers, (GrExpression)org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
         .skipParentheses(expr, false), expr.getType(), id);
-/*    if (declareFinal) {
-      com.intellij.psi.util.PsiUtil.setModifierProperty((decl.getMembers()[0]), PsiModifier.FINAL, true);
-    }*/
     final GrStatement statement = ((GrStatementOwner)anchorStatement.getParent()).addStatementBefore(decl, (GrStatement)anchorStatement);
     JavaCodeStyleManager.getInstance(statement.getProject()).shortenClassReferences(statement);
 

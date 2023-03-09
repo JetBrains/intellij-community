@@ -16,6 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -37,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class UnnecessaryUnboxingInspection extends BaseInspection {
 
@@ -67,11 +70,10 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
     return true;
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("unnecessary.unboxing.superfluous.option"),
-                                          this, "onlyReportSuperfluouslyUnboxed");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyReportSuperfluouslyUnboxed", InspectionGadgetsBundle.message("unnecessary.unboxing.superfluous.option")));
   }
 
   @Override
@@ -88,7 +90,7 @@ public class UnnecessaryUnboxingInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement grandParent = element.getParent().getParent();
       if (!(grandParent instanceof PsiMethodCallExpression)) {

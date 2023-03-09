@@ -76,7 +76,7 @@ public class ArrayEqualsInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor){
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor){
       final PsiIdentifier name = (PsiIdentifier)descriptor.getPsiElement();
       final PsiReferenceExpression expression = (PsiReferenceExpression)name.getParent();
       assert expression != null;

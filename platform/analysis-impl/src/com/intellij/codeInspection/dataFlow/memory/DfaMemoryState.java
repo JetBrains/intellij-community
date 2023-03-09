@@ -163,6 +163,13 @@ public interface DfaMemoryState {
   @NotNull DfType getDfType(@NotNull DfaValue value);
 
   /**
+   * @param value value to get the type of
+   * @return the DfType of the value within this memory state, including available information about derived variables, when possible
+   * @see com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor
+   */
+  @NotNull DfType getDfTypeIncludingDerived(@NotNull DfaValue value);
+
+  /**
    * Forget values of all unstable fields that could be
    * qualified by one of specified qualifiers (including possible aliases).
    */
@@ -193,7 +200,7 @@ public interface DfaMemoryState {
    *
    * @param filter filter to check whether the variable should be flushed
    */
-  void flushVariables(@NotNull Predicate<@NotNull DfaVariableValue> filter);
+  void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter);
 
   /**
    * Mark this state as ephemeral. See {@link #isEphemeral()} for details.

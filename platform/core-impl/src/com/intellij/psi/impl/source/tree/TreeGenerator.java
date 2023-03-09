@@ -30,5 +30,5 @@ public interface TreeGenerator {
   ExtensionPointName<TreeGenerator> EP_NAME = ExtensionPointName.create("com.intellij.treeGenerator");
   
   @Nullable
-  TreeElement generateTreeFor(@NotNull PsiElement original, @NotNull CharTable table, @NotNull final PsiManager manager);
+  TreeElement generateTreeFor(@NotNull PsiElement original, @NotNull CharTable table, @NotNull PsiManager manager);
 }

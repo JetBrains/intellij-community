@@ -16,7 +16,6 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ImageLoader
 import com.intellij.util.io.basicAttributesIfExists
-import com.intellij.util.io.exists
 import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.*
 import org.imgscalr.Scalr
@@ -26,6 +25,7 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
+import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.math.max
 
@@ -146,8 +146,8 @@ internal class RecentProjectIconHelper {
       return EmptyIcon.create(projectIconSize())
     }
 
-    return IconDeferrer.getInstance().deferAutoUpdatable(EmptyIcon.create(projectIconSize()), Pair(path, isProjectValid)) {
-      return@deferAutoUpdatable getCustomIcon(path = it.first, isProjectValid = it.second)
+    return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()), Pair(path, isProjectValid)) {
+      return@defer getCustomIcon(path = it.first, isProjectValid = it.second)
                                 ?: getGeneratedProjectIcon(path = it.first, isProjectValid = it.second)
     }
   }

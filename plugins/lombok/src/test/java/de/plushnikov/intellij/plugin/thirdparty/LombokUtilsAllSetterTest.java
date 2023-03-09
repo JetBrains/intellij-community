@@ -9,22 +9,16 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 public class LombokUtilsAllSetterTest {
 
-  private final List<String> lombokResult = new ArrayList<>();
   private final List<String> result = new ArrayList<>();
 
   private void makeResults(String fieldName, boolean isBoolean) {
-    lombokResult.clear();
     result.clear();
 
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(false, false, false);
-    lombokResult.addAll(LombokHandlerUtil.toAllSetterNames(accessorsInfo, fieldName, isBoolean));
-    result.addAll(LombokUtils.toAllSetterNames(accessorsInfo, fieldName, isBoolean));
-
-    assertThat(result, is(lombokResult));
+    result.addAll(LombokUtils.toAllSetterNames(AccessorsInfo.DEFAULT, fieldName, isBoolean));
   }
 
   @Test

@@ -326,11 +326,9 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
                                               "class My extends MyLoader {{ " +
                                               "  <caret>getClassLoadingLock(\"\"); " +
                                               "}}\n" +
-                                              "" +
                                               "class Standard extends ClassLoader {{ " +
                                               "  getClassLoadingLock(\"\"); " +
-                                              "}}" +
-                                              "");
+                                              "}}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
     myFixture.checkHighlighting();
 

@@ -16,7 +16,7 @@ import java.util.Comparator;
 
 public abstract class BackgroundUpdaterTask extends BackgroundUpdaterTaskBase<PsiElement> {
 
-  public BackgroundUpdaterTask(@Nullable Project project, @ProgressTitle @NotNull String title, @Nullable Comparator<PsiElement> comparator) {
+  public BackgroundUpdaterTask(@Nullable Project project, @ProgressTitle @NotNull String title, @Nullable Comparator<? super PsiElement> comparator) {
     super(project, title, comparator);
   }
 

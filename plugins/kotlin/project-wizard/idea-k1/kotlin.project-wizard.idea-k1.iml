@@ -12,5 +12,7 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" />
     <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.code-insight.api" />
+    <orderEntry type="module" module-name="kotlin.code-insight.impl-base" />
+    <orderEntry type="module" module-name="kotlin.migration" />
   </component>
 </module>

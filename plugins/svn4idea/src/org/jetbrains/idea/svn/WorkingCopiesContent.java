@@ -30,15 +30,13 @@ public final class WorkingCopiesContent implements ChangesViewContentProvider {
 
   public static void show(@NotNull Project project) {
     final ToolWindowManager manager = ToolWindowManager.getInstance(project);
-    if (manager != null) {
-      final ToolWindow window = manager.getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-      if (window != null) {
-        window.show(null);
-        final ContentManager cm = window.getContentManager();
-        final Content content = cm.findContent(getTabName());
-        if (content != null) {
-          cm.setSelectedContent(content, true);
-        }
+    final ToolWindow window = manager.getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+    if (window != null) {
+      window.show(null);
+      final ContentManager cm = window.getContentManager();
+      final Content content = cm.findContent(getTabName());
+      if (content != null) {
+        cm.setSelectedContent(content, true);
       }
     }
   }

@@ -25,7 +25,7 @@ import static de.plushnikov.intellij.plugin.util.LombokLibraryUtil.hasLombokLibr
  * @author Plushnikov Michail
  */
 public class LombokAugmentProvider extends PsiAugmentProvider {
-  private static class Holder {
+  private static final class Holder {
     static final Collection<ModifierProcessor> modifierProcessors = LombokProcessorManager.getLombokModifierProcessors();
   }
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader;
 
+import com.intellij.internal.statistic.config.StatisticsStringUtil;
 import com.intellij.internal.statistic.eventLog.EventLogSendConfig;
 import com.intellij.internal.statistic.eventLog.FilesToSendProvider;
 import com.intellij.internal.statistic.eventLog.MachineId;
@@ -9,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
-
-import static com.intellij.internal.statistic.config.StatisticsStringUtil.split;
 
 public class EventLogExternalSendConfig implements EventLogSendConfig {
   @NotNull
@@ -120,7 +119,7 @@ public class EventLogExternalSendConfig implements EventLogSendConfig {
       throw new ParseSendConfigurationException(ParseErrorType.NO_LOG_FILES);
     }
 
-    List<String> files = split(logs, File.pathSeparatorChar);
+    List<String> files = StatisticsStringUtil.split(logs, File.pathSeparatorChar);
     return new EventLogExternalSendConfig(recorderId, deviceOption, bucket, new MachineId(machineIdOption, idRevisionOption), files, true);
   }
 

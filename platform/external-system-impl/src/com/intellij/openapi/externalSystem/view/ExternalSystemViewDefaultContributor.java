@@ -250,7 +250,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       presentation.setIcon(AllIcons.Nodes.PpLibFolder);
       String description = myDependenciesGraph.getDescription();
       if (description != null) {
-        setNameAndTooltip(getName(), description, (String)null);
+        setNameAndTooltip(presentation, getName(), description, (String)null);
       }
     }
 
@@ -278,7 +278,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
       ExternalProjectsStructure.ErrorLevel result = ExternalProjectsStructure.ErrorLevel.NONE;
       for (DependencyNode dependencyNode : node.getDependencies()) {
         ExternalProjectsStructure.ErrorLevel eachLevel = getErrorLevelRecursively(dependencyNode);
-        if (result.compareTo(eachLevel) > 0) result = eachLevel;
+        if (result.compareTo(eachLevel) < 0) result = eachLevel;
         if (result == ExternalProjectsStructure.ErrorLevel.ERROR) break;
       }
       return result;
@@ -356,7 +356,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
           tooltip = null;
         }
       }
-      setNameAndTooltip(getName(), tooltip, (String)null);
+      setNameAndTooltip(presentation, getName(), tooltip, (String)null);
     }
 
     @NotNull
@@ -512,7 +512,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
 
       final ModuleDependencyData data = getData();
       if (data != null) {
-        setNameAndTooltip(getName(), null, data.getScope().getDisplayName());
+        setNameAndTooltip(presentation, getName(), null, data.getScope().getDisplayName());
       }
     }
 
@@ -541,7 +541,7 @@ final class ExternalSystemViewDefaultContributor extends ExternalSystemViewContr
 
       final LibraryDependencyData data = getData();
       if (data != null) {
-        setNameAndTooltip(getName(), null, data.getScope().getDisplayName());
+        setNameAndTooltip(presentation, getName(), null, data.getScope().getDisplayName());
       }
     }
   }

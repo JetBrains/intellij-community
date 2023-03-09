@@ -20,10 +20,10 @@ import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.Location;
 import com.sun.jdi.StackFrame;
 
-public interface StackFrameProxy extends ObjectReferenceProxy{
+public interface StackFrameProxy extends ObjectReferenceProxy {
   StackFrame getStackFrame() throws EvaluateException;
 
-  int getFrameIndex() throws EvaluateException ;
+  int getFrameIndex() throws EvaluateException;
 
   VirtualMachineProxy getVirtualMachine();
 

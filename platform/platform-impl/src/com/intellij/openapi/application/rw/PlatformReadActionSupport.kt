@@ -20,8 +20,13 @@ internal class PlatformReadActionSupport : ReadActionSupport {
     return CommittedDocumentsConstraint(project)
   }
 
-  override suspend fun <X> executeReadAction(constraints: List<ReadConstraint>, blocking: Boolean, action: () -> X): X {
-    return InternalReadAction(constraints, blocking, action).runReadAction()
+  override suspend fun <X> executeReadAction(
+    constraints: List<ReadConstraint>,
+    undispatched: Boolean,
+    blocking: Boolean,
+    action: () -> X,
+  ): X {
+    return InternalReadAction(constraints, undispatched, blocking, action).runReadAction()
   }
 
   override fun <X, E : Throwable> computeCancellable(action: ThrowableComputable<X, E>): X {

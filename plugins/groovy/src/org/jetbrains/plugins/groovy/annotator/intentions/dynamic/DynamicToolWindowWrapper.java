@@ -258,15 +258,14 @@ public final class DynamicToolWindowWrapper {
 
         String newTypeValue = ((MyPropertyTypeCellEditor)e.getSource()).getCellEditorValue();
 
-        if (newTypeValue == null || tree == null) {
+        if (tree == null) {
           myTreeTable.editingStopped(e);
           return;
         }
 
         try {
           final PsiType type = JavaPsiFacade.getElementFactory(myProject).createTypeFromText(newTypeValue, null);
-          String canonical = type.getCanonicalText();
-          if (canonical != null) newTypeValue = canonical;
+          newTypeValue = type.getCanonicalText();
         }
         catch (IncorrectOperationException ex) {
           //do nothing in case bad string is entered

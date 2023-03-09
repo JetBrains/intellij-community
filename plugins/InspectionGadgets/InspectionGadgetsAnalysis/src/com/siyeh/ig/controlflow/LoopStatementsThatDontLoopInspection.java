@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -23,9 +23,9 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class LoopStatementsThatDontLoopInspection extends BaseInspection {
 
@@ -44,10 +44,10 @@ public class LoopStatementsThatDontLoopInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("loop.statements.that.dont.loop.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.enhanced.for.loop.statements"), this, "ignoreForeach");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreForeach", InspectionGadgetsBundle.message("ignore.enhanced.for.loop.statements")));
   }
 
   @Override

@@ -9,22 +9,45 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.impl.ConnectionId
+import com.intellij.workspaceModel.storage.impl.EntityLink
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
+import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
+import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
+import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
+import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
+import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
+import org.jetbrains.deft.annotations.Child
 
 @GeneratedCodeApiVersion(1)
 @GeneratedCodeImplVersion(1)
 open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData) : ProjectModelTestEntity, WorkspaceEntityBase() {
 
   companion object {
-
+    internal val PARENTENTITY_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
+                                                                                ProjectModelTestEntity::class.java,
+                                                                                ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val CHILDRENENTITIES_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
+                                                                                    ProjectModelTestEntity::class.java,
+                                                                                    ConnectionId.ConnectionType.ONE_TO_MANY, true)
+    internal val CONTENTROOT_CONNECTION_ID: ConnectionId = ConnectionId.create(ProjectModelTestEntity::class.java,
+                                                                               ContentRootEntity::class.java,
+                                                                               ConnectionId.ConnectionType.ONE_TO_ONE, true)
 
     val connections = listOf<ConnectionId>(
+      PARENTENTITY_CONNECTION_ID,
+      CHILDRENENTITIES_CONNECTION_ID,
+      CONTENTROOT_CONNECTION_ID,
     )
 
   }
@@ -34,6 +57,15 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
 
   override val descriptor: Descriptor
     get() = dataSource.descriptor
+
+  override val parentEntity: ProjectModelTestEntity?
+    get() = snapshot.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this)
+
+  override val childrenEntities: List<ProjectModelTestEntity>
+    get() = snapshot.extractOneToManyChildren<ProjectModelTestEntity>(CHILDRENENTITIES_CONNECTION_ID, this)!!.toList()
+
+  override val contentRoot: ContentRootEntity?
+    get() = snapshot.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this)
 
   override val entitySource: EntitySource
     get() = dataSource.entitySource
@@ -81,6 +113,17 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
       if (!getEntityData().isDescriptorInitialized()) {
         error("Field ProjectModelTestEntity#descriptor should be initialized")
       }
+      // Check initialization for list with ref type
+      if (_diff != null) {
+        if (_diff.extractOneToManyChildren<WorkspaceEntityBase>(CHILDRENENTITIES_CONNECTION_ID, this) == null) {
+          error("Field ProjectModelTestEntity#childrenEntities should be initialized")
+        }
+      }
+      else {
+        if (this.entityLinks[EntityLink(true, CHILDRENENTITIES_CONNECTION_ID)] == null) {
+          error("Field ProjectModelTestEntity#childrenEntities should be initialized")
+        }
+      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -93,8 +136,7 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.info != dataSource.info) this.info = dataSource.info
       if (this.descriptor != dataSource.descriptor) this.descriptor = dataSource.descriptor
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -122,6 +164,127 @@ open class ProjectModelTestEntityImpl(val dataSource: ProjectModelTestEntityData
         getEntityData(true).descriptor = value
         changedProperty.add("descriptor")
 
+      }
+
+    override var parentEntity: ProjectModelTestEntity?
+      get() {
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToManyParent(PARENTENTITY_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(false,
+                                                                                                        PARENTENTITY_CONNECTION_ID)] as? ProjectModelTestEntity
+        }
+        else {
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] as? ProjectModelTestEntity
+        }
+      }
+      set(value) {
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          // Setting backref of the list
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+          _diff.addEntity(value)
+        }
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
+          _diff.updateOneToManyParentOfChild(PARENTENTITY_CONNECTION_ID, this, value)
+        }
+        else {
+          // Setting backref of the list
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            val data = (value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] as? List<Any> ?: emptyList()) + this
+            value.entityLinks[EntityLink(true, PARENTENTITY_CONNECTION_ID)] = data
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+
+          this.entityLinks[EntityLink(false, PARENTENTITY_CONNECTION_ID)] = value
+        }
+        changedProperty.add("parentEntity")
+      }
+
+    // List of non-abstract referenced types
+    var _childrenEntities: List<ProjectModelTestEntity>? = emptyList()
+    override var childrenEntities: List<ProjectModelTestEntity>
+      get() {
+        // Getter of the list of non-abstract referenced types
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToManyChildren<ProjectModelTestEntity>(CHILDRENENTITIES_CONNECTION_ID,
+                                                                 this)!!.toList() + (this.entityLinks[EntityLink(true,
+                                                                                                                 CHILDRENENTITIES_CONNECTION_ID)] as? List<ProjectModelTestEntity>
+                                                                                     ?: emptyList())
+        }
+        else {
+          this.entityLinks[EntityLink(true, CHILDRENENTITIES_CONNECTION_ID)] as? List<ProjectModelTestEntity> ?: emptyList()
+        }
+      }
+      set(value) {
+        // Setter of the list of non-abstract referenced types
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null) {
+          for (item_value in value) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *> && (item_value as? ModifiableWorkspaceEntityBase<*, *>)?.diff == null) {
+              // Backref setup before adding to store
+              if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
+                item_value.entityLinks[EntityLink(false, CHILDRENENTITIES_CONNECTION_ID)] = this
+              }
+              // else you're attaching a new entity to an existing entity that is not modifiable
+
+              _diff.addEntity(item_value)
+            }
+          }
+          _diff.updateOneToManyChildrenOfParent(CHILDRENENTITIES_CONNECTION_ID, this, value)
+        }
+        else {
+          for (item_value in value) {
+            if (item_value is ModifiableWorkspaceEntityBase<*, *>) {
+              item_value.entityLinks[EntityLink(false, CHILDRENENTITIES_CONNECTION_ID)] = this
+            }
+            // else you're attaching a new entity to an existing entity that is not modifiable
+          }
+
+          this.entityLinks[EntityLink(true, CHILDRENENTITIES_CONNECTION_ID)] = value
+        }
+        changedProperty.add("childrenEntities")
+      }
+
+    override var contentRoot: ContentRootEntity?
+      get() {
+        val _diff = diff
+        return if (_diff != null) {
+          _diff.extractOneToOneChild(CONTENTROOT_CONNECTION_ID, this) ?: this.entityLinks[EntityLink(true,
+                                                                                                     CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity
+        }
+        else {
+          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] as? ContentRootEntity
+        }
+      }
+      set(value) {
+        checkModificationAllowed()
+        val _diff = diff
+        if (_diff != null && value is ModifiableWorkspaceEntityBase<*, *> && value.diff == null) {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+          _diff.addEntity(value)
+        }
+        if (_diff != null && (value !is ModifiableWorkspaceEntityBase<*, *> || value.diff != null)) {
+          _diff.updateOneToOneChildOfParent(CONTENTROOT_CONNECTION_ID, this, value)
+        }
+        else {
+          if (value is ModifiableWorkspaceEntityBase<*, *>) {
+            value.entityLinks[EntityLink(false, CONTENTROOT_CONNECTION_ID)] = this
+          }
+          // else you're attaching a new entity to an existing entity that is not modifiable
+
+          this.entityLinks[EntityLink(true, CONTENTROOT_CONNECTION_ID)] = value
+        }
+        changedProperty.add("contentRoot")
       }
 
     override fun getEntityClass(): Class<ProjectModelTestEntity> = ProjectModelTestEntity::class.java
@@ -164,6 +327,7 @@ class ProjectModelTestEntityData : WorkspaceEntityData<ProjectModelTestEntity>()
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
     return ProjectModelTestEntity(info, descriptor, entitySource) {
+      this.parentEntity = parents.filterIsInstance<ProjectModelTestEntity>().singleOrNull()
     }
   }
 

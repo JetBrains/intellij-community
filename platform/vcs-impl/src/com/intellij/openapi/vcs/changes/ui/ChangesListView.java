@@ -6,6 +6,7 @@ import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -42,7 +43,9 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
-public class ChangesListView extends HoverChangesTree implements DataProvider, DnDAware {
+public abstract class ChangesListView extends HoverChangesTree implements DataProvider, DnDAware {
+  private static final Logger LOG = Logger.getInstance(ChangesListView.class);
+
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<ChangesListView> DATA_KEY
     = DataKey.create("ChangeListView");
@@ -63,12 +66,6 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       setDragEnabled(true);
     }
-  }
-
-  @NotNull
-  @Override
-  protected ChangesGroupingSupport installGroupingSupport() {
-    return new ChangesGroupingSupport(myProject, this, false);
   }
 
   @Override
@@ -110,6 +107,7 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
   @Override
   public void rebuildTree() {
     // currently not used in ChangesListView code flow
+    LOG.warn("rebuildTree() not implemented in " + this, new Throwable());
   }
 
   private void initTreeStateIfNeeded(ChangesBrowserNode<?> oldRoot, ChangesBrowserNode<?> newRoot) {

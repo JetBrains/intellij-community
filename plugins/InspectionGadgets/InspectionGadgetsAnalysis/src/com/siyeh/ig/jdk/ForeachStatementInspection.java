@@ -54,7 +54,7 @@ public class ForeachStatementInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiForeachStatement statement = (PsiForeachStatement)element.getParent();
       assert statement != null;

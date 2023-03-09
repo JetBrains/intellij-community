@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.core.resolveCandidates
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.ShadowedDeclarationsFilter
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.NULLABILITY_ANNOTATIONS
@@ -537,7 +536,7 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
         if (currentParameter == null) {
             if (currentArgumentIndex < arguments.lastIndex) {
                 // the current argument is not the last one and it is not mapped to any of the parameters
-                return SignatureInfo(resultingDescriptor, ::argumentToParameter, highlightParameterIndex, isGrey = true)
+                return SignatureInfo(resultingDescriptor, ::argumentToParameter, highlightParameterIndex = null, isGrey = true)
             }
 
             val usedParameters = argumentsBeforeCurrent.mapNotNull { argumentToParameter(it) }.toSet()
@@ -552,11 +551,11 @@ abstract class KotlinParameterInfoWithCallHandlerBase<TArgumentList : KtElement,
                 val supportsTrailingCommas = call.callElement.languageVersionSettings.supportsFeature(LanguageFeature.TrailingCommas)
                 if (!supportsTrailingCommas && noUnusedParametersLeft) {
                     // current argument is empty but there are no unused parameters left and trailing commas are not supported
-                    return SignatureInfo(resultingDescriptor, ::argumentToParameter, highlightParameterIndex, isGrey = true)
+                    return SignatureInfo(resultingDescriptor, ::argumentToParameter, highlightParameterIndex = null, isGrey = true)
                 }
             } else if (noUnusedParametersLeft) {
                 // there are no unused parameters left to which this argument could be matched
-                return SignatureInfo(resultingDescriptor, ::argumentToParameter, highlightParameterIndex, isGrey = true)
+                return SignatureInfo(resultingDescriptor, ::argumentToParameter, highlightParameterIndex = null, isGrey = true)
             }
         }
 

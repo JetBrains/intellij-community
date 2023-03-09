@@ -16,6 +16,7 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class ThrowFromFinallyBlockInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField")
@@ -41,11 +44,10 @@ public class ThrowFromFinallyBlockInspection extends BaseInspection {
     return true;
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("throw,from.finally.block.everywhere.option"),
-                                          this, "warnOnAllExceptions");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("warnOnAllExceptions", InspectionGadgetsBundle.message("throw,from.finally.block.everywhere.option")));
   }
 
   @Override

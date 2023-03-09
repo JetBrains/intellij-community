@@ -50,7 +50,7 @@ public class SingleElementAnnotationInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiNameValuePair annotationParameter = (PsiNameValuePair)descriptor.getPsiElement();
       final String text = buildReplacementText(annotationParameter);
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(annotationParameter.getProject());

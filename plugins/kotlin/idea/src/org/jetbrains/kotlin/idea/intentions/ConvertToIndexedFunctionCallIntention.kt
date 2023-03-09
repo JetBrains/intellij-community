@@ -40,7 +40,7 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
         val functionName = element.calleeExpression?.text ?: return
         val (_, newFunctionName) = functions[functionName] ?: return
         val functionLiteral = element.singleLambdaArgumentExpression()?.functionLiteral ?: return
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         val context = element.analyze(BodyResolveMode.PARTIAL)
 
         functionLiteral

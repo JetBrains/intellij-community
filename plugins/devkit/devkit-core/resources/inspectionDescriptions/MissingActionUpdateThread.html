@@ -1,20 +1,20 @@
 <html>
 <body>
-Reports actions, action groups and other <code>ActionUpdateThreadAware<code>
+Reports actions, action groups and other <code>ActionUpdateThreadAware</code> classes
   that implicitly state the deprecated and costly <code>ActionUpdateThread.OLD_EDT</code> mode.
 
 <p>
-  When an action or an action group defines its own <code>update</code> method, IntelliJ Platform tries to mimic
-  the old synchronous way of calling <code>update</code> and <code>getChildren</code> methods in the UI thread and
-  supply it with all the data in <code>AnActionEvent.dataContext</code>.
-  To do that, it caches all the possible data on a background thread beforehand even if it is not needed.
+  When an action or an action group defines its own <code>update()</code> method, IntelliJ Platform tries to mimic
+  the old synchronous way of calling <code>update()</code> and <code>getChildren()</code> methods in the UI thread and
+  supply it with all the data in <code>AnActionEvent.dataContext()</code>.
+  To do that, it caches all the possible data on a background thread beforehand, even if it is not needed.
 </p>
 <p>
   Provide one of the two new modes <code>ActionUpdateThread.EDT</code> or <code>ActionUpdateThread.BGT</code>
-  by overriding the <code>getActionUpdateThread</code> method.
+  by overriding the <code>getActionUpdateThread()</code> method.
 </p>
 <p>
-  See <code>ActionUpdateThread</code> documentation for more information.
+  See the documentation of <code>ActionUpdateThread</code> for more information.
 </p>
 <!-- tooltip end -->
 </body>

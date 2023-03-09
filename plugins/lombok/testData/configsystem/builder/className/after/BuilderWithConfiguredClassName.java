@@ -1,5 +1,3 @@
-package before.builder.ClassName;
-
 import lombok.Builder;
 
 public class BuilderWithConfiguredClassName {
@@ -29,7 +27,7 @@ public class BuilderWithConfiguredClassName {
 
     @java.lang.SuppressWarnings("all")
     public BuilderWithConfiguredClassName build() {
-      return new BuilderWithConfiguredClassName(field);
+      return new BuilderWithConfiguredClassName(this.field);
     }
 
     @java.lang.Override
@@ -42,6 +40,6 @@ public class BuilderWithConfiguredClassName {
 
   @java.lang.SuppressWarnings("all")
   public static Builder builder() {
-    return new Builder();
+    return new BuilderWithConfiguredClassName.Builder();
   }
 }

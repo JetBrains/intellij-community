@@ -157,7 +157,7 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
   }
 
   private inner class RemoveAction : DumbAwareAction(PyBundle.messagePointer("python.interpreters.remove.interpreter.action.text"),
-                                                     IconUtil.getRemoveIcon()) {
+                                                     IconUtil.removeIcon) {
     init {
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree)
     }
@@ -179,7 +179,7 @@ internal class PythonInterpreterMasterDetails(private val project: Project,
   }
 
   private inner class RenameAction : DumbAwareAction(PyBundle.messagePointer("python.interpreters.rename.interpreter.action.text"),
-                                                     IconUtil.getEditIcon()) {
+                                                     IconUtil.editIcon) {
     init {
       registerCustomShortcutSet(CommonShortcuts.getRename(), myTree)
     }

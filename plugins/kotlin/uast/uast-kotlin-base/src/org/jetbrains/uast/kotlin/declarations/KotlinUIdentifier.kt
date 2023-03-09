@@ -57,12 +57,18 @@ class KotlinUIdentifier(
         if (parentParent is KtCallElement && parentParent.calleeExpression == parent) { // method identifiers in calls
             return parentParent.toUElement()
         }
-        (generateSequence(parent) { it.parent }.take(3).find { it is KtTypeReference && it.parent is KtConstructorCalleeExpression })?.let {
-            val parent2 = it.parent.parent
-            return parent2.parent.parent.parent.safeAs<KtObjectLiteralExpression>()?.toUElement()
-                .safeAs<KotlinUObjectLiteralExpression>()?.constructorCall ?: parent2.toUElement()
-        }
-        return null
+        return generateSequence(parent) { it.parent }.take(3)
+            .mapNotNull { it.safeAs<KtTypeReference>()?.parent?.safeAs<KtConstructorCalleeExpression>() }
+            .mapNotNull {
+                val entry = it.parent as? KtSuperTypeCallEntry
+                if (entry != null)
+                    entry.parent.safeAs<KtSuperTypeList>()?.parent?.safeAs<KtObjectDeclaration>()?.parent?.safeAs<KtObjectLiteralExpression>()
+                        ?.toUElement().safeAs<KotlinUObjectLiteralExpression>()?.constructorCall
+                        ?: entry.toUElement()
+                else
+                    it.parent.safeAs<KtAnnotationEntry>()?.toUElement()
+            }
+            .firstOrNull()
     }
 
     constructor(javaPsi: PsiElement?, sourcePsi: PsiElement?, uastParent: UElement?) : this({ javaPsi }, sourcePsi, uastParent)

@@ -5,7 +5,7 @@ fun basicMath(x: Int, y: Int) {
         if (<warning descr="Condition 'x - y == 10' is always true">x - y == 10</warning>) {}
         if (<warning descr="Condition 'x * y == 24' is always true">x * y == 24</warning>) {}
         if (<warning descr="Condition 'x / y == 6' is always true">x / y == 6</warning>) {}
-        if (<warning descr="Condition 'x % y == 0' is always true"><warning descr="Value of 'x % y' is always zero">x % y</warning> == 0</warning>) {}
+        if (<warning descr="Condition 'x % y == 0' is always true">x % y == 0</warning>) {}
         if (<warning descr="Condition 'x shl y == 48' is always true">x shl y == 48</warning>) {}
         if (<warning descr="Condition 'x shr y == 3' is always true">x shr y == 3</warning>) {}
         if (<warning descr="Condition 'x ushr y == 3' is always true">x ushr y == 3</warning>) {}

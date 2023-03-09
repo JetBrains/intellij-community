@@ -297,7 +297,7 @@ class QuickFixRegistrar : QuickFixContributor {
         ELSE_MISPLACED_IN_WHEN.registerFactory(MoveWhenElseBranchFix)
         REDUNDANT_ELSE_IN_WHEN.registerFactory(RemoveWhenBranchFix)
         SENSELESS_NULL_IN_WHEN.registerFactory(RemoveWhenBranchFix, RemoveWhenConditionFix)
-        BREAK_OR_CONTINUE_IN_WHEN.registerFactory(AddLoopLabelFix)
+        BREAK_OR_CONTINUE_IN_WHEN.registerFactory(AddLoopLabelFixFactory)
         NO_ELSE_IN_WHEN.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
         NO_ELSE_IN_WHEN_WARNING.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
         NON_EXHAUSTIVE_WHEN.registerFactory(AddWhenElseBranchFix, AddWhenRemainingBranchesFix)
@@ -320,6 +320,9 @@ class QuickFixRegistrar : QuickFixContributor {
         CANNOT_CHECK_FOR_ERASED.registerFactory(ChangeToStarProjectionFix)
 
         CANNOT_CHECK_FOR_ERASED.registerFactory(ConvertToIsArrayOfCallFix)
+
+        UNINITIALIZED_PARAMETER.registerFactory(ReorderParametersFix)
+        UNINITIALIZED_PARAMETER_WARNING.registerFactory(ReorderParametersFix)
 
         INACCESSIBLE_OUTER_CLASS_EXPRESSION.registerFactory(AddModifierFixFE10.createFactory(INNER_KEYWORD, KtClass::class.java))
 
@@ -675,7 +678,7 @@ class QuickFixRegistrar : QuickFixContributor {
         DEFAULT_VALUE_NOT_ALLOWED_IN_OVERRIDE.registerFactory(RemoveDefaultParameterValueFix)
         ACTUAL_FUNCTION_WITH_DEFAULT_ARGUMENTS.registerFactory(RemoveDefaultParameterValueFix)
 
-        RESOLUTION_TO_CLASSIFIER.registerFactory(ConvertToAnonymousObjectFix)
+        RESOLUTION_TO_CLASSIFIER.registerFactory(ConvertToAnonymousObjectFix, AddFunModifierFix)
 
         NOTHING_TO_INLINE.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
 

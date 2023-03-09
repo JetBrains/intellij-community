@@ -1,5 +1,3 @@
-package before.builder.ClassName;
-
 import lombok.Builder;
 
 @Builder

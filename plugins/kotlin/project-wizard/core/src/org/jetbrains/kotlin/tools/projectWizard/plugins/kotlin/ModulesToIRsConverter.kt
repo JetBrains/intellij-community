@@ -80,7 +80,7 @@ class ModulesToIRsConverter(
         val initialState = ModulesToIrsState(projectPath, parentModuleHasTransitivelySpecifiedKotlinVersion = false)
 
         val parentModuleHasKotlinVersion = allModules.any { module ->
-            module.configurator == AndroidSinglePlatformModuleConfigurator ||
+            module.configurator is AndroidSinglePlatformModuleConfiguratorBase ||
             module.configurator is MppModuleConfigurator && module.subModules.any { subModule ->
                         subModule.configurator is AndroidTargetConfiguratorBase &&
                         subModule.dependencies.filterIsInstance<ModuleReference.ByModule>().any { moduleRef ->

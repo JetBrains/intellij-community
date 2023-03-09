@@ -35,6 +35,9 @@ interface FinalFieldsEntity : WorkspaceEntity {
   }
 
   companion object : Type<FinalFieldsEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(descriptor: AnotherDataClass, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): FinalFieldsEntity {
       val builder = builder()
       builder.descriptor = descriptor

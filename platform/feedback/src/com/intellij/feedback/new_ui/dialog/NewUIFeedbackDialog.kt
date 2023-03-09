@@ -2,6 +2,7 @@
 package com.intellij.feedback.new_ui.dialog
 
 import com.intellij.feedback.common.*
+import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.common.dialog.adjustBehaviourForFeedbackForm
@@ -33,7 +34,6 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.put
 import java.awt.event.ActionEvent
-import java.text.SimpleDateFormat
 import java.util.function.Predicate
 import javax.swing.Action
 import javax.swing.Action.NAME
@@ -211,9 +211,9 @@ class NewUIFeedbackDialog(
       }
 
       row {
-        cell(createFeedbackAgreementComponent(project) {
+        feedbackAgreement(project, CommonFeedbackBundle.message("dialog.feedback.consent.withEmail")) {
           showNewUIFeedbackSystemInfoDialog(project, newUISystemInfoData.value)
-        })
+        }
       }.bottomGap(BottomGap.SMALL)
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))

@@ -15,6 +15,10 @@ class ScriptTreeBuilder : AbstractScriptElementBuilder() {
 
   fun join(builder: ScriptTreeBuilder) = builder.generate().also(::addElements)
 
+  fun addElement(statement: Statement) = apply {
+    roots.add(statement)
+  }
+
   fun addElements(block: BlockElement) = addElements(block) { true }
   fun addElements(builder: ScriptTreeBuilder) = addElements(builder.generate())
   fun addElements(configure: ScriptTreeBuilder.() -> Unit) = addElements(ScriptTreeBuilder(configure))
@@ -24,7 +28,11 @@ class ScriptTreeBuilder : AbstractScriptElementBuilder() {
   fun addNonExistedElements(configure: ScriptTreeBuilder.() -> Unit) = addNonExistedElements(ScriptTreeBuilder(configure))
 
   fun addElements(block: BlockElement, filter: (ScriptElement) -> Boolean) = apply {
-    block.statements.filterTo(roots, filter)
+    for (statement in block.statements) {
+      if (filter(statement)) {
+        addElement(statement)
+      }
+    }
   }
 
   private fun <E : ScriptElement> process(vararg children: ScriptElement, element: () -> E) = process(children.toList(), element)
@@ -43,7 +51,7 @@ class ScriptTreeBuilder : AbstractScriptElementBuilder() {
   override fun string(value: String) = process { super.string(value) }
   override fun list(elements: List<Expression>) = process(elements) { super.list(elements) }
   override fun code(text: List<String>) = process { super.code(text) }
-  override fun assign(name: String, value: Expression) = process(value) { super.assign(name, value) }
+  override fun assign(left: Expression, right: Expression) = process(left, right) { super.assign(left, right) }
   override fun plusAssign(name: String, value: Expression) = process(value) { super.plusAssign(name, value) }
   override fun property(name: String, value: Expression) = process(value) { super.property(name, value) }
   override fun call(name: Expression, arguments: List<ArgumentElement>) = process(arguments + name) { super.call(name, arguments) }
@@ -71,5 +79,11 @@ class ScriptTreeBuilder : AbstractScriptElementBuilder() {
 
     fun script(builder: ScriptBuilder, configure: ScriptTreeBuilder.() -> Unit) =
       builder.generate(tree(configure))
+
+    fun script(useKotlinDsl: Boolean = false, configure: ScriptTreeBuilder.() -> Unit) =
+      when (useKotlinDsl) {
+        true -> script(KotlinScriptBuilder(), configure)
+        else -> script(GroovyScriptBuilder(), configure)
+      }
   }
 }

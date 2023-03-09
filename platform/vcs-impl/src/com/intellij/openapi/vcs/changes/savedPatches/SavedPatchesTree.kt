@@ -79,9 +79,7 @@ class SavedPatchesTree(project: Project,
   }
 
   override fun installGroupingSupport(): ChangesGroupingSupport {
-    return object : ChangesGroupingSupport(myProject, this, false) {
-      override fun isAvailable(groupingKey: String): Boolean = false
-    }
+    return ChangesGroupingSupport.Disabled(myProject, this)
   }
 
   override fun getData(dataId: String): Any? {

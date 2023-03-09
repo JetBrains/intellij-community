@@ -61,7 +61,7 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection implements 
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final TextRange range = descriptor.getTextRangeInElement();
       PsiElement element = descriptor.getPsiElement();
       PsiFile file = descriptor.getPsiElement().getContainingFile();

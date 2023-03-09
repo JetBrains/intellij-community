@@ -1,3 +1,5 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
 fun foo(paramFirst: Int, paramSecond: Int) = 12
 fun foo(paramThird: String, paramFourth: String) = 1
 

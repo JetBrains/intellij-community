@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.core.fileIndex
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Provides access to the information collected from [WorkspaceFileIndexContributor]s.
@@ -15,6 +16,32 @@ interface WorkspaceFileIndex {
     @JvmStatic
     fun getInstance(project: Project): WorkspaceFileIndex = project.service()
   }
+
+  /**
+   * Returns `true` if [file] is included to the workspace. 
+   * I.e., it's located under a registered file set of any [kind][WorkspaceFileKind], and isn't excluded or ignored.
+   * Currently, this function is equivalent to [com.intellij.openapi.roots.ProjectFileIndex.isInProject].
+   */
+  @RequiresReadLock
+  fun isInWorkspace(file: VirtualFile): Boolean
+
+  /**
+   * Returns `true` if [file] is included to the workspace with [content][WorkspaceFileKind.CONTENT] kind assigned to it.
+   * Currently, this function is equivalent to [com.intellij.openapi.roots.ProjectFileIndex.isInContent].
+   */
+  @RequiresReadLock
+  fun isInContent(file: VirtualFile): Boolean
+
+  /**
+   * Return the root file of a file set of [content][WorkspaceFileKind.CONTENT] kind containing [file]. 
+   * If [file] doesn't belong to such a file set, `null` is returned.
+   * 
+   * This function is similar to [com.intellij.openapi.roots.ProjectFileIndex.getContentRootForFile], but it processes custom file sets as 
+   * well, not only content roots of the project's modules.
+   * @param honorExclusion determines whether exclusions should be taken into account when searching for the file set.
+   */
+  @RequiresReadLock
+  fun getContentFileSetRoot(file: VirtualFile, honorExclusion: Boolean): VirtualFile?
 
   /**
    * Searches for the first parent of [file] (or [file] itself) which has an associated [WorkspaceFileSet] taking into account the passed

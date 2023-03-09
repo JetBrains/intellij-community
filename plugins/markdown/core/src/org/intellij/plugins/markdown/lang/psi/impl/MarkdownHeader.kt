@@ -143,15 +143,16 @@ class MarkdownHeader: MarkdownHeaderImpl {
 
   private fun buildRawAnchorText(includeStartingHash: Boolean = false): String? {
     val contentHolder = findContentHolder() ?: return null
-    val children = contentHolder.children().filter { !it.hasType(MarkdownTokenTypeSets.WHITE_SPACES) }
+    val children = contentHolder.children().dropWhile { it.hasType(MarkdownTokenTypeSets.WHITE_SPACES) }
     val text = buildString {
       if (includeStartingHash) {
         append("#")
       }
       var count = 0
       for (child in children) {
-        if (count >= 1) {
+        if (child.hasType(MarkdownTokenTypeSets.WHITE_SPACES)) {
           append(" ")
+          continue
         }
         when (child) {
           is MarkdownImage -> append("")

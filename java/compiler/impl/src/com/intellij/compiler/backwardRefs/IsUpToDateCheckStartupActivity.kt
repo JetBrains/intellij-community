@@ -7,7 +7,7 @@ import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectPostStartupActivity
@@ -51,7 +51,7 @@ internal class IsUpToDateCheckStartupActivity : ProjectPostStartupActivity {
 
   @Suppress("DuplicatedCode")
   suspend fun nonBlockingIsUpToDate(project: Project): Boolean {
-    return runUnderIndicator {
+    return coroutineToIndicator {
       val manager = CompilerManager.getInstance(project)
       manager.isUpToDate(manager.createProjectCompileScope(project), ProgressManager.getInstance().progressIndicator)
     }

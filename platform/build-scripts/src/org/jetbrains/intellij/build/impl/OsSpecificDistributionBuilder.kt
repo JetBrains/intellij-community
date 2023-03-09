@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.diagnostic.telemetry.useWithScope
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.io.PosixFilePermissionsUtil
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -43,7 +44,14 @@ interface OsSpecificDistributionBuilder {
           else -> checkZip(distribution, root, patterns)
         }
         if (entries.isNotEmpty()) {
-          context.messages.error("Missing executable permissions in $distribution for:\n" + entries.joinToString(separator = "\n"))
+          val message = "Missing executable permissions in $distribution for:\n" + entries.joinToString(separator = "\n")
+          if (SystemInfoRt.isWindows) {
+            // IJI-971 workaround
+            context.messages.warning(message)
+          }
+          else {
+            context.messages.error(message)
+          }
         }
       }
       catch (e: MissingFilesException) {

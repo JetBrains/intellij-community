@@ -1,5 +1,6 @@
 from collections.abc import Iterable, Iterator, Sequence
-from typing import Any, Pattern
+from re import Pattern
+from typing import Any
 
 from pyflakes.reporter import Reporter
 

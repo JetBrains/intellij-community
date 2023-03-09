@@ -13,7 +13,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
@@ -86,7 +86,7 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
       for (account in accountsModel.accounts) {
         newTokensMap.putIfAbsent(account, null)
       }
-      runBlockingModal(ModalTaskOwner.component(component), CollaborationToolsBundle.message("accounts.saving.credentials")) {
+      runBlockingModalWithRawProgressReporter(ModalTaskOwner.component(component), CollaborationToolsBundle.message("accounts.saving.credentials")) {
         accountManager.updateAccounts(newTokensMap)
       }
       accountsModel.clearNewCredentials()

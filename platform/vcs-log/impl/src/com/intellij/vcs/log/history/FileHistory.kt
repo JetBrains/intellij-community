@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
@@ -367,7 +367,8 @@ abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
     affectedCommits.forEach { (_, commitsMap) -> commitsMap.removeAll(commits) }
   }
 
-  abstract fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): EdgeData<FilePath>?
+  internal abstract fun findRename(parent: Int, child: Int, path: FilePath, isChildPath: Boolean): EdgeData<FilePath>?
+
   abstract fun getAffectedCommits(path: FilePath): Int2ObjectMap<Int2ObjectMap<ChangeKind>>
 }
 
@@ -485,7 +486,7 @@ internal fun forEach(map: Map<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>
 }
 
 internal fun Int2ObjectMap<*>.removeAll(keys: List<Int>) {
-  keys.forEach { this.remove(it) }
+  keys.forEach(this::remove)
 }
 
 private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
@@ -497,6 +498,6 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
 }
 
 @JvmField
-val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
+internal val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 
-data class EdgeData<T>(val parent: T, val child: T)
+internal data class EdgeData<T>(@JvmField val parent: T, @JvmField val child: T)

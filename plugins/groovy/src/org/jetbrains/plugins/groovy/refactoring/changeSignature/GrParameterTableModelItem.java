@@ -34,7 +34,7 @@ public class GrParameterTableModelItem extends ParameterTableModelItemBase<GrPar
     PsiTypeCodeFragment typeCodeFragment =
       JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment(parameterInfo.getTypeText(), context, true, JavaCodeFragmentFactory.ALLOW_ELLIPSIS);
     String initializer = parameterInfo.getDefaultInitializer();
-    GroovyCodeFragment initializerCodeFragment = new GroovyCodeFragment(project, initializer != null ? initializer : "");
+    GroovyCodeFragment initializerCodeFragment = new GroovyCodeFragment(project, initializer);
     GroovyCodeFragment defaultValueCodeFragment = new GroovyCodeFragment(project, parameterInfo.getDefaultValue());
     return new GrParameterTableModelItem(parameterInfo, typeCodeFragment, initializerCodeFragment, defaultValueCodeFragment);
   }

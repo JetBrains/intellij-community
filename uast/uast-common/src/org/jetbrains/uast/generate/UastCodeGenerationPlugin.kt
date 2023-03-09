@@ -96,7 +96,7 @@ interface UastCodeGenerationPlugin {
    * If the parameter is from Kotlin primary constructor and the field and the parameter have different names,
    * Kotlin property is initialized with the parameter.
    */
-  fun initializeField(uField: UField, uParameter: UParameter)
+  fun initializeField(uField: UField, uParameter: UParameter): UExpression?
 }
 
 /**
@@ -125,12 +125,18 @@ interface UastElementFactory {
 
   fun createQualifiedReference(qualifiedName: String, context: PsiElement?): UQualifiedReferenceExpression?
 
+  /**
+   * Generate method from language-specific text. It's up to the caller to generate the text properly
+   * May return null if not implemented by a specific plugin.
+   */
+  fun createMethodFromText(methodText: String, context: PsiElement?): UMethod? = null
+
   fun createParenthesizedExpression(expression: UExpression,
                                     context: PsiElement?): UParenthesizedExpression?
 
-  fun createReturnExpresion(expression: UExpression?,
-                            inLambda: Boolean = false,
-                            context: PsiElement?): UReturnExpression?
+  fun createReturnExpression(expression: UExpression?,
+                             inLambda: Boolean = false,
+                             context: PsiElement?): UReturnExpression?
 
   fun createLocalVariable(suggestedName: String?,
                           type: PsiType?,

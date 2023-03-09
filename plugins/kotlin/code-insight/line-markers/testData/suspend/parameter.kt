@@ -1,3 +1,3 @@
 suspend fun test(block: suspend () -> Unit) {
-    block()
+    <lineMarker text="Suspend operator call 'invoke()'">block</lineMarker>()
 }

@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 class MyAbsoluteSpecificStream
 
 fun foo(myAbSpeStream<caret>)

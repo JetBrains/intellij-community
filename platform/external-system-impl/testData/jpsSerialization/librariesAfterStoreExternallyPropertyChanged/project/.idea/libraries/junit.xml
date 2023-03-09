@@ -1,5 +1,5 @@
 <component name="libraryTable">
-  <library name="junit">
+  <library name="junit" external-system-id="GRADLE">
     <CLASSES />
     <JAVADOC />
     <SOURCES />

@@ -22,8 +22,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -471,7 +471,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   @NotNull
   @TestOnly
   public List<Object> calcPopupElements(@NotNull String text, boolean checkboxState) {
-    List<Object> elements = ContainerUtil.newArrayList("empty");
+    List<Object> elements = new SmartList<>("empty");
     Semaphore semaphore = new Semaphore(1);
     scheduleCalcElements(text, checkboxState, ModalityState.NON_MODAL, SelectMostRelevant.INSTANCE, set -> {
       elements.clear();

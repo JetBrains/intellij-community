@@ -740,7 +740,7 @@ public final class JDOMUtil {
    * With this method you can provide a list of tag+attribute names. If two tags have similar attributes from this lists,
    *   this method will merge them
    */
-  public static @NotNull Element deepMergeWithAttributes(@NotNull Element to, @NotNull Element from, @NotNull List<MergeAttribute> mergeByAttributes) {
+  public static @NotNull Element deepMergeWithAttributes(@NotNull Element to, @NotNull Element from, @NotNull List<? extends MergeAttribute> mergeByAttributes) {
     for (Iterator<Element> iterator = from.getChildren().iterator(); iterator.hasNext(); ) {
       Element child = iterator.next();
       iterator.remove();
@@ -773,7 +773,7 @@ public final class JDOMUtil {
   private static boolean areAttributesEqual(@NotNull List<? extends Attribute> l1,
                                             @NotNull List<? extends Attribute> l2,
                                             @NotNull Element base,
-                                            @NotNull List<MergeAttribute> mergeByAttributes) {
+                                            @NotNull List<? extends MergeAttribute> mergeByAttributes) {
     Set<String> attributes = mergeByAttributes.stream()
       .filter(o -> o.elementName.equals(base.getName()))
       .map(o -> o.attributeName)

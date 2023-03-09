@@ -3,9 +3,11 @@ package com.intellij.notebook.editor;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Experimental
 public interface BackedVirtualFileProvider {
   ExtensionPointName<BackedVirtualFileProvider> EP_NAME = ExtensionPointName.create("com.intellij.backedVirtualFileProvider");
 

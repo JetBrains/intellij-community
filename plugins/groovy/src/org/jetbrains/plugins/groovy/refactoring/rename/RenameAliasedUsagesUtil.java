@@ -35,7 +35,6 @@ public final class RenameAliasedUsagesUtil {
 
     for (PsiReference ref : refs) {
       final PsiElement e = ref.getElement();
-      if (e == null) continue;
       if (skipReference(element, aliases, e)) continue;
       result.add(ref);
     }

@@ -3,12 +3,16 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui
 
 import com.intellij.collaboration.api.page.SequentialListLoader
 import com.intellij.collaboration.async.combineState
+import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.util.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestsListViewModel.ListDataUpdate
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue
@@ -16,6 +20,11 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsF
 
 internal interface GitLabMergeRequestsListViewModel {
   val filterVm: GitLabMergeRequestsFiltersViewModel
+  val avatarIconsProvider: IconsProvider<GitLabUserDTO>
+  val accountManager: GitLabAccountManager
+
+  val repository: String
+  val account: GitLabAccount
 
   val listDataFlow: Flow<ListDataUpdate>
   val canLoadMoreState: StateFlow<Boolean>
@@ -36,6 +45,11 @@ internal interface GitLabMergeRequestsListViewModel {
 internal class GitLabMergeRequestsListViewModelImpl(
   parentCs: CoroutineScope,
   override val filterVm: GitLabMergeRequestsFiltersViewModel,
+  override val repository: String,
+  override val account: GitLabAccount,
+  override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
+  override val accountManager: GitLabAccountManager,
+  private val tokenRefreshFlow: Flow<Unit>,
   private val loaderSupplier: (GitLabMergeRequestsFiltersValue) -> SequentialListLoader<GitLabMergeRequestShortDTO>)
   : GitLabMergeRequestsListViewModel {
 
@@ -82,6 +96,13 @@ internal class GitLabMergeRequestsListViewModelImpl(
           doReset()
           requestMore()
         }
+    }
+
+    scope.launch {
+      tokenRefreshFlow.collect {
+        doReset()
+        requestMore()
+      }
     }
   }
 

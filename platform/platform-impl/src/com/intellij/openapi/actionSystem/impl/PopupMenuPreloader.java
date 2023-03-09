@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -59,8 +59,9 @@ public final class PopupMenuPreloader implements Runnable, HierarchyListener {
                              @NotNull String actionPlace,
                              @Nullable PopupHandler popupHandler,
                              @NotNull Supplier<? extends ActionGroup> groupSupplier) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    if ("none".equals(MODE)) return;
+    if (ApplicationManager.getApplication().isUnitTestMode() || "none".equals(MODE)) {
+      return;
+    }
     if (component instanceof EditorComponentImpl && ourEditorContextMenuPreloadCount > 4 ||
         component instanceof IdeMenuBar && SwingUtilities.getWindowAncestor(component) instanceof IdeFrame.Child) {
       return;

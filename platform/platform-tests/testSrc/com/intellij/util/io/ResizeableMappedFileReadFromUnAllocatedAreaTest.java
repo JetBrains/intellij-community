@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
@@ -15,7 +14,7 @@ import static org.junit.Assert.fail;
  * Basically, the testcase is about reading values from yet unallocated addresses of {@link ResizeableMappedFile}.
  * Currently {@link ResizeableMappedFile} allows it, but this is a kind of undocumented feature, which wasn't really
  * designed that way, but just so happens -- and client code rely on it sometimes.
- *
+ * <p>
  * If underlying buffer of {@link ResizeableMappedFile} wasn't zeroed before use it could contain anything (most
  * likely values from previous use) and reads from unallocated area will return that "anything". This is dangerous
  * by itself, but it could lead to even more interesting issues in scenarios with conditional writes, like
@@ -24,7 +23,7 @@ import static org.junit.Assert.fail;
  * 'allocate' the area, and _zero it_. Now buffer contains zeros there previously it has contained newValue,
  * and next try to re-read getLong(addr) will return 0, while it is expected to return newValue -- because
  * we just (conditionally) put it there!
- *
+ * <p>
  * Now this may look as a very rare case, because it is unlikely to have arbitrary int/long value to be equal to your
  * newValue. But it is not as rare as one may think, because values in unallocated areas of buffer is not something
  * random -- they are the values from previous use. So if app has a set of values it frequently writes into RMF (e.g. flags,
@@ -93,7 +92,7 @@ public class ResizeableMappedFileReadFromUnAllocatedAreaTest {
   }
 
   private static ResizeableMappedFile createResizeableMappedFile(final File storageFile) throws IOException {
-    final int pageSize = PagedFileStorage.DEFAULT_PAGE_SIZE;
+    final int pageSize = PageCacheUtils.DEFAULT_PAGE_SIZE;
     final StorageLockContext storageLockContext = new StorageLockContext(true, true, true);
     return new ResizeableMappedFile(
       storageFile.toPath(),

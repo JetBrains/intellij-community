@@ -1,6 +1,3 @@
-# stub-only module
-sqlalchemy.dbapi
-
 # wrong argument name in implementation ("self" instead of "cls")
 sqlalchemy.engine.URL.__new__
 sqlalchemy.engine.url.URL.__new__
@@ -121,6 +118,18 @@ sqlalchemy.engine.base.Connection.engine
 # uses @memoized_property at runtime, but we use @property for compatibility
 sqlalchemy.engine.URL.normalized_query
 sqlalchemy.engine.url.URL.normalized_query
+
+# runtime has extra internal arguments that are inconsistent across micro versions
+sqlalchemy.testing.engines.testing_engine
+
+# __new__ signature conflicts with __init__ signature (which is more precise),
+# so __new__ is deliberately omitted in the stub
+sqlalchemy.sql.annotation.Annotated.__new__
+
+# At runtime __new__ is defined, but we define __init__ in the stub
+# because otherwise all subclasses would be identified by pyright
+# as having conflicting __new__/__init__ methods
+sqlalchemy.orm.unitofwork.PostSortRec.__new__
 
 # unclear problems
 sqlalchemy.sql.elements.quoted_name.lower

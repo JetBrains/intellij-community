@@ -72,7 +72,7 @@ public class SimplifiableBooleanExpressionInspection extends BaseInspection impl
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       CommentTracker commentTracker = new CommentTracker();
       final String replacement;

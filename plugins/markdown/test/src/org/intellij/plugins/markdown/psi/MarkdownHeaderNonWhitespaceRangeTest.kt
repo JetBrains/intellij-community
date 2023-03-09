@@ -10,7 +10,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class MarkdownHeaderNonWhitespaceRangeTest: LightPlatformCodeInsightTestCase() {
   private val firstElement
-    get() = file.firstChild?.firstChild!!
+    get() = file.firstChild!!
 
   @Test
   fun `test range sanity in atx header`() {

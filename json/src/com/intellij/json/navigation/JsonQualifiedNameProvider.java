@@ -36,10 +36,10 @@ public class JsonQualifiedNameProvider implements QualifiedNameProvider {
     JsonElement parentProperty = PsiTreeUtil.getNonStrictParentOfType(element, JsonProperty.class, JsonArray.class);
     StringBuilder builder = new StringBuilder();
     while (parentProperty != null) {
-      if (parentProperty instanceof JsonProperty) {
-        String name = parentProperty.getName();
+      if (parentProperty instanceof JsonProperty jsonProperty) {
+        String name = jsonProperty.getName();
         if (qualifiedNameKind == JsonQualifiedNameKind.JsonPointer) {
-          name = name == null ? null : JsonPointerUtil.escapeForJsonPointer(name);
+          name = JsonPointerUtil.escapeForJsonPointer(name);
         }
         builder.insert(0, name);
         builder.insert(0, qualifiedNameKind == JsonQualifiedNameKind.JsonPointer ? "/" : ".");

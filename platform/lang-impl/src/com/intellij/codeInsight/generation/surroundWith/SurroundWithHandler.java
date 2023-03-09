@@ -20,6 +20,9 @@ import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -187,7 +190,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       if (elements.length > 0) {
         for (Surrounder descriptorSurrounder : descriptor.getSurrounders()) {
           if (surrounder.getClass().equals(descriptorSurrounder.getClass())) {
-            WriteCommandAction.runWriteCommandAction(project, () -> doSurround(project, editor, surrounder, elements));
+            doSurround(project, editor, surrounder, elements);
             return;
           }
         }
@@ -203,14 +206,28 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
   }
 
   static void doSurround(final Project project, final Editor editor, final Surrounder surrounder, final PsiElement[] elements) {
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    WriteAction.run(() -> PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument()));
     int col = editor.getCaretModel().getLogicalPosition().column;
     int line = editor.getCaretModel().getLogicalPosition().line;
     if (!editor.getCaretModel().supportsMultipleCarets()) {
       LogicalPosition pos = new LogicalPosition(0, 0);
       editor.getCaretModel().moveToLogicalPosition(pos);
     }
-    TextRange range = surrounder.surroundElements(project, editor, elements);
+    if (surrounder.startInWriteAction()) {
+      WriteCommandAction.runWriteCommandAction(project, CodeInsightBundle.message("surround.with.chooser.title"), null, () -> {
+          TextRange range = surrounder.surroundElements(project, editor, elements);
+          updateRange(project, editor, range, line, col);
+        }
+      );
+    } else {
+      CommandProcessor.getInstance().executeCommand(project, () -> {
+        TextRange range = ReadAction.compute(() -> surrounder.surroundElements(project, editor, elements));
+        updateRange(project, editor, range, line, col);
+      }, CodeInsightBundle.message("surround.with.chooser.title"), null);
+    }
+  }
+
+  private static void updateRange(Project project, Editor editor, TextRange range, int line, int col) {
     if (range != CARET_IS_OK) {
       if (TemplateManager.getInstance(project).getActiveTemplate(editor) == null &&
           InplaceRefactoring.getActiveInplaceRenamer(editor) == null) {
@@ -291,7 +308,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
       if (myElements != null && myElements.length != 0) {
         language = myElements[0].getLanguage();
       }
-      WriteCommandAction.runWriteCommandAction(myProject, () -> doSurround(myProject, myEditor, mySurrounder, myElements));
+      doSurround(myProject, myEditor, mySurrounder, myElements);
       SurroundWithLogger.logSurrounder(mySurrounder, language, myProject);
     }
   }

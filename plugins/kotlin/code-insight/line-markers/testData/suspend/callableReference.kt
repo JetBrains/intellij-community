@@ -1,6 +1,6 @@
 suspend fun test() {
-    val x = <lineMarker text="Suspend function call &apos;foo()&apos;">foo</lineMarker>()::bar
-    <lineMarker text="Suspend operator call &apos;invoke()&apos;">x</lineMarker>()
+    val x = <lineMarker text="Suspend function call 'foo()'">foo</lineMarker>()::bar
+    <lineMarker text="Suspend operator call 'invoke()'">x</lineMarker>()
 }
 
 suspend fun foo(): Foo {

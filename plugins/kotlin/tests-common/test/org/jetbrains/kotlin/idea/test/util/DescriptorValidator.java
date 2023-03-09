@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.test.util;
 
@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Predicate;
 
-public class DescriptorValidator {
+public final class DescriptorValidator {
 
     public static void validate(@NotNull ValidationVisitor validationStrategy, DeclarationDescriptor descriptor) {
         DiagnosticCollectorForTests collector = new DiagnosticCollectorForTests();

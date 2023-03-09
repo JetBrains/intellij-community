@@ -19,18 +19,27 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElementVisitor;
+import org.intellij.markdown.flavours.MarkdownFlavourDescriptor;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
+import org.intellij.plugins.markdown.lang.parser.MarkdownFlavourUtil;
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager;
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkdownFile extends PsiFileBase implements MarkdownPsiElement {
-  public MarkdownFile(FileViewProvider viewProvider) {
+  private final @NotNull MarkdownFlavourDescriptor flavour;
+
+  public MarkdownFile(@NotNull FileViewProvider viewProvider) {
+    this(viewProvider, MarkdownFlavourUtil.obtainDefaultMarkdownFlavour());
+  }
+
+  public MarkdownFile(@NotNull FileViewProvider viewProvider, @NotNull MarkdownFlavourDescriptor flavour) {
     super(viewProvider, MarkdownLanguage.INSTANCE);
-    // It is a little bit hacky way to set a flavour but there was no any way to do it before
-    putUserData(MarkdownParserManager.FLAVOUR_DESCRIPTION, MarkdownParserManager.FLAVOUR);
+    this.flavour = flavour;
+    // For compatibility only
+    putUserData(MarkdownParserManager.FLAVOUR_DESCRIPTION, flavour);
   }
 
   @Override
@@ -39,7 +48,6 @@ public class MarkdownFile extends PsiFileBase implements MarkdownPsiElement {
       ((MarkdownElementVisitor)visitor).visitMarkdownFile(this);
       return;
     }
-
     visitor.visitFile(this);
   }
 
@@ -47,5 +55,10 @@ public class MarkdownFile extends PsiFileBase implements MarkdownPsiElement {
   @NotNull
   public FileType getFileType() {
     return MarkdownFileType.INSTANCE;
+  }
+
+  @NotNull
+  public MarkdownFlavourDescriptor getFlavour() {
+    return flavour;
   }
 }

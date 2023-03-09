@@ -5,47 +5,68 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.PostCommitChangeConverter
-import com.intellij.vcs.commit.commitProperty
+import com.intellij.util.CollectConsumer
+import com.intellij.vcs.commit.commitExecutorProperty
 import com.intellij.vcs.log.Hash
-import git4idea.GitContentRevision
-import git4idea.GitRevisionNumber
+import git4idea.GitCommit
 import git4idea.GitUtil
+import git4idea.commands.Git
+import git4idea.history.GitCommitRequirements
+import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
 
 class GitPostCommitChangeConverter(private val project: Project) : PostCommitChangeConverter {
-  override fun convertChangesAfterCommit(changes: List<Change>, commitContext: CommitContext): List<Change> {
-    val hashes = commitContext.postCommitHashes ?: return changes
-    return changes.map { convertChangeAfterCommit(it, hashes) ?: it }
+  override fun collectChangesAfterCommit(commitContext: CommitContext): List<Change> {
+    val hashes = commitContext.postCommitHashes ?: return emptyList()
+
+    val result = mutableListOf<Change>()
+    for ((repo, hash) in hashes) {
+      result += loadChangesFromCommit(repo, hash)
+    }
+    return result
   }
 
-  private fun convertChangeAfterCommit(change: Change, hashes: Map<GitRepository, Hash>): Change? {
-    val filePath = ChangesUtil.getFilePath(change)
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(filePath) ?: return null
-    val commitHash = hashes[repository] ?: return null
+  private fun loadChangesFromCommit(repo: GitRepository, hash: Hash): List<Change> {
+    val consumer = CollectConsumer<GitCommit>()
+    val commitRequirements = GitCommitRequirements(diffInMergeCommits = GitCommitRequirements.DiffInMergeCommits.FIRST_PARENT)
+    GitLogUtil.readFullDetailsForHashes(project, repo.root, listOf(hash.asString()), commitRequirements, consumer)
+    val commit = consumer.result.first()
 
-    val bRev = change.beforeRevision
-    val fixedBRev = when {
-      bRev != null -> GitContentRevision.createRevision(bRev.file, GitRevisionNumber("${commitHash.asString()}~1"), project)
-      else -> null
+    return commit.getChanges(0).toList()
+  }
+
+  override fun areConsequentCommits(commitContexts: List<CommitContext>): Boolean {
+    val commitHashes = commitContexts.map { it.postCommitHashes }
+    if (commitHashes.all { it == null }) return true // no git commits, not our problem
+    if (commitHashes.any { it == null }) return false // has non-git commits, give up
+
+    val repoMap = mutableMapOf<GitRepository, Hash>()
+    for (hashes in commitHashes.reversed()) {
+      for ((repo, hash) in hashes!!) {
+        val oldHash = repoMap.put(repo, hash)
+        if (oldHash != null) {
+          val parentHash = Git.getInstance().resolveReference(repo, "${oldHash}^1")
+          if (parentHash != hash) {
+            logger<GitPostCommitChangeConverter>().debug("Non-consequent commits: $oldHash - $hash")
+            return false
+          }
+        }
+      }
     }
+    return true
+  }
 
-    val aRev = change.afterRevision
-    val fixedARev = when {
-      aRev != null -> GitContentRevision.createRevision(aRev.file, GitRevisionNumber(commitHash.asString()), project)
-      else -> null
-    }
-
-    return Change(fixedBRev, fixedARev, change.fileStatus)
+  override fun isFailureUpToDate(commitContexts: List<CommitContext>): Boolean {
+    val lastCommit = commitContexts.lastOrNull()?.postCommitHashes ?: return true // non-git commits, not our problem
+    return lastCommit.entries.any { (repo, hash) -> repo.currentRevision == hash.asString() }
   }
 
   companion object {
     private val GIT_POST_COMMIT_HASHES_KEY = Key.create<MutableMap<GitRepository, Hash>>("Git.Post.Commit.Hash")
 
-    private var CommitContext.postCommitHashes: MutableMap<GitRepository, Hash>? by commitProperty(GIT_POST_COMMIT_HASHES_KEY, null)
+    private var CommitContext.postCommitHashes: MutableMap<GitRepository, Hash>? by commitExecutorProperty(GIT_POST_COMMIT_HASHES_KEY, null)
 
     @JvmStatic
     fun markRepositoryCommit(commitContext: CommitContext, repository: GitRepository) {

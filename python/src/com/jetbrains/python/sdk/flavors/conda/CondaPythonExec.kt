@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.packaging.PyCondaPackageService
-import com.jetbrains.python.sdk.flavors.conda.CondaPathFix.Companion.shouldBeFixed
 import java.nio.file.Path
 import kotlin.io.path.isExecutable
 
@@ -33,13 +32,11 @@ fun addCondaPythonToTargetCommandLine(targetedCommandLineBuilder: TargetedComman
     condaEnv.addCondaToTargetBuilder(targetedCommandLineBuilder)
     targetedCommandLineBuilder.addParameter("python")
   }
-  if (targetedCommandLineBuilder.shouldBeFixed) {
-    if (sdk != null) {
-      CondaPathFix.BySdk(sdk)
-    }
-    else {
-      CondaPathFix.ByCondaFullPath(Path.of(condaEnv.fullCondaPathOnTarget))
-    }.fix(targetedCommandLineBuilder)
+  if (sdk != null) {
+    targetedCommandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
+  }
+  else {
+    targetedCommandLineBuilder.fixCondaPathEnvIfNeeded(condaEnv.fullCondaPathOnTarget)
   }
 }
 

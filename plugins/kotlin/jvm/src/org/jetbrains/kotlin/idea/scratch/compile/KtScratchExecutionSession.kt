@@ -71,7 +71,7 @@ class KtScratchExecutionSession(
     }
 
     private fun createFileWithLightClassSupport(result: Result.OK, psiFile: KtFile): KtFile =
-        runReadAction { KtPsiFactory(file.project).createFileWithLightClassSupport("tmp.kt", result.code, psiFile) }
+        runReadAction { KtPsiFactory.contextual(psiFile).createPhysicalFile("tmp.kt", result.code) }
 
     private fun tryRunCommandLine(modifiedScratchSourceFile: KtFile, psiFile: KtFile, result: Result.OK, callback: () -> Unit) {
         assert(backgroundProcessIndicator != null)

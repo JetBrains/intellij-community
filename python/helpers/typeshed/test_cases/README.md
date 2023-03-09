@@ -19,6 +19,6 @@ directory cannot always use modern syntax for type hints. For example, PEP 604
 syntax (unions with a pipe `|` operator) is new in Python 3.10. While this
 syntax can be used on older Python versions in a `.pyi` file, code using this
 syntax will fail at runtime on Python <=3.9. Since the test cases all use `.py`
-extensions, and since the tests need to pass on all Python versions >=3.6, PEP
+extensions, and since the tests need to pass on all Python versions >=3.7, PEP
 604 syntax cannot be used in a test case. Use `typing.Union` and
 `typing.Optional` instead.

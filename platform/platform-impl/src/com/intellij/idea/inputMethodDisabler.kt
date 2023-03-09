@@ -90,9 +90,7 @@ private fun disableInputMethdosImpl() {
 
     getLogger().info("Input method disabler: disabled for any java.awt.Component.")
 
-    val frames = WindowManagerEx.getInstanceEx().projectFrameHelpers
-      .map { fh -> SwingUtilities.getRoot(fh.frameOrNull) }
-      .filter { c -> c != null }
+    val frames = WindowManagerEx.getInstanceEx().projectFrameHelpers.mapNotNull { fh -> SwingUtilities.getRoot(fh.frame) }
 
     ApplicationManager.getApplication().executeOnPooledThread {
       val startMs = System.currentTimeMillis()

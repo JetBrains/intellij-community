@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 @ApiStatus.Internal
 public interface WelcomeScreenLeftPanel {
   void addRootTab(@NotNull WelcomeScreenTab tab);
-  void addSelectionListener(@NotNull Disposable disposable, @NotNull Consumer<WelcomeScreenTab> action);
+  void addSelectionListener(@NotNull Disposable disposable, @NotNull Consumer<? super WelcomeScreenTab> action);
   boolean selectTab(@NotNull WelcomeScreenTab tab);
   @Nullable WelcomeScreenTab getTabByIndex(int idx);
   void removeAllTabs();

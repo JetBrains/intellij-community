@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.suggested
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.TestOnly
 
@@ -25,8 +25,8 @@ class SuggestedRefactoringProviderImpl(project: Project) : SuggestedRefactoringP
     listener = SuggestedRefactoringChangeListener(project, changeCollector, project)
   }
 
-  internal class Startup : StartupActivity.DumbAware {
-    override fun runActivity(project: Project) {
+  internal class Startup : ProjectPostStartupActivity {
+    override suspend fun execute(project: Project) {
       if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
         getInstance(project)
       }

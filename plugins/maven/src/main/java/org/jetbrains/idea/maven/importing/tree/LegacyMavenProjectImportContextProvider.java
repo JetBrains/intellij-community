@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.tree;
 
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
@@ -10,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.MavenImportUtil;
 import org.jetbrains.idea.maven.importing.MavenModuleNameMapper;
-import org.jetbrains.idea.maven.importing.ModuleModelProxy;
 import org.jetbrains.idea.maven.importing.StandardMavenModuleType;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -30,11 +30,11 @@ import java.util.stream.Collectors;
 
 public class LegacyMavenProjectImportContextProvider extends MavenProjectImportContextProvider {
   @NotNull
-  private final ModuleModelProxy myModuleModel;
+  private final ModifiableModuleModel myModuleModel;
 
   public LegacyMavenProjectImportContextProvider(@NotNull Project project,
                                                  @NotNull MavenProjectsTree projectsTree,
-                                                 @NotNull ModuleModelProxy moduleModel,
+                                                 @NotNull ModifiableModuleModel moduleModel,
                                                  @NotNull MavenImportingSettings importingSettings) {
     super(project, projectsTree, importingSettings, new HashMap<>());
     myModuleModel = moduleModel;

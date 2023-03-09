@@ -16,7 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
@@ -30,9 +30,9 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.InlineGetterSetterCallFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CallToSimpleGetterInClassInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @SuppressWarnings("UnusedDeclaration")
@@ -41,14 +41,10 @@ public class CallToSimpleGetterInClassInspection extends BaseInspection implemen
   public boolean onlyReportPrivateGetter = false;
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("call.to.simple.getter.in.class.ignore.option"),
-                             "ignoreGetterCallsOnOtherObjects");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("call.to.private.simple.getter.in.class.option"),
-                             "onlyReportPrivateGetter");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreGetterCallsOnOtherObjects", InspectionGadgetsBundle.message("call.to.simple.getter.in.class.ignore.option")),
+      checkbox("onlyReportPrivateGetter", InspectionGadgetsBundle.message("call.to.private.simple.getter.in.class.option")));
   }
 
   @Override

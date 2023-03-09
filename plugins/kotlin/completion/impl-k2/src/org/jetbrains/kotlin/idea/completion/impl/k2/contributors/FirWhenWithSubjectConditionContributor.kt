@@ -103,19 +103,21 @@ internal class FirWhenWithSubjectConditionContributor(
                 )
             }
 
-        getAvailableClassifiersFromIndex(symbolFromIndexProvider, scopeNameFilter, visibilityChecker)
-            .forEach { classifier ->
-                if (classifier !is KtNamedSymbol || classifier in availableFromScope) return@forEach
+        if (prefixMatcher.prefix.isNotEmpty()) {
+            getAvailableClassifiersFromIndex(symbolFromIndexProvider, scopeNameFilter, visibilityChecker)
+                .forEach { classifier ->
+                    if (classifier !is KtNamedSymbol || classifier in availableFromScope) return@forEach
 
-                addLookupElement(
-                    classifier.name.asString(),
-                    classifier,
-                    (classifier as? KtNamedClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName(),
-                    isPrefixNeeded(classifier),
-                    isSingleCondition,
-                    availableWithoutImport = false,
-                )
-            }
+                    addLookupElement(
+                        classifier.name.asString(),
+                        classifier,
+                        (classifier as? KtNamedClassOrObjectSymbol)?.classIdIfNonLocal?.asSingleFqName(),
+                        isPrefixNeeded(classifier),
+                        isSingleCondition,
+                        availableWithoutImport = false,
+                    )
+                }
+        }
     }
 
     private fun KtAnalysisSession.isPrefixNeeded(classifier: KtClassifierSymbol): Boolean {

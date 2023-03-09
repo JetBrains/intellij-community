@@ -114,13 +114,11 @@ object CachedArgumentsRestoring {
         val propertiesByName = compilerArgumentsClass.kotlin.memberProperties.associateBy { it.name }
         cachedBucket.singleArguments.entries.mapNotNull {
             val (property, value) = it.obtainPropertyWithCachedValue(propertiesByName, cacheAware) ?: return@mapNotNull null
-            val newValue = when (value) {
-                null -> null
-                is KotlinRawRegularCompilerArgument -> value.data
-                else -> {
-                    LOGGER.error(property.prepareLogMessage())
-                    return@mapNotNull null
-                }
+            val newValue = if (value is KotlinRawRegularCompilerArgument) {
+                value.data
+            } else {
+                LOGGER.error(property.prepareLogMessage())
+                return@mapNotNull null
             }
             property to newValue
         }.forEach { (prop, newVal) ->
@@ -138,13 +136,11 @@ object CachedArgumentsRestoring {
         }
         cachedBucket.multipleArguments.entries.mapNotNull {
             val (property, value) = it.obtainPropertyWithCachedValue(propertiesByName, cacheAware) ?: return@mapNotNull null
-            val restoredValue = when (value) {
-                null -> null
-                is KotlinRawMultipleCompilerArgument -> value.data.toTypedArray()
-                else -> {
-                    LOGGER.error(property.prepareLogMessage())
-                    return@mapNotNull null
-                }
+            val restoredValue = if (value is KotlinRawMultipleCompilerArgument) {
+                value.data.toTypedArray()
+            } else {
+                LOGGER.error(property.prepareLogMessage())
+                return@mapNotNull null
             }
             property to restoredValue
         }.forEach { (prop, newVal) ->

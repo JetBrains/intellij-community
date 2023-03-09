@@ -23,7 +23,7 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
     ): KotlinCompilationImpl? {
         val compilationName = origin.compilationName
         val kotlinGradleSourceSets = origin.sourceSets ?: return null
-        val kotlinSourceSets = kotlinGradleSourceSets.mapNotNull { importingContext.sourceSetByName(it.name) }
+        val kotlinSourceSets = kotlinGradleSourceSets.mapNotNull { importingContext.sourceSetByName(it.name) }.toMutableSet()
         val compileKotlinTask = origin.compileKotlinTaskName
             ?.let { importingContext.project.tasks.findByName(it) }
             ?: return null

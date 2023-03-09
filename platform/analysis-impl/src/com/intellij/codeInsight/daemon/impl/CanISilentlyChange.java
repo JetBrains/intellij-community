@@ -13,7 +13,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
-class CanISilentlyChange {
+final class CanISilentlyChange {
   private static boolean canUndo(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
     if (editors.length == 0) {

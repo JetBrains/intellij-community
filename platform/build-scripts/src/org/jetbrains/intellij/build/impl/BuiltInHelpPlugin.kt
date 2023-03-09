@@ -13,7 +13,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 private const val MODULE_NAME = "intellij.platform.builtInHelp"
-private val LUCENE_LIBRARIES = setOf("lucene-queryparser", "lucene-highlighter", "lucene-memory")
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): PluginLayout? {
   val productName = context.applicationInfo.productName
@@ -47,7 +46,6 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
                                 content = pluginXml(buildContext, pluginVersion),
                                 overwrite = true)
     }
-    LUCENE_LIBRARIES.forEach { spec.withProjectLibrary(it) }
   }
 }
 

@@ -2,14 +2,13 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.status.InfoAndProgressPanel.MyInlineProgressIndicator;
 import com.intellij.toolWindow.ToolWindowPane;
 import com.intellij.ui.BalloonLayoutImpl;
@@ -170,16 +169,18 @@ final class ProcessBalloon {
   }
 
   private static @NotNull Component getAnchor(@NotNull JRootPane pane) {
-    Component tabWrapper = UIUtil.findComponentOfType(pane, TabbedPaneWrapper.TabWrapper.class);
-    if (tabWrapper != null && tabWrapper.isShowing()) return tabWrapper;
-    EditorsSplitters splitters = UIUtil.findComponentOfType(pane, EditorsSplitters.class);
-    if (splitters != null) {
-      return splitters.isShowing() ? splitters : pane;
+    if (pane instanceof IdeRootPane) {
+      JComponent component = ((IdeRootPane)pane).getToolWindowPane().getDocumentComponent();
+      return component == null || !component.isShowing() ? pane : component;
     }
-    FileEditorManagerEx ex = FileEditorManagerEx.getInstanceEx(ProjectUtil.guessCurrentProject(pane));
-    if (ex == null) return pane;
-    splitters = ex.getSplitters();
-    return splitters.isShowing() ? splitters : pane;
+
+    Component tabWrapper = UIUtil.findComponentOfType(pane, TabbedPaneWrapper.TabWrapper.class);
+    if (tabWrapper != null && tabWrapper.isShowing()) {
+      return tabWrapper;
+    }
+
+    EditorsSplitters splitters = UIUtil.findComponentOfType(pane, EditorsSplitters.class);
+    return splitters == null || !splitters.isShowing() ? pane : splitters;
   }
 
   private static boolean isBottomSideToolWindowsVisible(@NotNull JRootPane parent) {

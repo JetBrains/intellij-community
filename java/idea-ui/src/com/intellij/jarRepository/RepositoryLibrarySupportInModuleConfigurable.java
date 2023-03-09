@@ -40,7 +40,7 @@ public class RepositoryLibrarySupportInModuleConfigurable extends FrameworkSuppo
     RepositoryLibraryProperties defaultProperties = libraryDescription.createDefaultProperties();
     this.model = new RepositoryLibraryPropertiesModel(defaultProperties.getVersion(), false, false, defaultProperties.isIncludeTransitiveDependencies(),
                                                       defaultProperties.getExcludedDependencies());
-    editor = new RepositoryLibraryPropertiesEditor(project, model, libraryDescription);
+    editor = new RepositoryLibraryPropertiesEditor(project, model, libraryDescription, false);
   }
 
   @Nullable

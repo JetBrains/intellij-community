@@ -6,8 +6,9 @@ package com.intellij.ui
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
@@ -16,22 +17,18 @@ import com.intellij.testFramework.UITestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.compareFileContent
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.layout.*
-import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.scale.TestScaleHelper
 import com.intellij.ui.scale.paint.ImageComparator
 import com.intellij.util.SVGLoader
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.io.write
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestName
 import org.junit.runners.model.MultipleFailureException
-import org.yaml.snakeyaml.DumperOptions
-import org.yaml.snakeyaml.Yaml
 import java.awt.Color
 import java.awt.Component
 import java.awt.Container
@@ -43,6 +40,7 @@ import javax.swing.AbstractButton
 import javax.swing.JLabel
 import javax.swing.UIManager
 import javax.swing.plaf.metal.MetalLookAndFeel
+import kotlin.io.path.exists
 
 internal val isUpdateSnapshotsGlobal by lazy { SystemProperties.getBooleanProperty("test.update.snapshots", false) }
 
@@ -81,7 +79,7 @@ internal suspend fun changeLafIfNeeded(lafName: String) {
     return
   }
 
-  withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+  withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
     if (lafName == "Darcula") {
       // static init it is hell - UIUtil static init is called too early, so, call it to init properly
       // (otherwise null stylesheet added, and it leads to NPE on set comment text)
@@ -109,23 +107,6 @@ fun getSnapshotRelativePath(lafName: String): String {
   result.append(platformName)
 
   return result.toString()
-}
-
-@Throws(FileComparisonFailure::class)
-fun validateBounds(component: Container, snapshotDir: Path, snapshotName: String) {
-  val actualSerializedLayout: String
-  if (component.layout is MigLayout) {
-    actualSerializedLayout = serializeLayout(component, isIncludeCellBounds = false, isIncludeComponentBounds = false)
-  }
-  else {
-    val dumperOptions = DumperOptions()
-    dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
-    val yaml = Yaml(dumperOptions)
-    actualSerializedLayout = yaml
-      .dump(linkedMapOf("bounds" to dumpComponentBounds(component)))
-  }
-
-  compareFileContent(actualSerializedLayout, snapshotDir.resolve("$snapshotName.yml"))
 }
 
 @Throws(FileComparisonFailure::class)

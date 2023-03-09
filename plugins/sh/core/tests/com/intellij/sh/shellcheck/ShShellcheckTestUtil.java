@@ -19,7 +19,7 @@ import java.nio.file.Path;
 import static com.intellij.sh.shellcheck.ShShellcheckUtil.*;
 import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 
-class ShShellcheckTestUtil {
+final class ShShellcheckTestUtil {
   private static final Logger LOG = Logger.getInstance(ShShellcheckTestUtil.class);
 
   static void downloadShellcheck() throws IOException, InterruptedException {

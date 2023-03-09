@@ -47,6 +47,20 @@ public abstract class BaseTestNGInspectionsTest extends JavaCodeInsightFixtureTe
   }
 
   public void doTest() {
+    final String testName = getTestName(false);
+    IntentionAction resultAction = getAction();
+    myFixture.launchAction(resultAction);
+    myFixture.checkResultByFile(AFTER + testName + ".java");
+  }
+
+  public void doTestWithPreview() {
+    final String testName = getTestName(false);
+    IntentionAction resultAction = getAction();
+    myFixture.checkPreviewAndLaunchAction(resultAction);
+    myFixture.checkResultByFile(AFTER + testName + ".java");
+  }
+
+  private IntentionAction getAction() {
     IntentionAction resultAction = null;
     final String testName = getTestName(false);
     final String resultActionName = getActionName();
@@ -57,10 +71,8 @@ public abstract class BaseTestNGInspectionsTest extends JavaCodeInsightFixtureTe
       }
     }
     Assert.assertNotNull(resultAction, "action isn't found");
-    myFixture.launchAction(resultAction);
-    myFixture.checkResultByFile(AFTER + testName + ".java");
+    return resultAction;
   }
-
 
   protected abstract LocalInspectionTool getEnabledTool();
 

@@ -42,10 +42,12 @@ public final class BuildDependenciesUtil {
 
   private static final boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
   private static final int octal_0111 = Integer.parseInt("111", 8);
-  private static final boolean isWindows = System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows");
+  public static final boolean isWindows = System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("windows");
+
+  public static final boolean underTeamCity = System.getenv("TEAMCITY_VERSION") != null;
 
   @SuppressWarnings("HttpUrlsUsage")
-  private static DocumentBuilder createDocumentBuilder() {
+  public static DocumentBuilder createDocumentBuilder() {
     // from https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html#jaxp-documentbuilderfactory-saxparserfactory-and-dom4j
 
     DocumentBuilderFactory dbf = DocumentBuilderFactory.newDefaultInstance();
@@ -93,7 +95,7 @@ public final class BuildDependenciesUtil {
     }
   }
 
-  private static Element getSingleChildElement(Element parent, String tagName) {
+  private static List<Element> getChildElements(Element parent, String tagName) {
     NodeList childNodes = parent.getChildNodes();
 
     ArrayList<Element> result = new ArrayList<>();
@@ -107,11 +109,27 @@ public final class BuildDependenciesUtil {
       }
     }
 
+    return result;
+  }
+
+  public static Element getSingleChildElement(Element parent, String tagName) {
+    List<Element> result = getChildElements(parent, tagName);
+
     if (result.size() != 1) {
       throw new IllegalStateException("Expected one and only one element by tag '" + tagName + "'");
     }
 
     return result.get(0);
+  }
+
+  public static Element tryGetSingleChildElement(Element parent, String tagName) {
+    List<Element> result = getChildElements(parent, tagName);
+
+    if (result.size() == 1) {
+      return result.get(0);
+    }
+
+    return null;
   }
 
   public static String getLibraryMavenId(Path libraryXml) {
@@ -205,7 +223,7 @@ public final class BuildDependenciesUtil {
     });
   }
 
-  private static void extractTarBasedArchive(Path archiveFile, Path target, boolean stripRoot, Function<InputStream, InputStream> unpacker)
+  private static void extractTarBasedArchive(Path archiveFile, Path target, boolean stripRoot, Function<? super InputStream, ? extends InputStream> unpacker)
     throws Exception {
     try (TarArchiveInputStream archive = new TarArchiveInputStream(
       unpacker.apply(new BufferedInputStream(Files.newInputStream(archiveFile))))) {
@@ -481,5 +499,25 @@ public final class BuildDependenciesUtil {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static String directoryContentToString(Path directory, String humanReadableName) {
+    List<Path> contents = listDirectory(directory);
+    StringBuilder sb = new StringBuilder();
+
+    sb.append("Directory contents of ");
+    sb.append(directory.toAbsolutePath());
+    sb.append(" (");
+    sb.append(humanReadableName);
+    sb.append("), ");
+    sb.append(contents.size());
+    sb.append(" entries:");
+
+    for (Path p : contents) {
+      sb.append(Files.isDirectory(p) ? "\nD " : "\nF ");
+      sb.append(p.getFileName().toString());
+    }
+
+    return sb.toString();
   }
 }

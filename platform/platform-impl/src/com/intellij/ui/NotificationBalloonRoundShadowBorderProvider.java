@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons.Ide.RoundShadow;
 import com.intellij.util.ui.JBValue;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +15,9 @@ public class NotificationBalloonRoundShadowBorderProvider extends NotificationBa
   public static final JBValue CORNER_RADIUS = new JBValue.UIInteger("Notification.arc", 12);
 
   public NotificationBalloonRoundShadowBorderProvider(@NotNull Color fillColor, @NotNull Color borderColor) {
-    super(fillColor, borderColor);
+    super(fillColor, borderColor,
+          RoundShadow.Top, RoundShadow.Left, RoundShadow.Bottom, RoundShadow.Right,
+          RoundShadow.TopLeft, RoundShadow.TopRight, RoundShadow.BottomLeft, RoundShadow.BottomRight);
   }
 
   @Override

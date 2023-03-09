@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
 import com.intellij.ide.ui.AntialiasingType;
@@ -43,15 +43,15 @@ public class LabelPainter {
   private static final String SEPARATOR = "/";
   private static final JBColor TEXT_COLOR = CurrentBranchComponent.TEXT_COLOR;
 
-  @NotNull private final JComponent myComponent;
-  @NotNull private final LabelIconCache myIconCache;
+  private final @NotNull JComponent myComponent;
+  private final @NotNull LabelIconCache myIconCache;
 
-  @NotNull protected List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
+  protected @NotNull List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
   private int myHeight = JBUIScale.scale(22);
   private int myWidth = 0;
-  @NotNull protected Color myBackground = UIUtil.getTableBackground();
-  @Nullable private Color myGreyBackground = null;
-  @NotNull private Color myForeground = UIUtil.getTableForeground();
+  protected @NotNull Color myBackground = UIUtil.getTableBackground();
+  private @Nullable Color myGreyBackground = null;
+  private @NotNull Color myForeground = UIUtil.getTableForeground();
 
   private boolean myCompact;
   private boolean myLeftAligned;
@@ -66,7 +66,7 @@ public class LabelPainter {
                                @NotNull Color foreground,
                                boolean isSelected,
                                int availableWidth,
-                               @NotNull List<RefGroup> refGroups) {
+                               @NotNull List<? extends RefGroup> refGroups) {
     myBackground = background;
     myForeground = isSelected ? foreground : TEXT_COLOR;
 
@@ -82,12 +82,11 @@ public class LabelPainter {
     myWidth = presentation.second;
   }
 
-  @NotNull
-  private Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<? extends RefGroup> refGroups,
-                                                                             @NotNull FontMetrics fontMetrics,
-                                                                             @NotNull Color background,
-                                                                             int availableWidth,
-                                                                             boolean compact) {
+  private @NotNull Pair<List<Pair<String, LabelIcon>>, Integer> calculatePresentation(@NotNull List<? extends RefGroup> refGroups,
+                                                                                      @NotNull FontMetrics fontMetrics,
+                                                                                      @NotNull Color background,
+                                                                                      int availableWidth,
+                                                                                      boolean compact) {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
     List<Pair<String, LabelIcon>> labels = new ArrayList<>();
@@ -98,11 +97,10 @@ public class LabelPainter {
   }
 
 
-  @NotNull
-  private Pair<List<Pair<String, LabelIcon>>, Integer> calculateCompactPresentation(@NotNull List<? extends RefGroup> refGroups,
-                                                                                    @NotNull FontMetrics fontMetrics,
-                                                                                    @NotNull Color background,
-                                                                                    int availableWidth) {
+  private @NotNull Pair<List<Pair<String, LabelIcon>>, Integer> calculateCompactPresentation(@NotNull List<? extends RefGroup> refGroups,
+                                                                                             @NotNull FontMetrics fontMetrics,
+                                                                                             @NotNull Color background,
+                                                                                             int availableWidth) {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
     List<Pair<String, LabelIcon>> labels = new ArrayList<>();
@@ -123,11 +121,10 @@ public class LabelPainter {
     return Pair.create(labels, width);
   }
 
-  @NotNull
-  private Pair<List<Pair<String, LabelIcon>>, Integer> calculateLongPresentation(@NotNull List<? extends RefGroup> refGroups,
-                                                                                 @NotNull FontMetrics fontMetrics,
-                                                                                 @NotNull Color background,
-                                                                                 int availableWidth) {
+  private @NotNull Pair<List<Pair<String, LabelIcon>>, Integer> calculateLongPresentation(@NotNull List<? extends RefGroup> refGroups,
+                                                                                          @NotNull FontMetrics fontMetrics,
+                                                                                          @NotNull Color background,
+                                                                                          int availableWidth) {
     int width = LEFT_PADDING.get() + RIGHT_PADDING.get();
 
     List<Pair<String, LabelIcon>> labels = new ArrayList<>();
@@ -166,13 +163,11 @@ public class LabelPainter {
     return Pair.create(labels, width);
   }
 
-  @NotNull
-  private LabelIcon getIcon(int height, @NotNull Color background, @NotNull List<? extends Color> colors) {
+  private @NotNull LabelIcon getIcon(int height, @NotNull Color background, @NotNull List<? extends Color> colors) {
     return myIconCache.getIcon(myComponent, height, background, colors);
   }
 
-  @NotNull
-  private static List<Color> getColors(@NotNull Collection<? extends RefGroup> groups) {
+  private static @NotNull List<Color> getColors(@NotNull Collection<? extends RefGroup> groups) {
     LinkedHashMap<Color, Integer> usedColors = new LinkedHashMap<>();
 
     for (RefGroup group : groups) {
@@ -195,8 +190,7 @@ public class LabelPainter {
     return result;
   }
 
-  @NotNull
-  private static String getGroupText(@NotNull RefGroup group, @NotNull FontMetrics fontMetrics, int availableWidth) {
+  private static @NotNull String getGroupText(@NotNull RefGroup group, @NotNull FontMetrics fontMetrics, int availableWidth) {
     if (!group.isExpanded()) {
       return shortenRefName(group.getName(), fontMetrics, availableWidth);
     }
@@ -224,11 +218,10 @@ public class LabelPainter {
     return text.toString();
   }
 
-  @Nullable
-  private static Color calculateGreyBackground(@NotNull List<? extends RefGroup> refGroups,
-                                               @NotNull Color background,
-                                               boolean isSelected,
-                                               boolean isCompact) {
+  private static @Nullable Color calculateGreyBackground(@NotNull List<? extends RefGroup> refGroups,
+                                                         @NotNull Color background,
+                                                         boolean isSelected,
+                                                         boolean isCompact) {
     if (isSelected) return null;
     if (!isCompact) return getBranchPresentationBackground(background);
 
@@ -247,8 +240,7 @@ public class LabelPainter {
     return null;
   }
 
-  @NotNull
-  private static String shortenRefName(@NotNull @NlsSafe String refName, @NotNull FontMetrics fontMetrics, int availableWidth) {
+  private static @NotNull String shortenRefName(@NotNull @NlsSafe String refName, @NotNull FontMetrics fontMetrics, int availableWidth) {
     if (fontMetrics.stringWidth(refName) > availableWidth && refName.length() > MAX_LENGTH) {
       int separatorIndex = refName.indexOf(SEPARATOR);
       if (separatorIndex > TWO_DOTS.length()) {

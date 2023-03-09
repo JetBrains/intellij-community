@@ -42,12 +42,6 @@ internal class WorkspaceFolderImporter(
     addContentRoot(cachedFolders, allFolders)
     addCachedFolders(moduleType, cachedFolders, allFolders)
 
-    val annotationDirectories = setOf(mavenProject.getAnnotationProcessorDirectory(true),
-                                      mavenProject.getAnnotationProcessorDirectory(false))
-      .map { FileUtil.toSystemIndependentName(it) }
-    allFolders.filter { annotationDirectories.contains(it.path) && it is ContentRootCollector.UserOrGeneratedSourceFolder }
-      .forEach { (it as ContentRootCollector.UserOrGeneratedSourceFolder).isAnnotationFolder = true }
-
     for (root in ContentRootCollector.collect(allFolders)) {
       val excludedUrls = root.excludeFolders.map { exclude -> virtualFileUrlManager.fromPath(exclude.path) }
       val contentRootEntity = builder.addContentRootEntity(virtualFileUrlManager.fromPath(root.path),
@@ -197,10 +191,10 @@ internal class WorkspaceFolderImporter(
     fun toAbsolutePath(path: String) = MavenUtil.toPath(mavenProject, path).path
 
     mavenProject.sources.forEach { result.add(ContentRootCollector.SourceFolder(it, JavaSourceRootType.SOURCE)) }
-    mavenProject.resources.forEach { if (null != it.directory) result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.RESOURCE)) }
+    mavenProject.resources.forEach { result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.RESOURCE)) }
 
     mavenProject.testSources.forEach { result.add(ContentRootCollector.SourceFolder(it, JavaSourceRootType.TEST_SOURCE)) }
-    mavenProject.testResources.forEach { if (null != it.directory) result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.TEST_RESOURCE)) }
+    mavenProject.testResources.forEach { result.add(ContentRootCollector.SourceFolder(it.directory, JavaResourceRootType.TEST_RESOURCE)) }
 
     val buildHelperPlugin = BuildHelperMavenPluginUtil.findPlugin(mavenProject)
     if (buildHelperPlugin != null) {

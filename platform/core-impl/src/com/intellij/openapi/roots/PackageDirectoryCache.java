@@ -19,7 +19,7 @@ public interface PackageDirectoryCache {
 
   static @NotNull PackageDirectoryCache createCache(@NotNull List<? extends VirtualFile> roots) {
     return new PackageDirectoryCacheImpl((packageName, result) -> {
-      if ("".equals(packageName)) {
+      if (packageName.isEmpty()) {
         PackageDirectoryCacheImpl.addValidDirectories(roots, result);
       }
     }, (dir, name) -> true);

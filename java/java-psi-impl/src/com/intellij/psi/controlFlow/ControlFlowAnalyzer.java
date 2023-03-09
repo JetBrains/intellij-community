@@ -727,9 +727,15 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     myCurrentFlow.addInstruction(instruction);
     addElementOffsetLater(statement, false);
 
-    final PsiParameter iterationParameter = statement.getIterationParameter();
-    if (myPolicy.isParameterAccepted(iterationParameter)) {
-      generateWriteInstruction(iterationParameter);
+    PsiForeachDeclarationElement iterationDeclaration = statement.getIterationDeclaration();
+    if (iterationDeclaration instanceof PsiParameter) {
+      final PsiParameter iterationParameter = (PsiParameter)iterationDeclaration;
+      if (myPolicy.isParameterAccepted(iterationParameter)) {
+        generateWriteInstruction(iterationParameter);
+      }
+    } else if (iterationDeclaration instanceof PsiPattern) {
+      PsiPattern pattern = (PsiPattern)iterationDeclaration;
+      processPattern(pattern);
     }
     if (body != null) {
       body.accept(this);

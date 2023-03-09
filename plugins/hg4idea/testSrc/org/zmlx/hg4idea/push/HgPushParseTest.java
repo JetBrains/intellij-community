@@ -16,7 +16,6 @@
 package org.zmlx.hg4idea.push;
 
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,6 +23,7 @@ import org.junit.runners.Parameterized;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.Collection;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -41,7 +41,7 @@ public class HgPushParseTest {
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> createData() {
-    return ContainerUtil.newArrayList(new Object[][]{
+    return List.of(new Object[][]{
       {"DEFAULT_1", """
 pushing to /Users/user/TTT/AHG
 searching for changes

@@ -1,0 +1,10 @@
+$schema: https://json.schemastore.org/idea-inspection-profile-1.0.json
+
+include:
+  - "second.yml"
+
+inspections:
+  - inspection: TodoComment
+    severity: ERROR
+    ignore:
+      - "!file:Main.*"

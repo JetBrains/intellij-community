@@ -124,7 +124,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     private K myKey;
     private int myHash;
 
-    void setKey(K key, final int hash) {
+    void setKey(K key, int hash) {
       myKey = key;
       myHash = hash;
     }
@@ -367,14 +367,14 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   }
 
   @Override
-  public boolean replace(@NotNull K key, @NotNull final V oldValue, @NotNull final V newValue) {
+  public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
     boolean replaced = myMap.replace(createKeyReference(key), oldValue, newValue);
     processQueue();
     return replaced;
   }
 
   @Override
-  public V replace(@NotNull K key, @NotNull final V value) {
+  public V replace(@NotNull K key, @NotNull V value) {
     V replaced = myMap.replace(createKeyReference(key), value);
     processQueue();
     return replaced;

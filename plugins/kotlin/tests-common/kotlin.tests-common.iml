@@ -27,5 +27,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.high-level-api-impl-base" level="project" />
   </component>
 </module>

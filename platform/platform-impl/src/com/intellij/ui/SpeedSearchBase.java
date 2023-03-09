@@ -15,7 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
@@ -24,6 +24,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -45,8 +46,6 @@ import java.beans.PropertyChangeSupport;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
-import static com.intellij.util.ReflectionUtil.getMethodDeclaringClass;
-
 /**
  * Use {@link com.intellij.ui.speedSearch.SpeedSearchUtil} in renderer to highlight matching results
  */
@@ -54,7 +53,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private static final Logger LOG = Logger.getInstance(SpeedSearchBase.class);
 
   private static JBInsets borderInsets() {
-    return JBUI.insets("SpeedSearch.borderInsets", JBUI.insets(0, 0, 0, 0));
+    return JBUI.insets("SpeedSearch.borderInsets", JBUI.emptyInsets());
   }
 
   private static final Key<String> SEARCH_TEXT_KEY = Key.create("SpeedSearch.searchText");
@@ -110,8 +109,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       @Override
       public void focusGained(FocusEvent e) {
         if (!isStickySearch()) return;
-        String text = UIUtil.getClientProperty(myComponent, SEARCH_TEXT_KEY);
-        if (StringUtil.isEmpty(text)) return;
+        String text = ClientProperty.get(myComponent, SEARCH_TEXT_KEY);
+        if (Strings.isEmpty(text)) {
+          return;
+        }
         ApplicationManager.getApplication().invokeLater(() -> {
           if (myComponent.hasFocus()) {
             manageSearchPopup(createPopup(text)); // keep selection
@@ -144,7 +145,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        e.getPresentation().setEnabled(isPopupActive() && !StringUtil.isEmpty(getEnteredPrefix()));
+        e.getPresentation().setEnabled(isPopupActive() && !Strings.isEmpty(getEnteredPrefix()));
       }
       @Override
       public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -179,7 +180,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   public boolean isPopupActive() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return mySearchPopup != null && mySearchPopup.isVisible() ||
-           isStickySearch() && StringUtil.isNotEmpty(UIUtil.getClientProperty(myComponent, SEARCH_TEXT_KEY));
+           isStickySearch() &&
+           Strings.isNotEmpty(myComponent == null ? null : ClientProperty.get(myComponent, SEARCH_TEXT_KEY));
   }
 
 
@@ -188,7 +190,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if (!isPopupActive()) return null;
     final SpeedSearchComparator comparator = getComparator();
     final String recentSearchText = comparator.getRecentSearchText();
-    return StringUtil.isNotEmpty(recentSearchText) ? comparator.matchingFragments(recentSearchText, text) : null;
+    return Strings.isNotEmpty(recentSearchText) ? comparator.matchingFragments(recentSearchText, text) : null;
   }
 
   /**
@@ -494,6 +496,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
           String newText = oldText.substring(0, offs) + str + oldText.substring(offs);
           super.insertString(offs, str, a);
           handleInsert(newText);
+          updateSelection(findElement(newText));
         }
       });
 
@@ -514,7 +517,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
 
     private void updateLastPattern() {
-      String pattern = StringUtil.notNullize(mySearchField.getText());
+      String pattern = Strings.notNullize(mySearchField.getText());
       if (!pattern.equals(myLastPattern)) {
         myLastPattern = pattern;
         onSearchFieldUpdated(pattern);
@@ -604,7 +607,9 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   }
 
   protected void onSearchFieldUpdated(String pattern) {
-    if (Registry.is("ide.speed.search.close.when.empty") && StringUtil.isEmpty(pattern)) hidePopup();
+    if (Strings.isEmpty(pattern) && Registry.is("ide.speed.search.close.when.empty")) {
+      hidePopup();
+    }
   }
 
   protected class SearchField extends ExtendableTextField {
@@ -736,7 +741,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         myListenerDisposable = null;
       }
       if (isStickySearch()) {
-        UIUtil.putClientProperty(myComponent, SEARCH_TEXT_KEY, StringUtil.nullize(getEnteredPrefix()));
+        myComponent.putClientProperty(SEARCH_TEXT_KEY, Strings.nullize(getEnteredPrefix()));
       }
     }
     else if (searchPopup != null) {
@@ -801,10 +806,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   // TODO remove after the transition period
   private final boolean myElementAtImplemented;
+
   {
     boolean elementAtImplemented;
     try {
-      elementAtImplemented = getMethodDeclaringClass(getClass(), "getElementAt", Integer.TYPE) != SpeedSearchBase.class;
+      elementAtImplemented = ReflectionUtil.getMethodDeclaringClass(getClass(), "getElementAt", Integer.TYPE) != SpeedSearchBase.class;
     }
     catch (Exception ex) {
       elementAtImplemented = false;
@@ -813,8 +819,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     boolean elementIteratorImplemented = false;
     boolean elementCountImplemented = false;
     try {
-      elementCountImplemented = getMethodDeclaringClass(getClass(), "getElementCount") != SpeedSearchBase.class;
-      elementIteratorImplemented = getMethodDeclaringClass(getClass(), "getElementIterator", Integer.TYPE) != SpeedSearchBase.class;
+      elementCountImplemented = ReflectionUtil.getMethodDeclaringClass(getClass(), "getElementCount") != SpeedSearchBase.class;
+      elementIteratorImplemented = ReflectionUtil.getMethodDeclaringClass(getClass(), "getElementIterator", Integer.TYPE) != SpeedSearchBase.class;
     }
     catch (Exception ignore) { }
     if (!elementIteratorImplemented && !(elementAtImplemented && elementCountImplemented)) {

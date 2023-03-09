@@ -36,12 +36,12 @@ public abstract class FacetBasedDetectedFrameworkDescription<F extends Facet, C 
   private static final Logger LOG = Logger.getInstance(FacetBasedDetectedFrameworkDescription.class);
   private final FacetBasedFrameworkDetector<F, C> myDetector;
   private final C myConfiguration;
-  private final Set<VirtualFile> myRelatedFiles;
+  private final Set<? extends VirtualFile> myRelatedFiles;
   private final FacetType<F,C> myFacetType;
 
   public FacetBasedDetectedFrameworkDescription(FacetBasedFrameworkDetector<F, C> detector,
                                                 @NotNull C configuration,
-                                                Set<VirtualFile> files) {
+                                                Set<? extends VirtualFile> files) {
     myDetector = detector;
     myConfiguration = configuration;
     myRelatedFiles = files;

@@ -9,7 +9,7 @@ import java.util.function.Predicate
 internal class DescriptorBasedMessageBusConnection(@JvmField val module: PluginDescriptor,
                                                    @JvmField val topic: Topic<*>,
                                                    @JvmField val handlers: List<Any>) : MessageHandlerHolder {
-  override fun collectHandlers(topic: Topic<*>, result: MutableList<Any>) {
+  override fun collectHandlers(topic: Topic<*>, result: MutableList<in Any>) {
     if (this.topic === topic) {
       result.addAll(handlers)
     }

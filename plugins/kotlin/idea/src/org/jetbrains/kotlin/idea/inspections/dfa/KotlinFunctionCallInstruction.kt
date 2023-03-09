@@ -83,8 +83,7 @@ class KotlinFunctionCallInstruction(
                 if (dfaValue != null) {
                     val dfReferenceType = (dfaValue as? DfaTypeValue)?.dfType as? DfReferenceType
                     if (dfReferenceType != null) {
-                        val newType = dfReferenceType.dropTypeConstraint()
-                            .meet(dfReferenceType.constraint.convert(KtClassDef.typeConstraintFactory(call)).asDfType())
+                        val newType = dfReferenceType.convert(KtClassDef.typeConstraintFactory(call))
                         dfaValue = factory.fromDfType(newType)
                     }
                     return MethodEffect(dfaValue, pure)
@@ -167,9 +166,7 @@ class KotlinFunctionCallInstruction(
         val constructedClass = (expr.resolveToCall()?.resultingDescriptor as? ConstructorDescriptor)?.constructedClass
         if (constructedClass != null) {
             // Set exact class type for constructor
-            return TypeConstraints.exactClass(KtClassDef(constructedClass))
-                .convert(KtClassDef.typeConstraintFactory(expr))
-                .asDfType().meet(DfTypes.NOT_NULL_OBJECT)
+            return TypeConstraints.exactClass(KtClassDef(constructedClass)).asDfType().meet(DfTypes.NOT_NULL_OBJECT)
         }
         return expr.getKotlinType().toDfType()
     }

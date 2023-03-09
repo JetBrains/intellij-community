@@ -19,7 +19,7 @@ class MaxOrMinTransformation(
 
     override fun generateCode(chainedCallGenerator: ChainedCallGenerator): KtExpression {
         val call = chainedCallGenerator.generate(presentation)
-        return KtPsiFactory(call).createExpressionByPattern(
+        return KtPsiFactory(call.project).createExpressionByPattern(
             "$0\n ?: $1", call, initialization.initializer,
             reformat = chainedCallGenerator.reformat
         )

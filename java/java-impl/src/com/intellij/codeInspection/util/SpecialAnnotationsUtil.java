@@ -30,6 +30,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
+import java.awt.*;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -96,6 +98,7 @@ public final class SpecialAnnotationsUtil {
                                                            final SortedListModel<String> listModel,
                                                            final Predicate<? super PsiClass> isApplicable) {
     final JList<String> injectionList = new JBList<>(listModel);
+    injectionList.setBorder(JBUI.Borders.empty());
 
     injectionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
     ToolbarDecorator toolbarDecorator = ToolbarDecorator
@@ -122,7 +125,7 @@ public final class SpecialAnnotationsUtil {
       })
       .setAddActionName(JavaBundle.message("special.annotations.list.add.annotation.class"))
       .disableUpDownActions()
-      .setToolbarPosition(ActionToolbarPosition.RIGHT);
+      .setToolbarPosition(ActionToolbarPosition.LEFT);
 
     if (acceptPatterns) {
       toolbarDecorator
@@ -148,7 +151,9 @@ public final class SpecialAnnotationsUtil {
                                  JavaBundle.message("special.annotations.list.remove.pattern"));
     }
     final var panel = toolbarDecorator.createPanel();
-    panel.setMinimumSize(InspectionOptionsPanel.getMinimumListSize());
+    final Dimension minimumSize = acceptPatterns ? InspectionOptionsPanel.getMinimumLongListSize() : InspectionOptionsPanel.getMinimumListSize();
+    panel.setMinimumSize(minimumSize);
+    panel.setPreferredSize(minimumSize);
 
     if (borderTitle == null) return panel;
 

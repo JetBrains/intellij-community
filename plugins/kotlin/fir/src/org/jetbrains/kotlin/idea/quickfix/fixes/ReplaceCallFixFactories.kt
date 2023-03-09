@@ -5,11 +5,15 @@ package org.jetbrains.kotlin.idea.quickfix.fixes
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.quickfix.ReplaceImplicitReceiverCallFix
 import org.jetbrains.kotlin.idea.quickfix.ReplaceInfixOrOperatorCallFix
 import org.jetbrains.kotlin.idea.quickfix.ReplaceWithSafeCallFix
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.unwrapParenthesesLabelsAndAnnotations
@@ -53,13 +57,22 @@ object ReplaceCallFixFactories {
     val unsafeOperatorCallFactory =
         diagnosticFixFactory(KtFirDiagnostic.UnsafeOperatorCall::class) { diagnostic ->
             val psi = diagnostic.psi
-            val operationToken = psi.safeAs<KtOperationReferenceExpression>()?.getReferencedNameElementType()
+            val operationToken = when (psi) {
+                is KtOperationReferenceExpression -> psi.getReferencedNameElementType()
+                is KtBinaryExpression -> psi.operationToken
+                else -> null
+            }
             if (operationToken == KtTokens.EQ || operationToken in OperatorConventions.COMPARISON_OPERATIONS) {
                 // This matches FE1.0 behavior; see ReplaceInfixOrOperatorCallFixFactory.kt
                 return@diagnosticFixFactory emptyList()
             }
-
             val target = psi.getNonStrictParentOfType<KtBinaryExpression>() ?: return@diagnosticFixFactory emptyList()
+            val left = target.left
+            if (operationToken in KtTokens.AUGMENTED_ASSIGNMENTS && left is KtArrayAccessExpression) {
+                val type = left.arrayExpression?.getKtType() ?: return@diagnosticFixFactory emptyList()
+                val argumentType = (type as? KtNonErrorClassType)?.ownTypeArguments?.firstOrNull()
+                if (type.isMap() && argumentType?.type?.isMarkedNullable != true) return@diagnosticFixFactory emptyList()
+            }
             listOf(ReplaceInfixOrOperatorCallFix(target, shouldHaveNotNullType(target), diagnostic.operator))
         }
 
@@ -88,5 +101,13 @@ object ReplaceCallFixFactories {
         // `s.length` in `val x: Int = s.length` with a safe call, it should be replaced with `s.length ?: <caret>`.
         val expectedType = expression.getExpectedType()
         return expectedType?.nullability == KtTypeNullability.NON_NULLABLE
+    }
+
+    context(KtAnalysisSession)
+    private fun KtType.isMap(): Boolean {
+        val symbol = this.expandedClassSymbol ?: return false
+        if (symbol.name?.asString()?.endsWith("Map") != true) return false
+        val mapSymbol = getClassOrObjectSymbolByClassId(StandardClassIds.Map) ?: return false
+        return symbol.isSubClassOf(mapSymbol)
     }
 }

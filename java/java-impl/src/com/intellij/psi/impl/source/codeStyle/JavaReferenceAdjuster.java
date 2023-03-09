@@ -271,7 +271,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
               return false;
             }
             if (!refClass.hasModifierProperty(PsiModifier.STATIC)) {
-              PsiElement enclosingStaticElement = getEnclosingStaticElementOrDummy(psiReference);
+              PsiElement enclosingStaticElement = PsiUtil.getEnclosingStaticElement(psiReference, null);
               if (enclosingStaticElement != null && !PsiTreeUtil.isAncestor(enclosingStaticElement, refClass, false)) {
                 return false;
               }
@@ -304,20 +304,6 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
       return helper.resolveReferencedVariable(referenceText, psiReference) == null;
     }
     return false;
-  }
-
-  @Nullable
-  private static PsiElement getEnclosingStaticElementOrDummy(@NotNull PsiElement place) {
-    PsiElement parent = place;
-    while (parent != null) {
-      if (parent instanceof DummyHolder) return parent;
-      if (parent instanceof PsiFile) break;
-      if (parent instanceof PsiModifierListOwner && ((PsiModifierListOwner)parent).hasModifierProperty(PsiModifier.STATIC)) {
-        return parent;
-      }
-      parent = parent.getParent();
-    }
-    return null;
   }
 
   @NotNull

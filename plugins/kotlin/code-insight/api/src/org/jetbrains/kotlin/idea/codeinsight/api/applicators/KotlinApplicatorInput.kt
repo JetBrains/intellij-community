@@ -7,7 +7,7 @@ import com.intellij.psi.PsiElement
 /**
  * Data which [KotlinApplicator] is needed to perform the fix
  *
- * Created by [KotlinApplicatorInputProvider] or via [org.jetbrains.kotlin.idea.codeinsight.api.fixes.KotlinDiagnosticFixFactory]
+ * Created via [org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinDiagnosticFixFactory]
  *
  * Should not store inside
  * - Everything that came from [org.jetbrains.kotlin.analysis.api.KtAnalysisSession] like :

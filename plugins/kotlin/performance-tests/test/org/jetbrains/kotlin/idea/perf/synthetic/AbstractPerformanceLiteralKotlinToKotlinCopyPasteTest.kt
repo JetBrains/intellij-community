@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.perf.synthetic
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
@@ -48,7 +48,7 @@ abstract class AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest : AbstractC
     }
 
     private fun doWarmUpPerfTest() {
-        val fileEditorManager = FileEditorManagerEx.getInstance(project)
+        val fileEditorManager = FileEditorManager.getInstance(project)
         performanceTest<Pair<PsiFile, PsiFile>, Unit> {
             name(WARM_UP)
             stats(stats)
@@ -90,7 +90,7 @@ abstract class AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest : AbstractC
         val testPath: String = dataFilePath(fileName())
         val expectedPath = File(testPath.replace(".kt", ".expected.kt"))
 
-        val fileEditorManager = FileEditorManagerEx.getInstance(project)
+        val fileEditorManager = FileEditorManager.getInstance(project)
         performanceTest<Array<PsiFile>, Unit> {
             name(testName)
             stats(stats)

@@ -1,5 +1,6 @@
 {
   "type": "MARKED_ELEMENT",
   "newName": "second",
-  "mainFile": "RenameKotlinPrimaryConstructorProperty.kt"
+  "mainFile": "RenameKotlinPrimaryConstructorProperty.kt",
+  "enabledInK2": true
 }

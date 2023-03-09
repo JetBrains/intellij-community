@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
-public final class GotoModuleDirAction extends FileChooserAction {
+final class GotoModuleDirAction extends FileChooserAction {
   @Override
   protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getModulePath(e) != null);

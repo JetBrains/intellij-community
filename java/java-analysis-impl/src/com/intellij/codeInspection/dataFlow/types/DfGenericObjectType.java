@@ -139,6 +139,13 @@ final class DfGenericObjectType extends DfAntiConstantType<Object> implements Df
   }
 
   @Override
+  public @NotNull DfReferenceType convert(TypeConstraints.@NotNull TypeConstraintFactory factory) {
+    TypeConstraint newConstraint = myConstraint.convert(factory);
+    DfType newSpecialFieldType = (mySpecialFieldType instanceof DfReferenceType refType) ? refType.convert(factory) : mySpecialFieldType;
+    return new DfGenericObjectType(myNotValues, newConstraint, myNullability, myMutability, mySpecialField, newSpecialFieldType, myLocal);
+  }
+
+  @Override
   public boolean isSuperType(@NotNull DfType other) {
     if (other == BOTTOM) return true;
     if (other instanceof DfNullConstantType) {

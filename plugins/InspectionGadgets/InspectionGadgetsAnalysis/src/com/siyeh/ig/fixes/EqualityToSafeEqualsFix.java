@@ -75,7 +75,7 @@ public final class EqualityToSafeEqualsFix extends InspectionGadgetsFix implemen
   }
 
   @Override
-  public void doFix(Project project, ProblemDescriptor descriptor) {
+  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement comparisonToken = descriptor.getPsiElement();
     final PsiElement parent = comparisonToken.getParent();
     if (!(parent instanceof PsiBinaryExpression)) {

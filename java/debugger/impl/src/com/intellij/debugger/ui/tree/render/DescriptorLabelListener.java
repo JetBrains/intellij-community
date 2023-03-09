@@ -16,7 +16,6 @@
 package com.intellij.debugger.ui.tree.render;
 
 
-
 public interface DescriptorLabelListener {
   DescriptorLabelListener DUMMY_LISTENER = new DescriptorLabelListener() {
     @Override

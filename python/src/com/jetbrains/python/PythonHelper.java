@@ -30,8 +30,7 @@ public enum PythonHelper implements HelperPackage {
   VIRTUALENV_ZIPAPP("virtualenv-20.16.7.pyz"),
   PY2_VIRTUALENV_ZIPAPP("virtualenv-20.13.0.pyz"),
 
-  COVERAGEPY_OLD("coveragepy_old", ""),
-  COVERAGEPY_NEW("coveragepy_new", ""),
+  COVERAGEPY("coveragepy", ""),
   COVERAGE("coverage_runner", "run_coverage"),
   DEBUGGER("pydev", "pydevd", HelperDependency.THRIFTPY),
 

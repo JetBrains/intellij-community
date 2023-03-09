@@ -9,9 +9,8 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.AddAccessorApplicator
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAccessorUtils
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
@@ -21,10 +20,10 @@ import org.jetbrains.kotlin.psi.KtProperty
 abstract class AddAccessorsIntention(
   private val addGetter: Boolean,
   private val addSetter: Boolean
-) : SelfTargetingRangeIntention<KtProperty>(KtProperty::class.java, AddAccessorApplicator.applicator(addGetter, addSetter).getFamilyName()) {
+) : SelfTargetingRangeIntention<KtProperty>(KtProperty::class.java, AddAccessorUtils.familyAndActionName(addGetter, addSetter)) {
 
     override fun applyTo(element: KtProperty, editor: Editor?) {
-        AddAccessorApplicator.applicator(addGetter, addSetter).applyTo(element, KotlinApplicatorInput.Empty, element.project, editor)
+        AddAccessorUtils.addAccessors(element, addGetter, addSetter, editor)
     }
 
     override fun applicabilityRange(element: KtProperty): TextRange? {

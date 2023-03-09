@@ -1,18 +1,31 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.vm
 
-import kotlinx.coroutines.flow.SharedFlow
+import com.intellij.ide.navbar.NavBarItem
+import com.intellij.model.Pointer
 import kotlinx.coroutines.flow.StateFlow
 
 internal interface NavBarVm {
 
-  val items: StateFlow<List<NavBarVmItem>>
+  val items: StateFlow<List<NavBarItemVm>>
 
-  val popup: SharedFlow<Pair<NavBarVmItem, NavBarPopupVm>>
+  val selectedIndex: StateFlow<Int>
 
-  fun selectItem(item: NavBarVmItem)
+  val popup: StateFlow<NavBarPopupVm?>
 
-  fun activateItem(item: NavBarVmItem)
+  fun selection(): List<Pointer<out NavBarItem>>
+
+  enum class SelectionShift {
+    FIRST,
+    PREV,
+    NEXT,
+    LAST,
+    ;
+  }
+
+  fun shiftSelectionTo(shift: SelectionShift)
 
   fun selectTail()
+
+  fun showPopup()
 }

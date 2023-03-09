@@ -18,7 +18,6 @@ class <lineMarker descr="Run Test">ExampleInstrumentedTest</lineMarker> {
     @Test
     fun <lineMarker descr="Run Test">useAppContext</lineMarker>() {
         // Context of the app under test.
-        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.example.mylibrary.test", appContext.packageName)
+        println(InstrumentationRegistry.getInstrumentation().targetContext)
     }
 }

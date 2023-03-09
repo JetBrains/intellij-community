@@ -45,7 +45,7 @@ class PyProjectSynchronizerProviderTest : LightPlatformTestCase() {
     `when`(unsupportedRemoteSdkAdditionalData.remoteConnectionType).thenReturn(TestCredentialsType.INSTANCE)
     `when`(sdk.sdkAdditionalData).thenReturn(unsupportedRemoteSdkAdditionalData)
 
-    PyProjectSynchronizerProvider.EP_NAME.getPoint().registerExtension(PyTestProjectSynchronizerProvider(), testRootDisposable)
+    PyProjectSynchronizerProvider.EP_NAME.point.registerExtension(PyTestProjectSynchronizerProvider(), testRootDisposable)
 
     assertEquals(PyTestProjectSynchronizer.INSTANCE, PyProjectSynchronizerProvider.getSynchronizer(sdk))
   }

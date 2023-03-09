@@ -70,7 +70,7 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
   }
 
   @Override
-  public ArtifactExternalDependenciesImporter getArtifactExternalDependenciesImporter() {
+  public @NotNull ArtifactExternalDependenciesImporter getArtifactExternalDependenciesImporter() {
     return myArtifactExternalDependenciesImporter;
   }
 

@@ -72,7 +72,7 @@ public final class UnifiedDiffWriter {
                            @NotNull Writer writer,
                            @NotNull String lineSeparator,
                            @Nullable CommitContext commitContext,
-                           @Nullable List<PatchEP> patchEpExtensions) throws IOException {
+                           @Nullable List<? extends PatchEP> patchEpExtensions) throws IOException {
     boolean forceUnixSeparators = shouldForceUnixLineSeparator(project);
     String headerLineSeparator = forceUnixSeparators ? LineSeparator.LF.getSeparatorString()
                                                      : lineSeparator;

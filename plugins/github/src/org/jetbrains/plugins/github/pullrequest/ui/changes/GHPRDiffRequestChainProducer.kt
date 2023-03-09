@@ -46,6 +46,7 @@ open class GHPRDiffRequestChainProducer(
   private val dataProvider: GHPRDataProvider,
   private val avatarIconsProvider: GHAvatarIconsProvider,
   private val repositoryDataService: GHPRRepositoryDataService,
+  private val ghostUser: GHUser,
   private val currentUser: GHUser
 ) : DiffRequestChainProducer {
 
@@ -122,6 +123,7 @@ open class GHPRDiffRequestChainProducer(
                                      dataProvider.reviewData, dataProvider.detailsData, avatarIconsProvider,
                                      repositoryDataService,
                                      diffData,
+                                     ghostUser,
                                      currentUser)
   }
 

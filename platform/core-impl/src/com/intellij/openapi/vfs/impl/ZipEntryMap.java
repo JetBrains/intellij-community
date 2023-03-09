@@ -171,24 +171,7 @@ final class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
 
     @Override
     public Iterator<Entry<String, ArchiveHandler.EntryInfo>> iterator() {
-      Iterator<? extends ArchiveHandler.EntryInfo> iterator = ContainerUtil.iterate(Arrays.asList(entries), Conditions.notNull()).iterator();
-      return new Iterator<Entry<String, ArchiveHandler.EntryInfo>>() {
-        @Override
-        public boolean hasNext() {
-          return iterator.hasNext();
-        }
-
-        @Override
-        public Entry<String, ArchiveHandler.EntryInfo> next() {
-          ArchiveHandler.EntryInfo entry = iterator.next();
-          return new SimpleEntry<>(getRelativePath(entry), entry);
-        }
-
-        @Override
-        public void remove() {
-          iterator.remove();
-        }
-      };
+      return ContainerUtil.map(ContainerUtil.filter(entries, Objects::nonNull), entry -> (Entry<String, ArchiveHandler.EntryInfo>)new SimpleEntry<>(getRelativePath(entry), entry)).iterator();
     }
 
     @Override

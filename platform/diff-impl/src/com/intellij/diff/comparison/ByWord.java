@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class ByWord {
+public final class ByWord {
   @NotNull
   public static List<DiffFragment> compare(@NotNull CharSequence text1,
                                            @NotNull CharSequence text2,

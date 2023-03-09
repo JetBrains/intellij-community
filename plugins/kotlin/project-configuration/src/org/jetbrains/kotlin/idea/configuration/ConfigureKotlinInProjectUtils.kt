@@ -29,9 +29,11 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.indices.KotlinPackageIndexUtils
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinNativeLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.LibraryEffectiveKindProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.util.projectScope
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
@@ -41,6 +43,7 @@ import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppres
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.vfilefinder.IdeVirtualFileFinder
+import org.jetbrains.kotlin.idea.vfilefinder.KlibMetaFileIndex
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinJavaScriptMetaFileIndex
 import org.jetbrains.kotlin.idea.vfilefinder.hasSomethingInPackage
 import org.jetbrains.kotlin.name.FqName
@@ -282,6 +285,7 @@ fun getConfigurationPossibilitiesForConfigureNotification(
                     moduleCanBeConfigured = true
                     runnableConfigurators.add(configurator)
                 }
+
                 ConfigureKotlinStatus.CONFIGURED -> moduleAlreadyConfigured = true
                 else -> {
                 }
@@ -311,6 +315,7 @@ fun hasAnyKotlinRuntimeInScope(module: Module): Boolean {
             scope.hasKotlinJvmRuntime(module.project)
                     || runReadAction { hasKotlinJsKjsmFile(LibraryKindSearchScope(module, scope, KotlinJavaScriptLibraryKind)) }
                     || hasKotlinCommonRuntimeInScope(scope)
+                    || hasKotlinNativeRuntimeInScope(module)
         })
     }
 }
@@ -341,7 +346,16 @@ fun hasKotlinCommonRuntimeInScope(scope: GlobalSearchScope): Boolean {
     return IdeVirtualFileFinder(scope).hasMetadataPackage(StandardNames.BUILT_INS_PACKAGE_FQ_NAME)
 }
 
+fun hasKotlinNativeRuntimeInScope(module: Module): Boolean {
+    return module.project.runReadActionInSmartMode {
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(true)
+        KlibMetaFileIndex.hasSomethingInPackage(KOTLIN_NATIVE_FQ_NAME, LibraryKindSearchScope(module, scope, KotlinNativeLibraryKind))
+    }
+}
+
 private val KOTLIN_JS_FQ_NAME = FqName("kotlin.js")
+
+private val KOTLIN_NATIVE_FQ_NAME = FqName("kotlin.native")
 
 private fun hasKotlinJsKjsmFile(scope: GlobalSearchScope): Boolean {
     return KotlinJavaScriptMetaFileIndex.hasSomethingInPackage(KOTLIN_JS_FQ_NAME, scope)

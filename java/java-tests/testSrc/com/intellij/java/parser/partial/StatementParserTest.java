@@ -39,6 +39,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testYieldLambda() { doParserTest("yield () -> {};"); }
   public void testYieldAssignment() { doParserTest("yield = 10;"); }
   public void testYieldCompatibility() { setLanguageLevel(LanguageLevel.JDK_12); doParserTest("yield(2);"); }
+  public void testYieldWithTextBlock() { doParserTest("yield \"\"\"foo\"\"\""); }
 
   public void testContinueNormal0() { doParserTest("continue;"); }
   public void testContinueNormal1() { doParserTest("continue LABEL;"); }
@@ -68,6 +69,9 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testForNormal1() { doParserTest("for( ; ; ) foo();"); }
   public void testForNormal2() { doParserTest("for(var x = 0; ;) ;"); }
   public void testForNormal3() { doParserTest("for(var x : list) ;"); }
+  public void testForNormal4() { doParserTest("for(foo();;) ;"); }
+  public void testForNormal5() { doParserTest("for(((foo()));;) ;"); }
+  public void testForIncorrect() { doParserTest("for ((Point(var x, var y)) : pointArray) ;"); } // pattern with parens can't be parsed
   public void testForIncomplete0() { doParserTest("for"); }
   public void testForIncomplete1() { doParserTest("for("); }
   public void testForIncomplete2() { doParserTest("for(int i = 0;"); }
@@ -85,7 +89,13 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testForComments1() { doParserTest("for(int i=0; i<1; i++, j++ /**/) ;"); }
 
   public void testForEach() { doParserTest("for(Object o : map.entrySet()) ;"); }
+  public void testForEach1() { doParserTest("for (Point(var x, var y) : pointArray) ;"); }
   public void testForEachIncomplete0() { doParserTest("for(Object  : list) ;"); }
+  public void testForEachIncomplete1() { doParserTest("for (Point(var x, var y) : pointArray ;"); }
+  public void testForEachIncomplete2() { doParserTest("for (Point(var x, var y) : ) ;"); }
+  public void testForEachIncomplete3() { doParserTest("for (Point(var x, var y) ) ;"); }
+  public void testForEachIncomplete4() { doParserTest("for (Point(var x, var y) "); }
+  public void testForEachIncomplete5() { doParserTest("for (Point(var x, var y) foo.bar + 1) ;"); }
 
   public void testIfNormalWithElse() { doParserTest("if (a){ f1(); } else{ f2(); }"); }
   public void testIfNormalNoElse() { doParserTest("if (a) f1();"); }

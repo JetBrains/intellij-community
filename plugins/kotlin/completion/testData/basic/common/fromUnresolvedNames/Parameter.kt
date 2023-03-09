@@ -1,4 +1,5 @@
 // FIR_COMPARISON
+// FIR_IDENTICAL
 // RUN_HIGHLIGHTING_BEFORE
 
 fun foo(p: Int, <caret>) {

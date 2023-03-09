@@ -351,7 +351,7 @@ public final class NamespaceStack implements Iterable<Namespace> {
    * @return The revised version of 'in-scope' if the scope has changed. If
    * there is no modification then the same input scope will be returned.
    */
-  private static Namespace[] checkNamespace(List<Namespace> store,
+  private static Namespace[] checkNamespace(List<? super Namespace> store,
                                             Namespace namespace, Namespace[] scope) {
     // Scope is always sorted as the primary namespace first, then the
     // rest are in prefix order.

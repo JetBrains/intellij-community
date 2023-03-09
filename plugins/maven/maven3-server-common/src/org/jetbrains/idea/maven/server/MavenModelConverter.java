@@ -102,7 +102,11 @@ public class MavenModelConverter {
 
     List<MavenResource> result = new ArrayList<MavenResource>(resources.size());
     for (Resource each : resources) {
-      result.add(new MavenResource(each.getDirectory(),
+      String directory = each.getDirectory();
+
+      if (null == directory) continue;
+
+      result.add(new MavenResource(directory,
                                    each.isFiltering(),
                                    each.getTargetPath(),
                                    ensurePatterns(each.getIncludes()),

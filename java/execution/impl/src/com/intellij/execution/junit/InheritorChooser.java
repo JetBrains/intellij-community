@@ -54,9 +54,9 @@ public class InheritorChooser {
                                           final Condition<? super PsiClass> acceptAbstractCondition) {
     if (containingClass != null && acceptAbstractCondition.value(containingClass)) {
       final Location location = context.getLocation();
-      if (location instanceof MethodLocation) {
-        final PsiClass aClass = ((MethodLocation)location).getContainingClass();
-        if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (location instanceof MethodLocation loc) {
+        final PsiClass aClass = loc.getContainingClass();
+        if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
           return false;
         }
       } else if (location instanceof PsiMemberParameterizedLocation) {

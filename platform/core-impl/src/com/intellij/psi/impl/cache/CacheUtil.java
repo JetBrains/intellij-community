@@ -10,8 +10,8 @@ import com.intellij.psi.tree.TokenSet;
 
 public final class CacheUtil {
 
-  public static boolean isInComments(final IElementType tokenType) {
-    final Language language = tokenType.getLanguage();
+  public static boolean isInComments(IElementType tokenType) {
+    Language language = tokenType.getLanguage();
 
     for (CommentTokenSetProvider provider : CommentTokenSetProvider.EXTENSION.allForLanguage(language)) {
       if (provider.isInComments(tokenType)) {
@@ -20,10 +20,10 @@ public final class CacheUtil {
     }
 
     boolean inComments = false;
-    final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
 
     if (parserDefinition != null) {
-      final TokenSet commentTokens = parserDefinition.getCommentTokens();
+      TokenSet commentTokens = parserDefinition.getCommentTokens();
 
       if (commentTokens.contains(tokenType)) {
         inComments = true;

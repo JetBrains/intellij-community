@@ -17,6 +17,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneParent
 import com.intellij.workspaceModel.storage.impl.updateOneToOneParentOfChild
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -106,12 +109,7 @@ open class SourceRootTestOrderEntityImpl(val dataSource: SourceRootTestOrderEnti
       dataSource as SourceRootTestOrderEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource.data) this.data = dataSource.data
-      if (parents != null) {
-        val contentRootNew = parents.filterIsInstance<ContentRootTestEntity>().single()
-        if ((this.contentRoot as WorkspaceEntityBase).id != (contentRootNew as WorkspaceEntityBase).id) {
-          this.contentRoot = contentRootNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

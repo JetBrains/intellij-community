@@ -1,13 +1,13 @@
 from typing import Any
+from typing_extensions import TypeAlias
 
 # Enable when pyasn1 gets stubs:
-# from pyasn1.codec.ber.encoder import AbstractItemEncoder, BooleanEncoder
-AbstractItemEncoder = Any
-BooleanEncoder = Any
+# from pyasn1.codec.ber.encoder import AbstractItemEncoder
+_AbstractItemEncoder: TypeAlias = Any
 
 CLASSES: Any
 
-class LDAPBooleanEncoder(AbstractItemEncoder):
+class LDAPBooleanEncoder(_AbstractItemEncoder):
     supportIndefLenMode: bool
     # Requires pyasn1 > 0.3.7
     def encodeValue(self, value, asn1Spec, encodeFun, **options): ...

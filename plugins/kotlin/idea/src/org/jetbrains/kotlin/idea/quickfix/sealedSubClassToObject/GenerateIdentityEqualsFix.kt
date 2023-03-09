@@ -16,9 +16,9 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 class GenerateIdentityEqualsFix : LocalQuickFix {
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val klass = descriptor.psiElement.getParentOfType<KtClass>(false) ?: return
-        val factory = KtPsiFactory(klass)
+        val psiFactory = KtPsiFactory(project)
 
-        val equalsFunction = factory.createFunction(
+        val equalsFunction = psiFactory.createFunction(
             CallableBuilder(FUNCTION).apply {
                 modifier(KtTokens.OVERRIDE_KEYWORD.value)
                 typeParams()
@@ -30,7 +30,7 @@ class GenerateIdentityEqualsFix : LocalQuickFix {
         )
         klass.addDeclaration(equalsFunction)
 
-        val hashCodeFunction = factory.createFunction(
+        val hashCodeFunction = psiFactory.createFunction(
             CallableBuilder(FUNCTION).apply {
                 modifier(KtTokens.OVERRIDE_KEYWORD.value)
                 typeParams()

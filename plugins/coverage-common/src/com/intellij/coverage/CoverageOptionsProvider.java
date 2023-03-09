@@ -48,8 +48,13 @@ public class CoverageOptionsProvider implements PersistentStateComponent<Coverag
     myState.myActivateViewOnRun = state.myActivateViewOnRun;
   }
 
+  public static final int REPLACE_SUITE = 0;
+  public static final int ADD_SUITE = 1;
+  public static final int IGNORE_SUITE = 2;
+  public static final int ASK_ON_NEW_SUITE = 3;
+
   public static class State {
-    public int myAddOrReplace = 3;
+    public int myAddOrReplace = ASK_ON_NEW_SUITE;
     public boolean myActivateViewOnRun = true;
   }
 }

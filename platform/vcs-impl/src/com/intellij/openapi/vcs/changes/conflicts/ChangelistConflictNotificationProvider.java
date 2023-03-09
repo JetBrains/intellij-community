@@ -16,9 +16,8 @@ final class ChangelistConflictNotificationProvider implements EditorNotification
   @Override
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                  @NotNull VirtualFile file) {
-    ChangelistConflictTracker conflictTracker = ChangelistConflictTracker.getInstance(project);
-    return conflictTracker.hasConflict(file)
-           ? fileEditor -> ChangelistConflictNotificationPanel.create(conflictTracker, file, fileEditor)
+    return ChangelistConflictTracker.getInstance(project).hasConflict(file)
+           ? fileEditor -> ChangelistConflictNotificationPanel.create(project, file, fileEditor)
            : null;
   }
 }

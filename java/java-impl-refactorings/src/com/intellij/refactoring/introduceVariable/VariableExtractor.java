@@ -119,9 +119,7 @@ final class VariableExtractor {
 
     highlight(var);
 
-    if (!(var instanceof PsiPatternVariable) || PsiUtil.isLanguageLevel16OrHigher(myContainingFile)) {
-      PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
-    }
+    PsiUtil.setModifierProperty(var, PsiModifier.FINAL, mySettings.isDeclareFinal());
     if (!(var instanceof PsiPatternVariable)) {
       if (mySettings.isDeclareVarType()) {
         PsiTypeElement typeElement = var.getTypeElement();
@@ -352,8 +350,7 @@ final class VariableExtractor {
         }
       }
     }
-    if (anchor instanceof PsiWhileStatement) {
-      PsiWhileStatement whileStatement = (PsiWhileStatement)anchor;
+    if (anchor instanceof PsiWhileStatement whileStatement) {
       PsiExpression condition = whileStatement.getCondition();
       if (condition != null && ContainerUtil.and(allOccurrences, occurrence -> PsiTreeUtil.isAncestor(whileStatement, occurrence, true))) {
         if (firstOccurrence != null && PsiTreeUtil.isAncestor(condition, firstOccurrence, false) &&

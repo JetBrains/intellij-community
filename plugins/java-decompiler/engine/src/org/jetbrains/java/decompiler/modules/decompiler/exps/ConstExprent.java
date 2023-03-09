@@ -36,6 +36,7 @@ public class ConstExprent extends Exprent {
   private static final String E = "E";
   private static final String PI = "PI";
 
+  @SuppressWarnings("UnnecessaryUnicodeEscape")
   private static final Map<Integer, String> CHAR_ESCAPES = Map.of(
     0x8, "\\b",   /* \u0008: backspace BS */
     0x9, "\\t",   /* \u0009: horizontal tab HT */

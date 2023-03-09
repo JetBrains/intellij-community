@@ -27,7 +27,7 @@ public class ReplaceExpressionWithTextFix extends InspectionGadgetsFix {
 
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiNewExpression newExpression = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiNewExpression.class);
     if (newExpression == null) return;
     PsiElement result = new CommentTracker().replaceAndRestoreComments(newExpression, myReplacementText);

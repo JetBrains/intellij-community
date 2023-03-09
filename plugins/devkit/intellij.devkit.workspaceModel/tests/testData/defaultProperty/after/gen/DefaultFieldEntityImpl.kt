@@ -91,8 +91,7 @@ open class DefaultFieldEntityImpl(val dataSource: DefaultFieldEntityData) : Defa
       if (this.data != dataSource.data) this.data = dataSource.data
       if (this.anotherVersion != dataSource.anotherVersion) this.anotherVersion = dataSource.anotherVersion
       if (this.description != dataSource.description) this.description = dataSource.description
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

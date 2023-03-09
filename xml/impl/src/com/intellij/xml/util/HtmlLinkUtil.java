@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -11,7 +12,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class HtmlLinkUtil {
+public final class HtmlLinkUtil {
   @NonNls public static final String LINK = "link";
 
   public static void processLinks(@NotNull final XmlFile xhtmlFile,

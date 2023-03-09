@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
-import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -191,9 +190,6 @@ public final class FileStatusMap implements Disposable {
   }
 
   TextRange getFileDirtyScopeForAllPassesCombined(@NotNull Document document) {
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (!ProblemHighlightFilter.shouldHighlightFile(file)) return null;
-
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) {
@@ -218,8 +214,6 @@ public final class FileStatusMap implements Disposable {
   @Nullable
   public TextRange getFileDirtyScope(@NotNull Document document, int passId) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (!ProblemHighlightFilter.shouldHighlightFile(file)) return null;
-
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       if (status == null) {
@@ -242,8 +236,8 @@ public final class FileStatusMap implements Disposable {
   void markFileScopeDirtyDefensively(@NotNull PsiFile file, @NotNull @NonNls Object reason) {
     assertAllowModifications();
     log("Mark dirty file defensively: ",file.getName(),reason);
-    // mark whole file dirty in case no subsequent PSI events will come, but file requires rehighlighting nevertheless
-    // e.g. in the case of quick typing/backspacing char
+    // mark whole file dirty in case no subsequent PSI events will come, but file requires re-highlighting nevertheless
+    // e.g., in the case of quick typing/backspacing char
     synchronized(myDocumentToStatusMap){
       Document document = PsiDocumentManager.getInstance(myProject).getCachedDocument(file);
       if (document == null) return;
@@ -267,9 +261,6 @@ public final class FileStatusMap implements Disposable {
   }
 
   public boolean allDirtyScopesAreNull(@NotNull Document document) {
-    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (!ProblemHighlightFilter.shouldHighlightFile(file)) return true;
-
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
       return status != null && !status.defensivelyMarked && status.wolfPassFinished && status.allDirtyScopesAreNull();

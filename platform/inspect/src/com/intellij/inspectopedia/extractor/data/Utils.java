@@ -4,7 +4,7 @@ package com.intellij.inspectopedia.extractor.data;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-public class Utils {
+public final class Utils {
 
     @Contract(pure = true)
     public static @NotNull String safeId(@NotNull String id) {

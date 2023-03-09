@@ -2,6 +2,7 @@
 package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +17,7 @@ public interface ModuleEx extends Module {
     }
   }
 
-  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "removal"})
-  default void moduleAdded(List<com.intellij.openapi.module.ModuleComponent> oldComponents) {
+  default void moduleAdded(List<? super ModuleComponent> oldComponents) {
   }
 
   default void projectClosed() {

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -20,6 +21,8 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 /**
  * @author ven
  */
@@ -32,9 +35,9 @@ public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJava
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("report.suspicious.but.possibly.correct.method.calls"), this, "REPORT_CONVERTIBLE_METHOD_CALLS");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_CONVERTIBLE_METHOD_CALLS", JavaAnalysisBundle.message("report.suspicious.but.possibly.correct.method.calls")));
   }
 
   @Override

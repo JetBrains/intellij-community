@@ -336,7 +336,7 @@ public class DomSimpleValuesTest extends DomTestCase {
 
   public void testConvertAnnotationOnType() {
     final MyElement element =
-      createElement("<a>" + "<my-generic-value>abc</my-generic-value>" + "<my-foo-generic-value>abc</my-foo-generic-value>" + "");
+      createElement("<a>" + "<my-generic-value>abc</my-generic-value>" + "<my-foo-generic-value>abc</my-foo-generic-value>");
     assertEquals("bar", element.getMyGenericValue().getValue());
     assertEquals("foo", element.getMyFooGenericValue().getValue());
   }

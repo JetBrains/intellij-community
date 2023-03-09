@@ -28,7 +28,7 @@ internal class RunToolbarShowHidePopupAction : AnAction(ActionsBundle.message("a
     return state == RunToolbarMainSlotState.CONFIGURATION
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
     e.arrowIcon()?.let {
@@ -40,6 +40,7 @@ internal class RunToolbarShowHidePopupAction : AnAction(ActionsBundle.message("a
         e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && checkMainSlotVisibility(it)
       }
     }
+    e.presentation.isEnabled = e.presentation.isEnabled && e.isFromActionToolbar
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {

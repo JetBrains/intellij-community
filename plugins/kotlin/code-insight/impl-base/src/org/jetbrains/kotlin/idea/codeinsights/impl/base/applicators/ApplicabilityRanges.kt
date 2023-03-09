@@ -5,6 +5,8 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
+import com.intellij.refactoring.suggested.endOffset
+import com.intellij.refactoring.suggested.startOffset
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
@@ -19,9 +21,15 @@ object ApplicabilityRanges {
     }
 
     val VISIBILITY_MODIFIER = modifier(KtTokens.VISIBILITY_MODIFIERS)
+    val MODALITY_MODIFIER = modifier(KtTokens.MODALITY_MODIFIERS)
 
     private fun modifier(tokens: TokenSet) = applicabilityTarget<KtModifierListOwner> { declaration ->
         declaration.modifierList?.getModifier(tokens)
+    }
+
+    val CALL_EXCLUDING_LAMBDA_ARGUMENT = applicabilityRanges<KtCallElement> { element ->
+        val endElement = element.valueArgumentList ?: element.calleeExpression ?: return@applicabilityRanges emptyList()
+        listOf(TextRange(0, endElement.endOffset - element.startOffset))
     }
 
     val VALUE_ARGUMENT_EXCLUDING_LAMBDA = applicabilityRanges<KtValueArgument> { element ->

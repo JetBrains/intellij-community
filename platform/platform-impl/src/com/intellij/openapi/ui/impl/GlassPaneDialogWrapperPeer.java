@@ -67,13 +67,11 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
       }
     }
 
-    Window owner = window != null ? window : JOptionPane.getRootFrame();
-
-    createDialog(owner);
+    createDialog(window == null ? JOptionPane.getRootFrame() : window);
   }
 
   public GlassPaneDialogWrapperPeer(@NotNull DialogWrapper wrapper) throws GlasspanePeerUnavailableException {
-    this((Project)null, wrapper);
+    this(null, wrapper);
   }
 
   public GlassPaneDialogWrapperPeer(DialogWrapper wrapper, @NotNull Component parent) throws GlasspanePeerUnavailableException {
@@ -87,16 +85,17 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
       owner = JOptionPane.getRootFrame();
     }
 
-    createDialog(owner);
+    myDialog = createDialog(owner);
   }
 
   @ApiStatus.Internal
-  public GlassPaneDialogWrapperPeer(@NotNull Window owner, @NotNull DialogWrapper wrapper) throws GlasspanePeerUnavailableException {
+  public GlassPaneDialogWrapperPeer(@NotNull DialogWrapper wrapper,
+                                    @NotNull IdeGlassPaneEx glassPane) throws GlasspanePeerUnavailableException {
     myWrapper = wrapper;
-    createDialog(owner);
+    myDialog = new MyDialog(glassPane, myWrapper);
   }
 
-  private void createDialog(@NotNull Window owner) throws GlasspanePeerUnavailableException {
+  private @NotNull MyDialog createDialog(@NotNull Window owner) throws GlasspanePeerUnavailableException {
     Window active = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     if (active instanceof JDialog || !(owner instanceof IdeFrame)) {
       throw new GlasspanePeerUnavailableException();
@@ -115,7 +114,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     }
 
     assert glassPane instanceof IdeGlassPaneEx : "GlassPane should be instance of IdeGlassPane!";
-    myDialog = new MyDialog((IdeGlassPaneEx)glassPane, myWrapper);
+    return new MyDialog((IdeGlassPaneEx)glassPane, myWrapper);
   }
 
   @Override
@@ -357,7 +356,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
 
       myPane = pane;
       myDialogWrapper = new WeakReference<>(wrapper);
-//      myProject = new WeakReference<Project>(project);
+      //      myProject = new WeakReference<Project>(project);
 
       myRootPane = new MyRootPane(this); // be careful with DialogWrapper.dispose()!
       Disposer.register(this, myRootPane);
@@ -433,7 +432,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
       for (int i = 0; i < myPane.getComponentCount(); i++) {
         Component c = myPane.getComponent(i);
         if (c instanceof TransparentLayeredPane) {
-          return (TransparentLayeredPane) c;
+          return (TransparentLayeredPane)c;
         }
       }
 
@@ -452,11 +451,12 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     }
 
     @Override
-    public void setVisible(final boolean show) {
+    public void setVisible(boolean show) {
       if (show) {
         if (!isTransparentPaneExist()) {
           myPane.add(myTransparentPane);
-        } else {
+        }
+        else {
           myPreviouslyFocusedComponent = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         }
 
@@ -473,14 +473,16 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
       if (show) {
         myTransparentPane.revalidate();
         myTransparentPane.repaint();
-      } else {
+      }
+      else {
         myTransparentPane.remove(myWrapperPane);
         myTransparentPane.revalidate();
         myTransparentPane.repaint();
 
         if (myPreviouslyFocusedComponent != null) {
           Component component = myPreviouslyFocusedComponent;
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
+          IdeFocusManager.getGlobalInstance()
+            .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
           myPreviouslyFocusedComponent = null;
         }
 
@@ -508,7 +510,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
 
     @Override
     protected void paintComponent(final Graphics g) {
-      final Graphics2D g2 = (Graphics2D) g;
+      final Graphics2D g2 = (Graphics2D)g;
       if (shadow != null) {
         UIUtil.drawImage(g2, shadow, 0, 0, null);
       }
@@ -623,7 +625,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     @Override
     protected JLayeredPane createLayeredPane() {
       JLayeredPane p = new JBLayeredPane();
-      p.setName(this.getName()+".layeredPane");
+      p.setName(this.getName() + ".layeredPane");
       return p;
     }
 
@@ -654,7 +656,8 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     @Override
     public void setContentPane(Container contentPane) {
       super.setContentPane(contentPane);
-      contentPane.addMouseMotionListener(new MouseMotionAdapter() {}); // listen to mouse motion events for a11y
+      contentPane.addMouseMotionListener(new MouseMotionAdapter() {
+      }); // listen to mouse motion events for a11y
     }
   }
 

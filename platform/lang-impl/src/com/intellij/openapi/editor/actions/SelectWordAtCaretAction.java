@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.DumbAware;
@@ -110,7 +109,7 @@ public class SelectWordAtCaretAction extends EditorAction implements DumbAware {
       int startOffset = editor.logicalPositionToOffset(new LogicalPosition(guide.startLine, 0));
       int endOffset = guide.endLine >= doc.getLineCount() ? doc.getTextLength() : doc.getLineStartOffset(guide.endLine);
 
-      final VirtualFile file = ((EditorEx)editor).getVirtualFile();
+      final VirtualFile file = editor.getVirtualFile();
       if (file != null) {
         // Make sure selection contains closing matching brace.
 

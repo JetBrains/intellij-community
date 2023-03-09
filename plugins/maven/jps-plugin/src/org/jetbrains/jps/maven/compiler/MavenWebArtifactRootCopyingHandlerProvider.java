@@ -121,7 +121,7 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
     }
 
     protected int configurationHash() {
-      int hash = 0;
+      int hash = 1;
       hash = 31 * hash + myWarRootConfig.includes.hashCode();
       hash = 31 * hash + myWarRootConfig.excludes.hashCode();
       hash = 31 * hash + myWarRootConfig.computeConfigurationHash();

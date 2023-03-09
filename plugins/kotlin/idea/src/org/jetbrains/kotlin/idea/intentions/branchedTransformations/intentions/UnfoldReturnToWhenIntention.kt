@@ -28,7 +28,7 @@ class UnfoldReturnToWhenIntention : LowPriorityAction, SelfTargetingRangeIntenti
     }
 
     override fun applyTo(element: KtReturnExpression, editor: Editor?) {
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
         val context = element.analyze()
 
         val whenExpression = element.returnedExpression as KtWhenExpression

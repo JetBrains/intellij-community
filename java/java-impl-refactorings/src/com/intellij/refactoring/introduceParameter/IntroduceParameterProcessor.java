@@ -517,35 +517,42 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   private PsiMethod generateDelegate(final PsiMethod methodToReplaceIn) throws IncorrectOperationException {
+    final PsiMethod delegate = createDelegate(methodToReplaceIn, myParameterInitializer.getText(), myParametersToRemove);
+    return (PsiMethod)methodToReplaceIn.getContainingClass().addBefore(delegate, methodToReplaceIn);
+  }
+
+  protected static @NotNull PsiMethod createDelegate(final @NotNull PsiMethod methodToReplaceIn,
+                                                   final @NotNull String parameterInitializer,
+                                                   final @NotNull IntList parametersToRemove) {
     final PsiMethod delegate = (PsiMethod)methodToReplaceIn.copy();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myManager.getProject());
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(methodToReplaceIn.getProject());
     ChangeSignatureProcessor.makeEmptyBody(elementFactory, delegate);
     final PsiCallExpression callExpression = ChangeSignatureProcessor.addDelegatingCallTemplate(delegate, delegate.getName());
+    final PsiExpression initializer = elementFactory.createExpressionFromText(parameterInitializer, callExpression);
     final PsiExpressionList argumentList = callExpression.getArgumentList();
     assert argumentList != null;
     final PsiParameter[] psiParameters = methodToReplaceIn.getParameterList().getParameters();
 
-    final PsiParameter anchorParameter = getAnchorParameter(methodToReplaceIn);
     if (psiParameters.length == 0) {
-      argumentList.add(myParameterInitializer);
+      argumentList.add(initializer);
     }
     else {
+      final PsiParameter anchorParameter = getAnchorParameter(methodToReplaceIn);
       if (anchorParameter == null) {
-        argumentList.add(myParameterInitializer);
+        argumentList.add(initializer);
       }
       for (int i = 0; i < psiParameters.length; i++) {
         PsiParameter psiParameter = psiParameters[i];
-        if (!myParametersToRemove.contains(i)) {
+        if (!parametersToRemove.contains(i)) {
           final PsiExpression expression = elementFactory.createExpressionFromText(psiParameter.getName(), delegate);
           argumentList.add(expression);
         }
         if (psiParameter == anchorParameter) {
-          argumentList.add(myParameterInitializer);
+          argumentList.add(initializer);
         }
       }
     }
-
-    return (PsiMethod)methodToReplaceIn.getContainingClass().addBefore(delegate, methodToReplaceIn);
+    return delegate;
   }
 
   static PsiType getInitializerType(PsiType forcedType, PsiExpression parameterInitializer, PsiLocalVariable localVariable) {
@@ -645,7 +652,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   @Nullable
-  private static PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {
+  protected static PsiParameter getAnchorParameter(PsiMethod methodToReplaceIn) {
     PsiParameterList parameterList = methodToReplaceIn.getParameterList();
     final PsiParameter anchorParameter;
     final PsiParameter[] parameters = parameterList.getParameters();

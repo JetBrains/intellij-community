@@ -27,7 +27,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DynamicExtensionPointsTester {
+public final class DynamicExtensionPointsTester {
   public static final Set<String> EXTENSION_POINTS_WHITE_LIST = Collections.emptySet();
 
   public static void checkDynamicExtensionPoints(Function<? super String, String> namer) {

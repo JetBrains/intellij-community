@@ -1,6 +1,7 @@
 from _typeshed import Self
 from collections.abc import Callable, Iterable, Iterator
-from typing import Any, Generic, Pattern, TypeVar, overload
+from re import Pattern
+from typing import Any, Generic, TypeVar, overload
 from typing_extensions import TypeAlias
 
 from . import BeautifulSoup
@@ -8,7 +9,6 @@ from .builder import TreeBuilder
 from .formatter import Formatter, _EntitySubstitution
 
 DEFAULT_OUTPUT_ENCODING: str
-PY3K: bool
 nonwhitespace_re: Pattern[str]
 whitespace_re: Pattern[str]
 PYTHON_SPECIFIC_ENCODINGS: set[str]
@@ -73,7 +73,7 @@ class PageElement:
         self,
         name: _Strainable | SoupStrainer | None = ...,
         attrs: dict[str, _Strainable] | _Strainable = ...,
-        text: _Strainable | None = ...,
+        string: _Strainable | None = ...,
         **kwargs: _Strainable,
     ) -> Tag | NavigableString | None: ...
     findNext = find_next
@@ -81,7 +81,7 @@ class PageElement:
         self,
         name: _Strainable | SoupStrainer | None = ...,
         attrs: dict[str, _Strainable] | _Strainable = ...,
-        text: _Strainable | None = ...,
+        string: _Strainable | None = ...,
         limit: int | None = ...,
         **kwargs: _Strainable,
     ) -> ResultSet[PageElement]: ...
@@ -90,7 +90,7 @@ class PageElement:
         self,
         name: _Strainable | SoupStrainer | None = ...,
         attrs: dict[str, _Strainable] | _Strainable = ...,
-        text: _Strainable | None = ...,
+        string: _Strainable | None = ...,
         **kwargs: _Strainable,
     ) -> Tag | NavigableString | None: ...
     findNextSibling = find_next_sibling
@@ -98,7 +98,7 @@ class PageElement:
         self,
         name: _Strainable | SoupStrainer | None = ...,
         attrs: dict[str, _Strainable] | _Strainable = ...,
-        text: _Strainable | None = ...,
+        string: _Strainable | None = ...,
         limit: int | None = ...,
         **kwargs: _Strainable,
     ) -> ResultSet[PageElement]: ...
@@ -108,7 +108,7 @@ class PageElement:
         self,
         name: _Strainable | SoupStrainer | None = ...,
         attrs: dict[str, _Strainable] | _Strainable = ...,
-        text: _Strainable | None = ...,
+        string: _Strainable | None = ...,
         **kwargs: _Strainable,
     ) -> Tag | NavigableString | None: ...
     findPrevious = find_previous
@@ -116,7 +116,7 @@ class PageElement:
         self,
         name: _Strainable | SoupStrainer | None = ...,
         attrs: dict[str, _Strainable] | _Strainable = ...,
-        text: _Strainable | None = ...,
+        string: _Strainable | None = ...,
         limit: int | None = ...,
         **kwargs: _Strainable,
     ) -> ResultSet[PageElement]: ...
@@ -126,7 +126,7 @@ class PageElement:
         self,
         name: _Strainable | SoupStrainer | None = ...,
         attrs: dict[str, _Strainable] | _Strainable = ...,
-        text: _Strainable | None = ...,
+        string: _Strainable | None = ...,
         **kwargs: _Strainable,
     ) -> Tag | NavigableString | None: ...
     findPreviousSibling = find_previous_sibling
@@ -134,7 +134,7 @@ class PageElement:
         self,
         name: _Strainable | SoupStrainer | None = ...,
         attrs: dict[str, _Strainable] | _Strainable = ...,
-        text: _Strainable | None = ...,
+        string: _Strainable | None = ...,
         limit: int | None = ...,
         **kwargs: _Strainable,
     ) -> ResultSet[PageElement]: ...
@@ -257,6 +257,7 @@ class Tag(PageElement):
         cdata_list_attributes: list[str] | None = ...,
         preserve_whitespace_tags: list[str] | None = ...,
         interesting_string_types: type[NavigableString] | tuple[type[NavigableString], ...] | None = ...,
+        namespaces: dict[str, str] | None = ...,
     ) -> None: ...
     parserClass: type[BeautifulSoup] | None
     def __copy__(self: Self) -> Self: ...
@@ -280,7 +281,7 @@ class Tag(PageElement):
     def has_attr(self, key: str) -> bool: ...
     def __hash__(self) -> int: ...
     def __getitem__(self, key: str) -> str | list[str]: ...
-    def __iter__(self) -> Iterable[PageElement]: ...
+    def __iter__(self) -> Iterator[PageElement]: ...
     def __len__(self) -> int: ...
     def __contains__(self, x: object) -> bool: ...
     def __bool__(self) -> bool: ...
@@ -308,7 +309,7 @@ class Tag(PageElement):
         name: _Strainable | None = ...,
         attrs: dict[str, _Strainable] | _Strainable = ...,
         recursive: bool = ...,
-        text: _Strainable | None = ...,
+        string: _Strainable | None = ...,
         **kwargs: _Strainable,
     ) -> Tag | NavigableString | None: ...
     findChild = find
@@ -317,7 +318,7 @@ class Tag(PageElement):
         name: _Strainable | None = ...,
         attrs: dict[str, _Strainable] | _Strainable = ...,
         recursive: bool = ...,
-        text: _Strainable | None = ...,
+        string: _Strainable | None = ...,
         limit: int | None = ...,
         **kwargs: _Strainable,
     ) -> ResultSet[Any]: ...
@@ -337,12 +338,12 @@ class Tag(PageElement):
 class SoupStrainer:
     name: _NormalizedStrainable
     attrs: dict[str, _NormalizedStrainable]
-    text: _NormalizedStrainable
+    string: _NormalizedStrainable
     def __init__(
         self,
         name: _Strainable | None = ...,
         attrs: dict[str, _Strainable] | _Strainable = ...,
-        text: _Strainable | None = ...,
+        string: _Strainable | None = ...,
         **kwargs: _Strainable,
     ) -> None: ...
     def search_tag(self, markup_name: Tag | str | None = ..., markup_attrs=...): ...
@@ -351,4 +352,7 @@ class SoupStrainer:
 
 class ResultSet(list[_PageElementT], Generic[_PageElementT]):
     source: SoupStrainer
-    def __init__(self, source: SoupStrainer, result: Iterable[_PageElementT] = ...) -> None: ...
+    @overload
+    def __init__(self, source: SoupStrainer) -> None: ...
+    @overload
+    def __init__(self, source: SoupStrainer, result: Iterable[_PageElementT]) -> None: ...

@@ -18,6 +18,7 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetedCommandLineBuilder
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -34,7 +35,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.plugin.checkKotlinPluginKind
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
 import org.jetbrains.kotlin.idea.debugger.test.preference.*
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator
@@ -49,7 +49,6 @@ import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.ComparisonFailure
 import java.io.File
-import java.nio.file.Paths
 
 internal const val KOTLIN_LIBRARY_NAME = "KotlinJavaRuntime"
 internal const val TEST_LIBRARY_NAME = "TestLibrary"
@@ -125,19 +124,13 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         KotlinEvaluator.LOG_COMPILATIONS = true
         logPropagator = LogPropagator(::systemLogger).apply { attach() }
         checkPluginIsCorrect(isK2Plugin)
-    }
-
-    override fun tearDown() {
-        runAll(
-          ThrowableRunnable { KotlinEvaluator.LOG_COMPILATIONS = false },
-          ThrowableRunnable { oldValues?.revertValues() },
-          ThrowableRunnable { oldValues = null },
-          ThrowableRunnable { detachLibraries() },
-          ThrowableRunnable { logPropagator?.detach() },
-          ThrowableRunnable { logPropagator = null },
-          ThrowableRunnable { restoreEvaluatorBackend() },
-          ThrowableRunnable { super.tearDown() }
-        )
+        atDebuggerTearDown { restoreEvaluatorBackend() }
+        atDebuggerTearDown { logPropagator = null }
+        atDebuggerTearDown { logPropagator?.detach() }
+        atDebuggerTearDown { detachLibraries() }
+        atDebuggerTearDown { oldValues = null }
+        atDebuggerTearDown { invokeAndWaitIfNeeded { oldValues?.revertValues() } }
+        atDebuggerTearDown { KotlinEvaluator.LOG_COMPILATIONS = false }
     }
 
     protected fun dataFile(fileName: String): File = File(getTestDataPath(), fileName)
@@ -181,7 +174,9 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
 
         val preferences = DebuggerPreferences(myProject, wholeFileContents)
 
-        oldValues = SettingsMutators.mutate(preferences)
+        invokeAndWaitIfNeeded {
+            oldValues = SettingsMutators.mutate(preferences)
+        }
 
         val rawJvmTarget = preferences[DebuggerPreferenceKeys.JVM_TARGET]
         val jvmTarget = JvmTarget.fromString(rawJvmTarget) ?: error("Invalid JVM target value: $rawJvmTarget")

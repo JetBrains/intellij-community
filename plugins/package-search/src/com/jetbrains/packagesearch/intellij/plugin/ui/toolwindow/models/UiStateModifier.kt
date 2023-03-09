@@ -25,10 +25,3 @@ internal interface UiStateModifier {
     fun setTargetModules(modules: TargetModules)
     fun setDependency(coordinates: UnifiedDependency)
 }
-
-internal interface UiStateSource {
-
-    val searchQueryFlow: Flow<String>
-    val targetModulesFlow: Flow<TargetModules>
-    val selectedDependencyFlow: Flow<UnifiedDependency>
-}

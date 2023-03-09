@@ -150,6 +150,13 @@ if [ "$COMPRESS_INPUT" != "false" ]; then
   log "Zipping $BUILD_NAME to $SIT_FILE ..."
   (
     cd "$EXPLODED"
+    if [[ -n ${SOURCE_DATE_EPOCH+x} ]]; then
+      format=+%Y%m%d%H%m
+      # macOS command || Linux command
+      timestamp=$(date -r "$SOURCE_DATE_EPOCH" $format 2>/dev/null || date --date="@$SOURCE_DATE_EPOCH" $format)
+      log "Updating access and modification times for files and symbolic links in $SIT_FILE to $timestamp"
+      find "$BUILD_NAME" -exec touch -amht "$timestamp" '{}' \;
+    fi
     if ! ditto -c -k --zlibCompressionLevel=-1 --sequesterRsrc --keepParent "$BUILD_NAME" "../$SIT_FILE"; then
       # for running this script on Linux
       zip -q -r -o -1 "../$SIT_FILE" "$BUILD_NAME"

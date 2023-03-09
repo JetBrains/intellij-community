@@ -2,9 +2,12 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
-import com.intellij.codeInsight.lookup.*
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementWeigher
+import com.intellij.codeInsight.lookup.WeighingContext
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiClass
@@ -13,11 +16,7 @@ import com.intellij.psi.codeStyle.NameUtil
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
-import org.jetbrains.kotlin.idea.completion.handlers.isCharAt
-import org.jetbrains.kotlin.idea.completion.handlers.skipSpaces
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
-import org.jetbrains.kotlin.idea.core.moveCaret
-import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -107,7 +106,7 @@ class VariableOrParameterNameWithTypeCompletion(
                 if (descriptor != null) {
                     val parameterType = descriptor.type
                     if (parameterType.isVisible(visibilityFilter)) {
-                        val lookupElement = MyLookupElement.create(name, ArbitraryType(parameterType), withType, lookupElementFactory)!!
+                        val lookupElement = createLookupElement(name, ArbitraryType(parameterType), withType, lookupElementFactory)!!
                         val (count, s) = lookupElementToCount[lookupElement] ?: Pair(0, name)
                         lookupElementToCount[lookupElement] = Pair(count + 1, s)
                     }
@@ -139,7 +138,7 @@ class VariableOrParameterNameWithTypeCompletion(
         for (name in nameSuggestions) {
             val parameterName = userPrefix + name
             if (prefixMatcher.isStartMatch(parameterName)) {
-                val lookupElement = MyLookupElement.create(parameterName, type, withType, lookupElementFactory)
+                val lookupElement = createLookupElement(parameterName, type, withType, lookupElementFactory)
                 if (lookupElement != null) {
                     lookupElement.putUserData(PRIORITY_KEY, userPrefix.length) // suggestions with longer user prefix get lower priority
                     if (withType || !lookupNamesAdded.contains(parameterName)) collector.addElement(lookupElement, notImported)
@@ -156,7 +155,7 @@ class VariableOrParameterNameWithTypeCompletion(
         return visibilityFilter(classifier) && arguments.all { it.isStarProjection || it.type.isVisible(visibilityFilter) }
     }
 
-    private abstract class Type(private val idString: String) {
+    private abstract class Type(val idString: String) {
         abstract fun createTypeLookupElement(lookupElementFactory: BasicLookupElementFactory): LookupElement?
 
         override fun equals(other: Any?) = other is Type && other.idString == idString
@@ -179,87 +178,23 @@ class VariableOrParameterNameWithTypeCompletion(
             lookupElementFactory.createLookupElementForType(type)
     }
 
-    private class MyLookupElement private constructor(
-        private val parameterName: String,
-        private val type: Type,
-        typeLookupElement: LookupElement,
-        private val shouldInsertType: Boolean
-    ) : LookupElementDecorator<LookupElement>(typeLookupElement) {
-
-        companion object {
-            fun create(parameterName: String, type: Type, shouldInsertType: Boolean, factory: BasicLookupElementFactory): LookupElement? {
-                val typeLookupElement = type.createTypeLookupElement(factory) ?: return null
-                val lookupElement = MyLookupElement(parameterName, type, typeLookupElement, shouldInsertType)
-                if (!shouldInsertType) {
-                    lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
-                }
-                lookupElement.putUserData(KotlinCompletionCharFilter.HIDE_LOOKUP_ON_COLON, Unit)
-                return lookupElement.suppressAutoInsertion()
-            }
+    private fun createLookupElement(
+        parameterName: String,
+        type: Type,
+        shouldInsertType: Boolean,
+        factory: BasicLookupElementFactory
+    ): LookupElement? {
+        val typeLookupElement = type.createTypeLookupElement(factory) ?: return null
+        val lookupElement = NameWithTypeLookupElementDecorator(parameterName, type.idString, typeLookupElement, shouldInsertType)
+        if (!shouldInsertType) {
+            lookupElement.putUserData(KotlinCompletionCharFilter.SUPPRESS_ITEM_SELECTION_BY_CHARS_ON_TYPING, Unit)
         }
-
-        private val lookupString = parameterName + if (shouldInsertType) ": " + delegate.lookupString else ""
-
-        override fun getLookupString() = lookupString
-        override fun getAllLookupStrings() = setOf(lookupString)
-
-        override fun renderElement(presentation: LookupElementPresentation) {
-            super.renderElement(presentation)
-            if (shouldInsertType) {
-                presentation.itemText = parameterName + ": " + presentation.itemText
-            } else {
-                presentation.prependTailText(": " + presentation.itemText, true)
-                presentation.itemText = parameterName
-            }
-        }
-
-        override fun getDelegateInsertHandler(): InsertHandler<LookupElement> = InsertHandler { context, element ->
-            if (context.completionChar == Lookup.REPLACE_SELECT_CHAR) {
-                val replacementOffset = context.offsetMap.tryGetOffset(REPLACEMENT_OFFSET)
-                if (replacementOffset != null) {
-                    val tailOffset = context.tailOffset
-                    context.document.deleteString(tailOffset, replacementOffset)
-
-                    val chars = context.document.charsSequence
-                    var offset = chars.skipSpaces(tailOffset)
-                    if (chars.isCharAt(offset, ',')) {
-                        offset++
-                        offset = chars.skipSpaces(offset)
-                        context.editor.moveCaret(offset)
-                    }
-                }
-            }
-
-            val settings = context.file.kotlinCustomSettings
-            val spaceBefore = if (settings.SPACE_BEFORE_TYPE_COLON) " " else ""
-            val spaceAfter = if (settings.SPACE_AFTER_TYPE_COLON) " " else ""
-
-            val startOffset = context.startOffset
-            if (shouldInsertType) {
-                val text = "$parameterName$spaceBefore:$spaceAfter"
-                context.document.insertString(startOffset, text)
-
-                // update start offset so that it does not include the text we inserted
-                context.offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, startOffset + text.length)
-
-                element.handleInsert(context)
-            } else {
-                context.document.replaceString(startOffset, context.tailOffset, parameterName)
-
-                context.commitDocument()
-            }
-        }
-
-        override fun equals(other: Any?) =
-            other is MyLookupElement && parameterName == other.parameterName && type == other.type && shouldInsertType == other.shouldInsertType
-
-        override fun hashCode() = parameterName.hashCode()
+        lookupElement.putUserData(KotlinCompletionCharFilter.HIDE_LOOKUP_ON_COLON, Unit)
+        return lookupElement.suppressAutoInsertion()
     }
 
     companion object {
         private val PRIORITY_KEY = Key<Int>("ParameterNameAndTypeCompletion.PRIORITY_KEY")
-
-        val REPLACEMENT_OFFSET = OffsetKey.create("ParameterNameAndTypeCompletion.REPLACEMENT_OFFSET")
     }
 
     object Weigher : LookupElementWeigher("kotlin.parameterNameAndTypePriority") {

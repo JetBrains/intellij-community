@@ -106,10 +106,11 @@ internal object Weighers {
                 NotImportedWeigher.Weigher,
                 KindWeigher.Weigher,
                 CallableWeigher.Weigher,
-                K2SoftDeprecationWeigher.Weigher
+                K2SoftDeprecationWeigher.Weigher,
             )
             .weighAfter(PlatformWeighersIds.STATS, VariableOrFunctionWeigher.Weigher)
             .weighBefore(ExpectedTypeWeigher.WEIGHER_ID, CompletionContributorGroupWeigher.Weigher)
+            .weighBefore(PlatformWeighersIds.PREFIX, VariableOrParameterNameWithTypeWeigher.Weigher)
 
     private object PlatformWeighersIds {
         const val PREFIX = "prefix"

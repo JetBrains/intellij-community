@@ -159,15 +159,6 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
         return
       }
 
-      guardIndicator(indicator) { detectCondaEnvs(module, existingSdks, context).firstOrNull() }?.let {
-        val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
-        runInEdt {
-          SdkConfigurationUtil.addSdk(newSdk)
-          setReadyToUseSdk(project, module, newSdk)
-        }
-        return
-      }
-
       if (indicator.isCanceled) return
     }
 

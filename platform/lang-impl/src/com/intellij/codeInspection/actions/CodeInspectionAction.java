@@ -32,14 +32,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class CodeInspectionAction extends BaseAnalysisAction {
   private static final Logger LOG = Logger.getInstance(CodeInspectionAction.class);
   private static final String LAST_SELECTED_PROFILE_PROP = "run.code.analysis.last.selected.profile";
 
-  private int myRunId = 0;
+  private int myRunId;
   private GlobalInspectionContextImpl myGlobalInspectionContext;
   protected InspectionProfileImpl myExternalProfile;
 
@@ -110,44 +108,38 @@ public class CodeInspectionAction extends BaseAnalysisAction {
   }
 
   @Override
-  protected JComponent getAdditionalActionSettings(@NotNull final Project project, final BaseAnalysisActionDialog dialog) {
+  protected JComponent getAdditionalActionSettings(@NotNull final Project project, final @NotNull BaseAnalysisActionDialog dialog) {
     dialog.setShowInspectInjectedCode(true);
     final CodeInspectionAdditionalUi ui = new CodeInspectionAdditionalUi();
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
     final SchemesCombo<InspectionProfileImpl> profiles = ui.getBrowseProfilesCombo();
     final InspectionProfileManager profileManager = InspectionProfileManager.getInstance();
     final ProjectInspectionProfileManager projectProfileManager = ProjectInspectionProfileManager.getInstance(project);
-    ui.getLink().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final ExternalProfilesComboboxAwareInspectionToolsConfigurable errorConfigurable = createConfigurable(projectProfileManager, profiles);
-        final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
-        if (editor.showAndGet()) {
-          reloadProfiles(profiles, profileManager, projectProfileManager, project);
-          if (errorConfigurable.mySelectedName != null) {
-            final InspectionProfileImpl profile = (errorConfigurable.mySelectedIsProjectProfile ? projectProfileManager : profileManager)
-              .getProfile(errorConfigurable.mySelectedName);
-            profiles.selectScheme(profile);
-          }
-        }
-        else {
-          //if profile was disabled and cancel after apply was pressed
-          final InspectionProfile profile = profiles.getSelectedScheme();
-          final boolean canExecute = profile != null && profile.isExecutable(project);
-          dialog.setOKActionEnabled(canExecute);
+    ui.getLink().addActionListener(__ -> {
+      final ExternalProfilesComboboxAwareInspectionToolsConfigurable errorConfigurable = createConfigurable(projectProfileManager, profiles);
+      final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
+      if (editor.showAndGet()) {
+        reloadProfiles(profiles, profileManager, projectProfileManager, project);
+        if (errorConfigurable.mySelectedName != null) {
+          final InspectionProfileImpl profile = (errorConfigurable.mySelectedIsProjectProfile ? projectProfileManager : profileManager)
+            .getProfile(errorConfigurable.mySelectedName);
+          profiles.selectScheme(profile);
         }
       }
-    });
-    profiles.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myExternalProfile = profiles.getSelectedScheme();
-        final boolean canExecute = myExternalProfile != null && myExternalProfile.isExecutable(project);
+      else {
+        //if profile was disabled and cancel after apply was pressed
+        final InspectionProfile profile = profiles.getSelectedScheme();
+        final boolean canExecute = profile != null && profile.isExecutable(project);
         dialog.setOKActionEnabled(canExecute);
-        if (canExecute) {
-          PropertiesComponent.getInstance(project).setValue(LAST_SELECTED_PROFILE_PROP, (myExternalProfile.isProjectLevel() ? 'p' : 'a') + myExternalProfile.getName());
-          manager.setProfile(myExternalProfile.getName());
-        }
+      }
+    });
+    profiles.addActionListener(__ -> {
+      myExternalProfile = profiles.getSelectedScheme();
+      final boolean canExecute = myExternalProfile != null && myExternalProfile.isExecutable(project);
+      dialog.setOKActionEnabled(canExecute);
+      if (canExecute) {
+        PropertiesComponent.getInstance(project).setValue(LAST_SELECTED_PROFILE_PROP, (myExternalProfile.isProjectLevel() ? 'p' : 'a') + myExternalProfile.getName());
+        manager.setProfile(myExternalProfile.getName());
       }
     });
     reloadProfiles(profiles, profileManager, projectProfileManager, project);
@@ -192,7 +184,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     }
   }
 
-  private void reloadProfiles(SchemesCombo<InspectionProfileImpl> profilesCombo,
+  private void reloadProfiles(@NotNull SchemesCombo<InspectionProfileImpl> profilesCombo,
                               InspectionProfileManager appProfileManager,
                               InspectionProjectProfileManager projectProfileManager,
                               Project project) {
@@ -203,8 +195,8 @@ public class CodeInspectionAction extends BaseAnalysisAction {
 
   @NotNull
   private InspectionProfileImpl getProfileToUse(@NotNull Project project,
-                                               @NotNull InspectionProfileManager appProfileManager,
-                                               @NotNull InspectionProjectProfileManager projectProfileManager) {
+                                                @NotNull InspectionProfileManager appProfileManager,
+                                                @NotNull InspectionProjectProfileManager projectProfileManager) {
     final String lastSelectedProfile = PropertiesComponent.getInstance(project).getValue(LAST_SELECTED_PROFILE_PROP);
     if (lastSelectedProfile != null) {
       final char type = lastSelectedProfile.charAt(0);

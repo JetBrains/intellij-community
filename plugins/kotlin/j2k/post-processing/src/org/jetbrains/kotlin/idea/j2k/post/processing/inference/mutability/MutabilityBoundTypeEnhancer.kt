@@ -10,21 +10,21 @@ import org.jetbrains.kotlin.types.isFlexible
 
 class MutabilityBoundTypeEnhancer : BoundTypeEnhancer() {
     override fun enhance(
-      expression: KtExpression,
-      boundType: BoundType,
-      inferenceContext: InferenceContext
+        expression: KtExpression,
+        boundType: BoundType,
+        inferenceContext: InferenceContext
     ): BoundType = boundType
 
     override fun enhanceKotlinType(
-      type: KotlinType,
-      boundType: BoundType,
-      allowLowerEnhancement: Boolean,
-      inferenceContext: InferenceContext
+        type: KotlinType,
+        boundType: BoundType,
+        allowLowerEnhancement: Boolean,
+        inferenceContext: InferenceContext
     ): BoundType {
         if (type.isFlexible()) return boundType
         val fqName = type.constructor.declarationDescriptor?.fqNameOrNull()
         val enhancement = when {
-          fqName in MutabilityStateUpdater.mutableToImmutable && allowLowerEnhancement -> State.LOWER
+            fqName in MutabilityStateUpdater.mutableToImmutable && allowLowerEnhancement -> State.LOWER
             fqName in MutabilityStateUpdater.immutableToMutable -> State.UPPER
             else -> null
         }

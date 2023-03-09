@@ -1,14 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInsight.daemon.impl.analysis.MoveAnnotationToPackageInfoFileFix;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefPackage;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.CreatePackageInfoAction;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -23,7 +22,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseSharedLocalInspection;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PackageGlobalInspection;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +46,9 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
     final String packageName = refPackage.getQualifiedName();
     final Project project = globalInspectionContext.getProject();
     final PsiPackage aPackage = ReadAction.compute(() -> JavaPsiFacade.getInstance(project).findPackage(packageName));
-    boolean needsPackageInfo = ReadAction.compute(() -> !hasPackageInfoFile(aPackage) && aPackage.getClasses().length > 0);
+    boolean needsPackageInfo =
+      ReadAction.compute(() -> aPackage != null &&
+                               MoveAnnotationToPackageInfoFileFix.getPackageInfoFile(aPackage) == null && aPackage.getClasses().length > 0);
     if (!needsPackageInfo) {
       return null;
     }
@@ -60,22 +60,6 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
       return new CommonProblemDescriptor[] {
         inspectionManager.createProblemDescriptor(InspectionGadgetsBundle.message("missing.package.html.problem.descriptor", packageName))};
     }
-  }
-
-  @Contract("null -> true")
-  static boolean hasPackageInfoFile(PsiPackage aPackage) {
-    if (aPackage == null) {
-      return true;
-    }
-    final PsiDirectory[] directories = aPackage.getDirectories();
-    for (PsiDirectory directory : directories) {
-      final boolean packageInfoFound = directory.findFile(PsiPackage.PACKAGE_INFO_FILE) != null;
-      final boolean packageDotHtmlFound = directory.findFile("package.html") != null;
-      if (packageInfoFound || packageDotHtmlFound) {
-        return true;
-      }
-    }
-    return false;
   }
 
   private static class LocalMissingPackageInfoInspection extends BaseSharedLocalInspection<MissingPackageInfoInspection> {
@@ -100,7 +84,7 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
         }
 
         @Override
-        protected void doFix(Project project, ProblemDescriptor descriptor) {
+        protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
           DataManager.getInstance()
                      .getDataContextFromFocusAsync()
                      .onSuccess(context -> {
@@ -145,7 +129,7 @@ public class MissingPackageInfoInspection extends PackageGlobalInspection {
             return;
           }
           final PsiPackage aPackage = (PsiPackage)target;
-          if (hasPackageInfoFile(aPackage)) {
+          if (MoveAnnotationToPackageInfoFileFix.getPackageInfoFile(aPackage) != null) {
             return;
           }
           registerError(packageReference, packageStatement);

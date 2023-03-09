@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -353,11 +353,12 @@ public final class ClassUtils {
                                                             !m.hasModifierProperty(PsiModifier.PRIVATE) &&
                                                             !m.hasModifierProperty(PsiModifier.STATIC));
     }
-    if (getIfOnlyInvisibleConstructors(aClass).length == 0) {
+    final PsiMethod[] constructors = getIfOnlyInvisibleConstructors(aClass);
+    if (constructors.length != 1) {
       return false;
     }
     final PsiField selfInstance = getIfOneStaticSelfInstance(aClass);
-    return selfInstance != null && newOnlyAssignsToStaticSelfInstance(getIfOnlyInvisibleConstructors(aClass)[0], selfInstance);
+    return selfInstance != null && newOnlyAssignsToStaticSelfInstance(constructors[0], selfInstance);
   }
 
   private static PsiField getIfOneStaticSelfInstance(PsiClass aClass) {
@@ -406,7 +407,7 @@ public final class ClassUtils {
 
   private static boolean newOnlyAssignsToStaticSelfInstance(PsiMethod method, final PsiField field) {
     if (field instanceof LightElement) return true;
-    final Query<PsiReference> search = MethodReferencesSearch.search(method, field.getUseScope(), false);
+    final Query<PsiReference> search = MethodReferencesSearch.search(method, method.getUseScope(), false);
     final NewOnlyAssignedToFieldProcessor processor = new NewOnlyAssignedToFieldProcessor(field);
     search.forEach(processor);
     return processor.isNewOnlyAssignedToField();

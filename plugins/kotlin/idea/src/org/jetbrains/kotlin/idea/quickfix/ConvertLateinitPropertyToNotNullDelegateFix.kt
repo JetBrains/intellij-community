@@ -28,7 +28,7 @@ class ConvertLateinitPropertyToNotNullDelegateFix(
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val property = element ?: return
         val typeReference = property.typeReference ?: return
-        val psiFactory = KtPsiFactory(property)
+        val psiFactory = KtPsiFactory(project)
         property.removeModifier(KtTokens.LATEINIT_KEYWORD)
         val propertyDelegate = psiFactory.createPropertyDelegate(
             psiFactory.createExpression("kotlin.properties.Delegates.notNull<$type>()")

@@ -123,7 +123,7 @@ final class ServiceViewDragHelper {
   }
 
   @Nullable
-  static ServiceViewContributor getTheOnlyRootContributor(List<ServiceViewItem> items) {
+  static ServiceViewContributor getTheOnlyRootContributor(List<? extends ServiceViewItem> items) {
     ServiceViewContributor result = null;
     for (ServiceViewItem node : items) {
       if (result == null) {

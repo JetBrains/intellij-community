@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml.model
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService
 import com.intellij.ide.actions.searcheverywhere.ml.model.local.LocalRankingModelProviderUtil
 import com.intellij.internal.ml.DecisionFunction
@@ -19,7 +18,7 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
 
     fun getForTab(contributorId: String): SearchEverywhereMLRankingModelLoader {
       return EP_NAME.findFirstSafe {
-        it.supportedContributor.simpleName == contributorId
+        it.supportedContributorName == contributorId
       } ?: throw IllegalArgumentException("Unsupported contributor $contributorId")
     }
   }
@@ -48,18 +47,18 @@ internal abstract class SearchEverywhereMLRankingModelLoader {
    */
   protected abstract fun getBundledModel(): DecisionFunction
 
-  protected abstract val supportedContributor: Class<out SearchEverywhereContributor<*>>
+  protected abstract val supportedContributorName: String
 
   protected fun shouldProvideExperimentalModel(): Boolean {
-    return SearchEverywhereMlSessionService.getService()?.shouldUseExperimentalModel(supportedContributor.simpleName) ?: false
+    return SearchEverywhereMlSessionService.getService()?.shouldUseExperimentalModel(supportedContributorName) ?: false
   }
 
   private fun shouldProvideLocalModel(): Boolean {
-    return LocalRankingModelProviderUtil.isPathToLocalModelSpecified(supportedContributor.simpleName)
+    return LocalRankingModelProviderUtil.isPathToLocalModelSpecified(supportedContributorName)
   }
 
   private fun getLocalModel(): DecisionFunction {
-    return LocalRankingModelProviderUtil.getLocalModel(supportedContributor.simpleName)!!
+    return LocalRankingModelProviderUtil.getLocalModel(supportedContributorName)!!
   }
 
   protected fun getCatBoostModel(resourceDirectory: String, modelDirectory: String): DecisionFunction {

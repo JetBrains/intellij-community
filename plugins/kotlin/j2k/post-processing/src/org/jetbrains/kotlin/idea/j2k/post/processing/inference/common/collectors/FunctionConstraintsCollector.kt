@@ -20,10 +20,10 @@ class FunctionConstraintsCollector(
     private val superFunctionsProvider: SuperFunctionsProvider
 ) : ConstraintsCollector() {
     override fun ConstraintBuilder.collectConstraints(
-      element: KtElement,
-      boundTypeCalculator: BoundTypeCalculator,
-      inferenceContext: InferenceContext,
-      resolutionFacade: ResolutionFacade
+        element: KtElement,
+        boundTypeCalculator: BoundTypeCalculator,
+        inferenceContext: InferenceContext,
+        resolutionFacade: ResolutionFacade
     ) {
         if (element !is KtFunction) return
         superFunctionsProvider.inferenceContext = inferenceContext
@@ -62,27 +62,38 @@ class FunctionConstraintsCollector(
     }
 
     private fun ConstraintBuilder.collectTypeConstraints(
-      typeElement: KtTypeElement,
-      superType: KotlinType,
-      superTypeElement: KtTypeElement?,
-      substitutor: SuperTypesSubstitutor,
-      superClass: ClassDescriptor,
-      inferenceContext: InferenceContext
+        typeElement: KtTypeElement,
+        superType: KotlinType,
+        superTypeElement: KtTypeElement?,
+        substitutor: SuperTypesSubstitutor,
+        superClass: ClassDescriptor,
+        inferenceContext: InferenceContext
     ) {
         val usedTypeVariables = hashSetOf<TypeVariable>()
         val substitutions = calculateTypeSubstitutions(typeElement, superType) ?: return
         for ((innerTypeElement, innerTypeParameter) in substitutions) {
             val superEntryTypeElement = substitutor[superClass, innerTypeParameter] ?: continue
-            innerTypeElement.isTheSameTypeAs(superEntryTypeElement, org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.SUPER_DECLARATION)
+            innerTypeElement.isTheSameTypeAs(
+                superEntryTypeElement,
+                org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.SUPER_DECLARATION
+            )
 
             inferenceContext.typeElementToTypeVariable[innerTypeElement]?.also { usedTypeVariables += it }
         }
         val superTypeVariable = superTypeElement?.let { inferenceContext.typeElementToTypeVariable[it] }
         if (superTypeVariable != null) {
-            superTypeVariable.isTheSameTypeAs(typeElement, org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.SUPER_DECLARATION, usedTypeVariables)
+            superTypeVariable.isTheSameTypeAs(
+                typeElement,
+                org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.SUPER_DECLARATION,
+                usedTypeVariables
+            )
         } else {
             superType.boundType(forceEnhance = true, inferenceContext = inferenceContext)
-                .isTheSameTypeAs(typeElement, org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.SUPER_DECLARATION, usedTypeVariables)
+                .isTheSameTypeAs(
+                    typeElement,
+                    org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.SUPER_DECLARATION,
+                    usedTypeVariables
+                )
         }
 
     }

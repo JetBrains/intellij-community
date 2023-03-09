@@ -32,7 +32,7 @@ public final class DomResolveConverter<T extends DomElement> extends ResolvingCo
   private final SoftFactoryMap<DomElement, CachedValue<Map<String, DomElement>>> myResolveCache = new SoftFactoryMap<>() {
     @Override
     @NotNull
-    protected CachedValue<Map<String, DomElement>> create(final DomElement scope) {
+    protected CachedValue<Map<String, DomElement>> create(final @NotNull DomElement scope) {
       final DomManager domManager = scope.getManager();
       //noinspection ConstantConditions
       if (domManager == null) throw new AssertionError("Null DomManager for " + scope.getClass());

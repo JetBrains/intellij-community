@@ -48,7 +48,8 @@ class ReplaceObsoleteLabelSyntaxFix(element: KtAnnotationEntry) : KotlinQuickFix
             val textRangeToRetain = TextRange(annotation.textRange.endOffset, baseExpressionStart)
             val textToRetain = textRangeToRetain.substring(annotation.containingFile.text)
 
-            val labeledExpression = KtPsiFactory(annotation).createExpressionByPattern("$0@$1$2", labelName, textToRetain, expression)
+            val labeledExpression = KtPsiFactory(annotation.project)
+                .createExpressionByPattern("$0@$1$2", labelName, textToRetain, expression)
 
             annotatedExpression.replace(labeledExpression)
         }

@@ -109,7 +109,7 @@ class ReplaceAssociateFunctionFix(private val function: AssociateFunction, priva
         val lastStatement = lambda.functionLiteral.lastStatement() ?: return
         val (keySelector, valueTransform) = lastStatement.pair() ?: return
 
-        val psiFactory = KtPsiFactory(dotQualifiedExpression)
+        val psiFactory = KtPsiFactory(project)
         if (function == ASSOCIATE_BY_KEY_AND_VALUE) {
             val destination = if (hasDestination) {
                 callExpression.valueArguments.firstOrNull()?.getArgumentExpression() ?: return

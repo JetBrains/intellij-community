@@ -358,9 +358,7 @@ public class PackageChooserDialog extends PackageChooser {
           String newQualifiedName = selectedPackage.getQualifiedName();
           if (!Comparing.strEqual(newQualifiedName,"")) newQualifiedName += ".";
           newQualifiedName += newPackageName;
-          final PsiDirectory dir = PackageUtil.findOrCreateDirectoryForPackage(myProject, newQualifiedName, null, false);
-          if (dir == null) return;
-          final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(dir);
+          final PsiPackage newPackage = getPsiPackage(newQualifiedName);
 
           if (newPackage != null) {
             DefaultMutableTreeNode newChild = addPackage(newPackage);
@@ -388,6 +386,13 @@ public class PackageChooserDialog extends PackageChooser {
     },
                                                   IdeBundle.message("command.create.new.package"),
                                                   null);
+  }
+
+  @Nullable
+  protected PsiPackage getPsiPackage(String newQualifiedName) {
+    final PsiDirectory dir = PackageUtil.findOrCreateDirectoryForPackage(myProject, newQualifiedName, null, false);
+    if (dir == null) return null;
+    return JavaDirectoryService.getInstance().getPackage(dir);
   }
 
   private class NewPackageAction extends AnAction {

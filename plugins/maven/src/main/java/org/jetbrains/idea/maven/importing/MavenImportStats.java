@@ -10,7 +10,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collections;
 
-public class MavenImportStats {
+public final class MavenImportStats {
   // Hacky way to measure report import stages speed.
   // The better way would be to use StructuredIdeActivity.stageStared in MavenImportingManager.doImport with the new importing Flow
 

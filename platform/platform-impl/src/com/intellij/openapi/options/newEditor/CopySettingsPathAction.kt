@@ -4,6 +4,7 @@ package com.intellij.openapi.options.newEditor
 import com.google.common.net.UrlEscapers
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -58,7 +59,7 @@ internal class CopySettingsPathAction : AnAction(pathActionName, ActionsBundle.m
       val prefix = if (isMac) CommonBundle.message("action.settings.path.mac") else CommonBundle.message("action.settings.path")
       val sb = StringBuilder(prefix)
       for (name in names) {
-        sb.append(" | ").append(name)
+        sb.append(SearchableOptionsRegistrar.SETTINGS_GROUP_SEPARATOR).append(name)
       }
       return TextTransferable(sb)
     }

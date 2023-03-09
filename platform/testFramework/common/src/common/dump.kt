@@ -7,6 +7,8 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.UUID
 
+internal const val HEAP_DUMP_IS_PUBLISHED = "Heap dump is published to "
+
 @TestOnly
 fun publishHeapDump(fileNamePrefix: String): String {
   val uuid = UUID.randomUUID().toString().substring(1..4)
@@ -22,5 +24,7 @@ fun publishHeapDump(fileNamePrefix: String): String {
 
   val dumpPath = dumpFile.toAbsolutePath().toString()
   println("##teamcity[publishArtifacts '$dumpPath']")
+  //##teamcity lines are not rendered by IJ console, so let's duplicate the text for IJ users
+  println("$HEAP_DUMP_IS_PUBLISHED$dumpPath")
   return dumpPath
 }

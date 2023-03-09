@@ -32,7 +32,7 @@ abstract class FileTemplateTab {
   public abstract void removeSelected();
   public abstract void onTemplateSelected();
 
-  public void init(List<FileTemplate> templates) {
+  public void init(List<? extends FileTemplate> templates) {
     FileTemplate oldSelection = getSelectedTemplate();
     String oldSelectionName = oldSelection != null? ((FileTemplateBase)oldSelection).getQualifiedName() : null;
 

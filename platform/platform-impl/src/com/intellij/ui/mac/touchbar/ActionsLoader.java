@@ -17,7 +17,7 @@ import java.awt.event.InputEvent;
 import java.util.HashMap;
 import java.util.Map;
 
-class ActionsLoader {
+final class ActionsLoader {
   private static final Logger LOG = Logger.getInstance(ActionsLoader.class);
   private static final boolean ENABLE_FN_MODE = Boolean.getBoolean("touchbar.fn.mode.enable");
   private static int FN_WIDTH = Integer.getInteger("touchbar.fn.width", 68);

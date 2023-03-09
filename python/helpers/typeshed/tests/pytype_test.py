@@ -104,13 +104,13 @@ def _get_module_name(filename: str) -> str:
 
 
 def _is_version(path: str, version: str) -> bool:
-    return any("{}{}{}".format(d, os.path.sep, version) in path for d in TYPESHED_SUBDIRS)
+    return any(f"{d}{os.path.sep}{version}" in path for d in TYPESHED_SUBDIRS)
 
 
 def check_subdirs_discoverable(subdir_paths: list[str]) -> None:
     for p in subdir_paths:
         if not os.path.isdir(p):
-            raise SystemExit("Cannot find typeshed subdir at {} (specify parent dir via --typeshed-location)".format(p))
+            raise SystemExit(f"Cannot find typeshed subdir at {p} (specify parent dir via --typeshed-location)")
 
 
 def determine_files_to_test(*, typeshed_location: str, paths: Sequence[str]) -> list[str]:
@@ -159,11 +159,11 @@ def run_all_tests(*, files_to_test: Sequence[str], typeshed_location: str, print
 
         runs = i + 1
         if runs % 25 == 0:
-            print("  {:3d}/{:d} with {:3d} errors".format(runs, total_tests, errors))
+            print(f"  {runs:3d}/{total_tests:d} with {errors:3d} errors")
 
-    print("Ran pytype with {:d} pyis, got {:d} errors.".format(total_tests, errors))
+    print(f"Ran pytype with {total_tests:d} pyis, got {errors:d} errors.")
     for f, v, err in bad:
-        print("{} ({}): {}".format(f, v, err))
+        print(f"{f} ({v}): {err}")
     if errors:
         raise SystemExit("\nRun again with --print-stderr to get the full stacktrace.")
 

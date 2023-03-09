@@ -110,6 +110,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * Created visitor must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
+   * If the inspection should not run in the given context return {@link PsiElementVisitor#EMPTY_VISITOR}
    *
    * @param holder     where visitor will register problems found.
    * @param isOnTheFly true if inspection was run in non-batch mode
@@ -127,6 +128,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
    * Created visitor must not be recursive (e.g. it must not inherit {@link PsiRecursiveElementVisitor})
    * since it will be fed with every element in the file anyway.
    * Visitor created must be thread-safe since it might be called on several elements concurrently.
+   * If the inspection should not run in the given context return {@link PsiElementVisitor#EMPTY_VISITOR}
    *
    * @param holder     where visitor will register problems found.
    * @param isOnTheFly true if inspection was run in non-batch mode
@@ -160,7 +162,7 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
 
   /**
    * Returns problem container (e.g., method, class, file) that is used as inspection view tree node.
-   *
+   * <p>
    * Consider {@link com.intellij.codeInspection.lang.RefManagerExtension#getElementContainer(PsiElement)}
    * to override container element for any inspection for given language.
    *

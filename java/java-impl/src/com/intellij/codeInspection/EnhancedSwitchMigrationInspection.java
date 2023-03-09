@@ -4,7 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel.CompletenessResult;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -17,24 +17,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean myWarnOnlyOnExpressionConversion = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.switch.expression.migration.warn.only.on.expression"),
-                                          this,
-                                          "myWarnOnlyOnExpressionConversion");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myWarnOnlyOnExpressionConversion", JavaBundle.message("inspection.switch.expression.migration.warn.only.on.expression")));
   }
 
   private final static SwitchConversion[] ourInspections = new SwitchConversion[]{
@@ -353,7 +352,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
                          result,
                          branch.getUsedElements()));
       } else {
-        newBranches.add(new SwitchBranch(forceNextDefaultBranch || branch.isDefault(),
+        newBranches.add(new SwitchBranch(branch.isDefault(),
                                          branch.getCaseLabelElements(),
                                          result,
                                          branch.getUsedElements()));

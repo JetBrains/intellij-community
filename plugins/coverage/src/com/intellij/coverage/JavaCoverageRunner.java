@@ -15,7 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.rt.coverage.data.ProjectData;
-import com.intellij.rt.coverage.instrumentation.SaveHook;
+import com.intellij.rt.coverage.instrumentation.UnloadedUtil;
 import jetbrains.coverage.report.ClassInfo;
 import jetbrains.coverage.report.ReportBuilderFactory;
 import jetbrains.coverage.report.SourceCodeProvider;
@@ -48,21 +48,21 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
   }
 
   public abstract void appendCoverageArgument(final String sessionDataFilePath, final String @Nullable [] patterns, final SimpleJavaParameters parameters,
-                                              final boolean collectLineInfo, final boolean isSampling);
+                                              final boolean testTracking, final boolean branchCoverage);
 
   public void appendCoverageArgument(final String sessionDataFilePath,
                                      final String @Nullable [] patterns,
                                      String[] excludePatterns,
                                      final SimpleJavaParameters parameters,
-                                     final boolean collectLineInfo,
-                                     final boolean isSampling,
+                                     final boolean testTracking,
+                                     final boolean branchCoverage,
                                      String sourceMapPath,
                                      final Project project) {
-    appendCoverageArgument(sessionDataFilePath, patterns, parameters, collectLineInfo, isSampling);
+    appendCoverageArgument(sessionDataFilePath, patterns, parameters, testTracking, branchCoverage);
   }
 
-  public boolean isBranchInfoAvailable(boolean sampling) {
-    return !sampling;
+  public boolean isBranchInfoAvailable(boolean branchCoverage) {
+    return branchCoverage;
   }
 
   public void generateReport(CoverageSuitesBundle suite, Project project) throws IOException {
@@ -71,7 +71,7 @@ public abstract class JavaCoverageRunner extends CoverageRunner {
     if (projectData == null) return;
     final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
     IDEACoverageRunner.setExcludeAnnotations(project, projectData);
-    SaveHook.appendUnloadedFullAnalysis(projectData, new IdeaClassFinder(project, suite), false, !suite.isTracingEnabled(), optionsProvider.ignoreEmptyPrivateConstructors());
+    UnloadedUtil.appendUnloaded(projectData, new IdeaClassFinder(project, suite), false, suite.isTracingEnabled(), optionsProvider.ignoreEmptyPrivateConstructors());
 
     final long generationStartNs = System.nanoTime();
     final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);

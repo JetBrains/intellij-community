@@ -334,17 +334,7 @@ class RecentLocationsRenderer extends EditorTextFieldCellRenderer.SimpleWithGutt
     return result.toArray(Highlight.EMPTY_ARRAY);
   }
 
-  private static class Highlight {
-    static final Highlight[] EMPTY_ARRAY = new Highlight[0];
-
-    final int start;
-    final int end;
-    final TextAttributes attrs;
-
-    Highlight(int start, int end, TextAttributes attrs) {
-      this.start = start;
-      this.end = end;
-      this.attrs = attrs;
-    }
+  private record Highlight(int start, int end, TextAttributes attrs) {
+      static final Highlight[] EMPTY_ARRAY = new Highlight[0];
   }
 }

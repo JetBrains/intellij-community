@@ -72,7 +72,7 @@ public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
           type(robot, code, modifier);
         }
         catch (NumberFormatException e) {
-          dumpError(context, "Invalid code: " + eachPair);
+          dumpError(context, "Invalid code: `" + eachPair + "`. " + e.getMessage());
           result.setRejected();
           return;
         }

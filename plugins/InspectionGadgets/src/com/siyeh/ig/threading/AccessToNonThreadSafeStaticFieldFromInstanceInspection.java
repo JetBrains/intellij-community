@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -8,12 +10,11 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ig.ui.ExternalizableStringSet;
-import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends BaseInspection {
 
@@ -37,11 +38,11 @@ public class AccessToNonThreadSafeStaticFieldFromInstanceInspection extends Base
   public String nonThreadSafeTypes = "";
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return UiUtils.createTreeClassChooserList(
-      nonThreadSafeClasses, InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.option.title"),
-      InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.class.chooser.title"));
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringSet("nonThreadSafeClasses", InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.option.title"),
+                new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("access.to.non.thread.safe.static.field.from.instance.class.chooser.title")))
+    );
   }
 
   @NotNull

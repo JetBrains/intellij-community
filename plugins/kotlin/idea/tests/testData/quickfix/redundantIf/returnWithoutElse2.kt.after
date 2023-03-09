@@ -1,0 +1,13 @@
+// "Remove redundant 'if' statement" "true"
+// WITH_STDLIB
+fun foo(bar: Int?): Boolean {
+    if (bar == 3) { return true }
+    return bar != null
+    // A comment
+
+    /**
+     * And more comment
+     */
+
+    bar?.let{ it + 4 }
+}

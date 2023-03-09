@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,6 +47,6 @@ public final class ServiceManager {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static @NotNull <T> NotNullLazyKey<T, Project> createLazyKey(@NotNull Class<? extends T> serviceClass) {
-    return NotNullLazyKey.create("Service: " + serviceClass.getName(), project -> project.getService(serviceClass));
+    return NotNullLazyKey.createLazyKey("Service: " + serviceClass.getName(), project -> project.getService(serviceClass));
   }
 }

@@ -26,7 +26,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -86,9 +85,11 @@ public class TerminalWorkingDirectoryManager {
     data.myWorkingDirectory = content.getUserData(INITIAL_CWD_KEY);
     content.putUserData(INITIAL_CWD_KEY, null);
     dataRef.set(data);
-    JBTerminalWidget widget = Objects.requireNonNull(TerminalView.getWidgetByContent(content));
-    widget.getTerminalPanel().addCustomKeyListener(listener);
-    Disposer.register(content, () -> widget.getTerminalPanel().removeCustomKeyListener(listener));
+    JBTerminalWidget widget = TerminalView.getWidgetByContent(content);
+    if (widget != null) {
+      widget.getTerminalPanel().addCustomKeyListener(listener);
+      Disposer.register(content, () -> widget.getTerminalPanel().removeCustomKeyListener(listener));
+    }
     myDataByContentMap.put(content, data);
   }
 

@@ -1202,7 +1202,7 @@ skip_ipr:
   ${AndIf} $1 == 1
     ${If} ${FileExists} "$INSTDIR\jbr\bin\jabswitch.exe"
       ${LogText} "Executing '$\"$INSTDIR\jbr\bin\jabswitch.exe$\" /enable'"
-      ExecDos::exec /DETAILED '"$INSTDIR\jbr\bin\jabswitch.exe" /enable'
+      ExecDos::exec /DETAILED '"$INSTDIR\jbr\bin\jabswitch.exe" /enable' '' ''
       Pop $0
       ${LogText} "Exit code: $0"
     ${EndIf}

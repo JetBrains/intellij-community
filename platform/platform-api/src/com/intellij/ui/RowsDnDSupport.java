@@ -207,14 +207,7 @@ public final class RowsDnDSupport {
     }
   }
 
-  private static class RowDragInfo {
-    public final JComponent component;
-    public final int row;
-
-    RowDragInfo(JComponent component, int row) {
-      this.component = component;
-      this.row = row;
-    }
+  private record RowDragInfo(JComponent component, int row) {
   }
 
   public interface RefinedDropSupport {

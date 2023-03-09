@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.cancelActionsToBeCancelledBeforeWrite;
 
@@ -46,6 +48,10 @@ final class ReadMostlyRWLock {
   // (we have to reduce frequency of this "dead readers GC" activity because Thread.isAlive() turned out to be too expensive)
   private volatile long deadReadersGCStamp;
 
+  // This flag should be set by write thread only, and checked by same thread, so
+  // no "volatile" needed
+  private boolean allowImplicitRead = true;
+
   ReadMostlyRWLock(@NotNull Thread writeThread) {
     this.writeThread = writeThread;
   }
@@ -59,6 +65,8 @@ final class ReadMostlyRWLock {
     Reader(@NotNull Thread readerThread) {
       thread = readerThread;
     }
+    
+    private ProcessingContext processingContext;
 
     @Override
     @NonNls
@@ -83,15 +91,29 @@ final class ReadMostlyRWLock {
     return Thread.currentThread() == writeThread;
   }
 
+  boolean isReadAllowed() {
+    return (isWriteThread() && (isImplicitReadAllowed() || isWriteLocked() || isWriteIntentLocked()))
+           || isReadLockedByThisThread();
+  }
+
   boolean isReadLockedByThisThread() {
-    checkReadThreadAccess();
+    // If implicit read lock is disabled, don't check for write thread, check for true read lock
+    if (allowImplicitRead)
+      checkReadThreadAccess();
     Reader status = R.get();
     return status.readRequested;
   }
 
   // null means lock already acquired, Reader means lock acquired successfully
   Reader startRead() {
-    if (Thread.currentThread() == writeThread) return null;
+    // We have read lock, if:
+    // (a) This is write thread
+    //    AND
+    // (b.1) Implicit read lock is enabled
+    //   OR
+    // (b.2) Explicit write lock has been acquired.
+    if (Thread.currentThread() == writeThread && (allowImplicitRead || writeAcquired))
+      return null;
     Reader status = R.get();
     throwIfImpatient(status);
     if (status.readRequested) return null;
@@ -114,7 +136,14 @@ final class ReadMostlyRWLock {
 
   // return tristate: null means lock already acquired, Reader with readRequested==true means lock was successfully acquired, Reader with readRequested==false means lock was not acquired
   Reader startTryRead() {
-    if (Thread.currentThread() == writeThread) return null;
+    // We have read lock, if:
+    // (a) This is write thread
+    //    AND
+    // (b.1) Implicit read lock is enabled
+    //   OR
+    // (b.2) Explicit write lock has been acquired.
+    if (Thread.currentThread() == writeThread && (allowImplicitRead || writeAcquired))
+      return null;
     Reader status = R.get();
     throwIfImpatient(status);
     if (status.readRequested) return null;
@@ -124,8 +153,13 @@ final class ReadMostlyRWLock {
   }
 
   void endRead(Reader status) {
-    checkReadThreadAccess();
-    status.readRequested = false;
+    // If implicit read lock is disabled, don't check for write thread, check for true read lock
+    if (allowImplicitRead)
+      checkReadThreadAccess();
+    if (status != null) {
+      status.readRequested = false;
+      status.processingContext = null;
+    }
     if (writeRequested) {
       LockSupport.unpark(writeThread);  // parked by writeLock()
     }
@@ -158,6 +192,33 @@ final class ReadMostlyRWLock {
     return R.get().impatientReads;
   }
 
+
+  ProcessingContext getProcessingContext() {
+    if (Thread.currentThread() == writeThread) return writeActionProcessingContext;
+    Reader reader = R.get();
+    if (!reader.readRequested) return null;
+    ProcessingContext context = reader.processingContext;
+    if (context == null) {
+      context = reader.processingContext = new ProcessingContext();
+    }
+    return context;
+  }
+
+  private ProcessingContext writeActionProcessingContext = null;
+
+  <T> T allowProcessingContextInWriteAction(Supplier<T> supplier) {
+    if (Thread.currentThread() != writeThread || writeActionProcessingContext != null) {
+      return supplier.get();
+    }
+    try {
+      writeActionProcessingContext = new ProcessingContext();
+      return supplier.get();
+    }
+    finally {
+      writeActionProcessingContext = null;
+    }
+  }
+
   /**
    * Executes a {@code runnable} in an "impatient" mode.
    * In this mode any attempt to grab read lock
@@ -165,7 +226,9 @@ final class ReadMostlyRWLock {
    * if there is a pending write lock request.
    */
   void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
-    checkReadThreadAccess();
+    // If implicit read lock is disabled, don't check for write thread, check for true read lock
+    if (allowImplicitRead)
+      checkReadThreadAccess();
     Reader status = R.get();
     boolean old = status.impatientReads;
     try {
@@ -307,12 +370,26 @@ final class ReadMostlyRWLock {
     return writeAcquired;
   }
 
+  boolean isWriteIntentLocked() {
+    return writeIntent.get();
+  }
+
+  boolean isImplicitReadAllowed() {
+    return allowImplicitRead;
+  }
+
+  void setImplicitReadAllowance(boolean enable) {
+    allowImplicitRead = enable;
+  }
+
   @Override
   public String toString() {
     return "ReadMostlyRWLock{" +
            "writeThread=" + writeThread +
            ", writeRequested=" + writeRequested +
+           ", writeIntended=" + writeIntent.get() +
            ", writeAcquired=" + writeAcquired +
+           ", implicitRead=" + allowImplicitRead +
            ", readers=" + readers +
            ", writeSuspended=" + writeSuspended +
            '}';

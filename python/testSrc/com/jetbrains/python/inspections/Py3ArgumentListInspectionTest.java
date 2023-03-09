@@ -20,16 +20,18 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
 
   // PY-36158
   public void testDataclassesStarImportNoUnexpectedArgumentWarning() {
-    doTestByText("from dataclasses import *\n" +
-                 "\n" +
-                 "\n" +
-                 "@dataclass(eq=True)\n" +
-                 "class Foo:\n" +
-                 "    a: float\n" +
-                 "    b: float\n" +
-                 "\n" +
-                 "\n" +
-                 "print(Foo(1, 2))\n");
+    doTestByText("""
+                   from dataclasses import *
+
+
+                   @dataclass(eq=True)
+                   class Foo:
+                       a: float
+                       b: float
+
+
+                   print(Foo(1, 2))
+                   """);
   }
 
   // PY-50404
@@ -101,5 +103,15 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                        FOO = enum.auto()
                        BAR = enum.auto()
                    """);
+  }
+
+  // PY-27398
+  public void testInitializingDataclass() {
+    doMultiFileTest();
+  }
+
+  // PY-28957
+  public void testDataclassesReplace() {
+    doMultiFileTest();
   }
 }

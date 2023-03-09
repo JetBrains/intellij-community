@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
@@ -13,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.attribute.DosFileAttributeView;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
@@ -68,7 +70,9 @@ public class SafeFileOutputStreamTest {
 
     File target = tempDir.newFile("test.txt");
     File link = new File(tempDir.getRoot(), "link");
-    IoTestUtil.createSymbolicLink(link.toPath(), target.toPath());
+    @NotNull Path link1 = link.toPath();
+    @NotNull Path target1 = target.toPath();
+    Files.createSymbolicLink(link1, target1);
     checkWriteSucceed(link);
     assertThat(link.toPath()).isSymbolicLink();
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +19,7 @@ public class StatusPanel extends JPanel {
     myTextLabel.setVisible(false);
     myBusySpinner = new AsyncProcessIcon("StatusPanelSpinner");
     myBusySpinner.setVisible(false);
+    myBusySpinner.setToolTipText(DiffBundle.message("diff.progress.spinner.tooltip.text"));
 
     GridBag bag = new GridBag().setDefaultInsets(JBInsets.create(0, 2)).setDefaultFill(GridBagConstraints.BOTH)
       .setDefaultWeightY(1.0);

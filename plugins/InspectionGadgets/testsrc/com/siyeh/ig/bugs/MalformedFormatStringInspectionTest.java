@@ -89,6 +89,51 @@ public abstract class ZonedDateTime implements Temporal {
     public static ZonedDateTime now() {
         return null;
     }
+}""",
+
+      """
+package java.time;
+import java.time.temporal.Temporal;
+public abstract class LocalDateTime implements Temporal {
+    public static LocalDateTime now() {
+        return null;
+    }
+}""",
+
+      """
+package java.time;
+import java.time.temporal.Temporal;
+public abstract class LocalDate implements Temporal {
+    public static LocalDate now() {
+        return null;
+    }
+}""",
+
+      """
+package java.time;
+import java.time.temporal.Temporal;
+public abstract class LocalTime implements Temporal {
+    public static LocalTime now() {
+        return null;
+    }
+}""",
+
+      """
+package java.time;
+import java.time.temporal.Temporal;
+public abstract class OffsetDateTime implements Temporal {
+    public static OffsetDateTime now() {
+        return null;
+    }
+}""",
+
+      """
+package java.time;
+import java.time.temporal.Temporal;
+public abstract class OffsetTime implements Temporal {
+    public static OffsetTime now() {
+        return null;
+    }
 }"""
     };
   }

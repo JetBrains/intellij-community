@@ -10,7 +10,7 @@ package foo
  *   - Derived3 [main]
  */
 expect sealed class <!LINE_MARKER("descr='Has actuals in main module'"), LINE_MARKER("descr='Has subclasses'")!>Sealed1<!>()
-expect sealed class <!LINE_MARKER("descr='Has actuals in intermediate module'"), LINE_MARKER("descr='Is subclassed by Derived11 Derived12 Derived13Error  Click or press ... to navigate'")!>Sealed2<!>() : Sealed1
+expect sealed class <!LINE_MARKER("descr='Has actuals in intermediate module'"), LINE_MARKER("descr='Is subclassed by Derived11 (foo) Derived12 (foo) Derived13Error (foo) Press ... to navigate'")!>Sealed2<!>() : Sealed1
 
 class Derived1 : Sealed1()
 class Derived11 : Sealed2()

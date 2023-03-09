@@ -52,7 +52,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     if (session.isAsynchronous()) {
       queueSession(session, session.getModality());
     }
-    else if ((app = ApplicationManagerEx.getApplicationEx()).isWriteThread()) {
+    else if ((app = ApplicationManagerEx.getApplicationEx()).isWriteIntentLockAcquired()) {
       ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
       runRefreshSession(session, -1L);
       fireEvents(session);

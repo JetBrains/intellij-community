@@ -150,7 +150,7 @@ class KotlinCallableDefinitionUsage<T : PsiElement>(
             val returnTypeText = changeInfo.renderReturnType(this)
             val returnType = changeInfo.newReturnTypeInfo.type
             if (returnType == null || !returnType.isUnit()) {
-                element.setTypeReference(KtPsiFactory(element).createType(returnTypeText))!!.addToShorteningWaitSet(Options.DEFAULT)
+                element.setTypeReference(KtPsiFactory(element.project).createType(returnTypeText))!!.addToShorteningWaitSet(Options.DEFAULT)
             }
         }
     }

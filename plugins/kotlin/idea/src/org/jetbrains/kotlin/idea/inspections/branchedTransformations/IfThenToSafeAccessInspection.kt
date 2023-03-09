@@ -63,9 +63,9 @@ class IfThenToSafeAccessInspection @JvmOverloads constructor(private val inlineW
         fun convert(ifExpression: KtIfExpression, editor: Editor?, inlineWithPrompt: Boolean) {
             val ifThenToSelectData = ifExpression.buildSelectTransformationData() ?: return
 
-            val factory = KtPsiFactory(ifExpression)
+            val psiFactory = KtPsiFactory(ifExpression.project)
             val resultExpr = runWriteAction {
-                val replacedBaseClause = ifThenToSelectData.replacedBaseClause(factory)
+                val replacedBaseClause = ifThenToSelectData.replacedBaseClause(psiFactory)
                 val newExpr = ifExpression.replaced(replacedBaseClause)
                 KtPsiUtil.deparenthesize(newExpr)
             }

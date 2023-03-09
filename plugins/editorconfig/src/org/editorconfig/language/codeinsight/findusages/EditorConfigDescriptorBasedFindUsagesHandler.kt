@@ -26,10 +26,7 @@ class EditorConfigDescriptorBasedFindUsagesHandler(element: EditorConfigDescriba
       .flatMap { PsiTreeUtil.findChildrenOfType(it, EditorConfigDescribableElement::class.java).asSequence() }
       .filter { it.getDescriptor(false) == descriptor }
       .map(::UsageInfo)
-      .forEach {
-        if (!processor.process(it)) return@runReadAction false
-      }
-    return@runReadAction true
+      .all(processor::process)
   }
 
   override fun findReferencesToHighlight(target: PsiElement, searchScope: SearchScope) = runReadAction {

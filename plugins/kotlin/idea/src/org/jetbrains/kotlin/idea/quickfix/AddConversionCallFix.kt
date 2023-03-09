@@ -40,7 +40,7 @@ class AddConversionCallFix(element: KtExpression, val targetType: String) : Kotl
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val expression = element ?: return
-        val convertExpression = KtPsiFactory(file).createExpressionByPattern("($0).to$1()", expression, targetType)
+        val convertExpression = KtPsiFactory(project).createExpressionByPattern("($0).to$1()", expression, targetType)
         expression.replace(convertExpression)
     }
 

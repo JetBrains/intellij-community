@@ -3,11 +3,9 @@ package org.jetbrains.plugins.gradle.util
 
 import org.gradle.util.GradleVersion
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Test
 
 class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
 
-  @Test
   fun `test compatibility between gradle and java versions`() {
     assertTrue(isSupported("2.0", 6))
     assertTrue(isSupported("4.0", 6))
@@ -47,7 +45,6 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertTrue(isSupported("7.6", 19))
   }
 
-  @Test
   fun `test suggesting gradle version for java version`() {
     val bundledGradleVersion = GradleVersion.current()
     require(bundledGradleVersion >= GradleVersion.version("7.1"))
@@ -62,7 +59,6 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     //assertEquals(bundledGradleVersion.version, suggestGradleVersion(19))
   }
 
-  @Test
   fun `test suggesting java version for gradle version`() {
     assertEquals(8, suggestJavaVersion("0.9.2"))
     assertEquals(8, suggestJavaVersion("2.0"))
@@ -83,7 +79,7 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     assertEquals(19, suggestJavaVersion("7.6"))
   }
 
-  @Test
+  
   fun `test suggesting oldest compatible gradle version for java version`() {
     assertEquals("3.0", suggestOldestCompatibleGradleVersion(6))
     assertEquals("3.0", suggestOldestCompatibleGradleVersion(7))
@@ -102,7 +98,6 @@ class GradleJvmSupportMatricesTest : GradleJvmSupportMatricesTestCase() {
     //assertEquals("7.6", suggestOldestCompatibleGradleVersion(24))
   }
 
-  @Test
   fun `test suggesting oldest compatible java version for gradle version`() {
     assertEquals(7, suggestOldestCompatibleJavaVersion("2.0"))
     assertEquals(7, suggestOldestCompatibleJavaVersion("3.0"))

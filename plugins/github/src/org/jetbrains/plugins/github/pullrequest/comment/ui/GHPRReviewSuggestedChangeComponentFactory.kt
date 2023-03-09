@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.CommonBundle
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.defaultButton
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.icons.AllIcons
@@ -61,9 +62,11 @@ class GHPRReviewSuggestedChangeComponentFactory(
     }
 
     val topPanel = JBUI.Panels.simplePanel().apply {
-      isOpaque = false
       border = JBUI.Borders.compound(IdeBorderFactory.createBorder(SideBorder.BOTTOM),
                                      JBUI.Borders.empty(EMPTY_GAP, 2 * EMPTY_GAP))
+      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
+        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      }
 
       add(titleLabel, BorderLayout.WEST)
       if (Registry.`is`("github.suggested.changes.apply")) {

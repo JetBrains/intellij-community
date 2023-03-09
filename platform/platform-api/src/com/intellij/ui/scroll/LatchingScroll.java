@@ -42,13 +42,13 @@ public final class LatchingScroll {
     var iterator = myScrollEvents.iterator();
     while (iterator.hasNext()) {
       MyScrollEvent se = iterator.next();
-      if (se.getWhen() + getExpireAfter() < event.getWhen()) {
+      if (se.when() + getExpireAfter() < event.getWhen()) {
         iterator.remove();
       } else {
         if (se.isHorizontal()) {
-          xs += Math.abs(se.getRotation());
+          xs += Math.abs(se.rotation());
         } else {
-          ys += Math.abs(se.getRotation());
+          ys += Math.abs(se.rotation());
         }
       }
     }
@@ -84,27 +84,6 @@ public final class LatchingScroll {
     return Registry.is("idea.latching.scrolling.enabled", false);
   }
 
-  private static class MyScrollEvent {
-    private final long myWhen;
-    private final double myRotation;
-    private final boolean isMyHorizontal;
-
-    private MyScrollEvent(long when, double rotation, boolean isHorizontal) {
-      myWhen = when;
-      myRotation = rotation;
-      isMyHorizontal = isHorizontal;
-    }
-
-    private long getWhen() {
-      return myWhen;
-    }
-
-    private double getRotation() {
-      return myRotation;
-    }
-
-    private boolean isHorizontal() {
-      return isMyHorizontal;
-    }
+  private record MyScrollEvent(long when, double rotation, boolean isHorizontal) {
   }
 }

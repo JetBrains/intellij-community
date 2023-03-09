@@ -3,6 +3,7 @@ package com.intellij.codeInspection.redundantCast;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.miscGenerics.SuspiciousMethodCallUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   private final LocalQuickFix myQuickFixAction;
@@ -48,10 +51,9 @@ public class RedundantCastInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(JavaAnalysisBundle.message("ignore.casts.in.suspicious.collections.method.calls"), "IGNORE_SUSPICIOUS_METHOD_CALLS");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("IGNORE_SUSPICIOUS_METHOD_CALLS", JavaAnalysisBundle.message("ignore.casts.in.suspicious.collections.method.calls")));
   }
 
   @Nullable

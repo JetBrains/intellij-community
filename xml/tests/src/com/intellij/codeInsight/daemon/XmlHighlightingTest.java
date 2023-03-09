@@ -2106,8 +2106,15 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testBillionLaughsValidation() {
-    configureByFiles(null, BASE_PATH + "BillionLaughs.xml");
-    doDoTest(false, false);
+    Locale locale = Locale.getDefault();
+    try {
+      Locale.setDefault(Locale.ENGLISH);
+      configureByFiles(null, BASE_PATH + "BillionLaughs.xml");
+      doDoTest(false, false);
+    }
+    finally {
+      Locale.setDefault(locale);
+    }
   }
 
   public void testMaxOccurLimitValidation() {

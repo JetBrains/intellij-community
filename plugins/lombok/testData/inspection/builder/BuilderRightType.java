@@ -1,12 +1,12 @@
-<error descr="@lombok.Builder can be used on classes only">@lombok.Builder</error>
+<error descr="'@lombok.Builder' can be used on classes only">@lombok.Builder</error>
 enum BuilderEnumError {
 }
 
-<error descr="@lombok.Builder can be used on classes only">@lombok.Builder</error>
+<error descr="'@lombok.Builder' can be used on classes only">@lombok.Builder</error>
 interface BuilderInterfaceError {
 }
 
-<error descr="@lombok.Builder can be used on classes only">@lombok.Builder</error>
+<error descr="'@lombok.Builder' can be used on classes only">@lombok.Builder</error>
 @interface BuilderAnnotationError {
 }
 
@@ -37,7 +37,7 @@ class BuilderOnNormalMethod {
   }
 }
 
-<error descr="Lombok annotations are not allowed on builder class.">@lombok.Builder</error>
+<error descr="Lombok's annotations are not allowed on builder class.">@lombok.Builder</error>
 class BuilderWithPredefinedClassAnnotation {
   private int x;
   private Float y;

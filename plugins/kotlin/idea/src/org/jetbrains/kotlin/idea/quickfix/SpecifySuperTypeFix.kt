@@ -51,7 +51,7 @@ class SpecifySuperTypeFix(
     private fun KtSuperExpression.specifySuperType(superType: String) {
         project.executeWriteCommand(KotlinBundle.message("intention.name.specify.supertype")) {
             val label = this.labelQualifier?.text ?: ""
-            replace(KtPsiFactory(this).createExpression("super<$superType>$label"))
+            replace(KtPsiFactory(project).createExpression("super<$superType>$label"))
         }
     }
 
@@ -87,7 +87,7 @@ class SpecifySuperTypeFix(
             }
             if (superTypes.size != superTypeListEntries.size) return null
 
-            val psiFactory = KtPsiFactory(superExpression)
+            val psiFactory = KtPsiFactory(superExpression.project)
             val superTypesForSuperExpression = superTypes.mapNotNull { (typeElement, kotlinType) ->
                 if (superTypes.any { it.second != kotlinType && it.second.isSubtypeOf(kotlinType) }) return@mapNotNull null
                 val fqName = kotlinType.fqName ?: return@mapNotNull null

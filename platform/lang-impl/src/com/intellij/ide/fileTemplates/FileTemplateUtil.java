@@ -394,7 +394,7 @@ public final class FileTemplateUtil {
   public static @NotNull FileTemplate createTemplate(@NotNull String prefName,
                                                      @NotNull String extension,
                                                      @NotNull String content,
-                                                     @NotNull List<FileTemplate> templates) {
+                                                     @NotNull List<? extends FileTemplate> templates) {
     final Set<String> names = new HashSet<>();
     for (FileTemplate template : templates) {
       names.add(template.getName());

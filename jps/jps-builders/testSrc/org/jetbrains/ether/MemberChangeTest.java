@@ -67,6 +67,10 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testAddFieldToEnum() {
+    doTest();
+  }
+
   public void testAddFieldToInterface2() {
     doTest();
   }

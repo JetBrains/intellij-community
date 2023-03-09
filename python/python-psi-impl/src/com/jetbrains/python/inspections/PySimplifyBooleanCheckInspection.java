@@ -18,10 +18,10 @@ package com.jetbrains.python.inspections;
 import com.google.common.collect.ImmutableList;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.SimplifyBooleanCheckQuickFix;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyConditionalStatementPart;
@@ -31,10 +31,12 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Alexey.Ivanov
@@ -53,11 +55,8 @@ public class PySimplifyBooleanCheckInspection extends PyInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final PythonUiService uiService = PythonUiService.getInstance();
-    final JPanel panel = uiService.createMultipleCheckboxOptionsPanel(this);
-    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero"), "ignoreComparisonToZero");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(checkbox("ignoreComparisonToZero", PyPsiBundle.message("INSP.simplify.boolean.check.ignore.comparison.to.zero")));
   }
 
   private static class Visitor extends PyInspectionVisitor {

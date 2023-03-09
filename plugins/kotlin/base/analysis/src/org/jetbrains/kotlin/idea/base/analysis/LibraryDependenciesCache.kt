@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.analysis
 
 import com.intellij.ProjectTopics
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.assertReadAccessAllowed
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
@@ -18,6 +19,7 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
@@ -199,7 +201,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         inner class ModelChangeListener : ModuleEntityChangeListener(project) {
             override fun entitiesChanged(outdated: List<Module>) {
-                invalidate()
+                invalidate(writeAccessRequired = true)
             }
         }
 
@@ -220,7 +222,9 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             connection.subscribe(ProjectTopics.PROJECT_ROOTS, this)
         }
 
+        @RequiresReadLock
         override fun get(key: Module): LibraryDependencyCandidatesAndSdkInfos {
+            assertReadAccessAllowed()
             return internalGet(key, hashMapOf(), linkedSetOf(), hashMapOf())
         }
 
@@ -311,8 +315,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             val infoCache = LibraryInfoCache.getInstance(project)
             ModuleRootManager.getInstance(module).orderEntries()
                 .process(object : RootPolicy<Unit>() {
-                    override fun visitModuleSourceOrderEntry(moduleSourceOrderEntry: ModuleSourceOrderEntry, value: Unit) {
-                        modulesToVisit.addAll(moduleSourceOrderEntry.rootModel.getModuleDependencies(true).toList())
+                    override fun visitModuleOrderEntry(moduleOrderEntry: ModuleOrderEntry, value: Unit) {
+                        moduleOrderEntry.module?.let(modulesToVisit::add)
                     }
 
                     override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
@@ -410,7 +414,6 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         }
 
         override fun calculate(key: Module): LibraryDependencyCandidatesAndSdkInfos =
-            //computeLibrariesAndSdksUsedIn(key)
             throw UnsupportedOperationException("calculate(Module) should not be invoked due to custom impl of get()")
 
         override fun checkKeyValidity(key: Module) {
@@ -431,11 +434,6 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
         override fun rootsChanged(event: ModuleRootEvent) {
             if (event.isCausedByWorkspaceModelChangesOnly) return
-
-            // TODO: `invalidate()` to be drop when IDEA-298694 is fixed
-            //  Reason: unload modules are untracked with WorkspaceModel
-            invalidate()
-            return
 
             // SDK could be changed (esp in tests) out of message bus subscription
             val sdks = project.allSdks()

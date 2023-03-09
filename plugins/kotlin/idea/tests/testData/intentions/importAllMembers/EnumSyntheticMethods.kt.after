@@ -1,0 +1,11 @@
+import MyEnum.*
+
+enum class MyEnum {
+    A, B, C, D, E
+}
+
+fun main() {
+    A
+    MyEnum.valueOf("A")
+    MyEnum.values()
+}

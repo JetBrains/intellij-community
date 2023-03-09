@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
@@ -23,7 +23,7 @@ import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.mapping;
 import static org.jetbrains.idea.maven.indices.MavenIndices.LOCAL_REPOSITORY_ID;
 
-public class MavenIndexUtils {
+public final class MavenIndexUtils {
   private static final String CURRENT_VERSION = "5";
   private static final String INDEX_INFO_FILE = "index.properties";
 

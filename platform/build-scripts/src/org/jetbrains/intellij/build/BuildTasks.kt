@@ -68,6 +68,4 @@ interface BuildTasks {
   fun buildFullUpdaterJar()
 
   suspend fun buildUnpackedDistribution(targetDirectory: Path, includeBinAndRuntime: Boolean)
-
-  suspend fun buildDmg(macZipDir: Path)
 }

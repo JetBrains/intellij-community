@@ -60,7 +60,12 @@ public final class CompilerTestUtil {
   @TestOnly
   public static void enableExternalCompiler() {
     final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
-    WriteAction.runAndWait(() -> table.addJdk(table.getInternalJdk()));
+    WriteAction.runAndWait(() -> {
+      Sdk jdk = table.getInternalJdk();
+      if (table.findJdk(jdk.getName(), jdk.getSdkType().getName()) != jdk) {
+        table.addJdk(jdk);
+      }
+    });
   }
 
   @TestOnly
@@ -75,7 +80,9 @@ public final class CompilerTestUtil {
             ModuleRootModificationUtil.setModuleSdk(module, null);
           }
         }
-        table.removeJdk(internalJdk);
+        if (table.findJdk(internalJdk.getName(), internalJdk.getSdkType().getName()) == internalJdk) {
+          table.removeJdk(internalJdk);
+        }
         BuildManager.getInstance().clearState(project);
       });
     });

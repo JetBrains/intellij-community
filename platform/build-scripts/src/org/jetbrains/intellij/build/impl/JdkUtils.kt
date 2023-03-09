@@ -27,7 +27,7 @@ internal object JdkUtils {
   }
 
   /**
-   * Code is copied from com.intellij.openapi.projectRoots.impl.JavaSdkImpl#findClasses(java.io.File, boolean)
+   * Code is copied from [com.intellij.openapi.projectRoots.impl.JavaSdkImpl.findClasses]
    */
   fun readModulesFromReleaseFile(jbrBaseDir: Path): List<String> {
     val releaseFile = jbrBaseDir.resolve("release")

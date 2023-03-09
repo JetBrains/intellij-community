@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete;
 
@@ -55,6 +55,16 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
             runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/enumEntry.kt");
         }
 
+        @TestMetadata("interface1.kt")
+        public void testInterface1() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/interface1.kt");
+        }
+
+        @TestMetadata("interface2.kt")
+        public void testInterface2() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/interface2.kt");
+        }
+
         @TestMetadata("localClass1.kt")
         public void testLocalClass1() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/localClass1.kt");
@@ -78,16 +88,6 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         @TestMetadata("noUsages.kt")
         public void testNoUsages() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/noUsages.kt");
-        }
-
-        @TestMetadata("trait1.kt")
-        public void testTrait1() throws Exception {
-            runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/trait1.kt");
-        }
-
-        @TestMetadata("trait2.kt")
-        public void testTrait2() throws Exception {
-            runTest("testData/refactoring/safeDelete/deleteClass/kotlinClass/trait2.kt");
         }
 
         @TestMetadata("unsafeImport.kt")
@@ -499,6 +499,11 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         @TestMetadata("propertyInLocalObject.kt")
         public void testPropertyInLocalObject() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteProperty/kotlinProperty/propertyInLocalObject.kt");
+        }
+
+        @TestMetadata("propertyInLocalObject2.kt")
+        public void testPropertyInLocalObject2() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteProperty/kotlinProperty/propertyInLocalObject2.kt");
         }
     }
 

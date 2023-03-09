@@ -56,7 +56,7 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
  * This information will be used by [com.intellij.openapi.roots.ProjectFileIndex.getModuleForFile]
  * and [com.intellij.openapi.roots.ProjectFileIndex.getContentRootForFile] methods.
  */
-internal interface ModuleContentOrSourceRootData: WorkspaceFileSetData {
+interface ModuleContentOrSourceRootData: WorkspaceFileSetData {
   val module: Module
   val customContentRoot: VirtualFile?
 }
@@ -66,7 +66,7 @@ internal interface ModuleContentOrSourceRootData: WorkspaceFileSetData {
  * This information will be use by [com.intellij.openapi.roots.ProjectFileIndex.isInSource] and 
  * [com.intellij.openapi.roots.ProjectFileIndex.getSourceRootForFile] methods. 
  */
-internal interface ModuleOrLibrarySourceRootData: WorkspaceFileSetData
+interface ModuleOrLibrarySourceRootData: WorkspaceFileSetData
 
 internal interface JvmPackageRootData: WorkspaceFileSetData {
   val packagePrefix: String

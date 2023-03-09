@@ -38,7 +38,7 @@ class JpsCachesDownloader {
   private int hitsCount = 0;
   private final List<DownloadableFileUrl> myFilesDescriptions;
   private final JpsNettyClient myNettyClient;
-  private JpsLoaderContext myContext;
+  private final JpsLoaderContext myContext;
 
   JpsCachesDownloader(@NotNull List<DownloadableFileUrl> filesDescriptions,
                       @NotNull JpsNettyClient nettyClient,
@@ -71,11 +71,12 @@ class JpsCachesDownloader {
           final File existing = new File(targetDir, description.getDefaultFileName());
           byte attempt = 0;
           File downloaded = null;
-          while (downloaded == null && attempt++ < MAX_RETRY_COUNT) {
+          while (downloaded == null) {
+            attempt++;
             try {
               downloaded = downloadFile(description, existing, expectedDownloads);
             } catch (IOException e) {
-              int httpStatusCode = -1;
+              //int httpStatusCode = -1;
               //if (e  instanceof HttpRequests.HttpStatusException) {
               //  httpStatusCode = ((HttpRequests.HttpStatusException)e).getStatusCode();
               //  if (httpStatusCode == 404) {
@@ -93,11 +94,11 @@ class JpsCachesDownloader {
 
               // If max attempt count exceeded, rethrow exception further
               if (attempt != MAX_RETRY_COUNT) {
-                if (httpStatusCode != -1) {
-                  LOG.info("Failed to download " + description.getDownloadUrl() + " HTTP code: " + httpStatusCode + ". Attempt " + attempt + " to download file again");
-                } else {
+                //if (httpStatusCode != -1) {
+                //  LOG.info("Failed to download " + description.getDownloadUrl() + " HTTP code: " + httpStatusCode + ". Attempt " + attempt + " to download file again");
+                //} else {
                   LOG.info("Failed to download " + description.getDownloadUrl() + " Root cause: " + e + ". Attempt " + attempt + " to download file again");
-                }
+                //}
                 Thread.sleep(250);
               } else {
                 throw new IOException(JpsBuildBundle.message("error.file.download.failed", description.getDownloadUrl(), e.getMessage()), e);

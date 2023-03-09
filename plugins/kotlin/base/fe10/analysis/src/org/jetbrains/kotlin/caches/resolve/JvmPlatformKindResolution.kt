@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.supportsAdditionalBuiltInsMembers
 import org.jetbrains.kotlin.idea.caches.resolve.BuiltInsCacheKey
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
@@ -73,10 +72,7 @@ class JvmPlatformKindResolution : IdePlatformKindResolution {
             setPostponedSettingsComputation {
                 // SDK should be present, otherwise we wouldn't have created JvmBuiltIns in createBuiltIns
                 val sdkDescriptor = resolverForProject.descriptorForModule(sdkDependency)
-
-                val isAdditionalBuiltInsFeaturesSupported =
-                    moduleInfo.supportsAdditionalBuiltInsMembers(projectContext.project)
-                JvmBuiltIns.Settings(sdkDescriptor, isAdditionalBuiltInsFeaturesSupported)
+                JvmBuiltIns.Settings(sdkDescriptor, isAdditionalBuiltInsFeatureSupported = true)
             }
         }
     }
@@ -102,10 +98,7 @@ class JvmPlatformKindResolution : IdePlatformKindResolution {
             setPostponedSettingsComputation {
                 val sdkDescriptor = resolverForProject.descriptorForModule(sdkDependency)
 
-                val isAdditionalBuiltInsFeaturesSupported =
-                    moduleInfo.supportsAdditionalBuiltInsMembers(projectContext.project)
-
-                JvmBuiltIns.Settings(sdkDescriptor, isAdditionalBuiltInsFeaturesSupported)
+                JvmBuiltIns.Settings(sdkDescriptor, isAdditionalBuiltInsFeatureSupported = true)
             }
         }
     }

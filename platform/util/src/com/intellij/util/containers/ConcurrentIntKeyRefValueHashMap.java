@@ -151,7 +151,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
 
   @NotNull
   private Iterator<Entry<V>> entriesIterator() {
-    final Iterator<Entry<IntReference<V>>> entryIterator = ((Iterable<Entry<IntReference<V>>>)myMap.entrySet()).iterator();
+    Iterator<Entry<IntReference<V>>> entryIterator = ((Iterable<Entry<IntReference<V>>>)myMap.entrySet()).iterator();
     return new Iterator<Entry<V>>() {
       private Entry<V> nextVEntry;
       private Entry<IntReference<V>> nextReferenceEntry;
@@ -178,11 +178,11 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
       private void nextAliveEntry() {
         while (entryIterator.hasNext()) {
           Entry<IntReference<V>> entry = entryIterator.next();
-          final V v = entry.getValue().get();
+          V v = entry.getValue().get();
           if (v == null) {
             continue;
           }
-          final int key = entry.getKey();
+          int key = entry.getKey();
           nextVEntry = new SimpleEntry<>(key, v);
           nextReferenceEntry = entry;
           return;
@@ -214,7 +214,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   @Override
   @NotNull
   public Enumeration<V> elements() {
-    final Enumeration<IntReference<V>> elementRefs = myMap.elements();
+    Enumeration<IntReference<V>> elementRefs = myMap.elements();
     return new Enumeration<V>() {
       private V findNextRef() {
         while (elementRefs.hasMoreElements()) {

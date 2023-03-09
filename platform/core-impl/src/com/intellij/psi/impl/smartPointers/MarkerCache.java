@@ -89,9 +89,9 @@ class MarkerCache {
     FrozenDocument frozen = struct.myResultDocument;
     ManualRangeMarker[] resultMarkers = struct.myMarkers.clone();
     for (DocumentEvent event : events) {
-      final FrozenDocument before = frozen;
+      FrozenDocument before = frozen;
       frozen = frozen.applyEvent(event, 0);
-      final DocumentEvent corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(),
+      DocumentEvent corrected = new DocumentEventImpl(frozen, event.getOffset(), event.getOldFragment(), event.getNewFragment(),
                                                             event.getOldTimeStamp(), event.isWholeTextReplaced(),
                                                             ((DocumentEventImpl)event).getInitialStartOffset(),
                                                             ((DocumentEventImpl)event).getInitialOldLength(),

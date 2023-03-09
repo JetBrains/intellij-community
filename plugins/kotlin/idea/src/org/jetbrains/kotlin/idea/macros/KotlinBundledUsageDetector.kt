@@ -5,7 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.util.messages.Topic
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.storage.VersionedStorageChange
@@ -45,8 +45,8 @@ class KotlinBundledUsageDetector(private val project: Project) {
         }
     }
 
-    internal class MyStartupActivity : StartupActivity.DumbAware {
-        override fun runActivity(project: Project) {
+    internal class MyStartupActivity : ProjectPostStartupActivity {
+        override suspend fun execute(project: Project) {
             var isUsed = false
             project.forEachAllUsedLibraries { library ->
                 if (library.getUrls(OrderRootType.CLASSES).any(String::isStartsWithDistPrefix)) {

@@ -3,10 +3,9 @@ package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.*;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProcessor;
@@ -44,7 +43,7 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     final boolean result = validateAnnotationOnRightType(psiClass, builder) && LombokProcessorUtil.isLevelVisible(psiAnnotation);
     if (result) {
       final Collection<PsiField> psiFields = filterFields(psiClass);
@@ -55,10 +54,10 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  private static boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  private static boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addError(LombokBundle.message("inspection.message.field.name.constants.only.supported.on.class.enum.or.field.type"));
+      builder.addErrorMessage("inspection.message.field.name.constants.only.supported.on.class.enum.or.field.type");
       result = false;
     }
     return result;
@@ -68,7 +67,7 @@ public class FieldNameConstantsOldProcessor extends AbstractClassProcessor {
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final Collection<PsiField> psiFields = filterFields(psiClass);
     for (PsiField psiField : psiFields) {
-      if (FieldNameConstantsFieldProcessor.checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, ProblemEmptyBuilder.getInstance())) {
+      if (FieldNameConstantsFieldProcessor.checkIfFieldNameIsValidAndWarn(psiAnnotation, psiField, new ProblemProcessingSink())) {
         target.add(FieldNameConstantsFieldProcessor.createFieldNameConstant(psiField, psiClass, psiAnnotation));
       }
     }

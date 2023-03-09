@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
  *
  * @see PySdkUtil for run-time Python SDK utils
  */
-public class PythonSdkUtil {
+public final class PythonSdkUtil {
 
   public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
   /**

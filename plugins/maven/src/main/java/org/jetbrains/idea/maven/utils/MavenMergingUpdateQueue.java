@@ -55,47 +55,45 @@ public final class MavenMergingUpdateQueue extends MergingUpdateQueue {
     }
     super.queue(update);
   }
-  
+
   public void makeUserAware(final Project project) {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
+    EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
 
-      multicaster.addCaretListener(new CaretListener() {
-        @Override
-        public void caretPositionChanged(@NotNull CaretEvent e) {
+    multicaster.addCaretListener(new CaretListener() {
+      @Override
+      public void caretPositionChanged(@NotNull CaretEvent e) {
+        restartTimer();
+      }
+    }, this);
+
+    multicaster.addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(@NotNull DocumentEvent event) {
+        restartTimer();
+      }
+    }, this);
+
+    project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      int beforeCalled;
+
+      @Override
+      public void beforeRootsChange(@NotNull ModuleRootEvent event) {
+        if (beforeCalled++ == 0) {
+          suspend();
+        }
+      }
+
+      @Override
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
+        if (beforeCalled == 0) {
+          return; // This may occur if listener has been added between beforeRootsChange() and rootsChanged() calls.
+        }
+
+        if (--beforeCalled == 0) {
+          resume();
           restartTimer();
         }
-      }, this);
-
-      multicaster.addDocumentListener(new DocumentListener() {
-        @Override
-        public void documentChanged(@NotNull DocumentEvent event) {
-          restartTimer();
-        }
-      }, this);
-
-      project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-        int beforeCalled;
-
-        @Override
-        public void beforeRootsChange(@NotNull ModuleRootEvent event) {
-          if (beforeCalled++ == 0) {
-            suspend();
-          }
-        }
-
-        @Override
-        public void rootsChanged(@NotNull ModuleRootEvent event) {
-          if (beforeCalled == 0) {
-            return; // This may occur if listener has been added between beforeRootsChange() and rootsChanged() calls.
-          }
-
-          if (--beforeCalled == 0) {
-            resume();
-            restartTimer();
-          }
-        }
-      });
+      }
     });
   }
 

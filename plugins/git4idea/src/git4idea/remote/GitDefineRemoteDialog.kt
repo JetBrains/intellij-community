@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.remote
 
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
@@ -37,7 +38,7 @@ class GitDefineRemoteDialog(
   @NlsSafe initialUrl: String
 ) : DialogWrapper(repository.project) {
 
-  private val uiDispatcher get() = AppUIExecutor.onUiThread().coroutineDispatchingContext()
+  private val uiDispatcher get() = Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()
   private val scope = CoroutineScope(SupervisorJob()).also { Disposer.register(disposable) { it.cancel() } }
 
   private val nameField = JBTextField(initialName, 30)
@@ -139,6 +140,6 @@ class GitDefineRemoteDialog(
 
   private suspend fun lsRemote(url: String): GitCommandResult =
     withContext(Dispatchers.IO) {
-      runUnderIndicator { git.lsRemote(repository.project, virtualToIoFile(repository.root), url) }
+      coroutineToIndicator { git.lsRemote(repository.project, virtualToIoFile(repository.root), url) }
     }
 }

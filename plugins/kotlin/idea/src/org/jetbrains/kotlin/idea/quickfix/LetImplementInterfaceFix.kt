@@ -67,7 +67,7 @@ class LetImplementInterfaceFix(
         val element = element ?: return
         val point = element.createSmartPointer()
 
-        val superTypeEntry = KtPsiFactory(element).createSuperTypeEntry(expectedTypeNameSourceCode)
+        val superTypeEntry = KtPsiFactory(project).createSuperTypeEntry(expectedTypeNameSourceCode)
         runWriteAction {
             val entryElement = element.addSuperTypeListEntry(superTypeEntry)
             ShortenReferences.DEFAULT.process(entryElement)

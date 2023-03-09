@@ -9,7 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
@@ -31,8 +31,10 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class JavaDocReferenceInspection extends LocalInspectionTool {
   private static final String SHORT_NAME = "JavadocReference";
@@ -41,9 +43,9 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
   public boolean REPORT_INACCESSIBLE = true;
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      JavaBundle.message("checkbox.html.report.inaccessible.symbols"), this, "REPORT_INACCESSIBLE");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_INACCESSIBLE", JavaBundle.message("checkbox.html.report.inaccessible.symbols")));
   }
 
   @Override

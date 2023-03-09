@@ -39,9 +39,9 @@ class ConvertTryFinallyToUseCallIntention : SelfTargetingRangeIntention<KtTryExp
         val resourceReference = finallyExpressionReceiver as? KtNameReferenceExpression
         val resourceName = resourceReference?.getReferencedNameAsName()
 
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
 
-        val useCallExpression = factory.buildExpression {
+        val useCallExpression = psiFactory.buildExpression {
             if (resourceName != null) {
                 appendName(resourceName)
                 appendFixedText(".")

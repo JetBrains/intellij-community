@@ -23,24 +23,25 @@ internal abstract class GitAutoSquashCommitAction : GitSingleCommitEditingAction
     val changes = changeList.changes.filter {
       gitRepositoryManager.getRepositoryForFileQuick(ChangesUtil.getFilePath(it)) == repository
     }
+    if (changes.isEmpty()) {
+      CommitChangeListDialog.showNothingToCommitMessage(project)
+      return
+    }
 
-    val executors = repository.vcs.commitExecutors +
-                    if (getProhibitedStateMessage(commitEditingData, GitBundle.message("rebase.log.action.operation.rebase.name")) == null) {
+    val gitVcs = repository.vcs
+    val affectedVcses = setOf(gitVcs)
+    val executors = gitVcs.commitExecutors +
+                    if (getProhibitedStateMessage(commitEditingData,
+                                                  GitBundle.message("rebase.log.action.operation.rebase.name")) == null) {
                       listOf(GitRebaseAfterCommitExecutor(project, repository, commit.id.asString() + "~"))
                     }
                     else {
                       listOf()
                     }
-    CommitChangeListDialog.commitChanges(project,
-                                         changes,
-                                         changes,
-                                         changeList,
-                                         executors,
-                                         true,
-                                         null,
-                                         getCommitMessage(commit),
-                                         null,
-                                         true)
+
+    val commitMessage = getCommitMessage(commit)
+    CommitChangeListDialog.showCommitDialog(project, affectedVcses, changes, changeList,
+                                            executors, true, commitMessage, null)
   }
 
   protected abstract fun getCommitMessage(commit: VcsShortCommitDetails): String

@@ -1,16 +1,18 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,19 +30,19 @@ public final class CommonActionsPanel extends JPanel {
   private final ActionToolbar myToolbar;
 
   public enum Buttons {
-    ADD(IconUtil.getAddIcon(), UIBundle.messagePointer("button.text.add")) {
+    ADD(AllIcons.General.Add, UIBundle.messagePointer("button.text.add")) {
       @Override
       @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new AddButton(listener, name == null ? getText() : name, icon);
       }
     },
-    REMOVE(IconUtil.getRemoveIcon(), UIBundle.messagePointer("button.text.remove")) {
+    REMOVE(AllIcons.General.Remove, UIBundle.messagePointer("button.text.remove")) {
       @Override
       @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new RemoveButton(listener, name == null ? getText() : name, icon);
       }
     },
-    EDIT(IconUtil.getEditIcon(), UIBundle.messagePointer("button.text.edit")) {
+    EDIT(AllIcons.Actions.Edit, UIBundle.messagePointer("button.text.edit")) {
       @Override
       @NotNull AnActionButton createButton(@NotNull Listener listener, String name, @NotNull Icon icon) {
         return new EditButton(listener, name == null ? getText() : name, icon);
@@ -138,16 +140,16 @@ public final class CommonActionsPanel extends JPanel {
     if (buttonComparator != null) {
       Arrays.sort(myActions, buttonComparator);
     }
-    ArrayList<AnAction> toolbarActions = ContainerUtil.newArrayList(myActions);
-    for (int i = 0; i < toolbarActions.size(); i++) {
-        if (toolbarActions.get(i) instanceof AnActionButton.CheckedAnActionButton) {
-          toolbarActions.set(i, ((AnActionButton.CheckedAnActionButton)toolbarActions.get(i)).getDelegate());
-        }
+    AnAction[] toolbarActions = actions.clone();
+    for (int i = 0; i < toolbarActions.length; i++) {
+      if (toolbarActions[i] instanceof AnActionButton.CheckedAnActionButton) {
+        toolbarActions[i] = ((AnActionButton.CheckedAnActionButton)toolbarActions[i]).getDelegate();
+      }
     }
 
     ActionManager actionManager = ActionManager.getInstance();
     myToolbar = actionManager.createActionToolbar(ActionPlaces.TOOLBAR_DECORATOR_TOOLBAR,
-                                                  new DefaultActionGroup(toolbarActions.toArray(AnAction.EMPTY_ARRAY)),
+                                                  new DefaultActionGroup(toolbarActions),
                                                   position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP);
     myToolbar.setTargetComponent(contextComponent);
     myToolbar.getComponent().setBorder(null);
@@ -216,17 +218,6 @@ public final class CommonActionsPanel extends JPanel {
     super.addNotify(); // call after all to construct actions tooltips properly
   }
 
-  @Override
-  public void removeNotify() {
-    final JRootPane pane = getRootPane();
-    for (AnAction button : myActions) {
-      if (button instanceof AddButton && UIUtil.isDialogRootPane(pane)) {
-        button.unregisterCustomShortcutSet(pane);
-      }
-    }
-    super.removeNotify();
-  }
-
   private static void registerDeleteHook(final MyActionButton removeButton) {
     new AnAction(IdeBundle.messagePointer("action.Anonymous.text.delete.hook")) {
       @Override
@@ -285,6 +276,49 @@ public final class CommonActionsPanel extends JPanel {
   @NotNull
   public ActionToolbarPosition getPosition() {
     return myPosition;
+  }
+
+  /**
+   * Tries to calculate the 'under the toolbar button' position for a given action.
+   *
+   * @return the recommended popup position or null in case no toolbar button corresponds to the given action
+   */
+  public @Nullable RelativePoint getPreferredPopupPoint(@NotNull AnAction action) {
+    return computePreferredPopupPoint(getToolbar().getComponent(), action);
+  }
+
+  @ApiStatus.Internal
+  public static RelativePoint getPreferredPopupPoint(@NotNull AnAction action, @Nullable Component contextComponent) {
+    var c = contextComponent;
+    ActionToolbar toolbar = null;
+    while (c != null && (c = c.getParent()) != null) {
+      if (c instanceof JComponent
+          && (toolbar = (ActionToolbar)((JComponent)c).getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY)) != null) {
+        break;
+      }
+    }
+
+    if (toolbar instanceof JComponent) {
+      RelativePoint preferredPoint = computePreferredPopupPoint((JComponent)toolbar, action);
+      if (preferredPoint != null) return preferredPoint;
+    }
+
+    return null;
+  }
+
+  static @Nullable RelativePoint computePreferredPopupPoint(@NotNull JComponent toolbar, @NotNull AnAction action) {
+    for (Component comp : toolbar.getComponents()) {
+      if (comp instanceof ActionButtonComponent) {
+        if (comp instanceof AnActionHolder) {
+          AnAction componentAction = ((AnActionHolder)comp).getAction();
+          if (componentAction == action ||
+              (componentAction instanceof ActionWithDelegate<?> && ((ActionWithDelegate<?>)componentAction).getDelegate() == action)) {
+            return new RelativePoint(comp.getParent(), new Point(comp.getX(), comp.getY() + comp.getHeight()));
+          }
+        }
+      }
+    }
+    return null;
   }
 
   static abstract class MyActionButton extends AnActionButton implements DumbAware {

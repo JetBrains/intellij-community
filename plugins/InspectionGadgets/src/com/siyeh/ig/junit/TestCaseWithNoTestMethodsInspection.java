@@ -17,6 +17,7 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
 
@@ -62,12 +65,10 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
   }
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "test.case.with.no.test.methods.option"), this,
-      "ignoreSupers");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSupers", InspectionGadgetsBundle.message(
+        "test.case.with.no.test.methods.option")));
   }
 
   @Override

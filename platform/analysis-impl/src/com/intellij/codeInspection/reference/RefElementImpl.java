@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -282,11 +283,11 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     mySuppressions = text.split("[, ]");
   }
 
-  public boolean isSuppressed(String @NotNull ... toolId) {
+  public boolean isSuppressed(String @NotNull ... toolIds) {
     if (mySuppressions != null) {
       for (@NonNls String suppression : mySuppressions) {
-        for (String id : toolId) {
-          if (suppression.equals(id)) return true;
+        if (ArrayUtil.contains(suppression, toolIds)) {
+          return true;
         }
         if (suppression.equalsIgnoreCase(SuppressionUtil.ALL)) {
           return true;
@@ -294,6 +295,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
       }
     }
     final RefEntity entity = getOwner();
-    return entity instanceof RefElementImpl && ((RefElementImpl)entity).isSuppressed(toolId);
+    return entity instanceof RefElementImpl && ((RefElementImpl)entity).isSuppressed(toolIds);
   }
 }

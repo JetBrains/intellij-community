@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class LombokLibraryUtil {
+public final class LombokLibraryUtil {
 
   private static final Logger LOG = Logger.getInstance(LombokLibraryUtil.class);
 

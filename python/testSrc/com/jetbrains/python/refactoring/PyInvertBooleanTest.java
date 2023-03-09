@@ -2,6 +2,7 @@
 package com.jetbrains.python.refactoring;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -41,7 +42,7 @@ public class PyInvertBooleanTest extends PyTestCase {
     assertTrue(element instanceof PsiNamedElement);
 
     final InvertBooleanAction action = new InvertBooleanAction();
-    final TestActionEvent event = new TestActionEvent(action);
+    final AnActionEvent event = TestActionEvent.createTestEvent(action);
     assertTrue(ActionUtil.lastUpdateAndCheckDumb(action, event, true));
     assertTrue(event.getPresentation().isEnabledAndVisible());
 

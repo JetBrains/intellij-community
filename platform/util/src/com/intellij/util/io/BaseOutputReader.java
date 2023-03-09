@@ -45,6 +45,21 @@ public abstract class BaseOutputReader extends BaseDataReader {
       }
       return NON_BLOCKING;
     }
+
+    public static @NotNull Options forTerminalPtyProcess() {
+      return new BaseOutputReader.Options() {
+        @Override
+        public BaseDataReader.SleepingPolicy policy() {
+          // com.pty4j.PtyProcess inheritors do not implement java.io.InputStream#available
+          return BaseDataReader.SleepingPolicy.BLOCKING;
+        }
+
+        @Override
+        public boolean splitToLines() {
+          return false; // prevent converting \r\n to \n to render in terminal emulator correctly
+        }
+      };
+    }
   }
 
   protected final Reader myReader;

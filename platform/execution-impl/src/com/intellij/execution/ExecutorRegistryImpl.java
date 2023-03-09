@@ -20,6 +20,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunConfigurationStartHistory;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunState;
+import com.intellij.execution.ui.RunStatusHistory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.ui.ToolbarSettings;
@@ -330,7 +331,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
         // We can consider to add spinning to the inlined run actions. But there is a problem with redrawing
         if (ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
-          RunConfigurationStartHistory startHistory = RunConfigurationStartHistory.getInstance(project);
+          RunStatusHistory startHistory = RunStatusHistory.getInstance(project);
 
           boolean isLoading = startHistory.firstOrNull(selectedSettings, it ->
             (it.getExecutorId().equals(myExecutor.getId()) && it.getState() == RunState.SCHEDULED)
@@ -520,7 +521,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       return cache.myRunConfigs;
     }
 
-    private @NotNull List<RunnerAndConfigurationSettings> filterConfigsThatHaveRunner(@NotNull List<RunnerAndConfigurationSettings> runConfigs) {
+    private @NotNull List<RunnerAndConfigurationSettings> filterConfigsThatHaveRunner(@NotNull List<? extends RunnerAndConfigurationSettings> runConfigs) {
       return ContainerUtil.filter(runConfigs, config -> ProgramRunner.getRunner(myExecutor.getId(), config.getConfiguration()) != null);
     }
 
@@ -823,7 +824,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
                            @Nullable RunnerAndConfigurationSettings settings,
                            @NotNull DataContext dataContext,
                            @NotNull Executor executor) {
-
+      if (settings != null) {
+        RunConfigurationStartHistory.getInstance(project).register(settings);
+      }
       runSubProcess(project, configuration, settings, dataContext, executor, RunToolbarProcessData.prepareBaseSettingCustomization(settings, null));
     }
 

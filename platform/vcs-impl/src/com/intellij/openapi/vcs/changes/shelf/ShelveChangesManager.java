@@ -64,8 +64,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -123,7 +121,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     @Attribute("show_recycled")
     public boolean myShowRecycled;
     @XCollection
-    public Set<String> groupingKeys = new HashSet<>();
+    public TreeSet<String> groupingKeys = new TreeSet<>();
   }
 
   @Override
@@ -170,7 +168,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   private final Project myProject;
 
-  public static final Topic<ChangeListener> SHELF_TOPIC = new Topic<>("shelf updates", ChangeListener.class);
+  public static final Topic<ShelveChangesManagerListener> SHELF_TOPIC = new Topic<>("shelf updates", ShelveChangesManagerListener.class);
 
   public ShelveChangesManager(@NotNull Project project) {
     myPathMacroSubstitutor = PathMacroManager.getInstance(project);
@@ -223,7 +221,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
               }, null, customPath != null ? Paths.get(customPath) : null);
   }
 
-  public void projectOpened() {
+  private void projectOpened() {
     try {
       mySchemeManager.loadSchemes();
       //workaround for ignoring not valid patches, because readScheme doesn't support nullable value as it should be
@@ -541,7 +539,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     return patches;
   }
 
-  private void preloadBaseRevisions(@NotNull List<Change> textChanges) {
+  private void preloadBaseRevisions(@NotNull List<? extends Change> textChanges) {
     MultiMap<VcsRoot, Change> changesGroupedByRoot = MultiMap.create();
     for (Change change : textChanges) {
       ContentRevision beforeRevision = change.getBeforeRevision();
@@ -627,7 +625,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   public @NotNull ShelvedChangeList importFilePatches(String fileName,
                                                       List<? extends FilePatch> patches,
-                                                      List<PatchEP> patchTransitExtensions)
+                                                      List<? extends PatchEP> patchTransitExtensions)
     throws IOException {
     try {
       Path schemePatchDir = generateUniqueSchemePatchDir(fileName, true);
@@ -718,7 +716,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   private void notifyStateChanged() {
     if (!myProject.isDisposed()) {
-      myProject.getMessageBus().syncPublisher(SHELF_TOPIC).stateChanged(new ChangeEvent(this));
+      myProject.getMessageBus().syncPublisher(SHELF_TOPIC).shelvedListsChanged();
     }
   }
 
@@ -1442,12 +1440,13 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @NotNull
-  public Set<String> getGrouping() {
+  public Collection<String> getGrouping() {
     return myState.groupingKeys;
   }
 
-  public void setGrouping(@NotNull Set<String> grouping) {
-    myState.groupingKeys = grouping;
+  public void setGrouping(@NotNull Collection<String> grouping) {
+    myState.groupingKeys.clear();
+    myState.groupingKeys.addAll(grouping);
   }
 
   public static class PostStartupActivity implements StartupActivity.DumbAware {
@@ -1460,7 +1459,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private static void savePatchFile(@NotNull Project project,
                                     @NotNull Path patchFile,
                                     @NotNull List<? extends FilePatch> patches,
-                                    @Nullable List<PatchEP> extensions,
+                                    @Nullable List<? extends PatchEP> extensions,
                                     @NotNull CommitContext context) throws IOException {
     try (Writer writer = Files.newBufferedWriter(patchFile)) {
       UnifiedDiffWriter.write(project, ProjectKt.getStateStore(project).getProjectBasePath(), patches, writer, "\n", context, extensions);

@@ -66,39 +66,86 @@ public class ConvertToRecordProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
+  protected void doRun() {
+    prepareRenameOfAccessors();
+
+    super.doRun();
+  }
+
+  private void prepareRenameOfAccessors() {
+    List<FieldAccessorCandidate> accessorsToRename = getAccessorsToRename();
+
+    for (var fieldAccessorCandidate : accessorsToRename) {
+      String backingFieldName = fieldAccessorCandidate.getBackingField().getName();
+
+      List<PsiMethod> methods = substituteWithSuperMethodsIfPossible(fieldAccessorCandidate.getAccessor());
+      RenamePsiElementProcessor methodRenameProcessor = RenamePsiElementProcessor.forElement(methods.get(0));
+
+      methods.forEach(method -> {
+        myAllRenames.put(method, backingFieldName);
+        methodRenameProcessor.prepareRenaming(method, backingFieldName, myAllRenames);
+      });
+    }
+  }
+
+  @Override
   protected UsageInfo @NotNull [] findUsages() {
     List<UsageInfo> usages = new SmartList<>();
-    for (var entry : myRecordCandidate.getFieldAccessors().entrySet()) {
-      PsiField psiField = entry.getKey();
+    for (var psiField : myRecordCandidate.getFieldAccessors().keySet()) {
       if (!psiField.hasModifierProperty(PRIVATE)) {
         usages.add(new FieldUsageInfo(psiField));
       }
-      FieldAccessorCandidate fieldAccessorCandidate = entry.getValue();
-      if (fieldAccessorCandidate != null && !fieldAccessorCandidate.isRecordStyleNaming()) {
-        PsiMethod[] superMethods = fieldAccessorCandidate.getAccessor().findSuperMethods();
-        String backingFieldName = fieldAccessorCandidate.getBackingField().getName();
-        List<PsiMethod> methods;
-        if (superMethods.length == 0) {
-          methods = Collections.singletonList(fieldAccessorCandidate.getAccessor());
-        }
-        else {
-          methods = List.of(superMethods);
-        }
-        RenamePsiElementProcessor methodRenameProcessor = RenamePsiElementProcessor.forElement(methods.get(0));
-        methods.forEach(method -> {
-          myAllRenames.put(method, backingFieldName);
-          methodRenameProcessor.prepareRenaming(method, backingFieldName, myAllRenames);
-          UsageInfo[] methodUsages = RenameUtil.findUsages(method, backingFieldName, false, false, myAllRenames);
-          usages.addAll(Arrays.asList(methodUsages));
-        });
-        usages.add(new RenameMethodUsageInfo(fieldAccessorCandidate.getAccessor(), backingFieldName));
-      }
+    }
+
+    List<FieldAccessorCandidate> accessorsToRename = getAccessorsToRename();
+
+    for (var fieldAccessorCandidate : accessorsToRename) {
+      String backingFieldName = fieldAccessorCandidate.getBackingField().getName();
+
+      List<PsiMethod> methods = substituteWithSuperMethodsIfPossible(fieldAccessorCandidate.getAccessor());
+      methods.forEach(method -> {
+        UsageInfo[] methodUsages = RenameUtil.findUsages(method, backingFieldName, false, false, myAllRenames);
+        usages.addAll(Arrays.asList(methodUsages));
+      });
+    }
+
+    for (var fieldAccessorCandidate : accessorsToRename) {
+      String backingFieldName = fieldAccessorCandidate.getBackingField().getName();
+      usages.add(new RenameMethodUsageInfo(fieldAccessorCandidate.getAccessor(), backingFieldName));
     }
 
     if (myShowAffectedMembers) {
       usages.addAll(findAffectedMembersUsages(myRecordCandidate));
     }
     return usages.toArray(UsageInfo.EMPTY_ARRAY);
+  }
+
+  /**
+   * @return list of accessors which have not record-compatible names and need to be renamed separately.
+   */
+  @NotNull
+  private List<@NotNull FieldAccessorCandidate> getAccessorsToRename() {
+    //noinspection UnnecessaryLocalVariable
+    List<FieldAccessorCandidate> list = ContainerUtil.filter(
+      myRecordCandidate.getFieldAccessors().values(),
+      fieldAccessorCandidate -> fieldAccessorCandidate != null && !fieldAccessorCandidate.isRecordStyleNaming()
+    );
+    return list;
+  }
+
+  /**
+   * @param accessor a declaration to find supers methods for
+   * @return a list of direct super methods, or the declaration itself if no super methods are found
+   */
+  @NotNull
+  private static List<@NotNull PsiMethod> substituteWithSuperMethodsIfPossible(@NotNull PsiMethod accessor) {
+    PsiMethod[] superMethods = accessor.findSuperMethods();
+    if (superMethods.length == 0) {
+      return List.of(accessor);
+    }
+    else {
+      return List.of(superMethods);
+    }
   }
 
   @NotNull

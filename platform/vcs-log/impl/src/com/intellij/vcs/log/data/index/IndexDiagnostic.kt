@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.vcs.changes.ChangesUtil
@@ -20,9 +20,9 @@ internal object IndexDiagnostic {
   private const val FILTERED_PATHS_LIMIT = 1000
   private const val COMMITS_TO_CHECK = 10
 
-  fun IndexDataGetter.getDiffFor(commitsIdsList: List<Int>, commitDetailsList: List<VcsFullCommitDetails>): String {
+  fun IndexDataGetter.getDiffFor(commitsIdList: List<Int>, commitDetailsList: List<VcsFullCommitDetails>): String {
     val report = StringBuilder()
-    for ((commitId, commitDetails) in commitsIdsList.zip(commitDetailsList)) {
+    for ((commitId, commitDetails) in commitsIdList.zip(commitDetailsList)) {
       getDiffFor(commitId, commitDetails)?.let { commitReport ->
         report.append(commitReport).append("\n")
       }

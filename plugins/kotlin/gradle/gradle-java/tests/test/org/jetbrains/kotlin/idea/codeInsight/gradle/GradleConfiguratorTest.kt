@@ -32,7 +32,6 @@ import org.jetbrains.kotlin.idea.configuration.notifications.LAST_BUNDLED_KOTLIN
 import org.jetbrains.kotlin.idea.configuration.notifications.showNewKotlinCompilerAvailableNotificationIfNeeded
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinJsGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.migration.KotlinMigrationBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestTasksProvider
@@ -85,8 +84,6 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                     // We have a Kotlin runtime in build.gradle but not in the classpath, so it doesn't make sense
                     // to suggest configuring it
                     assertEquals(ConfigureKotlinStatus.BROKEN, findGradleModuleConfigurator().getStatus(moduleGroup))
-                    // Don't offer the JS configurator if the JVM configuration exists but is broken
-                    assertEquals(ConfigureKotlinStatus.BROKEN, findJsGradleModuleConfigurator().getStatus(moduleGroup))
                 }
             }
 
@@ -255,80 +252,8 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
-    @Test
-    @TargetVersions("4.4+")
-    fun testConfigureJsWithBuildGradle() {
-        val files = importProjectFromTestData()
-
-        runInEdtAndWait {
-            runWriteAction {
-                val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
-                val configurator = findJsGradleModuleConfigurator()
-                val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.2.40"), collector)
-
-                checkFiles(files)
-            }
-        }
-    }
-
-    @Test
-    @TargetVersions("4.4+")
-    fun testConfigureJsWithBuildGradleKts() {
-        val files = importProjectFromTestData()
-
-        runInEdtAndWait {
-            runWriteAction {
-                val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
-                val configurator = findJsGradleModuleConfigurator()
-                val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.2.40"), collector)
-
-                checkFiles(files)
-            }
-        }
-    }
-
-    @Test
-    @TargetVersions("4.4+")
-    fun testConfigureJsMilestoneWithBuildGradle() {
-        val files = importProjectFromTestData()
-
-        runInEdtAndWait {
-            runWriteAction {
-                val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
-                val configurator = findJsGradleModuleConfigurator()
-                val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.6.20-M1"), collector)
-
-                checkFiles(files)
-            }
-        }
-    }
-
-    @Test
-    @TargetVersions("4.4+")
-    fun testConfigureJsMilestoneWithBuildGradleKts() {
-        val files = importProjectFromTestData()
-
-        runInEdtAndWait {
-            runWriteAction {
-                val module = ModuleManager.getInstance(myProject).findModuleByName("project.app")!!
-                val configurator = findJsGradleModuleConfigurator()
-                val collector = NotificationMessageCollector.create(myProject)
-                configurator.configureWithVersion(myProject, listOf(module), IdeKotlinVersion.get("1.6.20-M1"), collector)
-
-                checkFiles(files)
-            }
-        }
-    }
-
     private fun findGradleModuleConfigurator(): KotlinGradleModuleConfigurator {
         return KotlinProjectConfigurator.EP_NAME.findExtensionOrFail(KotlinGradleModuleConfigurator::class.java)
-    }
-
-    private fun findJsGradleModuleConfigurator(): KotlinJsGradleModuleConfigurator {
-        return KotlinProjectConfigurator.EP_NAME.findExtensionOrFail(KotlinJsGradleModuleConfigurator::class.java)
     }
 
     @Test
@@ -356,7 +281,6 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
             val (modules, ableToRunConfigurators) = getConfigurationPossibilitiesForConfigureNotification(myProject)
             assertTrue(ableToRunConfigurators.any { it is KotlinGradleModuleConfigurator })
-            assertTrue(ableToRunConfigurators.any { it is KotlinJsGradleModuleConfigurator })
             val moduleNames = modules.map { it.baseModule.name }
             assertSameElements(moduleNames, "project.app")
 

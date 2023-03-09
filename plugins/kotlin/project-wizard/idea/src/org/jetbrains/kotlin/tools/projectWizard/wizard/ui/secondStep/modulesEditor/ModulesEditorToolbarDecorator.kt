@@ -45,7 +45,7 @@ class ModulesEditorToolbarDecorator(
                 ),
                 allowAndroid = isRootModule
                         && isMultiplatformProject()
-                        && allModules.none { it.configurator == AndroidSinglePlatformModuleConfigurator },
+                        && allModules.none { it.configurator is AndroidSinglePlatformModuleConfiguratorBase },
                 allowIos = isRootModule
                         && isMultiplatformProject()
                         && allModules.none { it.configurator is IOSSinglePlatformModuleConfiguratorBase },

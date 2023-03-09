@@ -53,8 +53,8 @@ class EqualsAndHashCodeSimple {
     }
 
     protected boolean canEqual(final Object other) {
-    return other instanceof EqualsAndHashCodeSimple;
-  }
+        return other instanceof EqualsAndHashCodeSimple;
+    }
 
     public int hashCode() {
         final int PRIME = 59;

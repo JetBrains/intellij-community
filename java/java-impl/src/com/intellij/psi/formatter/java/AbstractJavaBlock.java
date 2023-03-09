@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.tree.java.ClassElement;
 import com.intellij.psi.jsp.JspClassLevelDeclarationStatementType;
 import com.intellij.psi.jsp.JspCodeBlockType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayUtil;
@@ -1260,10 +1261,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     final Block previousBlock = getSubBlocks().get(newChildIndex - 1);
     if (!(previousBlock instanceof AbstractBlock)) return false;
     final IElementType previousElementType = ((AbstractBlock)previousBlock).getNode().getElementType();
-    for (IElementType elementType : elementTypes) {
-      if (previousElementType == elementType) return true;
-    }
-    return false;
+    return ArrayUtil.contains(previousElementType, elementTypes);
   }
 
   @Nullable

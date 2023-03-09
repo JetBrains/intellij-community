@@ -74,7 +74,6 @@ public final class TreePathUtil {
    */
   private static <T> T[] convertTreePathToArray(@NotNull TreePath path, @NotNull Function<Object, ? extends T> converter, @NotNull Class<T> type) {
     int count = path.getPathCount();
-    if (count <= 0) return null;
     T[] array = ArrayUtil.newArray(type, count);
     while (path != null && count > 0) {
       Object component = path.getLastPathComponent();

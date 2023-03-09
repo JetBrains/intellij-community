@@ -30,10 +30,10 @@ public abstract class CompileActionBase extends AnAction implements DumbAware {
     if (file != null && editor != null && !DumbService.getInstance(project).isDumb()) {
       DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, file); //let autoimport complete
     }
-    doAction(dataContext, project);
+    doAction(e, project);
   }
 
-  protected abstract void doAction(final DataContext dataContext, final Project project);
+  protected abstract void doAction(@NotNull AnActionEvent event, final Project project);
 
   @Override
   public void update(@NotNull final AnActionEvent e) {

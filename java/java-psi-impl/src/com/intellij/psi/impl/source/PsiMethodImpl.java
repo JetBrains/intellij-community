@@ -4,7 +4,6 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -203,18 +202,17 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     PsiParameterList list = getStubOrPsiChild(JavaStubElementTypes.PARAMETER_LIST);
     if (list == null) {
       return CachedValuesManager.getCachedValue(this, () -> {
-        LightParameterListBuilder lightList = new LightParameterListBuilder(this.getManager(), this.getLanguage()) {
+        LightParameterListBuilder lightList = new LightParameterListBuilder(getManager(), getLanguage()) {
           @Override
           public String getText() {
             return null;
           }
         };
-        PsiClass aClass = this.getContainingClass();
+        PsiClass aClass = getContainingClass();
         if (aClass != null) {
           PsiRecordComponent[] recordComponents = aClass.getRecordComponents();
           for (PsiRecordComponent component : recordComponents) {
             String name = component.getName();
-            if (name == null) continue;
             lightList.addParameter(new LightCompactConstructorParameter(name, component.getType(), this, component));
           }
         }
@@ -348,7 +346,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public @NotNull SearchScope getUseScope() {
-    return ReadAction.compute(() -> PsiImplUtil.getMemberUseScope(this));
+    return PsiImplUtil.getMemberUseScope(this);
   }
 
   @Override

@@ -44,13 +44,21 @@ public class Distance {
     return similarity1 < similarity2 && !MathUtil.equals(similarity1, similarity2, PRECISION);
   }
 
-  public static double jaccardSimilarityWithThreshold(@NotNull Bag bag1, @NotNull Bag bag2, double similarityThreshold) {
+  private static double jaccardSimilarity(@NotNull Bag bag1, @NotNull Bag bag2, double similarityThreshold, boolean isOptimised){
     final int cardinality1 = bag1.getCardinality();
     final int cardinality2 = bag2.getCardinality();
-    if (lessThen(Math.min(cardinality1, cardinality2), Math.max(cardinality1, cardinality2) * similarityThreshold)) {
+    if (!isOptimised && lessThen(Math.min(cardinality1, cardinality2), Math.max(cardinality1, cardinality2) * similarityThreshold)) {
       return 0;
     }
     int intersectionSize = Bag.intersectionSize(bag1, bag2);
     return intersectionSize / (double)(cardinality1 + cardinality2 - intersectionSize);
+  }
+
+  public static double jaccardSimilarityWithThreshold(@NotNull Bag bag1, @NotNull Bag bag2, double similarityThreshold) {
+    return jaccardSimilarity(bag1, bag2, similarityThreshold, false);
+  }
+
+  public static double jaccardDistanceExact(@NotNull Bag bag1, @NotNull Bag bag2){
+    return 1 - jaccardSimilarity(bag1, bag2, 0, true);
   }
 }

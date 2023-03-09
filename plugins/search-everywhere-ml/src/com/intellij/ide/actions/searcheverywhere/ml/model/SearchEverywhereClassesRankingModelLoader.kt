@@ -4,12 +4,18 @@ import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributo
 import com.intellij.internal.ml.DecisionFunction
 
 internal class SearchEverywhereClassesRankingModelLoader : SearchEverywhereMLRankingModelLoader() {
+  private val resourceDirectory = "classes_features"
+  private val modelDirectory = "classes_model"
   private val expResourceDirectory = "classes_features_exp"
   private val expModelDirectory = "classes_model_exp"
 
-  override val supportedContributor = ClassSearchEverywhereContributor::class.java
+
+  override val supportedContributorName: String = ClassSearchEverywhereContributor::class.java.simpleName
 
   override fun getBundledModel(): DecisionFunction {
-    return getCatBoostModel(expResourceDirectory, expModelDirectory)
+    return if (shouldProvideExperimentalModel())
+      getCatBoostModel(expResourceDirectory, expModelDirectory)
+    else
+      getCatBoostModel(resourceDirectory, modelDirectory)
   }
 }

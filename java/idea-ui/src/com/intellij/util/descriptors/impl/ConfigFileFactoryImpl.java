@@ -56,7 +56,7 @@ public final class ConfigFileFactoryImpl extends ConfigFileFactory {
   @Override
   public ConfigFileContainer createConfigFileContainer(final Project project, final ConfigFileMetaDataProvider metaDataProvider,
                                                        final ConfigFileInfoSet configuration) {
-    return new ConfigFileContainerImpl(project, metaDataProvider, (ConfigFileInfoSetImpl)configuration);
+    return new ConfigFileContainerImpl(project, metaDataProvider, configuration);
   }
 
   private static String getText(final String templateName, @Nullable Project project) throws IOException {

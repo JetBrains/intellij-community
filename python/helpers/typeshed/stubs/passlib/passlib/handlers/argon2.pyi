@@ -27,7 +27,7 @@ class _Argon2Common(  # type: ignore[misc]
     min_memory_cost: ClassVar[int]
     max_threads: ClassVar[int]
     pure_use_threads: ClassVar[bool]
-    def type_values(cls): ...  # type: ignore
+    def type_values(cls): ...
     type: str
     parallelism: int
     version: int

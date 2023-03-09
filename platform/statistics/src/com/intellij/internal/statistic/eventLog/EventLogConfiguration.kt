@@ -160,8 +160,10 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
   val maxFilesToSend: Int = computeMaxFilesToSend()
 
   init {
-    val configOptions = EventLogConfigOptionsService.getInstance().getOptions(recorderId)
-    machineIdReference = AtomicLazyValue { generateMachineId(configOptions.machineIdSalt, configOptions.machineIdRevision) }
+    machineIdReference = AtomicLazyValue {
+      val configOptions = EventLogConfigOptionsService.getInstance().getOptions(recorderId)
+      generateMachineId(configOptions.machineIdSalt, configOptions.machineIdRevision)
+    }
 
     EventLogConfigOptionsService.TOPIC.subscribe(null, object : EventLogRecorderConfigOptionsListener(recorderId) {
       override fun onMachineIdConfigurationChanged(salt: @Nullable String?, revision: Int) {

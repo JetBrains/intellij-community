@@ -446,6 +446,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       return Collections.emptyList();
     }
 
+    List<String> configParameters = new ArrayList<>();
     List<String> filterParameters = new ArrayList<>();
 
     VcsLogBranchFilter branchFilter = filterCollection.get(BRANCH_FILTER);
@@ -519,6 +520,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
       else {
         filterParameters.addAll(ContainerUtil.map(names, a -> prepareParameter("author", StringUtil.escapeBackSlashes(a))));
       }
+      configParameters.add("log.mailmap=false");
     }
 
     if (maxCount > 0) {
@@ -540,7 +542,7 @@ public final class GitLogProvider implements VcsLogProvider, VcsIndexableLogProv
     }
 
     List<TimedVcsCommit> commits = new ArrayList<>();
-    GitLogUtil.readTimedCommits(myProject, root, filterParameters, EmptyConsumer.getInstance(),
+    GitLogUtil.readTimedCommits(myProject, root, configParameters, filterParameters, EmptyConsumer.getInstance(),
                                 EmptyConsumer.getInstance(), new CollectConsumer<>(commits));
     return commits;
   }

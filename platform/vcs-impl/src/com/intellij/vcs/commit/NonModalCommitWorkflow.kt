@@ -6,9 +6,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 abstract class NonModalCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
-  internal fun asyncSession(scope: CoroutineScope,
-                            sessionInfo: CommitSessionInfo,
-                            commitChecks: suspend () -> CommitChecksResult) {
+  internal fun launchAsyncSession(scope: CoroutineScope,
+                                  sessionInfo: CommitSessionInfo,
+                                  commitChecks: suspend () -> CommitChecksResult) {
     check(isExecuting) { "Commit session has already finished" }
     scope.launch {
       try {

@@ -2,10 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.PagedFileStorage;
-import com.intellij.util.io.ResizeableMappedFile;
-import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -20,40 +17,42 @@ abstract class PersistentFSRecordsStorage {
   enum RecordsStorageKind {
     REGULAR,
     LOCK_FREE,
-    IN_MEMORY
+    IN_MEMORY,
+
+    OVER_LOCK_FREE_FILE_CACHE
   }
 
-  //static final boolean useLockFreeRecordsStorage = SystemProperties.getBooleanProperty("idea.use.lock.free.record.storage.for.vfs", false);
   static final RecordsStorageKind
     RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("idea.records-storage-kind", RecordsStorageKind.REGULAR.name()));
 
   static int recordsLength() {
-    return switch(RECORDS_STORAGE_KIND){
+    return switch (RECORDS_STORAGE_KIND) {
       case REGULAR, IN_MEMORY -> PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
       case LOCK_FREE -> PersistentFSLockFreeRecordsStorage.RECORD_SIZE;
+      case OVER_LOCK_FREE_FILE_CACHE -> PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES;
     };
   }
 
-  static PersistentFSRecordsStorage createStorage(@NotNull Path file) throws IOException {
-    ResizeableMappedFile resizeableMappedFile = createFile(file, recordsLength());
-
-    //FSRecords.LOG.info("using " + (useLockFreeRecordsStorage ? "synchronized" : "lock-free") + " storage for VFS records");
+  static PersistentFSRecordsStorage createStorage(final @NotNull Path file) throws IOException {
     FSRecords.LOG.info("using " + RECORDS_STORAGE_KIND + " storage for VFS records");
 
     return switch (RECORDS_STORAGE_KIND) {
-      case REGULAR -> new PersistentFSSynchronizedRecordsStorage(resizeableMappedFile);
-      case LOCK_FREE -> new PersistentFSLockFreeRecordsStorage(resizeableMappedFile);
-      case IN_MEMORY -> new PersistentInMemoryFSRecordsStorage(file, 1 << 24);
+      case REGULAR -> new PersistentFSSynchronizedRecordsStorage(openRMappedFile(file, recordsLength()));
+      case LOCK_FREE -> new PersistentFSLockFreeRecordsStorage(openRMappedFile(file, recordsLength()));
+      case IN_MEMORY -> new PersistentInMemoryFSRecordsStorage(file, /*max size: */1 << 24);
+
+      case OVER_LOCK_FREE_FILE_CACHE -> createLockFreeStorage(file);
     };
   }
 
   @VisibleForTesting
-  static @NotNull ResizeableMappedFile createFile(@NotNull Path file, int recordLength) throws IOException {
-    int pageSize = PagedFileStorage.DEFAULT_PAGE_SIZE * recordLength / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
+  static @NotNull ResizeableMappedFile openRMappedFile(final @NotNull Path file,
+                                                       final int recordLength) throws IOException {
+    int pageSize = PageCacheUtils.DEFAULT_PAGE_SIZE * recordLength / PersistentFSSynchronizedRecordsStorage.RECORD_SIZE;
 
     boolean aligned = pageSize % recordLength == 0;
     if (!aligned) {
-      String message = "Record length(="+recordLength+") is not aligned with page size(=" + pageSize + ")";
+      String message = "Record length(=" + recordLength + ") is not aligned with page size(=" + pageSize + ")";
       Logger.getInstance(PersistentFSRecordsStorage.class).error(message);
     }
 
@@ -63,6 +62,32 @@ abstract class PersistentFSRecordsStorage {
                                     aligned,
                                     IOUtil.useNativeByteOrderForByteBuffers());
   }
+
+  @VisibleForTesting
+  static @NotNull PersistentFSRecordsOverLockFreePagedStorage createLockFreeStorage(final @NotNull Path file) throws IOException {
+    final int recordLength = PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES;
+    final int pageSize = PageCacheUtils.DEFAULT_PAGE_SIZE;
+
+    if (!PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+      throw new AssertionError(
+        "Bug: PageCacheUtils.LOCK_FREE_VFS_ENABLED=false " +
+        "=> can't create PersistentFSRecordsOverLockFreePagedStorage is FilePageCacheLockFree is disabled");
+    }
+
+    final boolean recordsArePageAligned = pageSize % recordLength == 0;
+    if (!recordsArePageAligned) {
+      throw new AssertionError("Bug: record length(=" + recordLength + ") is not aligned with page size(=" + pageSize + ")");
+    }
+
+    final PagedFileStorageLockFree storage = new PagedFileStorageLockFree(
+      file,
+      PERSISTENT_FS_STORAGE_CONTEXT_RW,
+      pageSize,
+      IOUtil.useNativeByteOrderForByteBuffers()
+    );
+    return new PersistentFSRecordsOverLockFreePagedStorage(storage);
+  }
+
 
   /**
    * @return id of newly allocated record
@@ -87,6 +112,8 @@ abstract class PersistentFSRecordsStorage {
    */
   abstract boolean setFlags(int fileId, int flags) throws IOException;
 
+  //TODO RC: boolean updateFlags(fileId, int maskBits, boolean riseOrClean)
+
   abstract long getLength(int fileId) throws IOException;
 
 
@@ -94,7 +121,7 @@ abstract class PersistentFSRecordsStorage {
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
    */
   //RC: why 'put' not 'set'?
-  abstract boolean putLength(int fileId, long length) throws IOException;
+  abstract boolean setLength(int fileId, long length) throws IOException;
 
   abstract long getTimestamp(int fileId) throws IOException;
 
@@ -103,10 +130,12 @@ abstract class PersistentFSRecordsStorage {
    * @return true if value is changed, false if not (i.e. new value is actually equal to the old one)
    */
   //RC: why 'put' not 'set'?
-  abstract boolean putTimestamp(int fileId, long timestamp) throws IOException;
+  abstract boolean setTimestamp(int fileId, long timestamp) throws IOException;
 
   abstract int getModCount(int fileId) throws IOException;
 
+  //TODO RC: why we need this method? Record modification is detected by actual modification -- there
+  //         are (seems to) no way to modify record bypassing it.
   abstract void markRecordAsModified(int fileId) throws IOException;
 
   abstract int getContentRecordId(int fileId) throws IOException;
@@ -117,6 +146,7 @@ abstract class PersistentFSRecordsStorage {
 
   //TODO RC: what semantics is assumed for the method in concurrent context? If it is 'update atomically' than
   //         it makes it harder to implement a storage in a lock-free way
+
   /**
    * Fills all record fields in one shot
    */

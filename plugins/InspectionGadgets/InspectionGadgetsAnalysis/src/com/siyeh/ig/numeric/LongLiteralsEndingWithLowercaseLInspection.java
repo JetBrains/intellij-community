@@ -63,7 +63,7 @@ public class LongLiteralsEndingWithLowercaseLInspection extends BaseInspection i
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiExpression literal =
         (PsiExpression)descriptor.getPsiElement();
       final String text = literal.getText();

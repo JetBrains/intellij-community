@@ -479,7 +479,7 @@ public class ShowAffectedTestsAction extends AnAction {
     List<Location<PsiMethod>> testMethods = Arrays.stream(tree.getTestMethods())
       .map(TestMethodUsage::calculateLocation)
       .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .toList();
 
     getRunConfigurationProducers(project).stream()
       .map(producer -> pair(producer, ContainerUtil.filter(testMethods, producer::isApplicable)))

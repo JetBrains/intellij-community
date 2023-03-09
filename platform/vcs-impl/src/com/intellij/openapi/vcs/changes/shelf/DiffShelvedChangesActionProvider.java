@@ -187,7 +187,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
                                                              boolean withLocal) {
     final String beforePath = shelvedChange.getBeforePath();
     final String afterPath = shelvedChange.getAfterPath();
-    final FilePath filePath = VcsUtil.getFilePath(new File(base, afterPath == null ? beforePath : afterPath));
+    final FilePath filePath = VcsUtil.getFilePath(new File(base, afterPath));
 
     try {
       if (FileStatus.ADDED.equals(shelvedChange.getFileStatus())) {

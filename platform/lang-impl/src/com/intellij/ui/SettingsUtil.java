@@ -10,9 +10,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.xml.CommonXmlStrings;
 
-import java.util.Map;
-
-public class SettingsUtil {
+public final class SettingsUtil {
   /**
    * Injects into {@code description} "Powered by " message with a link to the corresponding plugin page based on passed {@code loader}.
    * <p> 

@@ -83,7 +83,7 @@ private object KotlinBrowserFullyQualifiedUsageReporter : ObsoleteCodeProblemRep
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val oldQualifier = descriptor.psiElement as? KtDotQualifiedExpression ?: return
 
-            val newQualifier = KtPsiFactory(oldQualifier).createExpression(KOTLINX_BROWSER_PACKAGE)
+            val newQualifier = KtPsiFactory(project).createExpression(KOTLINX_BROWSER_PACKAGE)
             oldQualifier.replace(newQualifier)
         }
     }

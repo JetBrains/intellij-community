@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.util;
 
 import com.intellij.diff.comparison.ComparisonMergeUtil;
@@ -17,7 +17,7 @@ import java.util.function.BooleanSupplier;
 
 import static com.intellij.diff.util.DiffRangeUtil.getLinesContent;
 
-public class MergeRangeUtil {
+public final class MergeRangeUtil {
   @NotNull
   public static MergeConflictType getMergeType(@NotNull Condition<? super ThreeSide> emptiness,
                                                @NotNull BiPredicate<? super ThreeSide, ? super ThreeSide> equality,

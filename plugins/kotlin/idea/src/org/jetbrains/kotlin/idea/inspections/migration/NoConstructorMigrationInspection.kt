@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory0
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.migration.MigrationInfo
@@ -17,5 +18,6 @@ class NoConstructorMigrationInspection :
         sinceNewVersion = LanguageVersion.KOTLIN_1_7,
     )
 
-    override val diagnosticFactory: DiagnosticFactory0<PsiElement> get() = Errors.NO_CONSTRUCTOR_WARNING
+    override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactory0<PsiElement> =
+        Errors.NO_CONSTRUCTOR_WARNING
 }

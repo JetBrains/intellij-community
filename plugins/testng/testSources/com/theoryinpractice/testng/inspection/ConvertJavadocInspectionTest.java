@@ -23,15 +23,15 @@ import com.intellij.openapi.application.PluginPathManager;
  */
 public class ConvertJavadocInspectionTest extends BaseTestNGInspectionsTest {
   public void test1() {
-    doTest();
+    doTestWithPreview();
   }
 
   public void test2() {
-    doTest();
+    doTestWithPreview();
   }
 
   public void test3() {
-    doTest();
+    doTestWithPreview();
   }
 
   @Override

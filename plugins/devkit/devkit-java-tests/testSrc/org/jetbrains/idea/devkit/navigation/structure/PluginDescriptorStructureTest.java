@@ -37,14 +37,15 @@ public class PluginDescriptorStructureTest extends JavaCodeInsightFixtureTestCas
 
 
   public void testPluginDescriptorStructure() {
-    myFixture.addClass("package a.b;" +
-                       "" +
-                       "import com.intellij.util.xmlb.annotations.Attribute; " +
-                       "" +
-                       "public class MockServiceDescriptor { " +
-                       "  @Attribute(\"serviceImplementation\")" +
-                       "  public String serviceImplementation; " +
-                       "}");
+    myFixture.addClass("""
+                         package a.b;
+
+                         import com.intellij.util.xmlb.annotations.Attribute;\s
+
+                         public class MockServiceDescriptor {\s
+                           @Attribute("serviceImplementation")
+                           public String serviceImplementation;\s
+                         }""");
 
     VirtualFile file = myFixture.copyFileToProject("plugin.xml");
     myFixture.openFileInEditor(file);

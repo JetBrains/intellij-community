@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package icons;
 
 import com.intellij.ui.IconManager;
@@ -14,5 +14,5 @@ public final class TerminalIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, TerminalIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 13x13 */ public static final @NotNull Icon OpenTerminal_13x13 = load("icons/OpenTerminal_13x13.svg", -1107707654, 2);
+  /** 13x13 */ public static final @NotNull Icon OpenTerminal_13x13 = load("icons/OpenTerminal_13x13.svg", 280418934, 2);
 }

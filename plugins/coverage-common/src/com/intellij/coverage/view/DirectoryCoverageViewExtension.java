@@ -97,11 +97,11 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
       final PsiDirectory psiDirectory = (PsiDirectory)val;
       final PsiDirectory[] subdirectories = ReadAction.compute(() -> psiDirectory.getSubdirectories());
       for (PsiDirectory subdirectory : subdirectories) {
-        children.add(new CoverageListNode(myProject, subdirectory, mySuitesBundle, myStateBean));
+        children.add(new CoverageListNode(myProject, subdirectory, mySuitesBundle, myStateBean, false));
       }
       final PsiFile[] psiFiles = ReadAction.compute(() -> psiDirectory.getFiles());
       for (PsiFile psiFile : psiFiles) {
-        children.add(new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean));
+        children.add(new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean, true));
       }
 
       for (AbstractTreeNode childNode : children) {

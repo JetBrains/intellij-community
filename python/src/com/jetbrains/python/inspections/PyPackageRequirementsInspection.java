@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.core.CoreBundle;
@@ -50,8 +50,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 /**
  * @author vlan
@@ -63,9 +65,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
   private static final NotificationGroup BALLOON_NOTIFICATIONS = NotificationGroupManager.getInstance().getNotificationGroup("Package requirements");
 
   @Override
-  public JComponent createOptionsPanel() {
-    final ListEditForm form = new ListEditForm(PyPsiBundle.message("INSP.requirements.column.name.ignore.packages"), PyPsiBundle.message("INSP.requirements.ignore.packages.label"), ignoredPackages);
-    return form.getContentPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(stringSet("ignoredPackages", PyPsiBundle.message("INSP.requirements.ignore.packages.label")));
   }
 
   @NotNull

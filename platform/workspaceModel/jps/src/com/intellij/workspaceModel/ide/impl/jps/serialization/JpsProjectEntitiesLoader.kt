@@ -78,6 +78,7 @@ object JpsProjectEntitiesLoader {
                                                                                       virtualFileManager,
                                                                                       externalStorageConfigurationManager,
                                                                                       fileInDirectorySourceNames)
+      else -> error("Unexpected state")
     }
   }
 

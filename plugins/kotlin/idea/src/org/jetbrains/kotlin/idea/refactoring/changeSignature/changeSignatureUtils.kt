@@ -8,6 +8,7 @@ import com.intellij.refactoring.changeSignature.CallerUsageInfo
 import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.refactoring.changeSignature.OverriderUsageInfo
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.builtins.isFunctionType
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
@@ -139,3 +140,12 @@ internal val ChangeInfo.asKotlinChangeInfo: KotlinChangeInfo?
         is KotlinChangeInfoWrapper -> delegate
         else -> null
     }
+
+fun KotlinTypeInfo.getReceiverTypeText(): String {
+    val text = render()
+    return when {
+        text.startsWith("(") && text.endsWith(")") -> text
+        type is DefinitelyNotNullType || type?.isFunctionType == true -> "($text)"
+        else -> text
+    }
+}

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.ui;
 
@@ -42,8 +28,8 @@ public class AsyncProcessIcon extends AnimatedIcon {
     return new Dimension(myPassiveIcon.getIconWidth(), myPassiveIcon.getIconHeight());
   }
 
-  public void updateLocation(final JComponent container) {
-    final Rectangle newBounds = calculateBounds(container);
+  public void updateLocation(@NotNull JComponent container) {
+    Rectangle newBounds = calculateBounds(container);
     if (!newBounds.equals(getBounds())) {
       setBounds(newBounds);
       // painting problems with scrollpane
@@ -52,8 +38,7 @@ public class AsyncProcessIcon extends AnimatedIcon {
     }
   }
 
-  @NotNull
-  protected Rectangle calculateBounds(@NotNull JComponent container) {
+  protected @NotNull Rectangle calculateBounds(@NotNull JComponent container) {
     Rectangle rec = container.getVisibleRect();
     Dimension iconSize = getPreferredSize();
     return new Rectangle(rec.x + rec.width - iconSize.width, rec.y, iconSize.width, iconSize.height);
@@ -62,19 +47,18 @@ public class AsyncProcessIcon extends AnimatedIcon {
   public static class Big extends AsyncProcessIcon {
     private static final Icon[] BIG_ICONS = com.intellij.ui.AnimatedIcon.Big.ICONS.toArray(new Icon[0]);
 
-    public Big(@NonNls final String name) {
+    public Big(final @NonNls String name) {
       super(name, BIG_ICONS, AllIcons.Process.Big.Step_passive);
     }
   }
 
   public static class BigCentered extends Big {
-    public BigCentered(@NonNls final String name) {
+    public BigCentered(@NonNls String name) {
       super(name);
     }
 
-    @NotNull
     @Override
-    protected Rectangle calculateBounds(@NotNull JComponent container) {
+    protected @NotNull Rectangle calculateBounds(@NotNull JComponent container) {
       Dimension size = container.getSize();
       Dimension iconSize = getPreferredSize();
       return new Rectangle((size.width - iconSize.width) / 2, (size.height - iconSize.height) / 2, iconSize.width, iconSize.height);

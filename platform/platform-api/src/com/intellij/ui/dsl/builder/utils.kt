@@ -2,7 +2,10 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.ui.UINumericRange
 import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 
 /**
@@ -24,13 +27,15 @@ enum class DslComponentProperty {
   VISUAL_PADDINGS,
 
   /**
-   * By default, almost every control have [SpacingConfiguration.verticalComponentGap] above and below it.
-   * This flag disables such gap below the control. Should be used in very rare situations (e.g. row with label **and** some additional
-   * label-kind controls above related to the label control), because most standard cases are covered by Kotlin UI DSL API
+   * By default, every component except JPanel have [SpacingConfiguration.verticalComponentGap] above and below it.
+   * This behavior can be overridden by this property. Should be used in very rare situations, because most standard cases are covered
+   * by Kotlin UI DSL API. It could be needed for example in the following cases:
+   * * A component with a label and some additional label-kind components above
+   * * Some components are compound and based on [JPanel] that requires [SpacingConfiguration.verticalComponentGap] above and below
    *
-   * Value: [Boolean]
+   * Value: [VerticalComponentGap]
    */
-  NO_BOTTOM_GAP,
+  VERTICAL_COMPONENT_GAP,
 
   /**
    * By default, we're trying to assign [javax.swing.JLabel.setLabelFor] for the cell component itself.
@@ -38,7 +43,19 @@ enum class DslComponentProperty {
    *
    * Value: [JComponent]
    */
-  LABEL_FOR
+  // todo replace usage by INTERACTIVE_COMPONENT and deprecate
+  LABEL_FOR,
+
+  /**
+   * Some compound components can contain several components inside itself. [INTERACTIVE_COMPONENT] points to main interactive one
+   *
+   * * Assigned to [JLabel.labelFor]
+   * * Used as the component for data validation
+   * * Used as destination for [Cell.onChanged]
+   *
+   * Value: [JComponent]
+   */
+  INTERACTIVE_COMPONENT
 }
 
 /**
@@ -63,7 +80,9 @@ fun interface HyperlinkEventAction {
      * Opens URL in a browser
      */
     @JvmField
-    val HTML_HYPERLINK_INSTANCE = HyperlinkEventAction { e -> BrowserUtil.browse(e.url) }
+    val HTML_HYPERLINK_INSTANCE = HyperlinkEventAction { e ->
+      e.url?.let { BrowserUtil.browse(it) }
+    }
   }
 
   fun hyperlinkActivated(e: HyperlinkEvent)
@@ -74,3 +93,14 @@ fun interface HyperlinkEventAction {
   fun hyperlinkExited(e: HyperlinkEvent) {
   }
 }
+
+/**
+ * Values meaning:
+ *
+ * null - use default logic for vertical component gap
+ * true - force setting [SpacingConfiguration.verticalComponentGap]
+ * false - force setting 0 as a vertical gap
+ */
+data class VerticalComponentGap(val top: Boolean? = null, val bottom: Boolean? = null)
+
+fun UINumericRange.asRange(): IntRange = min..max

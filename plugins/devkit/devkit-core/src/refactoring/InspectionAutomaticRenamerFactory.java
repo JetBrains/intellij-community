@@ -176,7 +176,7 @@ public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactor
     public void findUsages(List<UsageInfo> result,
                            boolean searchInStringsAndComments,
                            boolean searchInNonJavaFiles,
-                           List<UnresolvableCollisionUsageInfo> unresolvedUsages,
+                           List<? super UnresolvableCollisionUsageInfo> unresolvedUsages,
                            Map<PsiElement, String> allRenames) {
       super.findUsages(result, searchInStringsAndComments, searchInNonJavaFiles, unresolvedUsages, allRenames);
       if (allRenames == null) {

@@ -14,6 +14,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +90,8 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
   public void runnableTaskFinished(final @NotNull Runnable runnable,
                                    final long waitedInQueueNs,
                                    final int queueSize,
-                                   final long executionDurationNs) {
+                                   final long executionDurationNs,
+                                   final boolean wasInSkippedItems) {
     final long finishedAtMs = System.currentTimeMillis();
     final long startedExecutionAtMs = finishedAtMs - NANOSECONDS.toMillis(executionDurationNs);
     Class<?> runnableOrCallableClass = getCallableOrRunnableClass(runnable);
@@ -295,8 +297,7 @@ final class DetailedEventWatcher implements EventWatcher, Disposable {
 
     private <T extends Comparable<? super T>> void sortAndDumpToFile(@NotNull String fileName,
                                                                      @NotNull List<? extends T> entities) {
-      Collections.sort(entities);
-      writeToFile(fileName, entities, false);
+      writeToFile(fileName, ContainerUtil.sorted(entities), false);
     }
   }
 }

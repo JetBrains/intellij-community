@@ -2,13 +2,32 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
 object NegatedBinaryExpressionSimplificationUtils {
     fun simplifyNegatedBinaryExpressionIfNeeded(expression: KtPrefixExpression) {
-        if (expression.canBeSimplified()) expression.simplify()
+        if (expression.canBeSimplifiedWithoutChangingSemantics()) expression.simplify()
+    }
+
+    fun KtPrefixExpression.canBeSimplifiedWithoutChangingSemantics(): Boolean {
+        if (!canBeSimplified()) return false
+        val expression = KtPsiUtil.deparenthesize(baseExpression) as? KtBinaryExpression ?: return true
+        val operation = expression.operationReference.getReferencedNameElementType()
+        if (operation != KtTokens.LT && operation != KtTokens.LTEQ && operation != KtTokens.GT && operation != KtTokens.GTEQ) return true
+
+        @OptIn(KtAllowAnalysisOnEdt::class)
+        allowAnalysisOnEdt {
+            analyze(expression) {
+                fun KtType?.isFloatingPoint() = this != null && (isFloat || isDouble)
+                return !expression.left?.getKtType().isFloatingPoint() && !expression.right?.getKtType().isFloatingPoint()
+            }
+        }
     }
 
     fun KtPrefixExpression.canBeSimplified(): Boolean {
@@ -29,7 +48,7 @@ object NegatedBinaryExpressionSimplificationUtils {
         val operation =
             (expression as KtOperationExpression).operationReference.getReferencedNameElementType().negate()?.value ?: return
 
-        val psiFactory = KtPsiFactory(expression)
+        val psiFactory = KtPsiFactory(project)
         val newExpression = when (expression) {
             is KtIsExpression ->
                 psiFactory.createExpressionByPattern("$0 $1 $2", expression.leftHandSide, operation, expression.typeReference!!)

@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.methodmetrics;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiStatement;
 import com.intellij.psi.PsiType;
@@ -25,7 +25,7 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class MultipleReturnPointsPerMethodInspection
   extends MethodMetricInspection {
@@ -62,18 +62,12 @@ public class MultipleReturnPointsPerMethodInspection
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JLabel label = new JLabel(InspectionGadgetsBundle.message(
-      "return.point.limit.option"));
-    final JFormattedTextField termLimitTextField =
-      prepareNumberEditor("m_limit");
-
-    panel.addRow(label, termLimitTextField);
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.guard.clauses.option"), "ignoreGuardClauses");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.for.equals.methods.option"), "ignoreEqualsMethod");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message("return.point.limit.option"), 1, 100),
+      checkbox("ignoreGuardClauses", InspectionGadgetsBundle.message("ignore.guard.clauses.option")),
+      checkbox("ignoreEqualsMethod", InspectionGadgetsBundle.message("ignore.for.equals.methods.option"))
+    );
   }
 
   @Override

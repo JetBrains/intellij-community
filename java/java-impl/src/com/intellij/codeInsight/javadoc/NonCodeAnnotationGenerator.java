@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class NonCodeAnnotationGenerator {
+public final class NonCodeAnnotationGenerator {
 
   @NotNull
   public static MultiMap<PsiModifierListOwner, AnnotationDocGenerator> getSignatureNonCodeAnnotations(PsiModifierListOwner owner) {

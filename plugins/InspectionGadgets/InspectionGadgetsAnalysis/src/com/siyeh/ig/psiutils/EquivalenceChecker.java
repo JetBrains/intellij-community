@@ -27,6 +27,7 @@ import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -999,8 +1000,8 @@ public class EquivalenceChecker {
     List<PsiMember> children2 = PsiTreeUtil.getChildrenOfTypeAsList(class2, PsiMember.class);
     int size = children1.size();
     if (size != children2.size()) return EXACT_MISMATCH;
-    children1.sort(MEMBER_COMPARATOR);
-    children2.sort(MEMBER_COMPARATOR);
+    children1 = ContainerUtil.sorted(children1, MEMBER_COMPARATOR);
+    children2 = ContainerUtil.sorted(children2, MEMBER_COMPARATOR);
     for (int i = 0; i < size; i++) {
       // first pass checks only signatures for accurate reference tracking
       PsiElement child1 = children1.get(i);

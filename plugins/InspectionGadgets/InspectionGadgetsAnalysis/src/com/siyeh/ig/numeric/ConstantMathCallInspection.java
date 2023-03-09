@@ -85,7 +85,7 @@ public class ConstantMathCallInspection extends BaseInspection implements Cleanu
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiIdentifier nameIdentifier =
         (PsiIdentifier)descriptor.getPsiElement();
       final PsiReferenceExpression reference =

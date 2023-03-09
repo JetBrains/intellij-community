@@ -11,6 +11,7 @@ import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.InternalPersistentJavaLanguageLevelReaderService;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.java.stubs.PsiJavaFileStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl;
@@ -48,8 +49,7 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
   }
 
   public static boolean isInSourceContent(@NotNull VirtualFile file) {
-    VirtualFile dir = file.getParent();
-    if (dir == null || dir.getUserData(LanguageLevel.KEY) != null) {
+    if (ApplicationManager.getApplication().getService(InternalPersistentJavaLanguageLevelReaderService.class).getPersistedLanguageLevel(file) != null) {
       return true;
     }
     ModelBranch branch = ModelBranch.getFileBranch(file);

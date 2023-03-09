@@ -49,7 +49,7 @@ class SingleIndexValueRemover {
     UpdatableIndex<?, ?, FileContent, ?> index = myIndexImpl.getIndex(indexId);
 
     if (isWritingValuesSeparately) {
-      FileBasedIndexImpl.markFileWritingIndexes(inputId, filePath);
+      FileBasedIndexImpl.markFileWritingIndexes(inputId);
     }
     else {
       FileBasedIndexImpl.markFileIndexed(file, null);

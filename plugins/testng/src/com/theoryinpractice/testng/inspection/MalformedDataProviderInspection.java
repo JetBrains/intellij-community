@@ -9,7 +9,6 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -50,8 +49,7 @@ public class MalformedDataProviderInspection extends AbstractBaseJavaLocalInspec
 
                   holder.registerProblem(provider, TestngBundle.message("inspection.testng.data.provider.does.not.exist.problem"), fixes);
                 } else {
-                  Version version = TestNGUtil.detectVersion(holder.getProject(), ModuleUtilCore.findModuleForPsiElement(providerClass));
-                  if (version != null && version.isOrGreaterThan(6, 9, 13)) {
+                  if (TestNGUtil.isVersionOrGreaterThan(holder.getProject(), ModuleUtilCore.findModuleForPsiElement(providerClass), 6, 9, 13)) {
                     break;
                   }
                   final PsiMethod providerMethod = (PsiMethod)dataProviderMethod;

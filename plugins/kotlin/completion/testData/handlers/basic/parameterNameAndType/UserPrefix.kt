@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 class FooBar
 
 fun f(myFo<caret>)

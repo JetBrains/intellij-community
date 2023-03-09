@@ -6,7 +6,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -14,9 +14,9 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField")
@@ -34,11 +34,10 @@ public class DuplicateThrowsInspection extends AbstractBaseJavaLocalInspectionTo
     return "DuplicateThrows";
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      JavaAnalysisBundle.message("inspection.duplicate.throws.ignore.subclassing.option"), this, "ignoreSubclassing");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreSubclassing", JavaAnalysisBundle.message("inspection.duplicate.throws.ignore.subclassing.option")));
   }
 
   @Override

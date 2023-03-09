@@ -18,7 +18,7 @@ package com.siyeh.ig.visibility;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -34,11 +34,13 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -53,14 +55,12 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
     return "ClassEscapesDefinedScope";
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("class.escapes.defined.scope.display.module.option"), "checkModuleApi");
-    panel.addCheckbox(InspectionGadgetsBundle.message("class.escapes.defined.scope.display.public.option"), "checkPublicApi");
-    panel.addCheckbox(InspectionGadgetsBundle.message("class.escapes.defined.scope.display.package.option"), "checkPackageLocal");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("checkModuleApi", InspectionGadgetsBundle.message("class.escapes.defined.scope.display.module.option")),
+      checkbox("checkPublicApi", InspectionGadgetsBundle.message("class.escapes.defined.scope.display.public.option")),
+      checkbox("checkPackageLocal", InspectionGadgetsBundle.message("class.escapes.defined.scope.display.package.option")));
   }
 
   @NotNull

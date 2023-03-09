@@ -12,6 +12,8 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
+import com.intellij.ui.dsl.gridLayout.Gaps;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableModel;
@@ -451,7 +453,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     UIUtil.putClientProperty(contextComponent, JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY, true);
     myActionsPanel = new CommonActionsPanel(this, contextComponent,
                                             myToolbarPosition,
-                                            myExtraActions.toArray(new AnAction[0]),
+                                            myExtraActions.toArray(AnAction.EMPTY_ARRAY),
                                             myButtonComparator,
                                             myAddName, myRemoveName, myMoveUpName, myMoveDownName, myEditName,
                                             myAddIcon, buttons);
@@ -498,6 +500,8 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     panel.putClientProperty(DECORATOR_KEY, Boolean.TRUE);
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myActionsPanel.getComponent(0));
     panel.putClientProperty(DslComponentProperty.LABEL_FOR, contextComponent);
+    panel.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    panel.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY);
 
     panel.setBorder(myPanelBorder != null ? myPanelBorder : IdeBorderFactory.createBorder(SideBorder.ALL));
     Border scrollPaneBorder = null;

@@ -285,7 +285,7 @@ public final class ExtractUtil {
     return result;
   }
 
-  public static GrMethod createMethod(ExtractMethodInfoHelper helper) {
+  public static @NotNull GrMethod createMethod(ExtractMethodInfoHelper helper) {
     StringBuilder buffer = new StringBuilder();
 
     //Add signature

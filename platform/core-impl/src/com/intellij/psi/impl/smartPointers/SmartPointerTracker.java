@@ -199,7 +199,7 @@ class SmartPointerTracker {
   synchronized List<SelfElementInfo> getSortedInfos() {
     ensureSorted();
 
-    final List<SelfElementInfo> infos = new ArrayList<>(size);
+    List<SelfElementInfo> infos = new ArrayList<>(size);
     processAlivePointers(pointer -> {
       SelfElementInfo info = (SelfElementInfo)pointer.getElementInfo();
       if (!info.hasRange()) return false;

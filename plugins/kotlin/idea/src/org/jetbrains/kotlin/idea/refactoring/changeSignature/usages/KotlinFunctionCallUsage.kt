@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.RemoveEmptyParenthesesFromLambdaCallApplicator
+import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.removeEmptyArgumentListIfApplicable
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.isInsideOfCallerBody
@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.kind
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
+import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 class KotlinFunctionCallUsage(
     element: KtCallElement,
@@ -67,7 +68,7 @@ class KotlinFunctionCallUsage(
         if (element.valueArgumentList == null && changeInfo.isParameterSetOrOrderChanged && element.lambdaArguments.isNotEmpty()) {
             val anchor = element.typeArgumentList ?: element.calleeExpression
             if (anchor != null) {
-                element.addAfter(KtPsiFactory(element).createCallArguments("()"), anchor)
+                element.addAfter(KtPsiFactory(element.project).createCallArguments("()"), anchor)
             }
         }
         if (element.valueArgumentList != null) {
@@ -95,7 +96,9 @@ class KotlinFunctionCallUsage(
         if (resolvedCall == null || resolvedCall.isReallySuccess()) return false
 
         // TODO: investigate why arguments are not recorded for enum constructor call
-        if (element is KtSuperTypeCallEntry && element.parent.parent is KtEnumEntry && element.valueArguments.isEmpty()) return false
+        if (element.parentsWithSelf.match(KtSuperTypeCallEntry::class, KtInitializerList::class, last = KtEnumEntry::class) != null &&
+            element.valueArguments.isEmpty()
+        ) return false
 
         if (skipUnmatchedArgumentsCheck) return false
 
@@ -470,13 +473,7 @@ class KotlinFunctionCallUsage(
         }
 
         if (!skipRedundantArgumentList) {
-            newCallExpression?.valueArgumentList?.let {
-                if (RemoveEmptyParenthesesFromLambdaCallApplicator.applicator.isApplicableByPsi(it, it.project)) {
-                    RemoveEmptyParenthesesFromLambdaCallApplicator.applicator.applyTo(
-                        it, KotlinApplicatorInput.Empty, it.project, editor = null
-                    )
-                }
-            }
+            newCallExpression?.valueArgumentList?.let(::removeEmptyArgumentListIfApplicable)
         }
 
         newElement.flushElementsForShorteningToWaitList()

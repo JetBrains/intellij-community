@@ -1,1 +1,0 @@
-# coveragepy version 6.5, supports Python 3.7 and newer

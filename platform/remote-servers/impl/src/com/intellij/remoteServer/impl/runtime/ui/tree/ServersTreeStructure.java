@@ -378,7 +378,7 @@ public final class ServersTreeStructure {
       return result;
     }
 
-    protected void collectDeploymentChildren(List<AbstractTreeNode<?>> children) {
+    protected void collectDeploymentChildren(List<? super AbstractTreeNode<?>> children) {
       ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return;
@@ -391,7 +391,7 @@ public final class ServersTreeStructure {
       }
     }
 
-    protected void collectLogChildren(List<AbstractTreeNode<?>> children) {
+    protected void collectLogChildren(List<? super AbstractTreeNode<?>> children) {
       ServerConnection<?> connection = getConnection();
       if (connection == null) {
         return;

@@ -41,7 +41,7 @@ class MetricsEvaluatorTest {
 
   @Test
   fun `test found@1 metric`() {
-    val metric = FoundAtMetric(1)
+    val metric = RecallAtMetric(1)
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1)))
     Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1, sessionTop3)))
     Assertions.assertEquals(0.25, metric.evaluate(listOf(sessionTop1, sessionTop3, sessionTop5, sessionNone)))
@@ -50,7 +50,7 @@ class MetricsEvaluatorTest {
 
   @Test
   fun `test found@5 metric`() {
-    val metric = FoundAtMetric(5)
+    val metric = RecallAtMetric(5)
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1)))
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1, sessionTop3)))
     Assertions.assertEquals(0.75, metric.evaluate(listOf(sessionTop1, sessionTop3, sessionTop5, sessionNone)))

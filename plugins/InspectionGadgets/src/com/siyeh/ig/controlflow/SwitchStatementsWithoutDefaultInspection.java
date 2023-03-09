@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingMode
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.JavaElementVisitor;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel.PatternsInSwitchBlockHighlightingModel;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -51,9 +53,9 @@ public class SwitchStatementsWithoutDefaultInspection extends AbstractBaseJavaLo
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("switch.statement.without.default.ignore.option"),
-                                          this, "m_ignoreFullyCoveredEnums");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreFullyCoveredEnums", InspectionGadgetsBundle.message("switch.statement.without.default.ignore.option")));
   }
 
   @NotNull

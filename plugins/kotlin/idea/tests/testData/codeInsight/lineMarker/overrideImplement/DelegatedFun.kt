@@ -9,5 +9,5 @@ open class <lineMarker>C</lineMarker>(b : B) : B by b, A {
 }
 
 class D(b : B) : C(b) {
-  override fun <lineMarker descr="Overrides function in 'A'">f</lineMarker>() {}
+  override fun <lineMarker descr="Overrides function in A Press ... to navigate">f</lineMarker>() {}
 }

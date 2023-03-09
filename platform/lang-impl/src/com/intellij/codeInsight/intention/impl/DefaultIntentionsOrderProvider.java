@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -61,7 +61,6 @@ public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
       case TOP -> 20;
       case HIGH -> 3;
       case LOW -> -3;
-      case ERROR_FIX_LESS_IMPORTANT_THAN_INSPECTION_FIX -> IntentionGroup.INSPECTION.getPriority() - IntentionGroup.ERROR.getPriority() - 1;
       default -> 0;
     };
   }

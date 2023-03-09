@@ -80,6 +80,9 @@ public final class MacroManager {
     registerMacro(new SelectionEndLineMacro());
     registerMacro(new SelectionEndColumnMacro());
 
+    registerMacro(new OsNameMacro());
+    registerMacro(new TempDirMacro());
+
     if (File.separatorChar != '/') {
       registerMacro(new FileDirRelativeToProjectRootMacro2());
       registerMacro(new FilePathRelativeToProjectRootMacro2());

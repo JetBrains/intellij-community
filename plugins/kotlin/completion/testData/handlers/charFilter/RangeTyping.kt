@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun foo(start: Int) {
     val range = start.<caret>
 }

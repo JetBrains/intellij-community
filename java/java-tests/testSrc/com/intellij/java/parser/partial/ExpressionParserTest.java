@@ -72,6 +72,7 @@ public class ExpressionParserTest extends JavaParsingTestCase {
   public void testNew16() { doParserTest("new C<>()"); }
   public void testNew17() { doParserTest("new Map<String, >()"); }
   public void testNew18() { doParserTest("new int @A [2] @B"); }
+  public void testNew19() { doParserTest("new A(f; o)"); }
 
   public void testExprList0() { doParserTest("f(1,2)"); }
   public void testExprList1() { doParserTest("f("); }

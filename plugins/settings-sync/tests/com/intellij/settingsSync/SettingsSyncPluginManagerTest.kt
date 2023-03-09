@@ -200,7 +200,7 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
 
   private fun assertPluginManagerState(build: StateBuilder.() -> Unit) {
     val expectedState = state(build)
-    assertPluginsState(expectedState.plugins, pluginManager.state.plugins)
+    assertState(expectedState.plugins, pluginManager.state.plugins)
   }
 
   private fun assertIdeState(build: StateBuilder.() -> Unit) {
@@ -209,8 +209,27 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     val actualState = PluginManagerProxy.getInstance().getPlugins().associate { plugin ->
       plugin.pluginId to PluginData(plugin.isEnabled)
     }
-    assertPluginsState(expectedState.plugins, actualState)
+    assertState(expectedState.plugins, actualState)
   }
+
+  private fun assertState(expectedStates: Map<PluginId, PluginData>, actualStates: Map<PluginId, PluginData>) {
+    fun stringifyStates(states: Map<PluginId, PluginData>) =
+      states.entries
+        .sortedBy { it.key }
+        .joinToString { (id, data) -> "$id: ${enabledOrDisabled(data.enabled)}" }
+
+    if (expectedStates.size != actualStates.size) {
+      assertEquals("Expected and actual states have different number of elements",
+                   stringifyStates(expectedStates), stringifyStates(actualStates))
+    }
+    for ((expectedId, expectedData) in expectedStates) {
+      val actualData = actualStates[expectedId]
+      assertNotNull("Record for plugin $expectedId not found", actualData)
+      assertEquals("Plugin $expectedId has incorrect state", expectedData.enabled, actualData!!.enabled)
+    }
+  }
+
+  private fun enabledOrDisabled(value: Boolean?) = if (value == null) "null" else if (value) "enabled" else "disabled"
 
   private fun state(build: StateBuilder.() -> Unit): SettingsSyncPluginsState {
     val builder = StateBuilder()
@@ -231,22 +250,3 @@ class SettingsSyncPluginManagerTest : LightPlatformTestCase() {
     }
   }
 }
-
-internal fun assertPluginsState(expectedStates: Map<PluginId, PluginData>, actualStates: Map<PluginId, PluginData>) {
-  fun stringifyStates(states: Map<PluginId, PluginData>) =
-    states.entries
-      .sortedBy { it.key }
-      .joinToString { (id, data) -> "$id: ${enabledOrDisabled(data.enabled)}" }
-
-  if (expectedStates.size != actualStates.size) {
-    LightPlatformTestCase.assertEquals("Expected and actual states have different number of elements",
-                                       stringifyStates(expectedStates), stringifyStates(actualStates))
-  }
-  for ((expectedId, expectedData) in expectedStates) {
-    val actualData = actualStates[expectedId]
-    LightPlatformTestCase.assertNotNull("Record for plugin $expectedId not found", actualData)
-    LightPlatformTestCase.assertEquals("Plugin $expectedId has incorrect state", expectedData.enabled, actualData!!.enabled)
-  }
-}
-
-private fun enabledOrDisabled(value: Boolean?) = if (value == null) "null" else if (value) "enabled" else "disabled"

@@ -162,7 +162,7 @@ public class GrLightParameter extends LightVariableBuilder<GrLightParameter> imp
   }
 
   @Override
-  public GrLightParameter setModifiers(@GrModifierConstant String... modifiers) {
+  public @NotNull GrLightParameter setModifiers(@GrModifierConstant @NotNull String @NotNull ... modifiers) {
     GrLightModifierList modifiersList = new GrLightModifierList(getContext());
     modifiersList.setModifiers(modifiers);
     myModifierList = modifiersList;

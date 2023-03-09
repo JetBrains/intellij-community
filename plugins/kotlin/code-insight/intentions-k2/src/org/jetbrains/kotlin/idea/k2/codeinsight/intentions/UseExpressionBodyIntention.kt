@@ -3,10 +3,12 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.*
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
@@ -14,41 +16,11 @@ import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-internal class UseExpressionBodyIntention : AbstractKotlinApplicatorBasedIntention<KtDeclarationWithBody, UseExpressionBodyIntention.Input>(
-    KtDeclarationWithBody::class,
-) {
+internal class UseExpressionBodyIntention :
+    AbstractKotlinApplicableIntention<KtDeclarationWithBody>(KtDeclarationWithBody::class) {
 
-    class Input : KotlinApplicatorInput
-
-    override fun getApplicator() = applicator<KtDeclarationWithBody, Input> {
-        familyAndActionName(KotlinBundle.lazyMessage(("convert.body.to.expression")))
-        isApplicableByPsi { declaration ->
-
-            // Check if either property accessor or named function
-            if (declaration !is KtNamedFunction && declaration !is KtPropertyAccessor) return@isApplicableByPsi false
-
-            // Check if a named function has explicit type
-            if (declaration is KtNamedFunction && !declaration.hasDeclaredReturnType()) return@isApplicableByPsi false
-
-            // Check if function has block with single non-empty KtReturnExpression
-            val returnedExpression = declaration.singleReturnedExpressionOrNull ?: return@isApplicableByPsi false
-
-            // Check if the returnedExpression actually always returns (early return is possible)
-            // TODO: take into consideration other cases (???)
-            if (returnedExpression.anyDescendantOfType<KtReturnExpression>(
-                    canGoInside = { it !is KtFunctionLiteral && it !is KtNamedFunction && it !is KtPropertyAccessor })
-            )
-                return@isApplicableByPsi false
-
-            true
-        }
-        applyToWithEditorRequired { declaration, _, _, editor ->
-            val newFunctionBody = declaration.replaceWithPreservingComments()
-            editor.correctRightMargin(declaration, newFunctionBody)
-            if (declaration is KtNamedFunction) editor.selectFunctionColonType(declaration)
-        }
-    }
-
+    override fun getFamilyName(): String = KotlinBundle.message("convert.body.to.expression")
+    override fun getActionName(element: KtDeclarationWithBody): String = familyName
 
     override fun getApplicabilityRange() = applicabilityRanges { declaration: KtDeclarationWithBody ->
         val returnExpression = declaration.singleReturnExpressionOrNull ?: return@applicabilityRanges emptyList()
@@ -61,8 +33,31 @@ internal class UseExpressionBodyIntention : AbstractKotlinApplicatorBasedIntenti
         resultTextRanges
     }
 
+    override fun isApplicableByPsi(element: KtDeclarationWithBody): Boolean {
+        // Check if either property accessor or named function
+        if (element !is KtNamedFunction && element !is KtPropertyAccessor) return false
 
-    override fun getInputProvider() = inputProvider<KtDeclarationWithBody, _> { Input() }
+        // Check if a named function has explicit type
+        if (element is KtNamedFunction && !element.hasDeclaredReturnType()) return false
+
+        // Check if function has block with single non-empty KtReturnExpression
+        val returnedExpression = element.singleReturnedExpressionOrNull ?: return false
+
+        // Check if the returnedExpression actually always returns (early return is possible)
+        // TODO: take into consideration other cases (???)
+        if (returnedExpression.anyDescendantOfType<KtReturnExpression>(
+                canGoInside = { it !is KtFunctionLiteral && it !is KtNamedFunction && it !is KtPropertyAccessor }
+        )) return false
+
+        return true
+    }
+
+    override fun apply(element: KtDeclarationWithBody, project: Project, editor: Editor?) {
+        if (editor == null) return
+        val newFunctionBody = element.replaceWithPreservingComments()
+        editor.correctRightMargin(element, newFunctionBody)
+        if (element is KtNamedFunction) editor.selectFunctionColonType(element)
+    }
 
     override fun skipProcessingFurtherElementsAfter(element: PsiElement) = false
 }
@@ -73,7 +68,7 @@ private fun KtDeclarationWithBody.replaceWithPreservingComments(): KtExpression 
 
     val commentSaver = CommentSaver(bodyBlock)
 
-    val factory = KtPsiFactory(this)
+    val factory = KtPsiFactory(project)
     val eq = addBefore(factory.createEQ(), bodyBlockExpression)
     addAfter(factory.createWhiteSpace(), eq)
 
@@ -91,10 +86,8 @@ private fun KtDeclarationWithBody.replaceWithPreservingComments(): KtExpression 
  * @param[declaration] the PSI element used as an anchor, as no indexes are built for newly generated body yet
  * @param[newBody] the new "= <returnedExpression>" like body, which replaces the old one
  */
-private fun Editor.correctRightMargin(
-    declaration: KtDeclarationWithBody, newBody: KtExpression
-) {
-    val kotlinFactory = KtPsiFactory(declaration)
+private fun Editor.correctRightMargin(declaration: KtDeclarationWithBody, newBody: KtExpression) {
+    val kotlinFactory = KtPsiFactory(declaration.project)
     val startOffset = newBody.startOffset
     val startLine = document.getLineNumber(startOffset)
     val rightMargin = settings.getRightMargin(project)

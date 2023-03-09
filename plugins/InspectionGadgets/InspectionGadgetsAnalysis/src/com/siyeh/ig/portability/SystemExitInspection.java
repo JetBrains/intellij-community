@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.portability;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMethodUtil;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class SystemExitInspection extends BaseInspection {
 
@@ -46,10 +49,10 @@ public class SystemExitInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("system.exit.call.problem.descriptor", className);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("system.exit.call.ignore.option"), this, "ignoreInMainMethod");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInMainMethod", InspectionGadgetsBundle.message("system.exit.call.ignore.option")));
   }
 
   @Override

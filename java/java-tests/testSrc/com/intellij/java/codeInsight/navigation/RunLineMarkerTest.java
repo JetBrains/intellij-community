@@ -22,6 +22,7 @@ import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.LoadingOrder;
@@ -141,9 +142,9 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
     ActionGroup group = mark.getPopupMenuActions();
     assertNotNull(group);
-    TestActionEvent event = new TestActionEvent();
+    AnActionEvent event = TestActionEvent.createTestEvent();
     List<AnAction> list = ContainerUtil.findAll(group.getChildren(event), action -> {
-      TestActionEvent actionEvent = new TestActionEvent();
+      AnActionEvent actionEvent = TestActionEvent.createTestEvent();
       action.update(actionEvent);
       String text = actionEvent.getPresentation().getText();
       return text != null && text.startsWith("Run '") && text.endsWith("'");
@@ -285,7 +286,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
-    AnAction[] children = mark.getPopupMenuActions().getChildren(new TestActionEvent());
+    AnAction[] children = mark.getPopupMenuActions().getChildren(TestActionEvent.createTestEvent());
     String message = ExecutionBundle.message("create.run.configuration.action.name");
     AnAction action = ContainerUtil.find(children, t -> {
       if (t.getTemplateText() == null) return false;
@@ -293,7 +294,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     });
     assertNotNull(action);
     myFixture.testAction(action);
-    TestActionEvent event = new TestActionEvent();
+    AnActionEvent event = TestActionEvent.createTestEvent();
     action.update(event);
     assertTrue(event.getPresentation().getText().startsWith(message));
     ContainerUtil.addIfNotNull(myTempSettings, RunManager.getInstance(getProject()).getSelectedConfiguration());

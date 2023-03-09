@@ -130,6 +130,7 @@ abstract class JKTreeElement : JKElement, JKFormattingOwner, Cloneable {
                     child.detach(this)
                     child.attach(cloned)
                 }
+
                 is List<*> -> (child as List<JKTreeElement>).forEach {
                     it.detach(this)
                     it.attach(cloned)

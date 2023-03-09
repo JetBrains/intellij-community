@@ -88,7 +88,7 @@ public class UnnecessaryUnicodeEscapeInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       Document document = descriptor.getPsiElement().getContainingFile().getViewProvider().getDocument();
       if (document != null) {
         document.replaceString(myRangeMarker.getStartOffset(), myRangeMarker.getEndOffset(), String.valueOf(c));

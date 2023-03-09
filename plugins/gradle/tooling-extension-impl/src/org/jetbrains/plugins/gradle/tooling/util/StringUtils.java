@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.tooling.util;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class StringUtils {
+public final class StringUtils {
   private static final Pattern WORD_SEPARATOR = Pattern.compile("\\W+");
 
   /**

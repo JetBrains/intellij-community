@@ -97,13 +97,12 @@ public class ExternalProjectsStructure extends SimpleTreeStructure implements Di
   }
 
   public void updateProjects(Collection<? extends DataNode<ProjectData>> toImport) {
-    List<String> orphanProjects = ContainerUtil.mapNotNull(myNodeMapping.entrySet(), entry -> {
-      return entry.getValue() instanceof ProjectNode ? entry.getKey() : null;
-    });
+    List<String> toImportPaths = ContainerUtil.map(toImport, pd -> pd.getData().getLinkedExternalProjectPath());
+    Collection<String> orphanProjects = ContainerUtil.subtract(ContainerUtil.mapNotNull(myNodeMapping.entrySet(),
+         entry -> entry.getValue() instanceof ProjectNode ? entry.getKey() : null), toImportPaths);
     for (DataNode<ProjectData> each : toImport) {
       final ProjectData projectData = each.getData();
       final String projectPath = projectData.getLinkedExternalProjectPath();
-      orphanProjects.remove(projectPath);
 
       ExternalSystemNode<?> projectNode = findNodeFor(projectPath);
 

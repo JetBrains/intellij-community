@@ -15,7 +15,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
 import org.apache.commons.lang.StringUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -143,11 +142,10 @@ public class MavenIndexerCMDState extends CommandLineState {
     params.getClassPath().add(PathUtil.getJarPathForClass(NotNull.class));//annotations-java5
     params.getClassPath().add(PathUtil.getJarPathForClass(Element.class));//JDOM
     params.getClassPath().addAllFiles(collectClassPathAndLibsFolder(myDistribution));
-    addDependencies(params.getClassPath());
     return params;
   }
 
-  private static void addDependencies(PathsList classPath) {
+  private static void addDependencies(List<File> classPath) {
     String[] dependencies = dependenciesOutput.split("\\n");
     Pattern format = Pattern.compile(
       "^\\[INFO\\].*-\\s(?<groupId>[0-9a-z._\\-]+):(?<artifactId>[0-9a-z._\\-]+):jar:?(?<classifier>[a-z_]*):(?<version>[0-9a-z._\\-]+):(?<scope>(compile|runtime))$");
@@ -177,16 +175,18 @@ public class MavenIndexerCMDState extends CommandLineState {
 
     final List<File> classpath = new ArrayList<>();
 
+    addMavenLibs(classpath, distribution.getMavenHome().toFile());
     if (pluginFileOrDir.isDirectory()) {
       MavenLog.LOG.debug("collecting classpath for local run");
       prepareClassPathForLocalRunAndUnitTests(distribution.getVersion(), classpath, root);
+      addDependencies(classpath);
     }
     else {
       MavenLog.LOG.debug("collecting classpath for production");
       prepareClassPathForProduction(distribution.getVersion(), classpath, root);
-    }
 
-    addMavenLibs(classpath, distribution.getMavenHome().toFile());
+    }
+    
     MavenLog.LOG.debug("Collected classpath = ", classpath);
     return classpath;
   }
@@ -198,6 +198,7 @@ public class MavenIndexerCMDState extends CommandLineState {
     classpath.add(new File(PathUtil.getJarPathForClass(MavenServer.class)));
     classpath.add(new File(root, "maven-server-indexer.jar"));
     addDir(classpath, new File(root, "maven-server-indexer"), f -> true);
+    addDir(classpath, new File(new File(root, "intellij.maven.server.indexer"), "lib"), f -> true);
   }
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {

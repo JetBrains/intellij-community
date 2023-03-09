@@ -39,21 +39,17 @@ public abstract class IndexedFilesListener implements AsyncFileListener {
     }
   }
 
-  private static boolean collectFiles(@NotNull VirtualFile file, @NotNull Int2ObjectMap<VirtualFile> id2File) {
-    ProgressManager.checkCanceled();
-    if (file instanceof VirtualFileWithId) {
-      id2File.put(((VirtualFileWithId)file).getId(), file);
-    }
-    return !file.isDirectory() || FileBasedIndexImpl.isMock(file) || ManagingFS.getInstance().wereChildrenAccessed(file);
-  }
-
   protected abstract void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
 
-  public void collectFilesRecursively(@NotNull VirtualFile file, @NotNull Int2ObjectMap<VirtualFile> id2File) {
+  private static void collectFilesRecursively(@NotNull VirtualFile file, @NotNull Int2ObjectMap<VirtualFile> id2File) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        return collectFiles(file, id2File);
+        ProgressManager.checkCanceled();
+        if (file instanceof VirtualFileWithId) {
+          id2File.put(((VirtualFileWithId)file).getId(), file);
+        }
+        return !file.isDirectory() || FileBasedIndexImpl.isMock(file) || ManagingFS.getInstance().wereChildrenAccessed(file);
       }
 
       @Override

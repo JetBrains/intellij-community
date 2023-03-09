@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.TokenSet;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,7 +27,8 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class OverlyComplexArithmeticExpressionInspection extends BaseInspection {
 
@@ -41,10 +42,10 @@ public class OverlyComplexArithmeticExpressionInspection extends BaseInspection 
   public int m_limit = TERM_LIMIT;  //this is public for the DefaultJDOMExternalizer thingy
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(
-      InspectionGadgetsBundle.message("overly.complex.arithmetic.expression.max.number.option"),
-      this, "m_limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message("overly.complex.arithmetic.expression.max.number.option"), 2,
+             100));
   }
 
   @Override

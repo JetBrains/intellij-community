@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.memory;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -12,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * @author Bas Leijdekkers
@@ -32,11 +35,10 @@ public class ReturnOfInnerClassInspection extends BaseInspection {
     };
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("return.of.inner.class.ignore.non.public.option"),
-                                          this, "ignoreNonPublic");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreNonPublic", InspectionGadgetsBundle.message("return.of.inner.class.ignore.non.public.option")));
   }
 
   @Override

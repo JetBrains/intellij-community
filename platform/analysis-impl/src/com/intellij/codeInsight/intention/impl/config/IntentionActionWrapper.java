@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +52,7 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     return getDelegate().getFamilyName();
   }
 
-  public boolean isApplicable(Collection<String> fileLanguageIds) {
+  public boolean isApplicable(@NotNull Collection<String> fileLanguageIds) {
     String language = extension.language;
     if (language == null
         || "any".equals(language)
@@ -61,19 +62,9 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
 
     Set<String> languages = applicableToLanguages;
     if (languages == null) {
-      applicableToLanguages = languages = getLanguageWithDialects(language);
+      applicableToLanguages = languages = ToolLanguageUtil.getAllMatchingLanguages(language, true);
     }
-
-    if (languages.isEmpty()) return true;
-
-    for (String fileLanguage : fileLanguageIds) {
-      if (languages.contains(fileLanguage)) return true;
-    }
-    return false;
-  }
-
-  private static @NotNull Set<String> getLanguageWithDialects(@NotNull String langId) {
-    return ToolLanguageUtil.getAllMatchingLanguages(langId, true);
+    return ContainerUtil.intersects(fileLanguageIds, languages);
   }
 
   @Override

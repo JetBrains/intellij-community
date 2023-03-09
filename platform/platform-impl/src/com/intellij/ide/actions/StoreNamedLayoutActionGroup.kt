@@ -1,0 +1,33 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.actions
+
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAware
+import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
+
+class StoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
+
+  private val childrenCache = NamedLayoutListBasedCache<AnAction> {
+    StoreNamedLayoutActionImpl(it)
+  }
+
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> = childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
+
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+  private class StoreNamedLayoutActionImpl(layoutName: String) : StoreNamedLayoutAction(layoutName) {
+
+    override fun isSelected(e: AnActionEvent): Boolean =
+      ToolWindowDefaultLayoutManager.getInstance().activeLayoutName == layoutNameSupplier()
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      e.presentation.text = layoutNameSupplier()
+    }
+
+  }
+
+}

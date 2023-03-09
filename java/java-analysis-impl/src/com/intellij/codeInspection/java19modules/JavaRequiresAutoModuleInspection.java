@@ -3,7 +3,7 @@ package com.intellij.codeInspection.java19modules;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightJavaModule;
@@ -11,15 +11,16 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class JavaRequiresAutoModuleInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean TRANSITIVE_ONLY = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("inspection.requires.auto.module.option"), this, "TRANSITIVE_ONLY");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("TRANSITIVE_ONLY", JavaAnalysisBundle.message("inspection.requires.auto.module.option")));
   }
 
   @Override

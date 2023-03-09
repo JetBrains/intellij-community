@@ -11,7 +11,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 
-class ReportProblemAction : DumbAwareAction() {
+open class ReportProblemAction : DumbAwareAction() {
   companion object {
     fun submit(project: Project?) {
       val appInfo = ApplicationInfoEx.getInstanceEx()

@@ -1,1 +1,0 @@
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = Obj) -> Kotlin_Light_Class:object Obj: Obj

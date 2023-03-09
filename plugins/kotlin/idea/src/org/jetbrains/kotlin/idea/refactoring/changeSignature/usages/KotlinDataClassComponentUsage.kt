@@ -12,7 +12,7 @@ class KotlinDataClassComponentUsage(
     private val newName: String
 ) : KotlinUsageInfo<KtSimpleNameExpression>(calleeExpression) {
     override fun processUsage(changeInfo: KotlinChangeInfo, element: KtSimpleNameExpression, allUsages: Array<out UsageInfo>): Boolean {
-        element.replace(KtPsiFactory(element).createExpression(newName))
+        element.replace(KtPsiFactory(element.project).createExpression(newName))
         return true
     }
 }

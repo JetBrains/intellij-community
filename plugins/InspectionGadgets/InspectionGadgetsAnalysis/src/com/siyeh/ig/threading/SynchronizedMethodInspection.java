@@ -16,6 +16,7 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,6 +29,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class SynchronizedMethodInspection extends BaseInspection {
 
@@ -62,12 +65,10 @@ public class SynchronizedMethodInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("synchronized.method.include.option"), "m_includeNativeMethods");
-    panel.addCheckbox(InspectionGadgetsBundle.message("synchronized.method.ignore.synchronized.super.option"),
-                      "ignoreSynchronizedSuperMethods");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_includeNativeMethods", InspectionGadgetsBundle.message("synchronized.method.include.option")),
+      checkbox("ignoreSynchronizedSuperMethods", InspectionGadgetsBundle.message("synchronized.method.ignore.synchronized.super.option")));
   }
 
   private static class SynchronizedMethodFix extends InspectionGadgetsFix {
@@ -80,7 +81,7 @@ public class SynchronizedMethodInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement nameElement = descriptor.getPsiElement();
       final PsiModifierList modifierList = (PsiModifierList)nameElement.getParent();
       assert modifierList != null;

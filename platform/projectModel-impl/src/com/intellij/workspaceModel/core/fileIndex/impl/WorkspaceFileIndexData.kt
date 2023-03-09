@@ -67,6 +67,7 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
     if (hasDirtyEntities && ApplicationManager.getApplication().isWriteAccessAllowed) {
       updateDirtyEntities()
     }
+    ApplicationManager.getApplication().assertReadAccessAllowed()
     nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix)
 
     val originalAcceptedKindMask = 
@@ -363,14 +364,14 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
       val excludedRootFile = rootFileSupplier.findFile(excludedRoot)
       if (excludedRootFile != null) {
         //todo compare origins, not just their entities?
-        fileSets.removeValueIf(excludedRootFile) { it is ExcludedFileSet && isOriginatedFrom(it, entity) }
+        fileSets.removeValueIf(excludedRootFile) { it is ExcludedFileSet && it.entityReference.isReferenceTo(entity) }
       }
     }
 
     override fun registerExcludedRoot(excludedRoot: VirtualFile,
                                       excludedFrom: WorkspaceFileKind,
                                       entity: WorkspaceEntity) {
-      fileSets.removeValueIf(excludedRoot) { it is ExcludedFileSet && isOriginatedFrom(it, entity) }
+      fileSets.removeValueIf(excludedRoot) { it is ExcludedFileSet && it.entityReference.isReferenceTo(entity) }
     }
 
     override fun registerExclusionPatterns(root: VirtualFileUrl,
@@ -378,14 +379,14 @@ internal class WorkspaceFileIndexData(private val contributorList: List<Workspac
                                            entity: WorkspaceEntity) {
       val rootFile = rootFileSupplier.findFile(root)
       if (rootFile != null) {
-        fileSets.removeValueIf(rootFile) { it is ExcludedFileSet.ByPattern && isOriginatedFrom(it, entity) }
+        fileSets.removeValueIf(rootFile) { it is ExcludedFileSet.ByPattern && it.entityReference.isReferenceTo(entity) }
       }
     }
 
     override fun registerExclusionCondition(root: VirtualFile,
                                             condition: (VirtualFile) -> Boolean,
                                             entity: WorkspaceEntity) {
-      fileSets.removeValueIf(root) { it is ExcludedFileSet.ByCondition && isOriginatedFrom(it, entity) }
+      fileSets.removeValueIf(root) { it is ExcludedFileSet.ByCondition && it.entityReference.isReferenceTo(entity) }
     }
   }
 }

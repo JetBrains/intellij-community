@@ -20,9 +20,6 @@ open class TestGradleBuildScriptBuilder(
 
   override fun apply(action: TestGradleBuildScriptBuilder.() -> Unit) = applyKt(action)
 
-  fun applyPlugin(plugin: String) =
-    withPrefix { call("apply", argument("plugin", code(plugin))) }
-
   fun withTask(name: String) = withTask(name, null)
   fun withTask(name: String, type: String?) = withTask(name, type, null)
   fun withTask(name: String, type: String?, dependsOn: String?) = withTask(name, type, dependsOn) {}
@@ -109,7 +106,7 @@ open class TestGradleBuildScriptBuilder(
     addBuildScriptClasspath(jarFile)
     addBuildScriptClasspath("com.google.code.gson:gson:2.8.2")
     addBuildScriptClasspath("com.google.guava:guava:25.1-jre")
-    applyPlugin("'org.jetbrains.gradle.plugin.idea-ext'")
+    applyPlugin("org.jetbrains.gradle.plugin.idea-ext")
   }
 
   override fun withBuildScriptMavenCentral() =
@@ -157,16 +154,16 @@ open class TestGradleBuildScriptBuilder(
   private inner class TestGradleBuildScriptChildBuilder : TestGradleBuildScriptBuilder(gradleVersion) {
 
     override fun withJavaPlugin() =
-      applyPlugin("'java'")
+      applyPlugin("java")
 
     override fun withJavaLibraryPlugin() =
       if (isSupportedJavaLibraryPlugin(gradleVersion))
-        applyPlugin("'java-library'")
+        applyPlugin("java-library")
       else
-        applyPlugin("'java'")
+        applyPlugin("java")
 
     override fun withIdeaPlugin() =
-      applyPlugin("'idea'")
+      applyPlugin("idea")
   }
 
   companion object {

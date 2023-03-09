@@ -27,7 +27,6 @@ private val guard: TransactionGuardImpl
 private val app: Application?
   get() = ApplicationManager.getApplication()
 
-@Suppress("UsePropertyAccessSyntax")
 class TransactionTest : LightPlatformTestCase() {
   private val log = mutableListOf<String>()
 
@@ -62,8 +61,8 @@ class TransactionTest : LightPlatformTestCase() {
   @Test
   fun `test write action without transaction prohibited`() {
     val app = app!!
-    assertThat(app.isDispatchThread()).isTrue()
-    assertThat(app.isWriteAccessAllowed()).isFalse()
+    assertThat(app.isDispatchThread).isTrue()
+    assertThat(app.isWriteAccessAllowed).isFalse()
 
     assertWritingProhibited()
     SwingUtilities.invokeLater(::assertWritingProhibited)

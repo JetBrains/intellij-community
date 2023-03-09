@@ -87,7 +87,7 @@ private fun <T> VcsLogColumn<*>.withColumnProperties(block: (VcsLogColumnPropert
   return block(properties)
 }
 
-private fun <T> VcsLogUiProperties.changeProperty(property: VcsLogUiProperty<T>, value: T) {
+private fun <T : Any> VcsLogUiProperties.changeProperty(property: VcsLogUiProperty<T>, value: T) {
   if (exists(property)) {
     if (get(property) != value) {
       set(property, value)

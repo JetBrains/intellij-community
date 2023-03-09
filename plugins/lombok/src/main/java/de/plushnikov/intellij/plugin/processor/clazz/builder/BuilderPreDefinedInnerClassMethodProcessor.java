@@ -51,7 +51,7 @@ public class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBuilderP
       .forEach(result::addAll);
 
     // create 'build' method
-    final String buildMethodName = builderHandler.getBuildMethodName(psiAnnotation);
+    final String buildMethodName = BuilderHandler.getBuildMethodName(psiAnnotation);
     if (!existedMethodNames.contains(buildMethodName)) {
       result.add(builderHandler.createBuildMethod(psiAnnotation, psiParentClass, psiParentMethod, psiBuilderClass, buildMethodName, builderInfos));
     }

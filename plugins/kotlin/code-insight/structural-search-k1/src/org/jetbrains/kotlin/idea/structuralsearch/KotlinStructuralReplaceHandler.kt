@@ -123,7 +123,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
         if (receiverExpression is KtDotQualifiedExpression && selectorExpression is KtCallExpression && options.isToShortenFQN) {
             val file = match.containingKtFile
             val symbols = text.split(".")
-            val psiFactory = KtPsiFactory(match)
+            val psiFactory = KtPsiFactory(project)
             receiverExpression.replace(psiFactory.createExpression(symbols.first()))
             val importName = FqName(symbols.tail().joinToString(separator = ".") { it }.substringBefore("("))
             file.resolveImportReference(importName).firstOrNull()?.let { importRef ->
@@ -180,7 +180,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
         val indentationLength = IndentHelper.getInstance().getIndent(match.containingFile, match.node, true)
         collectDescendantsOfType<PsiWhiteSpace> { it.text.contains("\n") }.forEach {
             val newLineCount = it.text.count { char -> char == '\n' }
-            it.replace(KtPsiFactory(this).createWhiteSpace(
+            it.replace(KtPsiFactory(project).createWhiteSpace(
                 "\n".repeat(newLineCount) + " ".repeat(indentationLength + it.text.length - 1))
             )
         }

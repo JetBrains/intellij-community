@@ -8,6 +8,6 @@ private fun f(p: A, t: T) {
     E.ENTRY
 }
 
-private fun f2(i: Outer.Inner, n: Outer.Nested, e: Outer.NestedEnum, o: Outer.NestedObj, t: Outer.NestedTrait, a: Outer.NestedAnnotation) {
+private fun f2(i: Outer.Inner, n: Outer.Nested, e: Outer.NestedEnum, o: Outer.NestedObj, t: Outer.NestedInterface, a: Outer.NestedAnnotation) {
     ClassObject
 }

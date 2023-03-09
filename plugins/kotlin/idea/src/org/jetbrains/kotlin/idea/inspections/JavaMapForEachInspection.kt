@@ -46,7 +46,7 @@ class JavaMapForEachInspection : AbstractApplicabilityBasedInspection<KtCallExpr
         val lambda = element.lambda() ?: return
         val valueParameters = lambda.valueParameters
         lambda.functionLiteral.valueParameterList?.replace(
-            KtPsiFactory(element).createLambdaParameterList("(${valueParameters[0].text}, ${valueParameters[1].text})")
+            KtPsiFactory(project).createLambdaParameterList("(${valueParameters[0].text}, ${valueParameters[1].text})")
         )
     }
 

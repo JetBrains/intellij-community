@@ -331,23 +331,28 @@ public class StringUtilRt {
     List<String> result = new ArrayList<String>();
     StringBuilder builder = new StringBuilder(s.length());
     char quote = 0;
+    boolean isEscaped = false;
     for (int i = 0; i < s.length(); i++) {
       char c = s.charAt(i);
-      if (c == separator && quote == 0) {
+      boolean isSeparator = c == separator;
+      boolean isQuote = c == '"' || c == '\'';
+      boolean isQuoted = quote != 0;
+      boolean isEscape = c == '\\';
+
+      if (!isQuoted && isSeparator) {
         if (builder.length() > 0) {
           result.add(builder.toString());
           builder.setLength(0);
         }
         continue;
       }
-      boolean isQuote = c == '"' || c == '\'';
-      boolean isEscaped = isEscapedSymbol(s, i);
-      if (quote == 0 && isQuote && !isEscaped) {
-        quote = c;
+
+      if (!isEscaped && isQuote && (quote == 0 || quote == c)) {
+        quote = isQuoted ? 0 : c;
       }
-      else if (c == quote && !isEscaped) {
-        quote = 0;
-      }
+
+      isEscaped = isEscape && !isEscaped;
+
       builder.append(c);
     }
     if (builder.length() > 0) {
@@ -356,37 +361,42 @@ public class StringUtilRt {
     return result;
   }
 
-  private static boolean isEscapedSymbol(CharSequence charSequence, int index) {
-    return countTailingSymbols(charSequence.subSequence(0, index), '\\') % 2 == 1;
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  private static int countTailingSymbols(CharSequence charSequence, char symbol) {
-    int counter = 0;
-    for (int i = charSequence.length() - 1; i >= 0; i--) {
-      if (charSequence.charAt(i) != symbol) {
-        break;
-      }
-      counter++;
-    }
-    return counter;
-  }
-
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize) {
-    return formatFileSize(fileSize, " ");
+    return formatFileSize(fileSize, " ", -1);
   }
 
   @NotNull
   @Contract(pure = true)
   public static String formatFileSize(long fileSize, @NotNull String unitSeparator) {
+    return formatFileSize(fileSize, unitSeparator, -1);
+  }
+
+  /**
+   *
+   * @param fileSize - size of the file in bytes
+   * @param unitSeparator - separator inserted between value and unit
+   * @param rank - preferred rank. 0 - bytes, 1 - kilobytes, ..., 6 - exabytes. If less than 0 then picked automatically
+   * @return string with formatted file size
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static String formatFileSize(long fileSize, @NotNull String unitSeparator, int rank) {
     if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
     if (fileSize == 0) return '0' + unitSeparator + 'B';
-    int rank = (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
+    if (rank < 0) {
+      rank = rankForFileSize(fileSize);
+    }
     double value = fileSize / Math.pow(1000, rank);
     String[] units = {"B", "kB", "MB", "GB", "TB", "PB", "EB"};
     return new DecimalFormat("0.##").format(value) + unitSeparator + units[rank];
+  }
+
+  @Contract(pure = true)
+  public static int rankForFileSize(long fileSize) {
+    if (fileSize < 0) throw new IllegalArgumentException("Invalid value: " + fileSize);
+    return (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
   }
 
   /**

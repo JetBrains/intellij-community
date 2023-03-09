@@ -27,6 +27,12 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
 
   public boolean MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = true;
 
+  public boolean ASK_FOR_RENAME_DECLARATION_WHEN_RENAME_FILE = true;
+
+  public boolean RENAME_DECLARATION_WHEN_RENAME_FILE = true;
+
+  public boolean RENAME_SHOW_AUTOMATIC_RENAMING_DIALOG = true;
+
   @Override
   public RefactoringSettings getState() {
     return this;

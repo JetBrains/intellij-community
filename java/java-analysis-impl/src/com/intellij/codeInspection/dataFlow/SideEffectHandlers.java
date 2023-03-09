@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
@@ -34,7 +34,7 @@ import static com.siyeh.ig.callMatcher.CallMatcher.instanceCall;
  * This class allows custom handling (for example, updating the size of the collection on the
  * {@link java.util.List#add(Object)} call).
  */
-class SideEffectHandlers {
+final class SideEffectHandlers {
   private static final CallMapper<SideEffectHandler> HANDLERS = new CallMapper<SideEffectHandler>()
     // While list.set() produces a side effect (changes element), we don't track anything except size,
     // so we don't need to flush anything

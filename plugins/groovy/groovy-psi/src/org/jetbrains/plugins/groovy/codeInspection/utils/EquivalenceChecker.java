@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.utils;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression;
@@ -37,6 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import java.util.Objects;
 
 @SuppressWarnings({
   "MethodWithMultipleLoops",
@@ -159,15 +162,7 @@ public final class EquivalenceChecker {
                                                     @NotNull GrVariableDeclaration statement2) {
     final GrVariable[] variables1 = statement1.getVariables();
     final GrVariable[] variables2 = statement2.getVariables();
-    if (variables1.length != variables2.length) {
-      return false;
-    }
-    for (int i = 0; i < variables2.length; i++) {
-      if (!variablesAreEquivalent(variables1[i], variables2[i])) {
-        return false;
-      }
-    }
-    return true;
+    return ArrayUtil.areEqual(variables1, variables2, (v1, v2) -> variablesAreEquivalent(v1, v2));
   }
 
   private static boolean variablesAreEquivalent(@NotNull GrVariable var1,
@@ -205,15 +200,7 @@ public final class EquivalenceChecker {
     }
     final GrCatchClause[] catchBlocks1 = statement1.getCatchClauses();
     final GrCatchClause[] catchBlocks2 = statement2.getCatchClauses();
-    if (catchBlocks1.length != catchBlocks2.length) {
-      return false;
-    }
-    for (int i = 0; i < catchBlocks2.length; i++) {
-      if (!catchClausesAreEquivalent(catchBlocks1[i], catchBlocks2[i])) {
-        return false;
-      }
-    }
-    return true;
+    return ArrayUtil.areEqual(catchBlocks1, catchBlocks2, (c1, c2) -> catchClausesAreEquivalent(c1, c2));
   }
 
   private static boolean catchClausesAreEquivalent(GrCatchClause clause1, GrCatchClause clause2) {
@@ -237,13 +224,7 @@ public final class EquivalenceChecker {
   }
 
   private static boolean typesAreEquivalent(@Nullable PsiType type1, @Nullable PsiType type2) {
-    if (type1 == null) {
-      return type2 == null;
-    }
-    if (type2 == null) {
-      return false;
-    }
-    return type1.equals(type2);
+    return Objects.equals(type1, type2);
   }
 
   private static boolean whileStatementsAreEquivalent(@NotNull GrWhileStatement statement1,
@@ -274,15 +255,8 @@ public final class EquivalenceChecker {
     if (statement1 == null || statement2 == null) return false;
     GrVariable[] variables1 = statement1.getDeclaredVariables();
     GrVariable[] variables2 = statement2.getDeclaredVariables();
-    if (variables1.length != variables2.length) return false;
-    for (int i = 0; i < variables1.length; i++) {
-      final GrVariable var1 = variables1[i];
-      final GrVariable var2 = variables2[i];
-      if (var1 == null && var2 == null) return true;
-      if (var1 == null || var2 == null) return false;
-      if (!variablesAreEquivalent(var1, var2)) return false;
-    }
-    return true;
+    return ArrayUtil.areEqual(variables1, variables2, (var1, var2) -> 
+      (var1 == null && var2 == null) || (var1 != null && var2 != null && variablesAreEquivalent(var1, var2)));
   }
 
   private static boolean switchStatementsAreEquivalent(@NotNull GrSwitchStatement statement1,
@@ -294,44 +268,12 @@ public final class EquivalenceChecker {
     }
     final GrCaseSection[] clauses1 = statement1.getCaseSections();
     final GrCaseSection[] clauses2 = statement2.getCaseSections();
-    if (clauses1.length != clauses2.length) {
-      return false;
-    }
-    for (int i = 0; i < clauses1.length; i++) {
-      final GrCaseSection clause1 = clauses1[i];
-      final GrCaseSection clause2 = clauses2[i];
-      if (!caseClausesAreEquivalent(clause1, clause2)) {
-        return false;
-      }
-    }
-    return true;
+    return ArrayUtil.areEqual(clauses1, clauses2, (c1, c2) -> caseClausesAreEquivalent(c1, c2));
   }
 
   private static boolean caseClausesAreEquivalent(GrCaseSection clause1, GrCaseSection clause2) {
-    final GrExpression[] label1 = clause1.getExpressions();
-    final GrExpression[] label2 = clause2.getExpressions();
-    if (label1.length != label2.length) return false;
-
-    for (int i = 0; i < label1.length; i++) {
-      GrExpression l1 = label1[i];
-      GrExpression l2 = label2[i];
-
-      if (!expressionsAreEquivalent(l1, l2)) {
-        return false;
-      }
-    }
-
-    final GrStatement[] statements1 = clause1.getStatements();
-    final GrStatement[] statements2 = clause2.getStatements();
-    if (statements1.length != statements2.length) {
-      return false;
-    }
-    for (int i = 0; i < statements1.length; i++) {
-      if (!statementsAreEquivalent(statements1[i], statements2[i])) {
-        return false;
-      }
-    }
-    return false;
+    return ArrayUtil.areEqual(clause1.getExpressions(), clause2.getExpressions(), (l1, l2) -> expressionsAreEquivalent(l1, l2)) &&
+           ArrayUtil.areEqual(clause1.getStatements(), clause2.getStatements(), (s1, s2) -> statementsAreEquivalent(s1, s2));
   }
 
   private static boolean blockStatementsAreEquivalent(@NotNull GrBlockStatement statement1,
@@ -343,18 +285,7 @@ public final class EquivalenceChecker {
 
   private static boolean openBlocksAreEquivalent(@Nullable GrOpenBlock block1, @Nullable GrOpenBlock block2) {
     if (block1 == null || block2 == null) return false;
-
-    final GrStatement[] statements1 = block1.getStatements();
-    final GrStatement[] statements2 = block2.getStatements();
-    if (statements1.length != statements2.length) {
-      return false;
-    }
-    for (int i = 0; i < statements1.length; i++) {
-      if (!statementsAreEquivalent(statements1[i], statements2[i])) {
-        return false;
-      }
-    }
-    return true;
+    return ArrayUtil.areEqual(block1.getStatements(), block2.getStatements(), (s1, s2) -> statementsAreEquivalent(s1, s2));
   }
 
   private static boolean ifStatementsAreEquivalent(@NotNull GrIfStatement statement1,
@@ -449,28 +380,8 @@ public final class EquivalenceChecker {
 
   private static boolean closableBlockExpressionsAreEquivalent(GrClosableBlock closableBlock1,
                                                                GrClosableBlock closableBlock2) {
-    final GrStatement[] statements1 = closableBlock1.getStatements();
-    final GrStatement[] statements2 = closableBlock2.getStatements();
-    if (statements1.length != statements2.length) {
-      return false;
-    }
-    for (int i = 0; i < statements1.length; i++) {
-      if (!statementsAreEquivalent(statements1[i], statements2[i])) {
-        return false;
-      }
-    }
-
-    GrParameter[] parameters1 = closableBlock1.getParameters();
-    GrParameter[] parameters2 = closableBlock2.getParameters();
-    return parametersAreEquivalent(parameters1, parameters2);
-  }
-
-  private static boolean parametersAreEquivalent(GrParameter[] parameters1, GrParameter[] parameters2) {
-    if (parameters1.length != parameters2.length) return false;
-    for (int i = 0; i < parameters1.length; i++) {
-      if (!parametersAreEquivalent(parameters1[i], parameters2[i])) return false;
-    }
-    return true;
+    return ArrayUtil.areEqual(closableBlock1.getStatements(), closableBlock2.getStatements(), (s1, s2) -> statementsAreEquivalent(s1, s2)) &&
+           ArrayUtil.areEqual(closableBlock1.getParameters(), closableBlock2.getParameters(), (p1, p2) -> parametersAreEquivalent(p1, p2));
   }
 
   private static boolean listOrMapExpressionsAreEquivalent(GrListOrMap expression1, GrListOrMap expression2) {
@@ -716,15 +627,7 @@ public final class EquivalenceChecker {
     if (expressions1 == null || expressions2 == null) {
       return false;
     }
-    if (expressions1.length != expressions2.length) {
-      return false;
-    }
-    for (int i = 0; i < expressions1.length; i++) {
-      if (!expressionsAreEquivalent(expressions1[i], expressions2[i])) {
-        return false;
-      }
-    }
-    return true;
+    return ArrayUtil.areEqual(expressions1, expressions2, (e1, e2) -> expressionsAreEquivalent(e1, e2));
   }
 
   private static int getExpressionType(@Nullable GrExpression exp) {

@@ -19,6 +19,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,12 +72,23 @@ public class FqnUtil {
       }
     }
 
-    Module module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false);
-    if (module != null) {
-      for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
+    if (WorkspaceFileIndexEx.IS_ENABLED) {
+      VirtualFile root = WorkspaceFileIndex.getInstance(project).getContentFileSetRoot(virtualFile, false);
+      if (root != null) {
         String relativePath = VfsUtilCore.getRelativePath(virtualFile, root);
         if (relativePath != null) {
           return relativePath;
+        }
+      }
+    }
+    else {
+      Module module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false);
+      if (module != null) {
+        for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
+          String relativePath = VfsUtilCore.getRelativePath(virtualFile, root);
+          if (relativePath != null) {
+            return relativePath;
+          }
         }
       }
     }

@@ -6,15 +6,17 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.editorconfig.language.codeinsight.inspections.EditorConfigUnexpectedCommaInspection
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.language.psi.EditorConfigOptionValueList
 import org.editorconfig.language.services.EditorConfigElementFactory
 
-class EditorConfigCleanupValueListQuickFix(private val badCommas: List<PsiElement>) : LocalQuickFix {
+class EditorConfigCleanupValueListQuickFix : LocalQuickFix {
   override fun getFamilyName() = EditorConfigBundle.get("quickfix.values.list.cleanup.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val list = descriptor.psiElement?.parent as? EditorConfigOptionValueList ?: return
+    val badCommas = EditorConfigUnexpectedCommaInspection.findBadCommas(list)
     val manager = CodeStyleManager.getInstance(project)
     manager.performActionWithFormatterDisabled {
       badCommas.forEach(PsiElement::delete)

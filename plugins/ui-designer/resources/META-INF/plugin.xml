@@ -143,8 +143,6 @@
       <separator/>
       <action id="GuiDesigner.PreviewForm" class="com.intellij.uiDesigner.actions.PreviewFormAction"
               icon="AllIcons.Actions.Preview"/>
-      <action id="GuiDesigner.DataBindingWizard" class="com.intellij.uiDesigner.actions.DataBindingWizardAction"
-              icon="AllIcons.Actions.Lightning"/>
       <action id="GuiDesigner.ReloadCustomComponents" class="com.intellij.uiDesigner.actions.ReloadCustomComponentsAction"
               icon="AllIcons.Actions.Refresh"/>
       <action id="GuiDesigner.ChooseLocale" class="com.intellij.uiDesigner.actions.ChooseLocaleAction"/>
@@ -155,7 +153,6 @@
 
     <group id="GuiDesigner.EditorPopupMenu">
       <reference ref="GuiDesigner.PreviewForm"/>
-      <reference ref="GuiDesigner.DataBindingWizard"/>
       <separator/>
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>

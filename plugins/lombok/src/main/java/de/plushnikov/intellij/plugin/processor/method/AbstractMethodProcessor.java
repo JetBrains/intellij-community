@@ -6,9 +6,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
+import de.plushnikov.intellij.plugin.problem.ProblemValidationSink;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -46,7 +46,7 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotationByShortNameOnly(psiMethod, getSupportedAnnotationClasses());
       if (null != psiAnnotation && possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation, psiMethod)) {
         if (checkAnnotationFQN(psiClass, psiAnnotation, psiMethod)
-            && validate(psiAnnotation, psiMethod, ProblemEmptyBuilder.getInstance())) {
+            && validate(psiAnnotation, psiMethod, new ProblemProcessingSink())) {
           processIntern(psiMethod, psiAnnotation, result);
         }
       }
@@ -86,7 +86,7 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
 
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(psiAnnotation, PsiMethod.class);
     if (null != psiMethod) {
-      ProblemNewBuilder problemNewBuilder = new ProblemNewBuilder();
+      ProblemValidationSink problemNewBuilder = new ProblemValidationSink();
       validate(psiAnnotation, psiMethod, problemNewBuilder);
       result = problemNewBuilder.getProblems();
     }
@@ -94,7 +94,7 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
     return result;
   }
 
-  protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder);
+  protected abstract boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemSink problemSink);
 
   protected abstract void processIntern(PsiMethod psiMethod, PsiAnnotation psiAnnotation, List<? super PsiElement> target);
 }

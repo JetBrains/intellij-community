@@ -7,3 +7,5 @@ import com.intellij.openapi.util.NlsSafe
  * This is a path on target. String is temporary solution but would be changed to the real target-specific class
  */
 typealias FullPathOnTarget = @NlsSafe String
+
+fun FullPathOnTarget(path: String): FullPathOnTarget = path

@@ -30,8 +30,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-import static com.intellij.openapi.editor.ex.EditorEx.VERTICAL_SCROLLBAR_LEFT;
-
 /**
  * The general idea of soft wraps processing is to build a cache to use for quick document dimensions mapping
  * ({@code 'logical position -> visual position'}, {@code 'offset -> logical position'} etc) and update it incrementally
@@ -498,11 +496,20 @@ public class SoftWrapApplianceManager implements Dumpable {
     @Override
     public int getVisibleAreaWidth() {
       Insets insets = myEditor.getContentComponent().getInsets();
-      if (myEditor.getVerticalScrollbarOrientation() == VERTICAL_SCROLLBAR_LEFT && insets.left == 0) {
-        // we assume left scroll bar is always shown to avoid recalculating soft wraps twice (before it's shown and after that)
-        insets.left = getVerticalScrollBarWidth();
+      int horizontalInsets = insets.left + insets.right;
+      // We don't want soft-wrapped text to go under the scroll bar even if that feature is enabled,
+      // because in this case the scrollbar sometimes prevents the user from placing the caret by
+      // clicking inside wrapped text. Even if the scroll bar is invisible, some of its marks can get
+      // in the way too (errors/warnings, VCS changes, etc.). It's best to soft-wrap earlier.
+      // Example: IDEA-305944 (Code goes under the scrollbar with Soft-Wrap).
+      final var vsbWidth = getVerticalScrollBarWidth();
+      if (horizontalInsets < vsbWidth) {
+        // Guesswork: it isn't easy to figure out whether insets already include the scrollbar width,
+        // as the underlying logic is very complicated. But we can reasonably assume that if they
+        // do NOT include it, they will be very small (most likely zero).
+        horizontalInsets += vsbWidth;
       }
-      int width = Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - insets.left - insets.right);
+      int width = Math.max(0, myEditor.getScrollingModel().getVisibleArea().width - horizontalInsets);
       if (myEditor.isInDistractionFreeMode()) {
         int rightMargin = myEditor.getSettings().getRightMargin(myEditor.getProject());
         if (rightMargin > 0) width = Math.min(width, rightMargin * EditorUtil.getPlainSpaceWidth(myEditor));

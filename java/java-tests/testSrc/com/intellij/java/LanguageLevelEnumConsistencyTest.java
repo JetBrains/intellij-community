@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.jps.model.java.LanguageLevel;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.junit.Assert.assertEquals;
 
@@ -17,8 +17,8 @@ import static org.junit.Assert.assertEquals;
 public class LanguageLevelEnumConsistencyTest {
   @Test
   public void constants() {
-    List<String> ideConstants = Stream.of(com.intellij.pom.java.LanguageLevel.values()).map(Enum::name).collect(Collectors.toList());
-    List<String> jpsConstants = Stream.of(org.jetbrains.jps.model.java.LanguageLevel.values()).map(Enum::name).collect(Collectors.toList());
+    List<String> ideConstants = ContainerUtil.map(com.intellij.pom.java.LanguageLevel.values(), Enum::name);
+    List<String> jpsConstants = ContainerUtil.map(LanguageLevel.values(), Enum::name);
     assertEquals(ideConstants, jpsConstants);
   }
 

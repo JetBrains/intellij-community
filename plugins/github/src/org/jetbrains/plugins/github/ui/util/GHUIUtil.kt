@@ -4,8 +4,8 @@ package org.jetbrains.plugins.github.ui.util
 import com.intellij.UtilBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -29,7 +29,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedR
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import com.intellij.collaboration.util.CollectionDelta
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
@@ -85,12 +84,6 @@ object GHUIUtil {
   }
 
   fun getLabelForeground(bg: Color): Color = if (ColorUtil.isDark(bg)) Color.white else Color.black
-
-  private fun getFontEM(component: JComponent): Float {
-    val metrics = component.getFontMetrics(component.font)
-    //em dash character
-    return FontLayoutService.getInstance().charWidth2D(metrics, '\u2014'.code)
-  }
 
   fun formatActionDate(date: Date): String {
     val prettyDate = DateFormatUtil.formatPrettyDate(date).toLowerCase()
@@ -188,8 +181,6 @@ object GHUIUtil {
       .showUnderneathOf(parentComponent)
     return result
   }
-
-  fun getPRTimelineWidth() = (getFontEM(JLabel()) * 42).toInt()
 
   data class SelectableWrapper<T>(val value: T, var selected: Boolean = false)
 

@@ -7,13 +7,13 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.formatter.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
-import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
-import org.jetbrains.kotlin.nj2k.descriptorByFileDirective
-import org.jetbrains.kotlin.nj2k.inference.AbstractConstraintCollectorTest
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.CallExpressionConstraintCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.CommonConstraintsCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.collectors.FunctionConstraintsCollector
 import org.jetbrains.kotlin.idea.j2k.post.processing.inference.mutability.*
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.nj2k.descriptorByFileDirective
+import org.jetbrains.kotlin.nj2k.inference.AbstractConstraintCollectorTest
 import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTypeElement
@@ -27,7 +27,7 @@ abstract class AbstractMutabilityInferenceTest : AbstractConstraintCollectorTest
     override fun createInferenceFacade(resolutionFacade: ResolutionFacade): InferenceFacade {
         val typeEnhancer = MutabilityBoundTypeEnhancer()
         return InferenceFacade(
-          object : ContextCollector(resolutionFacade) {
+            object : ContextCollector(resolutionFacade) {
                 override fun ClassReference.getState(typeElement: KtTypeElement?) =
                     when (descriptor?.fqNameOrNull()) {
                         in MutabilityStateUpdater.mutableToImmutable -> State.UNKNOWN
@@ -35,20 +35,20 @@ abstract class AbstractMutabilityInferenceTest : AbstractConstraintCollectorTest
                         else -> State.UNUSED
                     }
             },
-          ConstraintsCollectorAggregator(
-            resolutionFacade,
-            MutabilityConstraintBoundProvider(),
-            listOf(
+            ConstraintsCollectorAggregator(
+                resolutionFacade,
+                MutabilityConstraintBoundProvider(),
+                listOf(
                     CommonConstraintsCollector(),
                     CallExpressionConstraintCollector(),
                     FunctionConstraintsCollector(ResolveSuperFunctionsProvider(resolutionFacade)),
                     MutabilityConstraintsCollector()
                 )
             ),
-          MutabilityBoundTypeCalculator(resolutionFacade, typeEnhancer),
-          MutabilityStateUpdater(),
-          MutabilityDefaultStateProvider(),
-          renderDebugTypes = true
+            MutabilityBoundTypeCalculator(resolutionFacade, typeEnhancer),
+            MutabilityStateUpdater(),
+            MutabilityDefaultStateProvider(),
+            renderDebugTypes = true
         )
     }
 

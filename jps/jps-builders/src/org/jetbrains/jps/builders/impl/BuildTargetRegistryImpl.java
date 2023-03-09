@@ -40,7 +40,7 @@ public final class BuildTargetRegistryImpl implements BuildTargetRegistry {
         }
       }
     }
-    myAllTargets = Collections.unmodifiableList(ContainerUtil.concat(targetsByType));
+    myAllTargets = ContainerUtil.concat(targetsByType);
   }
 
   @NotNull

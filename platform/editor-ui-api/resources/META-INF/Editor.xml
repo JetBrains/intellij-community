@@ -14,5 +14,8 @@
     <projectService
       serviceInterface="com.intellij.openapi.vcs.FileStatusManager"
       serviceImplementation="com.intellij.openapi.vcs.DefaultFileStatusManager" />
+    <projectService
+      serviceInterface="com.intellij.openapi.vcs.ElementStatusTracker"
+      serviceImplementation="com.intellij.openapi.vcs.DefaultElementStatusTracker" />
   </extensions>
 </idea-plugin>

@@ -188,7 +188,7 @@ class KotlinImportOrderLayoutPanel : BaseKotlinImportLayoutPanel(KotlinBundle.me
 
         val importLayoutPanel = ToolbarDecorator.createDecorator(layoutTable)
             .addExtraAction(
-                object : DumbAwareActionButton(KotlinBundle.message("button.add.package"), IconUtil.getAddPackageIcon()) {
+                object : DumbAwareActionButton(KotlinBundle.message("button.add.package"), IconUtil.addPackageIcon) {
                     override fun actionPerformed(event: AnActionEvent) {
                         addPackage()
                     }

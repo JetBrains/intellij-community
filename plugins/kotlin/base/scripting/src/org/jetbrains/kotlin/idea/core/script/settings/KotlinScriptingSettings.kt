@@ -143,12 +143,12 @@ class KotlinScriptingSettings(private val project: Project) : PersistentStateCom
 
             if (!settings.isEnabled) {
                 addElement(KotlinScriptDefinitionValue::isEnabled.name).apply {
-                    text = settings.isEnabled.toString()
+                    text = "false"
                 }
             }
             if (settings.autoReloadConfigurations) {
                 addElement(KotlinScriptDefinitionValue::autoReloadConfigurations.name).apply {
-                    text = settings.autoReloadConfigurations.toString()
+                    text = "true"
                 }
             }
         }

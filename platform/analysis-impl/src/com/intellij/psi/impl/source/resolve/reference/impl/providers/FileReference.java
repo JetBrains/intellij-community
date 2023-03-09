@@ -88,7 +88,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   @NotNull
   protected Collection<PsiFileSystemItem> getContexts() {
     final FileReference contextRef = getContextReference();
-    ArrayList<PsiFileSystemItem> result = new ArrayList<>();
+    List<PsiFileSystemItem> result = new ArrayList<>();
 
     if (contextRef == null) {
       Collection<PsiFileSystemItem> defaultContexts = myFileReferenceSet.getDefaultContexts();
@@ -143,7 +143,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   protected void innerResolveInContext(@NotNull final String text,
                                        @NotNull PsiFileSystemItem context,
-                                       final @NotNull Collection<ResolveResult> result,
+                                       final @NotNull Collection<? super ResolveResult> result,
                                        final boolean caseSensitive) {
     context = ModelBranchUtil.obtainCopyFromTheSameBranch(getElement(), context);
     if (isAllowedEmptyPath(text) || ".".equals(text) || "/".equals(text)) {

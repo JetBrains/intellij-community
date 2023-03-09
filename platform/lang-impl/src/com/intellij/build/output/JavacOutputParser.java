@@ -103,15 +103,15 @@ public class JavacOutputParser implements BuildOutputParser {
           String text = line.substring(colonIndex2 + 1).trim();
           MessageEvent.Kind kind = MessageEvent.Kind.ERROR;
 
-          if (text.startsWith(WARNING_PREFIX)) {
+          if (StringUtil.startsWithIgnoreCase(text, WARNING_PREFIX)) {
             text = text.substring(WARNING_PREFIX.length()).trim();
             kind = MessageEvent.Kind.WARNING;
           }
-          else if (text.startsWith(NOTE_PREFIX)) {
+          else if (StringUtil.startsWithIgnoreCase(text, NOTE_PREFIX)) {
             text = text.substring(NOTE_PREFIX.length()).trim();
             kind = MessageEvent.Kind.INFO;
           }
-          else if (text.startsWith(ERROR_PREFIX)) {
+          else if (StringUtil.startsWithIgnoreCase(text, ERROR_PREFIX)) {
             text = text.substring(ERROR_PREFIX.length()).trim();
             kind = MessageEvent.Kind.ERROR;
           }

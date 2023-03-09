@@ -1,0 +1,9 @@
+// EXPECT_VARIANT_IN_ORDER "class package2.MyClass"
+// EXPECT_VARIANT_IN_ORDER "class package3.MyClass"
+package root
+
+import package2.MyClass
+
+fun foo() {
+    MyClass<caret>(1)
+}

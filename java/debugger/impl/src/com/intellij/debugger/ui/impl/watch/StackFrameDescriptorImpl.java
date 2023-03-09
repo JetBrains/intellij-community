@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.SourcePosition;
@@ -34,7 +34,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Nodes of this type cannot be updated, because StackFrame objects become invalid as soon as VM has been resumed
  */
-public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements StackFrameDescriptor{
+public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements StackFrameDescriptor {
   private final StackFrameProxyImpl myFrame;
   private int myUiIndex;
   private String myName = null;
@@ -100,20 +100,20 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public static CompletableFuture<StackFrameDescriptorImpl> createAsync(@NotNull StackFrameProxyImpl frame,
                                                                         @NotNull MethodsTracker tracker) {
-      return frame.locationAsync()
-        .thenCompose(DebuggerUtilsAsync::method)
-        .thenApply(method -> new StackFrameDescriptorImpl(frame, method, tracker))
-        .exceptionally(throwable -> {
-          Throwable exception = DebuggerUtilsAsync.unwrap(throwable);
-          if (exception instanceof EvaluateException) {
-            // TODO: simplify when only async method left
-            if (!(exception.getCause() instanceof InvalidStackFrameException)) {
-              LOG.error(exception);
-            }
-            return new StackFrameDescriptorImpl(frame, tracker); // fallback to sync
+    return frame.locationAsync()
+      .thenCompose(DebuggerUtilsAsync::method)
+      .thenApply(method -> new StackFrameDescriptorImpl(frame, method, tracker))
+      .exceptionally(throwable -> {
+        Throwable exception = DebuggerUtilsAsync.unwrap(throwable);
+        if (exception instanceof EvaluateException) {
+          // TODO: simplify when only async method left
+          if (!(exception.getCause() instanceof InvalidStackFrameException)) {
+            LOG.error(exception);
           }
-          throw (RuntimeException)throwable;
-        });
+          return new StackFrameDescriptorImpl(frame, tracker); // fallback to sync
+        }
+        throw (RuntimeException)throwable;
+      });
   }
 
   public int getUiIndex() {
@@ -270,7 +270,8 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     if (myThisObject == null) {
       try {
         myThisObject = myFrame.thisObject();
-      } catch (EvaluateException e) {
+      }
+      catch (EvaluateException e) {
         LOG.info(e);
       }
       if (myThisObject != null) {

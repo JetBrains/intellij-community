@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.search
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
@@ -22,7 +23,7 @@ abstract class AbstractHLImplementationSearcherTest : KotlinLightCodeInsightFixt
         val declarationAtCaret = myFixture.elementAtCaret.parentOfType<KtDeclaration>(withSelf = true)
             ?: error("No declaration found at caret")
 
-        val result = DefinitionsScopedSearch.search(declarationAtCaret).toList()
+        val result = ActionUtil.underModalProgress(project, "") { DefinitionsScopedSearch.search(declarationAtCaret).toList() }
         val actual = render(result)
         KotlinTestUtils.assertEqualsToSibling(Paths.get(testFilePath), ".result.kt", actual)
     }

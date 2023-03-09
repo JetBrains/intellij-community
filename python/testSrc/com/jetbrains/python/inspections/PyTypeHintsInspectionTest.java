@@ -1204,97 +1204,114 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
 
   // PY-53104
   public void testInstanceAndClassChecksOnTypingSelf() {
-    doTestByText("from typing import Self\n" +
-                 "\n" +
-                 "\n" +
-                 "class A:\n" +
-                 "    pass\n" +
-                 "\n" +
-                 "\n" +
-                 "class B:\n" +
-                 "    def foo(self: Self):\n" +
-                 "        assert isinstance(A(), <error descr=\"'Self' cannot be used with instance and class checks\">Self</error>)\n" +
-                 "        assert issubclass(A, <error descr=\"'Self' cannot be used with instance and class checks\">Self</error>)\n");
+    doTestByText("""
+                   from typing import Self
+
+
+                   class A:
+                       pass
+
+
+                   class B:
+                       def foo(self: Self):
+                           assert isinstance(A(), <error descr="'Self' cannot be used with instance and class checks">Self</error>)
+                           assert issubclass(A, <error descr="'Self' cannot be used with instance and class checks">Self</error>)
+                   """);
   }
 
   // PY-53104
   public void testTypingSelfSubscription() {
-    doTestByText("from typing import Self, Generic, TypeVar\n" +
-                 "\n" +
-                 "T = TypeVar(\"T\")\n" +
-                 "\n" +
-                 "\n" +
-                 "class A(Generic[T]):\n" +
-                 "    def foo(self):\n" +
-                 "        x: Self[<error descr=\"'Self' cannot be parameterized\">int</error>]\n");
+    doTestByText("""
+                   from typing import Self, Generic, TypeVar
+
+                   T = TypeVar("T")
+
+
+                   class A(Generic[T]):
+                       def foo(self):
+                           x: Self[<error descr="'Self' cannot be parameterized">int</error>]
+                   """);
   }
 
   // PY-53104
   public void testTypingSelfAnnotationOutsideClass() {
-    doTestByText("from typing import Self\n" +
-                 "\n" +
-                 "def foo() -> <warning descr=\"Cannot use 'Self' outside class\">Self</warning>:\n" +
-                 "    pass\n");
+    doTestByText("""
+                   from typing import Self
+
+                   def foo() -> <warning descr="Cannot use 'Self' outside class">Self</warning>:
+                       pass
+                   """);
   }
 
   // PY-53104
   public void testTypingSelfAnnotationForVariableOutsideClass() {
-    doTestByText("from typing import Self\n" +
-                 "\n" +
-                 "something: <warning descr=\"Cannot use 'Self' outside class\">Self</warning> | None = None\n");
+    doTestByText("""
+                   from typing import Self
+
+                   something: <warning descr="Cannot use 'Self' outside class">Self</warning> | None = None
+                   """);
   }
 
   // PY-53104
   public void testTypingSelfInStaticMethod() {
-    doTestByText("from __future__ import annotations\n" +
-                 "from typing import Self\n" +
-                 "\n" +
-                 "class SomeClass:\n" +
-                 "    @staticmethod\n" +
-                 "    def foo(bar: <warning descr=\"Cannot use 'Self' in staticmethod\">Self</warning>) -> <warning descr=\"Cannot use 'Self' in staticmethod\">Self</warning>:\n" +
-                 "        return bar\n");
+    doTestByText("""
+                   from __future__ import annotations
+                   from typing import Self
+
+                   class SomeClass:
+                       @staticmethod
+                       def foo(bar: <warning descr="Cannot use 'Self' in staticmethod">Self</warning>) -> <warning descr="Cannot use 'Self' in staticmethod">Self</warning>:
+                           return bar
+                   """);
   }
 
   // PY-53104
   public void testTypingSelfParameterHasDifferentAnnotation() {
-    doTestByText("from __future__ import annotations\n" +
-                 "from typing import Self\n" +
-                 "\n" +
-                 "class SomeClass:\n" +
-                 "    def foo(self: SomeClass, bar: <warning descr=\"Cannot use 'Self' if 'self' parameter is not 'Self' annotated\">Self</warning>) -> <warning descr=\"Cannot use 'Self' if 'self' parameter is not 'Self' annotated\">Self</warning>:\n" +
-                 "        return self\n");
+    doTestByText("""
+                   from __future__ import annotations
+                   from typing import Self
+
+                   class SomeClass:
+                       def foo(self: SomeClass, bar: <warning descr="Cannot use 'Self' if 'self' parameter is not 'Self' annotated">Self</warning>) -> <warning descr="Cannot use 'Self' if 'self' parameter is not 'Self' annotated">Self</warning>:
+                           return self
+                   """);
   }
 
   // PY-53104
   public void testTypingSelfClsParameterHasDifferentAnnotation() {
-    doTestByText("from __future__ import annotations\n" +
-                 "from typing import Self\n" +
-                 "\n" +
-                 "class SomeClass:\n" +
-                 "    @classmethod\n" +
-                 "    def foo(cls: SomeClass, bar: <warning descr=\"Cannot use 'Self' if 'cls' parameter is not 'Self' annotated\">Self</warning>) -> <warning descr=\"Cannot use 'Self' if 'cls' parameter is not 'Self' annotated\">Self</warning>:\n" +
-                 "        return self\n");
+    doTestByText("""
+                   from __future__ import annotations
+                   from typing import Self
+
+                   class SomeClass:
+                       @classmethod
+                       def foo(cls: SomeClass, bar: <warning descr="Cannot use 'Self' if 'cls' parameter is not 'Self' annotated">Self</warning>) -> <warning descr="Cannot use 'Self' if 'cls' parameter is not 'Self' annotated">Self</warning>:
+                           return self
+                   """);
   }
 
   // PY-53104
   public void testTypingSelfInStaticMethodBody() {
-    doTestByText("from typing import Self\n" +
-                 "\n" +
-                 "\n" +
-                 "class C:\n" +
-                 "    @staticmethod\n" +
-                 "    def m():\n" +
-                 "        obj: <warning descr=\"Cannot use 'Self' in staticmethod\">Self</warning> = None");
+    doTestByText("""
+                   from typing import Self
+
+
+                   class C:
+                       @staticmethod
+                       def m():
+                           obj: <warning descr="Cannot use 'Self' in staticmethod">Self</warning> = None""");
   }
 
   // PY-53104
   public void testTypingSelfInFunctionBodySelfParameterHasDifferentAnnotation() {
-    doTestByText("from typing import Self\n" +
-                 "\n" +
-                 "\n" +
-                 "class C:\n" +
-                 "    def m(self: C):\n" +
-                 "        obj: <warning descr=\"Cannot use 'Self' if 'self' parameter is not 'Self' annotated\">Self</warning> = None\n");
+    doTestByText("""
+                   from typing import Self
+
+
+                   class C:
+                       def m(self: C):
+                           obj: <warning descr="Cannot use 'Self' if 'self' parameter is not 'Self' annotated">Self</warning> = None
+                   """);
   }
 
   @NotNull

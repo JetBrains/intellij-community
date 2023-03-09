@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
-import com.intellij.openapi.externalSystem.util.PathPrefixTreeMap
+import com.intellij.openapi.file.converter.CanonicalPathPrefixTreeFactory
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -31,23 +31,21 @@ class AsyncFilesChangesListener(
 
   override fun apply() {
     val updatedFilesSnapshot = HashMap(updatedFiles)
-    filesProvider.supply(
-      { filesToWatch ->
-        val index = PathPrefixTreeMap<Boolean>()
-        filesToWatch.forEach { index[it] = true }
-        val updatedWatchedFiles = updatedFilesSnapshot.flatMap { (path, modificationData) ->
-          index.getAllDescendantKeys(path)
-            .map { it to modificationData }
+    filesProvider.supply(parentDisposable) { filesToWatch ->
+      val index = CanonicalPathPrefixTreeFactory.createSet(filesToWatch)
+      val updatedWatchedFiles = updatedFilesSnapshot.flatMap { (path, modificationData) ->
+        index.getDescendantSequence(path)
+          .map { it to modificationData }
+      }
+      if (updatedWatchedFiles.isNotEmpty()) {
+        changesListener.init()
+        for ((path, modificationData) in updatedWatchedFiles) {
+          val (modificationStamp, modificationType) = modificationData
+          changesListener.onFileChange(path, modificationStamp, modificationType)
         }
-        if (updatedWatchedFiles.isNotEmpty()) {
-          changesListener.init()
-          for ((path, modificationData) in updatedWatchedFiles) {
-            val (modificationStamp, modificationType) = modificationData
-            changesListener.onFileChange(path, modificationStamp, modificationType)
-          }
-          changesListener.apply()
-        }
-      }, parentDisposable)
+        changesListener.apply()
+      }
+    }
   }
 
   private data class ModificationData(val modificationStamp: Long, val modificationType: ExternalSystemModificationType)

@@ -13,6 +13,9 @@ import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.TemplateKind
@@ -23,10 +26,6 @@ import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.idea.util.expectedDescriptors
-import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.core.OLD_EXPERIMENTAL_FQ_NAME
-import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.findDocComment.findDocComment
@@ -211,7 +210,7 @@ private fun createOverrideRenderer(file: KtFile?) = withOptions {
         // extension wants to keep it.
         val annotations = annotation.type.constructor.declarationDescriptor?.annotations
         if (annotations?.hasAnnotation(OptInNames.REQUIRES_OPT_IN_FQ_NAME) == true ||
-            annotations?.hasAnnotation(OptInNames.OLD_EXPERIMENTAL_FQ_NAME) == true) {
+            annotations?.hasAnnotation(FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME) == true) {
             return true
         }
 

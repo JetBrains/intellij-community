@@ -200,7 +200,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private static boolean isDescriptorAccepted(Descriptor descriptor,
                                               @NonNls String filter,
                                               final boolean forceInclude,
-                                              final List<Set<String>> keySetList, final Set<String> quoted) {
+                                              final List<? extends Set<String>> keySetList, final Set<String> quoted) {
     filter = StringUtil.toLowerCase(filter);
     if (StringUtil.containsIgnoreCase(descriptor.getText(), filter)) {
       return true;
@@ -242,16 +242,19 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void setConfigPanel(final JPanel configPanelAnchor, final ScopeToolState state) {
     configPanelAnchor.removeAll();
-    final JComponent additionalConfigPanel = state.getAdditionalConfigPanel();
+    final JComponent additionalConfigPanel = state.getAdditionalConfigPanel(myDisposable);
     if (additionalConfigPanel != null) {
       additionalConfigPanel.setBorder(InspectionUiUtilKt.getBordersForOptions(additionalConfigPanel));
-      configPanelAnchor.add(InspectionUiUtilKt.addScrollPaneIfNecessary(additionalConfigPanel));
+      configPanelAnchor.add(
+        InspectionUiUtilKt.addScrollPaneIfNecessary(additionalConfigPanel),
+        new GridBag().next().weightx(1.0).weighty(1.0).fillCell().anchor(GridBagConstraints.NORTHWEST)
+      );
     }
 
     if (myOptionsLabel != null)
       myOptionsLabel.setText(
         AnalysisBundle.message("inspections.settings.options.title.specific.scope",
-                               state.getScopeName() == CustomScopesProviderEx.getAllScope().getScopeId()
+                               state.getScopeName().equals(CustomScopesProviderEx.getAllScope().getScopeId())
                                  ? LangBundle.message("scopes.table.everywhere.else")
                                  : state.getScopeName()));
   }
@@ -668,7 +671,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return includeDoNotShow(myTreeTable.getSelectedToolNodes());
   }
 
-  private boolean includeDoNotShow(Collection<InspectionConfigTreeNode.Tool> nodes) {
+  private boolean includeDoNotShow(Collection<? extends InspectionConfigTreeNode.Tool> nodes) {
     final Project project = getProject();
     return !ContainerUtil.exists(nodes, node -> {
       final InspectionToolWrapper tool = myProfile.getToolDefaultState(node.getKey().toString(), project).getTool();
@@ -766,7 +769,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
       myOptionsPanel.removeAll();
       JPanel severityPanel = new JPanel(new GridBagLayout());
-      final JPanel configPanelAnchor = new JPanel(new GridLayout());
+      final JPanel configPanelAnchor = new JPanel(new GridBagLayout());
 
       final boolean showOptionPanel;
       final double severityPanelWeightY;
@@ -1001,7 +1004,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myOptionsPanel.repaint();
   }
 
-  private static void updateHighlightingChooser(Collection<InspectionConfigTreeNode.Tool> nodes,
+  private static void updateHighlightingChooser(Collection<? extends InspectionConfigTreeNode.Tool> nodes,
                                                 Project project,
                                                 HighlightingChooser highlightingChooser) {
     final TextAttributesKey key = ScopesAndSeveritiesTable.getEditorAttributesKey(
@@ -1019,7 +1022,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
   }
 
-  private boolean isThoughOneNodeEnabled(Collection<InspectionConfigTreeNode.Tool> nodes) {
+  private boolean isThoughOneNodeEnabled(Collection<? extends InspectionConfigTreeNode.Tool> nodes) {
     final Project project = getProject();
     for (final InspectionConfigTreeNode.Tool node : nodes) {
       final String toolId = node.getKey().toString();

@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
-import com.intellij.diagnostic.telemetry.TraceKt;
 import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,8 +22,8 @@ import com.intellij.vcs.log.data.index.IndexDiagnosticRunner;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
-import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
+import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogSharedSettings;
 import com.intellij.vcs.log.util.PersistentUtil;
 import io.opentelemetry.api.trace.Span;
@@ -40,21 +39,20 @@ import java.util.Set;
 import java.util.concurrent.*;
 
 import static com.intellij.diagnostic.telemetry.TraceKt.runSpanWithScope;
-import static com.intellij.diagnostic.telemetry.TraceKt.useWithScope;
 
-public class VcsLogData implements Disposable, VcsLogDataProvider {
+public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
   public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
   public static final VcsLogProgress.ProgressKey DATA_PACK_REFRESH = new VcsLogProgress.ProgressKey("data pack");
 
-  @NotNull private final Project myProject;
-  @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
-  @NotNull private final MiniDetailsGetter myMiniDetailsGetter;
-  @NotNull private final CommitDetailsGetter myDetailsGetter;
-  @NotNull private final CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
+  private final @NotNull Project myProject;
+  private final @NotNull Map<VirtualFile, VcsLogProvider> myLogProviders;
+  private final @NotNull MiniDetailsGetter myMiniDetailsGetter;
+  private final @NotNull CommitDetailsGetter myDetailsGetter;
+  private final @NotNull CheckedDisposable myDisposableFlag = Disposer.newCheckedDisposable();
 
   /**
-   * Current user name, as specified in the VCS settings.
+   * Current username, as specified in the VCS settings.
    * It can be configured differently for different roots => store in a map.
    */
   private final Map<VirtualFile, VcsUser> myCurrentUser = new ConcurrentHashMap<>();
@@ -65,21 +63,21 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
    * which is important because these details will be constantly visible to the user,
    * thus it would be annoying to re-load them from VCS if the cache overflows.
    */
-  @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
-  @NotNull private final VcsUserRegistryImpl myUserRegistry;
-  @NotNull private final VcsLogUserResolver myUserResolver;
-  @NotNull private final VcsLogStorage myStorage;
-  @NotNull private final ContainingBranchesGetter myContainingBranchesGetter;
-  @NotNull private final VcsLogRefresherImpl myRefresher;
-  @NotNull private final List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final @NotNull TopCommitsCache myTopCommitsDetailsCache;
+  private final @NotNull VcsUserRegistryImpl myUserRegistry;
+  private final @NotNull VcsLogUserResolver myUserResolver;
+  private final @NotNull VcsLogStorage myStorage;
+  private final @NotNull ContainingBranchesGetter myContainingBranchesGetter;
+  private final @NotNull VcsLogRefresherImpl myRefresher;
+  private final @NotNull List<DataPackChangeListener> myDataPackChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull private final VcsLogErrorHandler myErrorHandler;
-  @NotNull private final VcsLogModifiableIndex myIndex;
-  @NotNull private final IndexDiagnosticRunner myIndexDiagnosticRunner;
+  private final @NotNull VcsLogErrorHandler myErrorHandler;
+  private final @NotNull VcsLogModifiableIndex myIndex;
+  private final @NotNull IndexDiagnosticRunner myIndexDiagnosticRunner;
 
-  @NotNull private final Object myLock = new Object();
-  @NotNull private State myState = State.CREATED;
-  @Nullable private SingleTaskController.SingleTask myInitialization = null;
+  private final @NotNull Object myLock = new Object();
+  private @NotNull State myState = State.CREATED;
+  private @Nullable SingleTaskController.SingleTask myInitialization = null;
 
   public VcsLogData(@NotNull Project project,
                     @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -140,8 +138,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     Disposer.register(this, myDisposableFlag);
   }
 
-  @NotNull
-  private VcsLogStorage createStorage() {
+  private @NotNull VcsLogStorage createStorage() {
     VcsLogStorage vcsLogStorage;
     try {
       vcsLogStorage = new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
@@ -167,8 +164,8 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
               indicator.setIndeterminate(true);
               resetState();
               readCurrentUser();
-              DataPack dataPack = myRefresher.readFirstBlock();
-              fireDataPackChangeEvent(dataPack);
+              myRefresher.readFirstBlock();
+              fireDataPackChangeEvent(myRefresher.getCurrentDataPack());
             });
           }
 
@@ -178,7 +175,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
               // Here be dragons:
               // VcsLogProgressManager can cancel us when it's getting disposed,
               // and we can also get cancelled by invalid git executable.
-              // Since we do not know what's up, we just restore the state
+              // Since we do not know what's up, we just restore the state,
               // and it is entirely possible to start another initialization after that.
               // Eventually, everything gets cancelled for good in VcsLogData.dispose.
               // But still.
@@ -237,7 +234,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     span.end();
   }
 
-  private void fireDataPackChangeEvent(@NotNull final DataPack dataPack) {
+  private void fireDataPackChangeEvent(final @NotNull DataPack dataPack) {
     ApplicationManager.getApplication().invokeLater(() -> {
       for (DataPackChangeListener listener : myDataPackChangeListeners) {
         listener.onDataPackChange(dataPack);
@@ -246,7 +243,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myIndexDiagnosticRunner.onDataPackChange();
   }
 
-  public void addDataPackChangeListener(@NotNull final DataPackChangeListener listener) {
+  public void addDataPackChangeListener(final @NotNull DataPackChangeListener listener) {
     myDataPackChangeListeners.add(listener);
   }
 
@@ -254,14 +251,12 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myDataPackChangeListeners.remove(listener);
   }
 
-  @NotNull
-  public DataPack getDataPack() {
+  public @NotNull DataPack getDataPack() {
     return myRefresher.getCurrentDataPack();
   }
 
   @Override
-  @Nullable
-  public CommitId getCommitId(int commitIndex) {
+  public @Nullable CommitId getCommitId(int commitIndex) {
     return myStorage.getCommitId(commitIndex);
   }
 
@@ -270,8 +265,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     return myStorage.getCommitIndex(hash, root);
   }
 
-  @NotNull
-  public VcsLogStorage getStorage() {
+  public @NotNull VcsLogStorage getStorage() {
     return myStorage;
   }
 
@@ -279,33 +273,27 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myTopCommitsDetailsCache.clear();
   }
 
-  @NotNull
-  public Set<VcsUser> getAllUsers() {
+  public @NotNull Set<VcsUser> getAllUsers() {
     return myUserRegistry.getUsers();
   }
 
-  @NotNull
-  public Map<VirtualFile, VcsUser> getCurrentUser() {
+  public @NotNull Map<VirtualFile, VcsUser> getCurrentUser() {
     return myCurrentUser;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public Collection<VirtualFile> getRoots() {
+  public @NotNull Collection<VirtualFile> getRoots() {
     return myLogProviders.keySet();
   }
 
-  @NotNull
-  public Map<VirtualFile, VcsLogProvider> getLogProviders() {
+  public @NotNull Map<VirtualFile, VcsLogProvider> getLogProviders() {
     return myLogProviders;
   }
 
-  @NotNull
-  public ContainingBranchesGetter getContainingBranchesGetter() {
+  public @NotNull ContainingBranchesGetter getContainingBranchesGetter() {
     return myContainingBranchesGetter;
   }
 
@@ -318,13 +306,11 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     myRefresher.refresh(roots);
   }
 
-  @NotNull
-  public CommitDetailsGetter getCommitDetailsGetter() {
+  public @NotNull CommitDetailsGetter getCommitDetailsGetter() {
     return myDetailsGetter;
   }
 
-  @NotNull
-  public MiniDetailsGetter getMiniDetailsGetter() {
+  public @NotNull MiniDetailsGetter getMiniDetailsGetter() {
     return myMiniDetailsGetter;
   }
 
@@ -350,33 +336,27 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     resetState();
   }
 
-  @NotNull
-  public VcsLogProvider getLogProvider(@NotNull VirtualFile root) {
+  public @NotNull VcsLogProvider getLogProvider(@NotNull VirtualFile root) {
     return myLogProviders.get(root);
   }
 
-  @NotNull
-  public VcsUserRegistryImpl getUserRegistry() {
+  public @NotNull VcsUserRegistryImpl getUserRegistry() {
     return myUserRegistry;
   }
 
-  @NotNull
-  public VcsLogUserResolver getUserNameResolver() {
+  public @NotNull VcsLogUserResolver getUserNameResolver() {
     return myUserResolver;
   }
 
-  @NotNull
-  public VcsLogProgress getProgress() {
+  public @NotNull VcsLogProgress getProgress() {
     return myRefresher.getProgress();
   }
 
-  @NotNull
-  public TopCommitsCache getTopCommitsCache() {
+  public @NotNull TopCommitsCache getTopCommitsCache() {
     return myTopCommitsDetailsCache;
   }
 
-  @NotNull
-  public VcsLogIndex getIndex() {
+  public @NotNull VcsLogIndex getIndex() {
     //noinspection TestOnlyProblems
     return getModifiableIndex();
   }
@@ -401,15 +381,13 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
       Disposer.register(VcsLogData.this, this);
     }
 
-    @NotNull
     @Override
-    public Map<VirtualFile, VcsUser> getCurrentUsers() {
+    public @NotNull Map<VirtualFile, VcsUser> getCurrentUsers() {
       return VcsLogData.this.getCurrentUser();
     }
 
-    @NotNull
     @Override
-    public Set<VcsUser> getAllUsers() {
+    public @NotNull Set<VcsUser> getAllUsers() {
       return VcsLogData.this.getAllUsers();
     }
 

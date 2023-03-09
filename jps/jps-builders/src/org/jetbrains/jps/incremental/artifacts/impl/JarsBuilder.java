@@ -366,7 +366,8 @@ public final class JarsBuilder {
       return;
     }
 
-    final boolean added = ZipUtil.addFileToZip(jarOutputStream, file, relativePath, writtenItemRelativePaths, null);
+    final long timestamp = buildDateInMillis != null ? buildDateInMillis : FSOperations.lastModified(file);
+    final boolean added = ZipUtil.addFileToZip(jarOutputStream, file, relativePath, writtenItemRelativePaths, null, timestamp);
     if (rootIndex != -1) {
       myOutSrcMapping.appendData(targetJarPath, rootIndex, filePath);
       if (added) {

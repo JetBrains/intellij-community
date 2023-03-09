@@ -17,6 +17,7 @@ import java.util.List;
  * Common data keys used as parameter for {@link AnActionEvent#getData(DataKey)} in {@link AnAction#update(AnActionEvent)}/{@link AnAction#actionPerformed(AnActionEvent)} implementations.
  *
  * @see com.intellij.openapi.actionSystem.PlatformDataKeys
+ * @see com.intellij.openapi.actionSystem.PlatformCoreDataKeys
  * @see com.intellij.openapi.actionSystem.LangDataKeys
  */
 public class CommonDataKeys {

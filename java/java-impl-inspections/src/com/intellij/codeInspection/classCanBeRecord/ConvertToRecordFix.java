@@ -57,7 +57,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final ConvertToRecordProcessor processor = getRecordProcessor(descriptor);
     if (processor == null) return;
     processor.setPrepareSuccessfulSwingThreadCallback(() -> {});

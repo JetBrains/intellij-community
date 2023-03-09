@@ -16,134 +16,86 @@
 
 package org.jetbrains.idea.reposearch
 
-import com.intellij.openapi.util.Ref
-import com.sun.net.httpserver.HttpExchange
-import com.sun.net.httpserver.HttpServer
+import com.intellij.testFramework.assertInstanceOf
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.Parameters
+import io.ktor.http.headersOf
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.future.await
+import kotlinx.coroutines.test.runTest
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
-import org.jetbrains.idea.packagesearch.PackageSearchServiceConfig
-import org.jetbrains.idea.packagesearch.api.PackageSearchApiContentTypes
+import org.jetbrains.idea.packagesearch.api.PackageSearch
 import org.jetbrains.idea.packagesearch.api.PackageSearchProvider
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
-import org.junit.jupiter.api.Assertions.*
-import java.net.HttpURLConnection
-import java.net.InetSocketAddress
-import java.net.URI
+import org.junit.jupiter.api.Assertions.assertEquals
 
 class PackageSearchProviderTest {
-  companion object {
-    private const val LOCALHOST = "127.0.0.1"
-    private const val fulltextEndpoint = "/package"
-    private const val suggestEndpoint = "/package"
-  }
+  private fun <T : Any> T.getResourceText(path: String) = this::class.java.classLoader
+    .getResourceAsStream(path)!!.bufferedReader().readText()
 
-  private lateinit var myServer: HttpServer
-  private lateinit var myUrl: String
+  data class EngineInspector(val flow: Flow<Parameters>, val engine: MockEngine)
 
-  private val response: String = this::class.java.classLoader.getResourceAsStream("pkgs-response.json")!!.bufferedReader().readText()
-
-  @Before
-  fun setUp() {
-    myServer = HttpServer.create().apply {
-      bind(InetSocketAddress(LOCALHOST, 0), 1)
-      start()
+  private fun getMockEngine(): EngineInspector {
+    val channel = Channel<Parameters>(Channel.UNLIMITED)
+    val engine = MockEngine { request ->
+      channel.send(request.url.parameters)
+      respond(
+        content = getResourceText("pkgs-response.json"),
+        headers = headersOf(
+          HttpHeaders.ContentType to listOf(ContentType.Application.PackageSearch.StandardV2.toString())
+        )
+      )
     }
-    myUrl = "http://" + LOCALHOST + ":" + myServer.address?.port
+    return EngineInspector(channel.consumeAsFlow(), engine)
   }
 
-  @After
-  fun tearDown() {
-    myServer.stop(0)
-  }
+  private fun getClient(engine: MockEngine) = PackageSearchProvider(
+    scope = GlobalScope,
+    config = TestPackageSearchServiceConfig,
+    engine = engine
+  )
 
   @Test
-  fun `test suggested packages search`() {
-    val params = createServer(suggestEndpoint, response)
-    val data: MutableList<RepositoryArtifactData> = ArrayList()
-
-    PackageSearchProvider(MyPackageSearchServiceConfig()).suggestPrefix(
+  fun `test suggested packages search`() = runTest {
+    val (paramsFlow, engine) = getMockEngine()
+    val dataJob = getClient(engine).suggestPrefix(
       groupId = "org.apache.maven",
       artifactId = "maven-plugin-api",
-      consumer = data::add
     )
-
-    assertNotNull(params.get())
-    assertEquals("org.apache.maven", params.get()["groupid"])
-    assertEquals("maven-plugin-api", params.get()["artifactid"])
+    val data = dataJob.await()
+    val params = paramsFlow.first()
+    assertEquals("org.apache.maven", params["groupid"])
+    assertEquals("maven-plugin-api", params["artifactid"])
 
     assertEquals(1, data.size)
-    val info = data.first()
-    assertInstanceOf(MavenRepositoryArtifactInfo::class.java, info)
-    info as MavenRepositoryArtifactInfo
+    val info = assertInstanceOf<MavenRepositoryArtifactInfo>(data.first())
     assertEquals("org.apache.maven", info.groupId)
     assertEquals("maven-plugin-api", info.artifactId)
   }
 
   @Test
-  fun `test packages fulltext search`() {
-    val params = createServer(fulltextEndpoint, response)
-    val data: MutableList<RepositoryArtifactData> = ArrayList()
-
-    PackageSearchProvider(MyPackageSearchServiceConfig()).fulltextSearch(
-      searchString = "maven-plugin-api",
-      consumer = data::add
+  fun `test packages fulltext search`() = runTest {
+    val (paramsFlow, engine) = getMockEngine()
+    val dataJob = getClient(engine).fulltextSearch(
+      searchString = "maven-plugin-api"
     )
 
-    assertNotNull(params.get())
-    assertEquals("maven-plugin-api", params.get()["query"])
+    val data = dataJob.await()
+    val params = paramsFlow.first()
+
+    assertEquals("maven-plugin-api", params["query"])
 
     assertEquals(1, data.size)
-    val info = data.first()
-    assertInstanceOf(MavenRepositoryArtifactInfo::class.java, info)
-    info as MavenRepositoryArtifactInfo
+    val info = assertInstanceOf<MavenRepositoryArtifactInfo>(data.first())
     assertEquals("org.apache.maven", info.groupId)
     assertEquals("maven-plugin-api", info.artifactId)
   }
 
-  private fun createServer(endpoint: String, serverResponse: String): Ref<Map<String, String>> {
-    val params = Ref<Map<String, String>>()
-    myServer.createContext(endpoint) { ex: HttpExchange ->
-      try {
-        params.set(getQueryMap(ex.requestURI))
-        ex.responseHeaders.add("Content-Type", "${PackageSearchApiContentTypes.StandardV2}; charset=UTF-8")
-        val responseBody = serverResponse.toByteArray()
-        ex.sendResponseHeaders(HttpURLConnection.HTTP_OK, responseBody.size.toLong())
-        ex.responseBody.write(responseBody)
-      }
-      finally {
-        ex.close()
-      }
-    }
-    return params
-  }
-
-  private fun getQueryMap(uri: URI): Map<String, String>? {
-    val params = uri.query.split("&")
-    val map = HashMap<String, String>()
-
-    for (param in params) {
-      val split = param.split("=")
-      map[split[0]] = split[1]
-    }
-
-    return map
-  }
-
-  private inner class MyPackageSearchServiceConfig : PackageSearchServiceConfig {
-    override val baseUrl: String
-      get() = myUrl
-
-    override val timeoutInSeconds: Int
-      get() = 1000
-
-    override val userAgent: String
-      get() = "TEST"
-
-    override val forceHttps: Boolean
-      get() = false
-
-    override val headers: List<Pair<String, String>>
-      get() = emptyList()
-  }
 }

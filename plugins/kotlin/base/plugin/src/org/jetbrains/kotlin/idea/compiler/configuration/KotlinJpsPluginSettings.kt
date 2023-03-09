@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
@@ -13,7 +15,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.io.exists
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.JpsPluginSettings
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.config.toKotlinVersion
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import java.nio.file.Path
 import kotlin.io.path.bufferedReader
+import kotlin.io.path.exists
 
 @State(name = KOTLIN_JPS_PLUGIN_SETTINGS_SECTION, storages = [(Storage(SettingConstants.KOTLIN_COMPILER_SETTINGS_FILE))])
 class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<JpsPluginSettings>(project) {
@@ -95,20 +97,24 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             }
 
             if (parsedKotlinVersion < jpsMinimumSupportedVersion) {
-                return OutdatedCompilerVersion(KotlinBasePluginBundle.message(
-                    "kotlin.jps.compiler.minimum.supported.version.not.satisfied",
-                    jpsMinimumSupportedVersion,
-                    jpsVersion,
-                ))
+                return OutdatedCompilerVersion(
+                    KotlinBasePluginBundle.message(
+                        "kotlin.jps.compiler.minimum.supported.version.not.satisfied",
+                        jpsMinimumSupportedVersion,
+                        jpsVersion,
+                    )
+                )
 
             }
 
             if (parsedKotlinVersion > jpsMaximumSupportedVersion) {
-                return NewCompilerVersion(KotlinBasePluginBundle.message(
-                    "kotlin.jps.compiler.maximum.supported.version.not.satisfied",
-                    jpsMaximumSupportedVersion,
-                    jpsVersion,
-                ))
+                return NewCompilerVersion(
+                    KotlinBasePluginBundle.message(
+                        "kotlin.jps.compiler.maximum.supported.version.not.satisfied",
+                        jpsMaximumSupportedVersion,
+                        jpsVersion,
+                    )
+                )
             }
 
             return null
@@ -119,8 +125,8 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
          *
          * Please, prefer [getInstance] if possible.
          */
-        fun readFromKotlincXmlOrIpr(path: Path) =
-            path.takeIf { it.fileIsNotEmpty() }
+        fun readFromKotlincXmlOrIpr(path: Path): JpsPluginSettings? {
+            return path.takeIf { it.fileIsNotEmpty() }
                 ?.let { JDOMUtil.load(path) }
                 ?.children
                 ?.singleOrNull { it.getAttributeValue("name") == KotlinJpsPluginSettings::class.java.simpleName }
@@ -129,8 +135,12 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                         XmlSerializer.deserializeInto(this, xmlElement)
                     }
                 }
+        }
 
-        fun supportedJpsVersion(project: Project, onUnsupportedVersion: (String) -> Unit): String? {
+        fun supportedJpsVersion(
+            project: Project,
+            onUnsupportedVersion: (@Nls(capitalization = Nls.Capitalization.Sentence) String) -> Unit,
+        ): String? {
             val version = jpsVersion(project)
             return when (val error = checkJpsVersion(version, fromFile = true)) {
                 is OutdatedCompilerVersion -> fallbackVersionForOutdatedCompiler
@@ -177,6 +187,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                     instance.dropExplicitVersion()
                     return
                 }
+
                 null, is OutdatedCompilerVersion -> Unit
             }
 
@@ -188,12 +199,20 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             if (!isDelegatedToExtBuild) {
                 downloadKotlinJpsInBackground(project, version)
             }
-            instance.setVersion(version)
+            runInEdt {
+                runWriteAction {
+                    instance.setVersion(version)
+                }
+            }
         }
 
         private fun downloadKotlinJpsInBackground(project: Project, version: String) {
             ProgressManager.getInstance().run(
                 object : Task.Backgroundable(project, KotlinBasePluginBundle.getMessage("progress.text.downloading.kotlinc.dist"), true) {
+                    override fun isHeadless(): Boolean {
+                        return false
+                    }
+
                     override fun run(indicator: ProgressIndicator) {
                         KotlinArtifactsDownloader.lazyDownloadMissingJpsPluginDependencies(
                             project,
@@ -229,10 +248,10 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
     }
 }
 
-sealed class UnsupportedJpsVersionError(val message: String)
-class ParsingError(message: String) : UnsupportedJpsVersionError(message)
-class OutdatedCompilerVersion(message: String) : UnsupportedJpsVersionError(message)
-class NewCompilerVersion(message: String) : UnsupportedJpsVersionError(message)
+sealed class UnsupportedJpsVersionError(val message: @Nls(capitalization = Nls.Capitalization.Sentence) String)
+class ParsingError(message: @Nls(capitalization = Nls.Capitalization.Sentence) String) : UnsupportedJpsVersionError(message)
+class OutdatedCompilerVersion(message: @Nls(capitalization = Nls.Capitalization.Sentence) String) : UnsupportedJpsVersionError(message)
+class NewCompilerVersion(message: @Nls(capitalization = Nls.Capitalization.Sentence) String) : UnsupportedJpsVersionError(message)
 
 @get:NlsSafe
 val JpsPluginSettings.versionWithFallback: String get() = version.ifEmpty { KotlinJpsPluginSettings.rawBundledVersion }

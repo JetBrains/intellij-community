@@ -186,16 +186,18 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun addContentEntry(url: String): ContentEntry {
-    assertModelIsLive()
-
-    val finalSource = getInternalFileSource(moduleEntity.entitySource) ?: moduleEntity.entitySource
-    return addEntityAndContentEntry(url, finalSource)
+    return addContentEntry(url, false)
   }
 
   override fun addContentEntry(url: String, externalSource: ProjectModelExternalSource): ContentEntry {
+    return addContentEntry(url, true)
+  }
+
+  override fun addContentEntry(url: String, useSourceOfModule: Boolean): ContentEntry {
     assertModelIsLive()
 
-    return addEntityAndContentEntry(url, moduleEntity.entitySource)
+    val finalSource = if (useSourceOfModule) moduleEntity.entitySource else getInternalFileSource(moduleEntity.entitySource) ?: moduleEntity.entitySource
+    return addEntityAndContentEntry(url, finalSource)
   }
 
   private fun addEntityAndContentEntry(url: String, entitySource: EntitySource): ContentEntry {

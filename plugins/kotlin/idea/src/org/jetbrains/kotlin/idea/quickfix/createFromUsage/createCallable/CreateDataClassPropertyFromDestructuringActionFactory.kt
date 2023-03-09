@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinTypeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
-import org.jetbrains.kotlin.resolve.DataClassDescriptorResolver
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getAbbreviatedTypeOrType
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -31,8 +31,8 @@ object CreateDataClassPropertyFromDestructuringActionFactory : CreateParameterFr
         val diagnosticWithParameters = Errors.COMPONENT_FUNCTION_MISSING.cast(diagnostic)
 
         val functionName = diagnosticWithParameters.a
-        if (!DataClassDescriptorResolver.isComponentLike(functionName)) return null
-        val componentNumber = DataClassDescriptorResolver.getComponentIndex(functionName.asString()) - 1
+        if (!DataClassResolver.isComponentLike(functionName)) return null
+        val componentNumber = DataClassResolver.getComponentIndex(functionName.asString()) - 1
 
         val targetClassDescriptor = diagnosticWithParameters.b.constructor.declarationDescriptor as? ClassDescriptor ?: return null
         if (!targetClassDescriptor.isData) return null

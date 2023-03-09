@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.testFramework.fixtures
 
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 
-interface GradleCodeInsightTestFixture : GradleTestFixture {
+interface GradleCodeInsightTestFixture : GradleProjectTestFixture {
 
   val codeInsightFixture: JavaCodeInsightTestFixture
 }

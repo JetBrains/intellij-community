@@ -74,7 +74,7 @@ public class ConstantConditionalExpressionInspection extends BaseInspection impl
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiConditionalExpression expression = (PsiConditionalExpression)descriptor.getPsiElement();
       CommentTracker ct = new CommentTracker();
       final PsiExpression replacement = calculateReplacementExpression(expression);

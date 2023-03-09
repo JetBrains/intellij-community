@@ -20,7 +20,7 @@ import com.intellij.psi.tree.IElementType;
 import org.intellij.plugins.relaxNG.compact.psi.*;
 import org.intellij.plugins.relaxNG.compact.psi.impl.*;
 
-public class RncElementTypes {
+public final class RncElementTypes {
 
   public static final IElementType DOCUMENT = new RncElementTypeEx<>("DOCUMENT", RncDocument.class);
 

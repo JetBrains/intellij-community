@@ -288,7 +288,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     tableSplitter.setSecondComponent(myDiffRequestProcessor.getComponent());
   }
 
-  private void setDirFieldChooser(@Nullable Callable<DiffElement<?>> chooser, boolean isTarget) {
+  private void setDirFieldChooser(@Nullable Callable<? extends DiffElement<?>> chooser, boolean isTarget) {
     @NotNull TextFieldWithBrowseButton dirField = isTarget ? myTargetDirField : mySourceDirField;
     dirField.setEditable(false);
 

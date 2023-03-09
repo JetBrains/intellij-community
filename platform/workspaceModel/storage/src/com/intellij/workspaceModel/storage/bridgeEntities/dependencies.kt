@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
@@ -8,13 +9,17 @@ import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
 import java.io.Serializable
 
 interface LibraryEntity : WorkspaceEntityWithSymbolicId {
-    val name: String
+    val name: @NlsSafe String
     val tableId: LibraryTableId
 
     val roots: List<LibraryRoot>
@@ -40,6 +45,9 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
   }
 
   companion object : Type<LibraryEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(name: String,
                         tableId: LibraryTableId,
                         roots: List<LibraryRoot>,
@@ -61,9 +69,6 @@ interface LibraryEntity : WorkspaceEntityWithSymbolicId {
 //region generated code
 fun MutableEntityStorage.modifyEntity(entity: LibraryEntity, modification: LibraryEntity.Builder.() -> Unit) = modifyEntity(
   LibraryEntity.Builder::class.java, entity, modification)
-
-var LibraryEntity.Builder.externalSystemId: @Child LibraryExternalSystemIdEntity?
-  by WorkspaceEntity.extension()
 //endregion
 
 val ExcludeUrlEntity.library: LibraryEntity? by WorkspaceEntity.extension()
@@ -71,8 +76,8 @@ val ExcludeUrlEntity.library: LibraryEntity? by WorkspaceEntity.extension()
 interface LibraryPropertiesEntity : WorkspaceEntity {
     val library: LibraryEntity
 
-    val libraryType: String
-    val propertiesXmlTag: String?
+    val libraryType: @NonNls String
+    val propertiesXmlTag: @NonNls String?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -84,6 +89,9 @@ interface LibraryPropertiesEntity : WorkspaceEntity {
   }
 
   companion object : Type<LibraryPropertiesEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(libraryType: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): LibraryPropertiesEntity {
       val builder = builder()
       builder.libraryType = libraryType
@@ -116,6 +124,9 @@ interface SdkEntity : WorkspaceEntity {
   }
 
   companion object : Type<SdkEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(homeUrl: VirtualFileUrl, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SdkEntity {
       val builder = builder()
       builder.homeUrl = homeUrl
@@ -133,7 +144,7 @@ fun MutableEntityStorage.modifyEntity(entity: SdkEntity, modification: SdkEntity
   SdkEntity.Builder::class.java, entity, modification)
 //endregion
 
-data class LibraryRootTypeId(val name: String) : Serializable {
+data class LibraryRootTypeId(val name: @NonNls String) : Serializable {
     companion object {
         val COMPILED = LibraryRootTypeId("CLASSES")
         val SOURCES = LibraryRootTypeId("SOURCES")

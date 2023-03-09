@@ -54,13 +54,13 @@ public class Java15FormInspection extends BaseFormInspection {
                              final IProperty prop,
                              @NonNls final String api) {
     collector.addError(getID(), component, prop, UIDesignerBundle.message("inspection.java15form.problem.descriptor", api),
-                       (editor, component1) -> new RemovePropertyFix(editor, component1, (Property)prop));
+                       (editor, component1) -> new RemoveUIPropertyFix(editor, component1, (Property)prop));
   }
 
-  private static class RemovePropertyFix extends QuickFix {
+  private static class RemoveUIPropertyFix extends QuickFix {
     private final Property myProperty;
 
-    RemovePropertyFix(GuiEditor editor, RadComponent component, Property property) {
+    RemoveUIPropertyFix(GuiEditor editor, RadComponent component, Property property) {
       super(editor, UIDesignerBundle.message("remove.property.quickfix"), component);
       myProperty = property;
     }

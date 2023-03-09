@@ -11,7 +11,7 @@
 
     <registryKey key="tips.of.the.day.feedback"
                  description="Where to send like/dislike feedback from Tips of the Day (nowhere, staging, production)."
-                 defaultValue="production"
+                 defaultValue="nowhere"
                  restartRequired="false"/>
     <registryKey key="tips.of.the.day.show.group.label"
                  description="Whether to show group name of the tip in Tips of the Day dialog."
@@ -38,7 +38,8 @@
       <add-to-group group-id="HelpMenu" relative-to-action="Help.KeymapReference" anchor="after"/>
     </group>
 
-    <group id="TipsAndFeatures" internal="true">
+    <group id="TipsAndFeatures" internal="true" popup="true">
+      <action id="SelectAndShowTip" internal="true" class="com.intellij.ide.actions.SelectAndShowTipAction"/>
       <action id="DumpFeaturesAndTips" internal="true" class="com.intellij.featureStatistics.actions.DumpFeaturesAndTipsAction"/>
       <action id="DumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.DumpInvalidTipsAction"/>
       <action id="SelectAndDumpInvalidTipsOfTheDay" internal="true" class="com.intellij.ide.util.SelectAndDumpInvalidTipsAction"/>

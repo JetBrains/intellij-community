@@ -3,10 +3,8 @@ package com.intellij.vcs.log.ui.table
 
 import com.intellij.util.Consumer
 import com.intellij.util.EmptyConsumer
-import com.intellij.vcs.log.CommitId
-import com.intellij.vcs.log.VcsCommitMetadata
-import com.intellij.vcs.log.VcsFullCommitDetails
-import com.intellij.vcs.log.VcsLogCommitSelection
+import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.DataGetter
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.graph.VisibleGraph
 
@@ -18,11 +16,15 @@ internal class CommitSelectionImpl(private val logData: VcsLogData,
   override val ids: List<Int> get() = selectedRows.map { getIdAtRow(it) }
 
   override val commits: List<CommitId>
-    get() = getDataForRows(selectedRows) { row -> logData.getCommitId(getIdAtRow(row))!! }
+    get() = getDetails { id -> logData.getCommitId(id)!! }
   override val cachedMetadata: List<VcsCommitMetadata>
-    get() = getDataForRows(selectedRows) { row -> logData.miniDetailsGetter.getCommitData(getIdAtRow(row)) }
+    get() = getCachedDetails(logData.miniDetailsGetter)
   override val cachedFullDetails: List<VcsFullCommitDetails>
-    get() = getDataForRows(selectedRows) { row -> logData.commitDetailsGetter.getCommitData(getIdAtRow(row)) }
+    get() = getCachedDetails(logData.commitDetailsGetter)
+
+  override fun <T> getDetails(detailsGetter: (Int) -> T): List<T> {
+    return getDataForRows(selectedRows) { row -> detailsGetter(getIdAtRow(row)) }
+  }
 
   override fun requestFullDetails(consumer: Consumer<in List<VcsFullCommitDetails>>) {
     logData.commitDetailsGetter.loadCommitsData(ids, consumer, EmptyConsumer.getInstance(), null)
@@ -36,6 +38,10 @@ internal class CommitSelectionImpl(private val logData: VcsLogData,
         override fun get(index: Int): T = dataGetter(rows[index])
         override val size get() = rows.size
       }
+    }
+
+    internal fun <T : VcsShortCommitDetails> VcsLogCommitSelection.getCachedDetails(dataGetter: DataGetter<T>): List<T> {
+      return getDetails(dataGetter::getCommitData)
     }
   }
 }

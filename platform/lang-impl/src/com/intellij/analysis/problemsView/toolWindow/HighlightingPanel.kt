@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.markup.AnalyzingType
@@ -105,7 +104,11 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
   private fun findCurrentFile(): VirtualFile? {
     if (project.isDisposed) return null
     val fileEditor = FileEditorManager.getInstance(project)?.selectedEditor ?: return null
-    val file = ((fileEditor as? TextEditor)?.editor as? EditorEx)?.virtualFile ?: fileEditor.file
+    val file = if (fileEditor is TextEditor) {
+      fileEditor.editor.virtualFile
+    } else {
+      fileEditor.file
+    }
     if (file != null) return file
     val textEditor = fileEditor as? TextEditor ?: return null
     return FileDocumentManager.getInstance().getFile(textEditor.editor.document)

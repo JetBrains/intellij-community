@@ -19,8 +19,8 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.RefPackage;
-import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
@@ -31,7 +31,8 @@ import com.siyeh.ig.PackageGlobalInspection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.number;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class PackageWithTooManyClassesInspection extends PackageGlobalInspection {
 
@@ -63,7 +64,8 @@ public class PackageWithTooManyClassesInspection extends PackageGlobalInspection
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("package.with.too.many.classes.max.option"), this, "limit");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("limit", InspectionGadgetsBundle.message("package.with.too.many.classes.max.option"), 1, 1000));
   }
 }

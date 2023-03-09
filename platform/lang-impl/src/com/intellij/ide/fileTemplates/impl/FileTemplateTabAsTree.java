@@ -21,9 +21,6 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Alexey Kudravtsev
- */
 abstract class FileTemplateTabAsTree extends FileTemplateTab {
   private final JTree myTree;
   private final FileTemplateNode myRoot;

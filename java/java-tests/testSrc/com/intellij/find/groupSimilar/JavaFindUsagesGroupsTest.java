@@ -4,6 +4,7 @@ package com.intellij.find.groupSimilar;
 import com.intellij.JavaTestUtil;
 import com.intellij.find.findUsages.JavaFindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -13,9 +14,11 @@ import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.concurrent.ExecutionException;
 
 import static com.intellij.testFramework.EqualsToFile.assertEqualsToFile;
 
@@ -36,7 +39,12 @@ public class JavaFindUsagesGroupsTest extends JavaPsiTestCase {
     JavaFindUsagesHandler handler = new JavaFindUsagesHandler(streamMethod, factory);
     ClusteringSearchSession session = new ClusteringSearchSession();
     handler.processElementUsages(streamMethod, info -> {
-      UsageInfoToUsageConverter.convertToSimilarUsage(new PsiMethod[]{streamMethod}, info, session);
+      try {
+        ReadAction.nonBlocking(() -> UsageInfoToUsageConverter.convertToSimilarUsage(new PsiMethod[]{streamMethod}, info, session)).submit(AppExecutorUtil.getAppExecutorService()).get();
+      }
+      catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
       return true;
     }, factory.getFindMethodOptions());
     File file = new File(getTestRoot() + "/results.txt");

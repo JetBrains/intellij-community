@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -269,43 +270,46 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     assertNull(vDir.findChild("xxx//extFiles"));
   }
 
-  @Test(timeout = 20_000)
+  @Test(timeout = 30_000)
   public void testRenameDuringFullRefresh() throws IOException { doRenameAndRefreshTest(true); }
 
-  @Test(timeout = 240_000)
+  @Test(timeout = 120_000)
   public void testRenameDuringPartialRefresh() throws IOException { doRenameAndRefreshTest(false); }
 
   private void doRenameAndRefreshTest(boolean full) throws IOException {
     assertFalse(ApplicationManager.getApplication().isDispatchThread());
 
-    File tempDir = this.tempDir.newDirectory();
-    assertTrue(new File(tempDir, "child").createNewFile());
-
-    VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDir);
+    File testFile = tempDir.newFile("test/child.txt");
+    VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile.getParentFile());
     assertNotNull(parent);
     if (full) {
       assertEquals(1, parent.getChildren().length);
     }
-    VirtualFile child = parent.findChild("child");
+    VirtualFile child = parent.findChild(testFile.getName());
     assertNotNull(child);
 
-    List<VirtualFile> files = Collections.singletonList(parent);
+    ApplicationManagerEx.setInStressTest(true);
+    try {
+      List<VirtualFile> files = List.of(parent);
+      Semaphore semaphore = new Semaphore();
+      for (int i = 0; i < 1000; i++) {
+        semaphore.down();
+        VfsUtil.markDirty(true, false, parent);
+        LocalFileSystem.getInstance().refreshFiles(files, true, true, semaphore::up);
 
-    Semaphore semaphore = new Semaphore();
-    for (int i = 0; i < 1000; i++) {
-      semaphore.down();
-      VfsUtil.markDirty(true, false, parent);
-      LocalFileSystem.getInstance().refreshFiles(files, true, true, semaphore::up);
+        assertTrue(child.isValid());
+        String newName = "name" + i + ".txt";
+        WriteAction.runAndWait(() -> child.rename(this, newName));
+        assertTrue(child.isValid());
 
-      assertTrue(child.isValid());
-      String newName = "name" + i;
-      WriteAction.runAndWait(() -> child.rename(this, newName));
-      assertTrue(child.isValid());
+        TimeoutUtil.sleep(1);  // needed to prevent frequent event detector from triggering
+      }
 
-      TimeoutUtil.sleep(1);  // needed to prevent frequent event detector from triggering
+      semaphore.waitFor();
     }
-
-    semaphore.waitFor();
+    finally {
+      ApplicationManagerEx.setInStressTest(false);
+    }
   }
 
   @Test(timeout = 20_000)
@@ -334,7 +338,7 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     );
   }
 
-  private void checkNewDirAndRefresh(Consumer<Path> dirCreatedCallback, Consumer<AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
+  private void checkNewDirAndRefresh(Consumer<? super Path> dirCreatedCallback, Consumer<? super AtomicBoolean> getAllExcludedCalledChecker) throws IOException {
     AtomicBoolean getAllExcludedCalled = new AtomicBoolean();
     ((ProjectManagerImpl)ProjectManager.getInstance()).testOnlyGetExcludedUrlsCallback(getTestRootDisposable(), () -> {
       getAllExcludedCalled.set(true);
@@ -550,15 +554,9 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
 
   @Test
   public void pathEqualsWorksForWslPaths() {
-    IoTestUtil.assumeWindows();
-    IoTestUtil.assumeWslPresence();
-    List<@NotNull String> distributions = IoTestUtil.enumerateWslDistributions();
-    assumeTrue("No WSL distributions found", !distributions.isEmpty());
-
-    String wslName = distributions.get(0);
+    String wslName = IoTestUtil.assumeWorkingWslDistribution();
     File usrBinFile = new File("\\\\wsl$\\" + wslName + "\\usr\\bin\\");
-    assertTrue(usrBinFile + " doesn't exist, despite " +distributions.size()+
-               " WSL distributions found: " + distributions, usrBinFile.exists());
+    assertTrue(usrBinFile + " doesn't exist", usrBinFile.exists());
     VirtualFile usrBin = LocalFileSystem.getInstance().findFileByIoFile(usrBinFile);
     assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "\\\\wsl$\\" + wslName + "\\usr\\bin\\"));
     assertTrue(VfsUtilCore.pathEqualsTo(usrBin, "//wsl$/" + wslName + "/usr/bin"));

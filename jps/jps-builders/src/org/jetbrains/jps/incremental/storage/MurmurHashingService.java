@@ -16,13 +16,13 @@ final class MurmurHashingService {
   private static final ThreadLocal<ByteBuffer> THREAD_LOCAL_BUFFER = ThreadLocal.withInitial(() -> ByteBuffer.allocate(1024 * 1024));
   static final int HASH_SIZE = 16;
 
-  static byte[] getStringHash(@NotNull String hashableString) {
+  static byte @NotNull [] getStringHash(@NotNull String hashableString) {
     Hasher hasher = Hashing.murmur3_128().newHasher();
     hasher.putString(hashableString, StandardCharsets.UTF_8);
     return hasher.hash().asBytes();
   }
 
-  static byte[] getFileHash(@NotNull File file) throws IOException {
+  static byte @NotNull [] getFileHash(@NotNull File file) throws IOException {
     Hasher hasher = Hashing.murmur3_128().newHasher();
     try (FileInputStream fis = new FileInputStream(file); FileChannel fileChannel = fis.getChannel()) {
       ByteBuffer buffer = THREAD_LOCAL_BUFFER.get();

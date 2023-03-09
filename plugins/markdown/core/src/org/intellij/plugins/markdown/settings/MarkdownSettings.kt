@@ -24,10 +24,6 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     get() = state.showProblemsInCodeBlocks
     set(value) { state.showProblemsInCodeBlocks = value }
 
-  var isEnhancedEditingEnabled
-    get() = state.isEnhancedEditingEnabled
-    set(value) { state.isEnhancedEditingEnabled = value }
-
   var splitLayout
     get() = state.splitLayout
     set(value) { state.splitLayout = value }
@@ -59,6 +55,10 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
   var customStylesheetText
     get() = state.customStylesheetText
     set(value) { state.customStylesheetText = value }
+
+  var isFileGroupingEnabled
+    get() = state.isFileGroupingEnabled
+    set(value) { state.isFileGroupingEnabled = value }
 
   var fontSize
     get() = state.fontSize
@@ -111,7 +111,6 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
       enabledExtensions = old.extensionsEnabledState
       areInjectionsEnabled = !old.isDisableInjections
       showProblemsInCodeBlocks = !old.isHideErrors
-      isEnhancedEditingEnabled = old.isEnhancedEditingEnabled
       resetModificationCount()
     }
     migration.state.stateVersion = 1

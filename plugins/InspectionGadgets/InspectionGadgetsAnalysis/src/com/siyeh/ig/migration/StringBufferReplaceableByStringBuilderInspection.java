@@ -90,7 +90,7 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);

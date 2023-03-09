@@ -104,7 +104,7 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
     if (myShowJavaCodeInfo) {
       LOG.assertTrue(resourceBundle != null);
       myResourceBundleType = factory.createType(resourceBundle);
-      @NonNls String defaultVarName = "resourceBundle";
+      @NonNls String defaultVarName = PropertiesComponent.getInstance(myProject).getValue(RESOURCE_BUNDLE_EXPRESSION_USED, "resourceBundle");
       final JavaCodeFragmentFactory codeFragmentFactory = JavaCodeFragmentFactory.getInstance(project);
       PsiExpressionCodeFragment expressionCodeFragment =
         codeFragmentFactory.createExpressionCodeFragment(defaultVarName, myLiteralExpression.getSourcePsi(), myResourceBundleType, true);

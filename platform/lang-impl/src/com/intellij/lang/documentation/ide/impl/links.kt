@@ -58,8 +58,8 @@ internal fun openUrl(project: Project, targetPointer: Pointer<out DocumentationT
 }
 
 private fun handleExternal(project: Project, targetPointer: Pointer<out DocumentationTarget>, url: String): Boolean {
-  return SlowOperations.allowSlowOperations("old API fallback").use {
-    doHandleExternal(project, targetPointer, url)
+  return SlowOperations.allowSlowOperations(SlowOperations.GENERIC).use {
+    doHandleExternal(project, targetPointer, url) // old API fallback
   }
 }
 

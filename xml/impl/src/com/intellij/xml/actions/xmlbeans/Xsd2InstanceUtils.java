@@ -31,7 +31,7 @@ import java.util.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class Xsd2InstanceUtils {
+public final class Xsd2InstanceUtils {
     public static String generate(String[] args) {
         Set flags = new HashSet();
         Set opts = new HashSet();

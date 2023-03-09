@@ -10,6 +10,7 @@ interface GHPRDetailsModel {
   val description: String
   val state: GHPullRequestState
   val isDraft: Boolean
+  val url: String
 
   fun addAndInvokeDetailsChangedListener(listener: () -> Unit)
 }

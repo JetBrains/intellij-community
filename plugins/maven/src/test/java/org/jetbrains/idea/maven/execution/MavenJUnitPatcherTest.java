@@ -45,18 +45,18 @@ public class MavenJUnitPatcherTest extends MavenMultiVersionImportingTestCase {
   @Test
   public void ExcludeClassPathElement() throws CantRunException {
     String[] excludeSpecifications = {
-      "<classpathDependencyExcludes>" +
-      "<classpathDependencyExclude>org.jetbrains:annotations" +
-      "</classpathDependencyExclude>" +
-      "</classpathDependencyExcludes>",
-      "<classpathDependencyExcludes>" +
-      "<classpathDependencyExcludes>org.jetbrains:annotations" +
-      "</classpathDependencyExcludes>" +
-      "</classpathDependencyExcludes>",
-      "<classpathDependencyExcludes>" +
-      "<dependencyExclude>org.jetbrains:annotations" +
-      "</dependencyExclude>" +
-      "</classpathDependencyExcludes>",
+      """
+<classpathDependencyExcludes>
+<classpathDependencyExclude>org.jetbrains:annotations</classpathDependencyExclude>
+</classpathDependencyExcludes>""",
+      """
+<classpathDependencyExcludes>
+<classpathDependencyExcludes>org.jetbrains:annotations</classpathDependencyExcludes>
+</classpathDependencyExcludes>""",
+      """
+<classpathDependencyExcludes>
+<dependencyExclude>org.jetbrains:annotations</dependencyExclude>
+</classpathDependencyExcludes>""",
       """
 <classpathDependencyExcludes>
 org.jetbrains:annotations,
@@ -194,26 +194,28 @@ org.jetbrains:annotations
 
   @Test
   public void ArgList() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>" +
-                                           "<build><plugins>" +
-                                           "  <plugin>" +
-                                           "    <groupId>org.apache.maven.plugins</groupId>" +
-                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
-                                           "    <version>2.16</version>" +
-                                           "    <configuration>" +
-                                           "      <argLine>-Xmx2048M -XX:MaxPermSize=512M \"-Dargs=can have spaces\"</argLine>" +
-                                           "    </configuration>" +
-                                           "  </plugin>" +
-                                           "</plugins></build>");
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      <build><plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.16</version>
+          <configuration>
+            <argLine>-Xmx2048M -XX:MaxPermSize=512M "-Dargs=can have spaces"</argLine>
+          </configuration>
+        </plugin>
+      </plugins></build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");
@@ -290,26 +292,28 @@ org.jetbrains:annotations
 
   @Test
   public void VmPropertiesResolve() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<dependencies>" +
-                                           "  <dependency>" +
-                                           "    <groupId>test</groupId>" +
-                                           "    <artifactId>m2</artifactId>" +
-                                           "    <version>1</version>" +
-                                           "  </dependency>" +
-                                           "</dependencies>" +
-                                           "<build><plugins>" +
-                                           "  <plugin>" +
-                                           "    <groupId>org.apache.maven.plugins</groupId>" +
-                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
-                                           "    <version>2.16</version>" +
-                                           "    <configuration>" +
-                                           "      <argLine>-Xmx2048M -XX:MaxPermSize=512M \"-Dargs=can have spaces\" ${argLineApx}</argLine>" +
-                                           "    </configuration>" +
-                                           "  </plugin>" +
-                                           "</plugins></build>");
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>m2</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      <build><plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.16</version>
+          <configuration>
+            <argLine>-Xmx2048M -XX:MaxPermSize=512M "-Dargs=can have spaces" ${argLineApx}</argLine>
+          </configuration>
+        </plugin>
+      </plugins></build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");
@@ -325,19 +329,21 @@ org.jetbrains:annotations
 
   @Test
   public void ArgLineLateReplacement() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<build><plugins>" +
-                                           "  <plugin>" +
-                                           "    <groupId>org.apache.maven.plugins</groupId>" +
-                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
-                                           "    <version>2.16</version>" +
-                                           "    <configuration>" +
-                                           "      <argLine>@{argLine} -Xmx2048M -XX:MaxPermSize=512M \"-Dargs=can have spaces\"</argLine>" +
-                                           "    </configuration>" +
-                                           "  </plugin>" +
-                                           "</plugins></build>");
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <build><plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.16</version>
+          <configuration>
+            <argLine>@{argLine} -Xmx2048M -XX:MaxPermSize=512M "-Dargs=can have spaces"</argLine>
+          </configuration>
+        </plugin>
+      </plugins></build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");
@@ -408,23 +414,25 @@ org.jetbrains:annotations
 
   @Test
   public void ArgLineRefersAnotherProperty() {
-    VirtualFile m1 = createModulePom("m1", "<groupId>test</groupId>" +
-                                           "<artifactId>m1</artifactId>" +
-                                           "<version>1</version>" +
-                                           "<properties>" +
-                                           "  <app.testing.jvm.args>-Xms256m -Xmx1524m -Duser.language=en</app.testing.jvm.args>" +
-                                           "  <argLine>${app.testing.jvm.args}</argLine>" +
-                                           "</properties>" +
-                                           "<build><plugins>" +
-                                           "  <plugin>" +
-                                           "    <groupId>org.apache.maven.plugins</groupId>" +
-                                           "    <artifactId>maven-surefire-plugin</artifactId>" +
-                                           "    <version>2.16</version>" +
-                                           "    <configuration>" +
-                                           "        <argLine>@{argLine}</argLine>" +
-                                           "    </configuration>" +
-                                           "  </plugin>" +
-                                           "</plugins></build>");
+    VirtualFile m1 = createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <properties>
+        <app.testing.jvm.args>-Xms256m -Xmx1524m -Duser.language=en</app.testing.jvm.args>
+        <argLine>${app.testing.jvm.args}</argLine>
+      </properties>
+      <build><plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>2.16</version>
+          <configuration>
+              <argLine>@{argLine}</argLine>
+          </configuration>
+        </plugin>
+      </plugins></build>
+      """);
 
     importProjects(m1);
     Module module = getModule("m1");

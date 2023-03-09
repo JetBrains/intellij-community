@@ -26,7 +26,7 @@ class RedundantCast {
   
   @SuppressWarnings("unchecked")
   <T> List<T> getList2(int x) {
-    return (<warning descr="Casting 'switch(x) { ...' to 'List<T>' is redundant">List<T></warning>) switch(x) {
+    return (<warning descr="Casting 'switch (x) {...}' to 'List<T>' is redundant">List<T></warning>) switch(x) {
       case 0 ->  new ArrayList<>();
       default -> new ArrayList<>();
     };

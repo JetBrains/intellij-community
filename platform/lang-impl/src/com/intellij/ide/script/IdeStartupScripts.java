@@ -53,7 +53,7 @@ final class IdeStartupScripts implements StartupActivity.DumbAware {
     }
   }
 
-  static @NotNull List<Pair<Path, IdeScriptEngine>> prepareScriptsAndEngines(List<Path> scripts) {
+  static @NotNull List<Pair<Path, IdeScriptEngine>> prepareScriptsAndEngines(List<? extends Path> scripts) {
     IdeScriptEngineManager scriptEngineManager = IdeScriptEngineManager.getInstance();
     List<Pair<Path, IdeScriptEngine>> result = new ArrayList<>();
     for (Path script : scripts) {
@@ -91,7 +91,7 @@ final class IdeStartupScripts implements StartupActivity.DumbAware {
   }
 
   static void runAllScriptsImpl(@Nullable Project project,
-                                @NotNull List<Pair<Path, IdeScriptEngine>> result,
+                                @NotNull List<? extends Pair<Path, IdeScriptEngine>> result,
                                 @NotNull Logger logger) {
     for (Pair<Path, IdeScriptEngine> pair : result) {
       try {

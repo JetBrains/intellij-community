@@ -3,7 +3,9 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.MetaLanguage;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -14,11 +16,11 @@ public final class ToolLanguageUtil {
   private ToolLanguageUtil() {
   }
 
-  public static @NotNull Set<String> getAllMatchingLanguages(@NotNull String langId, boolean applyToDialects) {
-    Language language = Language.findLanguageByID(langId);
+  public static @NotNull @Unmodifiable Set<String> getAllMatchingLanguages(@NotNull String languageId, boolean applyToDialects) {
+    Language language = Language.findLanguageByID(languageId);
     if (language == null) {
       // unknown language in plugin.xml, ignore
-      return Set.of(langId);
+      return Set.of(languageId);
     }
 
     Set<String> result;
@@ -46,11 +48,42 @@ public final class ToolLanguageUtil {
     return result;
   }
 
-  private static void addDialects(@NotNull Language language, @NotNull Set<String> result) {
+  private static void addDialects(@NotNull Language language, @NotNull Set<? super String> result) {
     for (Language dialect : language.getDialects()) {
       if (result.add(dialect.getID())) {
         addDialects(dialect, result);
       }
     }
+  }
+  private static boolean existsDialectOneOf(@NotNull Set<String> elementDialectIds, @NotNull Language language, boolean applyToDialects) {
+    if (elementDialectIds.contains(language.getID())) {
+      return true;
+    }
+    if (applyToDialects) {
+      for (Language dialect : language.getDialects()) {
+        if (existsDialectOneOf(elementDialectIds, dialect, applyToDialects)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  public static boolean isToolLanguageOneOf(@NotNull Set<String> elementDialectIds, @NotNull String languageId, boolean applyToDialects) {
+    if (elementDialectIds.contains(languageId)) {
+      return true;
+    }
+    Language language = Language.findLanguageByID(languageId);
+    if (language == null) {
+      // unknown language in plugin.xml, ignore
+      return false;
+    }
+
+    if (language instanceof MetaLanguage) {
+      return !ContainerUtil.process(Language.getRegisteredLanguages(), registeredLanguage ->
+        !((MetaLanguage)language).matchesLanguage(registeredLanguage)
+        || !existsDialectOneOf(elementDialectIds, registeredLanguage, applyToDialects));
+    }
+    return existsDialectOneOf(elementDialectIds, language, applyToDialects);
   }
 }

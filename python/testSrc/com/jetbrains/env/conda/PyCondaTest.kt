@@ -10,7 +10,6 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
-import com.intellij.util.io.exists
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.add.target.conda.loadLocalPythonCondaPath
@@ -32,6 +31,7 @@ import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameter
 import org.junit.runners.Parameterized.Parameters
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 @RunWith(Parameterized::class)
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -64,11 +64,6 @@ internal class PyCondaTest {
   }
 
   @Test
-  fun testLocalPathSaveLoad() {
-    saveLocalPythonCondaPath(condaRule.condaPath)
-    Assert.assertEquals("Incorrectly loaded path", condaRule.condaPath, loadLocalPythonCondaPath())
-  }
-  @Test
   fun testBasePython(): Unit = runTest {
     val baseConda = PyCondaEnv.getEnvs(condaRule.condaCommand).getOrThrow()
       .first { (it.envIdentity as? PyCondaEnvIdentity.UnnamedEnv)?.isBase == true }
@@ -82,6 +77,12 @@ internal class PyCondaTest {
       .getResultStdoutStr()
       .getOrThrow()
     Assert.assertTrue("Script should return path to conda packages", Path.of(condaPackageRoot).exists())
+  }
+
+  @Test
+  fun testLocalPathSaveLoad() {
+    saveLocalPythonCondaPath(condaRule.condaPath)
+    Assert.assertEquals("Incorrectly loaded path", condaRule.condaPath, loadLocalPythonCondaPath())
   }
 
   @Test

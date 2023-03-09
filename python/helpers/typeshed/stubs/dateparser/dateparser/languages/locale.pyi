@@ -1,11 +1,6 @@
-import sys
+from re import Pattern
 
 from dateparser.conf import Settings
-
-if sys.version_info >= (3, 8):
-    from re import Pattern
-else:
-    from typing import Pattern
 
 DIGIT_GROUP_PATTERN: Pattern[str]
 NUMERAL_PATTERN: Pattern[str]

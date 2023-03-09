@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.config;
 
 import com.intellij.util.ArrayUtil;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * partial copy of {@link org.apache.maven.cli.CLIManager}
  */
-public class MavenConfigParser {
+public final class MavenConfigParser {
   private MavenConfigParser() {}
 
   @Nullable
@@ -58,7 +58,7 @@ public class MavenConfigParser {
   /**
    * copied from {@link org.apache.maven.cli.CleanArgument}
    */
-  public static class CleanArgument {
+  public static final class CleanArgument {
     public static String[] cleanArgs(String[] args) {
       List<String> cleaned = new ArrayList<>();
 
@@ -77,23 +77,11 @@ public class MavenConfigParser {
         }
 
         if (addedToBuffer && arg.endsWith("\"")) {
-          String cleanArgPart = arg.substring(0, arg.length() - 1);
-          if (currentArg != null) {
-            if (addedToBuffer) {
-              currentArg.setLength(currentArg.length() - 1);
-            }
-            else {
-              currentArg.append(' ').append(cleanArgPart);
-            }
+          currentArg.setLength(currentArg.length() - 1);
 
-            cleaned.add(currentArg.toString());
-          }
-          else {
-            cleaned.add(cleanArgPart);
-          }
+          cleaned.add(currentArg.toString());
 
           currentArg = null;
-          addedToBuffer = false;
           continue;
         }
 
@@ -119,7 +107,7 @@ public class MavenConfigParser {
         cleanArgs = args;
       }
       else {
-        cleanArgs = cleaned.toArray(new String[0]);
+        cleanArgs = ArrayUtil.toStringArray(cleaned);
       }
       return cleanArgs;
     }

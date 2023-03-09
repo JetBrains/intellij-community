@@ -104,7 +104,6 @@ abstract class FragmentNode extends DefaultMutableTreeNode implements Comparable
 
   @Override
   public String toString() {
-    if (myTextChunks == null) return "";
     String lineNumber = myLineNumberChunk != null ? myLineNumberChunk.getText().trim() + ":" : "";
     return Stream.of(myTextChunks).map(TextChunk::getText).collect(Collectors.joining("", lineNumber, ""));
   }

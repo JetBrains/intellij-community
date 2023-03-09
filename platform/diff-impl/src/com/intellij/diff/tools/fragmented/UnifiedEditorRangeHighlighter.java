@@ -36,7 +36,7 @@ class UnifiedEditorRangeHighlighter {
   UnifiedEditorRangeHighlighter(@Nullable Project project,
                                 @NotNull Document document1,
                                 @NotNull Document document2,
-                                @NotNull List<HighlightRange> ranges) {
+                                @NotNull List<? extends HighlightRange> ranges) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     MarkupModelEx model1 = (MarkupModelEx)DocumentMarkupModel.forDocument(document1, project, false);
@@ -46,7 +46,7 @@ class UnifiedEditorRangeHighlighter {
 
   private void init(@Nullable MarkupModelEx model1,
                     @Nullable MarkupModelEx model2,
-                    @NotNull List<HighlightRange> ranges) {
+                    @NotNull List<? extends HighlightRange> ranges) {
     for (HighlightRange range : ranges) {
       if (range.getSide().isLeft()) {
         if (model1 != null) processRange(model1, range);

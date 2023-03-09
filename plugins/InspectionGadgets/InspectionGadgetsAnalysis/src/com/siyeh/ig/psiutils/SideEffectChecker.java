@@ -68,10 +68,14 @@ public final class SideEffectChecker {
     return visitor.mayHaveSideEffects();
   }
 
-  public static boolean mayHaveSideEffects(@NotNull PsiElement element, Predicate<? super PsiElement> shouldIgnoreElement) {
+  public static boolean mayHaveSideEffects(@NotNull PsiElement element, @NotNull Predicate<? super PsiElement> shouldIgnoreElement) {
     final SideEffectsVisitor visitor = new SideEffectsVisitor(null, element, shouldIgnoreElement);
     element.accept(visitor);
     return visitor.mayHaveSideEffects();
+  }
+
+  public static boolean mayHaveNonLocalSideEffects(@NotNull PsiElement element, @NotNull Predicate<PsiElement> shouldIgnoreElement) {
+    return mayHaveSideEffects(element, shouldIgnoreElement.or(e -> isLocalSideEffect(e)));
   }
 
   /**

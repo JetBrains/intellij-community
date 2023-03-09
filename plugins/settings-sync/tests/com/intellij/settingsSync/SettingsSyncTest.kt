@@ -17,7 +17,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 import com.intellij.testFramework.replaceService
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
@@ -33,6 +32,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
 import kotlin.io.path.div
+import kotlin.io.path.exists
 
 @RunWith(JUnit4::class)
 internal class SettingsSyncTest : SettingsSyncTestBase() {
@@ -56,13 +56,11 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
   fun `settings are pushed`() {
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
-    executeAndWaitUntilPushed {
-      GeneralSettings.getInstance().initModifyAndSave {
-        isSaveOnFrameDeactivation = false
-      }
+    GeneralSettings.getInstance().initModifyAndSave {
+      isSaveOnFrameDeactivation = false
     }
 
-    assertServerSnapshot {
+    assertSettingsPushed {
       fileState {
         GeneralSettings().withState {
           isSaveOnFrameDeactivation = false
@@ -75,17 +73,14 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
   fun `scheme changes are logged`() {
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
-    val keymap = createKeymap()
-    executeAndWaitUntilPushed {
-      saveComponentStore()
-    }
+    val keymap = createAndSaveKeymap()
 
-    assertServerSnapshot {
+    assertSettingsPushed {
       fileState("keymaps/${keymap.name}.xml", String(keymap.writeScheme().toByteArray(), Charset.defaultCharset()))
     }
   }
 
-  private fun createKeymap(): KeymapImpl {
+  private fun createAndSaveKeymap(): KeymapImpl {
     val keymap = KeymapImpl()
     keymap.name = "SettingsSyncTestKeyMap"
     val keymapSchemeManager = KeymapManagerImpl().schemeManager
@@ -93,11 +88,8 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     Disposer.register(disposable, Disposable {
       keymapSchemeManager.removeScheme(keymap)
     })
-    return keymap
-  }
-
-  private fun saveComponentStore() {
     runBlocking { componentStore.save() }
+    return keymap
   }
 
   @Test
@@ -111,12 +103,9 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     EditorSettingsExternalizable.getInstance().initModifyAndSave {
       SHOW_INTENTION_BULB = false
     }
+    bridge.resumeEventProcessing()
 
-    val pushedSnapshot = executeAndWaitUntilPushed {
-      bridge.resumeEventProcessing()
-    }
-
-    pushedSnapshot.assertSettingsSnapshot {
+    assertSettingsPushed {
       fileState {
         GeneralSettings().withState {
           isSaveOnFrameDeactivation = false
@@ -138,13 +127,11 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
 
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
-    executeAndWaitUntilPushed {
-      UISettings.getInstance().initModifyAndSave {
-        recentFilesLimit = 1000
-      }
+    UISettings.getInstance().initModifyAndSave {
+      recentFilesLimit = 1000
     }
 
-    assertServerSnapshot {
+    assertSettingsPushed {
       fileState {
         GeneralSettings().withState {
           isSaveOnFrameDeactivation = false
@@ -168,8 +155,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     AppEditorFontOptions.getInstance().initModifyAndSave {
       FONT_SIZE = FontPreferences.DEFAULT_FONT_SIZE - 5
     }
-    val keymap = createKeymap()
-    saveComponentStore()
+    val keymap = createAndSaveKeymap()
 
     val os = getPerOsSettingsStorageFolderName()
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, false)
@@ -203,9 +189,9 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     remoteCommunicator.prepareFileOnServer(SettingsSnapshot(MetaInfo(Instant.now(), getLocalApplicationInfo()),
                                                             setOf(fileState), null, emptySet()))
 
-    waitForSettingsToBeApplied(generalSettings) {
-      SettingsSynchronizer.syncSettings()
-    }
+    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
+
+    waitForSettingsToBeApplied(generalSettings)
     assertFalse(generalSettings.isSaveOnFrameDeactivation)
   }
 
@@ -334,13 +320,9 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
                                                             setOf(fileState), null, emptySet()))
     //remoteCommunicator.offline = false
 
-    executeAndWaitUntilPushed {
-      waitForSettingsToBeApplied(generalSettings, EditorSettingsExternalizable.getInstance()) {
-        SettingsSynchronizer.syncSettings() // merge will happen here
-      }
-    }
+    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker) // merge will happen here
 
-    assertServerSnapshot {
+    assertSettingsPushed {
       fileState {
         GeneralSettings().withState {
           isSaveOnFrameDeactivation = false
@@ -352,6 +334,7 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
         }
       }
     }
+    waitForSettingsToBeApplied(generalSettings, EditorSettingsExternalizable.getInstance())
     assertFalse(generalSettings.isSaveOnFrameDeactivation)
     assertFalse(EditorSettingsExternalizable.getInstance().isShowIntentionBulb)
   }
@@ -361,12 +344,9 @@ internal class SettingsSyncTest : SettingsSyncTestBase() {
     TODO()
   }
 
-  private fun waitForSettingsToBeApplied(vararg componentsToReinit: PersistentStateComponent<*>, execution: () -> Unit) {
+  private fun waitForSettingsToBeApplied(vararg componentsToReinit: PersistentStateComponent<*>) {
     val cdl = CountDownLatch(1)
     componentStore.reinitLatch = cdl
-
-    execution()
-
     assertTrue("Didn't await until new settings are applied", cdl.wait())
 
     val reinitedComponents = componentStore.reinitedComponents

@@ -8,7 +8,6 @@ import com.intellij.ide.DataManager
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
-import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
@@ -78,33 +77,30 @@ internal class ReaderModeConfigurable(private val project: Project) : BoundSearc
         row {
           visualFormattingEnabled = checkBox(cdVisualFormatting)
         }
-        panel {
-          indent {
-            buttonsGroup {
-              row {
-                radioButton("", true).apply {
-                  onReset {
-                    component.text = (LangBundle.message("radio.reader.mode.use.active.scheme.visual.formatting",
-                                                         getCurrentCodeStyleSchemeName(project)))
-                  }
-                }
-                // ensure label is updated when active code style scheme changes
-                val listener = { e: CodeStyleSettingsChangeEvent -> if (e.psiFile == null) reset() }
-                CodeStyleSettingsManager.getInstance(project).addListener(listener)
-                disposable?.whenDisposed { CodeStyleSettingsManager.removeListener(project, listener) }
+        buttonsGroup(indent = true) {
+          row {
+            radioButton("", true).apply {
+              onReset {
+                component.text = (LangBundle.message("radio.reader.mode.use.active.scheme.visual.formatting",
+                                                     getCurrentCodeStyleSchemeName(project)))
               }
-              row {
-                val radio = radioButton(LangBundle.message("radio.reader.mode.choose.visual.formatting.scheme"), false)
-                val combo = VisualFormattingSchemesCombo(project)
-                cell(combo)
-                  .onReset { combo.onReset(settings) }
-                  .onIsModified { combo.onIsModified(settings) }
-                  .onApply { combo.onApply(settings) }
-                  .enabledIf(radio.selected)
-              }
-            }.bind(settings::useActiveSchemeForVisualFormatting)
+            }
+            // ensure label is updated when active code style scheme changes
+            val listener = { e: CodeStyleSettingsChangeEvent -> if (e.virtualFile == null) reset() }
+            CodeStyleSettingsManager.getInstance(project).subscribe(listener, disposable!!)
           }
-        }.enabledIf(visualFormattingEnabled.selected) // this panel is a temporary workaround for IDEA-307815
+          row {
+            val radio = radioButton(LangBundle.message("radio.reader.mode.choose.visual.formatting.scheme"), false)
+              .gap(RightGap.SMALL)
+            val combo = VisualFormattingSchemesCombo(project)
+            cell(combo)
+              .onReset { combo.onReset(settings) }
+              .onIsModified { combo.onIsModified(settings) }
+              .onApply { combo.onApply(settings) }
+              .enabledIf(radio.selected)
+          }
+        }.bind(settings::useActiveSchemeForVisualFormatting)
+          .enabledIf(visualFormattingEnabled.selected)
       }.enabledIf(enabled.selected)
     }
   }

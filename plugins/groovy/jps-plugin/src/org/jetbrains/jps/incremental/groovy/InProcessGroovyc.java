@@ -236,11 +236,10 @@ final class InProcessGroovyc implements GroovycFlavor {
 
     List<String> groovyJars = ContainerUtil.findAll(compilationClassPath, s -> {
       String fileName = PathUtilRt.getFileName(s);
-      return GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches();
-    });
-    ContainerUtil.retainAll(groovyJars, s -> {
-      String fileName = PathUtilRt.getFileName(s);
-      return !GROOVY_ECLIPSE_BATCH_PATTERN.matcher(fileName).matches() && !GROOVY_JPS_PLUGIN_JARS_PATTERN.matcher(fileName).matches();
+      return (GROOVY_ALL_JAR_PATTERN.matcher(fileName).matches() || GROOVY_JAR_PATTERN.matcher(fileName).matches())
+        && !GROOVY_ECLIPSE_BATCH_PATTERN.matcher(fileName).matches()
+             && !GROOVY_JPS_PLUGIN_JARS_PATTERN.matcher(fileName).matches()
+        ;
     });
 
     LOG.debug("Groovy jars: " + groovyJars);

@@ -1,5 +1,6 @@
 {
   "type": "KOTLIN_CLASS",
   "classId": "testing/rename/First",
-  "newName": "Third"
+  "newName": "Third",
+  "enabledInK2": true
 }

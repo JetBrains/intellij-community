@@ -48,7 +48,7 @@ internal class KotlinScriptDependenciesClassFinder(private val project: Project)
         return result
     }
 
-    override fun calcClassRoots(): List<VirtualFile> = computeClassRoots(project)
+    override fun calcClassRoots(): List<VirtualFile> = if (scriptsAsEntities) emptyList() else computeClassRoots(project)
 
     private val everywhereCache = CachedValuesManager.getManager(project).createCachedValue {
         CachedValueProvider.Result.create(

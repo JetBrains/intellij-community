@@ -11,7 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
-public class TestUtil {
+public final class TestUtil {
   @NonNls public static final String BAT = "bat";
   @NonNls public static final String JAVA = "java";
   @NonNls public static final String LOG = "log";

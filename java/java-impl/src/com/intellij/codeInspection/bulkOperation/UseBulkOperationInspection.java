@@ -5,6 +5,7 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.java.JavaBundle;
@@ -27,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.regex.Pattern;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Pattern FOR_EACH_METHOD = Pattern.compile("forEach(Ordered)?");
 
@@ -39,11 +42,10 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
 
   public boolean USE_ARRAYS_AS_LIST = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.replace.with.bulk.wrap.arrays"), this,
-                                          "USE_ARRAYS_AS_LIST");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("USE_ARRAYS_AS_LIST", JavaBundle.message("inspection.replace.with.bulk.wrap.arrays")));
   }
 
   @Nullable

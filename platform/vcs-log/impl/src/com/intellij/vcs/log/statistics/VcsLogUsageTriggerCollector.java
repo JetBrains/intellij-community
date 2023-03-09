@@ -53,7 +53,7 @@ public final class VcsLogUsageTriggerCollector extends CounterUsagesCollector {
     triggerUsage(e, action, null);
   }
 
-  public static void triggerUsage(@NotNull AnActionEvent e, @NotNull Object action, @Nullable Consumer<List<EventPair<?>>> configurator) {
+  public static void triggerUsage(@NotNull AnActionEvent e, @NotNull Object action, @Nullable Consumer<? super List<EventPair<?>>> configurator) {
     List<EventPair<?>> data = new ArrayList<>();
     data.add(getContext(e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null));
     data.add(EventFields.InputEventByAnAction.with(e));

@@ -50,7 +50,7 @@ public final class FinalUtils {
       if (!(e instanceof PsiReferenceExpression)) return true;
       PsiReferenceExpression ref = (PsiReferenceExpression)e;
       if (!ref.isReferenceTo(variable)) return true;
-      HighlightInfo highlightInfo = HighlightControlFlowUtil
+      HighlightInfo.Builder highlightInfo = HighlightControlFlowUtil
         .checkVariableInitializedBeforeUsage(ref, variable, uninitializedVarProblems, variable.getContainingFile(), true);
       if (highlightInfo != null) return false;
       if (!PsiUtil.isAccessedForWriting(ref)) return true;

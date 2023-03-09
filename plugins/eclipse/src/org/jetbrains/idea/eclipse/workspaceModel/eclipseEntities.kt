@@ -7,6 +7,9 @@ import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -51,6 +54,9 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   }
 
   companion object : Type<EclipseProjectPropertiesEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(variablePaths: Map<String, String>,
                         eclipseUrls: List<VirtualFileUrl>,
                         unknownCons: List<String>,

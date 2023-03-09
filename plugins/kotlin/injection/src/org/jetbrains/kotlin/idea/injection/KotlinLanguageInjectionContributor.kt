@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.descriptors.annotations.Annotated
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -55,6 +56,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.intellij.lang.annotations.Language as LanguageAnnotation
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
     private val absentKotlinInjection = BaseInjection("ABSENT_KOTLIN_BASE_INJECTION")
@@ -328,7 +330,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
 
     private tailrec fun injectInAnnotationCall(host: KtElement): InjectionInfo? {
         val argument = getArgument(host) ?: return null
-        val annotationEntry = argument.parent.parent as? KtCallElement ?: return null
+        val annotationEntry = argument.parents.match(KtValueArgumentList::class, last = KtCallElement::class) ?: return null
 
         val callableShortName = getCallableShortName(annotationEntry) ?: return null
         if (callableShortName == "arrayOf") return injectInAnnotationCall(annotationEntry)

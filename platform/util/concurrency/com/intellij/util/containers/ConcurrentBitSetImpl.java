@@ -23,7 +23,13 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
     this(32);
   }
   ConcurrentBitSetImpl(int estimatedSize) {
-    array = new int[Math.max(32, estimatedSize/BITS_PER_WORD)];
+    this(new int[Math.max(32, estimatedSize/BITS_PER_WORD)]);
+  }
+  // for serialization only
+  private ConcurrentBitSetImpl(int @NotNull [] words) {
+    synchronized (this) {
+      array = words;
+    }
   }
 
   /**
@@ -62,17 +68,21 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
       int[] newArray;
       int[] oldArray = array;
       int oldWord;
-      if (i < oldArray.length) {
+      boolean canReuseArray = i < oldArray.length;
+      if (canReuseArray) {
         newArray = oldArray;
         oldWord = arrayRead(oldArray, i);
       }
       else {
-        oldArray = array;
-        array = newArray = ArrayUtil.realloc(oldArray, Math.max(oldArray.length * 2, i + 1));
+        newArray = ArrayUtil.realloc(oldArray, Math.max(oldArray.length * 2, i + 1));
         oldWord = 0;
       }
       int newWord = changeWord.applyAsInt(oldWord);
       ARRAY_ELEMENT.setVolatile(newArray, i, newWord);
+      if (!canReuseArray) {
+        // reassign this.array only after newArray modification to avoid leaking empty newArray
+        array = newArray;
+      }
       return oldWord;
     }
   }
@@ -119,7 +129,9 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
    */
   @Override
   public void clear() {
-    array = new int[32];
+    synchronized (this) {
+      array = new int[32];
+    }
   }
 
   /**
@@ -284,10 +296,5 @@ class ConcurrentBitSetImpl implements ConcurrentBitSet {
       }
       return new ConcurrentBitSetImpl(words);
     }
-  }
-
-  // for serialization only
-  private ConcurrentBitSetImpl(int @NotNull [] words) {
-    array = words;
   }
 }

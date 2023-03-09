@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.initialization;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,6 +28,8 @@ import com.siyeh.ig.psiutils.InitializationUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class StaticVariableInitializationInspection extends BaseInspection {
 
@@ -48,8 +51,9 @@ public class StaticVariableInitializationInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("primitive.fields.ignore.option"), this, "m_ignorePrimitives");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignorePrimitives", InspectionGadgetsBundle.message("primitive.fields.ignore.option")));
   }
 
   @Override

@@ -73,7 +73,7 @@ data class IntroduceParameterDescriptor(
 ) {
     val newArgumentValue: KtExpression by lazy {
         if (argumentValue.mustBeParenthesizedInInitializerPosition()) {
-            KtPsiFactory(callable).createExpressionByPattern("($0)", argumentValue)
+            KtPsiFactory(callable.project).createExpressionByPattern("($0)", argumentValue)
         } else {
             argumentValue
         }

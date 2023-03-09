@@ -34,7 +34,7 @@ class Outer {
     }
     object NestedObj {
     }
-    interface NestedTrait {
+    interface NestedInterface {
     }
     annotation class NestedAnnotation
 }
@@ -51,6 +51,6 @@ class ClassObject {
     ENTRY
 }
 
-private fun f2(i: Inner, n: Nested, e: NestedEnum, o: NestedObj, t: NestedTrait, a: NestedAnnotation) {
+private fun f2(i: Inner, n: Nested, e: NestedEnum, o: NestedObj, t: NestedInterface, a: NestedAnnotation) {
     ClassObject
 }</selection>

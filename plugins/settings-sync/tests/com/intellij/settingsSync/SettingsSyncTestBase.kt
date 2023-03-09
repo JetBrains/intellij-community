@@ -9,7 +9,6 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.junit.After
@@ -20,6 +19,7 @@ import org.junit.rules.RuleChain
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.exists
 
 internal val TIMEOUT_UNIT = TimeUnit.SECONDS
 
@@ -78,6 +78,14 @@ internal abstract class SettingsSyncTestBase {
     remoteCommunicator.deleteAllFiles()
   }
 
+  protected fun assertSettingsPushed(build: SettingsSnapshotBuilder.() -> Unit) {
+    waitForSettingsPush { pushedSnap ->
+      pushedSnap.assertSettingsSnapshot {
+        build()
+      }
+    }
+  }
+
   protected fun writeToConfig(build: SettingsSnapshotBuilder.() -> Unit) {
     val builder = SettingsSnapshotBuilder()
     builder.build()
@@ -100,8 +108,10 @@ internal abstract class SettingsSyncTestBase {
     }
   }
 
-  protected fun executeAndWaitUntilPushed(testExecution: () -> Unit): SettingsSnapshot {
-    return remoteCommunicator.awaitForPush(testExecution)
+  private fun waitForSettingsPush(assertSnapshot: (SettingsSnapshot) -> Unit) {
+    val pushedSnap = remoteCommunicator.awaitForPush()
+    assertNotNull("Changes were not pushed", pushedSnap)
+    assertSnapshot(pushedSnap!!)
   }
 }
 

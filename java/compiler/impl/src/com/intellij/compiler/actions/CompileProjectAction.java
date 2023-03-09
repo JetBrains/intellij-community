@@ -3,7 +3,6 @@ package com.intellij.compiler.actions;
 
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
@@ -12,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class CompileProjectAction extends CompileActionBase {
   @Override
-  protected void doAction(DataContext dataContext, final Project project) {
+  protected void doAction(@NotNull AnActionEvent event, final Project project) {
     ProjectTaskManager.getInstance(project)
       .rebuildAllModules()
       .onSuccess(result -> {

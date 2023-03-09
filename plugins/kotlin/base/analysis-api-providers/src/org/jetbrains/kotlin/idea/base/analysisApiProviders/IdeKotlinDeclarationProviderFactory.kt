@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.base.analysisApiProviders
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -40,6 +41,7 @@ private class IdeKotlinDeclarationProvider(
     ): Psi? {
         var result: Psi? = null
         stubIndex.processElements(stubKey, key, project, scope, Psi::class.java) { candidate ->
+            ProgressManager.checkCanceled()
             if (filter(candidate)) {
                 result = candidate
                 return@processElements false // do not continue searching over PSI
@@ -55,11 +57,12 @@ private class IdeKotlinDeclarationProvider(
         } ?: getTypeAliasByClassId(classId)
     }
 
-    override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> {
-        return KotlinFullClassNameIndex
-            .get(classId.asStringForIndexes(), project, scope)
-            .filter { candidate -> candidate.getClassId() == classId }
-    }
+    override fun getAllClassesByClassId(classId: ClassId): Collection<KtClassOrObject> =
+        KotlinFullClassNameIndex.getAllElements(
+            classId.asStringForIndexes(),
+            project,
+            scope
+        ) { it.getClassId() == classId }
 
     override fun getAllTypeAliasesByClassId(classId: ClassId): Collection<KtTypeAlias> {
         return listOfNotNull(getTypeAliasByClassId(classId)) //todo

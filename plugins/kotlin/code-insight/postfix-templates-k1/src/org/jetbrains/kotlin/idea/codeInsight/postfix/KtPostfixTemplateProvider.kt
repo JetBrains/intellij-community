@@ -26,37 +26,38 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isBoolean
 
+// K1 PostfixTemplateProvider
 class KtPostfixTemplateProvider : PostfixTemplateProvider {
     private val templatesSet by lazy {
         setOf(
-            KtNotPostfixTemplate(this),
-            KtIfExpressionPostfixTemplate(this),
+            KtNotPostfixTemplate(this), // k2
+            KtIfExpressionPostfixTemplate(this), // k2
             KtElseExpressionPostfixTemplate(this),
-            KtNotNullPostfixTemplate("notnull", this),
-            KtNotNullPostfixTemplate("nn", this),
+            KtNotNullPostfixTemplate("notnull", this), // k2
+            KtNotNullPostfixTemplate("nn", this), // k2
             KtIsNullPostfixTemplate(this),
             KtWhenExpressionPostfixTemplate(this),
-            KtTryPostfixTemplate(this),
+            KtTryPostfixTemplate(this), // k2
             KtIntroduceVariablePostfixTemplate("val", this),
             KtIntroduceVariablePostfixTemplate("var", this),
-            KtForEachPostfixTemplate("for", this),
-            KtForEachPostfixTemplate("iter", this),
-            KtForReversedPostfixTemplate("forr", this),
-            KtForWithIndexPostfixTemplate("fori", this),
-            KtForLoopNumbersPostfixTemplate("fori", this),
+            KtForEachPostfixTemplate("for", this), // k2
+            KtForEachPostfixTemplate("iter", this), // k2
+            KtForReversedPostfixTemplate("forr", this), // k2
+            KtForWithIndexPostfixTemplate("fori", this), // k2
+            KtForLoopNumbersPostfixTemplate("fori", this), // k2
             KtForLoopReverseNumbersPostfixTemplate("forr", this),
-            KtAssertPostfixTemplate(this),
-            KtParenthesizedPostfixTemplate(this),
-            KtSoutPostfixTemplate(this),
-            KtReturnPostfixTemplate(this),
-            KtWhilePostfixTemplate(this),
-            KtWrapWithListOfPostfixTemplate(this),
-            KtWrapWithSetOfPostfixTemplate(this),
+            KtAssertPostfixTemplate(this), // k2
+            KtParenthesizedPostfixTemplate(this), // k2
+            KtSoutPostfixTemplate(this), // k2
+            KtReturnPostfixTemplate(this), // k2
+            KtWhilePostfixTemplate(this), // k2
+            KtWrapWithListOfPostfixTemplate(this), // k2
+            KtWrapWithSetOfPostfixTemplate(this), // k2
             KtWrapWithArrayOfPostfixTemplate(this),
             KtWrapWithSequenceOfPostfixTemplate(this),
-            KtSpreadPostfixTemplate(this),
+            KtSpreadPostfixTemplate(this), // k2
             KtArgumentPostfixTemplate(this),
-            KtWithPostfixTemplate(this),
+            KtWithPostfixTemplate(this), // k2
         )
     }
 

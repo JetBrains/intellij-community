@@ -22,6 +22,6 @@ public interface DebuggerView {
   void setUpdateEnabled(boolean enabled);
 
   boolean isRefreshNeeded();
-  void rebuildIfVisible(final DebuggerSession.Event eventContext);
 
+  void rebuildIfVisible(final DebuggerSession.Event eventContext);
 }

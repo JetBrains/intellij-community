@@ -2,7 +2,7 @@
 fun castMayFail(b: Boolean) {
     val x : Any = if (b) "x" else 5
     val y = x as String
-    if (<weak_warning descr="Value of 'b' is always true">b</weak_warning>) {}
+    if (<warning descr="Condition 'b' is always true">b</warning>) {}
     println(y)
 }
 fun castWillFail(b: Boolean) {
@@ -21,7 +21,7 @@ fun safeCast(b: Boolean) {
     val x : Any = if (b) "x" else 5
     val y = x as? String
     if (y == null) {
-        if (<weak_warning descr="Value of 'b' is always false">b</weak_warning>) {}
+        if (<warning descr="Condition 'b' is always false">b</warning>) {}
     }
 }
 fun nullAsNullableVoid() {

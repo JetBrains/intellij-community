@@ -1,6 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import org.intellij.lang.annotations.MagicConstant;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
 final class PersistentFSHeaders {
   static final int HEADER_VERSION_OFFSET = 0;
   //private static final int HEADER_RESERVED_4BYTES_OFFSET = 4; // reserved
@@ -22,5 +27,10 @@ final class PersistentFSHeaders {
       "HEADER_SIZE(=" + HEADER_SIZE + ") > RECORD_SIZE(=" + PersistentFSLockFreeRecordsStorage.RECORD_SIZE + ")";
     assert HEADER_SIZE <= PersistentFSSynchronizedRecordsStorage.RECORD_SIZE :
       "HEADER_SIZE(=" + HEADER_SIZE + ") > RECORD_SIZE(=" + PersistentFSSynchronizedRecordsStorage.RECORD_SIZE + ")";
+  }
+
+  @MagicConstant(flagsFromClass = PersistentFSHeaders.class)
+  @Target(ElementType.TYPE_USE)
+  public @interface HeaderOffset {
   }
 }

@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -28,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author irengrig
  */
-@SomeQueue
 public class ZipAndQueue {
   private final ZipperUpdater myZipperUpdater;
   private final BackgroundTaskQueue myQueue;

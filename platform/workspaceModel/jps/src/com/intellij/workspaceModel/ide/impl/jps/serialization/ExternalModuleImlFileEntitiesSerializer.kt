@@ -160,6 +160,7 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
       writer.saveComponent(fileUrl, "ExternalSystem", null)
       writer.saveComponent(fileUrl, "ExternalFacetManager", null)
       writer.saveComponent(fileUrl, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, null)
+      writer.saveComponent(fileUrl, TEST_MODULE_PROPERTIES_COMPONENT_NAME, null)
     }
   }
 

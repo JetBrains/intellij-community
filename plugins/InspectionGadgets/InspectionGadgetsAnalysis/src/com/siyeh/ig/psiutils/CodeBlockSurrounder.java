@@ -897,11 +897,32 @@ public abstract class CodeBlockSurrounder {
 
     @Override
     void collapse(@NotNull PsiElement anchor) {
+      if (anchor instanceof PsiIfStatement innerIf && innerIf.getElseBranch() == null) {
+        PsiStatement thenBranch = innerIf.getParent() instanceof PsiCodeBlock block && block.getStatementCount() == 1 &&
+                                  block.getParent() instanceof PsiBlockStatement blockStatement ? blockStatement : innerIf;
+        if (thenBranch.getParent() instanceof PsiIfStatement outerIf && outerIf.getThenBranch() == thenBranch &&
+            outerIf.getElseBranch() == null) {
+          mergeIfs(outerIf, innerIf);
+          return;
+        }
+      }
       PsiIfStatement ifStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(anchor), PsiIfStatement.class);
       if (ifStatement == null) return;
       PsiStatement result = collapseIf(ifStatement, "&&", "||");
       if (result == null) return;
       myUpstream.collapse(myUpstream.anchor(result));
+    }
+
+    private static void mergeIfs(@NotNull PsiIfStatement outerIf, @NotNull PsiIfStatement innerIf) {
+      PsiExpression outerCondition = outerIf.getCondition();
+      PsiExpression innerCondition = innerIf.getCondition();
+      if (outerCondition != null && innerCondition != null) {
+        innerCondition.replace(
+          JavaPsiFacade.getElementFactory(outerIf.getProject())
+            .createExpressionFromText(ParenthesesUtils.getText(outerCondition, ParenthesesUtils.OR_PRECEDENCE) + "&&" +
+                                      ParenthesesUtils.getText(innerCondition, ParenthesesUtils.OR_PRECEDENCE), null));
+        outerIf.replace(innerIf);
+      }
     }
   }
 

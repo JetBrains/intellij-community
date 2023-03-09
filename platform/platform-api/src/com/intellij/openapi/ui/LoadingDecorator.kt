@@ -13,12 +13,10 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.util.animation.FloatConsumer
 import com.intellij.util.ui.*
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.image.BufferedImage
@@ -42,8 +40,7 @@ open class LoadingDecorator @JvmOverloads constructor(
   private val pane: JLayeredPane = MyLayeredPane(if (useMinimumSize) content else null)
   private val loadingLayer: LoadingLayer = LoadingLayer(icon)
   private val fadeOutAnimator: Animator
-  private val startRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private var startRequestsJob: Job? = null
+  private var startRequestJob: Job? = null
 
   var loadingText: @Nls String?
     get() = loadingLayer.text.text
@@ -57,36 +54,20 @@ open class LoadingDecorator @JvmOverloads constructor(
 
   init {
     loadingText = CommonBundle.getLoadingTreeNodeText()
-    fadeOutAnimator = object : Animator("Loading", 10, if (RemoteDesktopService.isRemoteSession()) 2500 else 500, false) {
-      override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
-        loadingLayer.setAlpha(1f - frame.toFloat() / totalFrames.toFloat())
-      }
-
-      override fun paintCycleEnd() {
-        // paint with zero alpha before hiding completely
+    fadeOutAnimator = LoadingLayerAnimator(
+      setAlpha = { loadingLayer.setAlpha(it) },
+      end = {
         loadingLayer.setAlpha(0f)
         hideLoadingLayer()
         loadingLayer.setAlpha(-1f)
         pane.repaint()
-      }
-    }
+      },
+    )
     Disposer.register(parent, fadeOutAnimator)
     pane.add(content, JLayeredPane.DEFAULT_LAYER, 0)
     Disposer.register(parent, loadingLayer.progress)
     Disposer.register(parent) {
-      startRequestsJob?.cancel()
-    }
-  }
-
-  private fun startListening() {
-    startRequestsJob = ApplicationManager.getApplication().coroutineScope.launch {
-      startRequests
-        .debounce(200)
-        .collectLatest { takeSnapshot ->
-          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-            doStartLoading(takeSnapshot)
-          }
-        }
+      startRequestJob?.cancel()
     }
   }
 
@@ -128,13 +109,19 @@ open class LoadingDecorator @JvmOverloads constructor(
     get() = pane
 
   open fun startLoading(takeSnapshot: Boolean) {
-    if (isLoading || startRequestsJob != null) {
+    if (isLoading || startRequestJob != null) {
       return
     }
 
     if (startDelayMs > 0) {
-      startListening()
-      check(startRequests.tryEmit(takeSnapshot))
+      val scheduledTime = System.currentTimeMillis()
+      @Suppress("DEPRECATION")
+      startRequestJob = ApplicationManager.getApplication().coroutineScope.launch {
+        delay((startDelayMs - (System.currentTimeMillis() - scheduledTime)).coerceAtLeast(0))
+        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          doStartLoading(takeSnapshot)
+        }
+      }
     }
     else {
       doStartLoading(takeSnapshot)
@@ -146,12 +133,10 @@ open class LoadingDecorator @JvmOverloads constructor(
     loadingLayer.setVisible(true, takeSnapshot)
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   open fun stopLoading() {
-    startRequestsJob?.let {
+    startRequestJob?.let {
+      startRequestJob = null
       it.cancel()
-      startRequests.resetReplayCache()
-      startRequestsJob = null
     }
     if (!isLoading) {
       return
@@ -253,6 +238,21 @@ open class LoadingDecorator @JvmOverloads constructor(
   }
 
   interface CursorAware
+}
+
+@Internal
+class LoadingLayerAnimator(
+  private val setAlpha: FloatConsumer,
+  private val end: () -> Unit,
+) : Animator("Loading", 10, if (RemoteDesktopService.isRemoteSession()) 2500 else 500, false) {
+  override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
+    setAlpha.accept(1f - (frame.toFloat() / totalFrames.toFloat()))
+  }
+
+  override fun paintCycleEnd() {
+    // paint with zero alpha before hiding completely
+    end()
+  }
 }
 
 private class MyLayeredPane(private val content: JComponent?) : JBLayeredPane(), LoadingDecorator.CursorAware {

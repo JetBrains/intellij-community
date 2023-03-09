@@ -18,7 +18,9 @@ abstract class DependencyInspectionTestBase : UastInspectionTestBase() {
     myFixture.addFileToProject("pkg/api/$javaFooFile", """
       package pkg.api;
       
-      public class JavaFoo() { };
+      public class JavaFoo() {
+          public static void foo() { } 
+      };
     """.trimIndent())
     myFixture.addFileToProject("pkg/api/$kotlinFooFile", """
       package pkg.api

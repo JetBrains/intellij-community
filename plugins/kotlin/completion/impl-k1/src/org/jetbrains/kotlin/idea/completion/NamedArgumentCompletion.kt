@@ -2,33 +2,28 @@
 
 package org.jetbrains.kotlin.idea.completion
 
-import com.intellij.codeInsight.completion.InsertHandler
-import com.intellij.codeInsight.completion.InsertionContext
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.completion.implCommon.handlers.NamedArgumentInsertHandler
 import org.jetbrains.kotlin.idea.core.ArgumentPositionData
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.CallType
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.psi.psiUtil.siblings
-import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 object NamedArgumentCompletion {
     fun isOnlyNamedArgumentExpected(nameExpression: KtSimpleNameExpression, resolutionFacade: ResolutionFacade): Boolean {
@@ -61,53 +56,6 @@ object NamedArgumentCompletion {
                 .withInsertHandler(NamedArgumentInsertHandler(name))
             lookupElement.putUserData(SmartCompletionInBasicWeigher.NAMED_ARGUMENT_KEY, Unit)
             collector.addElement(lookupElement)
-        }
-    }
-
-    private class NamedArgumentInsertHandler(private val parameterName: Name) : InsertHandler<LookupElement> {
-        override fun handleInsert(context: InsertionContext, item: LookupElement) {
-            val editor = context.editor
-
-            val (textAfterCompletionArea, doNeedTrailingSpace) = context.file.findElementAt(context.tailOffset).let { psi ->
-                psi?.siblings()?.firstOrNull { it !is PsiWhiteSpace }?.text to (psi !is PsiWhiteSpace)
-            }
-
-            var text: String
-            var caretOffset: Int
-            if (textAfterCompletionArea == "=") {
-                // User tries to manually rename existing named argument. We shouldn't add trailing `=` in such case
-                text = parameterName.render()
-                caretOffset = text.length
-            } else {
-                // For complicated cases let's try to normalize the document firstly in order to avoid parsing errors due to incomplete code
-                editor.document.replaceString(context.startOffset, context.tailOffset, "")
-                PsiDocumentManager.getInstance(context.project).commitDocument(editor.document)
-
-                val nextArgument = context.file.findElementAt(context.startOffset)?.siblings()
-                    ?.firstOrNull { it !is PsiWhiteSpace }?.parentsWithSelf?.takeWhile { it !is KtValueArgumentList }
-                    ?.firstIsInstanceOrNull<KtValueArgument>()
-
-                if (nextArgument?.isNamed() == true) {
-                    if (doNeedTrailingSpace) {
-                        text = "${parameterName.render()} = , "
-                        caretOffset = text.length - 2
-                    } else {
-                        text = "${parameterName.render()} = ,"
-                        caretOffset = text.length - 1
-                    }
-                } else {
-                    text = "${parameterName.render()} = "
-                    caretOffset = text.length
-                }
-            }
-
-            if (context.file.findElementAt(context.startOffset - 1)?.let { it !is PsiWhiteSpace && it.text != "(" } == true) {
-                text = " $text"
-                caretOffset++
-            }
-
-            editor.document.replaceString(context.startOffset, context.tailOffset, text)
-            editor.caretModel.moveToOffset(context.startOffset + caretOffset)
         }
     }
 }

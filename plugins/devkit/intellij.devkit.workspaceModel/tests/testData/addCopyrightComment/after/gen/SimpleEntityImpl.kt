@@ -82,8 +82,7 @@ open class SimpleEntityImpl(val dataSource: SimpleEntityData) : SimpleEntity, Wo
       dataSource as SimpleEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.name != dataSource.name) this.name = dataSource.name
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

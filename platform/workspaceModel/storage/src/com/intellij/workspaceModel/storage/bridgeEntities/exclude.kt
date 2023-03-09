@@ -7,6 +7,9 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -21,6 +24,9 @@ interface ExcludeUrlEntity : WorkspaceEntity {
   }
 
   companion object : Type<ExcludeUrlEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(url: VirtualFileUrl, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ExcludeUrlEntity {
       val builder = builder()
       builder.url = url

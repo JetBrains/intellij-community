@@ -35,8 +35,6 @@ class MobileMppTemplate : Template() {
 
 
     override fun Writer.getIrsToAddToBuildFile(module: ModuleIR): List<BuildSystemIR> = irsList {
-        +RepositoryIR(DefaultRepository.JCENTER)
-
         val cocoaPods = module.originalModule.subModules.any {
             (it.configurator as? SimpleTargetConfigurator)?.moduleSubType == ModuleSubType.iosCocoaPods
         }
@@ -50,33 +48,18 @@ class MobileMppTemplate : Template() {
         val javaPackage = module.originalModule.javaPackage(pomIR())
 
         val mpp = mppSources(javaPackage) {
-            mppFile("Platform.kt") {
-                `class`("Platform") {
-                    expectBody = "val platform: String"
-                    actualFor(
-                        ModuleSubType.android,
-                        actualBody = """actual val platform: String = "Android ${'$'}{android.os.Build.VERSION.SDK_INT}""""
-                    )
-
-                    actualFor(
-                        ModuleSubType.ios, ModuleSubType.iosCocoaPods,
-                        actualBody =
-                        """actual val platform: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion"""
-                    ) {
-                        import("platform.UIKit.UIDevice")
-                    }
-                }
-            }
-
             filesFor(ModuleSubType.common) {
                 file(FileTemplateDescriptor("mppCommon/Greeting.kt.vm", relativePath = null), "Greeting.kt", SourcesetType.main)
+                file(FileTemplateDescriptor("mppCommon/Platform.kt.vm", relativePath = null), "Platform.kt", SourcesetType.main)
             }
 
             filesFor(ModuleSubType.android) {
+                file(FileTemplateDescriptor("android/Platform.kt.vm", relativePath = null), "Platform.kt", SourcesetType.main)
                 file(FileTemplateDescriptor("android/androidTest.kt.vm", relativePath = null), "androidTest.kt", SourcesetType.test)
             }
 
             filesFor(ModuleSubType.iosArm64, ModuleSubType.iosX64, ModuleSubType.ios, ModuleSubType.iosCocoaPods) {
+                file(FileTemplateDescriptor("ios/Platform.kt.vm", relativePath = null), "Platform.kt", SourcesetType.main)
                 file(FileTemplateDescriptor("ios/iosTest.kt.vm", relativePath = null), "iosTest.kt", SourcesetType.test)
             }
 

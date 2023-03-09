@@ -17,7 +17,6 @@ package com.intellij.psi.injection;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -61,13 +60,14 @@ public abstract class Injectable implements Comparable<Injectable> {
   public abstract Language getLanguage();
 
   public Language toLanguage() {
-    return getLanguage() == null ? new Language(getId(), false) {
+    Language language = getLanguage();
+    return language == null ? new Language(getId(), false) {
       @NotNull
       @Override
       public String getDisplayName() {
         return Injectable.this.getDisplayName();
       }
-    } : getLanguage();
+    } : language;
   }
 
   public static Injectable fromLanguage(final Language language) {

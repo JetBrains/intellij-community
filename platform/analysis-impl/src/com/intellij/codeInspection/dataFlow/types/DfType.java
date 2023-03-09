@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -357,11 +358,10 @@ public interface DfType {
   }
 
   /**
-   * @param derivedDescriptor descriptor returned from {@link #getDerivedVariables()}
-   * @return value for derived variable, if known
+   * @return values of all derived variables stored inside this type
    */
-  default @NotNull DfType getDerivedValue(@NotNull DerivedVariableDescriptor derivedDescriptor) {
-    return TOP;
+  default @NotNull Map<@NotNull DerivedVariableDescriptor, @NotNull DfType> getDerivedValues() {
+    return Map.of();
   }
 
   /**

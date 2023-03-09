@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.ui.*;
 import com.intellij.dvcs.repo.Repository;
@@ -12,7 +13,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -22,6 +22,8 @@ import com.intellij.util.Function;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.progress.StepsProgressIndicator;
+import com.intellij.util.ui.JBUI;
+import com.intellij.vcs.commit.PostCommitChecksHandler;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.*;
 
@@ -58,6 +60,8 @@ public final class PushController implements Disposable {
   private final ExecutorService myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DVCS Push");
 
   private final Map<RepositoryNode, MyRepoModel<Repository, PushSource, PushTarget>> myView2Model = new TreeMap<>();
+
+  private boolean myHasCommitWarning;
 
   public PushController(@NotNull Project project,
                         @NotNull VcsPushDialog dialog,
@@ -174,9 +178,7 @@ public final class PushController implements Disposable {
   @Nullable
   private <R extends Repository, S extends PushSource, T extends PushTarget> PushSupport<R, S, T> getPushSupportByRepository(@NotNull final R repository) {
     //noinspection unchecked
-    return (PushSupport<R, S, T>)ContainerUtil.find(
-      myPushSupports,
-      (Condition<PushSupport<? extends Repository, ? extends PushSource, ? extends PushTarget>>)support -> support.getVcs().equals(repository.getVcs()));
+    return (PushSupport<R, S, T>)ContainerUtil.find(myPushSupports, support -> support.getVcs().equals(repository.getVcs()));
   }
 
   private <R extends Repository, S extends PushSource, T extends PushTarget> void createRepoNode(@NotNull R repository,
@@ -259,6 +261,10 @@ public final class PushController implements Disposable {
     return !tree.isEditing() && ContainerUtil.exists(myPushSupports, support -> isPushAllowed(support));
   }
 
+  public boolean hasCommitWarnings() {
+    return myHasCommitWarning;
+  }
+
   private boolean isPushAllowed(@NotNull PushSupport<?, ?, ?> pushSupport) {
     return ContainerUtil.exists(getNodesForSupport(pushSupport), node -> {
       //if node is selected then target should not be null
@@ -272,7 +278,7 @@ public final class PushController implements Disposable {
       .mapNotNull(myView2Model.entrySet(), entry -> support.equals(entry.getValue().getSupport()) ? entry.getKey() : null);
   }
 
-  private static boolean hasLoadingNodes(@NotNull Collection<RepositoryNode> nodes) {
+  private static boolean hasLoadingNodes(@NotNull Collection<? extends RepositoryNode> nodes) {
     return ContainerUtil.exists(nodes, node -> node.isLoading());
   }
 
@@ -580,16 +586,13 @@ public final class PushController implements Disposable {
     List<DefaultMutableTreeNode> childrenToShown = new ArrayList<>();
     for (int i = 0; i < commits.size(); ++i) {
       if (i >= commitsNum) {
-        @NonNls
-        final VcsLinkedTextComponent moreCommitsLink = new VcsLinkedTextComponent(HtmlChunk.link("loadMore", "...").toString(), new VcsLinkListener() {
-          @Override
-          public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
+        @NonNls final VcsLinkedTextComponent moreCommitsLink =
+          new VcsLinkedTextComponent(HtmlChunk.link("loadMore", "...").toString(), (sourceNode, event) -> {
             TreeNode parent = sourceNode.getParent();
             if (parent instanceof RepositoryNode) {
               addMoreCommits((RepositoryNode)parent);
             }
-          }
-        });
+          });
         childrenToShown.add(new TextWithLinkNode(moreCommitsLink));
         break;
       }
@@ -605,6 +608,26 @@ public final class PushController implements Disposable {
       ContainerUtil.putIfNotNull(support, support.createOptionsPanel(), result);
     }
     return result;
+  }
+
+  @NotNull
+  public JComponent createTopPanel() {
+    List<JComponent> notifications = new ArrayList<>();
+    if (myPushSource == null) {
+      Runnable closeDialog = () -> myDialog.doCancelAction();
+      JComponent commitStatus = PostCommitChecksHandler.getInstance(myProject).createPushStatusNotification(closeDialog);
+      if (commitStatus != null) {
+        myHasCommitWarning = true;
+        notifications.add(commitStatus);
+      }
+    }
+
+    notifications = DiffUtil.wrapEditorNotificationBorders(notifications);
+    JComponent panel = DiffUtil.createStackedComponents(notifications, DiffUtil.TITLE_GAP);
+    if (!notifications.isEmpty()) {
+      panel.setBorder(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
+    }
+    return panel;
   }
 
   private static final class PushInfoImpl implements PushInfo {
@@ -652,8 +675,10 @@ public final class PushController implements Disposable {
     @NotNull private final CheckBoxModel myCheckBoxModel;
 
     MyRepoModel(@NotNull Repo repository,
-                       @NotNull PushSupport<Repo, S, T> supportForRepo,
-                       boolean isSelected, @NotNull S source, @Nullable T target) {
+                @NotNull PushSupport<Repo, S, T> supportForRepo,
+                boolean isSelected,
+                @NotNull S source,
+                @Nullable T target) {
       myRepository = repository;
       mySupport = supportForRepo;
       myCheckBoxModel = new CheckBoxModel(isSelected);
@@ -732,5 +757,4 @@ public final class PushController implements Disposable {
       myCheckBoxModel.setChecked(checked);
     }
   }
-
 }

@@ -21,10 +21,13 @@ import java.util.Set;
  * Dependencies are objects (in particular, instances of {@link com.intellij.openapi.util.ModificationTracker},
  * more info - {@link com.intellij.psi.util.CachedValueProvider.Result#getDependencyItems here}),
  * which can be tracked for changes, that should trigger folding regions recalculation for an editor (initiating code folding pass).
+ *
  * @see FoldingBuilder
  */
 public class FoldingDescriptor {
-  public static final FoldingDescriptor[] EMPTY = new FoldingDescriptor[0];
+  public static final FoldingDescriptor[] EMPTY_ARRAY = new FoldingDescriptor[0];
+  @Deprecated
+  public static final FoldingDescriptor[] EMPTY = EMPTY_ARRAY;
 
   private static final byte FLAG_NEVER_EXPANDS = 1;
   private static final byte FLAG_COLLAPSED_BY_DEFAULT_DEFINED = 1 << 1;

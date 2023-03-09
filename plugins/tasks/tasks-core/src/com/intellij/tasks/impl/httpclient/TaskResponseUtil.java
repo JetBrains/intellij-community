@@ -169,14 +169,14 @@ public final class TaskResponseUtil {
 
   private static class GsonResponseHandler<T> implements ResponseHandler<T> {
     private final JsonResponseHandlerBuilder myBuilder;
-    private final Function<String, T> myFromString;
-    private final Function<Reader, T> myFromReader;
-    private final Producer<T> myFallbackValue;
+    private final @NotNull Function<? super String, ? extends T> myFromString;
+    private final @NotNull Function<? super Reader, ? extends T> myFromReader;
+    private final @NotNull Producer<? extends T> myFallbackValue;
 
     private GsonResponseHandler(@NotNull JsonResponseHandlerBuilder builder,
-                                @NotNull Function<String, T> fromString,
-                                @NotNull Function<Reader, T> fromReader,
-                                @NotNull Producer<T> fallbackValue) {
+                                @NotNull Function<? super String, ? extends T> fromString,
+                                @NotNull Function<? super Reader, ? extends T> fromReader,
+                                @NotNull Producer<? extends T> fallbackValue) {
       myBuilder = builder;
       myFromString = fromString;
       myFromReader = fromReader;

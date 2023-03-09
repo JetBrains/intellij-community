@@ -19,7 +19,6 @@ class TestModuleInfoCache : JavaModuleTestCase() {
     override fun setUp() {
         super.setUp()
 
-        @Suppress("UsePropertyAccessSyntax")
         getOrCreateProjectBaseDir()
     }
 

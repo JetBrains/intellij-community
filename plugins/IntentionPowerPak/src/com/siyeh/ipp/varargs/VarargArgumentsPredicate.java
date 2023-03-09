@@ -36,12 +36,12 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
     }
     final PsiCall call = (PsiCall)parent;
     final JavaResolveResult resolveResult = call.resolveMethodGenerics();
-    if (!resolveResult.isValidResult() || !(resolveResult instanceof MethodCandidateInfo) ||
-        ((MethodCandidateInfo)resolveResult).getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
+    if (!resolveResult.isValidResult() || !(resolveResult instanceof MethodCandidateInfo candidateInfo) ||
+        candidateInfo.getApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
       return false;
     }
-    final PsiMethod method = (PsiMethod)resolveResult.getElement();
-    if (method == null || !method.isVarArgs()) {
+    final PsiMethod method = candidateInfo.getElement();
+    if (!method.isVarArgs()) {
       return false;
     }
     final PsiParameterList parameterList = method.getParameterList();

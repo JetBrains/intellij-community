@@ -75,7 +75,7 @@ public class AnimatedIcon implements Icon {
     public static final AnimatedIcon INSTANCE = new Default();
   }
 
-  public static class Big extends AnimatedIcon {
+  public static final class Big extends AnimatedIcon {
     public Big() {
       super(DELAY, ICONS.toArray(new Icon[0]));
     }

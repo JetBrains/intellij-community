@@ -13,7 +13,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -170,7 +170,7 @@ abstract class ProjectOpenProcessorBase<T : ProjectImportBuilder<*>> : ProjectOp
 
       try {
         @Suppress("DialogTitleCapitalization")
-        val project = runBlockingModal(ModalTaskOwner.guess(), IdeBundle.message("title.open.project")) {
+        val project = runBlockingModalWithRawProgressReporter(ModalTaskOwner.guess(), IdeBundle.message("title.open.project")) {
           if (importToProject) {
             options = options.copy(beforeOpen = { project -> importToProject(project, projectToClose, wizardContext) })
           }

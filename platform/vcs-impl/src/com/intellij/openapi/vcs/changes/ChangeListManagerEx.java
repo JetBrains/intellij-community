@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.util.Collection;
 import java.util.List;
@@ -86,4 +87,11 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    */
   @RequiresBackgroundThread
   public abstract void waitForUpdate();
+
+  /**
+   * Wait until all current pending tasks are finished.
+   *
+   * @see #waitForUpdate()
+   */
+  public abstract @NotNull Promise<?> promiseWaitForUpdate();
 }

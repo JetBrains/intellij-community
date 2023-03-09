@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from ..sql.base import CacheableOptions, CompileState, Options
@@ -136,7 +137,13 @@ class _BundleEntity(_QueryEntity):
     type: Any
     supports_single_entity: Any
     def __init__(
-        self, compile_state, expr, entities_collection, setup_entities: bool = ..., parent_bundle: Any | None = ...
+        self,
+        compile_state,
+        expr,
+        entities_collection,
+        is_current_entities: bool,
+        setup_entities: bool = ...,
+        parent_bundle: Incomplete | None = ...,
     ) -> None: ...
     @property
     def mapper(self): ...
@@ -164,7 +171,15 @@ class _RawColumnEntity(_ColumnEntity):
     translate_raw_column: Any
     column: Any
     entity_zero_or_selectable: Any
-    def __init__(self, compile_state, column, entities_collection, raw_column_index, parent_bundle: Any | None = ...) -> None: ...
+    def __init__(
+        self,
+        compile_state,
+        column,
+        entities_collection,
+        raw_column_index,
+        is_current_entities: bool,
+        parent_bundle: Incomplete | None = ...,
+    ) -> None: ...
     def corresponds_to(self, entity): ...
     def setup_compile_state(self, compile_state) -> None: ...
 
@@ -178,7 +193,14 @@ class _ORMColumnEntity(_ColumnEntity):
     mapper: Any
     column: Any
     def __init__(
-        self, compile_state, column, entities_collection, parententity, raw_column_index, parent_bundle: Any | None = ...
+        self,
+        compile_state,
+        column,
+        entities_collection,
+        parententity,
+        raw_column_index,
+        is_current_entities: bool,
+        parent_bundle: Incomplete | None = ...,
     ) -> None: ...
     def corresponds_to(self, entity): ...
     def setup_compile_state(self, compile_state) -> None: ...

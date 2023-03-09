@@ -1,5 +1,4 @@
 // WITH_STDLIB
-// WITHOUT_CUSTOM_LINE_INDENT_PROVIDER
 class Test {
     val test = run {<caret>foo()
 

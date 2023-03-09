@@ -10,7 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.SequentialTaskExecutor
@@ -62,7 +62,7 @@ class FileHistoryManagerWrapper(private val project: Project) : Disposable {
     executor.shutdown()
   }
 
-  internal class ProjectClosureListener : ProjectManagerListener {
+  internal class ProjectClosureListener : ProjectCloseListener {
     override fun projectClosing(project: Project) {
       getInstanceIfCreated(project)?.onProjectClosed(project)
     }

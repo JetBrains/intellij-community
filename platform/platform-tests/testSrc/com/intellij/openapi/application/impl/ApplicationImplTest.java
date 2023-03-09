@@ -441,7 +441,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         boolean result = ApplicationManagerEx.getApplicationEx().runProcessWithProgressSynchronously(() -> {
           // check that defaultModalityState() carries write-safe context now
           ApplicationManager.getApplication().invokeAndWait(() -> {
-            ApplicationManager.getApplication().assertIsWriteThread();
+            ApplicationManager.getApplication().assertWriteIntentLockAcquired();
             ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
           });
         }, "Title", true, getProject());
@@ -685,7 +685,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         @Override
         public void beforeWriteActionStart(@NotNull Object action) {
           nestingCount.incrementAndGet();
-          assertTrue(application.isWriteThread());
+          assertTrue(application.isWriteIntentLockAcquired());
           assertEquals(nestingCount.get() > 1, application.isWriteAccessAllowed());
           assertTrue(application.isWriteActionPending());
           assertThrows(IllegalStateException.class,()->application.runWriteAction(() -> {}));
@@ -693,7 +693,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
         @Override
         public void writeActionStarted(@NotNull Object action) {
-          assertTrue(application.isWriteThread());
+          assertTrue(application.isWriteIntentLockAcquired());
           assertTrue(application.isWriteActionInProgress());
           assertTrue(application.isWriteAccessAllowed());
           assertFalse(application.isWriteActionPending());
@@ -703,7 +703,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
         @Override
         public void writeActionFinished(@NotNull Object action) {
-          assertTrue(application.isWriteThread());
+          assertTrue(application.isWriteIntentLockAcquired());
           assertTrue(application.isWriteAccessAllowed());
           assertTrue(application.isWriteActionInProgress());
           assertFalse(application.isWriteActionPending());
@@ -715,7 +715,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
         @Override
         public void afterWriteActionFinished(@NotNull Object action) {
-          assertTrue(application.isWriteThread());
+          assertTrue(application.isWriteIntentLockAcquired());
           assertFalse(application.isWriteAccessAllowed());
           assertFalse(application.isWriteActionInProgress());
           assertFalse(application.isWriteActionPending());
@@ -726,12 +726,12 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         }
       }, disposable);
       application.runWriteAction(() -> {
-        assertTrue(application.isWriteThread());
+        assertTrue(application.isWriteIntentLockAcquired());
         assertTrue(application.isWriteAccessAllowed());
         assertFalse(application.isWriteActionPending());
         if (nestingCount.get() < 2) {
           application.runWriteAction(() -> {
-            assertTrue(application.isWriteThread());
+            assertTrue(application.isWriteIntentLockAcquired());
             assertTrue(application.isWriteAccessAllowed());
             assertFalse(application.isWriteActionPending());
           });

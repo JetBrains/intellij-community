@@ -20,7 +20,7 @@ import com.intellij.openapi.util.NlsActions
  *
  * @param V see [RunAnythingProvider]
  */
-abstract class RunAnythingNotifiableProvider<V> : RunAnythingProviderBase<V>() {
+abstract class RunAnythingNotifiableProvider<V : Any> : RunAnythingProviderBase<V>() {
 
   private val runAnythingGroup = NotificationGroupManager.getInstance().getNotificationGroup("Run Anything")
 

@@ -105,7 +105,7 @@ public class ChainVariable {
     String[] fromType = JavaCodeStyleManager.getInstance(context.getProject())
       .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, myType, true).names;
     List<String> variants = StreamEx.of(myBestCandidates).append(myOtherCandidates).append(fromType).distinct().toList();
-    if (variants.isEmpty()) variants.add("val");
+    if (variants.isEmpty()) variants = List.of("val");
     myName = context.registerVarName(variants);
     myBestCandidates = myOtherCandidates = null;
   }

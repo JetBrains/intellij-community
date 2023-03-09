@@ -110,7 +110,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
   @NotNull
   private Set<VcsRoot> scanForRootsInsideDir(@NotNull Project project,
                                              @NotNull VirtualFile root,
-                                             @Nullable Set<VirtualFile> skipDirs,
+                                             @Nullable Set<? extends VirtualFile> skipDirs,
                                              @NotNull Map<VirtualFile, Boolean> scannedDirs) {
     Set<VcsRoot> result = new HashSet<>();
     VcsRootScanner.visitDirsRecursivelyWithoutExcluded(project, root, false, dir -> {
@@ -133,7 +133,7 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
   }
 
   @NotNull
-  private Collection<VcsRoot> scanForRootsAboveDirs(@NotNull Collection<VirtualFile> dirsToScan,
+  private Collection<VcsRoot> scanForRootsAboveDirs(@NotNull Collection<? extends VirtualFile> dirsToScan,
                                                     @NotNull Map<VirtualFile, Boolean> scannedDirs,
                                                     @NotNull Collection<VcsRoot> detectedRoots) {
     Set<VirtualFile> skipDirs = new HashSet<>();
@@ -153,8 +153,8 @@ final class VcsRootDetectorImpl implements VcsRootDetector {
 
   private void scanForRootsAboveDir(@NotNull VirtualFile root,
                                     @NotNull Map<VirtualFile, Boolean> scannedDirs,
-                                    @NotNull Set<VirtualFile> skipDirs,
-                                    @NotNull Set<VcsRoot> result) {
+                                    @NotNull Set<? super VirtualFile> skipDirs,
+                                    @NotNull Set<? super VcsRoot> result) {
     Pattern ignorePattern = VcsRootScanner.parseDirIgnorePattern();
     if (VcsRootScanner.isUnderIgnoredDirectory(myProject, ignorePattern, root)) {
       return;

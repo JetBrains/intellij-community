@@ -13,4 +13,13 @@ internal fun Graphics2D.withTranslated(x: Int, y: Int, block: () -> Unit) {
   }
 }
 
+internal fun Graphics2D.withTranslated(x: Double, y: Double, block: () -> Unit) {
+  try {
+    translate(x, y)
+    block()
+  } finally {
+    translate(-x, -y)
+  }
+}
+
 internal fun Point.translateNew(dx: Int, dy: Int) : Point = Point(x + dx, y + dy)

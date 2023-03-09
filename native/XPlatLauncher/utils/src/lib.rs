@@ -28,6 +28,16 @@ pub fn get_readable_file_from_env_var<S:AsRef<OsStr>>(env_var_name: S) -> Result
     Ok(file)
 }
 
+pub fn get_current_exe() -> PathBuf {
+    match get_path_from_env_var("XPLAT_LAUNCHER_CURRENT_EXE_PATH") {
+        Ok(x) => {
+            debug!("Using exe path from XPLAT_LAUNCHER_CURRENT_EXE_PATH: {x:?}");
+            x
+        }
+        Err(_) => { env::current_exe().expect("Failed to get current executable path") }
+    }
+}
+
 pub fn get_path_from_env_var<S:AsRef<OsStr>>(env_var_name: S) -> Result<PathBuf> {
     let env_var_value = env::var(env_var_name)?;
 

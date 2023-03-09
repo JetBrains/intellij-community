@@ -46,7 +46,7 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
   }
 
   @Override
-  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<PsiElement> toExtract) {
+  public PsiElement collectAffectedElements(@NotNull PsiElement e, @NotNull List<? super PsiElement> toExtract) {
     try {
       C c = createContext();
       doUnwrap(e, c);

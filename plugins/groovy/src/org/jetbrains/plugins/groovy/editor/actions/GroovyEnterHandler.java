@@ -7,10 +7,7 @@ import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -104,9 +101,9 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
                                                                       GroovyElementTypes.GSTRING_INJECTION,
                                                                       GroovyElementTypes.GSTRING_CONTENT);
 
-  public static void insertSpacesByGroovyContinuationIndent(Editor editor, Project project) {
+  public static void insertSpacesByGroovyContinuationIndent(Editor editor) {
     int indentSize = CodeStyle.getSettings(editor).getContinuationIndentSize(GroovyFileType.GROOVY_FILE_TYPE);
-    EditorModificationUtil.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', indentSize));
+    EditorModificationUtilEx.insertStringAtCaret(editor, StringUtil.repeatSymbol(' ', indentSize));
   }
 
 
@@ -155,7 +152,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
         if (element != null &&
             element.getNode().getElementType() == GroovyTokenTypes.mRCURLY &&
             element.getParent() instanceof GrClosableBlock &&
-            docLength > caret && afterArrow) {
+            afterArrow) {
           return Result.DefaultForceIndent;
         }
       }
@@ -171,13 +168,12 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       }
     }
 
-    if (handleEnter(editor, dataContext, project, originalHandler)) return Result.Stop;
+    if (handleEnter(editor, dataContext, originalHandler)) return Result.Stop;
     return Result.Continue;
   }
 
   protected static boolean handleEnter(Editor editor,
                                        DataContext dataContext,
-                                       @NotNull Project project,
                                        EditorActionHandler originalHandler) {
     if (HandlerUtils.isReadOnly(editor)) {
       return false;
@@ -185,7 +181,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
     int caretOffset = editor.getCaretModel().getOffset();
     if (caretOffset < 1) return false;
 
-    if (handleBetweenSquareBraces(editor, caretOffset, dataContext, project, originalHandler)) {
+    if (handleBetweenSquareBraces(editor, caretOffset, dataContext, originalHandler)) {
       return true;
     }
     if (handleInString(editor, caretOffset, dataContext, originalHandler)) {
@@ -239,25 +235,22 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
   private static boolean handleBetweenSquareBraces(Editor editor,
                                                    int caret,
                                                    DataContext context,
-                                                   Project project,
                                                    EditorActionHandler originalHandler) {
     String text = editor.getDocument().getText();
-    if (text == null || text.isEmpty()) return false;
+    if (text.isEmpty()) return false;
     final EditorHighlighter highlighter = editor.getHighlighter();
     if (caret < 1 || caret > text.length() - 1) {
       return false;
     }
     HighlighterIterator iterator = highlighter.createIterator(caret - 1);
     if (GroovyTokenTypes.mLBRACK == iterator.getTokenType()) {
-      if (text.length() > caret) {
-        iterator = highlighter.createIterator(caret);
-        if (GroovyTokenTypes.mRBRACK == iterator.getTokenType()) {
-          originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), context);
-          originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), context);
-          editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
-          insertSpacesByGroovyContinuationIndent(editor, project);
-          return true;
-        }
+      iterator = highlighter.createIterator(caret);
+      if (GroovyTokenTypes.mRBRACK == iterator.getTokenType()) {
+        originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), context);
+        originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), context);
+        editor.getCaretModel().moveCaretRelatively(0, -1, false, false, true);
+        insertSpacesByGroovyContinuationIndent(editor);
+        return true;
       }
     }
     return false;
@@ -295,19 +288,19 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
 
         //the case of print '\<caret>'
         if (isSlashBeforeCaret(caretOffset, fileText)) {
-          EditorModificationUtil.insertStringAtCaret(editor, "\n");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "\n");
         }
         else if(stringElement.getParent() instanceof GrReferenceExpression) {
           TextRange range = stringElement.getTextRange();
           convertEndToMultiline(range.getEndOffset(), document, fileText, '\'');
           document.insertString(range.getStartOffset(), "''");
           caretModel.moveToOffset(caretOffset + 2);
-          EditorModificationUtil.insertStringAtCaret(editor, "\n");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "\n");
         }
         else {
-          EditorModificationUtil.insertStringAtCaret(editor, "'+");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "'+");
           originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
-          EditorModificationUtil.insertStringAtCaret(editor, "'");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "'");
           PsiDocumentManager.getInstance(project).commitDocument(document);
           CodeStyleManager.getInstance(project).reformatRange(file, caretOffset, caretModel.getOffset());
         }
@@ -340,18 +333,18 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
           convertEndToMultiline(parent.getTextRange().getEndOffset(), document, fileText, '"');
           document.insertString(parentRange.getStartOffset(), "\"\"");
           caretModel.moveToOffset(caretOffset + 2);
-          EditorModificationUtil.insertStringAtCaret(editor, "\n");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "\n");
           if (rightFromDollar) {
             caretModel.moveCaretRelatively(1, 0, false, false, true);
           }
         }
         else if (isSlashBeforeCaret(caretOffset, fileText)) {
-          EditorModificationUtil.insertStringAtCaret(editor, "\n");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "\n");
         }
         else {
-          EditorModificationUtil.insertStringAtCaret(editor, "\"+");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "\"+");
           originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
-          EditorModificationUtil.insertStringAtCaret(editor, "\"");
+          EditorModificationUtilEx.insertStringAtCaret(editor, "\"");
           PsiDocumentManager.getInstance(project).commitDocument(document);
           CodeStyleManager.getInstance(project).reformatRange(file, caretOffset, caretModel.getOffset());
         }
@@ -426,7 +419,7 @@ public class GroovyEnterHandler extends EnterHandlerDelegateAdapter {
       originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
     }
     else {
-      EditorModificationUtil.insertStringAtCaret(editor, "\n");
+      EditorModificationUtilEx.insertStringAtCaret(editor, "\n");
     }
   }
 

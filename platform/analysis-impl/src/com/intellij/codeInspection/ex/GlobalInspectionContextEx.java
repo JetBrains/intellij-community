@@ -12,6 +12,7 @@ import com.intellij.codeInspection.ui.AggregateResultsExporter;
 import com.intellij.codeInspection.ui.GlobalReportedProblemFilter;
 import com.intellij.codeInspection.ui.ReportedProblemFilter;
 import com.intellij.configurationStore.JbXmlOutputter;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -193,7 +194,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
           InspectionToolResultExporter presentation = getPresentation(toolWrapper);
           try {
             if (presentation instanceof AggregateResultsExporter) {
-              presentation.updateContent();
+              ReadAction.run(() -> presentation.updateContent());
               if (presentation.hasReportedProblems().toBoolean()) {
                 toolsWithResultsToAggregate.add(sameTools);
                 break;
@@ -203,7 +204,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
               hasProblems = Files.exists(InspectionsResultUtil.getInspectionResultPath(outputDir, toolWrapper.getShortName()));
             }
             else {
-              presentation.updateContent();
+              ReadAction.run(() -> presentation.updateContent());
               if (presentation.hasReportedProblems().toBoolean()) {
                 globalToolsWithProblems.add(sameTools);
                 LOG.assertTrue(!hasProblems, toolName);

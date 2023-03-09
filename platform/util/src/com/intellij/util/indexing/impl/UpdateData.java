@@ -27,13 +27,13 @@ import java.util.Map;
 
 public final class UpdateData<Key, Value> extends AbstractUpdateData<Key, Value> {
   private final Map<Key, Value> myNewData;
-  private final ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;
+  private final @NotNull ThrowableComputable<? extends InputDataDiffBuilder<Key, Value>, IOException> myCurrentDataEvaluator;
   private final IndexId<Key, Value> myIndexId;
   private final ThrowableRunnable<? extends IOException> myForwardIndexUpdate;
 
   public UpdateData(int inputId,
                     @NotNull Map<Key, Value> newData,
-                    @NotNull ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> currentDataEvaluator,
+                    @NotNull ThrowableComputable<? extends InputDataDiffBuilder<Key, Value>, IOException> currentDataEvaluator,
                     @NotNull IndexId<Key, Value> indexId,
                     @Nullable ThrowableRunnable<? extends IOException> forwardIndexUpdate) {
     super(inputId);

@@ -28,8 +28,13 @@ class TrustedPaths : SerializablePersistentStateComponent<TrustedPaths.State>(St
   @ApiStatus.Internal
   fun getProjectPathTrustedState(path: Path): ThreeState {
     val trustedPaths = state.trustedPaths
-    val ancestors = trustedPaths.keys.asSequence().map { path.fileSystem.getPath(it) }.filter { it.isAncestor(path) }
-    val closestAncestor = ancestors.maxByOrNull { it.nameCount } ?: return ThreeState.UNSURE
+    val closestAncestor = trustedPaths.keys.asSequence()
+      .map { path.fileSystem.getPath(it) }
+      .filter { it.isAncestor(path) }
+      .maxByOrNull { it.nameCount }
+    if (closestAncestor == null) {
+      return ThreeState.UNSURE
+    }
     return when (trustedPaths[closestAncestor.toString()]) {
       true -> ThreeState.YES
       false -> ThreeState.NO

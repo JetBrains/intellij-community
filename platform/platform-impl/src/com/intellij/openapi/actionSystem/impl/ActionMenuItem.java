@@ -8,7 +8,10 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMe
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsSafe;
@@ -255,7 +258,7 @@ public final class ActionMenuItem extends JBCheckBoxMenuItem {
     if (icon != null) {
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = IconLoader.getMenuBarIcon(icon, myUseDarkIcons);
+        icon = IconLoader.INSTANCE.getMenuBarIcon(icon, myUseDarkIcons);
       }
       else if (ActionMenu.shouldConvertIconToDarkVariant()) {
         icon = IconLoader.getDarkIcon(icon, true);

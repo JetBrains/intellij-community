@@ -9,6 +9,7 @@ import java.awt.Cursor
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 
+@Deprecated("Use Panel.collapsibleGroup in Kotlin UI DSL 2")
 class HideableTitledSeparator(@NlsContexts.Separator title: String) : TitledSeparator(title) {
 
   private var isExpanded: Boolean = true

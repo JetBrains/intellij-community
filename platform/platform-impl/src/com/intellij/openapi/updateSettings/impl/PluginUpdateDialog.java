@@ -240,7 +240,7 @@ final class PluginUpdateDialog extends DialogWrapper {
         return installedDescriptors;
       }
 
-      private @NotNull @Nls String getUpdateNotificationMessage(@NotNull List<IdeaPluginDescriptor> descriptors) {
+      private @NotNull @Nls String getUpdateNotificationMessage(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
         if (descriptors.size() == 1) {
           IdeaPluginDescriptor descriptor = descriptors.get(0);
           return IdeBundle.message("notification.content.updated.plugin.to.version", descriptor.getName(), descriptor.getVersion());

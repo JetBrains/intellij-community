@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -81,8 +82,11 @@ public interface ProblemDescriptor extends CommonProblemDescriptor {
       end = PsiTreeUtil.findSameElementInCopy(getEndElement(), target);
       psi = PsiTreeUtil.findSameElementInCopy(getPsiElement(), target);
     }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
     catch (RuntimeException e) {
-      throw new RuntimeException("Failed to obtain element copy for preview; descriptor: " + this, e);
+      throw new RuntimeException("Failed to obtain element copy for preview; descriptor: " + getDescriptionTemplate(), e);
     }
     ProblemDescriptor pd = this;
     return new ProblemDescriptor() {

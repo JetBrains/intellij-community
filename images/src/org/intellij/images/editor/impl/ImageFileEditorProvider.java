@@ -21,9 +21,12 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.Alarm;
+import org.intellij.images.editor.impl.jcef.JCefImageViewer;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NonNls;
@@ -45,21 +48,25 @@ final class ImageFileEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   @NotNull
   public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-    ImageFileEditorImpl viewer = new ImageFileEditorImpl(project, file);
     if (IfsUtil.isSVG(file)) {
       TextEditor editor = (TextEditor)TextEditorProvider.getInstance().createEditor(project, file);
-      editor.getEditor().getDocument().addDocumentListener(new DocumentListener() {
-        final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, editor);
-        @Override
-        public void documentChanged(@NotNull DocumentEvent event) {
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(() -> ((ImageEditorImpl)viewer.getImageEditor()).setValue(new LightVirtualFile("preview.svg", file.getFileType(), event.getDocument().getText())),
-                             500);
-        }
-      }, editor);
-      return new TextEditorWithPreview(editor, viewer, "SvgEditor");
+      if (JBCefApp.isSupported() && RegistryManager.getInstance().is("ide.browser.jcef.svg-viewer.enabled")) {
+        return new TextEditorWithPreview(editor, new JCefImageViewer(file, "image/svg+xml") , "SvgEditor");
+      } else {
+        ImageFileEditorImpl viewer = new ImageFileEditorImpl(project, file);
+        editor.getEditor().getDocument().addDocumentListener(new DocumentListener() {
+          final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, editor);
+          @Override
+          public void documentChanged(@NotNull DocumentEvent event) {
+            myAlarm.cancelAllRequests();
+            myAlarm.addRequest(() -> ((ImageEditorImpl)viewer.getImageEditor()).setValue(new LightVirtualFile("preview.svg", file.getFileType(), event.getDocument().getText())),
+                               500);
+          }
+        }, editor);
+        return new TextEditorWithPreview(editor, viewer, "SvgEditor");
+      }
     }
-    return viewer;
+    return new ImageFileEditorImpl(project, file);
   }
 
   @Override

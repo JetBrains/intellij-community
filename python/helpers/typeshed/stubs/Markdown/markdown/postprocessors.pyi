@@ -1,4 +1,5 @@
-from typing import Any, Pattern
+from re import Pattern
+from typing import Any
 
 from . import util
 
@@ -12,6 +13,6 @@ class RawHtmlPostprocessor(Postprocessor):
 
 class AndSubstitutePostprocessor(Postprocessor): ...
 
-class UnescapePostprocessor(Postprocessor):
+class UnescapePostprocessor(Postprocessor):  # deprecated
     RE: Pattern[str]
     def unescape(self, m): ...

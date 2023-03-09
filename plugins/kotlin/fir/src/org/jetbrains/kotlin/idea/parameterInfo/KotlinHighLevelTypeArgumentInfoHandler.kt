@@ -5,23 +5,21 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.components.KtTypeRendererOptions
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParameters
-import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtClassType
-import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.types.Variance
 
 /**
  * Presents type argument info for class type references (e.g., property type in declaration, base class in super types list).
@@ -61,7 +59,7 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
         val symbols = callElement.collectCallCandidates()
             .mapNotNull { (it.candidate as? KtCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.signature }
             .filterIsInstance<KtFunctionLikeSignature<*>>()
-            .filter { filterCandidate(it, callElement, fileSymbol, explicitReceiver) }
+            .filter { filterCandidateByReceiverTypeAndVisibility(it, callElement, fileSymbol, explicitReceiver) }
 
         // Multiple overloads may have the same type parameters (see Overloads.kt test), so we select the distinct ones.
         return symbols.distinctBy { buildPresentation(fetchCandidateInfo(it.symbol), -1).first }.map { it.symbol }
@@ -91,7 +89,7 @@ abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeAr
             } else {
                 it.isAny && it.isMarkedNullable
             }
-            val renderedType = it.render(KtTypeRendererOptions.SHORT_NAMES)
+            val renderedType = it.render(KtTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
             UpperBoundInfo(isNullableAnyOrFlexibleAny, renderedType)
         }
         return TypeParameterInfo(parameter.name.asString(), parameter.isReified, parameter.variance, upperBounds)

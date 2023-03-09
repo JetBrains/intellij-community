@@ -35,7 +35,7 @@ public class MockObjectReference extends MockValue implements ObjectReference {
   @Override
   public Value getValue(Field field) {
     try {
-      java.lang.reflect.Field refField = ((MockField) field).getField();
+      java.lang.reflect.Field refField = ((MockField)field).getField();
       refField.setAccessible(true);
       Object value = refField.get(myObject);
       return value == null ? null : MockValue.createValue(value, refField.getType(), myVirtualMachine);
@@ -51,15 +51,15 @@ public class MockObjectReference extends MockValue implements ObjectReference {
   }
 
   @Override
-  public void setValue(Field field,Value value) {
+  public void setValue(Field field, Value value) {
     throw new UnsupportedOperationException("Not implemented: \"setValue\" in " + getClass().getName());
   }
 
   @Override
-  public Value invokeMethod(ThreadReference threadReference,Method method,List<? extends Value> list,int i) {
+  public Value invokeMethod(ThreadReference threadReference, Method method, List<? extends Value> list, int i) {
     Object[] argsArray = MockClassType.values2Objects(list);
     try {
-      java.lang.reflect.Method refMethod = ((MockMethod) method).getMethod();
+      java.lang.reflect.Method refMethod = ((MockMethod)method).getMethod();
       refMethod.setAccessible(true);
       return MockValue.createValue(refMethod.invoke(myObject, argsArray), refMethod.getReturnType(), myVirtualMachine);
     }
@@ -113,13 +113,13 @@ public class MockObjectReference extends MockValue implements ObjectReference {
 
   public static MockObjectReference createObjectReference(Object o, Class<?> type, final MockVirtualMachine virtualMachine) {
     if (o instanceof String || type != null && String.class.isAssignableFrom(type)) {
-      return new MockStringReference(virtualMachine, (String) o);
+      return new MockStringReference(virtualMachine, (String)o);
     }
     if (o instanceof Thread || type != null && Thread.class.isAssignableFrom(type)) {
-      return new MockThreadReference(virtualMachine, (Thread) o);
+      return new MockThreadReference(virtualMachine, (Thread)o);
     }
     if (o instanceof ClassLoader || type != null && ClassLoader.class.isAssignableFrom(type)) {
-      return new MockClassLoaderReference(virtualMachine, (ClassLoader) o);
+      return new MockClassLoaderReference(virtualMachine, (ClassLoader)o);
     }
     if (o instanceof Object[] || type != null && type.isArray()) {
       return new MockArrayReference(virtualMachine, o, type == null ? o.getClass() : type);

@@ -1,6 +1,7 @@
 {
   "expui": {
     "actions": {
+      "deploy.svg": "nodes/deploy.svg",
       "filterdups.svg": "toolbar/filterdups.svg",
       "generated.svg": "actions/generatedFolder.svg",
       "groupByMethod.svg": "actions/groupByMethod.svg",
@@ -11,8 +12,9 @@
       "playLast.svg": "actions/play_last.svg",
       "showWriteAccess.svg": "actions/showWriteAccess.svg",
       "showReadAccess.svg": "actions/showReadAccess.svg",
-      "showImportStatements.svg": "actions/showImportStatements.svg"
-
+      "showImportStatements.svg": "actions/showImportStatements.svg",
+      "toggleVisibility.svg": "actions/toggleVisibility.svg",
+      "undeploy.svg": "nodes/undeploy.svg"
     },
     "bookmarks": {
       "addBookmarksList.svg": "actions/addList.svg",
@@ -115,11 +117,13 @@
       "nodes/tabAlert.svg"
     ],
     "fileTypes": {
+      "actionScript.svg": "fileTypes/as.svg",
       "angularJS.svg": "icons/AngularJS.svg",
       "archive.svg": [
         "fileTypes/archive.svg",
         "nodes/ppJar.svg"
       ],
+      "aspectJ.svg": "fileTypes/aspectj.svg",
       "css.svg": "fileTypes/css.svg",
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
       "docker.svg": [
@@ -137,6 +141,7 @@
       ],
       "html.svg": "fileTypes/html.svg",
       "ideaModule.svg": "nodes/ideaModule.svg",
+      "idl.svg": "fileTypes/idl.svg",
       "ignored.svg": "vcs/ignore_file.svg",
       "java.svg": "fileTypes/java.svg",
       "javascript.svg": [
@@ -144,8 +149,11 @@
         "icons/JavaScript_debug_configuration.svg"
       ],
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
+      "jfr.svg": "fileTypes/jfr.svg",
       "jshint.svg": "icons/fileTypes/jsHint.svg",
       "json.svg": "fileTypes/json.svg",
+      "jsp.svg": "fileTypes/jsp.svg",
+      "jspx.svg": "fileTypes/jspx.svg",
       "less.svg": "icons/less.svg",
       "lombok.svg": "icons/lombok.svg",
       "lombokConfig.svg": "icons/config.svg",
@@ -180,10 +188,13 @@
       "unknown.svg": "fileTypes/unknown.svg",
       "velocity.svg": "icons/velocity.svg",
       "vueJs.svg": "icons/vue.svg",
+      "wsdl.svg": "fileTypes/wsdlFile.svg",
+      "xhtml.svg": "fileTypes/xhtml.svg",
       "xml.svg": [
         "fileTypes/dtd.svg",
         "fileTypes/xml.svg"
       ],
+      "xsd.svg": "fileTypes/xsdFile.svg",
       "yaml.svg": "fileTypes/yaml.svg",
       "yarn.svg": "icons/nodejs/yarn.svg"
     },
@@ -271,15 +282,14 @@
       "ideUpdate.svg": "ide/notification/ideUpdate.svg",
       "pluginUpdate.svg": "ide/notification/pluginUpdate.svg",
       "import.svg": "toolbarDecorator/import.svg",
-      "informationDialog.svg":"general/informationDialog.svg",
+      "informationDialog.svg": "general/informationDialog.svg",
       "layout.svg": "debugger/restoreLayout.svg",
       "left.svg": "actions/back.svg",
       "listFiles.svg": "actions/listFiles.svg",
       "locate.svg": "general/locate.svg",
       "locked.svg": "ide/readonly.svg",
       "moreHorizontal.svg": "actions/moreHorizontal.svg",
-      "moreVertical.svg":
-      [
+      "moreVertical.svg": [
         "actions/more.svg",
         "ide/notification/gear.svg",
         "ide/notification/gearHover.svg"
@@ -287,16 +297,6 @@
       "moveDown.svg": "actions/moveDown.svg",
       "moveUp.svg": "actions/moveUp.svg",
       "open.svg": "actions/menu-open.svg",
-      "openInToolWindow.svg": [
-        "actions/moveToBottomLeft.svg",
-        "actions/moveToBottomRight.svg",
-        "actions/moveToLeftBottom.svg",
-        "actions/moveToLeftTop.svg",
-        "actions/moveToRightBottom.svg",
-        "actions/moveToRightTop.svg",
-        "actions/moveToTopLeft.svg",
-        "actions/moveToTopRight.svg"
-      ],
       "openNewTab.svg": "actions/openNewTab.svg",
       "paste.svg": "actions/menu-paste.svg",
       "pin.svg": [
@@ -339,16 +339,17 @@
       "scrollDown.svg": "runConfigurations/scroll_down.svg",
       "projectStructure.svg": "general/projectStructure.svg",
       "successDialog.svg": "general/successDialog.svg",
+      "successLogin.svg": "general/successLogin.svg",
       "questionDialog.svg": "general/questionDialog.svg",
       "warningDialog.svg": "general/warningDialog.svg"
     },
     "gutter": {
       "bookmark.svg": "gutter/bookmark.svg",
       "colors.svg": "gutter/colors.svg",
-      "dataSchema.svg" : "gutter/dataSchema.svg",
+      "dataSchema.svg": "gutter/dataSchema.svg",
       "extAnnotation.svg": "gutter/extAnnotation.svg",
       "javadocEdit.svg": "gutter/javadocEdit.svg",
-      "javadocRead.svg":  "gutter/javadocRead.svg",
+      "javadocRead.svg": "gutter/javadocRead.svg",
       "mnemonic.svg": "gutter/mnemonic.svg",
       "readAccess.svg": "gutter/readAccess.svg",
       "rerun.svg": "runConfigurations/testState/run_run.svg",
@@ -359,7 +360,12 @@
       "suggestedRefactoring.svg": "gutter/suggestedRefactoringBulb.svg",
       "suggestedRefactoringDisabled.svg": "gutter/suggestedRefactoringBulbDisabled.svg",
       "writeAccess.svg": "gutter/writeAccess.svg"
-
+    },
+    "ide": {
+      "feedbackRating.svg": "ide/feedbackRating.svg",
+      "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
+      "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
+      "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg"
     },
     "image": {
       "colorPicker_dark.svg": "ide/pipette.svg",
@@ -580,7 +586,7 @@
       "testUnknown.svg": "runConfigurations/testUnknown.svg",
       "viewBreakpoints.svg": "debugger/viewBreakpoints.svg"
     },
-    "runConfigurations":{
+    "runConfigurations": {
       "application.svg": "runConfigurations/application.svg",
       "applicationRemote.svg": "runConfigurations/remote.svg",
       "compound.svg": "runConfigurations/compound.svg",
@@ -620,7 +626,6 @@
       "documentation.svg": "toolwindows/documentation.svg",
       "endpoints.svg": "icons/toolWindowEndpoints.svg",
       "find.svg": "toolwindows/toolWindowFind.svg",
-      "findExternalUsages.svg": "toolwindows/toolWindowFindExternalUsages.svg",
       "gradle.svg": "icons/toolWindowGradle.svg",
       "hierarchy.svg": "toolwindows/toolWindowHierarchy.svg",
       "messages.svg": "toolwindows/toolWindowMessages.svg",
@@ -633,7 +638,7 @@
       "project.svg": "toolwindows/toolWindowProject.svg",
       "run.svg": "toolwindows/toolWindowRun.svg",
       "services.svg": "toolwindows/toolWindowServices.svg",
-      "settingSync.svg":"toolwindows/settingSync.svg",
+      "settingSync.svg": "toolwindows/settingSync.svg",
       "structure.svg": "toolwindows/toolWindowStructure.svg",
       "todo.svg": "toolwindows/toolWindowTodo.svg",
       "vcs.svg": [
@@ -661,6 +666,10 @@
         "vcs/Shelve.svg",
         "vcs/shelveSilent.svg",
         "vcs/Stash.svg"
+      ],
+      "unshelve.svg": [
+        "vcs/Unshelve.svg",
+        "vcs/unshelveSilent.svg"
       ],
       "update.svg": "actions/checkOut.svg"
     }

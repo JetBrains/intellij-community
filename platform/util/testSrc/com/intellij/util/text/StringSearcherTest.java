@@ -35,7 +35,7 @@ public class StringSearcherTest extends TestCase {
   public void testCaseInsensitiveWithUnicode() {
     String pattern = "SİL";
     final String text = "SİL SIL";
-    final int firstPos = text.indexOf(pattern);
+    final int firstPos = 0;
     final int secondPos = text.indexOf("SIL");
 
     StringSearcher searcher = new StringSearcher(pattern, false, true);

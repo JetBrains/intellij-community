@@ -37,8 +37,6 @@ abstract class GitMergeProviderTestCase : GitPlatformTest() {
 
   protected lateinit var repository: GitRepository
 
-  override fun runInDispatchThread(): Boolean = true
-
   public override fun setUp() {
     super.setUp()
 

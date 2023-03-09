@@ -37,11 +37,11 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.MemoryDumpHelper
-import com.intellij.util.io.exists
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.io.path.exists
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun usedMemory(withGC: Boolean): Long {

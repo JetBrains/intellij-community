@@ -278,13 +278,14 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         ":taskWithArgs",
         {
           assertThat(it).matches(
-            "> Task :taskWithArgs\n" +
-            "Caching disabled for task ':taskWithArgs' because:\n" +
-            " {2}Build cache is disabled\n" +
-            "Task ':taskWithArgs' is not up-to-date because:\n" +
-            " {2}Task has not declared any outputs despite executing actions.\n" +
-            "test args\n" +
-            ":taskWithArgs \\(Thread\\[.*]\\) completed. Took (\\d+).(\\d+) secs.\n\n"
+            """> Task :taskWithArgs
+Caching disabled for task ':taskWithArgs' because:
+ {2}Build cache is disabled
+Task ':taskWithArgs' is not up-to-date because:
+ {2}Task has not declared any outputs despite executing actions.
+test args
+
+"""
           )
         }
       )

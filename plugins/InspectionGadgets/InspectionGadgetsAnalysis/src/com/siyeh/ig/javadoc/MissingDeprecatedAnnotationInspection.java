@@ -18,7 +18,7 @@ package com.siyeh.ig.javadoc;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,7 +38,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 final class MissingDeprecatedAnnotationInspection extends BaseInspection implements CleanupLocalInspectionTool {
   @SuppressWarnings("PublicField") public boolean warnOnMissingJavadoc = false;
@@ -52,11 +53,10 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
            : InspectionGadgetsBundle.message("missing.deprecated.tag.problem.descriptor");
   }
 
-  @NotNull
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("missing.deprecated.tag.option"),
-                                          this, "warnOnMissingJavadoc");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("warnOnMissingJavadoc", InspectionGadgetsBundle.message("missing.deprecated.tag.option")));
   }
 
   @Override
@@ -79,7 +79,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement identifier = descriptor.getPsiElement();
       final PsiModifierListOwner parent = (PsiModifierListOwner)identifier.getParent();
       if (parent == null) {
@@ -107,7 +107,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       doFix(project, descriptor, false);
     }
 

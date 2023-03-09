@@ -72,7 +72,11 @@ else
 
   if command -v curl >/dev/null 2>&1; then
       if [ -t 1 ]; then CURL_PROGRESS="--progress-bar"; else CURL_PROGRESS=""; fi
-      curl -fsSL $CURL_PROGRESS --output "${JVM_TEMP_FILE}" "$JVM_URL"
+      CURL_OPTIONS="-fsSL"
+      if [ "${JBR_DOWNLOAD_CURL_VERBOSE:-false}" = "true" ]; then CURL_OPTIONS="-fvL"; fi
+      # CURL_PROGRESS may be empty, with quotes this interpreted by curl as malformed URL
+      # shellcheck disable=SC2086
+      curl "$CURL_OPTIONS" $CURL_PROGRESS --output "${JVM_TEMP_FILE}" "$JVM_URL"
   elif command -v wget >/dev/null 2>&1; then
       if [ -t 1 ]; then WGET_PROGRESS=""; else WGET_PROGRESS="-nv"; fi
       wget $WGET_PROGRESS -O "${JVM_TEMP_FILE}" "$JVM_URL"

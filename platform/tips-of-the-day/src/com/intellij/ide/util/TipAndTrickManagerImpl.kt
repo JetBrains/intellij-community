@@ -28,7 +28,7 @@ class TipAndTrickManagerImpl : TipAndTrickManager {
         closeTipDialog()
         openedDialog = TipDialog(project, sortingResult).also { dialog ->
           Disposer.register(dialog.disposable, Disposable { openedDialog = null })  // clear link to not leak the project
-          dialog.show()
+          dialog.showWhenTipInstalled()
         }
       }
     }

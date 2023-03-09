@@ -122,11 +122,32 @@ public final class Disposer {
     }
   }
 
+  @Contract(pure = true, value = "_->new")
+  public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable) {
+    Disposable disposable = newDisposable();
+    register(parentDisposable, disposable);
+    return disposable;
+  }
+
   @Contract(pure = true, value = "_,_->new")
   public static @NotNull Disposable newDisposable(@NotNull Disposable parentDisposable, @NotNull String debugName) {
     Disposable result = newDisposable(debugName);
     register(parentDisposable, result);
     return result;
+  }
+
+  @Contract(pure = true, value = "_->new")
+  public static @NotNull CheckedDisposable newCheckedDisposable(@NotNull Disposable parentDisposable) {
+    CheckedDisposable disposable = newCheckedDisposable();
+    register(parentDisposable, disposable);
+    return disposable;
+  }
+
+  @Contract(pure = true, value = "_,_->new")
+  public static @NotNull CheckedDisposable newCheckedDisposable(@NotNull Disposable parentDisposable, @NotNull String debugName) {
+    CheckedDisposable disposable = newCheckedDisposable(debugName);
+    register(parentDisposable, disposable);
+    return disposable;
   }
 
   private static final Map<String, Disposable> ourKeyDisposables = ContainerUtil.createConcurrentWeakMap();
@@ -137,7 +158,7 @@ public final class Disposer {
    * then it's unregistered from {@code oldParent} before registering with {@code parent}.
    *
    * @throws IncorrectOperationException If {@code child} has been registered with {@code parent} before;
-   *                                     if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
+   *                                     if {@code parent} is being disposed or already disposed, see {@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) throws IncorrectOperationException {
     ourTree.register(parent, child);

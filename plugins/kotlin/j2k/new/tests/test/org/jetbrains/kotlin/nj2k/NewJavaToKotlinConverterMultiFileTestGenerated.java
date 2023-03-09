@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k;
 
@@ -36,6 +36,11 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
     @TestMetadata("DetectPropertiesMultipleFiles")
     public void testDetectPropertiesMultipleFiles() throws Exception {
         runTest("testData/multiFile/DetectPropertiesMultipleFiles/");
+    }
+
+    @TestMetadata("EnumValues")
+    public void testEnumValues() throws Exception {
+        runTest("testData/multiFile/EnumValues/");
     }
 
     @TestMetadata("FieldToPrimaryConstructorProperty")
@@ -86,6 +91,11 @@ public class NewJavaToKotlinConverterMultiFileTestGenerated extends AbstractNewJ
     @TestMetadata("NullabilityByDFa")
     public void testNullabilityByDFa() throws Exception {
         runTest("testData/multiFile/NullabilityByDFa/");
+    }
+
+    @TestMetadata("OverrideFieldToPrimaryConstructorProperty")
+    public void testOverrideFieldToPrimaryConstructorProperty() throws Exception {
+        runTest("testData/multiFile/OverrideFieldToPrimaryConstructorProperty/");
     }
 
     @TestMetadata("ProtectedVisibility")

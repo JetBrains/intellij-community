@@ -78,7 +78,7 @@ class StatisticsManagerImpl : StatisticsManager(), SettingsSavingComponent {
       return
     }
 
-    ApplicationManager.getApplication().assertIsWriteThread()
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
 
     for (conjunct in info.conjuncts) {
       doIncUseCount(conjunct)

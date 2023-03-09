@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Document;
@@ -21,18 +22,17 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
 
   public boolean mySuggestLiteralReplacement = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.text.block.migration.suggest.literal.replacement"),
-                                          this,
-                                          "mySuggestLiteralReplacement");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("mySuggestLiteralReplacement", JavaBundle.message("inspection.text.block.migration.suggest.literal.replacement")));
   }
 
   @NotNull

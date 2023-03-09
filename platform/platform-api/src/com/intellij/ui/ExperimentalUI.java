@@ -16,6 +16,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ public abstract class ExperimentalUI {
   private IconPathPatcher iconPathPatcher;
   public static final String KEY = "ide.experimental.ui";
 
+  @Contract(pure = true)
   public static boolean isNewUI() {
     // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
     // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
@@ -77,20 +79,21 @@ public abstract class ExperimentalUI {
       boolean isEnabled = value.asBoolean();
 
       patchUIDefaults(isEnabled);
+      ExperimentalUI instance = getInstance();
       if (isEnabled) {
-        if (getInstance().isIconPatcherSet.compareAndSet(false, true)) {
-          if (getInstance().iconPathPatcher != null) {
-            IconLoader.removePathPatcher(getInstance().iconPathPatcher);
+        if (instance.isIconPatcherSet.compareAndSet(false, true)) {
+          if (instance.iconPathPatcher != null) {
+            IconLoader.removePathPatcher(instance.iconPathPatcher);
           }
-          getInstance().iconPathPatcher = getInstance().createPathPatcher();
-          IconLoader.installPathPatcher(getInstance().iconPathPatcher);
+          instance.iconPathPatcher = instance.createPathPatcher();
+          IconLoader.installPathPatcher(instance.iconPathPatcher);
         }
-        getInstance().onExpUIEnabled(true);
+        instance.onExpUIEnabled(true);
       }
-      else if (getInstance().isIconPatcherSet.compareAndSet(true, false)) {
-        IconLoader.removePathPatcher(getInstance().iconPathPatcher);
-        getInstance().iconPathPatcher = null;
-        getInstance().onExpUIDisabled(true);
+      else if (instance.isIconPatcherSet.compareAndSet(true, false)) {
+        IconLoader.removePathPatcher(instance.iconPathPatcher);
+        instance.iconPathPatcher = null;
+        instance.onExpUIDisabled(true);
       }
     }
   }
@@ -108,7 +111,7 @@ public abstract class ExperimentalUI {
     }
   }
 
-  private IconPathPatcher createPathPatcher() {
+  private @NotNull IconPathPatcher createPathPatcher() {
     Map<ClassLoader, Map<String, String>> paths = getIconMappings();
     return new IconPathPatcher() {
       @Override
@@ -124,7 +127,7 @@ public abstract class ExperimentalUI {
     };
   }
 
-  public abstract Map<ClassLoader, Map<String, String>> getIconMappings();
+  public abstract @NotNull Map<ClassLoader, Map<String, String>> getIconMappings();
 
   public abstract void onExpUIEnabled(boolean suggestRestart);
   public abstract void onExpUIDisabled(boolean suggestRestart);
@@ -148,7 +151,7 @@ public abstract class ExperimentalUI {
     }
 
     if (SystemInfo.isJetBrainsJvm && EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui.inter.font")) {
-      installInterFont(defaults);
+      installInterFont();
     }
   }
 
@@ -157,16 +160,17 @@ public abstract class ExperimentalUI {
     defaults.put(key, value);
   }
 
-  private static void installInterFont(UIDefaults defaults) {
+  private static void installInterFont() {
     if (UISettings.getInstance().getOverrideLafFonts()) {
       //todo[kb] add RunOnce
       UISettings.getInstance().setOverrideLafFonts(false);
     }
   }
 
-  public static class Icons {
-    public static class Gutter {
+  public static final class Icons {
+    public static final class Gutter {
       public static final Icon Fold = loadIcon("expui/gutter/fold.svg");
+      public static final Icon FoldBottom = loadIcon("expui/gutter/foldBottom.svg");
       public static final Icon Unfold = loadIcon("expui/gutter/unfold.svg");
     }
 

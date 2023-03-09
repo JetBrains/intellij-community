@@ -16,8 +16,6 @@ public abstract class IconDeferrer {
 
   public abstract <T> @NotNull Icon defer(@Nullable Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
 
-  public abstract <T> @NotNull Icon deferAutoUpdatable(Icon base, T param, @NotNull Function<? super T, ? extends Icon> f);
-
   public abstract void clearCache();
 
   public boolean equalIcons(Icon icon1, Icon icon2) {

@@ -58,7 +58,6 @@ interface RenameTarget {
    *
    * TODO consider an EP
    */
-  @JvmDefault
   fun validator(): RenameValidator = RenameValidator.empty()
 
 }

@@ -1128,10 +1128,19 @@ public class CommonCodeStyleSettings {
       document.putUserData(INDENT_OPTIONS_KEY, this);
     }
 
+    /**
+     * @deprecated Use {@link #retrieveFromAssociatedDocument(Document)}
+     */
     @Nullable
+    @Deprecated
     public static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
       Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
+    }
+
+    @Nullable
+    public static IndentOptions retrieveFromAssociatedDocument(@NotNull Document document) {
+      return document.getUserData(INDENT_OPTIONS_KEY);
     }
 
     /**

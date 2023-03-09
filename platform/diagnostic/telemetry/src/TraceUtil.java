@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 
 @SuppressWarnings("RedundantThrows") //Kotlin doesn't support checked exception, so we need to create inter-op java / kotlin
-public class TraceUtil {
+public final class TraceUtil {
 
   @NotNull
   public static <T, E extends Throwable> T computeWithSpanThrows(@NotNull Tracer tracer,

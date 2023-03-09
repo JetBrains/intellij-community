@@ -17,8 +17,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -85,7 +84,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     // default project doesn't have modules
     if (!project.isDefault) {
       val busConnection = project.messageBus.connect(this)
-      busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      busConnection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
         override fun projectClosed(eventProject: Project) {
           if (project == eventProject) {
             for (module in modules()) {

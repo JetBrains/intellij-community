@@ -68,7 +68,7 @@ class UnstableApiUsageInspection : LocalInspectionTool() {
       unstableApiAnnotations, JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list")
     )
 
-    panel.add(annotationsListControl, "growx, wrap")
+    panel.addGrowing(annotationsListControl)
     return panel
   }
 }

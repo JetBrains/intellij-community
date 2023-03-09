@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.openapi.externalSystem.model.task.event.*;
@@ -6,7 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.events.*;
 
-public class GradleTestEventsProcessor {
+public final class GradleTestEventsProcessor {
 
   public static void onStatusChange(GradleTestsExecutionConsole console, ExternalSystemProgressEvent<? extends TestOperationDescriptor> event) {
     TestOperationDescriptor descriptor = event.getDescriptor();

@@ -15,7 +15,6 @@
  */
 package hg4idea.test.validator;
 
-import com.intellij.util.containers.ContainerUtil;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -27,6 +26,7 @@ import org.zmlx.hg4idea.repo.HgRepositoryImpl;
 import org.zmlx.hg4idea.util.HgBranchReferenceValidator;
 
 import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.echo;
@@ -65,7 +65,7 @@ public class HgReferenceValidatorTest extends HgPlatformTest {
 
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> createData() {
-    return ContainerUtil.newArrayList(new Object[][]{
+    return List.of(new Object[][]{
       {"WORD", "branch", true},
       {"UNDERSCORED_WORD", "new_branch", true},
       {"HIERARCHY", "user/branch", true},

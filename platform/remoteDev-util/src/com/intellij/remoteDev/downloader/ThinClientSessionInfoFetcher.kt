@@ -63,15 +63,7 @@ object ThinClientSessionInfoFetcher {
               val learnMoreLink = sessionInfo["learnMoreLink"]?.textValue()
               val message = sessionInfo["message"]?.textValue() ?: "Forbidden"
               val reason = sessionInfo["forbiddenReasonText"]?.textValue()
-              val allTogetherText = StringBuilder()
-                .append(message)
-              if (learnMoreLink != null) {
-                allTogetherText.append("\n" + learnMoreLink)
-              }
-              if (reason != null) {
-                allTogetherText.append("\n" + reason)
-              }
-              throw CodeWithMeUnavailableException(allTogetherText.toString(), null, null, null, connection.responseCode)
+              throw CodeWithMeUnavailableException(message, learnMoreLink, reason, null, connection.responseCode)
             }
           } catch (ex: JacksonException) {
             logger.warn("Failed to decode response", ex)

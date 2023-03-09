@@ -33,7 +33,7 @@ public class UnusedSymbolLocalInspectionBase extends AbstractBaseJavaLocalInspec
   protected String myFieldVisibility = PsiModifier.PUBLIC;
   protected String myMethodVisibility = PsiModifier.PUBLIC;
   protected String myParameterVisibility = PsiModifier.PUBLIC;
-  private boolean myIgnoreAccessors = false;
+  protected boolean myIgnoreAccessors = false;
   protected boolean myCheckParameterExcludingHierarchy = false;
 
   @PsiModifier.ModifierConstant

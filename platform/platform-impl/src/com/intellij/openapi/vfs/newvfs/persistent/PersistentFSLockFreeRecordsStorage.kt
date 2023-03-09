@@ -155,7 +155,7 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   }
 
   @Throws(IOException::class)
-  override fun putTimestamp(id: Int, value: Long): Boolean = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
+  override fun setTimestamp(id: Int, value: Long): Boolean = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
     if(timeStamp()!=value) {
       timeStamp(value)
       return true
@@ -169,7 +169,7 @@ internal class PersistentFSLockFreeRecordsStorage @Throws(IOException::class) co
   }
 
   @Throws(IOException::class)
-  override fun putLength(id: Int, value: Long): Boolean = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
+  override fun setLength(id: Int, value: Long): Boolean = acquireRecord(id, AccessType.WRITE_AND_INCREMENT_MOD_COUNTER) {
     if(value != length()) {
       length(value)
       return true

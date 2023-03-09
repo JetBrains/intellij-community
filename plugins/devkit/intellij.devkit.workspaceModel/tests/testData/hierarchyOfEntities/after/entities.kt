@@ -21,6 +21,9 @@ interface GrandParentEntity : WorkspaceEntity {
   }
 
   companion object : Type<GrandParentEntity, Builder<GrandParentEntity>>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data1: String,
                         entitySource: EntitySource,
                         init: (Builder<GrandParentEntity>.() -> Unit)? = null): GrandParentEntity {
@@ -47,6 +50,9 @@ interface ParentEntity : GrandParentEntity {
   }
 
   companion object : Type<ParentEntity, Builder<ParentEntity>>(GrandParentEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data1: String,
                         data2: String,
                         entitySource: EntitySource,
@@ -75,6 +81,9 @@ interface ChildEntity: ParentEntity {
   }
 
   companion object : Type<ChildEntity, Builder>(ParentEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data1: String,
                         data2: String,
                         data3: String,

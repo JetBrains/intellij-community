@@ -43,8 +43,6 @@ public class QuickFixActionRegistrarImpl implements QuickFixActionRegistrar {
 
   @Override
   public String toString() {
-    return "QuickFixActionRegistrarImpl{" +
-           "myInfo=" + myInfo +
-           '}';
+    return "QuickFixActionRegistrarImpl{myInfo=" + myInfo + '}';
   }
 }

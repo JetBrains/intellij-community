@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.util.containers.toMutableSmartList
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
@@ -46,8 +46,8 @@ object SpecifySuperTypeFixFactory {
     private fun KtSuperExpression.specifySuperType(superType: TypeStringWithoutArgs) {
         project.executeWriteCommand(KotlinBundle.message("intention.name.specify.supertype")) {
             val label = this.labelQualifier?.text ?: ""
-            val replaced =
-                replace(KtPsiFactory(this).createExpression("super<${superType.longTypeRepresentation}>$label")) as KtSuperExpression
+            val psiFactory = KtPsiFactory(project)
+            val replaced = replace(psiFactory.createExpression("super<${superType.longTypeRepresentation}>$label")) as KtSuperExpression
             shortenReferences(replaced)
         }
     }
@@ -81,7 +81,7 @@ object SpecifySuperTypeFixFactory {
         if (candidates.isEmpty()) return@diagnosticFixFactory listOf()
         val superTypes = candidates.mapNotNull { superType ->
             when (superType) {
-                is KtClassErrorType ->  null
+                is KtErrorType ->  null
                 is KtNonErrorClassType ->
                     TypeStringWithoutArgs(superType.classId.asSingleFqName().render(), superType.classId.shortClassName.render())
                 else -> error("Expected KtClassType but ${superType::class} was found")

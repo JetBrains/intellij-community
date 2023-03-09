@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.build.BuildProgressListener;
@@ -41,6 +41,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
@@ -75,6 +76,7 @@ import org.jetbrains.idea.maven.utils.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -358,7 +360,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     if (tryToLoadExisting) {
       Path file = getProjectsTreeFile();
       try {
-        if (PathKt.exists(file)) {
+        if (Files.exists(file)) {
           myProjectsTree = MavenProjectsTree.read(myProject, file);
         }
       }
@@ -771,8 +773,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     });
   }
 
-  @Nullable
-  public Module findModule(@NotNull MavenProject project) {
+  @RequiresReadLock
+  public @Nullable Module findModule(@NotNull MavenProject project) {
     if (!isInitialized()) return null;
     return ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(project.getFile());
   }
@@ -881,20 +883,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return myProjectsTree.isIgnored(project);
   }
 
-  public void ignoreMavenProject(@Nullable MavenProject mavenProject) {
-    if (mavenProject != null && !isIgnored(mavenProject)) {
-      VirtualFile file = mavenProject.getFile();
-
-      if (isManagedFile(file) && getModules(mavenProject).isEmpty()) {
-        MavenLog.LOG.info("Removing managed maven project  + " + mavenProject + "because there is no module for it");
-        removeManagedFiles(Collections.singletonList(file));
-      } else {
-        MavenLog.LOG.info("Ignoring " + mavenProject);
-        setIgnoredState(Collections.singletonList(mavenProject), true);
-      }
-    }
-  }
-
   public Set<MavenRemoteRepository> getRemoteRepositories() {
     Set<MavenRemoteRepository> result = new HashSet<>();
     for (MavenProject each : getProjects()) {
@@ -909,7 +897,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @ApiStatus.Internal
-  public void setProjectsTree(MavenProjectsTree newTree) {
+  public void setProjectsTree(@NotNull MavenProjectsTree newTree) {
     if (!isInitialized()) {
       initNew(Collections.emptyList(), MavenExplicitProfiles.NONE);
     }
@@ -1405,7 +1393,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       );
       try {
         MavenProjectImporter projectImporter = MavenProjectImporter.createImporter(
-          myProject, myProjectsTree, projectsToImportWithChanges, importModuleGroupsRequired,
+          myProject, getProjectsTree(), projectsToImportWithChanges, importModuleGroupsRequired,
           modelsProvider, getImportingSettings(), myPreviewModule, activity
         );
         importer.set(projectImporter);

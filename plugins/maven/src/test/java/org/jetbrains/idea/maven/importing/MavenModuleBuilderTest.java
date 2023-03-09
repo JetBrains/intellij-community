@@ -128,9 +128,11 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
   public void testAddingNewlyCreatedModuleToTheAggregator() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setAggregatorProject(myProjectPom);
@@ -151,9 +153,11 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
   public void testAddingManagedProjectIfNoArrgerator() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     assertEquals(1, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
 
@@ -169,9 +173,11 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
   public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     assertEquals(1, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
 
@@ -187,9 +193,11 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
   public void testAddingParent() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setParentProject(myProjectPom);
@@ -220,9 +228,11 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
   public void testAddingParentWithInheritedProperties() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setParentProject(myProjectPom);
@@ -252,9 +262,11 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
   public void testAddingParentAndInheritWhenGeneratingFromArchetype() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     setModuleNameAndRoot("module", getProjectPath() + "/module");
     setParentProject(myProjectPom);
@@ -299,9 +311,11 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
   public void testAddingParentWithRelativePath() throws Exception {
     if (!hasMavenInstallation()) return;
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
 
     setModuleNameAndRoot("module", getProjectPath() + "/subDir/module");
     setParentProject(myProjectPom);
@@ -334,9 +348,11 @@ public class MavenModuleBuilderTest extends MavenMultiVersionImportingTestCase {
     Assume.assumeFalse(Registry.is("maven.linear.import"));
 
     VirtualFile customPomXml = createProjectSubFile("custompom.xml", createPomXml(
-      "<groupId>test</groupId>" +
-      "<artifactId>project</artifactId>" +
-      "<version>1</version>"));
+      """
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+        """));
     importProject(customPomXml);
     assertModules("project");
 

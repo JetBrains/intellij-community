@@ -28,7 +28,7 @@ public class KotlinGotoImplementationMultifileTest extends KotlinLightCodeInsigh
         doKotlinJavaTest();
     }
 
-    public void testImplementKotlinTraitInJava() {
+    public void testImplementKotlinInterfaceInJava() {
         doKotlinJavaTest();
     }
 

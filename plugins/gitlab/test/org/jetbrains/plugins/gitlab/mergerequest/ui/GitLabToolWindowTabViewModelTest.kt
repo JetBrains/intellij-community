@@ -65,4 +65,3 @@ internal class GitLabToolWindowTabViewModelTest {
     val mainRule = MainDispatcherRule()
   }
 }
-

@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,11 +25,12 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class MethodOverloadsParentMethodInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -57,11 +58,10 @@ public class MethodOverloadsParentMethodInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("method.overloads.problem.descriptor");
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("method.overloads.report.incompatible.option"),
-                                          this, "reportIncompatibleParameters");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("reportIncompatibleParameters", InspectionGadgetsBundle.message("method.overloads.report.incompatible.option")));
   }
 
   @Override

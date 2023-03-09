@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
@@ -27,6 +27,8 @@ import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
 
 public class BooleanMethodNameMustStartWithQuestionInspection extends NonBooleanMethodNameMayNotStartWithQuestionInspection {
 
@@ -46,10 +48,9 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends NonBoolean
   }
 
   @Override
-  public @NotNull MultipleCheckboxOptionsPanel createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = super.createOptionsPanel();
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.boolean.methods.in.an.interface.option"), "ignoreInAnnotationInterface");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return super.getOptionsPane()
+      .append(checkbox("ignoreInAnnotationInterface", InspectionGadgetsBundle.message("ignore.boolean.methods.in.an.interface.option")));
   }
 
   @Override

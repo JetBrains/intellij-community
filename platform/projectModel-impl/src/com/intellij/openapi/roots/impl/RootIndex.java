@@ -366,6 +366,7 @@ class RootIndex {
         info.libraryOrSdkSources.add(librarySource);
         info.classAndSourceRoots.add(librarySource);
         info.sourceOfLibraries.putValue(librarySource, entity);
+        info.packagePrefix.put(librarySource, "");
       }
 
       for (VirtualFile root : libraryRoots.classes) {
@@ -375,6 +376,7 @@ class RootIndex {
         info.libraryOrSdkClasses.add(libraryClass);
         info.classAndSourceRoots.add(libraryClass);
         info.classOfLibraries.putValue(libraryClass, entity);
+        info.packagePrefix.put(libraryClass, "");
       }
 
       for (VirtualFile root : libraryRoots.excluded) {
@@ -414,7 +416,7 @@ class RootIndex {
   }
 
   @NotNull
-  private static Set<VirtualFile> collectSdkClasses(Set<Sdk> sdks) {
+  private static Set<VirtualFile> collectSdkClasses(Set<? extends Sdk> sdks) {
     Set<VirtualFile> roots = new HashSet<>();
 
     for (Sdk sdk : sdks) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
@@ -23,6 +24,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.util.PopupImplUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -60,6 +62,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
 
   private JBDimension myMinimumButtonSize;
+  private Supplier<? extends @NotNull Dimension> myMinimumButtonSizeFunction;
   private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
   protected Icon myIcon;
@@ -75,16 +78,25 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   private boolean myNoIconsInPopup;
   private Insets myInsets;
+  private boolean myUpdateThreadOnDirectUpdateChecked;
 
   public ActionButton(@NotNull AnAction action,
                       @Nullable Presentation presentation,
                       @NotNull String place,
                       @NotNull Dimension minimumSize) {
+    this(action, presentation, place, () -> minimumSize);
+  }
+
+  public ActionButton(@NotNull AnAction action,
+                      @Nullable Presentation presentation,
+                      @NotNull String place,
+                      @NotNull Supplier<? extends @NotNull Dimension> minimumSize) {
     boolean isTemplatePresentation = presentation == action.getTemplatePresentation();
     if (isTemplatePresentation) {
       LOG.warn(new Throwable("Template presentations must not be used directly"));
     }
-    setMinimumButtonSize(minimumSize);
+    this.myMinimumButtonSizeFunction = minimumSize;
+    updateMinimumSize();
     setIconInsets(null);
     myRollover = false;
     myMouseDown = false;
@@ -119,13 +131,23 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
   }
 
+  private void updateMinimumSize() {
+    myMinimumButtonSize = JBDimension.create(myMinimumButtonSizeFunction.get());
+  }
+
   public void setNoIconsInPopup(boolean noIconsInPopup) {
     myNoIconsInPopup = noIconsInPopup;
   }
 
+  public void setMinimumButtonSize(Supplier<? extends @NotNull Dimension> size) {
+    myMinimumButtonSizeFunction = size;
+    updateMinimumSize();
+  }
+
   // used in Rider, please don't change visibility
   public void setMinimumButtonSize(@NotNull Dimension size) {
-    myMinimumButtonSize = JBDimension.create(size);
+    myMinimumButtonSizeFunction = () -> size;
+    updateMinimumSize();
   }
 
   @Override
@@ -278,6 +300,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void update() {
+    if (!myUpdateThreadOnDirectUpdateChecked) {
+      myUpdateThreadOnDirectUpdateChecked = true;
+      if (myAction.getActionUpdateThread() == ActionUpdateThread.BGT &&
+          !(myAction instanceof OverridingAction) && // todo workaround BackendDelegatingAction
+          !AnAction.class.equals(ReflectionUtil.getMethodDeclaringClass(myAction.getClass(), "update", AnActionEvent.class))) {
+        String name = myAction.getClass().getName();
+        LOG.error(PluginException.createByClass(
+          myAction.getActionUpdateThread() + " action " + StringUtil.getShortName(name) + " (" + name + ") is not allowed. " +
+          "Only EDT actions are allowed.", null, myAction.getClass()));
+      }
+    }
     AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
     ActionUtil.performDumbAwareUpdate(myAction, e, false);
     updateToolTipText();
@@ -299,12 +332,17 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  protected void setCustomToolTipText(@NlsContexts.Tooltip String toolTipText) {
+    super.setToolTipText(Strings.isNotEmpty(toolTipText) ? toolTipText : null);
+  }
+
   @Override
   public void updateUI() {
     if (myLook != null) {
       myLook.updateUI();
     }
     updateToolTipText();
+    updateMinimumSize();
   }
 
   @Override
@@ -360,7 +398,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
     else if (IconLoader.isGoodSize(myIcon)) {
       Supplier<RGBImageFilter> disableFilter = myPresentation.getClientProperty(Presentation.DISABLE_ICON_FILTER);
-      myDisabledIcon = IconLoader.getDisabledIcon(myIcon, disableFilter, this);
+      myDisabledIcon = IconLoader.INSTANCE.getDisabledIcon(myIcon, disableFilter == null ? null : disableFilter::get);
     }
     else {
       myDisabledIcon = null;

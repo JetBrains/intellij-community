@@ -103,12 +103,12 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
     DefaultJDOMExternalizer.readExternal(this, element);
 
     TextWithImports childrenExpression = DebuggerUtils.getInstance().readTextWithImports(element, "CHILDREN_EXPRESSION");
-    if(childrenExpression != null) {
+    if (childrenExpression != null) {
       setChildrenExpression(childrenExpression);
     }
 
     TextWithImports childrenExpandable = DebuggerUtils.getInstance().readTextWithImports(element, "CHILDREN_EXPANDABLE");
-    if(childrenExpandable != null) {
+    if (childrenExpandable != null) {
       myChildrenExpandable.setReferenceExpression(childrenExpandable);
     }
   }
@@ -128,7 +128,7 @@ public final class ExpressionChildrenRenderer extends ReferenceRenderer implemen
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.unable.to.evaluate.children.expression"));
     }
 
-    NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue.type(), (ValueDescriptor) node.getParent().getDescriptor());
+    NodeRenderer childrenRenderer = getChildrenRenderer(expressionValue.type(), (ValueDescriptor)node.getParent().getDescriptor());
 
     PsiExpression childrenPsiExpression = myChildrenExpression.getPsiExpression(node.getProject());
     if (childrenPsiExpression == null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -42,6 +42,7 @@ import org.junit.Assert;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -105,7 +106,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
    * Debug output of this classes will be captured and reported in case of test failure
    */
   @NotNull
-  public Iterable<Class<?>> getClassesToEnableDebug() {
+  public Collection<Class<?>> getClassesToEnableDebug() {
     return Collections.emptyList();
   }
 

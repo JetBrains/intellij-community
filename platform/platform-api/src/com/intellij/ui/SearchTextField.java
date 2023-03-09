@@ -14,6 +14,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +28,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.ui.dsl.gridLayout.GapsKt.toGaps;
 
 public class SearchTextField extends JPanel {
 
@@ -58,6 +62,10 @@ public class SearchTextField extends JPanel {
   }
 
   public SearchTextField(boolean historyPopupEnabled, @Nullable String historyPropertyName) {
+    this(historyPopupEnabled, true, historyPropertyName);
+  }
+
+  public SearchTextField(boolean historyPopupEnabled, boolean clearActionEnabled, @Nullable String historyPropertyName) {
     super(new BorderLayout());
     this.historyPopupEnabled = historyPopupEnabled;
 
@@ -79,12 +87,13 @@ public class SearchTextField extends JPanel {
         //noinspection unchecked
         if (ui instanceof Condition && ((Condition)ui).value(e)) return;
 
-        if(e.getX() < JBUIScale.scale(28) && myModel.myFullList.size() > 0) {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED && e.getX() < JBUIScale.scale(28) && myModel.myFullList.size() > 0) {
           myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           if (e.getClickCount() == 1) {
-           showPopup();
+            showPopup();
           }
-        } else {
+        }
+        else {
           myTextField.setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
         }
         super.processMouseEvent(e);
@@ -98,6 +107,18 @@ public class SearchTextField extends JPanel {
           bounds.width -= 2 * gap;
         }
         return bounds;
+      }
+
+      @Override
+      public String getToolTipText() {
+        if (myPopup != null && myPopup.isVisible()) return null;
+        return super.getToolTipText();
+      }
+
+      @Override
+      public String getToolTipText(MouseEvent event) {
+        if (myPopup != null && myPopup.isVisible()) return null;
+        return super.getToolTipText(event);
       }
     };
     myTextField.setColumns(15);
@@ -143,12 +164,18 @@ public class SearchTextField extends JPanel {
       myTextField.getInputMap().put(SHOW_HISTORY_KEYSTROKE, "showNextHistoryItem");
     }
 
-    myTextField.putClientProperty("JTextField.variant", "search");
     myTextField.putClientProperty("JTextField.Search.Gap", JBUIScale.scale(4));
     myTextField.putClientProperty("JTextField.Search.CancelAction", (ActionListener)e -> {
       myTextField.setText("");
       onFieldCleared();
     });
+    if (!clearActionEnabled) {
+      myTextField.putClientProperty("JTextField.Search.HideClearAction", true);
+    }
+    myTextField.putClientProperty("JTextField.variant", "search");
+
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toGaps(myTextField.getInsets()));
     DumbAwareAction.create(event -> {
       showPopup();
     }).registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ShowSearchHistory"), myTextField);
@@ -389,7 +416,9 @@ public class SearchTextField extends JPanel {
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
         .setMovable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(chooseRunnable).createPopup();
+        .setItemChoosenCallback(chooseRunnable)
+        .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        .createPopup();
       AlignedPopup.showUnderneathWithoutAlignment(myPopup, getPopupLocationComponent());
     }
   }

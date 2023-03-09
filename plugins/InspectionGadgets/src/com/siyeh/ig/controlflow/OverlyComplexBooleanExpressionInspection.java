@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -27,10 +27,9 @@ import com.siyeh.ig.fixes.ExtractMethodFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
   private static final TokenSet s_booleanOperators =
@@ -58,16 +57,11 @@ public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-
-    final JLabel label = new JLabel(InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"));
-    final JFormattedTextField termLimitTextField = prepareNumberEditor("m_limit");
-
-    panel.addRow(label, termLimitTextField);
-    panel.addCheckbox(InspectionGadgetsBundle.message("overly.complex.boolean.expression.ignore.option"), "m_ignorePureConjunctionsDisjunctions");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      number("m_limit", InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"), 2, 100),
+      checkbox("m_ignorePureConjunctionsDisjunctions", InspectionGadgetsBundle.message("overly.complex.boolean.expression.ignore.option"))
+    );
   }
 
   @Override

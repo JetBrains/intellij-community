@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
@@ -10,13 +10,14 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorBasedQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
@@ -70,12 +71,12 @@ object WrapWithSafeLetCallFixFactories {
                 return@applyTo
             }
             val suggestedVariableName = input.suggestedVariableName
-            val factory = KtPsiFactory(targetExpression)
+            val psiFactory = KtPsiFactory(targetExpression.project)
 
             fun getNewExpression(nullableExpressionText: String, expressionUnderLetText: String): KtExpression {
                 return when (suggestedVariableName) {
-                    "it" -> factory.createExpressionByPattern("$0?.let { $1 }", nullableExpressionText, expressionUnderLetText)
-                    else -> factory.createExpressionByPattern(
+                    "it" -> psiFactory.createExpressionByPattern("$0?.let { $1 }", nullableExpressionText, expressionUnderLetText)
+                    else -> psiFactory.createExpressionByPattern(
                         "$0?.let { $1 -> $2 }",
                         nullableExpressionText,
                         suggestedVariableName,
@@ -120,7 +121,7 @@ object WrapWithSafeLetCallFixFactories {
                 if (qualifiedExpression == targetExpression) {
                     targetExpression.replace(getNewExpression(nullableExpressionText, newInvokeCallText))
                 } else {
-                    qualifiedExpression.replace(factory.createExpression(newInvokeCallText))
+                    qualifiedExpression.replace(psiFactory.createExpression(newInvokeCallText))
                     targetExpression.replace(getNewExpression(nullableExpressionText, targetExpression.text))
                 }
 
@@ -129,7 +130,7 @@ object WrapWithSafeLetCallFixFactories {
                     is KtBinaryExpression, is KtBinaryExpressionWithTypeRHS -> "(${nullableExpression.text})"
                     else -> nullableExpression.text
                 }
-                nullableExpression.replace(factory.createExpression(suggestedVariableName))
+                nullableExpression.replace(psiFactory.createExpression(suggestedVariableName))
                 targetExpression.replace(getNewExpression(nullableExpressionText, targetExpression.text))
             }
         }

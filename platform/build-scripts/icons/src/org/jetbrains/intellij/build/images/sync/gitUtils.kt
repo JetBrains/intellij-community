@@ -37,8 +37,7 @@ internal fun gitPull(repo: Path) {
  * @return map of file paths (relative to [dirToList]) to [GitObject]
  */
 internal fun listGitObjects(repo: Path, dirToList: Path?, fileFilter: (Path) -> Boolean = { true }): Map<String, GitObject> {
-  return listGitTree(repo, dirToList, fileFilter)
-    .collect(Collectors.toMap({ it.first }, { it.second }))
+  return listGitTree(repo, dirToList, fileFilter).collect(Collectors.toMap({ it.first }, { it.second }))
 }
 
 private fun listGitTree(repo: Path, dirToList: Path?, fileFilter: (Path) -> Boolean): Stream<Pair<String, GitObject>> {
@@ -58,26 +57,6 @@ private fun listGitTree(repo: Path, dirToList: Path?, fileFilter: (Path) -> Bool
     // <file>, <object>, repo
     .map { GitObject(it[3], it[2], repo) }
     .map { it.path.removePrefix("$relativeDirToList/") to it }
-}
-
-/**
- * @param repos multiple git repos from which to list files
- * @param root root repo
- * @return map of file paths (relative to [root]) to [GitObject]
- */
-internal fun listGitObjects(root: Path, repos: List<Path>, fileFilter: (Path) -> Boolean = { true }): Map<String, GitObject> {
-  return repos.parallelStream().flatMap { repo ->
-    listGitTree(repo, null, fileFilter).map {
-      // root relative <file> path to git object
-      val rootRelativePath = root.relativize(repo).toString()
-      if (rootRelativePath.isEmpty()) {
-        it.first
-      }
-      else {
-        "$rootRelativePath/${it.first}"
-      } to it.second
-    }
-  }.collect(Collectors.toMap({ it.first }, { it.second }))
 }
 
 /**
@@ -158,7 +137,7 @@ internal fun commitAndPush(repo: Path, branch: String, message: String, user: St
   return commitInfo(repo) ?: error("Unable to read last commit")
 }
 
-internal fun checkout(repo: Path, branch: String) = execute(repo, GIT, "checkout", branch)
+internal fun checkout(repo: Path, branch: String) = execute(repo, GIT, "checkout", "-B", branch)
 
 internal fun push(repo: Path, spec: String, user: String? = null, email: String? = null, force: Boolean = false) =
   retry(doRetry = { beforePushRetry(it, repo, spec, user, email) }) {
@@ -278,7 +257,7 @@ private fun findMergeCommit(repo: Path, commit: String, searchUntil: String = "H
     .lastOrNull(firstParentList::contains)
     ?.let { commitInfo(repo, it) }
     ?.takeIf {
-      // should be merge
+      // should be a merge
       it.parents.size > 1 &&
       // but not some branch merge right after [commit]
       it.parents.first() != commit

@@ -55,8 +55,8 @@ public final class GitLogBranchOperationsActionGroup extends GitSingleCommitActi
     if (provider != null) {
       VcsLogRefManager refManager = provider.getReferenceManager();
       Comparator<VcsRef> comparator = refManager.getLabelsOrderComparator();
-      ContainerUtil.sort(branchRefs, comparator);
-      ContainerUtil.sort(tagRefs, comparator);
+      branchRefs = ContainerUtil.sorted(branchRefs, comparator);
+      tagRefs = ContainerUtil.sorted(tagRefs, comparator);
     }
 
 

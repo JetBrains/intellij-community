@@ -60,5 +60,7 @@
             serviceImplementation="org.jetbrains.kotlin.idea.stubindex.IdeStubIndexService"/>
 
     <globalIndexFilter implementation="org.jetbrains.kotlin.idea.stubindex.KotlinNonSourceRootIndexFilter"/>
+
+    <registryKey key="kotlin.indices.nested.access.enabled" defaultValue="false" description="Allows nested indices access" />
   </extensions>
 </idea-plugin>

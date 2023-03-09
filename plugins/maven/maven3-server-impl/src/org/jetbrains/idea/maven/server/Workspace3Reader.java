@@ -20,19 +20,22 @@ import org.eclipse.aether.repository.WorkspaceReader;
 import org.eclipse.aether.repository.WorkspaceRepository;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMapWrapper;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class Workspace3Reader implements WorkspaceReader {
 
   private final WorkspaceRepository myRepository = new WorkspaceRepository();
 
-  private final MavenWorkspaceMap myWorkspaceMap;
+  private final MavenWorkspaceMapWrapper myWorkspaceMap;
 
   public Workspace3Reader(MavenWorkspaceMap workspaceMap) {
-    myWorkspaceMap = workspaceMap;
+    myWorkspaceMap = new MavenWorkspaceMapWrapper(workspaceMap);
   }
 
   @Override
@@ -48,16 +51,13 @@ public class Workspace3Reader implements WorkspaceReader {
     return resolved.getFile(artifact.getExtension());
   }
 
-  private static boolean equals(String s1, String s2) {
-    return s1 == null ? s2 == null : s1.equals(s2);
-  }
-
   @Override
   public List<String> findVersions(Artifact artifact) {
-    List<String> res = new ArrayList<String>();
+    List<String> res = new ArrayList<>();
 
-    for (MavenId id : myWorkspaceMap.getAvailableIds()) {
-      if (equals(id.getArtifactId(), artifact.getArtifactId()) && equals(id.getGroupId(), artifact.getGroupId())) {
+    Set<MavenId> ids = myWorkspaceMap.getAvailableIdsForArtifactId(artifact.getArtifactId());
+    for (MavenId id : ids) {
+      if (Objects.equals(id.getGroupId(), artifact.getGroupId())) {
         String version = id.getVersion();
 
         if (version != null) {

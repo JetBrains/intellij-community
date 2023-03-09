@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 
 package com.intellij.openapi.progress
@@ -12,7 +12,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 
 /**
- * Coroutine pause-ability is cooperative, the coroutine must periodically invoke [checkCanceled] to achieve that.
+ * Coroutine pause-ability is cooperative, the coroutine must periodically invoke [checkCancelled] to achieve that.
  *
  * Example:
  * ```
@@ -30,7 +30,7 @@ import kotlin.coroutines.resume
  *
  * @param active `true` means non-paused, while `false` creates a suspender in paused state
  * @return handle which can be used to pause and resume the coroutine
- * @see checkCanceled
+ * @see checkCancelled
  */
 fun coroutineSuspender(active: Boolean = true): CoroutineSuspender = CoroutineSuspenderElement(active)
 

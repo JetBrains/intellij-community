@@ -91,19 +91,20 @@ public class ConfigurationFromEditorTest extends LightJavaCodeInsightFixtureTest
 
   public void testConfigurationFromParameterizedValue() {
     JUnitConfiguration configuration = setupConfigurationContext(
-      "import org.junit.jupiter.params.ParameterizedTest;\n" +
-      "import org.junit.jupiter.params.provider.ValueSource;\n" +
-      "\n" +
-      "public class MyTest {\n" +
-      "  @ParameterizedTest\n" +
-      "  @ValueSource(strings = {\n" +
-      "    \"racecar\",\n" +
-      "    \"ra<caret>dar\",\n" +
-      "    \"able was I ere I saw elba\"\n" +
-      "  })\n" +
-      "public void palindromes(String candidate) {}}");
+      """
+        import org.junit.jupiter.params.ParameterizedTest;
+        import org.junit.jupiter.params.provider.ValueSource;
+
+        public class MyTest {
+          @ParameterizedTest
+          @ValueSource(strings = {
+            "racecar",
+            "ra<caret>dar",
+            "able was I ere I saw elba"
+          })
+        public void palindromes(String candidate) {}}""");
     String parameters = configuration.getPersistentData().getProgramParameters();
-    assertTrue(parameters.equals("valueSource 1"));
+    assertEquals("valueSource 1", parameters);
   }
 
   public void testStaticNestedClassWithAnnotations() {

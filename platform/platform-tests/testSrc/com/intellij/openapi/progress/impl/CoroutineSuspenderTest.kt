@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
 import com.intellij.openapi.progress.*
@@ -17,7 +17,7 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
       repeat(count) {
         launch {
           started.release()
-          checkCanceled()
+          checkCancelled()
           fail("must not be called")
         }
       }
@@ -36,10 +36,10 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
     val result = async(Dispatchers.Default + suspender) {
       (1..count).map {
         async { // coroutine context (including CoroutineSuspender) is inherited
-          checkCanceled() // won't suspend
+          checkCancelled() // won't suspend
           started.release()
           paused.acquire()
-          checkCanceled() // should suspend here
+          checkCancelled() // should suspend here
           it
         }
       }.awaitAll().sum()

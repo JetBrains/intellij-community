@@ -1,4 +1,5 @@
 // FIR_COMPARISON
+// FIR_IDENTICAL
 
 interface I {
     fun takeXxx(): Int = 0

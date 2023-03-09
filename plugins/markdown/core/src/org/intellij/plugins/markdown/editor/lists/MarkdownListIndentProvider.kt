@@ -12,7 +12,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLineSaf
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.settings.MarkdownSettings
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 
 /**
@@ -24,7 +24,7 @@ import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 internal class MarkdownListIndentProvider : FormatterBasedLineIndentProvider() {
 
   override fun getLineIndent(project: Project, editor: Editor, language: Language?, offset: Int): String? {
-    if (!MarkdownSettings.getInstance(project).isEnhancedEditingEnabled) {
+    if (!MarkdownCodeInsightSettings.getInstance().state.adjustListIndentation) {
       return null
     }
     val file = PsiEditorUtil.getPsiFile(editor) as? MarkdownFile ?: return null

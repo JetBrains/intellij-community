@@ -6,8 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,9 +22,7 @@ import com.intellij.sh.psi.ShFile;
 import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.openapi.wm.StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL;
-
-public class ShLineEndingsAdapter implements FileDocumentManagerListener {
+final class ShLineEndingsAdapter implements FileDocumentManagerListener {
   private boolean statusBarUpdated;
 
   @Override
@@ -62,11 +58,10 @@ public class ShLineEndingsAdapter implements FileDocumentManagerListener {
     ApplicationManager.getApplication().invokeLater(() -> {
       IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
       StatusBar statusBar = frame != null ? frame.getStatusBar() : null;
-      StatusBarWidget widget = statusBar != null ? statusBar.getWidget(LINE_SEPARATOR_PANEL) : null;
+      StatusBarWidget widget = statusBar != null ? statusBar.getWidget(StatusBar.StandardWidgets.LINE_SEPARATOR_PANEL) : null;
 
       if (widget instanceof LineSeparatorPanel) {
-        FileEditorManagerEvent event = new FileEditorManagerEvent(FileEditorManager.getInstance(project), null, null);
-        ((LineSeparatorPanel)widget).selectionChanged(event);
+        ((LineSeparatorPanel)widget).selectionChanged(null);
       }
     });
   }

@@ -1,9 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Generate Kotlin Tests" type="Application" factoryName="Application">
-    <option name="MAIN_CLASS_NAME" value="org.jetbrains.kotlin.testGenerator.GenerateTestsKt" />
-    <module name="kotlin.generators" />
-    <method v="2">
-      <option name="Make" enabled="true" />
-    </method>
-  </configuration>
-</component>

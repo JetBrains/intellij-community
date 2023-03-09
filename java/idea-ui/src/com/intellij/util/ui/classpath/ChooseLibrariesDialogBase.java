@@ -36,7 +36,6 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
-import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
@@ -122,13 +121,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   }
 
   protected void queueUpdateAndSelect(@NotNull final Library library) {
-    myModel.invalidateAsync().thenRun(() -> {
-      ((AsyncTreeModel)myTree.getModel()).accept(path -> {
-        return TreeVisitor.Action.CONTINUE; // traverse to update myParentsMap
-      }).onProcessed(path -> {
-        myModel.select(library, myTree, p -> {});
-      });
-    });
+    myModel.select(library, myTree, path -> {});
   }
 
   private boolean processSelection(final Processor<? super Library> processor) {

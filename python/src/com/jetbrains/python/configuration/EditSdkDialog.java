@@ -116,7 +116,7 @@ public class EditSdkDialog extends DialogWrapper {
       var type = TargetEnvironmentConfigurationKt.getTargetType(configuration);
       if (type instanceof BrowsableTargetEnvironmentType) {
         return ((BrowsableTargetEnvironmentType)type).createBrowser(project, label, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-                                                                    myInterpreterPathTextField.getTextField(), () -> configuration, new TargetBrowserHints(true));
+                                                                    myInterpreterPathTextField.getTextField(), () -> configuration, new TargetBrowserHints(true, null));
       }
     }
     return null;

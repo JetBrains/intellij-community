@@ -60,7 +60,7 @@ public final class MakeFieldFinalFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     final PsiField field;
     if (element instanceof PsiReferenceExpression) {

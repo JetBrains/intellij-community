@@ -147,8 +147,7 @@ private fun GrReferenceElement<*>.canResolveToTypeParameter(): Boolean {
     is GrAnnotation,
     is GrImportStatement,
     is GrNewExpression,
-    is GrAnonymousClassDefinition,
-    is GrCodeReferenceElement -> false
+    is GrAnonymousClassDefinition -> false
     else -> true
   }
 }

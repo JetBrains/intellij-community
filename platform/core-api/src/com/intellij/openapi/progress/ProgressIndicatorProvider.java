@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 public abstract class ProgressIndicatorProvider {
@@ -15,7 +15,7 @@ public abstract class ProgressIndicatorProvider {
    * or null if this code is running outside any progress.
    */
   public static ProgressIndicator getGlobalProgressIndicator() {
-    ProgressManager instance = ProgressManager.ourInstance;
+    ProgressManager instance = ProgressManager.getInstanceOrNull();
     return instance == null ? null : instance.getProgressIndicator();
   }
 

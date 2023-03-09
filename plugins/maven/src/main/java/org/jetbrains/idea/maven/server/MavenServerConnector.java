@@ -144,7 +144,7 @@ public abstract class MavenServerConnector implements Disposable {
     return myVmOptions;
   }
 
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 

@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 open class S {
     open fun s(vararg v: Int) {}
 }

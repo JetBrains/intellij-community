@@ -6,17 +6,19 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.remoteServer.agent.util.log.TerminalListener.TtyResizeHandler;
-import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.ui.TerminalWidget;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
+import org.jetbrains.plugins.terminal.TerminalProcessOptions;
 
 import java.awt.*;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalProcess> {
   private final @NlsSafe String myPipeName;
@@ -24,7 +26,7 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   private final TtyResizeHandler myTtyResizeHandler;
   private final boolean myDeferSessionUntilFirstShown;
 
-  public CloudTerminalRunner(@NotNull Project project, @NotNull @NlsSafe String pipeName, CloudTerminalProcess process,
+  public CloudTerminalRunner(@NotNull Project project, @NotNull @NlsSafe String pipeName, @NotNull CloudTerminalProcess process,
                              @Nullable TtyResizeHandler resizeHandler,
                              boolean deferSessionUntilFirstShown) {
     super(project);
@@ -38,12 +40,15 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
     this(project, pipeName, process, null, false);
   }
 
-  public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable String currentWorkingDirectory) {
-    return super.createTerminalWidget(parent, currentWorkingDirectory, myDeferSessionUntilFirstShown);
+  @Override
+  public @NotNull TerminalWidget createShellTerminalWidget(@NotNull Disposable parent,
+                                                           @Nullable String currentWorkingDirectory,
+                                                           boolean deferSessionStartUntilUiShown) {
+    return super.createShellTerminalWidget(parent, currentWorkingDirectory, myDeferSessionUntilFirstShown);
   }
 
   @Override
-  public CloudTerminalProcess createProcess(@Nullable String directory) {
+  public @NotNull CloudTerminalProcess createProcess(@NotNull TerminalProcessOptions options) throws ExecutionException {
     return myProcess;
   }
 

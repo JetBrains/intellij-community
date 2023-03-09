@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerManager;
@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import java.io.OutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class RemoteDebugProcessHandler extends ProcessHandler{
+public class RemoteDebugProcessHandler extends ProcessHandler {
   private final Project myProject;
   private final boolean myAutoRestart;
   private final AtomicBoolean myClosedByUser = new AtomicBoolean();
@@ -56,7 +56,7 @@ public class RemoteDebugProcessHandler extends ProcessHandler{
   protected void destroyProcessImpl() {
     myClosedByUser.set(true);
     DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
-    if(debugProcess != null) {
+    if (debugProcess != null) {
       debugProcess.stop(true);
     }
   }
@@ -65,7 +65,7 @@ public class RemoteDebugProcessHandler extends ProcessHandler{
   protected void detachProcessImpl() {
     myClosedByUser.set(true);
     DebugProcess debugProcess = DebuggerManager.getInstance(myProject).getDebugProcess(this);
-    if(debugProcess != null) {
+    if (debugProcess != null) {
       debugProcess.stop(false);
     }
   }

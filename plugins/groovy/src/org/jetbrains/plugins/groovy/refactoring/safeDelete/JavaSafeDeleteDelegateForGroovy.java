@@ -35,7 +35,7 @@ import java.util.List;
 public class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDelegate {
   @Override
   public void createUsageInfoForParameter(@NotNull PsiReference reference,
-                                          @NotNull List<UsageInfo> usages,
+                                          @NotNull List<? super UsageInfo> usages,
                                           @NotNull PsiNamedElement parameter,
                                           int paramIdx, boolean isVararg) {
     final PsiElement element = reference.getElement();
@@ -121,7 +121,7 @@ public class JavaSafeDeleteDelegateForGroovy implements JavaSafeDeleteDelegate {
   }
 
   @Override
-  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement[] elements2Delete, @NotNull List<UsageInfo> result) { }
+  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement @NotNull [] elements2Delete, @NotNull List<? super UsageInfo> result) { }
 
   @Override
   public UsageInfo createExtendsListUsageInfo(PsiElement refElement, PsiReference reference) {

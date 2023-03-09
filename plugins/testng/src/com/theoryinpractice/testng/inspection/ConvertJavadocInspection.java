@@ -2,6 +2,7 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -68,6 +69,13 @@ public class ConvertJavadocInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     public boolean startInWriteAction() {
       return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final PsiDocTag tag = (PsiDocTag)previewDescriptor.getPsiElement();
+      doFix(project, tag);
+      return IntentionPreviewInfo.DIFF;
     }
 
     @Override

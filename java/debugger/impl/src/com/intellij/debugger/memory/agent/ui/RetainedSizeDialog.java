@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent.ui;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -46,6 +46,7 @@ import static com.intellij.debugger.memory.action.DebuggerTreeAction.getObjectRe
 public class RetainedSizeDialog extends DialogWrapper {
   private static final Icon HELD_OBJECTS_MARK_ICON = AllIcons.Nodes.Locked;
   public static final Color HELD_OBJECTS_BACKGROUND_COLOR;
+
   static {
     Color background = UIUtil.getTreeSelectionBackground(true);
     HELD_OBJECTS_BACKGROUND_COLOR = new JBColor(new Color(background.getRed(), background.getGreen(), background.getBlue(), 30),

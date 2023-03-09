@@ -9,6 +9,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.lang.PsiBuilderUtil.expect;
 import static com.intellij.lang.java.parser.JavaParserUtil.*;
@@ -28,16 +29,31 @@ public class PatternParser {
    */
   @Contract(pure = true)
   public boolean isPattern(final PsiBuilder builder) {
+    PsiBuilder.Marker patternStart = preParsePattern(builder, true);
+    if (patternStart == null) {
+      return false;
+    }
+    patternStart.rollbackTo();
+    return true;
+  }
+
+  @Nullable("when not pattern")
+  PsiBuilder.Marker preParsePattern(final PsiBuilder builder, boolean parensAllowed) {
     PsiBuilder.Marker patternStart = builder.mark();
-    while (builder.getTokenType() == JavaTokenType.LPARENTH) {
-      builder.advanceLexer();
+    if (parensAllowed) {
+      while (builder.getTokenType() == JavaTokenType.LPARENTH) {
+        builder.advanceLexer();
+      }
     }
     myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS);
     PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
     boolean isPattern = type != null && (builder.getTokenType() == JavaTokenType.IDENTIFIER ||
                                          builder.getTokenType() == JavaTokenType.LPARENTH);
-    patternStart.rollbackTo();
-    return isPattern;
+    if (!isPattern) {
+      patternStart.rollbackTo();
+      return null;
+    }
+    return patternStart;
   }
 
   /**

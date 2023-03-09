@@ -220,9 +220,9 @@ fun main(args: Array<String>) {}
         val mark = marks[0] as GutterIconRenderer
         val group = mark.popupMenuActions
         assertNotNull(group)
-        val event = TestActionEvent()
+        val event = TestActionEvent.createTestEvent()
         val list = ContainerUtil.findAll(group!!.getChildren(event)) { action: AnAction ->
-            val actionEvent = TestActionEvent()
+            val actionEvent = TestActionEvent.createTestEvent()
             action.update(actionEvent)
             val text = actionEvent.presentation.text
             text != null && text.startsWith("Run '") && text.endsWith("'")

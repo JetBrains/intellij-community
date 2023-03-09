@@ -22,7 +22,7 @@ import com.jetbrains.python.target.targetWithVfs.TargetWithMappedLocalVfs
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-interface PythonInterpreterTargetEnvironmentFactory: PluginAware {
+interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
   /**
    * Docker target may also access WSL, hence returns WSL here.
    * Note, that you shouldn't return [getTargetType] here, since WSL can't run another WSL (you need to check distro),

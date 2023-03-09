@@ -75,16 +75,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
 
   @Override
   protected XmlAttributeDescriptor[] collectAttributeDescriptors(@Nullable XmlTag context) {
-    final QName qName = null;
-    final DPattern[] patterns;
-    if (qName == null) {
-      patterns = myPatterns;
-    } else {
-      final List<DElementPattern> p = ContainerUtil.findAll(myPatterns, pattern -> pattern.getName().contains(qName));
-      patterns = p.toArray(new DPattern[0]);
-    }
-
-    return computeAttributeDescriptors(AttributeFinder.find(patterns));
+    return computeAttributeDescriptors(AttributeFinder.find(myPatterns));
   }
 
   public boolean equals(Object o) {

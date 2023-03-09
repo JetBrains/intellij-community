@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
@@ -31,14 +32,15 @@ import org.jetbrains.idea.devkit.dom.*;
 import javax.swing.*;
 import java.util.Objects;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionBase {
   public boolean highlightNonDynamicEPUsages = false;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.option.highlight.usages.ep"), this,
-                                          "highlightNonDynamicEPUsages");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("highlightNonDynamicEPUsages", DevKitBundle.message("inspections.plugin.xml.dynamic.plugin.option.highlight.usages.ep")));
   }
 
   @Override

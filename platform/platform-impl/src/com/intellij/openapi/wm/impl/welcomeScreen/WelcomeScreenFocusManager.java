@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ide.DataManager;
@@ -18,7 +18,7 @@ import java.awt.event.*;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionLinkSelectionColor;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainBackground;
 
-public class WelcomeScreenFocusManager {
+public final class WelcomeScreenFocusManager {
 
   static void installFocusable(@NotNull final Container parentContainer,
                                final JComponent comp,

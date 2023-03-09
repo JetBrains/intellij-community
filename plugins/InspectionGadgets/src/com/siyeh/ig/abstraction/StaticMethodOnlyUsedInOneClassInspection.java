@@ -4,6 +4,7 @@ package com.siyeh.ig.abstraction;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -37,6 +38,8 @@ import org.jetbrains.uast.UElement;
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspection {
 
   @SuppressWarnings("PublicField")
@@ -53,15 +56,13 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
 
   static final Key<SmartPsiElementPointer<PsiClass>> MARKER = Key.create("STATIC_METHOD_USED_IN_ONE_CLASS");
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.test.option"), "ignoreTestClasses");
-    panel.addCheckbox(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.anonymous.option"), "ignoreAnonymousClasses");
-    panel.addCheckbox(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.on.conflicts"), "ignoreOnConflicts");
-    panel.addCheckbox(InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.utility.classes"), "ignoreUtilityClasses");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreTestClasses", InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.test.option")),
+      checkbox("ignoreAnonymousClasses", InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.anonymous.option")),
+      checkbox("ignoreOnConflicts", InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.on.conflicts")),
+      checkbox("ignoreUtilityClasses", InspectionGadgetsBundle.message("static.method.only.used.in.one.class.ignore.utility.classes")));
   }
 
   @Override

@@ -30,7 +30,7 @@ class a {
       for (<error descr="Incompatible types. Found: 'int', required: 'java.lang.Object'">int p</error>: list) {}
     }
 
-    for (int gjkh : <error descr="foreach not applicable to type 'int'">222</error>) {
+    for (int gjkh : <error descr="Foreach not applicable to type 'int'">222</error>) {
     }
   }
 }

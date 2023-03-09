@@ -15,6 +15,8 @@ interface InlaySettingsProvider {
   /**
    * Returns list of hint provider models to be shown in Preferences | Editor | Inlay Hints
    * Languages are expected to be only from [getSupportedLanguages]
+   *
+   * WARNING! Make sure you are not creating Swing components inside. It is not guaranteed to run in EDT!
    */
   fun createModels(project: Project, language: Language): List<InlayProviderSettingsModel>
 

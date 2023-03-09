@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.naming;
 
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -24,6 +25,8 @@ import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class OverloadedMethodsWithSameNumberOfParametersInspection extends BaseInspection {
 
@@ -37,9 +40,10 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection extends BaseI
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "overloaded.methods.with.same.number.parameters.option"), this, "ignoreInconvertibleTypes");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInconvertibleTypes", InspectionGadgetsBundle.message(
+        "overloaded.methods.with.same.number.parameters.option")));
   }
 
   @Override

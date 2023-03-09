@@ -598,13 +598,13 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
 
     createProjectSubFile("pA-1/build.gradle",
                          createBuildScriptBuilder()
-                           .applyPlugin("'java-library'")
+                           .applyPlugin("java-library")
                            .addDependency("implementation 'group:pC'")
                            .generate());
 
     createProjectSubFile("pA-2/build.gradle",
                          createBuildScriptBuilder()
-                           .applyPlugin("'java-library'")
+                           .applyPlugin("java-library")
                            .addDependency("implementation project(':pA-1')")
                            .addDependency("implementation 'group:pB'")
                            .generate());
@@ -612,14 +612,14 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
     createProjectSubFile("pB/build.gradle",
                          createBuildScriptBuilder()
                            .addPostfix("group = 'group'")
-                           .applyPlugin("'java-library'")
+                           .applyPlugin("java-library")
                            .addDependency("api 'group:pC'")
                            .generate());
 
     createProjectSubFile("pC/build.gradle",
                          createBuildScriptBuilder()
                            .addPostfix("group = 'group'")
-                           .applyPlugin("'java-library'")
+                           .applyPlugin("java-library")
                            .generate());
 
     //enableGradleDebugWithSuspend();

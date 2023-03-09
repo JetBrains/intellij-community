@@ -210,7 +210,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     task {
       text(LessonsBundle.message("debug.workflow.evaluate.it", LessonUtil.rawEnter()))
       triggerUI().component l@{ ui: XDebuggerTree ->
-        if (ui.root.childCount == 0) return@l false
         val resultNode = ui.root.getChildAt(0) as? WatchNodeImpl ?: return@l false
         resultNode.expression.expression == needToEvaluate
       }

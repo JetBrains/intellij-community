@@ -34,7 +34,7 @@ class WorkspaceEntityExtensionDelegate<T> {
   operator fun setValue(thisRef: WorkspaceEntity, property: KProperty<*>, value: T?) {
     thisRef as ModifiableWorkspaceEntityBase<*, *>
     val entities = if (value is List<*>) value else listOf(value)
-    thisRef.linkExternalEntity(property.returnTypeKClass, property.isChildProperty, entities as List<WorkspaceEntity?>)
+    thisRef.updateReferenceToEntity(property.returnTypeKClass, property.isChildProperty, entities as List<WorkspaceEntity?>)
   }
 
   private fun computeOrGetCachedMetadata(property: KProperty<*>): PropertyMetadata {

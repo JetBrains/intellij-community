@@ -44,7 +44,7 @@ import java.util.concurrent.CompletableFuture
 
 object InplaceExtractUtils {
 
-  private fun createInsertedHighlighting(editor: Editor, range: TextRange): Disposable {
+  fun createInsertedHighlighting(editor: Editor, range: TextRange): Disposable {
     val project = editor.project ?: return Disposable {}
     val highlighters = SmartList<RangeHighlighter>()
     val manager = HighlightManager.getInstance(project)
@@ -172,7 +172,7 @@ object InplaceExtractUtils {
     return TemplateInlayUtil.createNavigatableButtonWithPopup(templateState.editor, offset, presentation, settingsPopup.panel, templateElement)
   }
 
-  private fun addPreview(preview: EditorCodePreview, editor: Editor, lines: IntRange, navigatableOffset: Int){
+  fun addPreview(preview: EditorCodePreview, editor: Editor, lines: IntRange, navigatableOffset: Int){
     val navigatableMarker = createGreedyRangeMarker(editor.document, TextRange(navigatableOffset, navigatableOffset))
     Disposer.register(preview) { navigatableMarker.dispose() }
     preview.addPreview(lines, onClickAction = { navigateToEditorOffset(editor, navigatableMarker.range?.endOffset) })
@@ -192,7 +192,7 @@ object InplaceExtractUtils {
 
   private fun IntRange.trim(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)
 
-  private fun getLinesFromTextRange(document: Document, range: TextRange): IntRange {
+  fun getLinesFromTextRange(document: Document, range: TextRange): IntRange {
     return document.getLineNumber(range.startOffset)..document.getLineNumber(range.endOffset)
   }
 

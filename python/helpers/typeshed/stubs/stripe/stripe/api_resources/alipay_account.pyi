@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, NoReturn
 
 from stripe.api_resources.abstract import (
     DeletableAPIResource as DeletableAPIResource,
@@ -14,4 +14,4 @@ class AlipayAccount(DeletableAPIResource, UpdateableAPIResource):
     @classmethod
     def retrieve(
         cls, id, api_key: Any | None = ..., stripe_version: Any | None = ..., stripe_account: Any | None = ..., **params
-    ) -> None: ...
+    ) -> NoReturn: ...

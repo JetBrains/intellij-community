@@ -17,44 +17,65 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui
 
 import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.intellij.openapi.components.Service
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackagesListPanelProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreePath
 
-@Service(Service.Level.PROJECT)
-internal class PkgsUiCommandsService(project: Project) : UiStateModifier, UiStateSource {
+internal class PkgsUiCommandsService(private val project: Project) : UiStateModifier {
 
-    private val programmaticSearchQueryChannel = Channel<String>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val programmaticTargetModulesChannel = Channel<TargetModules>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val programmaticSelectedDependencyChannel = Channel<UnifiedDependency>(onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val modulesTree
+        get() = project.service<PackagesListPanelProvider.PanelContainer>()
+            .panel
+            .modulesTree
 
-    override val searchQueryFlow: Flow<String> = programmaticSearchQueryChannel.consumeAsFlow()
-        .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
+    private val packagesListPanel
+        get() = project.service<PackagesListPanelProvider.PanelContainer>()
+            .panel
+            .packagesListPanel
 
-    override val targetModulesFlow: Flow<TargetModules> = programmaticTargetModulesChannel.consumeAsFlow()
-        .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
-
-    override val selectedDependencyFlow: Flow<UnifiedDependency> = programmaticSelectedDependencyChannel.consumeAsFlow()
-        .shareIn(project.lifecycleScope, SharingStarted.Eagerly)
+    private val packagesTable
+        get() = project.service<PackagesListPanelProvider.PanelContainer>()
+            .panel
+            .packagesListPanel
+            .packagesTable
 
     override fun setSearchQuery(query: String) {
-        programmaticSearchQueryChannel.trySend(query)
+        project.lifecycleScope.launch(Dispatchers.EDT) {
+            packagesListPanel.searchTextField.text = query
+        }
     }
 
     override fun setTargetModules(modules: TargetModules) {
-        programmaticTargetModulesChannel.trySend(modules)
+        project.lifecycleScope.launch {
+            val queue = mutableListOf(modulesTree.model.root as DefaultMutableTreeNode)
+            var path: TreePath? = null
+            while (queue.isNotEmpty()) {
+                val elem = queue.removeAt(0)
+                if (elem.userObject as TargetModules == modules) {
+                    path = TreePath(elem.path)
+                    break
+                } else {
+                    queue.addAll(elem.children().asSequence().filterIsInstance<DefaultMutableTreeNode>())
+                }
+            }
+            if (path != null) withContext(Dispatchers.EDT) {
+                modulesTree.selectionModel.selectionPath = path
+            }
+        }
     }
 
     override fun setDependency(coordinates: UnifiedDependency) {
-        programmaticSelectedDependencyChannel.trySend(coordinates)
+        project.lifecycleScope.launch {
+            packagesTable.setSelection(coordinates)
+        }
     }
 }

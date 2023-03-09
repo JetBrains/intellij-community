@@ -34,6 +34,7 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -648,7 +649,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
   }
 
-  private final class RunAction extends AnAction {
+  private final class RunAction extends AnAction implements DumbAware {
     RunAction() {
       super(AntBundle.messagePointer("run.ant.file.or.target.action.name"),
             AntBundle.messagePointer("run.ant.file.or.target.action.description"), AllIcons.Actions.Execute);
@@ -744,7 +745,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
   }
 
-  private final class ShowAllTargetsAction extends ToggleAction {
+  private final class ShowAllTargetsAction extends ToggleAction implements DumbAware {
     ShowAllTargetsAction() {
       super(AntBundle.messagePointer("filter.ant.targets.action.name"), AntBundle.messagePointer("filter.ant.targets.action.description"),
             AllIcons.General.Filter);

@@ -133,7 +133,7 @@ final class ServiceViewSourceScrollHelper {
       select(Arrays.asList(editors).iterator());
     }
 
-    private void select(Iterator<FileEditor> editors) {
+    private void select(Iterator<? extends FileEditor> editors) {
       if (!editors.hasNext()) return;
 
       FileEditor editor = editors.next();

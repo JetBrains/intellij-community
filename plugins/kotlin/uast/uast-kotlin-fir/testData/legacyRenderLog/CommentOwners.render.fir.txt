@@ -40,7 +40,7 @@ public final class TopLevelClass {
 public final enum MyBooleanEnum {
     @null TRUE
     @null FALSE
-    private fun MyBooleanEnum() = UastEmptyExpression
     public static fun values() : MyBooleanEnum[] = UastEmptyExpression
-    public static fun valueOf(@org.jetbrains.annotations.NotNull name: java.lang.String) : MyBooleanEnum = UastEmptyExpression
+    public static fun valueOf(value: java.lang.String) : MyBooleanEnum = UastEmptyExpression
+    private fun MyBooleanEnum() = UastEmptyExpression
 }

@@ -6,8 +6,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.IntPair;
-import com.intellij.util.Producer;
 
 import java.util.List;
 
@@ -136,10 +134,4 @@ public interface DiffUserDataKeys {
    * @see com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings#isEnableAligningChangesMode
    */
   Key<Boolean> ALIGNED_TWO_SIDED_DIFF = Key.create("Diff.AlignTwoSidedDiff");
-
-  /**
-   * Override left and right borders of area showing changed lines
-   * see {@link com.intellij.openapi.diff.LineStatusMarkerDrawUtil#getGutterArea}
-   */
-  Key<Producer<IntPair>> CUSTOM_GUTTER_AREA_FUNC = Key.create("Diff.customGutterAreaFunc");
 }

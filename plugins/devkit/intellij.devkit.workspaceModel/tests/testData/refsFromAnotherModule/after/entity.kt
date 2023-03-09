@@ -24,6 +24,9 @@ interface ReferredEntity : WorkspaceEntity {
   }
 
   companion object : Type<ReferredEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(version: Int, name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ReferredEntity {
       val builder = builder()
       builder.version = version

@@ -2,7 +2,7 @@ package com.pme.util;
 
 import java.io.*;
 
-public class StreamUtil {
+public final class StreamUtil {
   public static long getOffset(DataInput stream) throws IOException {
     if (stream instanceof OffsetTrackingInputStream) {
       return ((OffsetTrackingInputStream)stream).getOffset();

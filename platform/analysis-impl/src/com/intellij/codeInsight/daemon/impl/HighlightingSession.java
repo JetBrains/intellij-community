@@ -15,14 +15,25 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * This instance is created at the highlighting start and discarded when the highlighting is finished.
+ * Intended to store highlighting-related data to make it accessible in the background, during the highlighting process,
+ * e.g., inside {@link Annotator#annotate(PsiElement, AnnotationHolder)} or {@link com.intellij.codeInspection.LocalInspectionTool#checkFile(PsiFile, InspectionManager, boolean)} methods.
+ */
+@ApiStatus.NonExtendable
 public interface HighlightingSession {
   @NotNull
   Project getProject();
@@ -40,4 +51,6 @@ public interface HighlightingSession {
 
   @NotNull
   ProperTextRange getVisibleRange();
+
+  boolean isEssentialHighlightingOnly();
 }

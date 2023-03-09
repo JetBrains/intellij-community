@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,17 +41,20 @@ public interface ProjectFileIndex extends FileIndex {
   /**
    * Returns {@code true} if {@code file} is located under project content or library roots and not excluded or ignored
    */
+  @RequiresReadLock
   boolean isInProject(@NotNull VirtualFile file);
 
   /**
    * Returns {@code true} if {@code file} is located under project content or library roots, regardless of whether it's marked as excluded or not,
    * and returns {@code false} if {@code file} is located outside or it or one of its parent directories is ignored.
    */
+  @RequiresReadLock
   boolean isInProjectOrExcluded(@NotNull VirtualFile file);
 
   /**
    * Returns module to which content the specified file belongs or null if the file does not belong to content of any module.
    */
+  @RequiresReadLock
   @Nullable
   Module getModuleForFile(@NotNull VirtualFile file);
 
@@ -59,12 +63,14 @@ public interface ProjectFileIndex extends FileIndex {
    *
    * @param honorExclusion if {@code false} the containing module will be returned even if the file is located under a folder marked as excluded
    */
+  @RequiresReadLock
   @Nullable
   Module getModuleForFile(@NotNull VirtualFile file, boolean honorExclusion);
 
   /**
    * Returns the order entries which contain the specified file (either in CLASSES or SOURCES).
    */
+  @RequiresReadLock
   @NotNull
   List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file);
 
@@ -74,6 +80,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @return the file for the classpath entry, or null if the file is not a compiled
    *         class file or directory belonging to a library.
    */
+  @RequiresReadLock
   @Nullable
   VirtualFile getClassRootForFile(@NotNull VirtualFile file);
 
@@ -82,12 +89,14 @@ public interface ProjectFileIndex extends FileIndex {
    *
    * @return the file for the source root, or null if the file is not located under any of the source roots for the module.
    */
+  @RequiresReadLock
   @Nullable
   VirtualFile getSourceRootForFile(@NotNull VirtualFile file);
 
   /**
    * Returns the module content root to which the specified file or directory belongs or null if the file does not belong to content of any module.
    */
+  @RequiresReadLock
   @Nullable
   VirtualFile getContentRootForFile(@NotNull VirtualFile file);
 
@@ -96,6 +105,7 @@ public interface ProjectFileIndex extends FileIndex {
    *
    * @param honorExclusion if {@code false} the containing content root will be returned even if the file is located under a folder marked as excluded
    */
+  @RequiresReadLock
   @Nullable
   VirtualFile getContentRootForFile(@NotNull VirtualFile file, final boolean honorExclusion);
 
@@ -103,6 +113,7 @@ public interface ProjectFileIndex extends FileIndex {
    * @deprecated use {@link com.intellij.openapi.roots.PackageIndex#getPackageNameByDirectory(VirtualFile)} from Java plugin instead.
    */
   @Deprecated
+  @RequiresReadLock
   @Nullable
   String getPackageNameByDirectory(@NotNull VirtualFile dir);
 
@@ -113,29 +124,34 @@ public interface ProjectFileIndex extends FileIndex {
    * Use {@link #isInLibraryClasses} with additional {@code !file.isDirectory()} check instead.   
    */
   @Deprecated
+  @RequiresReadLock
   boolean isLibraryClassFile(@NotNull VirtualFile file);
 
   /**
    * Returns true if {@code fileOrDir} is a file or directory from production/test sources of some module or sources of some library which is included into dependencies
    * of some module.
    */
+  @RequiresReadLock
   boolean isInSource(@NotNull VirtualFile fileOrDir);
 
   /**
    * Returns true if {@code fileOrDir} belongs to classes of some library which is included into dependencies of some module.
    */
+  @RequiresReadLock
   boolean isInLibraryClasses(@NotNull VirtualFile fileOrDir);
 
   /**
    * @return true if the file belongs to the classes or sources of a library added to dependencies of the project,
    *         false otherwise
    */
+  @RequiresReadLock
   boolean isInLibrary(@NotNull VirtualFile fileOrDir);
 
   /**
    * Returns true if {@code fileOrDir} is a file or directory from sources of some library which is included into dependencies
    * of some module.
    */
+  @RequiresReadLock
   boolean isInLibrarySource(@NotNull VirtualFile fileOrDir);
 
   /**
@@ -144,6 +160,7 @@ public interface ProjectFileIndex extends FileIndex {
    * If you want to check if the file or one of its parents is ignored use {@link #isUnderIgnored(VirtualFile)}.
    */
   @Deprecated(forRemoval = true)
+  @RequiresReadLock
   boolean isIgnored(@NotNull VirtualFile file);
 
   /**
@@ -152,6 +169,7 @@ public interface ProjectFileIndex extends FileIndex {
    *
    * @return true if {@code file} is excluded or ignored, false otherwise.
    */
+  @RequiresReadLock
   boolean isExcluded(@NotNull VirtualFile file);
 
   /**
@@ -160,18 +178,21 @@ public interface ProjectFileIndex extends FileIndex {
    *
    * @return true if {@code file} is ignored, false otherwise.
    */
+  @RequiresReadLock
   boolean isUnderIgnored(@NotNull VirtualFile file);
 
   /**
    * Returns type of the module source root which contains the given {@code file}, or {@code null} if {@code file} doesn't belong to sources 
    * of modules.
    */
+  @RequiresReadLock
   @Nullable JpsModuleSourceRootType<?> getContainingSourceRootType(@NotNull VirtualFile file);
 
   /**
    * Returns {@code true} if {@code file} is located under a source root which is marked as containing generated sources. This method is 
    * mostly for internal use only. If you need to check if a source file is generated, it's better to use {@link com.intellij.openapi.roots.GeneratedSourcesFilter#isGeneratedSourceByAnyFilter} instead.
    */
+  @RequiresReadLock
   boolean isInGeneratedSources(@NotNull VirtualFile file);
 
   /**
@@ -179,6 +200,7 @@ public interface ProjectFileIndex extends FileIndex {
    * {@link #getContainingSourceRootType} or {@link #isInGeneratedSources}.
    */
   @Deprecated
+  @RequiresReadLock
   @Nullable
   default SourceFolder getSourceFolder(@NotNull VirtualFile fileOrDir) {
     return null;

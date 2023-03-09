@@ -16,15 +16,12 @@ import org.jetbrains.kotlin.fileClasses.JvmMultifileClassPartInfo
 import org.jetbrains.kotlin.fileClasses.fileClassInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.BinaryModuleInfo
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.caches.project.binariesScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.decompiler.navigation.MemberMatching.*
-import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
-import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
+import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -32,6 +29,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.debugText.getDebugText
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 object SourceNavigationHelper {
     private val LOG = Logger.getInstance(SourceNavigationHelper::class.java)
@@ -53,13 +51,14 @@ object SourceNavigationHelper {
         SourceNavigationHelper.forceResolve = forceResolve
     }
 
-    private fun targetScopes(declaration: KtNamedDeclaration, navigationKind: NavigationKind): List<GlobalSearchScope> {
+    private fun targetScopes(declaration: KtElement, navigationKind: NavigationKind): List<GlobalSearchScope> {
         val containingFile = declaration.containingKtFile
         val vFile = containingFile.virtualFile ?: return emptyList()
 
+        val project = declaration.project
         return when (navigationKind) {
             NavigationKind.CLASS_FILES_TO_SOURCES -> {
-                val binaryModuleInfos = ModuleInfoProvider.getInstance(declaration.project)
+                val binaryModuleInfos = ModuleInfoProvider.getInstance(project)
                     .collectLibraryBinariesModuleInfos(vFile)
                     .toList()
 
@@ -84,14 +83,14 @@ object SourceNavigationHelper {
                     // acceptOverrides). That's why we include only .class jar in the scope.
                     val psiClass = containingFile.findFacadeClass()
                     if (psiClass != null) {
-                        return ModuleInfoProvider.getInstance(declaration.project)
+                        return ModuleInfoProvider.getInstance(project)
                             .collectLibraryBinariesModuleInfos(psiClass.containingFile.virtualFile)
                             .map { it.binariesScope }
                             .toList()
                             .union()
                     }
                 }
-                ModuleInfoProvider.getInstance(declaration.project)
+                ModuleInfoProvider.getInstance(project)
                     .collectLibrarySourcesModuleInfos(vFile)
                     .map { it.binariesModuleInfo.binariesScope }
                     .toList()
@@ -269,7 +268,8 @@ object SourceNavigationHelper {
         from: KtDeclaration,
         navigationKind: NavigationKind
     ): KtDeclaration {
-        if (DumbService.isDumb(from.project)) return from
+        val project = from.project
+        if (DumbService.isDumb(project)) return from
 
         when (navigationKind) {
             NavigationKind.CLASS_FILES_TO_SOURCES -> if (!from.containingKtFile.isCompiled) return from
@@ -298,7 +298,8 @@ object SourceNavigationHelper {
             findFirstMatchingInIndex(typeAlias, navigationKind, KotlinTopLevelTypeAliasFqNameIndex)
 
         override fun visitParameter(parameter: KtParameter, data: Unit): KtDeclaration? {
-            val callableDeclaration = parameter.parent.parent as KtCallableDeclaration
+            val callableDeclaration = parameter.parents.match(KtParameterList::class, last = KtCallableDeclaration::class)
+                ?: error("Can't typeMatch ${parameter.parent.parent}")
             val parameters = callableDeclaration.valueParameters
             val index = parameters.indexOf(parameter)
 

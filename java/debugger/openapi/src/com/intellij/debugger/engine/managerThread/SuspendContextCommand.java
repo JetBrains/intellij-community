@@ -17,6 +17,6 @@ package com.intellij.debugger.engine.managerThread;
 
 import com.intellij.debugger.engine.SuspendContext;
 
-public interface SuspendContextCommand extends DebuggerCommand{
+public interface SuspendContextCommand extends DebuggerCommand {
   SuspendContext getSuspendContext();
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider
 import com.intellij.codeInspection.ProblemHighlightType
@@ -40,7 +41,11 @@ fun checkUnresolvedCodeReference(ref: GrCodeReferenceElement, annotationHolder: 
   generateAddImportActions(ref).forEach { builder.withFix(it) }
   val fixRegistrar = AnnotationFixRegistrar(builder)
   UnresolvedReferenceQuickFixProvider.registerReferenceFixes(ref, fixRegistrar)
-  QuickFixFactory.getInstance().registerOrderEntryFixes(fixRegistrar, ref)
+  val registrar = ArrayList<IntentionAction>()
+  QuickFixFactory.getInstance().registerOrderEntryFixes(ref, registrar)
+  for (fix in registrar) {
+    fixRegistrar.register(fix)
+  }
   builder.create()
 }
 

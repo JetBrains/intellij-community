@@ -6,7 +6,9 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.MessageHandler
 import com.intellij.util.messages.Topic
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 internal class MessageBusConnectionImpl(bus: MessageBusImpl) : BaseBusConnection(bus), MessageBusConnection {
   private var defaultHandler: MessageHandler? = null
 

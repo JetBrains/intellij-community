@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
@@ -35,7 +36,7 @@ import java.util.Objects;
 /**
  * Listens for editor events and starts brace/identifier highlighting in the background
  */
-final class BackgroundHighlighter implements StartupActivity.DumbAware {
+final class BackgroundHighlighter implements StartupActivity, DumbAware {
   private final Alarm myAlarm = new Alarm();
 
   @Override
@@ -46,7 +47,7 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
       return;
     }
 
-    Disposable activityDisposable = ExtensionPointUtil.createExtensionDisposable(this, StartupActivity.POST_STARTUP_ACTIVITY);
+    Disposable activityDisposable = ExtensionPointUtil.createExtensionDisposable(this, StartupActivity.Companion.getPOST_STARTUP_ACTIVITY());
     Disposer.register(project, activityDisposable);
 
     registerListeners(project, activityDisposable);
@@ -149,8 +150,13 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
     }
 
     BackgroundHighlightingUtil.lookForInjectedFileInOtherThread(project, editor, (foundFile, newEditor) -> {
+      int textLength = foundFile.getTextLength();
+      if (textLength == -1) {
+        // sometime some crazy stuff is returned (EA-248725)
+        return Pair.<IdentifierHighlighterPass, Pair<TextRange, TextRange>>create(null, null);
+      }
       IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().
-        createHighlightingPass(foundFile, newEditor, TextRange.from(0, foundFile.getTextLength()));
+        createHighlightingPass(foundFile, newEditor, TextRange.from(0, textLength));
       if (pass != null) {
         pass.doCollectInformation();
       }
@@ -191,11 +197,11 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
 
   @NotNull
   static Alarm getAlarm() {
-    return Objects.requireNonNull(POST_STARTUP_ACTIVITY.findExtension(BackgroundHighlighter.class)).myAlarm;
+    return Objects.requireNonNull(StartupActivity.Companion.getPOST_STARTUP_ACTIVITY().findExtension(BackgroundHighlighter.class)).myAlarm;
   }
 
   @TestOnly
   static void enableListenersInTest(@NotNull Project project, @NotNull Disposable disposable) {
-    POST_STARTUP_ACTIVITY.findExtension(BackgroundHighlighter.class).registerListeners(project, disposable);
+    StartupActivity.Companion.getPOST_STARTUP_ACTIVITY().findExtension(BackgroundHighlighter.class).registerListeners(project, disposable);
   }
 }

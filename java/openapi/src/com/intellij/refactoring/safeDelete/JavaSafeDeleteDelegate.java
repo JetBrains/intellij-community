@@ -19,7 +19,7 @@ public interface JavaSafeDeleteDelegate {
     new LanguageExtension<>("com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate");
 
   /**
-   * Method is used to create usage information according to the input <code>reference</code> to the <code>parameter</code>.
+   * Method is used to create usage information according to the input {@code reference} to the {@code parameter}.
    * <p/>
    * The result will be filled into the list of the usages.
    * <p> The method should be called under read action.
@@ -28,9 +28,9 @@ public interface JavaSafeDeleteDelegate {
    * @param paramIdx index with receiver parameter
    */
   void createUsageInfoForParameter(@NotNull PsiReference reference,
-                                   @NotNull List<UsageInfo> usages,
+                                   @NotNull List<? super UsageInfo> usages,
                                    @NotNull PsiNamedElement parameter,
-                                   int paramIdx, 
+                                   int paramIdx,
                                    boolean isVararg);
   /**
    * Method is used to create usage information for type parameter.
@@ -46,12 +46,12 @@ public interface JavaSafeDeleteDelegate {
                                         int index);
 
   /**
-   * Method is used to create usage to remove <code>@Override</code> annotation in java or corresponding <code>override</code> modifier in kotlin
+   * Method is used to create usage to remove {@code @Override} annotation in java or corresponding {@code override} modifier in kotlin
    *
-   * @param overriddenMethod method which overrides method to be deleted
+   * @param overriddenFunction method which overrides method to be deleted
    * @param elements2Delete all elements which would be deleted this time
    */
-  void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement[] elements2Delete, @NotNull List<UsageInfo> result);
+  void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement @NotNull [] elements2Delete, @NotNull List<? super UsageInfo> result);
 
   UsageInfo createExtendsListUsageInfo(PsiElement refElement,
                                        PsiReference reference);

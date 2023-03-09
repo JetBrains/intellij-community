@@ -13,17 +13,22 @@ import com.intellij.psi.xml.IXmlAttributeElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public abstract class AbstractSyntheticBlock implements Block {
   protected final Indent myIndent;
-  protected final XmlFormattingPolicy myXmlFormattingPolicy;
+  protected @NotNull XmlFormattingPolicy myXmlFormattingPolicy;
   protected final ASTNode myEndTreeNode;
   protected final ASTNode myStartTreeNode;
   private final XmlTag myTag;
 
-  public AbstractSyntheticBlock(List<Block> subBlocks, Block parent, XmlFormattingPolicy policy, Indent indent) {
+  public AbstractSyntheticBlock(@NotNull List<@NotNull Block> subBlocks,
+                                @NotNull Block parent,
+                                @NotNull XmlFormattingPolicy policy,
+                                @Nullable Indent indent) {
     myEndTreeNode = getLastNode(subBlocks);
     myStartTreeNode = getFirstNode(subBlocks);
     myIndent = indent;
@@ -33,10 +38,10 @@ public abstract class AbstractSyntheticBlock implements Block {
     }
     else if (parent instanceof AbstractSyntheticBlock) {
       myTag = ((AbstractSyntheticBlock)parent).getTag();
-    } else {
+    }
+    else {
       throw new IllegalStateException("Parent should be AbstractXmlBlock or AbstractSyntheticBlock, but it is " + parent.getClass());
     }
-
   }
 
   private static final Logger LOG = Logger.getInstance(AbstractSyntheticBlock.class);
@@ -72,17 +77,17 @@ public abstract class AbstractSyntheticBlock implements Block {
   }
 
   @Override
-  public Wrap getWrap() {
+  public @Nullable Wrap getWrap() {
     return null;
   }
 
   @Override
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     return myIndent;
   }
 
   @Override
-  public Alignment getAlignment() {
+  public @Nullable Alignment getAlignment() {
     return null;
   }
 
@@ -232,5 +237,4 @@ public abstract class AbstractSyntheticBlock implements Block {
   protected boolean isAttributeElementType(final IElementType elementType) {
     return elementType instanceof IXmlAttributeElementType;
   }
-
 }

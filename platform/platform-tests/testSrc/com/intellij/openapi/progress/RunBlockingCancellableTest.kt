@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.openapi.progress.impl.ProgressState
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -116,37 +117,71 @@ class RunBlockingCancellableTest : CancellationTest() {
   }
 
   @Test
+  fun `propagates context reporter`() {
+    progressReporterTest {
+      val reporter = checkNotNull(progressReporter)
+      assertTrue(rawProgressReporter == null)
+      blockingContext {
+        runBlockingCancellable {
+          assertSame(reporter, progressReporter)
+          assertTrue(rawProgressReporter == null)
+        }
+      }
+    }
+    progressReporterTest {
+      withRawProgressReporter {
+        assertTrue(progressReporter == null)
+        val reporter = checkNotNull(rawProgressReporter)
+        blockingContext {
+          runBlockingCancellable {
+            assertTrue(progressReporter == null)
+            assertSame(reporter, rawProgressReporter)
+          }
+        }
+      }
+    }
+  }
+
+  @Test
   fun `delegates reporting to current indicator`() {
     val indicator = object : EmptyProgressIndicator() {
+      val updates = ArrayList<ProgressState>()
+      var state = ProgressState(null, null, -1.0)
 
-      var myText: String? = null
-      var myText2: String? = null
-      var myFraction: Double? = null
-
-      override fun setText(text: String) {
-        myText = text
+      override fun setText(text: String?) {
+        val newState = state.copy(text = text)
+        if (newState != state) {
+          state = newState
+          updates.add(state)
+        }
       }
 
-      override fun setText2(text: String) {
-        myText2 = text
+      override fun setText2(text: String?) {
+        val newState = state.copy(details = text)
+        if (newState != state) {
+          state = newState
+          updates.add(state)
+        }
       }
 
       override fun setFraction(fraction: Double) {
-        myFraction = fraction
+        val newState = state.copy(fraction = fraction)
+        if (newState != state) {
+          state = newState
+          updates.add(state)
+        }
       }
     }
 
     withIndicator(indicator) {
       runBlockingCancellable {
-        progressSink?.text("Hello")
-        progressSink?.details("World")
-        coroutineContext.progressSink?.fraction(0.42)
+        check(progressReporter == null)
+        val reporter = checkNotNull(rawProgressReporter)
+        reporter.text("Hello")
+        reporter.details("World")
+        reporter.fraction(0.42)
       }
     }
-
-    assertEquals(indicator.myText, "Hello")
-    assertEquals(indicator.myText2, "World")
-    assertEquals(indicator.myFraction, 0.42)
   }
 
   @Test

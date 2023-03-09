@@ -16,7 +16,7 @@ public class VcsFileListenerContextHelperImpl implements VcsFileListenerContextH
   private final RecursiveFilePathSet myIgnoredAddedRecursive = new RecursiveFilePathSet(SystemInfo.isFileSystemCaseSensitive);
 
   @Override
-  public void ignoreDeleted(@NotNull Collection<FilePath> filePath) {
+  public void ignoreDeleted(@NotNull Collection<? extends FilePath> filePath) {
     synchronized (LOCK) {
       myIgnoredDeleted.addAll(filePath);
     }
@@ -30,14 +30,14 @@ public class VcsFileListenerContextHelperImpl implements VcsFileListenerContextH
   }
 
   @Override
-  public void ignoreAdded(@NotNull Collection<FilePath> filePaths) {
+  public void ignoreAdded(@NotNull Collection<? extends FilePath> filePaths) {
     synchronized (LOCK) {
       myIgnoredAdded.addAll(filePaths);
     }
   }
 
   @Override
-  public void ignoreAddedRecursive(@NotNull Collection<FilePath> filePaths) {
+  public void ignoreAddedRecursive(@NotNull Collection<? extends FilePath> filePaths) {
     synchronized (LOCK) {
       myIgnoredAddedRecursive.addAll(filePaths);
     }

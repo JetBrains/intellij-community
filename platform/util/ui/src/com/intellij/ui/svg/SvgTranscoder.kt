@@ -46,8 +46,7 @@ class SvgTranscoder private constructor(private var width: Float, private var he
       SVGFeatureStrings.addSupportedFeatureStrings(supportedFeatures)
     }
 
-    @JvmStatic
-    val iconMaxSize: Float by lazy {
+    internal val iconMaxSize: Float by lazy {
       var maxSize = Integer.MAX_VALUE.toFloat()
       if (!GraphicsEnvironment.isHeadless()) {
         val device = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice

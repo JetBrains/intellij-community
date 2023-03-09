@@ -95,7 +95,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
     String name = getEnteredName();
     if (name == null) return;
     GrMethod method = ExtractUtil.createMethod(myHelper);
-    if (method != null && !validateMethod(method, myHelper)) {
+    if (!validateMethod(method, myHelper)) {
       return;
     }
     final GroovyApplicationSettings settings = GroovyApplicationSettings.getInstance();
@@ -181,7 +181,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
   @Nullable
   protected String getEnteredName() {
     String text = myNameField.getText();
-    if (text != null && !text.trim().isEmpty()) {
+    if (!text.trim().isEmpty()) {
       return text.trim();
     }
     else {
@@ -275,7 +275,7 @@ public class GroovyExtractMethodDialog extends DialogWrapper {
       }
     }
 
-    return conflicts.size() <= 0 || reportConflicts(conflicts, helper.getProject());
+    return conflicts.size() == 0 || reportConflicts(conflicts, helper.getProject());
   }
 
   private static boolean reportConflicts(final ArrayList<String> conflicts, final Project project) {

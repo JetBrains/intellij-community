@@ -82,7 +82,7 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * Called when VCS gets a configured mapping.
-   * <p>
+   * <p/>
    * This is a good place to install project-wide listeners and perform generic initialization.
    *
    * @see #deactivate
@@ -141,10 +141,10 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * Allows to hide 'VCS' action group in 'Main Menu'.
+   * Allows hiding the 'VCS' action group in 'Main Menu'.
    * Takes effect for projects that have configured mappings for this VCS only.
    *
-   * @return true if 'VCS' group should be hidden.
+   * @return true if the 'VCS' group should be hidden.
    */
   public boolean isWithCustomMenu() {
     return false;
@@ -191,7 +191,7 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * Used by {@link com.intellij.openapi.vcs.changes.ChangeListManager} to collect changed files for VCS.
-   * <p>
+   * <p/>
    * VCS should notify {@link com.intellij.openapi.vcs.changes.VcsDirtyScopeManager} if it expects that some file statuses were changed,
    * so that {@link ChangeProvider} could be called again for these files.
    *
@@ -207,7 +207,7 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * Returns the interface for performing check out / edit file operations.
+   * Returns the interface for performing check-out / edit file operations.
    *
    * @return the interface implementation, or null if none is provided.
    */
@@ -312,7 +312,7 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * This method is called when user invokes "Enable VCS Integration" and selects a particular VCS.
-   * <p>
+   * <p/>
    * By default, it sets up a single mapping {@code <Project> -> selected VCS}.
    */
   @RequiresEdt
@@ -322,7 +322,7 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * This method is called when a user invokes "Enable VCS Integration" and selects a particular VCS.
-   * <p>
+   * <p/>
    * By default, it sets up a single mapping {@code <targetDirectory> -> selected VCS}.
    * Some VCSes might try to automatically detect VCS roots or create a new one.
    *
@@ -346,7 +346,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * when the previous one was empty).
    *
    * @param list       change list that's about to be removed
-   * @param explicitly whether it's a result of explicit Delete action, or just after switching the active changelist.
+   * @param explicitly whether it's a result of an explicit Delete action, or just triggered after switching active changelist.
    * @return UNSURE if the VCS has nothing to say about this changelist.
    * YES or NO if the changelist has to be removed or not, and no further confirmations are needed about this changelist
    * (in particular, the VCS can show a confirmation to the user by itself)
@@ -410,7 +410,7 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * Notify that VCS supports some standard options.
-   * This information is used to hide options from settings, if no available VCS supports them.
+   * This information is used to hide options from settings if no available VCS supports them.
    *
    * @see ProjectLevelVcsManager#getStandardOption
    * @see ProjectLevelVcsManager#getStandardConfirmation
@@ -430,8 +430,10 @@ public abstract class AbstractVcs extends StartedActivated {
   /**
    * Notify that VCS supports some custom file statuses.
    *
+   * @return unused - this method is a reminder to call {@link FileStatusFactory#createFileStatus}.
    * @see FileStatusFactory
    */
+  @SuppressWarnings("UnusedReturnValue")
   public FileStatus[] getProvidedStatuses() {
     return null;
   }
@@ -450,7 +452,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * Returns the interface for performing integrate operations (merging changes made in another branch of
    * the project into the current working copy).
    *
-   * @return the update interface, or null if the integrate operations are not supported by the VCS.
+   * @return the update interface, or null if integrate operations are not supported by the VCS.
    */
   @Nullable
   public UpdateEnvironment getIntegrateEnvironment() {
@@ -474,13 +476,13 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * For some version controls (like Git) the revision parsing is dependent
-   * on the specific repository instance since the the revision number
+   * For some version controls (like Git), the revision parsing is dependent
+   * on the specific repository instance since the revision number
    * returned from this method is later used for comparison information.
    * By default, this method invokes {@link #parseRevisionNumber(String)}.
-   * The client code should invoke this method, if it expect ordering information
+   * The client code should invoke this method if it expects ordering information
    * from revision numbers.
-   * <p>
+   * <p/>
    * Can be used to restore revision information for created patches and shelves.
    * Ex: These revisions may be loaded via {@link VcsBaseRevisionAdviser} or {@link DiffProvider}.
    *
@@ -546,7 +548,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * Overrides the list of VCS roots that is returned by {@link ProjectLevelVcsManager#getRootsUnderVcs(AbstractVcs)}.
    *
    * @deprecated This breaks {@link ProjectLevelVcsManager#getRootsUnderVcs(AbstractVcs)} vs {@link ProjectLevelVcsManager#getVcsFor)} symmetry,
-   * and should not be avoided whenever possible.
+   * and should be avoided whenever possible.
    * Consider implementing other means of automatic VCS root detection,
    * such as {@link VcsRootChecker#detectProjectMappings(Project, Collection, Set)} or {@link VcsRootChecker#isRoot(VirtualFile)}.
    */
@@ -564,11 +566,11 @@ public abstract class AbstractVcs extends StartedActivated {
 
   /**
    * This switch disables platform support for "default mapping" aka "&lt;Project&gt;".
-   * <p>
+   * <p/>
    * If enabled, platform will do nothing. All roots from {@link com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy} will be registered as vcs root.
    * Vcs can try using {@link RootsConvertor} to process roots itself.
-   * <p>
-   * If disabled, platform will use {@link VcsRootChecker} or {@link com.intellij.openapi.vcs.impl.VcsEP#administrativeAreaName} to find actual vcs roots.
+   * <p/>
+   * If disabled, the platform will use {@link VcsRootChecker} or {@link com.intellij.openapi.vcs.impl.VcsEP#administrativeAreaName} to find actual vcs roots.
    * If vcs does not implement these EP, no vcs roots will be registered for "default mapping".
    *
    * @see ProjectLevelVcsManager
@@ -790,7 +792,7 @@ public abstract class AbstractVcs extends StartedActivated {
   }
 
   /**
-   * @return whether {@link com.intellij.openapi.vcs.changes.VcsDirtyScopeManager} should preserve case on case-insensitive systems.
+   * @return whether {@link com.intellij.openapi.vcs.changes.VcsDirtyScopeManager} should preserve file path cases on case-insensitive systems.
    */
   public boolean needsCaseSensitiveDirtyScope() {
     return false;
@@ -804,4 +806,3 @@ public abstract class AbstractVcs extends StartedActivated {
     return true;
   }
 }
-

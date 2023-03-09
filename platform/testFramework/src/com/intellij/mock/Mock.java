@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -11,13 +10,15 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtilRt;
+import kotlinx.coroutines.flow.StateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,9 +34,9 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 //[kirillk] - this class looks to be an overkill but IdeDocumentHistory is highly coupled
-// with all of that stuff below, so it's not possible to test it's back/forward capabilities
+// with all of that stuff below, so it's not possible to test its back/forward capabilities
 // w/o making mocks for all of them. perhaps later we will decouple those things
-public class Mock {
+public final class Mock {
   public static class MyFileEditor extends UserDataHolderBase implements DocumentsEditor {
     private final Document @NotNull [] DOCUMENTS;
 
@@ -71,11 +72,6 @@ public class Mock {
     }
 
     @Override
-    public StructureViewBuilder getStructureViewBuilder() {
-      return null;
-    }
-
-    @Override
     public void setState(@NotNull FileEditorState state) {
     }
 
@@ -105,26 +101,8 @@ public class Mock {
     }
 
     @Override
-    public @NotNull ActionCallback notifyPublisher(@NotNull Runnable runnable) {
+    public void notifyPublisher(@NotNull Runnable runnable) {
       runnable.run();
-      return ActionCallback.DONE;
-    }
-
-    @Override
-    public @NotNull ActionCallback getReady(@NotNull Object requestor) {
-      return ActionCallback.DONE;
-    }
-
-    @Override
-    public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                   boolean focusEditor,
-                                                                                   @NotNull EditorWindow window) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isInsideChange() {
-      return false;
     }
 
     @Override
@@ -133,7 +111,7 @@ public class Mock {
     }
 
     @Override
-    public EditorsSplitters getSplittersFor(Component c) {
+    public EditorsSplitters getSplittersFor(@NotNull Component component) {
       return null;
     }
 
@@ -192,18 +170,11 @@ public class Mock {
     }
 
     @Override
-    public VirtualFile getFile(@NotNull FileEditor editor) {
-      return null;
-    }
-
-    @Override
     public void unsplitWindow() {
-
     }
 
     @Override
     public void unsplitAllWindow() {
-
     }
 
     @Override
@@ -212,18 +183,16 @@ public class Mock {
     }
 
     @Override
-    public VirtualFile @NotNull [] getSiblings(@NotNull VirtualFile file) {
-      return VirtualFile.EMPTY_ARRAY;
+    public @NotNull List<VirtualFile> getSiblings(@NotNull VirtualFile file) {
+      return Collections.emptyList();
     }
 
     @Override
     public void createSplitter(int orientation, @Nullable EditorWindow window) {
-
     }
 
     @Override
     public void changeSplitterOrientation() {
-
     }
 
     @Override
@@ -266,10 +235,8 @@ public class Mock {
     }
 
     @Override
-    public @NotNull Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
-                                                                                   boolean focusEditor,
-                                                                                   boolean searchForSplitter) {
-      return Pair.create(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY);
+    public @NotNull StateFlow<FileEditor> getCurrentFileEditorFlow() {
+      return StateFlowKt.MutableStateFlow(null);
     }
 
     @Override
@@ -301,13 +268,13 @@ public class Mock {
     }
 
     @Override
-    protected boolean canOpenFile(@NotNull VirtualFile file, @NotNull List<FileEditorProvider> providers) {
-      return false;
+    public VirtualFile @NotNull [] getOpenFiles() {
+      return VirtualFile.EMPTY_ARRAY;
     }
 
     @Override
-    public VirtualFile @NotNull [] getOpenFiles() {
-      return VirtualFile.EMPTY_ARRAY;
+    public @NotNull List<VirtualFile> getOpenFilesWithRemotes() {
+      return Collections.emptyList();
     }
 
     @Override
@@ -318,11 +285,6 @@ public class Mock {
     @Override
     public FileEditor @NotNull [] getSelectedEditors() {
       return FileEditor.EMPTY_ARRAY;
-    }
-
-    @Override
-    public FileEditor getSelectedEditor(@NotNull VirtualFile file) {
-      return null;
     }
 
     @Override
@@ -361,6 +323,11 @@ public class Mock {
 
     @Override
     public void setSelectedEditor(@NotNull VirtualFile file, @NotNull String fileEditorProviderId) {
+    }
+
+    @Override
+    public @NotNull FileEditorComposite openFile(@NotNull VirtualFile file, @Nullable EditorWindow window, @NotNull FileEditorOpenOptions options) {
+      return FileEditorComposite.Companion.fromPair(new Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
     }
   }
 

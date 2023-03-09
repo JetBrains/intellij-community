@@ -283,7 +283,6 @@ final class ComponentPanelTestAction extends DumbAwareAction {
 
       try {
         new GotItTooltip("Abracadabda.button", GOT_IT_TEXT, project).
-          andShowCloseShortcut().
           withShowCount(3).
           withHeader(GOT_IT_HEADER).
           withIcon(AllIcons.General.BalloonInformation).
@@ -954,7 +953,7 @@ final class ComponentPanelTestAction extends DumbAwareAction {
           this(icon, text, ImmutableList.of());
         }
 
-        Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text, @NotNull List<Item> myChildren) {
+        Item(@NotNull Icon icon, @NotNull @NlsContexts.ListItem String text, @NotNull List<? extends Item> myChildren) {
           this.myIcon = icon;
           this.myText = text;
           this.myChildren = List.copyOf(myChildren);

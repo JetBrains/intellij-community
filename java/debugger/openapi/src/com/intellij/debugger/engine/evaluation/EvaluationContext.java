@@ -11,7 +11,7 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public interface EvaluationContext extends StackFrameContext{
+public interface EvaluationContext extends StackFrameContext {
   @Override
   @NotNull
   DebugProcess getDebugProcess();

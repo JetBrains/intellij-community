@@ -74,5 +74,5 @@ data class InvalidModuleDependencyError(val from: String, val to: String, @Nls v
     constructor(from: Module, to: Module, @Nls reason: String? = null) : this(from.name, to.name, reason)
 
     override val message: String
-        get() = KotlinNewProjectWizardBundle.message("error.invalid.module.dependency", from, to) + reason?.let { ": $it" }.orEmpty()
+        get() = KotlinNewProjectWizardBundle.message("error.invalid.module.dependency", from, to, reason?.let { ": $it" }.orEmpty())
 }

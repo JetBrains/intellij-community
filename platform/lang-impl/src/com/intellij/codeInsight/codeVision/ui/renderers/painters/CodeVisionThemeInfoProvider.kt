@@ -27,6 +27,7 @@ open class CodeVisionThemeInfoProvider {
     return if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
       val editorFont = EditorUtil.getEditorFont()
       editorFont.deriveFont(style, size)
+
     }
     else {
       UIUtil.getLabelFont().deriveFont(style, size)

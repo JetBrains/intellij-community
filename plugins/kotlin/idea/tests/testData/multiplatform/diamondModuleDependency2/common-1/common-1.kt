@@ -6,7 +6,7 @@ interface BB
 interface CC
 interface DD
 
-expect interface <!LINE_MARKER("descr='Has actuals in common-2-3 module'"), LINE_MARKER("descr='Is subclassed by B [common-2-1] C [common-2-2] D  Click or press ... to navigate'")!>A<!> {
+expect interface <!LINE_MARKER("descr='Has actuals in common-2-3 module'"), LINE_MARKER("descr='Is subclassed by B [common-2-1] (sample) C [common-2-2] (sample) D (sample) Press ... to navigate'")!>A<!> {
     fun <!LINE_MARKER("descr='Has actuals in common-2-3 module'")!>foo_A<!>()
 }
 

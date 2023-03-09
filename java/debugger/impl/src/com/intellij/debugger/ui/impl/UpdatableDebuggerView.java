@@ -50,7 +50,6 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
         myStateManager.removeListener(contextListener);
       }
     });
-
   }
 
   protected void changeEvent(final DebuggerContextImpl newContext, final DebuggerSession.Event event) {
@@ -75,7 +74,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
 
   @Override
   public final void rebuildIfVisible(final DebuggerSession.Event event) {
-    if(isUpdateEnabled()) {
+    if (isUpdateEnabled()) {
       myRefreshNeeded = false;
       rebuild(event);
     }

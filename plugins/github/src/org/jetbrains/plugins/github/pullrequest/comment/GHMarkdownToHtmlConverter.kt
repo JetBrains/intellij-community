@@ -44,7 +44,6 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
   }
 }
 
-@NlsSafe
-internal fun String.convertToHtml(project: Project): String {
+internal fun String.convertToHtml(project: Project): @NlsSafe String {
   return GHMarkdownToHtmlConverter(project).convertMarkdown(this)
 }

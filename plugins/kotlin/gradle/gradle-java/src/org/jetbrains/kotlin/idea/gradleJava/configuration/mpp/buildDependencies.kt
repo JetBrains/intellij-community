@@ -17,12 +17,12 @@ internal fun KotlinMPPGradleProjectResolver.Companion.buildDependencies(
     resolverCtx: ProjectResolverContext,
     sourceSetMap: Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>>,
     artifactsMap: Map<ArtifactPath, ModuleId>,
-    ownerDataNode: DataNode<GradleSourceSetData>,
+    ownerDataNode: DataNode<out GradleSourceSetData>,
     dependencies: Collection<KotlinDependency>,
     ideProject: DataNode<ProjectData>
 ) {
     GradleProjectResolverUtil.buildDependencies(
         resolverCtx, sourceSetMap, artifactsMap, ownerDataNode, dependencies, ideProject
     )
-    KotlinNativeLibrariesFixer.applyTo(ownerDataNode, ideProject, resolverCtx)
+    KotlinNativeLibrariesFixer.applyTo(ownerDataNode, ideProject)
 }

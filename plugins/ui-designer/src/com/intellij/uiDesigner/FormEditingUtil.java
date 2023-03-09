@@ -783,10 +783,8 @@ public final class FormEditingUtil {
   @Nullable
   public static IButtonGroup findGroupForComponent(final IRootContainer radRootContainer, @NotNull final IComponent component) {
     for (IButtonGroup group : radRootContainer.getButtonGroups()) {
-      for (String id : group.getComponentIds()) {
-        if (component.getId().equals(id)) {
+      if (ArrayUtil.contains(component.getId(), group.getComponentIds())) {
           return group;
-        }
       }
     }
     return null;

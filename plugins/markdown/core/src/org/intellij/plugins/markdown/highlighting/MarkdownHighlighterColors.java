@@ -60,4 +60,6 @@ public final class MarkdownHighlighterColors {
   public static final TextAttributesKey TERM = createTextAttributesKey("MARKDOWN_TERM", HEADER_LEVEL_1);
   public static final TextAttributesKey DEFINITION = createTextAttributesKey("MARKDOWN_DEFINITION", LIST_ITEM);
   public static final TextAttributesKey DEFINITION_LIST_MARKER = createTextAttributesKey("MARKDOWN_DEFINITION_LIST_MARKER", LIST_MARKER);
+
+  public static final TextAttributesKey FRONT_MATTER_HEADER_DELIMITER = createTextAttributesKey("MARKDOWN_FRONT_MATTER_HEADER_DELIMITER", LIST_MARKER);
 }

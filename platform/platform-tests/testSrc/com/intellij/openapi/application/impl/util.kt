@@ -2,11 +2,14 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.testFramework.LeakHunter
 import com.intellij.util.ui.EDT
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.assertSame
+import java.lang.Runnable
 import java.util.function.Supplier
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
@@ -48,4 +51,20 @@ suspend fun pumpEDT() {
       continuation.resume(Unit)
     }
   }
+}
+
+internal suspend fun withDifferentInitialModalities(action: suspend CoroutineScope.() -> Unit) {
+  coroutineScope {
+    action()
+    withContext(ModalityState.any().asContextElement()) {
+      action()
+    }
+    withContext(ModalityState.NON_MODAL.asContextElement()) {
+      action()
+    }
+  }
+}
+
+internal suspend fun processApplicationQueue() {
+  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {}
 }

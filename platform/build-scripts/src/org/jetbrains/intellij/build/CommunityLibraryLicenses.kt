@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package org.jetbrains.intellij.build
@@ -147,6 +147,8 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Apache Commons Logging", libraryName = "commons-logging",
                    url = "https://commons.apache.org/proper/commons-logging/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-logging.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
+    LibraryLicense(name = "Apache Commons Math", libraryName = "commons-math3",
+                   url = "https://commons.apache.org/proper/commons-math/").apache(),
     LibraryLicense(name = "Apache Commons Net", libraryName = "commons-net",
                    url = "https://commons.apache.org/proper/commons-net/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-net.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
@@ -166,14 +168,18 @@ object CommunityLibraryLicenses {
                      "lucene-queryparser",
                      "lucene-queries",
                      "lucene-analyzers-common",
-                     "org.apache.lucene:lucene-core:2.4.1"
+                     "org.apache.lucene:lucene-core:2.4.1",
+                     "lucene-query-parser:ind-deps",
+                     "lucene-core:ind-deps",
+                     "lucene-analyzer:ind-deps",
+                     "lucene-highlighter:ind-deps",
+                     "lucene-backward-codecs:ind-deps"
                    )).apache(),
     LibraryLicense(name = "Apache Tuweni-Toml", libraryName = "tuweni-toml",
                    url = "https://github.com/apache/incubator-tuweni/tree/main/toml")
       .apache("https://github.com/apache/incubator-tuweni/blob/main/LICENSE"),
     LibraryLicense(name = "ASM (JetBrains's fork)", libraryName = "ASM",
-                   url = "https://github.com/JetBrains/intellij-deps-asm",
-                   additionalLibraryNames = listOf("asm-capture"))
+                   url = "https://github.com/JetBrains/intellij-deps-asm")
       .newBsd("https://github.com/JetBrains/intellij-deps-asm/blob/master/LICENSE.txt"),
     LibraryLicense(name = "ASM Tools", libraryName = "asm-tools", url = "https://asm.ow2.io", )
       .newBsd("https://asm.ow2.io/license.html"),
@@ -246,9 +252,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Eclipse JDT Core", attachedTo = "intellij.platform.jps.build", version = "4.2.1", license = "CPL 1.0",
                    url = "https://www.eclipse.org/jdt/core/index.php"),
     LibraryLicense(name = "Eclipse Layout Kernel", url = "https://www.eclipse.org/elk/", libraryName = "eclipse-layout-kernel").eplV1(),
-    LibraryLicense(name = "EditorConfig Java Core", libraryName = "editorconfig-core-java.jar", version = "1.0",
-                   url = "https://github.com/editorconfig/editorconfig-core-java/")
-      .apache("https://github.com/editorconfig/editorconfig-core-java/blob/master/LICENSE"),
     LibraryLicense(name = "emoji-java", libraryName = "com.vdurmont:emoji-java",
                    url = "https://github.com/vdurmont/emoji-java")
       .mit("https://github.com/vdurmont/emoji-java/blob/master/LICENSE.md"),
@@ -378,7 +381,7 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/JetBrains/intellij-deps-ini4j/blob/master/LICENSE.txt"),
     androidDependency(name = "Instant run protos", libraryName = "deploy_java_proto"),
     androidDependency(name = "Instant run version", libraryName = "libjava_version"),
-    LibraryLicense(name = "intellij-markdown", libraryName = "jetbrains.markdown.jvm",
+    LibraryLicense(name = "intellij-markdown", libraryName = "jetbrains.markdown",
                    url = "https://github.com/JetBrains/markdown")
       .apache("https://github.com/JetBrains/markdown/blob/master/LICENSE"),
     LibraryLicense(name = "IntelliJ IDEA Code Coverage Agent", libraryName = "intellij-coverage",
@@ -553,10 +556,6 @@ object CommunityLibraryLicenses {
                    libraryName = "kotlin-stdlib-jdk8",
                    url = "https://github.com/JetBrains/kotlin")
       .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt"),
-    LibraryLicense(name = "kotlinx-datetime",
-                   libraryName = "kotlinx-datetime",
-                   url = "https://github.com/Kotlin/kotlinx-datetime")
-      .apache("https://github.com/Kotlin/kotlinx-datetime/blob/master/LICENSE.txt"),
     LibraryLicense(name = "kotlinx-datetime-jvm",
                    libraryName = "kotlinx-datetime-jvm",
                    url = "https://github.com/Kotlin/kotlinx-datetime")
@@ -587,6 +586,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "lz4-java", libraryName = "lz4-java",
                    url = "https://github.com/lz4/lz4-java")
       .apache("https://github.com/lz4/lz4-java/blob/master/LICENSE.txt"),
+
     LibraryLicense(name = "markdown4j", libraryName = "markdown4j", url = "https://code.google.com/p/markdown4j/").newBsd(),
     LibraryLicense(name = "MarkdownJ", libraryName = "markdownj", version = "0.4.2", url = "https://github.com/myabc/markdownj").newBsd(),
     LibraryLicense(name = "MathJax", attachedTo = "intellij.python", version = "2.6.1",
@@ -611,7 +611,8 @@ object CommunityLibraryLicenses {
                    url = "https://maven.apache.org/ref/3.6.1/maven-resolver-provider/", libraryName = "maven-resolver-provider",
                    additionalLibraryNames = listOf("org.apache.maven.resolver:maven-resolver-connector-basic",
                                                    "org.apache.maven.resolver:maven-resolver-transport-http",
-                                                   "org.apache.maven.resolver:maven-resolver-transport-file")).apache(),
+                                                   "org.apache.maven.resolver:maven-resolver-transport-file",
+                                                   "maven-resolver-util:ind-deps")).apache("https://maven.apache.org/"),
     LibraryLicense(name = "Maven wagon provider api", libraryName="apache.maven.wagon.provider.api:3.5.2",
                    url = "https://maven.apache.org/wagon/wagon-provider-api/index.html")
       .apache("https://github.com/apache/maven-wagon"),
@@ -645,6 +646,9 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/morfologik/morfologik-stemming").simplifiedBsd(),
     LibraryLicense(name = "Moshi", libraryName = "moshi", url = "https://github.com/square/moshi")
       .apache("https://github.com/square/moshi/blob/master/LICENSE.txt"),
+    LibraryLicense(libraryName = "mvstore", url = "https://github.com/h2database/h2database")
+      .eplV1("https://github.com/h2database/h2database/blob/master/LICENSE.txt"),
+
     LibraryLicense(libraryName = "NanoXML", license = "zlib/libpng",
                    url = "https://mvnrepository.com/artifact/be.cyberelf.nanoxml/nanoxml/2.2.3",
                    licenseUrl = "https://www.opensource.org/licenses/zlib-license.html"),
@@ -812,10 +816,9 @@ object CommunityLibraryLicenses {
     androidDependency(name = "TraceProcessor Daemon Protos", libraryName = "traceprocessor-proto"),
     androidDependency(name = "Transport Pipeline", libraryName = "transport-proto"),
 
-    LibraryLicense(name = "Trove4j (JetBrains's fork)", attachedTo = "intellij.platform.util.trove", license = "LGPL",
-                   version = "1.0.20220920",
-                    url = "https://github.com/JetBrains/intellij-deps-trove4j",
-                    licenseUrl = "https://github.com/JetBrains/intellij-deps-trove4j/blob/master/LICENSE.txt"),
+    LibraryLicense(name = "Trove4j (JetBrains's fork)", libraryName = "trove", license = "LGPL",
+                   url = "https://github.com/JetBrains/intellij-deps-trove4j",
+                   licenseUrl = "https://github.com/JetBrains/intellij-deps-trove4j/blob/master/LICENSE.txt"),
 
     LibraryLicense(name = "TwelveMonkeys ImageIO", libraryName = "imageio-tiff",
                    url = "https://github.com/haraldk/TwelveMonkeys")
@@ -848,9 +851,12 @@ object CommunityLibraryLicenses {
       .apache("https://xalan.apache.org/xalan-j/#license"),
     LibraryLicense(libraryName = "Xerces", url = "https://xerces.apache.org/xerces2-j/")
       .apache("https://svn.apache.org/repos/asf/xerces/java/trunk/LICENSE"),
-    LibraryLicense(name = "Xerial SQLite JDBC", libraryName = "sqlite",
-                   url = "https://github.com/xerial/sqlite-jdbc")
+
+    LibraryLicense(name = "Xerial SQLite JDBC", libraryName = "sqlite", url = "https://github.com/xerial/sqlite-jdbc")
       .apache("https://github.com/xerial/sqlite-jdbc/blob/master/LICENSE"),
+    LibraryLicense(name = "Xerial SQLite JDBC", libraryName = "sqlite-native", url = "https://github.com/xerial/sqlite-jdbc")
+      .apache("https://github.com/xerial/sqlite-jdbc/blob/master/LICENSE"),
+
     LibraryLicense(name = "xml-apis-ext", libraryName = "xml-apis-ext",
                    url = "https://xerces.apache.org/xml-commons/components/external").apache(),
     LibraryLicense(name = "xml-resolver", libraryName = "xml-resolver",
@@ -904,6 +910,8 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("file-prediction-model"),
     jetbrainsLibrary("find-action-model"),
     jetbrainsLibrary("find-action-model-experimental"),
+    jetbrainsLibrary("find-all-model-experimental"),
+    jetbrainsLibrary("find-classes-model"),
     jetbrainsLibrary("find-classes-model-experimental"),
     jetbrainsLibrary("find-file-model"),
     jetbrainsLibrary("find-file-model-experimental"),

@@ -17,7 +17,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem;
 import com.intellij.util.BitUtil;
 import kotlin.Unit;
@@ -28,7 +28,6 @@ import org.jetbrains.annotations.SystemIndependent;
 import java.awt.event.InputEvent;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 public class ReopenProjectAction extends AnAction implements DumbAware, LightEditCompatible {
   private final String myProjectPath;
@@ -44,7 +43,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     String text = projectPath.equals(displayName) ? FileUtil.getLocationRelativeToUserHome(projectPath) : displayName;
     presentation.setText(text, false);
     presentation.setDescription(FileUtil.toSystemDependentName(projectPath));
-    if (StringUtil.isEmpty(text)) {
+    if (Strings.isEmpty(text)) {
       Logger.getInstance(ReopenProjectAction.class).error(
         String.format("Empty action text for projectName='%s' displayName='%s' path='%s'", projectName, displayName, projectPath));
     }
@@ -56,7 +55,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups();
 
     Project project = e.getProject();
-    Path file = Paths.get(myProjectPath).normalize();
+    Path file = Path.of(myProjectPath).normalize();
     if (!Files.exists(file)) {
       if (Messages.showDialog(project, IdeBundle
                                 .message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(myProjectPath)),
@@ -90,9 +89,9 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
   }
 
   public @NlsSafe String getProjectName() {
-    final RecentProjectsManager mgr = RecentProjectsManager.getInstance();
-    if (mgr instanceof RecentProjectsManagerBase) {
-      return ((RecentProjectsManagerBase)mgr).getProjectName(myProjectPath);
+    RecentProjectsManager manager = RecentProjectsManager.getInstance();
+    if (manager instanceof RecentProjectsManagerBase) {
+      return ((RecentProjectsManagerBase)manager).getProjectName(myProjectPath);
     }
     return myProjectName;
   }

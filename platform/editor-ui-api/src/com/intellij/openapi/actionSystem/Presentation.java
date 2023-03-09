@@ -462,7 +462,7 @@ public final class Presentation implements Cloneable {
 
   void assertNotTemplatePresentation() {
     if (BitUtil.isSet(myFlags, IS_TEMPLATE)) {
-      LOG.warn(new Throwable("Template presentations must not be used directly"));
+      LOG.warnInProduction(new Throwable("Template presentations must not be used directly"));
     }
   }
 

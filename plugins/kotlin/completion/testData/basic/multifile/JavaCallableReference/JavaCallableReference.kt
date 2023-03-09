@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+
 fun main(args: Array<String>) {
     val f = JavaCallableReference::<caret>
 }

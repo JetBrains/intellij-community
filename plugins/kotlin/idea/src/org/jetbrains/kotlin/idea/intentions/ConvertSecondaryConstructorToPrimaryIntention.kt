@@ -141,23 +141,23 @@ class ConvertSecondaryConstructorToPrimaryIntention : SelfTargetingRangeIntentio
     override fun applyTo(element: KtSecondaryConstructor, editor: Editor?) {
         val klass = element.containingClassOrObject as? KtClass ?: return
         val context = klass.analyzeWithContent()
-        val factory = KtPsiFactory(klass)
+        val psiFactory = KtPsiFactory(klass.project)
         val constructorCommentSaver = CommentSaver(element)
         val initializer = runWriteAction {
             val constructorInClass = klass.createPrimaryConstructorIfAbsent()
-            val constructor = factory.createPrimaryConstructorWithModifiers(element.modifierList?.text?.replace("\n", " "))
+            val constructor = psiFactory.createPrimaryConstructorWithModifiers(element.modifierList?.text?.replace("\n", " "))
 
             val parameterToPropertyMap = mutableMapOf<ValueParameterDescriptor, PropertyDescriptor>()
-            val initializer = element.extractInitializer(parameterToPropertyMap, context, factory) ?: return@runWriteAction null
+            val initializer = element.extractInitializer(parameterToPropertyMap, context, psiFactory) ?: return@runWriteAction null
 
-            element.moveParametersToPrimaryConstructorAndInitializers(constructor, parameterToPropertyMap, context, factory)
+            element.moveParametersToPrimaryConstructorAndInitializers(constructor, parameterToPropertyMap, context, psiFactory)
 
             val argumentList = element.getDelegationCall().valueArgumentList
             for (superTypeListEntry in klass.superTypeListEntries) {
                 val typeReference = superTypeListEntry.typeReference ?: continue
                 val type = context[BindingContext.TYPE, typeReference]
                 if ((type?.constructor?.declarationDescriptor as? ClassifierDescriptorWithTypeParameters)?.kind == ClassKind.CLASS) {
-                    val superTypeCallEntry = factory.createSuperTypeCallEntry(
+                    val superTypeCallEntry = psiFactory.createSuperTypeCallEntry(
                         "${typeReference.text}${argumentList?.text ?: "()"}"
                     )
                     superTypeListEntry.replace(superTypeCallEntry)

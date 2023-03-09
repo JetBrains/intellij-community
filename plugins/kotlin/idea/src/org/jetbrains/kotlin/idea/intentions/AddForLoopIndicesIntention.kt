@@ -47,7 +47,7 @@ class AddForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpression>(
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
         val loopRange = element.loopRange!!
         val loopParameter = element.loopParameter!!
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(element.project)
 
         loopRange.replace(createWithIndexExpression(loopRange, reformat = true))
 
@@ -89,7 +89,7 @@ class AddForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpression>(
     }
 
     private fun createWithIndexExpression(originalExpression: KtExpression, reformat: Boolean): KtExpression =
-        KtPsiFactory(originalExpression).createExpressionByPattern(
+        KtPsiFactory(originalExpression.project).createExpressionByPattern(
             "$0.$WITH_INDEX_NAME()", originalExpression,
             reformat = reformat
         )

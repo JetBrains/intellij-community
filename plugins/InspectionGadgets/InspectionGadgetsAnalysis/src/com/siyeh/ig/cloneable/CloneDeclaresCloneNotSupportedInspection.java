@@ -16,7 +16,7 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
@@ -32,9 +32,9 @@ import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
 
@@ -57,11 +57,10 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
     return true;
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("only.warn.on.protected.clone.methods"),
-                                          this, "onlyWarnOnProtectedClone");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnOnProtectedClone", InspectionGadgetsBundle.message("only.warn.on.protected.clone.methods")));
   }
 
   @Override
@@ -83,7 +82,7 @@ public class CloneDeclaresCloneNotSupportedInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
       final PsiMethod method = (PsiMethod)methodNameIdentifier.getParent();
       PsiUtil.addException(method, "java.lang.CloneNotSupportedException");

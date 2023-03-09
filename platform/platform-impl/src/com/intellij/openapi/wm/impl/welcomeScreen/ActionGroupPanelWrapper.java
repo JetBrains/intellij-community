@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static com.intellij.ide.wizard.AbstractWizard.isNewWizard;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getProjectsBackground;
 
-public class ActionGroupPanelWrapper {
+public final class ActionGroupPanelWrapper {
 
   private static final String ACTION_GROUP_KEY = "ACTION_GROUP_KEY";
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.treeStructure.filtered;
 
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
@@ -64,7 +65,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
   private void addToCache(FilteringNode node, boolean duplicate) {
     Object delegate = node.getDelegate();
     Object[] delegates = myBaseStructure.getChildElements(delegate);
-    if (delegates == null || delegates.length == 0 || duplicate) {
+    if (delegates.length == 0 || duplicate) {
       myLeaves.add(node);
     } else {
       ArrayList<FilteringNode> nodes = new ArrayList<>(delegates.length);
@@ -102,6 +103,10 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
         }
       }
     }
+  }
+
+  public List<FilteringNode> getVisibleLeaves() {
+    return ContainerUtil.filter(myLeaves, node -> node.state == State.VISIBLE);
   }
 
   private State getState(@NotNull FilteringNode node) {
@@ -216,25 +221,17 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       return myDelegate instanceof PresentableNodeDescriptor && ((PresentableNodeDescriptor<?>)myDelegate).isHighlightableContentNode(kid);
     }
 
-
-
     @Override
-    protected void updateFileStatus() {
-      // DO NOTHING
-    }
-
-    @Override
-    protected void doUpdate() {
-      clearColoredText();
-      if (myDelegate instanceof PresentableNodeDescriptor) {
-        PresentableNodeDescriptor node = (PresentableNodeDescriptor)myDelegate;
+    protected void doUpdate(@NotNull PresentationData presentation) {
+      presentation.clearText();
+      if (myDelegate instanceof PresentableNodeDescriptor<?> node) {
         node.update();
-        apply(node.getPresentation());
+        presentation.applyFrom(node.getPresentation());
       } else if (myDelegate != null) {
-        NodeDescriptor descriptor = myBaseStructure.createDescriptor(myDelegate, getParentDescriptor());
+        NodeDescriptor<?> descriptor = myBaseStructure.createDescriptor(myDelegate, getParentDescriptor());
         descriptor.update();
-        setUniformIcon(descriptor.getIcon());
-        setPlainText(myDelegate.toString());
+        presentation.setIcon(descriptor.getIcon());
+        presentation.setPresentableText(myDelegate.toString());
       }
     }
 

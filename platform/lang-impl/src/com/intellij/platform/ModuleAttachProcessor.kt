@@ -25,9 +25,9 @@ import com.intellij.platform.ModuleAttachProcessor.Companion.getPrimaryModule
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 private val LOG = logger<ModuleAttachProcessor>()
 

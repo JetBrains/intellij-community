@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.List;
 
 /**
  * Anchor for positioning {@link ToolWindow tool window} (TOP, LEFT, BOTTOM, RIGHT).
@@ -17,6 +18,7 @@ public final class ToolWindowAnchor {
   public static final @NotNull ToolWindowAnchor LEFT = new ToolWindowAnchor("left", "action.text.anchor.left", "action.text.anchor.left.capitalized");
   public static final @NotNull ToolWindowAnchor BOTTOM = new ToolWindowAnchor("bottom", "action.text.anchor.bottom", "action.text.anchor.bottom.capitalized");
   public static final @NotNull ToolWindowAnchor RIGHT = new ToolWindowAnchor("right", "action.text.anchor.right", "action.text.anchor.right.capitalized");
+  public static final @NotNull List<ToolWindowAnchor> VALUES = List.of(TOP, LEFT, BOTTOM, RIGHT);
 
   private final @NotNull String myText;
 

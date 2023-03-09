@@ -2,15 +2,18 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidation
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 import javax.swing.JLabel
@@ -28,8 +31,10 @@ enum class LabelPosition {
 @JvmDefaultWithCompatibility
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
 
   override fun align(align: Align): Cell<T>
@@ -58,9 +63,13 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   override fun enabledIf(predicate: ComponentPredicate): Cell<T>
 
+  override fun enabledIf(property: ObservableProperty<Boolean>): Cell<T>
+
   override fun visible(isVisible: Boolean): Cell<T>
 
   override fun visibleIf(predicate: ComponentPredicate): Cell<T>
+
+  override fun visibleIf(property: ObservableProperty<Boolean>): Cell<T>
 
   /**
    * Changes [component] font to bold
@@ -237,4 +246,20 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    */
   fun onIsModified(callback: () -> Boolean): Cell<T>
 
+  /**
+   * Adds [listener] to cell component data modification. If the component is not supported yet UiDslException is thrown.
+   *
+   * See below description of some non-trivial cases:
+   * * Non-editable [JComboBox] sets selected item to the first element while initialization,
+   * so for this event onChange is not called (because not installed yet)
+   * * Editable [JComboBox] sets selected item after focus is lost, so there are no onChange events while typing
+   */
+  @Throws(UiDslException::class)
+  fun onChangedContext(listener: (component: T, context: ChangeContext) -> Unit): Cell<T>
+
+  /**
+   * Simplified version of [onChangedContext] method, which doesn't provide context of notification
+   */
+  @Throws(UiDslException::class)
+  fun onChanged(listener: (component: T) -> Unit): Cell<T>
 }

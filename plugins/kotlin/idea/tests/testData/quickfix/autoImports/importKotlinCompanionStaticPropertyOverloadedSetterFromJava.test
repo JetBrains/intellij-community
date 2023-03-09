@@ -3,7 +3,6 @@
 // ERROR: Unresolved reference: setVariable
 // ACTION: Create method 'foobar'
 // WITH_STDLIB
-/* IGNORE_FIR */
 
 package bar;
 
@@ -32,7 +31,6 @@ class Bar {
 // ERROR: Unresolved reference: setVariable
 // ACTION: Create method 'foobar'
 // WITH_STDLIB
-/* IGNORE_FIR */
 
 package bar;
 

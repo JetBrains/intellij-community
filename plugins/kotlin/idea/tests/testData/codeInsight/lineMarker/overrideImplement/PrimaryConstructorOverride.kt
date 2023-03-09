@@ -3,5 +3,5 @@ interface <lineMarker>I</lineMarker> {
 }
 
 class D(
-    override val <lineMarker descr="Implements property in 'I'">name</lineMarker>: String
+    override val <lineMarker descr="Implements property in I Press ... to navigate">name</lineMarker>: String
 ): I

@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.idea.preferences.KotlinPreferencesBundle;
 import javax.swing.*;
 import java.util.List;
 
+import static org.jetbrains.kotlin.idea.util.application.ApplicationUtilsKt.isApplicationInternalMode;
+
 public class KotlinLanguageConfigurationForm {
     public JComboBox<String> channelCombo;
     public JButton reCheckButton;
@@ -45,6 +47,8 @@ public class KotlinLanguageConfigurationForm {
         } else {
             currentVersion.setText(pluginVersion);
         }
+
+        analyzerVersionPanel.setVisible(isApplicationInternalMode());
 
         currentAnalyzerVersion.setText(KotlinPluginLayout.getIdeCompilerVersion().getRawVersion());
 

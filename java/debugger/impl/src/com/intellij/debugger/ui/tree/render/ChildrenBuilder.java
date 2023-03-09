@@ -24,10 +24,10 @@ import com.intellij.xdebugger.frame.XCompositeNode;
 import java.util.List;
 
 public interface ChildrenBuilder extends XCompositeNode {
-  NodeDescriptorFactory  getDescriptorManager();
+  NodeDescriptorFactory getDescriptorManager();
 
   NodeManager getNodeManager();
-    
+
   ValueDescriptor getParentDescriptor();
 
   void setChildren(List<? extends DebuggerTreeNode> children);

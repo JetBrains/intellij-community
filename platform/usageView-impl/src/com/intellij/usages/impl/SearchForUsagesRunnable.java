@@ -413,7 +413,7 @@ final class SearchForUsagesRunnable implements Runnable {
       }
       return true;
     });
-    if (getUsageView(indicator, startSearchStamp) != null) {
+    if (myProcessPresentation.isShowFindOptionsPrompt() && getUsageView(indicator, startSearchStamp) != null) {
       ApplicationManager.getApplication().invokeLater(() -> myUsageViewManager.showToolWindow(true), myProject.getDisposed());
     }
   }

@@ -9,7 +9,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.RecentsManager
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.Cell
+import com.intellij.ui.layout.LCFlags
+import com.intellij.ui.layout.panel
+import com.intellij.ui.layout.selected
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionFormat
 import org.intellij.plugins.markdown.fileActions.MarkdownFileActionsBaseDialog
@@ -42,7 +45,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
     saveSettings(project)
 
     val preview = MarkdownFileEditorUtils.findMarkdownPreviewEditor(project, mdFile, true) ?: return
-    val htmlPanel = preview.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER) ?: return
+    val htmlPanel = preview.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER)?.get() ?: return
 
     if (htmlPanel is MarkdownJCEFHtmlPanel) {
       htmlPanel.saveHtml(outputFile, service<MarkdownHtmlExportSettings>().getResourceSavingSettings(), project) { path, ok ->

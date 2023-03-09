@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.formatter.lineIndent
 
@@ -42,10 +42,12 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
         val after = currentPosition.afterOptionalMix(*WHITE_SPACE_OR_COMMENT_BIT_SET)
 
         when {
-            after.isAt(BlockClosingBrace) && !currentPosition.hasLineBreaksAfter(offset) ->
+            after.isAt(BlockClosingBrace) &&
+                    !currentPosition.hasLineBreaksAfter(offset) &&
+                    !(currentPosition.after().let { it.isAt(BlockComment) && it.isAtMultiline }) ->
                 return factory.createIndentCalculatorForBrace(before, after, BlockOpeningBrace, BlockClosingBrace, Indent.getNoneIndent())
 
-            before.isAt(BlockOpeningBrace) && after.isAt(BlockClosingBrace) ->
+            before.isAt(BlockOpeningBrace) ->
                 return factory.createIndentCalculatorForBrace(before, after, BlockOpeningBrace, BlockClosingBrace, Indent.getNormalIndent())
 
             after.isAt(ArrayClosingBracket) && !currentPosition.hasLineBreaksAfter(offset) ->

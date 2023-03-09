@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.findCompilation
 import org.jetbrains.kotlin.idea.gradleTooling.getCompilations
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
-import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
@@ -19,7 +18,7 @@ internal fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependencies
     if (!mppModel.extraFeatures.isHMPPEnabled) return
     context.mppModel.sourceSetsByName.values
         .filter { sourceSet -> isDependencyPropagationAllowed(sourceSet) }
-        .filter { sourceSet -> processedModuleIds.add(getKotlinModuleId(gradleModule, sourceSet, resolverCtx)) }
+        .filter { sourceSet -> processedModuleIds.add(getKotlinModuleId(gradleIdeaModule, sourceSet, resolverCtx)) }
         .forEach { sourceSet -> populateModuleDependenciesByPlatformPropagation(context, sourceSet) }
 }
 
@@ -33,7 +32,7 @@ private typealias CompilationDependencies = Set<KotlinDependency>
 private fun KotlinMPPGradleProjectResolver.Companion.populateModuleDependenciesByPlatformPropagation(
     context: KotlinMppPopulateModuleDependenciesContext, sourceSet: KotlinSourceSet
 ) = with(context) {
-    val sourceSetDataNode = getSiblingKotlinModuleData(sourceSet, gradleModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
+    val sourceSetDataNode = getSiblingKotlinModuleData(sourceSet, gradleIdeaModule, ideModule, resolverCtx)?.cast<GradleSourceSetData>()
         ?: return
 
     val propagatedDependencies = findCompilationsToPropagateDependenciesFrom(sourceSet)

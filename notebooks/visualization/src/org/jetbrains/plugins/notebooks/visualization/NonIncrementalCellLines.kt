@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -68,10 +67,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
       newAffectedIntervals = newAffectedCells,
       modificationStamp = modificationStamp,
     )
-
-    catchExceptionsAndLogThem {
-      intervalListeners.multicaster.documentChanged(event)
-    }
+    intervalListeners.multicaster.documentChanged(event)
   }
 
   private fun createDocumentListener() = object : DocumentListener {
@@ -80,15 +76,13 @@ class NonIncrementalCellLines private constructor(private val document: Document
     override fun beforeDocumentChange(event: DocumentEvent) {
       oldAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.oldLength))
 
-      catchExceptionsAndLogThem {
-        intervalListeners.multicaster.beforeDocumentChange(
-          NotebookCellLinesEventBeforeChange(
-            documentEvent = event,
-            oldAffectedIntervals = oldAffectedCells,
-            modificationStamp = modificationStamp
-          )
+      intervalListeners.multicaster.beforeDocumentChange(
+        NotebookCellLinesEventBeforeChange(
+          documentEvent = event,
+          oldAffectedIntervals = oldAffectedCells,
+          modificationStamp = modificationStamp
         )
-      }
+      )
     }
 
     override fun documentChanged(event: DocumentEvent) {
@@ -98,16 +92,6 @@ class NonIncrementalCellLines private constructor(private val document: Document
 
       val newAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.newLength))
       notifyChanged(oldIntervals, oldAffectedCells, intervals, newAffectedCells, event)
-    }
-  }
-
-  private inline fun catchExceptionsAndLogThem(func: () -> Unit) {
-    try {
-      func()
-    }
-    catch (e: Exception) {
-      thisLogger().error("NotebookCellLines.IntervalListener shouldn't throw exceptions", e)
-      // consume exception, otherwise this will prevent document updating. See DS-4305
     }
   }
 

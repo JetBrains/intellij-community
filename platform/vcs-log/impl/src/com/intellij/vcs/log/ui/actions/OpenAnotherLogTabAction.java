@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.icons.AllIcons;
@@ -53,15 +53,11 @@ public class OpenAnotherLogTabAction extends DumbAwareAction {
     e.getPresentation().setDescription(getDescription(vcsName));
   }
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  private static String getDescription(@Nls @NotNull String vcsName) {
+  private static @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription(@Nls @NotNull String vcsName) {
     return VcsLogBundle.message("vcs.log.action.description.open.new.tab.with.log", vcsName);
   }
 
-  @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title)
-  private static String getText(@Nls @NotNull String vcsName) {
+  private static @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getText(@Nls @NotNull String vcsName) {
     return VcsLogBundle.message("vcs.log.action.open.new.tab.with.log", vcsName);
   }
 

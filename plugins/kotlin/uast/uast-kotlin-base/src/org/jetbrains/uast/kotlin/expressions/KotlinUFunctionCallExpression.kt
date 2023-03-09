@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.*
@@ -125,18 +126,28 @@ class KotlinUFunctionCallExpression(
         }
 
         val ktNameReferenceExpression = sourcePsi.calleeExpression as? KtNameReferenceExpression ?: return@lz null
-        val localCallableDeclaration =
-            baseResolveProviderService.resolveToDeclaration(ktNameReferenceExpression) as? PsiVariable ?: return@lz null
-        if (localCallableDeclaration !is PsiLocalVariable && localCallableDeclaration !is PsiParameter) return@lz null
+        val callableDeclaration = baseResolveProviderService.resolveToDeclaration(ktNameReferenceExpression) ?: return@lz null
+
+        val variable = when (callableDeclaration) {
+            is PsiVariable -> callableDeclaration
+            is PsiMethod -> {
+                callableDeclaration.containingClass?.let { containingClass ->
+                    PropertyUtilBase.getPropertyName(callableDeclaration.name)?.let { propertyName ->
+                        PropertyUtilBase.findPropertyField(containingClass, propertyName, true)
+                    }
+                }
+            }
+            else -> null
+        } ?: return@lz null
 
         // an implicit receiver for variables calls (KT-25524)
         object : KotlinAbstractUExpression(this), UReferenceExpression {
 
             override val sourcePsi: KtNameReferenceExpression get() = ktNameReferenceExpression
 
-            override val resolvedName: String? get() = localCallableDeclaration.name
+            override val resolvedName: String? get() = variable.name
 
-            override fun resolve(): PsiElement = localCallableDeclaration
+            override fun resolve(): PsiElement = variable
 
         }
     }

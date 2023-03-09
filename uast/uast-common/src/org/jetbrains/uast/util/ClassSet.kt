@@ -1,11 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.util
 
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.map2Array
-import java.util.concurrent.ConcurrentMap
-
+import java.util.concurrent.ConcurrentHashMap
 
 interface ClassSet<out T> {
   fun isEmpty(): Boolean
@@ -19,38 +17,49 @@ fun <T> T?.isInstanceOf(classSet: ClassSet<T>): Boolean =
 fun <T> ClassSet<T>.hasClassOf(instance: T?): Boolean =
   instance?.let { contains(it.javaClass) } ?: false
 
-private class ClassSetImpl<out T>(vararg val initialClasses: Class<out T>) : ClassSet<T> {
-
-  private val isSimple = initialClasses.size <= SIMPLE_CLASS_SET_LIMIT
-
-  private lateinit var internalMapping: MutableMap<Class<out T>, Boolean>
-
-  init {
-    if (!isSimple)
-      internalMapping = CollectionFactory.createConcurrentWeakMap<Class<out T>, Boolean>().apply {
-        for (initialClass in initialClasses)
-          this[initialClass] = true
-      }
+private class ClassSetImpl<out T>(val initialClasses: List<Class<out T>>) : ClassSet<T> {
+  private val internalMapping: MutableMap<String, Boolean> = ConcurrentHashMap<String, Boolean>().apply {
+    for (initialClass in initialClasses) {
+      this[initialClass.name] = true
+    }
   }
 
   override fun isEmpty(): Boolean = initialClasses.isEmpty()
 
-  override operator fun contains(element: Class<out @UnsafeVariance T>): Boolean =
-    if (isSimple)
-      initialClasses.any { it.isAssignableFrom(element) }
-    else
-      internalMapping[element]
-      ?: initialClasses.any { it.isAssignableFrom(element) }.also { internalMapping[element] = it }
-
-  override fun toString(): String {
-    return "ClassSetImpl(${initialClasses.contentToString()})"
+  override operator fun contains(element: Class<out @UnsafeVariance T>): Boolean {
+    return internalMapping[element.name]
+      ?: initialClasses.any { it.isAssignableFrom(element) }.also { internalMapping[element.name] = it }
   }
 
-  override fun toList(): List<Class<out @UnsafeVariance T>> = listOf(*initialClasses)
+  override fun toString(): String {
+    return "ClassSetImpl($initialClasses)"
+  }
+
+  override fun toList(): List<Class<out @UnsafeVariance T>> = initialClasses
 }
 
-fun <T> classSetOf(vararg classes: Class<out T>): ClassSet<T> =
-  if (classes.isNotEmpty()) ClassSetImpl(*classes) else emptyClassSet
+private class SimpleClassSetImpl<out T>(val initialClasses: List<Class<out T>>) : ClassSet<T> {
+  override fun isEmpty(): Boolean = initialClasses.isEmpty()
+
+  override operator fun contains(element: Class<out @UnsafeVariance T>): Boolean {
+    return initialClasses.any { it.isAssignableFrom(element) }
+  }
+
+  override fun toString(): String {
+    return "SimpleClassSetImpl($initialClasses)"
+  }
+
+  override fun toList(): List<Class<out @UnsafeVariance T>> = initialClasses
+}
+
+fun <T> classSetOf(vararg classes: Class<out T>): ClassSet<T> {
+  if (classes.isEmpty()) return emptyClassSet
+
+  return if (classes.size <= SIMPLE_CLASS_SET_LIMIT)
+    SimpleClassSetImpl(classes.toList())
+  else
+    ClassSetImpl(classes.toList())
+}
 
 private val emptyClassSet: ClassSet<Nothing> = object : ClassSet<Nothing> {
   override fun isEmpty() = true

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -110,9 +110,9 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   private List<SmartStepTarget> findStepTargetsInt(final SourcePosition position,
-                                                  @Nullable SuspendContextImpl suspendContext,
-                                                  @NotNull DebuggerContextImpl debuggerContext,
-                                                  boolean smart) {
+                                                   @Nullable SuspendContextImpl suspendContext,
+                                                   @NotNull DebuggerContextImpl debuggerContext,
+                                                   boolean smart) {
     final int line = position.getLine();
     if (line < 0) {
       return Collections.emptyList(); // the document has been changed
@@ -155,7 +155,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
         final Deque<PsiMethod> myContextStack = new LinkedList<>();
-        final Deque<String> myParamNameStack =  new LinkedList<>();
+        final Deque<String> myParamNameStack = new LinkedList<>();
         private int myNextLambdaExpressionOrdinal = 0;
         private boolean myInsideLambda = false;
 
@@ -353,7 +353,6 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
             }
           }
         }
-
       };
 
       element.accept(methodCollector);
@@ -464,8 +463,10 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
   private interface MethodInsnVisitor {
     void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf, int ordinal);
-    default void visitJumpInsn(int opcode, Label label) {}
-    default void visitCode() {}
+
+    default void visitJumpInsn(int opcode, Label label) { }
+
+    default void visitCode() { }
   }
 
   private static void visitLinesInstructions(Location location, boolean full, Set<Integer> lines, MethodInsnVisitor visitor) {

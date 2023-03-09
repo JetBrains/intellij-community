@@ -8,7 +8,7 @@ import com.intellij.openapi.util.NlsSafe
 @GraphQLFragment("/graphql/fragment/labelInfo.graphql")
 class GHLabel(id: String,
               val url: String,
-              @NlsSafe val name: String,
+              val name: @NlsSafe String,
               val color: String)
   : GHNode(id) {
 

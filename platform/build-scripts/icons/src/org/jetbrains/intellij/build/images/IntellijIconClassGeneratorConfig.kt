@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.images
 
 import org.jetbrains.jps.model.module.JpsModule
 
-class IntellijIconClassGeneratorConfig : IconsClasses() {
+class IntellijIconClassGeneratorConfig : IconClasses() {
   override val modules: List<JpsModule>
     get() = super.modules.filterNot {
       // TODO: use icon-robots.txt
@@ -69,11 +69,11 @@ class IntellijIconClassGeneratorConfig : IconsClasses() {
 
       "intellij.grazie.core" -> IntellijIconClassGeneratorModuleConfig(className = "GrazieIcons", packageName = "com.intellij.grazie.icons")
       "intellij.sh.core" -> IntellijIconClassGeneratorModuleConfig(className = "ShIcons", packageName = "com.intellij.sh")
-      "intellij.python.django.core" -> IntellijIconClassGeneratorModuleConfig(
+      "intellij.django.core" -> IntellijIconClassGeneratorModuleConfig(
         className = "DjangoIcons",
         packageName = "com.jetbrains.django"
       )
-      "intellij.python.jinja2" -> IntellijIconClassGeneratorModuleConfig(
+      "intellij.jinja" -> IntellijIconClassGeneratorModuleConfig(
         className = "Jinja2Icons",
         packageName = "com.jetbrains.jinja2"
       )

@@ -82,7 +82,9 @@ import java.util.function.Supplier;
 /**
  * @author Konstantin Bulenkov
  * @author Anna Kozlova
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Disposable, Queryable,
                                                    InfoAndProgressPanel.ScrollableToSelected, NavBarActionHandler {
 
@@ -110,14 +112,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   private Selection mySelection = null;
   private AutoscrollLimit myAutoscrollLimit = AutoscrollLimit.UNLIMITED;
 
-  private static class Selection {
-    private final int myBarIndex;
-    private final @Nullable List<Object> myNodePopupObjects;
-
-    Selection(int barIndex, @Nullable List<Object> nodePopupObjects) {
-      myBarIndex = barIndex;
-      myNodePopupObjects = nodePopupObjects;
-    }
+  private record Selection(int barIndex, @Nullable List<Object> nodePopupObjects) {
   }
 
   public NavBarPanel(@NotNull Project project, boolean docked) {
@@ -265,7 +260,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   public void enter() {
     Object selectedPopupObject = getSelectedPopupObject();
     if (selectedPopupObject != null) {
-      navigateInsideBar(mySelection.myBarIndex, selectedPopupObject, false);
+      navigateInsideBar(mySelection.barIndex, selectedPopupObject, false);
     }
 
     int index = myModel.getSelectedIndex();
@@ -281,18 +276,17 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   public void navigate() {
     Object selectedPopupObject = getSelectedPopupObject();
     if (selectedPopupObject != null) {
-      navigateInsideBar(mySelection.myBarIndex, selectedPopupObject, true);
+      navigateInsideBar(mySelection.barIndex, selectedPopupObject, true);
     }
-    else {
-      int index = myModel.getSelectedIndex();
-      if (index != -1) doubleClick(index);
-    }
+
+    int index = myModel.getSelectedIndex();
+    if (index != -1) doubleClick(index);
   }
 
   private @Nullable Object getSelectedPopupObject() {
     if (!isNodePopupActive()) return null;
 
-    List<Object> popupObjects = mySelection == null ? null : mySelection.myNodePopupObjects;
+    List<Object> popupObjects = mySelection == null ? null : mySelection.nodePopupObjects;
     if (popupObjects != null && !popupObjects.isEmpty()) {
       return popupObjects.get(0);
     }
@@ -366,8 +360,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       item.update();
     }
     if (UISettings.getInstance().getShowNavigationBar()) {
-      NavBarRootPaneExtension.NavBarWrapperPanel wrapperPanel = ComponentUtil
-        .getParentOfType((Class<? extends NavBarRootPaneExtension.NavBarWrapperPanel>)NavBarRootPaneExtension.NavBarWrapperPanel.class,
+      MyNavBarWrapperPanel wrapperPanel = ComponentUtil
+        .getParentOfType((Class<? extends MyNavBarWrapperPanel>)MyNavBarWrapperPanel.class,
                          (Component)this);
 
       if (wrapperPanel != null) {
@@ -711,11 +705,13 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       }
       final NavBarItem item = getItem(index);
 
-      final int selectedIndex = index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0;
-      myNodePopup = new NavBarPopup(this, index, siblings, index, selectedIndex);
-      myModel.setSelectedIndex(index);
-      myNodePopup.show(item);
-      item.update();
+      if (item != null) {
+        final int selectedIndex = index < myModel.size() - 1 ? objects.indexOf(myModel.getElement(index + 1)) : 0;
+        myNodePopup = new NavBarPopup(this, index, siblings, index, selectedIndex);
+        myModel.setSelectedIndex(index);
+        myNodePopup.show(item);
+        item.update();
+      }
     }
   }
 
@@ -814,8 +810,8 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     List<Object> popupObjects = null;
 
     if (mySelection != null) {
-      barObject = myModel.getRawElement(mySelection.myBarIndex);
-      popupObjects = mySelection.myNodePopupObjects;
+      barObject = myModel.getRawElement(mySelection.barIndex);
+      popupObjects = mySelection.nodePopupObjects;
     }
 
     if (barObject != null) {
@@ -872,7 +868,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     return null;
   }
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Project project, @NotNull JBIterable<?> selection) {
+  public static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Project project, @NotNull JBIterable<?> selection) {
     DataProvider provider = o -> getSlowDataImpl(o, project, selection);
     // slow extension data with selection
     for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {

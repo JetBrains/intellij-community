@@ -1,13 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.comment.ReviewUIUtil
+import com.intellij.collaboration.ui.codereview.timeline.comment.CommentInputComponentFactory
+import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.diff.util.Side
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
@@ -25,15 +32,18 @@ internal constructor(private val project: Project,
                      private val avatarIconsProvider: GHAvatarIconsProvider,
                      private val createCommentParametersHelper: GHPRCreateDiffCommentParametersHelper,
                      private val suggestedChangeHelper: GHPRSuggestedChangeHelper,
+                     private val ghostUser: GHUser,
                      private val currentUser: GHUser)
   : GHPRDiffEditorReviewComponentsFactory {
 
   override fun createThreadComponent(thread: GHPRReviewThreadModel): JComponent =
-    GHPRReviewThreadComponent.create(project, thread,
-                                     reviewDataProvider, avatarIconsProvider,
-                                     suggestedChangeHelper,
-                                     currentUser).apply {
-      border = JBUI.Borders.empty(8, 8)
+    GHPRReviewThreadComponent.createForInlay(project, thread, reviewDataProvider,
+                                             avatarIconsProvider, suggestedChangeHelper,
+                                             ghostUser, currentUser).apply {
+      border = JBUI.Borders.empty(ReviewUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.top,
+                                  0,
+                                  ReviewUIUtil.INLAY_PADDING - GHPRReviewThreadComponent.INLAY_COMPONENT_TYPE.paddingInsets.bottom,
+                                  0)
     }.let { ReviewUIUtil.createEditorInlayPanel(it) }
 
   override fun createSingleCommentComponent(side: Side, line: Int, startLine: Int, hideCallback: () -> Unit): JComponent {
@@ -97,17 +107,44 @@ internal constructor(private val project: Project,
       }
     }
 
-    return createCommentComponent(textFieldModel, GithubBundle.message("pull.request.diff.editor.review.comment"), hideCallback)
+    return createCommentComponent(textFieldModel,
+                                  GithubBundle.message("pull.request.diff.editor.review.comment"),
+                                  hideCallback)
   }
 
   private fun createCommentComponent(
     textFieldModel: GHCommentTextFieldModel,
     @NlsActions.ActionText actionName: String,
     hideCallback: () -> Unit
-  ): JComponent =
-    GHCommentTextFieldFactory(textFieldModel).create(avatarIconsProvider, currentUser, actionName) {
+  ): JComponent {
+    val submitShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommentInputComponentFactory.defaultSubmitShortcut)
+    val newLineShortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.ENTER)
+
+    val cancelAction = swingAction(CommonBundle.getCancelButtonText()) {
       hideCallback()
-    }.apply {
+    }
+    val submitAction = swingAction(actionName) {
+      textFieldModel.submit()
+    }
+    val busyListener: () -> Unit = {
+      submitAction.isEnabled = !textFieldModel.isBusy
+    }
+    textFieldModel.addStateListener(busyListener)
+    busyListener()
+
+    val actions = CommentInputActionsComponentFactory.Config(
+      primaryAction = MutableStateFlow(submitAction),
+      hintInfo = MutableStateFlow(CommentInputActionsComponentFactory.HintInfo(
+        submitHint = GithubBundle.message("pull.request.comment.hint", submitShortcutText), //TODO: separate hint
+        newLineHint = GithubBundle.message("pull.request.new.line.hint", newLineShortcutText)
+      ))
+    )
+
+    return GHCommentTextFieldFactory(textFieldModel).create(
+      GHCommentTextFieldFactory.ActionsConfig(actions, cancelAction),
+      GHCommentTextFieldFactory.AvatarConfig(avatarIconsProvider, currentUser)
+    ).apply {
       border = JBUI.Borders.empty(8)
     }.let { ReviewUIUtil.createEditorInlayPanel(it) }
+  }
 }

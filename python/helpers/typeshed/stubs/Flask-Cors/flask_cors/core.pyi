@@ -1,7 +1,8 @@
 from collections.abc import Iterable
 from datetime import timedelta
 from logging import Logger
-from typing import Any, Pattern, TypeVar, overload
+from re import Pattern
+from typing import Any, TypeVar, overload
 from typing_extensions import TypeAlias, TypedDict
 
 _IterableT = TypeVar("_IterableT", bound=Iterable[Any])
@@ -36,7 +37,7 @@ ACL_REQUEST_HEADERS: str
 ALL_METHODS: list[str]
 CONFIG_OPTIONS: list[str]
 FLASK_CORS_EVALUATED: str
-RegexObject: TypeAlias = Pattern[str]
+RegexObject: type[Pattern[str]]
 DEFAULT_OPTIONS: _Options
 
 def parse_resources(resources: dict[str, _Options] | Iterable[str] | str | Pattern[str]) -> list[tuple[str, _Options]]: ...

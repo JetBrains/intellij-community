@@ -14,21 +14,32 @@ import javax.swing.JPanel
 @ApiStatus.Experimental
 open class SelectablePanel(background: Color? = null) : JPanel() {
 
-  enum class SelectionArcCorners {
+  internal enum class Side {
+    TOP, BOTTOM, LEFT, RIGHT
+  }
+
+  enum class SelectionArcCorners(internal val sides: Set<Side>) {
+    TOP_LEFT(setOf(Side.TOP, Side.LEFT)),
+    TOP_RIGHT(setOf(Side.TOP, Side.RIGHT)),
+    BOTTOM_LEFT(setOf(Side.BOTTOM, Side.LEFT)),
+    BOTTOM_RIGHT(setOf(Side.BOTTOM, Side.RIGHT)),
+
     /**
      * Arc corners for top-left and bottom-left corners
      */
-    LEFT,
+    LEFT(setOf(Side.LEFT, Side.TOP, Side.BOTTOM)),
 
     /**
      * Arc corners for top-right and bottom-right corners
      */
-    RIGHT,
+    RIGHT(setOf(Side.TOP, Side.BOTTOM, Side.RIGHT)),
+    TOP(setOf(Side.TOP, Side.LEFT, Side.RIGHT)),
+    BOTTOM(setOf(Side.BOTTOM, Side.LEFT, Side.RIGHT)),
 
     /**
      * All corners are rounded
      */
-    ALL
+    ALL(Side.values().toSet())
   }
 
   companion object {
@@ -71,7 +82,7 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
   override fun paintComponent(g: Graphics) {
     val g2 = g.create() as Graphics2D
 
-    try  {
+    try {
       background?.let {
         if (isOpaque) {
           g2.color = it
@@ -87,26 +98,36 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
       g2.color = selectionColor
       GraphicsUtil.setupAAPainting(g2)
       var rectX = selectionInsets.left
-      val rectY = selectionInsets.top
+      var rectY = selectionInsets.top
       var rectWidth = width - rectX - selectionInsets.right
-      val rectHeight = height - rectY - selectionInsets.bottom
+      var rectHeight = height - rectY - selectionInsets.bottom
 
       if (selectionArc == 0 || selectionArcCorners == SelectionArcCorners.ALL) {
         g2.fillRoundRect(rectX, rectY, rectWidth, rectHeight, selectionArc, selectionArc)
-      } else {
+      }
+      else {
         g2.clipRect(rectX, rectY, rectWidth, rectHeight)
-        when (selectionArcCorners) {
-          SelectionArcCorners.LEFT -> {
-            rectWidth += selectionArc
-          }
+        rectX -= selectionArc
+        rectY -= selectionArc
+        rectHeight += 2 * selectionArc
+        rectWidth += 2 * selectionArc
 
-          SelectionArcCorners.RIGHT -> {
-            rectX -= selectionArc
-            rectWidth += selectionArc
-          }
-
-          else -> {
-            throw RuntimeException("No implementation for $selectionArcCorners")
+        for (side in selectionArcCorners.sides) {
+          when (side) {
+            Side.TOP -> {
+              rectY += selectionArc
+              rectHeight -= selectionArc
+            }
+            Side.BOTTOM -> {
+              rectHeight -= selectionArc
+            }
+            Side.LEFT -> {
+              rectX += selectionArc
+              rectWidth -= selectionArc
+            }
+            Side.RIGHT -> {
+              rectWidth -= selectionArc
+            }
           }
         }
         g2.fillRoundRect(rectX, rectY, rectWidth, rectHeight, selectionArc, selectionArc)

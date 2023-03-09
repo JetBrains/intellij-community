@@ -48,9 +48,10 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestImplementation().show(message);
     }
 
-    if (AlertMessagesManager.isEnabled()) {
-      return AlertMessagesManager.instance().showMessageDialog(project, parentComponent, message, title, options, defaultOptionIndex,
-                                                               focusedOptionIndex, icon, doNotAskOption, helpId);
+    AlertMessagesManager alertMessagesManager = AlertMessagesManager.getInstanceIfPossible();
+    if (alertMessagesManager != null) {
+      return alertMessagesManager.showMessageDialog(project, parentComponent, message, title, options, defaultOptionIndex,
+                                                    focusedOptionIndex, icon, doNotAskOption, helpId);
     }
 
     MessageDialog dialog = new MessageDialog(project, parentComponent, message, title, options, defaultOptionIndex, focusedOptionIndex,
@@ -72,9 +73,12 @@ public class MessagesServiceImpl implements MessagesService {
       return TestDialogManager.getTestImplementation().show(message);
     }
 
-    if (AlertMessagesManager.isEnabled() && moreInfo == null) {
-      return AlertMessagesManager.instance().showMessageDialog(project, null, message, title, options, defaultOptionIndex,
-                                                               focusedOptionIndex, icon, null, null);
+    if (moreInfo == null) {
+      AlertMessagesManager alertMessagesManager = AlertMessagesManager.getInstanceIfPossible();
+      if (alertMessagesManager != null) {
+        return alertMessagesManager.showMessageDialog(project, null, message, title, options, defaultOptionIndex,
+                                                      focusedOptionIndex, icon, null, null);
+      }
     }
 
     MessageDialog dialog =

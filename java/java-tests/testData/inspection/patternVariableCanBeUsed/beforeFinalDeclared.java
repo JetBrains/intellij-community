@@ -2,7 +2,7 @@
 class X {
   void test(Object obj) {
     if (obj instanceof String) {
-      final String <caret>s = (String)obj;
+      @Ann final String <caret>s = (String)obj;
     }
   }
 }

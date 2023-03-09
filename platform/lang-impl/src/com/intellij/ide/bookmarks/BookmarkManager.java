@@ -162,18 +162,6 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     }
   }
 
-  public void addEditorBookmark(@NotNull Editor editor, int lineIndex) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    Document document = editor.getDocument();
-    PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    if (psiFile == null) return;
-
-    final VirtualFile virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) return;
-
-    addTextBookmark(virtualFile, lineIndex, getAutoDescription(editor, lineIndex));
-  }
-
   @NotNull
   public Bookmark addTextBookmark(@NotNull VirtualFile file, int lineIndex, @NotNull @NlsSafe String description) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -218,12 +206,11 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   public List<Bookmark> getValidBookmarks() {
     List<Bookmark> answer = ContainerUtil.filter(myBookmarks.values(), b -> b.isValid());
     if (UISettings.getInstance().getSortBookmarks()) {
-      Collections.sort(answer);
+      return ContainerUtil.sorted(answer);
     }
     else {
-      answer.sort(Comparator.comparingInt(b -> b.index));
+      return ContainerUtil.sorted(answer, Comparator.comparingInt(b -> b.index));
     }
-    return answer;
   }
 
   @NotNull

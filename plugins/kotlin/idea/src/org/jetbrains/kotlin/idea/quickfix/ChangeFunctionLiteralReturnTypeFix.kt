@@ -112,7 +112,7 @@ class ChangeFunctionLiteralReturnTypeFix(
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         ApplicationManager.getApplication().runWriteAction {
             functionLiteralReturnTypeRef?.let {
-                val newTypeRef = it.replace(KtPsiFactory(file).createType(typeSourceCode)) as KtTypeReference
+                val newTypeRef = it.replace(KtPsiFactory(project).createType(typeSourceCode)) as KtTypeReference
                 ShortenReferences.DEFAULT.process(newTypeRef)
             }
         }

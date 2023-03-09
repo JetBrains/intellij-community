@@ -17,21 +17,23 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
-import static com.intellij.openapi.util.NlsActions.*;
+import static com.intellij.openapi.util.NlsActions.ActionText;
 
 /**
  * @author anna
@@ -121,7 +123,7 @@ public class ProjectSdksModel implements SdkModel {
   }
 
   public void disposeUIResources() {
-    myProjectSdks.values().forEach(it -> ObjectUtils.consumeIfCast(it, Disposable.class, Disposer::dispose));
+    StreamEx.ofValues(myProjectSdks).select(Disposable.class).forEach(Disposer::dispose);
     myProjectSdks.clear();
     myInitialized = false;
   }

@@ -17,7 +17,7 @@ package com.jetbrains.rest.inspections;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.ListEditForm;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -40,10 +40,12 @@ import com.jetbrains.rest.psi.RestRole;
 import com.jetbrains.rest.quickfixes.AddIgnoredRoleFix;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringSet;
 
 /**
  * User: catherine
@@ -139,8 +141,7 @@ public class RestRoleInspection extends RestInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    ListEditForm form = new ListEditForm(PythonRestBundle.message("python.rest.inspections.role.ignore.roles"), PythonRestBundle.message("python.rest.inspections.role.ignore.roles.label"), ignoredRoles);
-    return form.getContentPanel();
+  public @NotNull OptPane getOptionsPane() {
+    return pane(stringSet("ignoredRoles", PythonRestBundle.message("python.rest.inspections.role.ignore.roles.label")));
   }
 }

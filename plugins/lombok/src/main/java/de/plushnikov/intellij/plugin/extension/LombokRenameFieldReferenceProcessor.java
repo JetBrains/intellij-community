@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.extension;
 
 import com.intellij.psi.*;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.handler.singular.BuilderElementHandler;
@@ -24,8 +25,8 @@ public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProce
     if (element instanceof PsiField && !(element instanceof LombokLightFieldBuilder)) {
       final PsiClass containingClass = ((PsiField) element).getContainingClass();
       if (null != containingClass) {
-        return Arrays.stream(containingClass.getMethods()).anyMatch(LombokLightMethodBuilder.class::isInstance) ||
-          Arrays.stream(containingClass.getInnerClasses()).anyMatch(LombokLightClassBuilder.class::isInstance);
+        return ContainerUtil.exists(containingClass.getMethods(), LombokLightMethodBuilder.class::isInstance) ||
+          ContainerUtil.exists(containingClass.getInnerClasses(), LombokLightClassBuilder.class::isInstance);
       }
     }
     return false;
@@ -36,10 +37,10 @@ public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProce
     final PsiField psiField = (PsiField) element;
     final PsiClass containingClass = psiField.getContainingClass();
     final String currentFieldName = psiField.getName();
-    if (null != containingClass && null != currentFieldName) {
+    if (null != containingClass) {
       final boolean isBoolean = PsiType.BOOLEAN.equals(psiField.getType());
 
-      final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+      final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(psiField);
 
       final String getterName = LombokUtils.toGetterName(accessorsInfo, currentFieldName, isBoolean);
       final PsiMethod[] psiGetterMethods = containingClass.findMethodsByName(getterName, false);
@@ -65,8 +66,8 @@ public class LombokRenameFieldReferenceProcessor extends RenameJavaVariableProce
       if (null != builderAnnotation) {
         final PsiAnnotation singularAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, LombokClassNames.SINGULAR);
         final BuilderElementHandler handler = SingularHandlerFactory.getHandlerFor(psiField, null!=singularAnnotation);
-        final List<String> currentBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(currentFieldName), singularAnnotation);
-        final List<String> newBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(newFieldName), singularAnnotation);
+        final List<String> currentBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(currentFieldName), singularAnnotation, accessorsInfo.getCapitalizationStrategy());
+        final List<String> newBuilderMethodNames = handler.getBuilderMethodNames(accessorsInfo.removePrefix(newFieldName), singularAnnotation, accessorsInfo.getCapitalizationStrategy());
 
         if (currentBuilderMethodNames.size() == newBuilderMethodNames.size()) {
           Arrays.stream(containingClass.getInnerClasses())

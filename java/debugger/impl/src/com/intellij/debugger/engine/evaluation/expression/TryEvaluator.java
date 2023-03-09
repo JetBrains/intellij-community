@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.evaluation.expression;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -28,7 +28,8 @@ public class TryEvaluator implements Evaluator {
     Object result = context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
     try {
       result = myBodyEvaluator.evaluate(context);
-    } catch (EvaluateException e) {
+    }
+    catch (EvaluateException e) {
       boolean catched = false;
       ObjectReference vmException = e.getExceptionFromTargetVM();
       if (vmException != null) {
@@ -43,7 +44,8 @@ public class TryEvaluator implements Evaluator {
       if (!catched) {
         throw e;
       }
-    } finally {
+    }
+    finally {
       if (myFinallyEvaluator != null) {
         result = myFinallyEvaluator.evaluate(context);
       }

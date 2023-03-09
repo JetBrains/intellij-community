@@ -9,7 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.kotlin.types.typeUtil.TypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
@@ -31,15 +31,15 @@ class KotlinNullabilityUAnnotation(
     override val sourcePsi: PsiElement?
         get() = null
 
-    private val nullability : TypeNullability? by lz {
+    private val nullability : KtTypeNullability? by lz {
         baseKotlinUastResolveProviderService.nullability(annotatedElement)
     }
 
     override val qualifiedName: String?
         get() = when (nullability) {
-            TypeNullability.NOT_NULL -> NotNull::class.qualifiedName
-            TypeNullability.NULLABLE -> Nullable::class.qualifiedName
-            TypeNullability.FLEXIBLE -> null
+            KtTypeNullability.NON_NULLABLE -> NotNull::class.qualifiedName
+            KtTypeNullability.NULLABLE -> Nullable::class.qualifiedName
+            KtTypeNullability.UNKNOWN -> null
             null -> null
         }
 

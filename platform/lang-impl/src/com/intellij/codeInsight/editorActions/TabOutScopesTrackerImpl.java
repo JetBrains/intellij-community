@@ -27,7 +27,7 @@ public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
   public void registerScopeRange(@NotNull Editor editor, int rangeStart, int rangeEnd, int tabOutOffset) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
-    if (editor.isDisposed()) throw new IllegalArgumentException("Editor is already disposed");
+    if (editor.isDisposed()) throw new IllegalArgumentException(editor + " is already disposed");
     if (rangeStart > rangeEnd) {
       final String message = String.format("regionEnd (%d) should be larger than regionStart (%d)", rangeEnd, rangeStart);
       throw new IllegalArgumentException(message);

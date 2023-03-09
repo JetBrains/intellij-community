@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks;
 
 import com.intellij.tasks.impl.TaskUtil;
@@ -13,7 +14,7 @@ import static junit.framework.Assert.assertTrue;
 /**
  * @author Mikhail Golubev
  */
-public class TaskTestUtil {
+public final class TaskTestUtil {
   public static void  assertTasksEqual(@NotNull Task t1, @NotNull Task t2) {
     assertTrue(TaskUtil.tasksEqual(t1, t2));
   }

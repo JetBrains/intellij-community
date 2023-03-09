@@ -438,7 +438,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
 
   @Nullable
   public ExternalProjectsViewState getState() {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (myStructure != null) {
       try {
         myState.treeState = new Element("root");

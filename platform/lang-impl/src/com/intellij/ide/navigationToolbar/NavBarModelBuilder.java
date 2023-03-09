@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -15,7 +15,10 @@ import java.util.Set;
 /**
  * Creates a new model for navigation bar by taking a giving element and
  *  traverse path to root adding each element to a model
+ *  
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public abstract class NavBarModelBuilder {
 
   public static NavBarModelBuilder getInstance() {

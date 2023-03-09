@@ -295,7 +295,7 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     LOG.info(sb.toString());
   }
 
-  private static void runAndMeasure(@NotNull List<Pair<Integer, String>> results,
+  private static void runAndMeasure(@NotNull List<? super Pair<Integer, String>> results,
                                     @NotNull String actionName,
                                     @NotNull LongSupplier runnable) {
     ReadAction.run(() -> {
@@ -306,16 +306,7 @@ public final class ActionUpdatesBenchmarkAction extends DumbAwareAction {
     });
   }
 
-  private static class TraceData {
-    final long delta;
-    final StackTraceElement[] trace;
-    final TraceData next;
-
-    TraceData(long delta, StackTraceElement @NotNull [] trace, @Nullable TraceData next) {
-      this.delta = delta;
-      this.trace = trace;
-      this.next = next;
-    }
+  private record TraceData(long delta, StackTraceElement @NotNull [] trace, @Nullable TraceData next) {
   }
 
   private interface MyRunner {

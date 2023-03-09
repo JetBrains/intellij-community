@@ -42,7 +42,7 @@ object MarkdownUtil {
     if (project != null) {
       map[MarkdownElementTypes.IMAGE] = IntelliJImageGeneratingProvider(linkMap, baseUri)
       map[MarkdownElementTypes.PARAGRAPH] = ParagraphGeneratingProvider()
-      map[MarkdownElementTypes.CODE_SPAN] = CodeSpanRunnerGeneratingProvider(map[MarkdownElementTypes.CODE_SPAN]!!, project, file)
+      map[MarkdownElementTypes.CODE_SPAN] = CodeSpanRunnerGeneratingProvider(project, file)
     }
 
     val html = HtmlGenerator(text, parsedTree, map, true).generateHtml()

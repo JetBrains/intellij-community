@@ -2,6 +2,9 @@
   <module value="com.intellij.modules.remoteServers"/>
 
   <extensionPoints>
+    <extensionPoint name="remoteServer.deploymentConfiguration.stateProvider"
+                    interface="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerStateProvider"
+                    dynamic="true"/>
     <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType" dynamic="true"/>
     <extensionPoint name="remoteServer.deploymentSource.type"
                     interface="com.intellij.remoteServer.configuration.deployment.DeploymentSourceType"

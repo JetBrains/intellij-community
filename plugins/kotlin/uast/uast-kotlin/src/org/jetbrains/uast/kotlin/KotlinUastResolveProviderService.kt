@@ -3,8 +3,8 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.asJava.toLightAnnotation
-import org.jetbrains.kotlin.backend.common.descriptors.explicitParameters
 import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -323,7 +323,8 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
             ?.toPsiType(containingLightDeclaration, ktDeclaration, ktDeclaration.typeOwnerKind, boxed = false)
     }
 
-    override fun getFunctionType(ktFunction: KtFunction, source: UElement): PsiType? {
+    override fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType? {
+        if (ktFunction is KtConstructor<*>) return null
         val descriptor = ktFunction.analyze()[BindingContext.FUNCTION, ktFunction] ?: return null
         val returnType = descriptor.returnType ?: return null
 
@@ -342,8 +343,14 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         return uLambdaExpression.getFunctionalInterfaceType()
     }
 
-    override fun nullability(psiElement: PsiElement): TypeNullability? {
-        return getTargetType(psiElement)?.nullability()
+    override fun nullability(psiElement: PsiElement): KtTypeNullability? {
+        return getTargetType(psiElement)?.nullability()?.let {
+            when (it) {
+                TypeNullability.NOT_NULL -> KtTypeNullability.NON_NULLABLE
+                TypeNullability.NULLABLE -> KtTypeNullability.NULLABLE
+                TypeNullability.FLEXIBLE -> KtTypeNullability.UNKNOWN
+            }
+        }
     }
 
     private fun getTargetType(annotatedElement: PsiElement): KotlinType? {
@@ -352,6 +359,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         }
         if (annotatedElement is KtCallableDeclaration) {
             annotatedElement.typeReference?.getType()?.let { return it }
+            annotatedElement.getReturnType()?.let { return it }
         }
         if (annotatedElement is KtProperty) {
             annotatedElement.initializer?.let { it.getType(it.analyze()) }?.let { return it }

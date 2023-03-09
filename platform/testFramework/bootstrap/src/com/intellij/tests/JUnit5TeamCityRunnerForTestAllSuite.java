@@ -33,7 +33,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
-public class JUnit5TeamCityRunnerForTestAllSuite {
+public final class JUnit5TeamCityRunnerForTestAllSuite {
   public static void main(String[] args) throws ClassNotFoundException {
     try {
       Launcher launcher = LauncherFactory.create(LauncherConfig.builder().enableLauncherSessionListenerAutoRegistration(false).build());

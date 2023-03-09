@@ -44,7 +44,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
     finally {
       ourCustomRegionElements.set(null);
     }
-    return descriptors.toArray(FoldingDescriptor.EMPTY);
+    return descriptors.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
   @Override

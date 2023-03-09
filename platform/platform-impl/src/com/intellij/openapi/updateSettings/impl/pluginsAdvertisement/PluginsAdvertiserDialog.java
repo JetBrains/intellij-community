@@ -18,8 +18,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import static java.util.Collections.emptyList;
-
 /**
  * @author anna
  */
@@ -61,11 +59,13 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   protected @NotNull JComponent createCenterPanel() {
     if (myPanel == null) {
       myPanel = new DetectedPluginsPanel(myProject);
-      if (mySelectAllSuggestions || myPluginToInstall.size() == 1) {
-        myPanel.addAll(myPluginToInstall, myPluginToInstall); // all or nothing, single plugin always gets selected automatically
-      } else {
-        myPanel.addAll(myPluginToInstall, emptyList());
+
+      // all or nothing, single plugin always gets selected automatically
+      boolean checkAll = mySelectAllSuggestions || myPluginToInstall.size() == 1;
+      for (PluginDownloader downloader : myPluginToInstall) {
+        myPanel.setChecked(downloader, checkAll);
       }
+      myPanel.addAll(myPluginToInstall);
     }
     return myPanel;
   }

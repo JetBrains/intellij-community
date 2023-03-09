@@ -29,7 +29,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.geom.*;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
@@ -76,34 +78,38 @@ public final class IdeBackgroundUtil {
                                                        @NotNull String paintersName,
                                                        @NotNull JComponent component) {
     Boolean noBackground = ClientProperty.get(component, NO_BACKGROUND);
-    if (Boolean.TRUE.equals(noBackground)) return MyGraphics.unwrap(g);
+    if (Boolean.TRUE.equals(noBackground)) {
+      return MyGraphics.unwrap(g);
+    }
+
     boolean checkLayer = !Boolean.FALSE.equals(noBackground);
     JRootPane rootPane = null;
     for (Component c = component, p = null; c != null && rootPane == null; p = c, c = c.getParent()) {
-      if (c instanceof JRootPane) rootPane = (JRootPane)c;
-      if (checkLayer && c instanceof JLayeredPane && p != null && ((JLayeredPane)c).getLayer(p) == JLayeredPane.POPUP_LAYER) break;
+      if (c instanceof JRootPane) {
+        rootPane = (JRootPane)c;
+      }
+      if (checkLayer && c instanceof JLayeredPane && p != null && ((JLayeredPane)c).getLayer(p) == JLayeredPane.POPUP_LAYER) {
+        break;
+      }
     }
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
-    PaintersHelper helper = glassPane instanceof IdeGlassPaneImpl? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
-    if (helper == null || !helper.needsRepaint()) return MyGraphics.unwrap(g);
+    PainterHelper helper = glassPane instanceof IdeGlassPaneImpl ? ((IdeGlassPaneImpl)glassPane).getNamedPainters$intellij_platform_ide_impl(paintersName) : null;
+    if (helper == null || !helper.needsRepaint()) {
+      return MyGraphics.unwrap(g);
+    }
     return MyGraphics.wrap(g, helper, component);
   }
 
   static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
-    PaintersHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
+    PainterHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters$intellij_platform_ide_impl(EDITOR_PROP));
   }
 
   static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
-    PaintersHelper painters = glassPane.getNamedPainters(FRAME_PROP);
-    PaintersHelper.initWallpaperPainter(FRAME_PROP, painters);
-
-    //Image centerImage = null;
-    //if (centerImage != null) {
-    //  painters.addPainter(PaintersHelper.newImagePainter(centerImage, Fill.PLAIN, Anchor.TOP_CENTER, 1.0f, JBUI.insets(10, 0, 0, 0)), null);
-    //}
+    PainterHelper painters = glassPane.getNamedPainters$intellij_platform_ide_impl(FRAME_PROP);
+    PainterHelper.initWallpaperPainter(FRAME_PROP, painters);
 
     painters.addPainter(new AbstractPainter() {
-      final EditorEmptyTextPainter p = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
+      EditorEmptyTextPainter p = null;
 
       @Override
       public boolean needsRepaint() {
@@ -112,6 +118,9 @@ public final class IdeBackgroundUtil {
 
       @Override
       public void executePaint(Component component, Graphics2D g) {
+        if (p == null) {
+          p = ApplicationManager.getApplication().getService(EditorEmptyTextPainter.class);
+        }
         p.paintEmptyText((JComponent)component, g);
       }
     }, null);
@@ -125,8 +134,8 @@ public final class IdeBackgroundUtil {
   }
 
   public static void createTemporaryBackgroundTransform(@NotNull JPanel root, String tmp, @NotNull Disposable disposable) {
-    PaintersHelper paintersHelper = new PaintersHelper(root);
-    PaintersHelper.initWallpaperPainter(tmp, paintersHelper);
+    PainterHelper paintersHelper = new PainterHelper(root);
+    PainterHelper.initWallpaperPainter(tmp, paintersHelper);
     Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
       if (!UIUtil.isAncestor(root, t)) return v;
       return MyGraphics.wrap(v, paintersHelper, t);
@@ -140,8 +149,8 @@ public final class IdeBackgroundUtil {
                                                         float alpha,
                                                         Insets insets,
                                                         Disposable disposable) {
-    PaintersHelper paintersHelper = new PaintersHelper(root);
-    paintersHelper.addPainter(PaintersHelper.newImagePainter(image, fill, anchor, alpha, insets), root);
+    PainterHelper paintersHelper = new PainterHelper(root);
+    paintersHelper.addPainter(PainterHelper.newImagePainter(image, fill, anchor, alpha, insets), root);
     Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
       if (!UIUtil.isAncestor(root, t)) {
         return v;
@@ -177,11 +186,11 @@ public final class IdeBackgroundUtil {
   };
 
   private static final class MyGraphics extends Graphics2DDelegate {
-    final PaintersHelper helper;
-    final PaintersHelper.Offsets offsets;
+    final PainterHelper helper;
+    final PainterHelper.Offsets offsets;
     Predicate<? super Color> preserved;
 
-    static Graphics2D wrap(Graphics g, PaintersHelper helper, JComponent component) {
+    static Graphics2D wrap(Graphics g, PainterHelper helper, JComponent component) {
       MyGraphics gg = g instanceof MyGraphics ? (MyGraphics)g : null;
       return new MyGraphics(gg != null ? gg.myDelegate : g, helper, helper.computeOffsets(g, component), gg != null ? gg.preserved : null);
     }
@@ -190,7 +199,7 @@ public final class IdeBackgroundUtil {
       return g instanceof MyGraphics ? ((MyGraphics)g).getDelegate() : (Graphics2D)g;
     }
 
-    MyGraphics(Graphics g, PaintersHelper helper, PaintersHelper.Offsets offsets, Predicate<? super Color> preserved) {
+    MyGraphics(Graphics g, PainterHelper helper, PainterHelper.Offsets offsets, Predicate<? super Color> preserved) {
       super((Graphics2D)g);
       this.helper = helper;
       this.offsets = offsets;
@@ -302,21 +311,6 @@ public final class IdeBackgroundUtil {
       return b;
     }
 
-    private static @Nullable Shape calcTempClip(@Nullable Shape prevClip, @NotNull Shape forcedClip) {
-      if (prevClip == null) {
-        return forcedClip;
-      }
-      else if (prevClip instanceof Rectangle2D && forcedClip instanceof Rectangle2D) {
-        Rectangle2D r = ((Rectangle2D)prevClip).createIntersection((Rectangle2D)forcedClip);
-        return r.isEmpty() ? null : r;
-      }
-      else {
-        Area area = new Area(prevClip);
-        area.intersect(new Area(forcedClip));
-        return area.getBounds().isEmpty() ? null : area;
-      }
-    }
-
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
       if (width <= 1 || height <= 1) return;
       boolean hasAlpha;
@@ -335,17 +329,18 @@ public final class IdeBackgroundUtil {
         return;
       }
 
-      Shape prevClip = getClip();
-      Shape tmpClip = calcTempClip(prevClip, sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
-      if (tmpClip == null) return;
-
       boolean preserve = preserved != null && reason instanceof Color && preserved.test((Color)reason);
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.TRUE);
       }
-      setClip(tmpClip);
-      helper.runAllPainters(myDelegate, offsets);
-      setClip(prevClip);
+      Graphics2D clipped = (Graphics2D)create();
+      try {
+        clipped.clip(sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
+        helper.runAllPainters(clipped, offsets);
+      }
+      finally {
+        clipped.dispose();
+      }
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.FALSE);
       }

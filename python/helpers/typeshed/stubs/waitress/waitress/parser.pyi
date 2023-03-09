@@ -1,12 +1,11 @@
 from collections.abc import Mapping, Sequence
 from io import BytesIO
-from typing import Any, Pattern
+from re import Pattern
+from typing import Any
 
 from waitress.adjustments import Adjustments
 from waitress.receiver import ChunkedReceiver, FixedStreamReceiver
 from waitress.utilities import Error
-
-from .rfc7230 import HEADER_FIELD as HEADER_FIELD
 
 class ParsingError(Exception): ...
 class TransferEncodingNotImplemented(Exception): ...

@@ -30,6 +30,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
@@ -47,6 +48,7 @@ import org.gradle.wrapper.WrapperConfiguration;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
@@ -85,7 +87,7 @@ import static org.junit.Assume.assumeThat;
 @RunWith(Parameterized.class)
 public abstract class GradleImportingTestCase extends JavaExternalSystemImportingTestCase {
   public static final String BASE_GRADLE_VERSION = VersionMatcherRule.BASE_GRADLE_VERSION;
-  protected static final String GRADLE_JDK_NAME = "Gradle JDK";
+  public static final String GRADLE_JDK_NAME = "Gradle JDK";
   private static final int GRADLE_DAEMON_TTL_MS = 10000;
 
   @Rule public TestName name = new TestName();
@@ -374,6 +376,15 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       deprecationError.set(Couple.of("Deprecation warning from Gradle", text));
     }
     super.printOutput(text, stdOut);
+  }
+
+  @Override
+  protected void handleImportFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+    var combinedMessage = errorMessage + "\n" + errorDetails;
+    if (combinedMessage.contains("org.gradle.wrapper.Download.download") && combinedMessage.contains("java.net.SocketException")) {
+      ExternalResourcesChecker.reportUnavailability("Gradle distribution service", null);
+    }
+    super.handleImportFailure(errorMessage, errorDetails);
   }
 
   public void importProject(@NonNls @Language("Groovy") String config) throws IOException {

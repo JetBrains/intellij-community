@@ -4,6 +4,7 @@ package com.siyeh.ig.numeric;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -21,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+import static com.intellij.codeInspection.options.OptPane.*;
+
 public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspection implements CleanupLocalInspectionTool {
 
   @SuppressWarnings("PublicField") public boolean ignoreReferences = true;
@@ -34,15 +37,12 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "unpredictable.big.decimal.constructor.call.ignore.references.option"),
-                             "ignoreReferences");
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
-      "unpredictable.big.decimal.constructor.call.ignore.complex.literals.option"),
-                             "ignoreComplexLiterals");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreReferences", InspectionGadgetsBundle.message(
+        "unpredictable.big.decimal.constructor.call.ignore.references.option")),
+      checkbox("ignoreComplexLiterals", InspectionGadgetsBundle.message(
+        "unpredictable.big.decimal.constructor.call.ignore.complex.literals.option")));
   }
 
   @Override
@@ -95,7 +95,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiNewExpression newExpression = (PsiNewExpression)element.getParent();
       if (!isStillValid(newExpression)) {

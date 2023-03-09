@@ -52,9 +52,9 @@ public final class WinIntelliJTextBorder extends DarculaTextBorder {
 
       boolean isCellRenderer = DarculaUIUtil.isTableCellEditor(c);
       int bw = 1;
-      Object op = jc.getClientProperty("JComponent.outline");
+      DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(jc);
       if (c.isEnabled() && op != null) {
-        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, c.hasFocus());
+        op.setGraphicsColor(g2, c.hasFocus());
         bw = isCellRenderer ? 1 : 2;
       }
       else {

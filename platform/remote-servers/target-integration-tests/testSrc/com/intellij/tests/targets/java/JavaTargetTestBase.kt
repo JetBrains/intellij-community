@@ -10,16 +10,11 @@ import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestUtil
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -63,7 +58,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
   private suspend fun doTestCanReadFileAtTarget(shortenCommandLine: ShortenCommandLine) {
     val cwd = tempDir.createDir()
     val executor = DefaultRunExecutor.getRunExecutorInstance()
-    val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+    val executionEnvironment: ExecutionEnvironment = withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
       ExecutionEnvironmentBuilder(project, executor)
         .runProfile(
           ApplicationConfiguration("CatRunConfiguration", project).also { conf ->
@@ -83,7 +78,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
         CompletableDeferred<RunContentDescriptor>()
           .also { deferred ->
             executionEnvironment.setCallback { deferred.complete(it) }
-            withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+            withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
               executionEnvironment.runner.execute(executionEnvironment)
             }
           }
@@ -97,7 +92,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
   @Test
   fun `test java application`(): Unit = runBlocking {
     val cwd = tempDir.createDir()
-    val executionEnvironment: ExecutionEnvironment = withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+    val executionEnvironment: ExecutionEnvironment = withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
       ExecutionEnvironmentBuilder(project, getExecutor()).runProfile(
         ApplicationConfiguration("CatRunConfiguration", project).also { conf ->
           conf.setModule(module)
@@ -132,7 +127,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
         CompletableDeferred<RunContentDescriptor>()
           .also { deferred ->
             executionEnvironment.setCallback { deferred.complete(it) }
-            withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+            withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
               executionEnvironment.runner.execute(executionEnvironment)
             }
           }
@@ -154,7 +149,7 @@ abstract class JavaTargetTestBase(executionMode: ExecutionMode) : CommonJavaTarg
       handler()
     }
     finally {
-      withContext(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+      withContext(Dispatchers.EDT + ModalityState.defaultModalityState().asContextElement()) {
         for (editor in editorFactory.allEditors) {
           if (editor.project === project && editor !in editorsBefore) {
             editorFactory.releaseEditor(editor)

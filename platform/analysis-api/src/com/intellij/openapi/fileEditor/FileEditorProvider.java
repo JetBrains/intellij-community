@@ -68,6 +68,8 @@ public interface FileEditorProvider {
   /**
    * @return editor type ID for the editors created with this FileEditorProvider. Each FileEditorProvider should have
    * a unique nonnull ID. The ID is used for saving/loading of EditorStates.
+   *
+   * Please consider setting extension id in registration also for performance reasons.
    */
   @NotNull
   @NonNls

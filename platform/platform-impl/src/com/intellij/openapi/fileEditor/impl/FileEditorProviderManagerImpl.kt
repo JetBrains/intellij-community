@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.WeighedFileEditorProvider
@@ -64,7 +65,7 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
       sharedProviders.removeIf { it.policy != FileEditorPolicy.HIDE_OTHER_EDITORS }
     }
 
-    // Sort editors according policies
+    // sort editors according policies
     sharedProviders.sortWith(MyComparator)
     return sharedProviders
   }
@@ -104,7 +105,7 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
   }
 
   override fun getProvider(editorTypeId: String): FileEditorProvider? {
-    return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList.firstOrNull { it.editorTypeId == editorTypeId }
+    return FileEditorProvider.EP_FILE_EDITOR_PROVIDER.findByIdOrFromInstance(editorTypeId) { it.editorTypeId }
   }
 
   fun providerSelected(composite: EditorComposite) {
@@ -114,12 +115,12 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
     }
 
     updateState {
-      FileEditorProviderManagerState(it.selectedProviders + (computeKey(providers) to composite.selectedWithProvider.provider.editorTypeId))
+      FileEditorProviderManagerState(it.selectedProviders + (computeKey(providers) to composite.selectedWithProvider!!.provider.editorTypeId))
     }
   }
 
-  fun getSelectedFileEditorProvider(composite: EditorComposite): FileEditorProvider? {
-    val editorHistoryManager = EditorHistoryManager.getInstance(composite.project)
+  internal fun getSelectedFileEditorProvider(composite: EditorComposite, project: Project): FileEditorProvider? {
+    val editorHistoryManager = EditorHistoryManager.getInstance(project)
     val provider = editorHistoryManager.getSelectedProvider(composite.file)
     val providers = composite.allProviders
     if (provider != null || providers.size < 2) {

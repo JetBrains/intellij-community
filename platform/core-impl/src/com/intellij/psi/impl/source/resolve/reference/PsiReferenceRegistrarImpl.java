@@ -77,7 +77,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     }
 
     Class<?> scope = pattern.getCondition().getInitialCondition().getAcceptedClass();
-    final List<PatternCondition<? super T>> conditions = pattern.getCondition().getConditions();
+    List<PatternCondition<? super T>> conditions = pattern.getCondition().getConditions();
     for (PatternCondition<? super T> _condition : conditions) {
       if (!(_condition instanceof PsiNamePatternCondition)) {
         continue;
@@ -86,13 +86,13 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
       List<PatternCondition<? super String>> conditions1 = nameCondition.getNamePattern().getCondition().getConditions();
       for (PatternCondition<? super String> condition1 : conditions1) {
         if (condition1 instanceof ValuePatternCondition) {
-          final Collection<String> strings = ((ValuePatternCondition)condition1).getValues();
+          Collection<String> strings = ((ValuePatternCondition)condition1).getValues();
           registerNamedReferenceProvider(ArrayUtilRt.toStringArray(strings), nameCondition, scope, true, provider, priority, pattern,
                                          parentDisposable);
           return;
         }
         if (condition1 instanceof CaseInsensitiveValuePatternCondition) {
-          final String[] strings = ((CaseInsensitiveValuePatternCondition)condition1).getValues();
+          String[] strings = ((CaseInsensitiveValuePatternCondition)condition1).getValues();
           registerNamedReferenceProvider(strings, nameCondition, scope, false, provider, priority, pattern, parentDisposable);
           return;
         }
@@ -130,7 +130,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   }
 
   public void unregisterReferenceProvider(@NotNull Class<?> scope, @NotNull PsiReferenceProvider provider) {
-    final SimpleProviderBinding binding = myBindingsMap.get(scope);
+    SimpleProviderBinding binding = myBindingsMap.get(scope);
     if (binding != null) {
       binding.unregisterProvider(provider);
       if (binding.isEmpty()) {
@@ -141,11 +141,11 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   }
 
   private void registerNamedReferenceProvider(String @NotNull [] names,
-                                              final PsiNamePatternCondition<?> nameCondition,
+                                              PsiNamePatternCondition<?> nameCondition,
                                               @NotNull Class<?> scopeClass,
-                                              final boolean caseSensitive,
+                                              boolean caseSensitive,
                                               @NotNull PsiReferenceProvider provider,
-                                              final double priority,
+                                              double priority,
                                               @NotNull ElementPattern<?> pattern,
                                               @Nullable Disposable parentDisposable) {
     NamedObjectProviderBinding providerBinding = myNamedBindingsMap.get(scopeClass);
@@ -153,7 +153,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
     if (providerBinding == null) {
       myNamedBindingsMap.put(scopeClass, providerBinding = new NamedObjectProviderBinding() {
         @Override
-        protected String getName(@NotNull final PsiElement position) {
+        protected String getName(@NotNull PsiElement position) {
           return nameCondition.getPropertyValue(position);
         }
       });
@@ -179,7 +179,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   @ApiStatus.Internal
   public @NotNull List<ProviderBinding.ProviderInfo<ProcessingContext>> getPairsByElement(@NotNull PsiElement element,
                                                                                           @NotNull PsiReferenceService.Hints hints) {
-    final ProviderBinding[] bindings = myBindingCache.get(element.getClass());
+    ProviderBinding[] bindings = myBindingCache.get(element.getClass());
     if (bindings.length == 0) return Collections.emptyList();
 
     List<ProviderBinding.ProviderInfo<ProcessingContext>> ret = new SmartList<>();

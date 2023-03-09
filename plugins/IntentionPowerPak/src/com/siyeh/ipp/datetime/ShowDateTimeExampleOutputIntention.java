@@ -63,7 +63,9 @@ public class ShowDateTimeExampleOutputIntention extends Intention implements Hig
         if (!TypeUtils.isJavaLangString(type)) {
           return false;
         }
-        final PsiElement grandParent = PsiUtil.skipParenthesizedExprUp(expression).getParent().getParent();
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression).getParent();
+        if (parent == null) return false;
+        final PsiElement grandParent = parent.getParent();
         if (grandParent instanceof PsiMethodCallExpression) {
           if (SIMPLE_DATE_FORMAT_METHODS.test((PsiMethodCallExpression)grandParent)) {
             dateTimeFormatter = false;

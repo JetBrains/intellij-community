@@ -1,8 +1,8 @@
 // FIR_IDENTICAL
-interface <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>TheTrait<!> {
+interface <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>TheInterface<!> {
 }
 
-class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>TheClass<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>TheTrait<!> {
+class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>TheClass<!> : <!HIGHLIGHTING("textAttributesKey='KOTLIN_TRAIT'")!>TheInterface<!> {
 }
 
 <!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>magnificent<!>

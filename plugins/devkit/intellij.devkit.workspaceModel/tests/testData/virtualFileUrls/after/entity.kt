@@ -26,6 +26,9 @@ interface EntityWithUrls : WorkspaceEntity {
   }
 
   companion object : Type<EntityWithUrls, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(simpleUrl: VirtualFileUrl,
                         listOfUrls: List<VirtualFileUrl>,
                         dataClassWithUrl: DataClassWithUrl,

@@ -53,7 +53,7 @@ class AutomaticParameterRenamer(element: KtParameter, newName: String) : Automat
 class AutomaticParameterRenamerFactory : AutomaticRenamerFactory {
     override fun isApplicable(element: PsiElement) = element is KtParameter && element.ownerFunction is KtNamedFunction
 
-    override fun getOptionName() = RefactoringBundle.message("rename.parameters.hierarchy")!!
+    override fun getOptionName() = RefactoringBundle.message("rename.parameters.hierarchy")
 
     override fun isEnabled() = KotlinRefactoringSettings.instance.renameParameterInHierarchy
 

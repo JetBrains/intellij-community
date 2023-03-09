@@ -73,6 +73,7 @@ class ImplicitInitializerConversion(context: NewJ2kConverterContext) : Recursive
                     parent is JKKtAssignmentStatement -> parent
                     parent is JKQualifiedExpression && parent.receiver is JKThisExpression ->
                         parent.parent as? JKKtAssignmentStatement
+
                     else -> null
                 } ?: return@mapNotNull null
             val constructor =

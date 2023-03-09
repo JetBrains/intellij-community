@@ -25,7 +25,8 @@ class ExcludeUrlIndexableEntityProvider implements IndexableEntityProvider<Exclu
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ExcludeUrlEntity oldEntity,
-                                                                                                   @NotNull ExcludeUrlEntity newEntity) {
+                                                                                                   @NotNull ExcludeUrlEntity newEntity,
+                                                                                                   @NotNull Project project) {
     if (VirtualFileUrlManagerUtil.isEqualOrParentOf(newEntity.getUrl(), oldEntity.getUrl())) return Collections.emptyList();
     return createBuilders(oldEntity);
   }

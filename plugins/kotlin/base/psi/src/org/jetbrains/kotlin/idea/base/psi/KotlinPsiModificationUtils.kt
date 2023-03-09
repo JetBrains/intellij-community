@@ -42,7 +42,7 @@ fun KtBlockStringTemplateEntry.dropCurlyBrackets(): KtSimpleNameStringTemplateEn
         else -> (expression as KtNameReferenceExpression).getReferencedNameElement().text
     }
 
-    val newEntry = KtPsiFactory(this).createSimpleNameStringTemplateEntry(name)
+    val newEntry = KtPsiFactory(project).createSimpleNameStringTemplateEntry(name)
     return replaced(newEntry)
 }
 

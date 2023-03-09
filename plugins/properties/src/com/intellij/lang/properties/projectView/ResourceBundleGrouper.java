@@ -101,14 +101,14 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   }
 
   @Override
-  public Object getData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
+  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       return (DataProvider)slowId -> getSlowData(selected, slowId);
     }
     return null;
   }
 
-  private static Object getSlowData(@NotNull Collection<AbstractTreeNode<?>> selected, @NotNull String dataId) {
+  private static Object getSlowData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       for (AbstractTreeNode<?> selectedElement : selected) {
         Object element = selectedElement.getValue();

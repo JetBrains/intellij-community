@@ -10,26 +10,15 @@ internal fun interface SettingsChangeListener : EventListener {
 }
 
 internal sealed class SyncSettingsEvent {
-  /**
-   * These events are processed in a batch
-   */
-  sealed class StandardEvent: SyncSettingsEvent()
-
-  /**
-   * Exclusive events are processed separately from other events.
-   */
-  sealed class ExclusiveEvent : SyncSettingsEvent()
-
   class IdeChange(snapshot: SettingsSnapshot) : EventWithSnapshot(snapshot)
   class CloudChange(snapshot: SettingsSnapshot, val serverVersionId: String?) : EventWithSnapshot(snapshot)
-  object MustPushRequest : StandardEvent()
-  object LogCurrentSettings : StandardEvent()
+  object MustPushRequest : SyncSettingsEvent()
+  object LogCurrentSettings : SyncSettingsEvent()
 
   /**
-   * Request to check the server state and the local state, and initiate the sync procedure, if there is a newer version on the server,
-   * or if there are changes which were not pushed yet.
+   * Special request to ping the merge and push procedure in case there are settings which weren't pushed yet.
    */
-  object SyncRequest : ExclusiveEvent()
+  object PingRequest : SyncSettingsEvent()
 
   /**
    * Tells that the settings sync has to be stopped, and the server data has to be deleted.
@@ -37,21 +26,21 @@ internal sealed class SyncSettingsEvent {
    *
    * @param afterDeleting this callback function will be called after executing the deletion
    */
-  class DeleteServerData(val afterDeleting: (DeleteServerDataResult) -> Unit): StandardEvent()
+  class DeleteServerData(val afterDeleting: (DeleteServerDataResult) -> Unit): SyncSettingsEvent()
 
   /**
    * Indicates that the settings sync snapshot has been explicitly deleted on the server.
    * It means that other clients must disable settings sync.
    */
-  object DeletedOnCloud: StandardEvent()
+  object DeletedOnCloud: SyncSettingsEvent()
 
-  class CrossIdeSyncStateChanged(val isCrossIdeSyncEnabled: Boolean) : ExclusiveEvent()
+  class CrossIdeSyncStateChanged(val isCrossIdeSyncEnabled: Boolean) : SyncSettingsEvent()
 
   override fun toString(): String {
     return javaClass.simpleName
   }
 
-  internal sealed class EventWithSnapshot(val snapshot: SettingsSnapshot) : StandardEvent() {
+  internal sealed class EventWithSnapshot(val snapshot: SettingsSnapshot) : SyncSettingsEvent() {
     override fun toString(): String {
       return "${javaClass.simpleName}[${snapshot.fileStates.joinToString(limit = 5) { it.file }}]"
     }

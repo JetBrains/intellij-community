@@ -40,8 +40,8 @@ class NullableBooleanEqualityCheckToElvisIntention : SelfTargetingIntention<KtBi
             else -> return
         }
 
-        val factory = KtPsiFactory(constPart)
-        val elvis = factory.createExpressionByPattern("$0 ?: ${!constValue}", exprPart)
-        element.replaced(if (constValue == equality) elvis else factory.createExpressionByPattern("!($0)", elvis))
+        val psiFactory = KtPsiFactory(constPart.project)
+        val elvis = psiFactory.createExpressionByPattern("$0 ?: ${!constValue}", exprPart)
+        element.replaced(if (constValue == equality) elvis else psiFactory.createExpressionByPattern("!($0)", elvis))
     }
 }

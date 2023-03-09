@@ -15,10 +15,10 @@
  */
 package org.jetbrains.idea.maven.utils
 
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.codeInsight.daemon.ProblemHighlightFilter
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import org.junit.Test
-
 /**
  * @author Sergey Evdokimov
  */
@@ -32,7 +32,7 @@ class A {
 }
 """)
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
-    myFixture.checkHighlighting()
+    assertFalse(ProblemHighlightFilter.shouldHighlightFile(file))
 
     file = myFixture.addFileToProject("src/main/resources/B.java", """
 import <error>\$</error><error><error>{</error>package};</error>
@@ -42,6 +42,5 @@ class B {
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile())
     myFixture.checkHighlighting()
   }
-
 }
 

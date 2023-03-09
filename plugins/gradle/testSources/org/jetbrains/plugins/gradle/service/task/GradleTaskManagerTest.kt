@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.gradle.tooling.LongRunningOperation
@@ -50,10 +50,10 @@ class GradleTaskManagerTest: UsefulTestCase() {
   }
 
   override fun tearDown() {
-    RunAll(
+    runAll(
       { myTestFixture.tearDown() },
       { super.tearDown() }
-    ).run()
+    )
   }
 
   @Test
@@ -149,7 +149,7 @@ class GradleTaskManagerTest: UsefulTestCase() {
 
   private fun createBuildFile(gradleVersion: GradleVersion, configure: TestGradleBuildScriptBuilder.() -> Unit) {
     val projectRoot = runWriteAction { PlatformTestUtil.getOrCreateProjectBaseDir(myProject) }
-    projectRoot.createBuildFile(gradleVersion, configure)
+    projectRoot.createBuildFile(gradleVersion, configure = configure)
   }
 }
 

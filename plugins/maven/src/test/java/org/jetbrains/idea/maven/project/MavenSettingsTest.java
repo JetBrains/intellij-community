@@ -116,13 +116,15 @@ public class MavenSettingsTest extends MavenTestCase {
     replaceService(myProject, ExternalSystemProjectTrackerSettings.class, new AutoImportProjectTrackerSettings(), () -> {
       ExternalSystemProjectTrackerSettings projectTrackerSettings = ExternalSystemProjectTrackerSettings.getInstance(myProject);
       MavenWorkspaceSettingsComponent workspaceSettingsComponent = loadWorkspaceComponent(
-        "<MavenWorkspaceSettings>" +
-        "  <option name=\"importingSettings\">" +
-        "    <MavenImportingSettings>" +
-        "      <option name=\"importAutomatically\" value=\"true\" />" +
-        "    </MavenImportingSettings>" +
-        "  </option>" +
-        "</MavenWorkspaceSettings>");
+        """
+          <MavenWorkspaceSettings>
+            <option name="importingSettings">
+              <MavenImportingSettings>
+                <option name="importAutomatically" value="true" />
+              </MavenImportingSettings>
+            </option>
+          </MavenWorkspaceSettings>
+          """);
       assertFalse(workspaceSettingsComponent.getSettings().importingSettings.isImportAutomatically());
       assertEquals(ExternalSystemProjectTrackerSettings.AutoReloadType.ALL, projectTrackerSettings.getAutoReloadType());
       assertEquals("<MavenWorkspaceSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
@@ -130,13 +132,15 @@ public class MavenSettingsTest extends MavenTestCase {
     replaceService(myProject, ExternalSystemProjectTrackerSettings.class, new AutoImportProjectTrackerSettings(), () -> {
       ExternalSystemProjectTrackerSettings projectTrackerSettings = ExternalSystemProjectTrackerSettings.getInstance(myProject);
       MavenWorkspaceSettingsComponent workspaceSettingsComponent = loadWorkspaceComponent(
-        "<MavenWorkspaceSettings>" +
-        "  <option name=\"importingSettings\">" +
-        "    <MavenImportingSettings>" +
-        "      <option name=\"importAutomatically\" value=\"false\" />" +
-        "    </MavenImportingSettings>" +
-        "  </option>" +
-        "</MavenWorkspaceSettings>");
+        """
+          <MavenWorkspaceSettings>
+            <option name="importingSettings">
+              <MavenImportingSettings>
+                <option name="importAutomatically" value="false" />
+              </MavenImportingSettings>
+            </option>
+          </MavenWorkspaceSettings>
+          """);
       assertFalse(workspaceSettingsComponent.getSettings().importingSettings.isImportAutomatically());
       assertEquals(ExternalSystemProjectTrackerSettings.AutoReloadType.SELECTIVE, projectTrackerSettings.getAutoReloadType());
       assertEquals("<MavenWorkspaceSettings />", storeWorkspaceComponent(workspaceSettingsComponent));

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass
 
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedReferenceQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
@@ -56,7 +57,7 @@ object CreateClassFromTypeReferenceActionFactory : CreateClassFromUsageFactory<K
         val containingClass = getStrictParentOfType<KtClass>() ?: return false
         return !containingClass.hasModifier(KtTokens.ANNOTATION_KEYWORD)
                 && !containingClass.hasModifier(KtTokens.ENUM_KEYWORD)
-                && !containingClass.hasModifier(KtTokens.INLINE_KEYWORD)
+                && !containingClass.isInlineOrValue()
     }
 
     private fun getExpectedUpperBound(element: KtUserType, context: BindingContext): KotlinType? {

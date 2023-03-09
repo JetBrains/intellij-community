@@ -1,21 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.storage.bridgeEntities
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
-import org.jetbrains.deft.annotations.Child
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.deft.ObjBuilder
+import org.jetbrains.deft.Type
+import org.jetbrains.deft.annotations.Child
 
 interface ModuleEntity : WorkspaceEntityWithSymbolicId {
-    val name: String
+    val name: @NlsSafe String
 
-    val type: String?
+    val type: @NonNls String?
     val dependencies: List<ModuleDependencyItem>
 
     val contentRoots: List<@Child ContentRootEntity>
@@ -23,6 +28,7 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
     @Child val groupPath: ModuleGroupPathEntity?
     @Child val javaSettings: JavaModuleSettingsEntity?
     @Child val exModuleOptions: ExternalSystemModuleOptionsEntity?
+    @Child val testProperties: TestModulePropertiesEntity?
     val facets: List<@Child FacetEntity>
 
     override val symbolicId: ModuleId
@@ -40,10 +46,14 @@ interface ModuleEntity : WorkspaceEntityWithSymbolicId {
     override var groupPath: ModuleGroupPathEntity?
     override var javaSettings: JavaModuleSettingsEntity?
     override var exModuleOptions: ExternalSystemModuleOptionsEntity?
+    override var testProperties: TestModulePropertiesEntity?
     override var facets: List<FacetEntity>
   }
 
   companion object : Type<ModuleEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(name: String,
                         dependencies: List<ModuleDependencyItem>,
                         entitySource: EntitySource,
@@ -73,8 +83,8 @@ var ModuleEntity.Builder.sourceRoots: List<SourceRootEntity>
 interface ModuleCustomImlDataEntity : WorkspaceEntity {
     val module: ModuleEntity
 
-    val rootManagerTagCustomData: String?
-    val customModuleOptions: Map<String, String>
+    val rootManagerTagCustomData: @NonNls String?
+    val customModuleOptions: Map<@NonNls String, @NonNls String>
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -86,6 +96,9 @@ interface ModuleCustomImlDataEntity : WorkspaceEntity {
   }
 
   companion object : Type<ModuleCustomImlDataEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(customModuleOptions: Map<String, String>,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): ModuleCustomImlDataEntity {
@@ -109,7 +122,7 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleCustomImlDataEntity,
 interface ModuleGroupPathEntity : WorkspaceEntity {
     val module: ModuleEntity
 
-    val path: List<String>
+    val path: List<@NonNls String>
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -120,6 +133,9 @@ interface ModuleGroupPathEntity : WorkspaceEntity {
   }
 
   companion object : Type<ModuleGroupPathEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(path: List<String>, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ModuleGroupPathEntity {
       val builder = builder()
       builder.path = path.toMutableWorkspaceList()
@@ -144,7 +160,7 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
     val excludeOutput: Boolean
     val compilerOutput: VirtualFileUrl?
     val compilerOutputForTests: VirtualFileUrl?
-    val languageLevelId: String?
+    val languageLevelId: @NonNls String?
 
   //region generated code
   @GeneratedCodeApiVersion(1)
@@ -159,6 +175,9 @@ interface JavaModuleSettingsEntity: WorkspaceEntity {
   }
 
   companion object : Type<JavaModuleSettingsEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(inheritedCompilerOutput: Boolean,
                         excludeOutput: Boolean,
                         entitySource: EntitySource,
@@ -207,6 +226,9 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
   }
 
   companion object : Type<ExternalSystemModuleOptionsEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ExternalSystemModuleOptionsEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -222,4 +244,39 @@ interface ExternalSystemModuleOptionsEntity: WorkspaceEntity {
 fun MutableEntityStorage.modifyEntity(entity: ExternalSystemModuleOptionsEntity,
                                       modification: ExternalSystemModuleOptionsEntity.Builder.() -> Unit) = modifyEntity(
   ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
+//endregion
+
+interface TestModulePropertiesEntity: WorkspaceEntity {
+  val module: ModuleEntity
+  val productionModuleId: ModuleId
+
+  //region generated code
+  @GeneratedCodeApiVersion(1)
+  interface Builder : TestModulePropertiesEntity, WorkspaceEntity.Builder<TestModulePropertiesEntity>, ObjBuilder<TestModulePropertiesEntity> {
+    override var entitySource: EntitySource
+    override var module: ModuleEntity
+    override var productionModuleId: ModuleId
+  }
+
+  companion object : Type<TestModulePropertiesEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
+    operator fun invoke(productionModuleId: ModuleId,
+                        entitySource: EntitySource,
+                        init: (Builder.() -> Unit)? = null): TestModulePropertiesEntity {
+      val builder = builder()
+      builder.productionModuleId = productionModuleId
+      builder.entitySource = entitySource
+      init?.invoke(builder)
+      return builder
+    }
+  }
+  //endregion
+}
+
+//region generated code
+fun MutableEntityStorage.modifyEntity(entity: TestModulePropertiesEntity,
+                                      modification: TestModulePropertiesEntity.Builder.() -> Unit) = modifyEntity(
+  TestModulePropertiesEntity.Builder::class.java, entity, modification)
 //endregion

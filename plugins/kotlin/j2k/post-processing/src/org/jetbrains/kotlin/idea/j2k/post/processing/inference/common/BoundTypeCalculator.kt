@@ -10,9 +10,9 @@ import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isNullExpres
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
-import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.builtIns
@@ -24,12 +24,12 @@ interface BoundTypeCalculator {
     fun KtExpression.boundType(inferenceContext: InferenceContext): BoundType
 
     fun KotlinType.boundType(
-      typeVariable: TypeVariable? = null,
-      contextBoundType: BoundType? = null,
-      call: ResolvedCall<*>? = null,
-      isImplicitReceiver: Boolean = false,
-      forceEnhance: Boolean = false,
-      inferenceContext: InferenceContext
+        typeVariable: TypeVariable? = null,
+        contextBoundType: BoundType? = null,
+        call: ResolvedCall<*>? = null,
+        isImplicitReceiver: Boolean = false,
+        forceEnhance: Boolean = false,
+        inferenceContext: InferenceContext
     ): BoundType
 }
 
@@ -49,14 +49,15 @@ open class BoundTypeCalculatorImpl(
         null
 
     private fun calculateBoundType(inferenceContext: InferenceContext, expression: KtExpression): BoundType =
-      interceptCalculateBoundType(inferenceContext, expression) ?: when {
+        interceptCalculateBoundType(inferenceContext, expression) ?: when {
             expression.isNullExpression() -> BoundType.NULL
             expression is KtParenthesizedExpression -> expression.expression?.boundType(inferenceContext)
             expression is KtConstantExpression
                     || expression is KtStringTemplateExpression
                     || expression.node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT
                     || expression is KtBinaryExpression ->
-              BoundType.LITERAL
+                BoundType.LITERAL
+
             expression is KtQualifiedExpression -> expression.toBoundTypeAsQualifiedExpression(inferenceContext)
             expression is KtBinaryExpressionWithTypeRHS -> expression.toBoundTypeAsCastExpression(inferenceContext)
             expression is KtNameReferenceExpression -> expression.toBoundTypeAsReferenceExpression(inferenceContext)
@@ -95,14 +96,14 @@ open class BoundTypeCalculatorImpl(
         val returnTypeTypeVariable = inferenceContext.declarationToTypeVariable[functionLiteral] ?: return null
         val returnTypeParameter =
             TypeParameter(
-              BoundTypeImpl(
-                TypeVariableLabel(returnTypeTypeVariable),
-                returnTypeTypeVariable.typeParameters
+                BoundTypeImpl(
+                    TypeVariableLabel(returnTypeTypeVariable),
+                    returnTypeTypeVariable.typeParameters
                 ),
-              Variance.OUT_VARIANCE
+                Variance.OUT_VARIANCE
             )
         return BoundTypeImpl(
-          GenericLabel(prototypeDescriptor.classReference),
+            GenericLabel(prototypeDescriptor.classReference),
             parameterBoundTypes.map { TypeParameter(it, Variance.IN_VARIANCE) } + returnTypeParameter
         )
     }
@@ -124,8 +125,8 @@ open class BoundTypeCalculatorImpl(
                             ?.safeAs<ClassDescriptor>()
                             ?.classReference ?: NoClassReference
                     BoundTypeImpl(
-                      GenericLabel(arrayClassReference),
-                      listOf(TypeParameter(boundType, Variance.INVARIANT))
+                        GenericLabel(arrayClassReference),
+                        listOf(TypeParameter(boundType, Variance.INVARIANT))
                     )
                 } else boundType
             }
@@ -137,8 +138,8 @@ open class BoundTypeCalculatorImpl(
 
 
     private fun KtExpression.toBoundTypeAsCallableExpression(
-      contextBoundType: BoundType?,
-      inferenceContext: InferenceContext
+        contextBoundType: BoundType?,
+        inferenceContext: InferenceContext
     ): BoundType? {
         val call = getResolvedCall(analyze(resolutionFacade)) ?: return null
         val returnType = call.candidateDescriptor.original.returnType ?: return null
@@ -166,12 +167,12 @@ open class BoundTypeCalculatorImpl(
     }
 
     final override fun KotlinType.boundType(
-      typeVariable: TypeVariable?,
-      contextBoundType: BoundType?,
-      call: ResolvedCall<*>?,
-      isImplicitReceiver: Boolean,
-      forceEnhance: Boolean,
-      inferenceContext: InferenceContext
+        typeVariable: TypeVariable?,
+        contextBoundType: BoundType?,
+        call: ResolvedCall<*>?,
+        isImplicitReceiver: Boolean,
+        forceEnhance: Boolean,
+        inferenceContext: InferenceContext
     ) = boundTypeUnenhanced(
         typeVariable,
         contextBoundType,
@@ -190,11 +191,11 @@ open class BoundTypeCalculatorImpl(
     } ?: BoundType.LITERAL
 
     private fun KotlinType.boundTypeUnenhanced(
-      typeVariable: TypeVariable?,
-      contextBoundType: BoundType?,
-      call: ResolvedCall<*>?,
-      isImplicitReceiver: Boolean,
-      inferenceContext: InferenceContext
+        typeVariable: TypeVariable?,
+        contextBoundType: BoundType?,
+        call: ResolvedCall<*>?,
+        isImplicitReceiver: Boolean,
+        inferenceContext: InferenceContext
     ): BoundType? {
         return when (val target = constructor.declarationDescriptor) {
             is ClassDescriptor ->
@@ -204,11 +205,11 @@ open class BoundTypeCalculatorImpl(
                         val argumentBoundType = when {
                             argument.isStarProjection -> BoundType.STAR_PROJECTION
                             else -> argument.type.boundTypeUnenhanced(
-                              typeVariable?.typeParameters?.getOrNull(i)?.boundType?.label?.safeAs<TypeVariableLabel>()?.typeVariable,
-                              contextBoundType,
-                              call,
-                              isImplicitReceiver,
-                              inferenceContext
+                                typeVariable?.typeParameters?.getOrNull(i)?.boundType?.label?.safeAs<TypeVariableLabel>()?.typeVariable,
+                                contextBoundType,
+                                call,
+                                isImplicitReceiver,
+                                inferenceContext
                             ) ?: return null
                         }
                         TypeParameter(argumentBoundType, constructor.parameters.getOrNull(i)?.variance ?: return null)
@@ -225,39 +226,43 @@ open class BoundTypeCalculatorImpl(
                 when {
                     containingDeclaration == call?.candidateDescriptor?.original -> {
                         val returnTypeVariable = inferenceContext.typeElementToTypeVariable[
-                                call.call.typeArguments.getOrNull(target.index)?.typeReference?.typeElement
-                                    ?: return BoundType.STAR_PROJECTION
+                            call.call.typeArguments.getOrNull(target.index)?.typeReference?.typeElement
+                                ?: return BoundType.STAR_PROJECTION
                         ] ?: return BoundType.STAR_PROJECTION
                         BoundTypeImpl(
-                          TypeVariableLabel(returnTypeVariable),
-                          returnTypeVariable.typeParameters
+                            TypeVariableLabel(returnTypeVariable),
+                            returnTypeVariable.typeParameters
                         )
                     }
+
                     typeVariable != null && isImplicitReceiver ->
                         BoundTypeImpl(
-                          TypeVariableLabel(typeVariable),
-                          emptyList()
+                            TypeVariableLabel(typeVariable),
+                            emptyList()
                         )
+
                     contextBoundType?.isReferenceToClass == true ->
                         contextBoundType.typeParameters.getOrNull(target.index)?.boundType
 
                     // `this`, `super`, or constructor call cases
                     containingDeclaration == call?.candidateDescriptor.safeAs<ConstructorDescriptor>()?.constructedClass -> {
                         val returnTypeVariable = inferenceContext.typeElementToTypeVariable[
-                                call?.call?.typeArguments?.getOrNull(target.index)?.typeReference?.typeElement
-                                    ?: return BoundType.STAR_PROJECTION
+                            call?.call?.typeArguments?.getOrNull(target.index)?.typeReference?.typeElement
+                                ?: return BoundType.STAR_PROJECTION
                         ] ?: return BoundType.STAR_PROJECTION
                         BoundTypeImpl(
-                          TypeVariableLabel(returnTypeVariable),
-                          returnTypeVariable.typeParameters
+                            TypeVariableLabel(returnTypeVariable),
+                            returnTypeVariable.typeParameters
                         )
                     }
+
                     else -> BoundTypeImpl(
-                      TypeParameterLabel(target),
-                      emptyList()
+                        TypeParameterLabel(target),
+                        emptyList()
                     )
                 }
             }
+
             else -> null
         }
     }

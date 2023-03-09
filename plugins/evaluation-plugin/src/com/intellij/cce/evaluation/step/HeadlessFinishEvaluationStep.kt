@@ -1,7 +1,7 @@
 package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.workspace.EvaluationWorkspace
-import kotlin.system.exitProcess
+import com.intellij.openapi.application.ApplicationManager
 
 class HeadlessFinishEvaluationStep : FinishEvaluationStep() {
   override fun start(workspace: EvaluationWorkspace): EvaluationWorkspace? {
@@ -12,6 +12,7 @@ class HeadlessFinishEvaluationStep : FinishEvaluationStep() {
       println("Reports:")
       workspace.getReports().forEach { println("${it.key}: ${it.value}") }
     }
-    exitProcess(0)
+    ApplicationManager.getApplication().exit(true, false, false)
+    return null
   }
 }

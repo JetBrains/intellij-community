@@ -1,19 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
-import com.intellij.util.ui.update.Update
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 
 internal class ModuleVcsDetector(private val project: Project) {
@@ -29,7 +28,7 @@ internal class ModuleVcsDetector(private val project: Project) {
 
     if (vcsManager.needAutodetectMappings() &&
         vcsManager.haveDefaultMapping() == null) {
-      queue.queue(Update.create("initial scan") { autoDetectDefaultRoots() })
+      queue.queue(DisposableUpdate.createDisposable(queue, "initial scan") { autoDetectDefaultRoots() })
     }
   }
 
@@ -117,7 +116,7 @@ internal class ModuleVcsDetector(private val project: Project) {
             dirtyContentRoots.addAll(added)
             dirtyContentRoots.removeAll(removed.toSet())
           }
-          queue.queue(Update.create("modules scan") { runScanForNewContentRoots() })
+          queue.queue(DisposableUpdate.createDisposable(queue, "modules scan") { runScanForNewContentRoots() })
         }
       }
 
@@ -140,7 +139,7 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  internal class MyPostStartUpActivity : StartupActivity.DumbAware {
+  internal class MyStartUpActivity : VcsStartupActivity {
     init {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         throw ExtensionNotApplicableException.create()
@@ -149,6 +148,10 @@ internal class ModuleVcsDetector(private val project: Project) {
 
     override fun runActivity(project: Project) {
       project.service<ModuleVcsDetector>().startDetection()
+    }
+
+    override fun getOrder(): Int {
+      return VcsInitObject.MAPPINGS.order + 10;
     }
   }
 }

@@ -120,9 +120,6 @@ public final class KnownArgumentsInfo implements ArgumentsInfo {
     }
 
     // We may need last one
-    if (argumentPosition < myMaxArguments) {
-      return Pair.create(false, myArguments.get(myArguments.size() - 1));
-    }
-    return null;
+    return Pair.create(false, myArguments.get(myArguments.size() - 1));
   }
 }

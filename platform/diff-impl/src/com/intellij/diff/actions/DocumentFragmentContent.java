@@ -1,14 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.actions;
 
-import com.intellij.diff.contents.DiffContentBase;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.LineCol;
-import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.FileType;
@@ -24,30 +21,23 @@ import java.util.function.IntUnaryOperator;
 /**
  * Represents sub text of other content.
  */
-public final class DocumentFragmentContent extends DiffContentBase implements DocumentContent {
+public final class DocumentFragmentContent extends SynchronizedDocumentContent {
   // TODO: reuse DocumentWindow ?
-
-  @NotNull private final DocumentContent myOriginal;
   @NotNull private final RangeMarker myRangeMarker;
 
   @NotNull private final MyDocumentsSynchronizer mySynchronizer;
-
-  private int myAssignments = 0;
 
   public DocumentFragmentContent(@Nullable Project project, @NotNull DocumentContent original, @NotNull TextRange range) {
     this(project, original, createRangeMarker(original.getDocument(), range));
   }
 
   public DocumentFragmentContent(@Nullable Project project, @NotNull DocumentContent original, @NotNull RangeMarker rangeMarker) {
-    myOriginal = original;
+    super(original);
     myRangeMarker = rangeMarker;
 
-    Document document1 = myOriginal.getDocument();
+    Document document1 = getOriginal().getDocument();
 
-    Document document2 = EditorFactory.getInstance().createDocument("");
-    document2.putUserData(UndoManager.ORIGINAL_DOCUMENT, document1);
-
-    mySynchronizer = new MyDocumentsSynchronizer(project, myRangeMarker, document1, document2);
+    mySynchronizer = new MyDocumentsSynchronizer(project, myRangeMarker, document1, getFakeDocument());
 
     IntUnaryOperator originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR);
     putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, value -> {
@@ -74,7 +64,7 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
   @Nullable
   @Override
   public VirtualFile getHighlightFile() {
-    return myOriginal.getHighlightFile();
+    return getOriginal().getHighlightFile();
   }
 
   @Nullable
@@ -83,14 +73,14 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
     if (!myRangeMarker.isValid()) return null;
     int offset = position.toOffset(getDocument());
     int originalOffset = offset + myRangeMarker.getStartOffset();
-    LineCol originalPosition = LineCol.fromOffset(myOriginal.getDocument(), originalOffset);
-    return myOriginal.getNavigatable(originalPosition);
+    LineCol originalPosition = LineCol.fromOffset(getOriginal().getDocument(), originalOffset);
+    return getOriginal().getNavigatable(originalPosition);
   }
 
   @Nullable
   @Override
   public FileType getContentType() {
-    return myOriginal.getContentType();
+    return getOriginal().getContentType();
   }
 
   @Nullable
@@ -99,17 +89,10 @@ public final class DocumentFragmentContent extends DiffContentBase implements Do
     return getNavigatable(new LineCol(0));
   }
 
+  @NotNull
   @Override
-  public void onAssigned(boolean isAssigned) {
-    if (isAssigned) {
-      if (myAssignments == 0) mySynchronizer.startListen();
-      myAssignments++;
-    }
-    else {
-      myAssignments--;
-      if (myAssignments == 0) mySynchronizer.stopListen();
-    }
-    assert myAssignments >= 0;
+  public DocumentsSynchronizer getSynchronizer() {
+    return mySynchronizer;
   }
 
   private static class MyDocumentsSynchronizer extends DocumentsSynchronizer {

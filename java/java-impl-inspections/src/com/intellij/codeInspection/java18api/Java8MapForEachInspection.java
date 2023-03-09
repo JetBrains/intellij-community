@@ -2,7 +2,7 @@
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -21,11 +21,12 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String JAVA_UTIL_MAP_ENTRY = CommonClassNames.JAVA_UTIL_MAP + ".Entry";
@@ -39,11 +40,10 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
 
   public boolean DO_NOT_HIGHLIGHT_LOOP = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("inspection.map.foreach.option.no.loops"), this,
-                                          "DO_NOT_HIGHLIGHT_LOOP");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("DO_NOT_HIGHLIGHT_LOOP", JavaBundle.message("inspection.map.foreach.option.no.loops")));
   }
 
   @NotNull

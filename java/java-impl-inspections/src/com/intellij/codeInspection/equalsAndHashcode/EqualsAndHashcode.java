@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.equalsAndHashcode;
 
 import com.intellij.codeInsight.generation.GenerateEqualsHandler;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.java.JavaBundle;
@@ -24,6 +25,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,6 +77,14 @@ public class EqualsAndHashcode extends EqualsAndHashcodeBase {
     @Override
     public boolean startInWriteAction() {
       return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      final @Nls String preview = myHasEquals
+             ? JavaBundle.message("inspection.equals.hashcode.generate.hashcode.quickfix.preview")
+             : JavaBundle.message("inspection.equals.hashcode.generate.equals.quickfix.preview");
+      return new IntentionPreviewInfo.Html(preview);
     }
   }
 }

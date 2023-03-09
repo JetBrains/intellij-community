@@ -1,5 +1,5 @@
 //skip compare content
-<error descr="Lombok annotations are not allowed on builder class.">@lombok.experimental.SuperBuilder</error>
+<error descr="Lombok's annotations are not allowed on builder class.">@lombok.experimental.SuperBuilder</error>
 class BuilderInvalidUse {
 	private int something;
 
@@ -10,7 +10,7 @@ class BuilderInvalidUse {
 	}
 }
 
-<error descr="Lombok annotations are not allowed on builder class.">@lombok.experimental.SuperBuilder</error>
+<error descr="Lombok's annotations are not allowed on builder class.">@lombok.experimental.SuperBuilder</error>
 class AlsoInvalid {
 	@lombok.Value
 	public static class AlsoInvalidBuilder {

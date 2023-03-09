@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 class Outer {
     inner class Inner {
         fun String.foo() {

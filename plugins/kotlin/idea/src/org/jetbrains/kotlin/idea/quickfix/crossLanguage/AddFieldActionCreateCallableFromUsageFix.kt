@@ -27,16 +27,16 @@ class AddFieldActionCreateCallableFromUsageFix(
     override val propertyInfo: PropertyInfo?
         get() = run {
             val targetContainer = element ?: return@run null
-            val ktFactory = KtPsiFactory(targetContainer)
+            val psiFactory = KtPsiFactory(targetContainer.project)
             val resolutionFacade = targetContainer.getResolutionFacade()
             val typeInfo = request.fieldType.toKotlinTypeInfo(resolutionFacade)
             val writable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
             val requestInitializer = request.initializer
-            val annotations = request.annotations.map { ktFactory.createAnnotationEntry("@${it.qualifiedName}") }
+            val annotations = request.annotations.map { psiFactory.createAnnotationEntry("@${it.qualifiedName}") }
             val initializer = if (requestInitializer is JvmLong) {
-                ktFactory.createExpression("${requestInitializer.longValue}L")
+                psiFactory.createExpression("${requestInitializer.longValue}L")
             } else if (!lateinit) {
-                ktFactory.createExpression("TODO(\"initialize me\")")
+                psiFactory.createExpression("TODO(\"initialize me\")")
             } else null
             PropertyInfo(
                 request.fieldName,

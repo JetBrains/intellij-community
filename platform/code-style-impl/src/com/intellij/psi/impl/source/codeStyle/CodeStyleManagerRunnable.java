@@ -81,7 +81,7 @@ abstract class CodeStyleManagerRunnable<T> {
       mySettings = CodeStyle.getSettings(file);
 
       mySignificantRange = offset != -1 ? getSignificantRange(file, offset) : null;
-      myIndentOptions = mySettings.getIndentOptionsByFile(file, mySignificantRange);
+      myIndentOptions = CodeFormatterFacade.getIndentOptions(mySettings, myCodeStyleManager.getProject(), file, document, mySignificantRange);
 
       FormattingMode currentMode = myCodeStyleManager.getCurrentFormattingMode();
       myCodeStyleManager.setCurrentFormattingMode(myMode);

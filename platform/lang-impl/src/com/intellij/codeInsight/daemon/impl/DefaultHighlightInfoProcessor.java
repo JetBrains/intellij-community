@@ -9,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -19,7 +18,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -52,8 +50,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
       if (priorityIntersection != null) {
         MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
 
-        EditorColorsScheme scheme = session.getColorsScheme();
-        UpdateHighlightersUtil.setHighlightersInRange(project, psiFile, document, priorityIntersection, scheme, infoCopy, (MarkupModelEx)markupModel, groupId);
+        UpdateHighlightersUtil.setHighlightersInRange(document, priorityIntersection, infoCopy, (MarkupModelEx)markupModel, groupId, session);
       }
       if (editor != null && !editor.isDisposed()) {
         // usability: show auto import popup as soon as possible
@@ -102,12 +99,10 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     ((HighlightingSessionImpl)session).applyInEDT(() -> {
       if (project.isDisposed() || modificationStamp != document.getModificationStamp()) return;
 
-      EditorColorsScheme scheme = session.getColorsScheme();
-
-      UpdateHighlightersUtil.setHighlightersOutsideRange(project, document, psiFile, infos, scheme,
+      UpdateHighlightersUtil.setHighlightersOutsideRange(document, infos,
                                                          restrictedRange.getStartOffset(), restrictedRange.getEndOffset(),
-                                                         ProperTextRange.create(priorityRange),
-                                                         groupId);
+                                                         priorityRange,
+                                                         groupId, session);
       if (editor != null) {
         repaintErrorStripeAndIcon(editor, project, psiFile);
       }
@@ -125,7 +120,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                    @NotNull Document document,
                                                    long range,
                                                    @Nullable List<? extends HighlightInfo> infos,
-                                                   @NotNull HighlightingSession highlightingSession) {
+                                                   @NotNull HighlightingSession session) {
     DaemonCodeAnalyzerEx.processHighlights(document, project, null, TextRangeScalarUtil.startOffset(range), TextRangeScalarUtil.endOffset(range), existing -> {
       if (existing.getGroup() == Pass.UPDATE_ALL && range == existing.getVisitingTextRange()) {
         if (infos != null) {
@@ -134,9 +129,9 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
           }
         }
         RangeHighlighterEx highlighter = existing.highlighter;
-        if (highlighter != null && UpdateHighlightersUtil.shouldRemoveHighlighter(highlightingSession.getPsiFile(), highlighter)) {
+        if (highlighter != null && UpdateHighlightersUtil.shouldRemoveHighlighter(highlighter, session)) {
           // seems that highlight info 'existing' is going to disappear; remove it earlier
-          ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighter(existing);
+          ((HighlightingSessionImpl)session).queueDisposeHighlighter(existing);
         }
       }
       return true;

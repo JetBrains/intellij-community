@@ -21,6 +21,9 @@ import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractManyParentOfChild
 import com.intellij.workspaceModel.storage.impl.updateOneToAbstractOneParentOfChild
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -129,16 +132,7 @@ open class CompositeChildAbstractEntityImpl(val dataSource: CompositeChildAbstra
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as CompositeChildAbstractEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (parents != null) {
-        val parentInListNew = parents.filterIsInstance<CompositeAbstractEntity>().single()
-        if ((this.parentInList as WorkspaceEntityBase).id != (parentInListNew as WorkspaceEntityBase).id) {
-          this.parentInList = parentInListNew
-        }
-        val parentEntityNew = parents.filterIsInstance<ParentChainEntity?>().singleOrNull()
-        if ((parentEntityNew == null && this.parentEntity != null) || (parentEntityNew != null && this.parentEntity == null) || (parentEntityNew != null && this.parentEntity != null && (this.parentEntity as WorkspaceEntityBase).id != (parentEntityNew as WorkspaceEntityBase).id)) {
-          this.parentEntity = parentEntityNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

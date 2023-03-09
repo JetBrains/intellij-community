@@ -302,19 +302,24 @@ public final class MadTestingUtil {
   }
 
   private static boolean shouldGoInsiderDir(@NotNull String name) {
-    return !name.equals("gen") && // https://youtrack.jetbrains.com/issue/IDEA-175404
-           !name.equals("reports") && // no idea what this is
-           !name.equals("android") && // no 'android' repo on agents in some builds
-           !containsBinariesOnly(name) &&
-           !name.endsWith("system") && !name.endsWith("config"); // temporary stuff from tests or debug IDE
+    return !name.equals("gen") // https://youtrack.jetbrains.com/issue/IDEA-175404
+           && !name.equals("reports") // no idea what this is
+           && !name.equals("android") // no 'android' repo on agents in some builds
+           && canContainSources(name)
+           && !name.endsWith("system")
+           && !name.endsWith("config") // temporary stuff from tests or debug IDE
+           && !name.equals("build")    // the dir is too deep and has almost no sources, descending there is a waste of time
+    ;
   }
 
-  private static boolean containsBinariesOnly(@NotNull String name) {
-    return name.equals("jdk") ||
-           name.equals("jre") ||
-           name.equals("lib") ||
-           name.equals("bin") ||
-           name.equals("out");
+  private static boolean canContainSources(@NotNull String name) {
+    return !name.equals("jdk")
+           && !name.equals("jre")
+           && !name.equals("lib")
+           && !name.equals("bin")
+           && !name.equals("out")
+           && !name.startsWith(".")  // .gradle/.git/.idea have too many irrelevant files but no sources
+      ;
   }
 
   @NotNull
@@ -535,13 +540,19 @@ public final class MadTestingUtil {
     private static final File[] EMPTY_DIRECTORY = new File[0];
     private final SoftFactoryMap<File, File[]> myChildrenCache = new SoftFactoryMap<>() {
       @Override
-      protected File[] create(File f) {
+      protected File[] create(@NotNull File f) {
         File[] files = f.listFiles(child -> myFilter.accept(child) && (child.isFile() || FileGenerator.containsAtLeastOneFileDeep(child)));
-        return files != null && files.length == 0 ? EMPTY_DIRECTORY : files;
+        if (files == null) {
+          return null;
+        }
+        if (files.length == 0) {
+          return EMPTY_DIRECTORY;
+        }
+        return files;
       }
     };
 
-    private RouletteWheelFileGenerator(File root, FileFilter filter) {
+    private RouletteWheelFileGenerator(@NotNull File root, @NotNull FileFilter filter) {
       myRoot = root;
       myFilter = filter;
     }

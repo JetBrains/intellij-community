@@ -98,7 +98,7 @@ public class GroovyCodeStyleManagerImpl extends GroovyCodeStyleManager {
 
     if (anchor == null) anchor = psiFile.getPackageDefinition();
     if (anchor == null) anchor = getShellComment(psiFile);
-    if (anchor == null && importStatements.length > 0) anchor = importStatements[0].getPrevSibling();
+    if (anchor == null) anchor = importStatements[0].getPrevSibling();
     return anchor;
   }
 

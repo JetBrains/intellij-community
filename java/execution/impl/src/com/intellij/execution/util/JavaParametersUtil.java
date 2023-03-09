@@ -157,7 +157,7 @@ public final class JavaParametersUtil {
     return jdk;
   }
   
-  public static @Nullable JavaVersion getJavaVersion(String jreHome) {
+  public static @Nullable JavaVersion getJavaVersion(@NotNull String jreHome) {
     final Sdk configuredJdk = ProjectJdkTable.getInstance().findJdk(jreHome);
     if (configuredJdk != null) {
       return JavaVersion.tryParse(configuredJdk.getVersionString());

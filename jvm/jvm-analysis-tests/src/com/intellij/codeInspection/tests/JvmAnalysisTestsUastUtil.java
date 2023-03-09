@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class JvmAnalysisTestsUastUtil {
+public final class JvmAnalysisTestsUastUtil {
   public static <T extends UElement> Set<T> getUElementsOfTypeFromFile(@NotNull PsiFile file, @NotNull Class<? extends T> type) {
     return getUElementsOfTypeFromFile(file, type, null);
   }

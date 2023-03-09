@@ -38,9 +38,7 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
   private final Invoker myInvoker;
 
   public InspectionTreeModel() {
-    myInvoker = ApplicationManager.getApplication().isUnitTestMode()
-                ? Invoker.forEventDispatchThread(this)
-                : Invoker.forBackgroundThreadWithReadAction(this);
+    myInvoker = Invoker.forBackgroundThreadWithReadAction(this);
   }
 
   @Override

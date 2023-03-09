@@ -98,7 +98,7 @@ public final class DeployToServerConfigurationTypesRegistrar implements Disposab
   static final class Provider implements SyntheticConfigurationTypeProvider {
 
     @Override
-    public @NotNull Collection<? extends ConfigurationType> getConfigurationTypes() {
+    public @NotNull Collection<? extends DeployToServerConfigurationType<?>> getConfigurationTypes() {
       return getInstance().myConfigurationTypes.values();
     }
   }

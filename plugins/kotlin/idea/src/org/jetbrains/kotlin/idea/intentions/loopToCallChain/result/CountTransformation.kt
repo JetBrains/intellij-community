@@ -21,7 +21,7 @@ class CountTransformation(
         val newFilter = if (filter == null)
             previousTransformation.effectiveCondition.asExpression(reformat)
         else
-            KtPsiFactory(filter).createExpressionByPattern(
+            KtPsiFactory(filter.project).createExpressionByPattern(
                 "$0 && $1", previousTransformation.effectiveCondition.asExpression(reformat), filter,
                 reformat = reformat
             )
@@ -43,7 +43,7 @@ class CountTransformation(
         return if (initialization.initializer.isZeroConstant()) {
             call
         } else {
-            KtPsiFactory(call).createExpressionByPattern("$0 + $1", initialization.initializer, call, reformat = reformat)
+            KtPsiFactory(call.project).createExpressionByPattern("$0 + $1", initialization.initializer, call, reformat = reformat)
         }
     }
 

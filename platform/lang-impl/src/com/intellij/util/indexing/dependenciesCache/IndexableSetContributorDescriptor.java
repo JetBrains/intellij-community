@@ -70,7 +70,7 @@ class IndexableSetContributorDescriptor {
   }
 
   @NotNull
-  public IndexableSetContributorFilesIteratorBuilder toIteratorBuilderWithRoots(@NotNull Set<VirtualFile> roots, boolean projectAware) {
+  public IndexableSetContributorFilesIteratorBuilder toIteratorBuilderWithRoots(@NotNull Set<? extends VirtualFile> roots, boolean projectAware) {
     return new IndexableSetContributorFilesIteratorBuilder(presentableText, debugName, roots, projectAware, contributor);
   }
 

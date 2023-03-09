@@ -47,11 +47,8 @@ internal class RepositoryTreeItemRenderer : ColoredTreeCellRenderer() {
                 )
             }
             is RepositoryTreeItem.Module -> {
-                icon = item.usageInfo.projectModule.moduleType.packageIcon
-
-                item.usageInfo.projectModule.let {
-                    append(it.getFullName())
-                }
+                icon = item.module.moduleType.packageIcon
+                append(item.module.getFullName())
             }
         }
 

@@ -15,11 +15,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 abstract class TabNavigationActionBase extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(TabNavigationActionBase.class);
@@ -132,24 +132,24 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
   private void doNavigate(DataContext dataContext, Project project) {
     final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(project);
     EditorWindow currentWindow = EditorWindow.DATA_KEY.getData(dataContext);
-    if (currentWindow == null){
-      currentWindow = editorManager.getCurrentWindow ();
+    if (currentWindow == null) {
+      currentWindow = editorManager.getCurrentWindow();
     }
-    VirtualFile selectedFile = currentWindow.getSelectedFile();
+    VirtualFile selectedFile = Objects.requireNonNull(currentWindow).getSelectedFile();
     if (selectedFile == null) {
       selectedFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     }
-    final VirtualFile[] files = currentWindow.getFiles();
-    int index = ArrayUtil.find(files, selectedFile);
+    var files = currentWindow.getFileList();
+    int index = files.indexOf(selectedFile);
     LOG.assertTrue(index != -1);
     int targetIndex = switch (myNavigationType) {
-      case PREV -> (index + files.length - 1) % files.length;
-      case NEXT -> (index + files.length + 1) % files.length;
-      case LAST -> files.length - 1;
+      case PREV -> (index + files.size() - 1) % files.size();
+      case NEXT -> (index + files.size() + 1) % files.size();
+      case LAST -> files.size() - 1;
       default -> myNavigationType.ordinal();
     };
-    if (targetIndex < files.length) {
-      editorManager.openFile(files[targetIndex], true);
+    if (targetIndex < files.size()) {
+      editorManager.openFile(files.get(targetIndex), true);
     }
   }
 

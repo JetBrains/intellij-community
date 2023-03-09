@@ -84,7 +84,7 @@ fun processScriptModel(
 }
 
 private fun Collection<KotlinDslScriptModel>.collectErrors(): List<KotlinDslScriptModel.Message> {
-    return this.flatMap { it.messages.filter { it.severity == KotlinDslScriptModel.Severity.ERROR } }
+    return this.flatMap { it.messages.filter { msg -> msg.severity == KotlinDslScriptModel.Severity.ERROR } }
 }
 
 private fun KotlinDslScriptsModel.toListOfScriptModels(project: Project): List<KotlinDslScriptModel> =
@@ -98,6 +98,7 @@ private fun KotlinDslScriptsModel.toListOfScriptModels(project: Project): List<K
                 if (filePath != file.path) return@forEach
             }
             @NlsSafe val delimiter = System.lineSeparator()
+            @Suppress("HardCodedStringLiteral")
             messages.add(
                 KotlinDslScriptModel.Message(
                     KotlinDslScriptModel.Severity.ERROR,

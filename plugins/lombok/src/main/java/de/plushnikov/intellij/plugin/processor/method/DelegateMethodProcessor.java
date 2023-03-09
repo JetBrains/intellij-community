@@ -4,9 +4,8 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,15 +18,15 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemSink problemSink) {
     boolean result = true;
     if (psiMethod.getParameterList().getParametersCount() > 0) {
-      builder.addError(LombokBundle.message("inspection.message.delegate.legal.only.on.no.argument.methods"));
+      problemSink.addErrorMessage("inspection.message.delegate.legal.only.on.no.argument.methods");
       result = false;
     }
 
     final PsiType returnType = psiMethod.getReturnType();
-    result &= null != returnType && DelegateHandler.validate(psiMethod, returnType, psiAnnotation, builder);
+    result &= null != returnType && DelegateHandler.validate(psiMethod, returnType, psiAnnotation, problemSink);
 
     return result;
   }

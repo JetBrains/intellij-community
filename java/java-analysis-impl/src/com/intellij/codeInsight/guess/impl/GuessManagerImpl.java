@@ -377,14 +377,7 @@ public final class GuessManagerImpl extends GuessManager {
       if (var instanceof PsiParameter && var.getParent() instanceof PsiParameterList && var.getParent().getParent() instanceof PsiMethod){
         PsiParameterList list = (PsiParameterList)var.getParent();
         PsiParameter[] parameters = list.getParameters();
-        int argIndex = -1;
-        for(int i = 0; i < parameters.length; i++){
-          PsiParameter parameter = parameters[i];
-          if (parameter.equals(var)){
-            argIndex = i;
-            break;
-          }
-        }
+        int argIndex = ArrayUtil.indexOf(parameters, var);
 
         PsiMethod method = (PsiMethod)var.getParent().getParent();
         //System.out.println("analyzing usages of " + method + " in file " + scopeFile);

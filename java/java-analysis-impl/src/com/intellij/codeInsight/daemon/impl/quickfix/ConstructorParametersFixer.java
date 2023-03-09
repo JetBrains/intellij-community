@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 public final class ConstructorParametersFixer {
   public static void registerFixActions(@NotNull PsiJavaCodeReferenceElement ctrRef,
                                         @NotNull PsiConstructorCall constructorCall,
-                                        @NotNull HighlightInfo highlightInfo,
+                                        @NotNull HighlightInfo.Builder builder,
                                         @NotNull TextRange fixRange) {
     JavaResolveResult resolved = ctrRef.advancedResolve(false);
     PsiClass aClass = (PsiClass) resolved.getElement();
@@ -29,9 +29,9 @@ public final class ConstructorParametersFixer {
     for (int i = 0; i < candidates.length; i++) {
       candidates[i] = new CandidateInfo(methods[i], resolved.getSubstitutor());
     }
-    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
-    AddTypeArgumentsFix.REGISTRAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
-    WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
-    WrapWithAdapterMethodCallFix.registerCastActions(candidates, constructorCall, highlightInfo, fixRange);
+    CastMethodArgumentFix.REGISTRAR.registerCastActions(candidates, constructorCall, builder, fixRange);
+    AddTypeArgumentsFix.REGISTRAR.registerCastActions(candidates, constructorCall, builder, fixRange);
+    WrapObjectWithOptionalOfNullableFix.REGISTAR.registerCastActions(candidates, constructorCall, builder, fixRange);
+    WrapWithAdapterMethodCallFix.registerCastActions(candidates, constructorCall, builder, fixRange);
   }
 }

@@ -110,6 +110,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     object : GHPRDiffRequestChainProducer(project,
                                           dataProvider, dataContext.avatarIconsProvider,
                                           dataContext.repositoryDataService,
+                                          dataContext.securityService.ghostUser,
                                           dataContext.securityService.currentUser) {
 
       private val viewedStateSupport = GHPRViewedStateDiffSupportImpl(repository, dataProvider.viewedStateData)

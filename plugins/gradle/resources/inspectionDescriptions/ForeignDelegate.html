@@ -2,7 +2,7 @@
 <body>                                            
 <p>Detects possibly misplaced calls to Gradle methods.</p>
   Gradle buildscripts comprise a lot of nested closures, making the code structure similar to a markup language.
-  Due to the behavior of Groovy, the methods that you can write in the outer closures are also available in the inner ones.
+  Due to the behavior of DSL languages, the methods that you can write in the outer closures are also available in the inner ones.
   Such methods may have no meaning when written outside their scope. <br>
   Sometimes it may be hard to detect this situation.
   This inspection aims to detect such methods.

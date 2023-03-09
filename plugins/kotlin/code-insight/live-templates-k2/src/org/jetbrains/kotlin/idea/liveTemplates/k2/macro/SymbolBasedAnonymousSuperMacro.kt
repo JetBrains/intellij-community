@@ -8,11 +8,16 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.liveTemplates.macro.AbstractAnonymousSuperMacro
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
+    private companion object {
+        private val FORBIDDEN_PACKAGE_NAMES = listOf("kotlin", "java.lang")
+    }
+
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun resolveSupertypes(expression: KtExpression, file: KtFile): Collection<PsiNamedElement> {
         allowAnalysisOnEdt {
@@ -20,10 +25,12 @@ internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
                 val scope = file.getScopeContextForPosition(expression).scopes
                 return scope.getClassifierSymbols()
                     .filterIsInstance<KtNamedClassOrObjectSymbol>()
-                    .filter {
-                        when (it.classKind) {
-                            KtClassKind.CLASS, KtClassKind.INTERFACE -> true
-                            KtClassKind.ANNOTATION_CLASS -> it.origin != KtSymbolOrigin.JAVA
+                    .filter { shouldSuggest(it) }
+                    .filter { symbol ->
+                        when (symbol.classKind) {
+                            KtClassKind.CLASS -> symbol.modality in listOf(Modality.OPEN, Modality.ABSTRACT)
+                            KtClassKind.INTERFACE -> true
+                            KtClassKind.ANNOTATION_CLASS -> symbol.origin != KtSymbolOrigin.JAVA
                             else -> false
                         }
                     }
@@ -31,5 +38,19 @@ internal class SymbolBasedAnonymousSuperMacro : AbstractAnonymousSuperMacro() {
                     .toList()
             }
         }
+    }
+
+    private fun shouldSuggest(declaration: KtNamedClassOrObjectSymbol): Boolean {
+        val classId = declaration.classIdIfNonLocal
+        if (classId != null) {
+            val packageName = classId.packageFqName.asString()
+            for (forbiddenPackageName in FORBIDDEN_PACKAGE_NAMES) {
+                if (packageName == forbiddenPackageName || packageName.startsWith("$forbiddenPackageName.")) {
+                    return false
+                }
+            }
+        }
+
+        return true
     }
 }

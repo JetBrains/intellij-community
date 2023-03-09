@@ -4,7 +4,6 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService
-import com.intellij.util.io.exists
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import org.eclipse.jgit.api.Git
@@ -23,6 +22,7 @@ import java.time.Instant
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import kotlin.io.path.div
+import kotlin.io.path.exists
 import kotlin.io.path.writeText
 
 @RunWith(JUnit4::class)
@@ -87,15 +87,11 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
     deleteServerDataAndWait()
 
-    assertVersionOnServerIsDeleted()
-    assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
-  }
-
-  private fun assertVersionOnServerIsDeleted() {
     val versionOnServer = remoteCommunicator.getVersionOnServer()
     assertNotNull("There is no version on the server", versionOnServer)
     assertTrue("The server snapshot is incorrect: $versionOnServer", versionOnServer!!.isDeleted())
     assertTrue("There should be no settings data after deletion: $versionOnServer", versionOnServer.isEmpty())
+    assertFalse("Settings sync was not disabled", SettingsSyncSettings.getInstance().syncEnabled)
   }
 
   private fun deleteServerDataAndWait() {
@@ -326,12 +322,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
     }
     val task2 = Callable {
-      SettingsSynchronizer.syncSettings()
+      SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
     }
-
-    executeAndWaitUntilPushed {
-      ConcurrencyUtil.invokeAll(setOf(task1, task2), createBoundedScheduledExecutorService("SettingsSyncFlowTest", 2))
-    }
+    ConcurrencyUtil.invokeAll(setOf(task1, task2), createBoundedScheduledExecutorService("SettingsSyncFlowTest", 2))
 
     assertTrue("Settings Sync has been disabled", SettingsSyncSettings.getInstance().syncEnabled)
 
@@ -340,16 +333,17 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     }
   }
 
-  @Test fun `migration should respect deletion on server`() {
-    val deletionSnapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true),
-                                            emptySet(), null, emptySet())
-    remoteCommunicator.prepareFileOnServer(deletionSnapshot)
+  @Test fun `deletion should be recognized correctly`() {
+    writeToConfig {
+      fileState("options/editor.xml", "Editor Initial")
+    }
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+    deleteServerDataAndWait()
 
     val migration = migrationFromLafXml()
     initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
 
-    assertFalse("Settings Sync should be disabled", SettingsSyncSettings.getInstance().syncEnabled)
-    assertVersionOnServerIsDeleted()
+    assertEquals("Incorrect content", "Migration Data", (settingsSyncStorage / "options" / "laf.xml").readText())
   }
 
   @Test fun `regular sync should push if there is nothing on server`() {
@@ -394,7 +388,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   private fun syncSettingsAndWait() {
-    SettingsSynchronizer.syncSettings()
+    SettingsSynchronizer.syncSettings(remoteCommunicator, updateChecker)
     bridge.waitForAllExecuted()
   }
 

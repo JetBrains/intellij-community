@@ -100,8 +100,7 @@ interface CommitProblem {
   @RequiresEdt
   fun showModalSolution(project: Project, commitInfo: CommitInfo): CheckinHandler.ReturnResult {
     if (this is CommitProblemWithDetails) {
-      val commit = MessageDialogBuilder.yesNoCancel(VcsBundle.message("checkin.commit.checks.failed"),
-                                                    VcsBundle.message("checkin.commit.checks.failed.with.error.message", text))
+      val commit = MessageDialogBuilder.yesNoCancel(VcsBundle.message("checkin.commit.checks.failed"), text)
         .yesText(StringUtil.toTitleCase(showDetailsAction))
         .noText(commitInfo.commitActionText)
         .cancelText(VcsBundle.message("checkin.commit.checks.failed.cancel.button"))
@@ -116,8 +115,7 @@ interface CommitProblem {
       }
     }
     else {
-      val commit = MessageDialogBuilder.yesNo(VcsBundle.message("checkin.commit.checks.failed"),
-                                              VcsBundle.message("checkin.commit.checks.failed.with.error.message", text))
+      val commit = MessageDialogBuilder.yesNo(VcsBundle.message("checkin.commit.checks.failed"), text)
         .yesText(commitInfo.commitActionText)
         .noText(VcsBundle.message("checkin.commit.checks.failed.cancel.button"))
         .ask(project)
@@ -144,6 +142,11 @@ interface CommitProblem {
 
 @ApiStatus.Experimental
 interface CommitProblemWithDetails : CommitProblem {
+  /**
+   * If null, [text] will be used instead.
+   */
+  val showDetailsLink: @NlsContexts.LinkLabel String? get() = null
+
   val showDetailsAction: @NlsContexts.NotificationContent String
 
   /**
@@ -158,6 +161,7 @@ class TextCommitProblem(override val text: String) : CommitProblem
 
 interface CommitInfo {
   val commitContext: CommitContext
+  val isVcsCommit: Boolean
   val executor: CommitExecutor?
 
   val committedChanges: List<Change>

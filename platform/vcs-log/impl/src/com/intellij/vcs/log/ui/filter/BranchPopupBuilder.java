@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -21,9 +21,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public abstract class BranchPopupBuilder {
-  @NotNull protected final VcsLogDataPack myDataPack;
-  @Nullable private final Collection<? extends VirtualFile> myVisibleRoots;
-  @Nullable private final List<? extends List<String>> myRecentItems;
+  protected final @NotNull VcsLogDataPack myDataPack;
+  private final @Nullable Collection<? extends VirtualFile> myVisibleRoots;
+  private final @Nullable List<? extends List<String>> myRecentItems;
 
   protected BranchPopupBuilder(@NotNull VcsLogDataPack dataPack,
                                @Nullable Collection<? extends VirtualFile> visibleRoots,
@@ -33,8 +33,7 @@ public abstract class BranchPopupBuilder {
     myRecentItems = recentItems;
   }
 
-  @NotNull
-  protected abstract AnAction createAction(@NotNull @NlsActions.ActionText String name, @NotNull Collection<? extends VcsRef> refs);
+  protected abstract @NotNull AnAction createAction(@NotNull @NlsActions.ActionText String name, @NotNull Collection<? extends VcsRef> refs);
 
   protected void createRecentAction(@NotNull List<AnAction> actionGroup, @NotNull List<String> recentItem) {
     assert myRecentItems == null;
@@ -43,8 +42,7 @@ public abstract class BranchPopupBuilder {
   protected void createFavoritesAction(@NotNull List<AnAction> actionGroup, @NotNull List<String> favorites) {
   }
 
-  @NotNull
-  protected AnAction createCollapsedAction(@NotNull @NlsActions.ActionText String actionName, @NotNull Collection<? extends VcsRef> refs) {
+  protected @NotNull AnAction createCollapsedAction(@NotNull @NlsActions.ActionText String actionName, @NotNull Collection<? extends VcsRef> refs) {
     return createAction(actionName, refs);
   }
 
@@ -72,8 +70,7 @@ public abstract class BranchPopupBuilder {
     return filteredGroups;
   }
 
-  @NotNull
-  private DefaultActionGroup createActions(@NotNull Groups groups) {
+  private @NotNull DefaultActionGroup createActions(@NotNull Groups groups) {
     List<AnAction> actionGroup = new ArrayList<>();
     for (Map.Entry<@NlsActions.ActionText String, Collection<VcsRef>> entry : groups.singletonGroups.entrySet()) {
       actionGroup.add(createAction(entry.getKey(), entry.getValue()));

@@ -1,0 +1,9 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.runConfigurations.jvm">
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <kotlinTestFramework id="delegateTestFramework" order="last"
+                         implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinDelegatingTestFramework"/>
+  </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <javaMainMethodProvider implementation="org.jetbrains.kotlin.idea.runConfigurations.jvm.KotlinMainMethodProvider"/> 
+  </extensions>
+</idea-plugin>

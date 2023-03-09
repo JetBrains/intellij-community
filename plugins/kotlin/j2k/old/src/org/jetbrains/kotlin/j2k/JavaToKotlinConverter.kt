@@ -122,7 +122,7 @@ class OldJavaToKotlinConverter(
             val (i, result) = pair
             try {
                 val kotlinFile = ApplicationManager.getApplication().runReadAction(Computable {
-                    KtPsiFactory(project).createAnalyzableFile("dummy.kt", result!!.text, files[i])
+                    KtPsiFactory.contextual(files[i]).createFile("dummy.kt", result!!.text)
                 })
 
                 result!!.importsToAdd.forEach { postProcessor.insertImport(kotlinFile, it) }

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.*
@@ -29,13 +30,16 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener.Companion.shouldFireRootsChanged
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher.Companion.calculateAffectedEntities
 import com.intellij.workspaceModel.ide.impl.virtualFile
+import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.storage.EntityReference
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex
@@ -221,6 +225,18 @@ private class RootsChangeWatcher(private val project: Project) {
         workspaceFileIndex.updateDirtyEntities()
       }
     }
+    // Keep old behaviour for global libraries
+    if (GlobalLibraryTableBridge.isEnabled() && affectedEntities.isNotEmpty()) {
+      val entityStorage = WorkspaceModel.getInstance(project).entityStorage.current
+      val globalLibraryTableBridge = GlobalLibraryTableBridge.getInstance() as GlobalLibraryTableBridgeImpl
+
+      affectedEntities.forEach { entityRef ->
+        val libraryEntity = (entityRef.resolve(entityStorage) as? LibraryEntity) ?: return@forEach
+        if (libraryEntity.tableId.level != LibraryTablesRegistrar.APPLICATION_LEVEL) return@forEach
+        globalLibraryTableBridge.fireRootSetChanged(libraryEntity, entityStorage)
+      }
+    }
+
     val indexingInfo = entityChangesStorage.createIndexingInfo()
     if (indexingInfo != null && !isRootChangeForbidden()) {
       val projectRootManager = ProjectRootManager.getInstance(project) as ProjectRootManagerBridge

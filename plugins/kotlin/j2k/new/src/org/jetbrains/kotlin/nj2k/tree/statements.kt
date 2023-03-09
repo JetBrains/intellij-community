@@ -123,11 +123,6 @@ class JKJavaSwitchStatement(
     override fun accept(visitor: JKVisitor) = visitor.visitJavaSwitchStatement(this)
 }
 
-class JKJavaThrowStatement(exception: JKExpression) : JKStatement() {
-    var exception: JKExpression by child(exception)
-    override fun accept(visitor: JKVisitor) = visitor.visitJavaThrowStatement(this)
-}
-
 class JKJavaTryStatement(
     resourceDeclarations: List<JKJavaResourceElement>,
     tryBlock: JKBlock,

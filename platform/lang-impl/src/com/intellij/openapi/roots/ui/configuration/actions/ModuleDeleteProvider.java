@@ -96,7 +96,7 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
   }
 
   private static Set<String> getModuleNamesToDelete(Module @Nullable [] modules,
-                                                    @Nullable List<UnloadedModuleDescription> unloadedModules) {
+                                                    @Nullable List<? extends UnloadedModuleDescription> unloadedModules) {
     Set<String> moduleNamesToDelete = new HashSet<>();
     if (null != modules) {
       for (var module : modules) {
@@ -113,7 +113,7 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
 
   protected void doDetachModules(@NotNull Project project,
                                  Module @Nullable [] modules,
-                                 @Nullable List<UnloadedModuleDescription> unloadedModules) {
+                                 @Nullable List<? extends UnloadedModuleDescription> unloadedModules) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] currentModules = moduleManager.getModules();
     final ModifiableModuleModel modifiableModuleModel = moduleManager.getModifiableModel();
@@ -142,7 +142,7 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
 
   private void detachModules(@NotNull Project project,
                              Module @Nullable [] modules,
-                             @Nullable List<UnloadedModuleDescription> unloadedModules) {
+                             @Nullable List<? extends UnloadedModuleDescription> unloadedModules) {
     doDetachModules(project, modules, unloadedModules);
   }
 
@@ -163,7 +163,7 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
                                                        : ProjectBundle.message("action.text.remove.module");
   }
 
-  protected void doRemoveModule(@NotNull final Module moduleToRemove,
+  private static void doRemoveModule(@NotNull final Module moduleToRemove,
                                 @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
                                 @NotNull final ModifiableModuleModel moduleModel) {
     removeDependenciesOnModules(Collections.singleton(moduleToRemove.getName()), otherModuleRootModels);
@@ -173,7 +173,7 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler  {
   public static void removeModule(@NotNull final Module moduleToRemove,
                                   @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
                                   @NotNull final ModifiableModuleModel moduleModel) {
-    getInstance().doRemoveModule(moduleToRemove, otherModuleRootModels, moduleModel);
+    doRemoveModule(moduleToRemove, otherModuleRootModels, moduleModel);
   }
 
   private static void removeDependenciesOnModules(@NotNull Set<String> moduleNamesToRemove,

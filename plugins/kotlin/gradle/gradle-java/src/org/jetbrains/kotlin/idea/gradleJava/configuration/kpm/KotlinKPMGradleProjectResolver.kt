@@ -11,7 +11,7 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.util.PlatformUtils
 import org.gradle.tooling.model.idea.IdeaModule
-import org.jetbrains.kotlin.gradle.kpm.idea.*
+import org.jetbrains.kotlin.gradle.idea.kpm.*
 import org.jetbrains.kotlin.idea.base.externalSystem.findAll
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.configuration.multiplatform.KotlinMultiplatformNativeDebugSuggester

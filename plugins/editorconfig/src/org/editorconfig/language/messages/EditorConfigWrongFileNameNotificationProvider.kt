@@ -15,15 +15,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import org.editorconfig.Utils
 import org.editorconfig.language.filetype.EditorConfigFileConstants
 import org.jetbrains.annotations.Nls
 import java.io.IOException
+import java.util.function.Function
+import javax.swing.JComponent
 
-class EditorConfigWrongFileNameNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>(), DumbAware {
-  override fun getKey() = KEY
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+class EditorConfigWrongFileNameNotificationProvider : EditorNotificationProvider, DumbAware {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    return Function { createNotificationPanel(file, it, project) }
+  }
+  private fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
     if (fileEditor !is TextEditor) return null
     val editor = fileEditor.editor
     if (editor.getUserData(HIDDEN_KEY) != null) return null
@@ -84,7 +89,6 @@ class EditorConfigWrongFileNameNotificationProvider : EditorNotifications.Provid
   private fun update(file: VirtualFile, project: Project) = EditorNotifications.getInstance(project).updateNotifications(file)
 
   private companion object {
-    private val KEY = Key.create<EditorNotificationPanel>("editorconfig.wrong.name.notification")
     private val HIDDEN_KEY = Key.create<Boolean>("editorconfig.wrong.name.notification.hidden")
     private const val DISABLE_KEY = "editorconfig.wrong.name.notification.disabled"
   }

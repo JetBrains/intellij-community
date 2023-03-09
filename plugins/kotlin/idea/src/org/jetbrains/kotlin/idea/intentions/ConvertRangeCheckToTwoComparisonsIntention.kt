@@ -44,6 +44,9 @@ class ConvertRangeCheckToTwoComparisonsIntention : SelfTargetingOffsetIndependen
             null -> return null
         }
 
-        return lazy { KtPsiFactory(element).createExpressionByPattern(pattern, left, arg, right, reformat = false) }
+        return lazy {
+            val psiFactory = KtPsiFactory(element.project)
+            psiFactory.createExpressionByPattern(pattern, left, arg, right, reformat = false)
+        }
     }
 }

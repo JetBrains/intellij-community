@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview.jcef.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
+import org.intellij.plugins.markdown.ui.preview.html.PreviewEncodingUtil
 import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jsoup.Jsoup
@@ -11,7 +12,6 @@ import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 import java.net.URI
 import java.net.URISyntaxException
-import java.net.URLEncoder
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -53,7 +53,7 @@ class IncrementalDOMBuilder(
   }
 
   private fun encodeArgument(argument: String): String {
-    return URLEncoder.encode(argument, Charsets.UTF_8).replace("+", "%20")
+    return PreviewEncodingUtil.encodeUrl(argument)
   }
 
   private fun openTag(node: Node) {

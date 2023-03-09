@@ -59,7 +59,7 @@ public class DoubleNegationInspection extends BaseInspection implements CleanupL
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement expression = descriptor.getPsiElement();
       CommentTracker tracker = new CommentTracker();
       if (expression instanceof PsiPrefixExpression) {

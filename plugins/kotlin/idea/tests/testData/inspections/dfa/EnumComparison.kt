@@ -24,7 +24,7 @@ enum class Enum {
 
 fun ordinal(e : Enum) {
     if (e == Enum.A) {
-        if (<warning descr="Condition 'e.ordinal == 0' is always true"><weak_warning descr="Value of 'e.ordinal' is always zero">e.ordinal</weak_warning> == 0</warning>) {}
+        if (<warning descr="Condition 'e.ordinal == 0' is always true">e.ordinal == 0</warning>) {}
     }
 }
 

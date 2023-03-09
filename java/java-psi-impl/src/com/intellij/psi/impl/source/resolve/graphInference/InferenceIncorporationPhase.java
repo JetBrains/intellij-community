@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompa
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
@@ -67,12 +68,7 @@ public class InferenceIncorporationPhase {
   }
 
   private static boolean isCapturedVariable(InferenceVariable variable, Pair<InferenceVariable[], PsiClassType> capture) {
-    for (InferenceVariable capturedVariable : capture.first) {
-      if (variable == capturedVariable){
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(variable, capture.first);
   }
 
   public void collectCaptureDependencies(InferenceVariable variable, Set<? super InferenceVariable> dependencies) {

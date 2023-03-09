@@ -56,10 +56,10 @@ internal class SearchEverywhereMlSessionService : SearchEverywhereMlService() {
     val state = session.getCurrentSearchState() ?: return foundElementInfoWithoutMl
 
     val elementId = session.itemIdProvider.getId(element)
-    val mlFeatures = state.getElementFeatures(elementId, element, contributor, priority).features
-    val mlWeight = if (state.orderByMl) state.getMLWeight(session.cachedContextInfo, mlFeatures) else null
+    val mlElementInfo = state.getElementFeatures(elementId, element, contributor, priority, session.mixedListInfo)
+    val mlWeight = if (state.orderByMl) state.getMLWeight(session.cachedContextInfo, mlElementInfo) else null
 
-    return SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlFeatures)
+    return SearchEverywhereFoundElementInfoWithMl(element, priority, contributor, mlWeight, mlElementInfo.features)
   }
 
   override fun onSearchRestart(project: Project?,

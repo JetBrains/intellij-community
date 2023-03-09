@@ -31,14 +31,14 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class QualifyThisOrSuperArgumentFix implements IntentionAction {
+abstract class QualifyThisOrSuperArgumentFix implements IntentionAction {
   protected static final Logger LOG = Logger.getInstance(QualifyThisOrSuperArgumentFix.class);
   protected final PsiExpression myExpression;
   protected final PsiClass myPsiClass;
   private @IntentionName String myText;
 
 
-  public QualifyThisOrSuperArgumentFix(@NotNull PsiExpression expression, @NotNull PsiClass psiClass) {
+  QualifyThisOrSuperArgumentFix(@NotNull PsiExpression expression, @NotNull PsiClass psiClass) {
     myExpression = expression;
     myPsiClass = psiClass;
   }

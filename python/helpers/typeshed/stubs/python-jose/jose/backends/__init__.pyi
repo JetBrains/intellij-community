@@ -14,8 +14,8 @@ from .rsa_backend import RSAKey as BackendRSAKey
 # python-jose relies on importing from cryptography_backend
 # then falling back on other imports
 # these are all the potential options
-AESKey: CryptographyAESKey | None
-HMACKey: CryptographyHMACKey | NativeHMACKey
-RSAKey: CryptographyRSAKey | BackendRSAKey | None
-ECKey: CryptographyECKey | ECDSAECKey
+AESKey: type[CryptographyAESKey] | None
+HMACKey: type[CryptographyHMACKey] | type[NativeHMACKey]
+RSAKey: type[CryptographyRSAKey] | type[BackendRSAKey] | None
+ECKey: type[CryptographyECKey] | type[ECDSAECKey]
 get_random_bytes: Callable[[int], bytes]

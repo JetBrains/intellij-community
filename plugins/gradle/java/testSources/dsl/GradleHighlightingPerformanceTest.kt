@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.externalSystem.util.runInEdtAndWait
-import com.intellij.openapi.externalSystem.util.text
+import com.intellij.openapi.externalSystem.util.textContent
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.asSafely
@@ -24,7 +24,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
   fun testPerformance(gradleVersion: GradleVersion) {
     test(gradleVersion, FIXTURE_BUILDER) {
       val file = getFile("build.gradle")
-      val pos = file.text.indexOf("a.json")
+      val pos = file.textContent.indexOf("a.json")
       runInEdtAndWait {
         fixture.openFileInEditor(file)
         fixture.editor.caretModel.moveToOffset(pos + 1)
@@ -48,7 +48,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
   fun testCompletionPerformance(gradleVersion: GradleVersion) {
     test(gradleVersion, COMPLETION_FIXTURE) {
       val file = getFile("build.gradle")
-      val pos = file.text.indexOf("dependencies {") + "dependencies {".length
+      val pos = file.textContent.indexOf("dependencies {") + "dependencies {".length
       runInEdtAndWait {
         fixture.openFileInEditor(file)
         fixture.editor.caretModel.moveToOffset(pos)

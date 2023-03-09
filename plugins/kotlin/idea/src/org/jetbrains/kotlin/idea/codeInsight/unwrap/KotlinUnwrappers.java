@@ -61,7 +61,7 @@ public class KotlinUnwrappers {
         @Override
         protected void doUnwrap(PsiElement element, Context context) throws IncorrectOperationException {
             KtIfExpression ifExpr = (KtIfExpression) element;
-            context.replace(ifExpr, KtPsiFactoryKt.KtPsiFactory(ifExpr).createIf(ifExpr.getCondition(), ifExpr.getThen(), null));
+            context.replace(ifExpr, new KtPsiFactory(ifExpr.getProject()).createIf(ifExpr.getCondition(), ifExpr.getThen(), null));
         }
     }
 

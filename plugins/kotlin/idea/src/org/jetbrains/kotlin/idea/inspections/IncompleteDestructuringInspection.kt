@@ -78,7 +78,7 @@ class IncompleteDestructuringQuickfix : LocalQuickFix {
                     KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER
                 )
             )
-            val psiFactory = KtPsiFactory(destructuringDeclaration)
+            val psiFactory = KtPsiFactory(destructuringDeclaration.project)
             val currentEntries = destructuringDeclaration.entries
             val hasType = currentEntries.any { it.typeReference != null }
             val additionalEntries = primaryParameters

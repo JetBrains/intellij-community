@@ -70,12 +70,14 @@ class HelpersTestCase(unittest.TestCase):
         pass
 
     def _test_has_failed(self):
-        try:
-            return any(error for _, error in self._outcome.errors)
-        except AttributeError:
-            # Python 2 fallback
+        if sys.version_info.major < 3:
             class_result = self._resultForDoCleanups  # type: unittest.TestResult
             problems = class_result.failures + class_result.errors
+            return any(test is self for test, _ in problems)
+        elif sys.version_info < (3, 11):
+            return any(error for _, error in self._outcome.errors)
+        else:
+            problems = self._outcome.result.failures + self._outcome.result.errors
             return any(test is self for test, _ in problems)
 
     @property
@@ -146,7 +148,7 @@ class HelpersTestCase(unittest.TestCase):
 
     def assertEqualsToFileContent(self, actual_text, expected_path):
         try:
-            with open(expected_path) as f:
+            with open(expected_path, encoding='utf-8') as f:
                 expected = f.read()
         except IOError as e:
             if e.errno == errno.ENOENT:
@@ -162,7 +164,7 @@ class HelpersTestCase(unittest.TestCase):
 
     def _dump_file(self, path, text):
         self.log.warning("Creating new file {}".format(path))
-        with open(path, 'w') as f:
+        with open(path, 'w', encoding='utf-8') as f:
             f.write(text)
 
     @contextmanager

@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.ui.jcef.JBCefJSQuery.JSQueryFunc;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import org.cef.CefClient;
 import org.cef.CefSettings;
 import org.cef.browser.CefBrowser;
@@ -16,6 +15,7 @@ import org.cef.callback.*;
 import org.cef.handler.*;
 import org.cef.misc.BoolRef;
 import org.cef.network.CefRequest;
+import org.cef.security.CefSSLInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public final class JBCefClient implements JBCefDisposable {
   /**
    * @see #setProperty(String, Object)
    */
-  public static class Properties {
+  public static final class Properties {
     /**
      * Defines the size of the pool used by {@link JBCefJSQuery} after a native browser has been created.
      * <p>
@@ -623,10 +623,19 @@ public final class JBCefClient implements JBCefDisposable {
         public boolean onCertificateError(CefBrowser browser,
                                           CefLoadHandler.ErrorCode cert_error,
                                           String request_url,
+                                          CefSSLInfo sslInfo,
                                           CefCallback callback) {
-          return myRequestHandler.handleBoolean(browser, handler -> {
-            return handler.onCertificateError(browser, cert_error, request_url, callback);
-          });
+          List<CefRequestHandler> handlers = myRequestHandler.get(browser);
+          if (handlers == null) {
+            return false;
+          }
+
+          boolean result = false;
+          for (CefRequestHandler handler: handlers) {
+            result |= handler.onCertificateError(browser, cert_error, request_url, sslInfo, callback);
+          }
+
+          return result;
         }
 
         @Override

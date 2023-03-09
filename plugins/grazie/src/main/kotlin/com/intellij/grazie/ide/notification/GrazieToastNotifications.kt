@@ -23,6 +23,9 @@ object GrazieToastNotifications {
   internal val MISSED_LANGUAGES_GROUP = NotificationGroupManager.getInstance()
     .getNotificationGroup("Proofreading missing languages information")
 
+  internal val GENERAL_GROUP
+    get() = NotificationGroupManager.getInstance().getNotificationGroup("Grazie notifications")
+
   fun showMissedLanguages(project: Project) {
     val langs = GrazieConfig.get().missedLanguages
     MISSED_LANGUAGES_GROUP

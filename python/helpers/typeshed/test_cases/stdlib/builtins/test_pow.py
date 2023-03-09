@@ -1,3 +1,5 @@
+# pyright: reportUnnecessaryTypeIgnoreComment=true
+
 from decimal import Decimal
 from fractions import Fraction
 from typing import Any, NoReturn
@@ -54,7 +56,8 @@ assert_type(pow(Decimal("4.6"), 7, None), Decimal)
 assert_type(Decimal("4.6") ** 7, Decimal)
 
 # These would ideally be more precise, but `Any` is acceptable
-# They have to be `Any` due to the fact that type-checkers can't distinguish between positive and negative numbers for the second argument to `pow()`
+# They have to be `Any` due to the fact that type-checkers can't distinguish
+# between positive and negative numbers for the second argument to `pow()`
 #
 # int for positive 2nd-arg, float otherwise
 assert_type(pow(4, 65), Any)
@@ -71,3 +74,14 @@ assert_type(pow(8.2, -9.8), Any)
 assert_type(pow(4.7, 9.2, None), Any)
 # See #7046 -- float for a positive 1st arg, complex otherwise
 assert_type((-95) ** 8.42, Any)
+
+# All of the following cases should fail a type-checker.
+pow(1.9, 4, 6)  # type: ignore
+pow(4, 7, 4.32)  # type: ignore
+pow(6.2, 5.9, 73)  # type: ignore
+pow(complex(6), 6.2, 7)  # type: ignore
+pow(Fraction(), 5, 8)  # type: ignore
+Decimal("8.7") ** 3.14  # type: ignore
+
+# TODO: This fails at runtime, but currently passes mypy and pyright:
+pow(Decimal("8.5"), 3.21)

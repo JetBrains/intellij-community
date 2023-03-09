@@ -18,7 +18,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
 
-internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XBreakpoint<*>, @ActionText text : String) : AnAction(text) {
+internal abstract class BreakpointIntentionAction(protected val myBreakpoint: XBreakpoint<*>, @ActionText text: String) : AnAction(text) {
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT

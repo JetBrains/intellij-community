@@ -210,13 +210,10 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "class X {" +
            "  /** constructor */" +
            "  X() {}" +
-           "" +
            "  /** */" +
            "  void x() {}" +
-           "" +
            "  /** @deprecated */" +
            "  void y() {}" +
-           "" +
            "  /**" +
            "   * important" +
            "   * method" +
@@ -225,7 +222,6 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "   int z(int i) {" +
            "     return i;" +
            "   }" +
-           "" +
            "  void a() {}" +
            "}",
            "/** constructor */" +

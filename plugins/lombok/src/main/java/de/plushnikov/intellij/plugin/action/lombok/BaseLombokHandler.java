@@ -79,8 +79,7 @@ public abstract class BaseLombokHandler implements CodeInsightActionHandler {
       final String presentAccessModifier = LombokProcessorUtil.getMethodModifier(presentAnnotation);
       final String currentAccessModifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(firstPropertyMethod.getModifierList()));
 
-      return (presentAccessModifier == null && currentAccessModifier == null) ||
-        (presentAccessModifier != null && presentAccessModifier.equals(currentAccessModifier));
+      return presentAccessModifier != null && presentAccessModifier.equals(currentAccessModifier);
     }
     return true;
   }

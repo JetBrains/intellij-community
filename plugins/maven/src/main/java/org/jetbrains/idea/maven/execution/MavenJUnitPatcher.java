@@ -87,7 +87,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
     if (domModel == null) {
       return s -> s;
     }
-    Properties staticProperties = MavenPropertyResolver.collectPropertiesFromDOM(mavenProject, domModel);
+    var staticProperties = MavenPropertyResolver.collectPropertyMapFromDOM(mavenProject, domModel);
     Properties modelProperties = mavenProject.getProperties();
     String jaCoCoConfigProperty = getJaCoCoArgLineProperty(mavenProject);
     ParametersList vmParameters = javaParameters.getVMParametersList();
@@ -96,7 +96,7 @@ public final class MavenJUnitPatcher extends JUnitPatcher {
       if (vmPropertyValue != null) {
         return vmPropertyValue;
       }
-      String staticPropertyValue = staticProperties.getProperty(name);
+      String staticPropertyValue = staticProperties.get(name);
       if (staticPropertyValue != null) {
         return MavenPropertyResolver.resolve(staticPropertyValue, domModel);
       }

@@ -19,6 +19,9 @@ interface SimpleEntity : WorkspaceEntity {
   }
 
   companion object : Type<SimpleEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(name: String, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SimpleEntity {
       val builder = builder()
       builder.name = name

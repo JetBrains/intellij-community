@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.events;
 
 import com.intellij.debugger.impl.DebuggerTaskImpl;
@@ -38,7 +38,7 @@ public abstract class DebuggerCommandImpl extends DebuggerTaskImpl {
   }
 
   @Async.Execute
-  public final void run() throws Exception{
+  public final void run() throws Exception {
     try {
       action();
     }

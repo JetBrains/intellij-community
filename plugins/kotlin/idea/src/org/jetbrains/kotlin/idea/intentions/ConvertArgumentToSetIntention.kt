@@ -55,7 +55,7 @@ class ConvertArgumentToSetIntention : SelfTargetingIntention<KtExpression>(
     override fun applyTo(element: KtExpression, editor: Editor?) {
         val arguments = getConvertibleArguments(element)
         for (arg in arguments) {
-            arg.replace(KtPsiFactory(element).createExpressionByPattern("$0.toSet()", arg))
+            arg.replace(KtPsiFactory(element.project).createExpressionByPattern("$0.toSet()", arg))
         }
     }
 

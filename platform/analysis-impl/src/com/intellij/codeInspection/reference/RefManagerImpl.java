@@ -129,8 +129,10 @@ public class RefManagerImpl extends RefManager {
     for (RefElement refElement : getSortedElements()) {
       refElement.accept(visitor);
     }
-    for (RefModule refModule : myModules.values()) {
-      if (myScope.containsModule(refModule.getModule())) refModule.accept(visitor);
+    List<RefModule> filteredModules =
+      ContainerUtil.filter(myModules.values(), refModule -> ReadAction.compute(() -> myScope.containsModule(refModule.getModule())));
+    for (RefModule refModule : filteredModules) {
+      refModule.accept(visitor);
     }
     for (RefManagerExtension<?> extension : myExtensions.values()) {
       extension.iterate(visitor);

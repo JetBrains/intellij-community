@@ -427,7 +427,7 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
   }
 
   private fun assertTreeEqual(expected: String) {
-    TreeUtil.expandAll(tree)
+    PlatformTestUtil.expandAll(tree)
     PlatformTestUtil.assertTreeEqual(tree, expected.trimIndent() + "\n")
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.restriction;
 
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.util.UastExpressionUtils;
 
-public class StringFlowUtil {
+public final class StringFlowUtil {
 
   /**
    * Extracts return value without qualifier from getter-like method.

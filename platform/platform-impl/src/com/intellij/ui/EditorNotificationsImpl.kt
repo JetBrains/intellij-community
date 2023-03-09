@@ -177,7 +177,9 @@ class EditorNotificationsImpl(private val project: Project) : EditorNotification
       // delay for debounce
       delay(100)
 
-      if (!file.isValid) {
+      // Please don't remove this readAction {} here, it's needed for checking of validity of injected files,
+      // and many unpleasant exceptions appear in case if validity check is not wrapped.
+      if (!readAction { file.isValid }) {
         return@launch
       }
 

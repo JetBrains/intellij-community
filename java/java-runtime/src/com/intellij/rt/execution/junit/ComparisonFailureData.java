@@ -215,11 +215,11 @@ public class ComparisonFailureData {
     if (commonAssertion != null) return commonAssertion;
 
     try {
-     return new ComparisonFailureData(getExpected(assertion), getActual(assertion));
-   }
-    catch (Throwable e) {
-    return null;
-  }
+      return new ComparisonFailureData(getExpected(assertion), getActual(assertion));
+    }
+    catch (IllegalAccessException | NoSuchFieldException e) {
+      return null;
+    }
 }
 
   /** @noinspection SSBasedInspection*/

@@ -133,11 +133,17 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
         DELEGATED_RUN_PROFILE_KEY[runProfile] = runProfileToDelegate
       }
     }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun getDelegatedRunProfile(runProfile: RunProfile): RunProfile? {
+      return if (runProfile is UserDataHolder) runProfile.getUserData(DELEGATED_RUN_PROFILE_KEY) else null
+    }
   }
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect(this)
-    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {
         if (project === this@ExecutionManagerImpl.project) {
           inProgress.clear()

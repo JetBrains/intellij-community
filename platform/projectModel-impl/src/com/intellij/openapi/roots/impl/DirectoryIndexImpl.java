@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
@@ -138,8 +139,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
       return super.getDirectoriesByPackageName(packageName, scope);
     }
 
-    List<RootIndex> indices = ContainerUtil.map(branches, DirectoryIndexImpl::obtainBranchRootIndex);
-    indices.add(getRootIndex());
+    List<RootIndex> indices = ContainerUtil.append(ContainerUtil.map(branches, DirectoryIndexImpl::obtainBranchRootIndex),
+                                                   getRootIndex());
     return new CollectionQuery<>(indices)
       .flatMapping(i -> i.getDirectoriesByPackageName(packageName, true))
       .filtering(scope::contains);
@@ -235,6 +236,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   }
 
   private void checkAvailability() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (myDisposed) {
       ProgressManager.checkCanceled();
       LOG.error("Directory index is already disposed for " + myProject);

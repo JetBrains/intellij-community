@@ -59,11 +59,6 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
   }
 
   @Override
-  public void rollbackIfUnchanged(@NotNull VirtualFile file) {
-    // do nothing
-  }
-
-  @Override
   public void rollbackChanges(List<? extends Change> changes,
                               List<VcsException> exceptions,
                               @NotNull RollbackProgressListener listener) {

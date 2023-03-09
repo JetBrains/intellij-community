@@ -74,7 +74,6 @@ public final class HighlightManagerImpl extends HighlightManager {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, myProject);
   }
 
-  @Nullable
   private Map<RangeHighlighter, HighlightFlags> getHighlightInfoMap(@NotNull Editor editor, boolean toCreate) {
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
@@ -390,18 +389,9 @@ public final class HighlightManagerImpl extends HighlightManager {
     }
   }
 
-
   private final Key<Map<RangeHighlighter, HighlightFlags>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
   public static final Key<Integer> HIGHLIGHT_FLAGS_KEY = Key.create("HIGHLIGHT_FLAGS_KEY");
 
-  private static class HighlightFlags {
-    @NotNull
-    final Editor editor;
-    @HideFlags final int flags;
-
-    HighlightFlags(@NotNull Editor editor, @HideFlags int flags) {
-      this.editor = editor;
-      this.flags = flags;
-    }
+  private record HighlightFlags(@NotNull Editor editor, @HideFlags int flags) {
   }
 }

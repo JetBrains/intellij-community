@@ -28,7 +28,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
     var isLeftBraceAdded: Boolean = false
     var isRightBraceAdded: Boolean = false
     var lastChangeTimeMillis: Long = 0L
-    var lastTextInsertedAction: EditorTextInsertedAction? by WeakReferenceDelegator(null)
+    var lastInsertedTextAndOffset: Pair<String, Int>? = null
 
     fun applySurroundingStatementAddition(statement: PsiElement, timeMillis: Long) {
       reset()
@@ -59,7 +59,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
       isLeftBraceAdded = false
       isRightBraceAdded = false
       lastChangeTimeMillis = 0L
-      lastTextInsertedAction = null
+      lastInsertedTextAndOffset = null
     }
   }
 
@@ -87,8 +87,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
       }
       is ChildrenChangedAction -> {
         if (State.surroundingStatement == null) return NoSuggestion
-        val textInsertedAction = State.lastTextInsertedAction ?: return NoSuggestion
-        val text = textInsertedAction.text
+        val (text, caretOffset) = State.lastInsertedTextAndOffset ?: return NoSuggestion
         if (text.contains("{") || text.contains("}")) {
           val psiFile = action.parent as? PsiFile ?: return NoSuggestion
           if (State.isOutOfDate(action.timeMillis) || text != "{" && text != "}") {
@@ -101,7 +100,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
             else if (State.isBraceAddedToStatement(
                 langSupport,
                 psiFile,
-                textInsertedAction.caretOffset
+                caretOffset
               )
             ) {
               State.applyBraceAddition(action.timeMillis, "{")
@@ -110,7 +109,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
           }
           else {
             if (State.isLeftBraceAdded &&
-                State.isBraceAddedToStatement(langSupport, psiFile, textInsertedAction.caretOffset)
+                State.isBraceAddedToStatement(langSupport, psiFile, caretOffset)
             ) {
               State.applyBraceAddition(action.timeMillis, "}")
               if (State.isStatementsSurrounded(langSupport)) {
@@ -123,7 +122,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
         }
       }
       is EditorTextInsertedAction -> {
-        State.lastTextInsertedAction = action
+        State.lastInsertedTextAndOffset = action.text to action.caretOffset
       }
       else -> NoSuggestion
     }

@@ -151,21 +151,22 @@ fun KtExpression.replaceWithBranch(branch: KtExpression, isUsedAsExpression: Boo
         }
     })
 
-    val factory = KtPsiFactory(this)
+    val psiFactory = KtPsiFactory(project)
+
     val parent = this.parent
     val replaced = when {
         branch !is KtBlockExpression -> {
             if (subjectVariable != null) {
-                replaced(KtPsiFactory(this).createExpressionByPattern("run { $0\n$1 }", subjectVariable, branch))
+                replaced(psiFactory.createExpressionByPattern("run { $0\n$1 }", subjectVariable, branch))
             } else {
                 replaced(branch)
             }
         }
         isUsedAsExpression -> {
             if (subjectVariable != null) {
-                branch.addAfter(factory.createNewLine(), branch.addBefore(subjectVariable, branch.statements.firstOrNull()))
+                branch.addAfter(psiFactory.createNewLine(), branch.addBefore(subjectVariable, branch.statements.firstOrNull()))
             }
-            replaced(factory.createExpressionByPattern("run $0", branch.text))
+            replaced(psiFactory.createExpressionByPattern("run $0", branch.text))
         }
         else -> {
             val firstChildSibling = branch.firstChild.nextSibling
@@ -176,7 +177,7 @@ fun KtExpression.replaceWithBranch(branch: KtExpression, isUsedAsExpression: Boo
                 } else {
                     if (subjectVariable != null) {
                         branch.addAfter(subjectVariable, branch.lBrace)
-                        parent.addAfter(KtPsiFactory(this).createExpression("run ${branch.text}"), this)
+                        parent.addAfter(psiFactory.createExpression("run ${branch.text}"), this)
                     } else {
                         parent.addRangeAfter(firstChildSibling, lastChild.prevSibling, this)
                     }

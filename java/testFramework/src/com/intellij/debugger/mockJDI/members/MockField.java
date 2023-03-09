@@ -1,16 +1,12 @@
-/*
- * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.mockJDI.members;
 
+import com.intellij.debugger.mockJDI.MockVirtualMachine;
+import com.intellij.debugger.mockJDI.types.MockType;
 import com.sun.jdi.Field;
 import com.sun.jdi.Type;
 
 import java.lang.reflect.Modifier;
-
-import com.intellij.debugger.mockJDI.types.MockType;
-import com.intellij.debugger.mockJDI.MockVirtualMachine;
 
 public class MockField extends MockTypeComponent implements Field {
   public MockField(java.lang.reflect.Field member, final MockVirtualMachine virtualMachine) {
@@ -18,7 +14,7 @@ public class MockField extends MockTypeComponent implements Field {
   }
 
   public java.lang.reflect.Field getField() {
-    return (java.lang.reflect.Field) myMember;
+    return (java.lang.reflect.Field)myMember;
   }
 
   @Override

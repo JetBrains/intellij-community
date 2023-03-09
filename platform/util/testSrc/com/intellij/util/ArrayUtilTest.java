@@ -3,7 +3,7 @@ package com.intellij.util;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.*;
 
 public class ArrayUtilTest {
   @Test
@@ -51,5 +51,13 @@ public class ArrayUtilTest {
   private static void checkArrayReverse(int[] array, int[] expectedReversedArray) {
     int[] reversed = ArrayUtil.reverseArray(array);
     assertArrayEquals(expectedReversedArray, reversed);
+  }
+  
+  @Test
+  public void testAreEqual() {
+    assertTrue(ArrayUtil.areEqual(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY, (a, b) -> false));
+    assertFalse(ArrayUtil.areEqual(ArrayUtil.EMPTY_STRING_ARRAY, new String[1], (a, b) -> true));
+    assertTrue(ArrayUtil.areEqual(new String[] {"hello", "goodbye"}, new String[] {"HELLO", "goodBye"}, String::equalsIgnoreCase));
+    assertFalse(ArrayUtil.areEqual(new String[] {"hello", "goodbye1"}, new String[] {"HELLO", "goodBye"}, String::equalsIgnoreCase));
   }
 }

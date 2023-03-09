@@ -3,6 +3,7 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.projectWizard.NewProjectWizardCollector
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
 import com.intellij.openapi.GitRepositoryInitializer
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.progress.runBackgroundableTask
@@ -23,7 +24,7 @@ class GitNewProjectWizardStep(
   private val gitRepositoryInitializer = GitRepositoryInitializer.getInstance()
 
   private val gitProperty = propertyGraph.property(false)
-    .bindBooleanStorage("NewProjectWizard.gitState")
+    .bindBooleanStorage(GIT_PROPERTY_NAME)
 
   override val git get() = gitRepositoryInitializer != null && gitProperty.get()
 
@@ -39,15 +40,21 @@ class GitNewProjectWizardStep(
   }
 
   override fun setupProject(project: Project) {
-    if (git) {
-      val projectBaseDirectory = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(path, name))
-      if (projectBaseDirectory != null) {
-        runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
-          gitRepositoryInitializer!!.initRepository(project, projectBaseDirectory, true)
+    setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.git")) {
+      if (git) {
+        val projectBaseDirectory = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(path, name))
+        if (projectBaseDirectory != null) {
+          whenProjectCreated(project) {
+            runBackgroundableTask(IdeBundle.message("progress.title.creating.git.repository"), project) {
+              setupProjectSafe(project, UIBundle.message("error.project.wizard.new.project.git")) {
+                gitRepositoryInitializer!!.initRepository(project, projectBaseDirectory, true)
+              }
+            }
+          }
         }
       }
+      NewProjectWizardCollector.logGitFinished(context, git)
     }
-    NewProjectWizardCollector.logGitFinished(context, git)
   }
 
   init {

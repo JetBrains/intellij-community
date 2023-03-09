@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -168,7 +168,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
 
   /**
    *
-   * @param constraint is expected to be one of compass-directions or CENTER
+   * @param constraint is expected to be one of the compass-directions or CENTER
    */
   public void setIcon(Icon icon, int layer, @MagicConstant(valuesFromClass = SwingConstants.class) int constraint) {
     int width = getIconWidth();
@@ -238,8 +238,8 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     for (int i = 0; i < icons.length; i++) {
       Icon icon = icons[i];
       if (icon == null || myDisabledLayers[i]) continue;
-      int xOffset = (int)Math.floor(x + scaleVal(myXShift + myHShifts(i), OBJ_SCALE));
-      int yOffset = (int)Math.floor(y + scaleVal(myYShift + myVShifts(i), OBJ_SCALE));
+      int xOffset = (int)Math.floor(x + scaleVal(myXShift + getHShift(i), OBJ_SCALE));
+      int yOffset = (int)Math.floor(y + scaleVal(myYShift + getVShift(i), OBJ_SCALE));
       icon.paintIcon(c, g, xOffset, yOffset);
     }
   }
@@ -271,11 +271,11 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     return (int)Math.ceil(scaleVal(myHeight, OBJ_SCALE));
   }
 
-  private int myHShifts(int i) {
+  public int getHShift(int i) {
     return (int)Math.floor(scaleVal(myHShifts[i], USR_SCALE));
   }
 
-  private int myVShifts(int i) {
+  public int getVShift(int i) {
     return (int)Math.floor(scaleVal(myVShifts[i], USR_SCALE));
   }
 
@@ -289,8 +289,8 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
       Icon icon = myIcons[i];
       if (icon == null) continue;
       allIconsAreNull = false;
-      int hShift = myHShifts(i);
-      int vShift = myVShifts(i);
+      int hShift = getHShift(i);
+      int vShift = getVShift(i);
       minX = Math.min(minX, hShift);
       maxX = Math.max(maxX, hShift + icon.getIconWidth());
       minY = Math.min(minY, vShift);
@@ -356,7 +356,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
 
   private static void buildCompositeTooltip(Icon[] icons, StringBuilder result, Set<? super String> seenTooltips) {
     for (int i = 0; i < icons.length; i++) {
-      // first layer is the actual object (noun), other layers are modifiers (adjectives), so put first object in last position
+      // the first layer is the actual object (noun), other layers are modifiers (adjectives), so put a first object in the last position
       Icon icon = i == icons.length - 1 ? icons[0] : icons[i + 1];
       if (icon instanceof LayeredIcon) {
         buildCompositeTooltip(((LayeredIcon) icon).myIcons, result, seenTooltips);

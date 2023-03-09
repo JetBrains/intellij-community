@@ -448,7 +448,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
         assertNull(VirtualFileManager.getInstance().findFileByUrl(fileUrl));
 
         CorruptedJarFileSystemTestWrapper.corrupted = false;
-        var event = new TestActionEvent(
+        var event = TestActionEvent.createTestEvent(
           dataId -> CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId) ? new VirtualFile[]{root} :
                     CommonDataKeys.PROJECT.is(dataId) ? DefaultProjectFactory.getInstance().getDefaultProject() :
                     null);

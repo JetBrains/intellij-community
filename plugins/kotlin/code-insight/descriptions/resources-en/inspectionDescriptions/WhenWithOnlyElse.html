@@ -5,7 +5,7 @@ Reports <code>when</code> expressions with only an <code>else</code> branch that
 <p>Example:</p>
 <pre><code>
   fun redundant() {
-      val x = when { // &lt;== redundant, a quick-fix simplifies the when expression to "val x = 1"
+      val x = when { // &lt;== redundant, the quick-fix simplifies the when expression to "val x = 1"
           else -> 1
       }
   }

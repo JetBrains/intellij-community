@@ -11,16 +11,12 @@ import com.intellij.execution.ui.RunConfigurationFragmentedEditor;
 import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor;
 import com.intellij.execution.ui.TargetAwareRunConfigurationEditor;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.HideableDecorator;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,21 +27,13 @@ import java.util.List;
 public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAndConfigurationSettings>
   implements BeforeRunStepsPanel.StepsBeforeRunListener, TargetAwareRunConfigurationEditor {
   public static final DataKey<ConfigurationSettingsEditorWrapper> CONFIGURATION_EDITOR_KEY = DataKey.create("ConfigurationSettingsEditor");
-  @NonNls private static final String EXPAND_PROPERTY_KEY = "ExpandBeforeRunStepsPanel";
 
-  private JPanel myComponentPlace;
-  private JPanel myWholePanel;
-
-  private JPanel myBeforeLaunchContainer;
-  private JBCheckBox myIsAllowRunningInParallelCheckBox;
-  private JPanel myRCStoragePanel;
+  private final ConfigurationSettingsEditorPanel content;
   private final RunOnTargetPanel myRunOnTargetPanel;
   private final @Nullable RunConfigurationStorageUi myRCStorageUi;
   private final BeforeRunStepsPanel myBeforeRunStepsPanel;
-  private JPanel myTargetPanel;
 
   private final ConfigurationSettingsEditor myEditor;
-  private final HideableDecorator myDecorator;
 
   public <T extends SettingsEditor<?>> T selectExecutorAndGetEditor(ProgramRunner<?> runner, Class<T> editorClass) {
     return myEditor.selectExecutorAndGetEditor(runner, editorClass);
@@ -61,11 +49,12 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     // RunConfigurationStorageUi for non-template settings is managed by com.intellij.execution.impl.SingleConfigurationConfigurable
     if (!project.isDefault() && settings.isTemplate()) {
       myRCStorageUi = new RunConfigurationStorageUi(project, () -> fireEditorStateChanged());
-      myRCStoragePanel.add(myRCStorageUi.createComponent());
+      content = new ConfigurationSettingsEditorPanel(myRCStorageUi.createComponent());
       myRunOnTargetPanel = new RunOnTargetPanel(settings, this);
-      myRunOnTargetPanel.buildUi(myTargetPanel, null);
+      myRunOnTargetPanel.buildUi(content.targetPanel, null);
     }
     else {
+      content = new ConfigurationSettingsEditorPanel(null);
       myRCStorageUi = null;
       myRunOnTargetPanel = null;
     }
@@ -74,35 +63,16 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
     myEditor.addSettingsEditorListener(editor -> fireStepsBeforeRunChanged());
     Disposer.register(this, myEditor);
     myBeforeRunStepsPanel = new BeforeRunStepsPanel(this);
-    myDecorator = new HideableDecorator(myBeforeLaunchContainer, "", false) {
-      @Override
-      protected void on() {
-        super.on();
-        storeState();
-      }
-
-      @Override
-      protected void off() {
-        super.off();
-        storeState();
-      }
-
-      private void storeState() {
-        PropertiesComponent.getInstance().setValue(EXPAND_PROPERTY_KEY, String.valueOf(isExpanded()));
-      }
-    };
-    myDecorator.setOn(PropertiesComponent.getInstance().getBoolean(EXPAND_PROPERTY_KEY, true));
-    myDecorator.setContentComponent(myBeforeRunStepsPanel);
+    content.beforeRunStepsPlaceholder.setComponent(myBeforeRunStepsPanel);
     doReset(settings);
   }
 
   private void doReset(@NotNull RunnerAndConfigurationSettings settings) {
     myBeforeRunStepsPanel.doReset(settings);
-    myBeforeLaunchContainer.setVisible(!(settings.getConfiguration() instanceof WithoutOwnBeforeRunSteps));
-
-    myIsAllowRunningInParallelCheckBox.setSelected(settings.getConfiguration().isAllowRunningInParallel());
-    myIsAllowRunningInParallelCheckBox.setVisible(settings.isTemplate() &&
-                                                  settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
+    content.beforeRunStepsRow.visible(!(settings.getConfiguration() instanceof WithoutOwnBeforeRunSteps));
+    content.isAllowRunningInParallelCheckBox.setSelected(settings.getConfiguration().isAllowRunningInParallel());
+    content.isAllowRunningInParallelCheckBox.setVisible(settings.isTemplate() &&
+                                                        settings.getFactory().getSingletonPolicy().isPolicyConfigurable());
 
     if (myRCStorageUi != null) {
       myRCStorageUi.reset(settings);
@@ -113,15 +83,15 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
   @Override
   @NotNull
   protected JComponent createEditor() {
-    myComponentPlace.setLayout(new BorderLayout());
-    myComponentPlace.add(myEditor.getComponent(), BorderLayout.CENTER);
-    DataManager.registerDataProvider(myWholePanel, dataId -> {
+    content.componentPlace.setLayout(new BorderLayout());
+    content.componentPlace.add(myEditor.getComponent(), BorderLayout.CENTER);
+    DataManager.registerDataProvider(content.panel, dataId -> {
       if (CONFIGURATION_EDITOR_KEY.is(dataId)) {
         return this;
       }
       return null;
     });
-    return myWholePanel;
+    return content.panel;
   }
 
   boolean isSpecificallyModified() {
@@ -181,8 +151,8 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
 
     settingsToApply.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
     settingsToApply.setActivateToolWindowBeforeRun(myBeforeRunStepsPanel.needActivateToolWindowBeforeRun());
-    if (myIsAllowRunningInParallelCheckBox.isVisible()) {
-      settings.getConfiguration().setAllowRunningInParallel(myIsAllowRunningInParallelCheckBox.isSelected());
+    if (content.isAllowRunningInParallelCheckBox.isVisible()) {
+      settings.getConfiguration().setAllowRunningInParallel(content.isAllowRunningInParallelCheckBox.isSelected());
     }
 
     if (myRCStorageUi != null) {
@@ -213,7 +183,7 @@ public final class ConfigurationSettingsEditorWrapper extends SettingsEditor<Run
 
   @Override
   public void titleChanged(@NotNull String title) {
-    myDecorator.setTitle(title);
+    content.beforeRunStepsRow.setTitle(title);
   }
 
   @Override

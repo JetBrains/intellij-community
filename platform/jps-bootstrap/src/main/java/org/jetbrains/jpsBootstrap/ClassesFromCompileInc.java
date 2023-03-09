@@ -24,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.verbose;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.verbose;
 
 public final class ClassesFromCompileInc {
   public final static String MANIFEST_JSON_URL_ENV_NAME = "JPS_BOOTSTRAP_MANIFEST_JSON_URL";

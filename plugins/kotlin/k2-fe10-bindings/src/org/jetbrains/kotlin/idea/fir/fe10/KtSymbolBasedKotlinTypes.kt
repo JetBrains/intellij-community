@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.fir.fe10
 
-import org.jetbrains.kotlin.analysis.api.KtStarProjectionTypeArgument
-import org.jetbrains.kotlin.analysis.api.KtTypeArgument
+import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.KtTypeProjection
 import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.symbols.KtAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtNamedClassOrObjectSymbol
@@ -99,9 +99,9 @@ internal class MemberScopeForKtSymbolBasedDescriptors(lazyDebugInfo: () -> Strin
 fun KtType.getDescriptorsAnnotations(context: Fe10WrapperContext): Annotations =
     Annotations.create(annotations.map { KtSymbolBasedAnnotationDescriptor(it, context) })
 
-fun KtTypeArgument.toTypeProjection(context: Fe10WrapperContext): TypeProjection =
+fun KtTypeProjection.toTypeProjection(context: Fe10WrapperContext): TypeProjection =
     when (this) {
-        is KtStarProjectionTypeArgument -> StarProjectionForAbsentTypeParameter(context.builtIns)
+        is KtStarTypeProjection -> StarProjectionForAbsentTypeParameter(context.builtIns)
         is KtTypeArgumentWithVariance -> TypeProjectionImpl(variance, type.toKotlinType(context))
     }
 
@@ -109,11 +109,11 @@ fun KtType.toKotlinType(context: Fe10WrapperContext, annotations: Annotations = 
     val typeConstructor: TypeConstructor = when (this) {
         is KtTypeParameterType -> KtSymbolBasedTypeParameterDescriptor(this.symbol, context).typeConstructor
         is KtNonErrorClassType -> when (val classLikeSymbol = classSymbol) {
-            is KtTypeAliasSymbol -> return classLikeSymbol.toExpandedKotlinType(context, typeArguments, annotations)
+            is KtTypeAliasSymbol -> return classLikeSymbol.toExpandedKotlinType(context, ownTypeArguments, annotations)
             is KtNamedClassOrObjectSymbol -> KtSymbolBasedClassDescriptor(classLikeSymbol, context).typeConstructor
             is KtAnonymousObjectSymbol -> context.implementationPostponed()
         }
-        is KtClassErrorType -> ErrorUtils.createErrorTypeConstructor(ErrorTypeKind.TYPE_FOR_ERROR_TYPE_CONSTRUCTOR, error)
+        is KtErrorType -> ErrorUtils.createErrorTypeConstructor(ErrorTypeKind.TYPE_FOR_ERROR_TYPE_CONSTRUCTOR, errorMessage)
         is KtFlexibleType -> {
             return KotlinTypeFactory.flexibleType(
                 lowerBound.toKotlinType(context, annotations) as SimpleType,
@@ -136,7 +136,7 @@ fun KtType.toKotlinType(context: Fe10WrapperContext, annotations: Annotations = 
         else -> error("Unexpected subclass: ${this.javaClass}")
     }
 
-    val ktTypeArguments = this.safeAs<KtNonErrorClassType>()?.typeArguments ?: emptyList()
+    val ktTypeArguments = this.safeAs<KtNonErrorClassType>()?.ownTypeArguments ?: emptyList()
 
     val markedAsNullable = this.nullability == KtTypeNullability.NULLABLE
 
@@ -148,7 +148,7 @@ fun KtType.toKotlinType(context: Fe10WrapperContext, annotations: Annotations = 
 
 fun KtTypeAliasSymbol.toExpandedKotlinType(
     context: Fe10WrapperContext,
-    arguments: List<KtTypeArgument>,
+    arguments: List<KtTypeProjection>,
     annotations: Annotations
 ): UnwrappedType {
     check(arguments.size == typeParameters.size) {

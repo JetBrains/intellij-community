@@ -151,12 +151,11 @@ public class FindUIHelper implements Disposable {
     }
 
     findSettings.setWholeWordsOnly(myModel.isWholeWordsOnly());
-    boolean saveContextBetweenRestarts = false;
-    findSettings.setInStringLiteralsOnly(saveContextBetweenRestarts && myModel.isInStringLiteralsOnly());
-    findSettings.setInCommentsOnly(saveContextBetweenRestarts && myModel.isInCommentsOnly());
-    findSettings.setExceptComments(saveContextBetweenRestarts && myModel.isExceptComments());
-    findSettings.setExceptStringLiterals(saveContextBetweenRestarts && myModel.isExceptStringLiterals());
-    findSettings.setExceptCommentsAndLiterals(saveContextBetweenRestarts && myModel.isExceptCommentsAndStringLiterals());
+    findSettings.setInStringLiteralsOnly(false);
+    findSettings.setInCommentsOnly(false);
+    findSettings.setExceptComments(false);
+    findSettings.setExceptStringLiterals(false);
+    findSettings.setExceptCommentsAndLiterals(false);
 
     findSettings.setRegularExpressions(myModel.isRegularExpressions());
     if (!myModel.isMultipleFiles()){

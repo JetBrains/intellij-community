@@ -25,7 +25,7 @@ import javax.swing.*
 @Suppress("LeakingThis")
 @ApiStatus.Experimental
 open class ConnectionPanel(private val manager: ConnectionManager) : ActionPanel(
-  MigLayout("wrap 2, ins 20 20 0 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", null)) {
+  MigLayout("wrap 2, ins 20 20 0 0, novisualpadding, gap 5, flowy", null)) {
 
   private var defaultButtonArc = 0
   private val titleLabel: JBLabel

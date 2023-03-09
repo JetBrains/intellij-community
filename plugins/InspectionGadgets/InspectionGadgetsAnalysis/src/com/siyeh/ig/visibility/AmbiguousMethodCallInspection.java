@@ -40,7 +40,7 @@ public class AmbiguousMethodCallInspection extends BaseInspection implements Cle
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent.getParent();

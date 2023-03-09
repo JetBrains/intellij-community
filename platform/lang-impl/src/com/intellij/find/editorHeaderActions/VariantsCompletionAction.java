@@ -14,6 +14,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,9 +24,8 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class VariantsCompletionAction extends DumbAwareAction implements LightEditCompatible {
@@ -84,9 +84,7 @@ public class VariantsCompletionAction extends DumbAwareAction implements LightEd
       }, chars, 0, chars.length());
 
 
-    ArrayList<String> sortedWords = new ArrayList<>(words);
-    Collections.sort(sortedWords);
-
+    List<String> sortedWords = ContainerUtil.sorted(words);
     return ArrayUtilRt.toStringArray(sortedWords);
   }
 }

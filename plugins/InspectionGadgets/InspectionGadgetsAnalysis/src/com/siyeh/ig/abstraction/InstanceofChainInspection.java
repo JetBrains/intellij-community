@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -26,7 +26,8 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class InstanceofChainInspection extends BaseInspection {
 
@@ -50,9 +51,9 @@ public class InstanceofChainInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.instanceof.on.library.classes"), this,
-                                          "ignoreInstanceofOnLibraryClasses");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreInstanceofOnLibraryClasses", InspectionGadgetsBundle.message("ignore.instanceof.on.library.classes")));
   }
 
   @Override

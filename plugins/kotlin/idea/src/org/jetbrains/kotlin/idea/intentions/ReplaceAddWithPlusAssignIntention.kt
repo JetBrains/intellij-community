@@ -44,7 +44,7 @@ class ReplaceAddWithPlusAssignIntention : SelfTargetingOffsetIndependentIntentio
 
     override fun applyTo(element: KtDotQualifiedExpression, editor: Editor?) {
         element.replace(
-            KtPsiFactory(element).createExpressionByPattern(
+            KtPsiFactory(element.project).createExpressionByPattern(
                 "$0 += $1", element.receiverExpression,
                 element.callExpression?.valueArguments?.get(0)?.getArgumentExpression() ?: return
             )

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.error.ErrorType
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 // Debugging tip: use 'PsiTreeUtilsKt.printTree' to see PSI trees in the runtime. See fun documentation for details.
 
@@ -46,7 +48,8 @@ private fun addParamTypes(position: PsiElement): PsiElement {
         Replacing KtQualifiedExpression with its nested KtCallExpression we're getting "non-broken" tree.
         */
 
-        val dotExprWithCaret = positionInCopy.parent.parent as? KtQualifiedExpression ?: return null
+        val dotExprWithCaret =
+          positionInCopy.parents.match(KtNameReferenceExpression::class, last = KtQualifiedExpression::class) ?: return null
         val dotExprWithCaretCopy = dotExprWithCaret.copy() as KtQualifiedExpression
 
         val beforeDotExpr = dotExprWithCaret.receiverExpression // smth.call()

@@ -2,11 +2,13 @@
 package com.intellij.util.xml;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.mock.MockInspectionProfile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
@@ -19,9 +21,10 @@ import com.intellij.util.xml.impl.DomTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 public class DomHighlightingLiteTest extends DomTestCase {
   private DomElementAnnotationsManagerImpl myAnnotationsManager;
@@ -118,7 +121,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
   }
 
   private DomElementAnnotationHolderImpl createHolder() {
-    return new DomElementAnnotationHolderImpl(true, myElement);
+    return new DomElementAnnotationHolderImpl(true, myElement, new AnnotationHolderImpl(new AnnotationSession(myElement.getFile()), false));
   }
 
   private static DomElementsProblemsHolderImpl assertNotEmptyHolder(final DomElementsProblemsHolder holder1) {
@@ -168,7 +171,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
     };
     final StringBuilder s = new StringBuilder();
-    final ArrayList<Annotation> toFill = new ArrayList<>();
+    AnnotationHolder toFill = new AnnotationHolderImpl(new AnnotationSession(myElement.getFile()), false);
     final MyDomElementsInspection inspection = new MyDomElementsInspection() {
 
       @Override
@@ -179,12 +182,12 @@ public class DomHighlightingLiteTest extends DomTestCase {
     annotator.runInspection(inspection, myElement, toFill);
     assertEquals("visited", s.toString());
     final DomElementsProblemsHolderImpl holder = assertNotEmptyHolder(myAnnotationsManager.getProblemHolder(myElement));
-    assertEmpty(toFill);
+    assertEmpty((List<Annotation>)toFill);
 
     annotator.runInspection(inspection, myElement, toFill);
     assertEquals("visited", s.toString());
     assertSame(holder, assertNotEmptyHolder(myAnnotationsManager.getProblemHolder(myElement)));
-    assertEmpty(toFill);
+    assertEmpty((List<Annotation>)toFill);
   }
 
   public void testHighlightStatus_MockDomInspection() {

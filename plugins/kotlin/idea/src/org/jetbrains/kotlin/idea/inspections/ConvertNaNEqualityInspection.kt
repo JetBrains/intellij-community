@@ -50,7 +50,7 @@ private class ConvertNaNEqualityQuickFix(val inverted: Boolean) : LocalQuickFix 
             else -> return
         }
         val pattern = if (inverted) "!$0.isNaN()" else "$0.isNaN()"
-        element.replace(KtPsiFactory(element).createExpressionByPattern(pattern, other))
+        element.replace(KtPsiFactory(project).createExpressionByPattern(pattern, other))
     }
 }
 

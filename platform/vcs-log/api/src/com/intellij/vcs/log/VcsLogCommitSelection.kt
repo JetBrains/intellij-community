@@ -2,14 +2,12 @@
 package com.intellij.vcs.log
 
 import com.intellij.util.Consumer
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Commit selection in the Vcs Log table.
  *
  * @see VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION
  */
-@ApiStatus.Experimental
 interface VcsLogCommitSelection {
   /**
    * Selection size.
@@ -48,6 +46,13 @@ interface VcsLogCommitSelection {
    * @see com.intellij.vcs.log.data.LoadingDetails
    */
   val cachedFullDetails: List<VcsFullCommitDetails>
+
+  /**
+   * Returns a lazy list of commit details for this selection.
+   *
+   * @param detailsGetter function which gets commit details by commit id.
+   */
+  fun <T> getDetails(detailsGetter: (Int) -> T): List<T>
 
   /**
    * Sends a request to load full details of the selected commits in a background thread.

@@ -23,7 +23,7 @@ import java.util.List;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
 
-class ArgumentSuggester {
+final class ArgumentSuggester {
   static @NotNull Collection<LookupElement> suggestArgument(PsiReferenceExpression ref, List<ExpectedTypeInfo> expectedTypeInfos) {
     PsiExpression qualifier = ref.getQualifierExpression();
 

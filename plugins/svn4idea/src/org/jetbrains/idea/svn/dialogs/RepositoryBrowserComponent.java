@@ -257,7 +257,7 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
   public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final Project project = myVCS.getProject();
-      if (project == null || project.isDefault()) {
+      if (project.isDefault()) {
         return null;
       }
       final VirtualFile vcsFile = getSelectedVcsFile();

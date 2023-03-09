@@ -47,8 +47,10 @@ class ValToObjectIntention : SelfTargetingIntention<KtProperty>(
         val superTypesText = superTypeList?.text?.plus(" ") ?: ""
 
         val replacementText = "${prefix}object $name: $superTypesText${body.text}"
-        val replaced =
-            runWriteAction { element.replaced(KtPsiFactory(element).createDeclarationByPattern<KtObjectDeclaration>(replacementText)) }
+        val replaced = runWriteAction {
+            val psiFactory = KtPsiFactory(element.project)
+            element.replaced(psiFactory.createDeclarationByPattern<KtObjectDeclaration>(replacementText))
+        }
 
         editor?.caretModel?.moveToOffset(replaced.nameIdentifier?.endOffset ?: return)
     }

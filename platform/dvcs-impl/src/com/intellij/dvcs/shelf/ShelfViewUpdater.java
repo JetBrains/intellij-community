@@ -15,6 +15,7 @@ public final class ShelfViewUpdater implements VcsRepositoryMappingListener {
 
   @Override
   public void mappingChanged() {
-    ShelvedChangesViewManager.getInstance(myProject).updateOnVcsMappingsChanged();
+    ShelvedChangesViewManager shelveViewManager = myProject.getServiceIfCreated(ShelvedChangesViewManager.class);
+    if (shelveViewManager != null) shelveViewManager.updateOnVcsMappingsChanged();
   }
 }

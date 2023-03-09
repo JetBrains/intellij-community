@@ -62,6 +62,8 @@
     <extensionPoint qualifiedName="com.intellij.externalProjectWatcherContributor"
                     interface="com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl$Contributor"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.openapi.externalSystem.projectSetupExtension" interface="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemProjectSetupExtension" dynamic="true"/>
+
     <extensionPoint qualifiedName="com.intellij.externalIconProvider" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider"/>
     </extensionPoint>
@@ -81,5 +83,8 @@
     <extensionPoint name="externalSystemDependencyAnalyzer"
                     interface="com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.libraryDataServiceExtension"
+                    interface="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataServiceExtension"
+                    dynamic="true" />
   </extensionPoints>
 </idea-plugin>

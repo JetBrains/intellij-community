@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.RefactoringQuickFix;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +31,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.util.SmartList;
-import com.intellij.util.ui.JBUI;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.IntelliLangBundle;
 import org.intellij.plugins.intelliLang.util.AnnotateFix;
@@ -38,11 +38,7 @@ import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.intellij.plugins.intelliLang.util.SubstitutedExpressionEvaluationHelper;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -57,19 +53,10 @@ public class PatternValidator extends LocalInspectionTool {
   public boolean CHECK_NON_CONSTANT_VALUES = true;
 
   @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    final JCheckBox jCheckBox = new JCheckBox(IntelliLangBundle.message("flag.non.compile.time.constant.expressions"));
-    jCheckBox.setToolTipText(IntelliLangBundle.message(
-      "the.inspection.will.flag.expressions.with.unknown.values"));
-    jCheckBox.setSelected(CHECK_NON_CONSTANT_VALUES);
-    jCheckBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        CHECK_NON_CONSTANT_VALUES = jCheckBox.isSelected();
-      }
-    });
-    return JBUI.Panels.simplePanel().addToTop(jCheckBox);
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.checkbox("CHECK_NON_CONSTANT_VALUES", IntelliLangBundle.message("flag.non.compile.time.constant.expressions"))
+    );
   }
 
   @Override

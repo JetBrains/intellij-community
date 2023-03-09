@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui.completion
 
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.*
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.BACKGROUND_COLOR
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.SELECTED_BACKGROUND_COLOR
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.ui.getKeyStrokes
+import com.intellij.openapi.ui.popup.AlignedPopup
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.BaseStep
@@ -15,10 +17,7 @@ import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.popup.list.ListPopupImpl
 import java.awt.Dimension
 import java.awt.event.KeyEvent
-import javax.swing.Icon
-import javax.swing.JList
-import javax.swing.ListCellRenderer
-import javax.swing.ListSelectionModel
+import javax.swing.*
 
 class TextCompletionPopup<T>(
   project: Project?,
@@ -32,11 +31,14 @@ class TextCompletionPopup<T>(
   fun update() {
     listModel.updateOriginalList()
 
-    val insets = textComponent.insets
-    val popupWidth = textComponent.width - (insets.right + insets.left)
-    val rowNumber = maxOf(1, minOf(list.model.size, list.visibleRowCount))
-    val popupHeight = list.fixedCellHeight * rowNumber
+    val popupWidth = textComponent.width
+    val numLines = maxOf(1, minOf(list.model.size, list.visibleRowCount))
+    val popupHeight = list.fixedCellHeight * numLines
     size = Dimension(popupWidth, popupHeight)
+  }
+
+  fun showUnderneathOfTextComponent() {
+    AlignedPopup.showUnderneathWithoutAlignment(this, textComponent)
   }
 
   override fun process(aEvent: KeyEvent) {

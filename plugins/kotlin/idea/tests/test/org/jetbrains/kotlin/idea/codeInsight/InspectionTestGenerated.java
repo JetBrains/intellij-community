@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
@@ -73,6 +73,16 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/allOpenSimple/inspectionData/inspections.test");
         }
 
+        @TestMetadata("ambiguousExpressionInWhenBranchMigration1_7/inspectionData/inspections.test")
+        public void testAmbiguousExpressionInWhenBranchMigration1_7_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/ambiguousExpressionInWhenBranchMigration1_7/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("ambiguousExpressionInWhenBranchMigration_1_8/inspectionData/inspections.test")
+        public void testAmbiguousExpressionInWhenBranchMigration_1_8_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/ambiguousExpressionInWhenBranchMigration_1_8/inspectionData/inspections.test");
+        }
+
         @TestMetadata("arrayInDataClass/inspectionData/inspections.test")
         public void testArrayInDataClass_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/arrayInDataClass/inspectionData/inspections.test");
@@ -91,6 +101,16 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("canBeVal/inspectionData/inspections.test")
         public void testCanBeVal_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/canBeVal/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("castDueToProgressionResolutionChangeMigration1_7/inspectionData/inspections.test")
+        public void testCastDueToProgressionResolutionChangeMigration1_7_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/castDueToProgressionResolutionChangeMigration1_7/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("castDueToProgressionResolutionChangeMigration1_8/inspectionData/inspections.test")
+        public void testCastDueToProgressionResolutionChangeMigration1_8_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/castDueToProgressionResolutionChangeMigration1_8/inspectionData/inspections.test");
         }
 
         @TestMetadata("conflictingExtensionProperty/inspectionData/inspections.test")
@@ -123,6 +143,16 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/coroutines/asyncResultUnused/inspectionData/inspections.test");
         }
 
+        @TestMetadata("declaringClassMigration1_7/inspectionData/inspections.test")
+        public void testDeclaringClassMigration1_7_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/declaringClassMigration1_7/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("declaringClassMigration1_9/inspectionData/inspections.test")
+        public void testDeclaringClassMigration1_9_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/declaringClassMigration1_9/inspectionData/inspections.test");
+        }
+
         @TestMetadata("destructuringWrongName/inspectionData/inspections.test")
         public void testDestructuringWrongName_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/destructuringWrongName/inspectionData/inspections.test");
@@ -136,6 +166,16 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("emptyRange/inspectionData/inspections.test")
         public void testEmptyRange_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/emptyRange/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("enumValuesSoftDeprecateInJava/inspectionData/inspections.test")
+        public void testEnumValuesSoftDeprecateInJava_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/enumValuesSoftDeprecateInJava/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("enumValuesSoftDeprecateMigration/inspectionData/inspections.test")
+        public void testEnumValuesSoftDeprecateMigration_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/enumValuesSoftDeprecateMigration/inspectionData/inspections.test");
         }
 
         @TestMetadata("equalsAndHashCode/inspectionData/inspections.test")
@@ -156,6 +196,11 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         @TestMetadata("hasPlatformType/inspectionData/inspections.test")
         public void testHasPlatformType_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/hasPlatformType/inspectionData/inspections.test");
+        }
+
+        @TestMetadata("inlineClassDeprecatedMigration/inspectionData/inspections.test")
+        public void testInlineClassDeprecatedMigration_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/inlineClassDeprecatedMigration/inspectionData/inspections.test");
         }
 
         @TestMetadata("javaCollectionsStaticMethodOnImmutableList/inspectionData/inspections.test")

@@ -158,8 +158,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
                                             return myProject == project ? Collections.singletonList(
                                               new JavaSyntheticLibrary(
                                                 "test",
-                                                ContainerUtil.newArrayList(myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir),
-                                                ContainerUtil.newArrayList(myLibAdditionalClsDir, myLibAdditionalOutsideClsDir),
+                                                List.of(myLibAdditionalSrcDir, myLibAdditionalOutsideSrcDir),
+                                                List.of(myLibAdditionalClsDir, myLibAdditionalOutsideClsDir),
                                                 ContainerUtil.newHashSet(myLibAdditionalExcludedDir, myLibAdditionalOutsideExcludedDir)
                                               )
                                             ) : Collections.emptyList();

@@ -3,5 +3,6 @@
   "classId": "/A",
   "oldName": "n",
   "newName": "foo",
-  "mainFile": "synthesizedComponentFunction.kt"
+  "mainFile": "synthesizedComponentFunction.kt",
+  "enabledInK2": true
 }

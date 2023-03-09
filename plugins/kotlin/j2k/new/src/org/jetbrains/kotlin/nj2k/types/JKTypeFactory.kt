@@ -6,6 +6,7 @@ import com.intellij.psi.*
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.j2k.ast.Nullability
+import org.jetbrains.kotlin.j2k.ast.Nullability.*
 import org.jetbrains.kotlin.js.descriptorUtils.getJetTypeFqName
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -26,7 +27,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
         private fun typeByFqName(
             fqName: FqNameUnsafe,
             typeArguments: List<JKType> = emptyList(),
-            nullability: Nullability = Nullability.NotNull
+            nullability: Nullability = NotNull
         ) = JKClassType(
             symbolProvider.provideClassSymbol(fqName),
             typeArguments,
@@ -43,11 +44,11 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
         val double = typeByFqName(StandardNames.FqNames._double)
 
         val string = typeByFqName(StandardNames.FqNames.string)
-        val possiblyNullString = typeByFqName(StandardNames.FqNames.string, nullability = Nullability.Default)
+        val possiblyNullString = typeByFqName(StandardNames.FqNames.string, nullability = Default)
 
         val unit = typeByFqName(StandardNames.FqNames.unit)
         val nothing = typeByFqName(StandardNames.FqNames.nothing)
-        val nullableAny = typeByFqName(StandardNames.FqNames.any, nullability = Nullability.Nullable)
+        val nullableAny = typeByFqName(StandardNames.FqNames.any, nullability = Nullable)
     }
 
     fun fromPrimitiveType(primitiveType: JKJavaPrimitiveType) = when (primitiveType.jvmPrimitiveType) {
@@ -70,8 +71,10 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
             when (target) {
                 null ->
                     JKClassType(JKUnresolvedClassSymbol(type.rawType().canonicalText, this), parameters)
+
                 is PsiTypeParameter ->
                     JKTypeParameterType(symbolProvider.provideDirectSymbol(target) as JKTypeParameterSymbol)
+
                 is PsiAnonymousClass -> {
                     /*
                      If anonymous class is declared inside the converting code, we will not be able to access JKUniverseClassSymbol's target
@@ -79,6 +82,7 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                     */
                     createPsiType(target.baseClassType)
                 }
+
                 else -> {
                     JKClassType(
                         target.let { symbolProvider.provideDirectSymbol(it) as JKClassSymbol },
@@ -87,10 +91,12 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                 }
             }
         }
+
         is PsiArrayType -> JKJavaArrayType(fromPsiType(type.componentType))
         is PsiPrimitiveType -> JKJavaPrimitiveType.fromPsi(type)
         is PsiDisjunctionType ->
             JKJavaDisjunctionType(type.disjunctions.map { fromPsiType(it) })
+
         is PsiWildcardType ->
             when {
                 type.isExtends ->
@@ -98,19 +104,25 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                         JKVarianceTypeParameterType.Variance.OUT,
                         fromPsiType(type.extendsBound)
                     )
+
                 type.isSuper ->
                     JKVarianceTypeParameterType(
                         JKVarianceTypeParameterType.Variance.IN,
                         fromPsiType(type.superBound)
                     )
+
                 else -> JKStarProjectionTypeImpl
             }
+
         is PsiCapturedWildcardType ->
             JKCapturedType(fromPsiType(type.wildcard) as JKWildCardType)
+
         is PsiIntersectionType -> // TODO what to do with intersection types? old j2k just took the first conjunct
             fromPsiType(type.representative)
+
         is PsiLambdaParameterType -> // Probably, means that we have erroneous Java code
             JKNoType
+
         is PsiLambdaExpressionType -> type.expression.functionalInterfaceType?.let(::createPsiType) ?: JKNoType
         is PsiMethodReferenceType -> type.expression.functionalInterfaceType?.let(::createPsiType) ?: JKNoType
         else -> JKNoType
@@ -126,12 +138,12 @@ class JKTypeFactory(val symbolProvider: JKSymbolProvider) {
                 )
 
             else -> JKClassType(
-                symbolProvider.provideClassSymbol(type.getJetTypeFqName(false)),//TODO constructor fqName
+                symbolProvider.provideClassSymbol(type.getJetTypeFqName(false)), //TODO constructor fqName
                 type.arguments.map { typeArgument ->
                     if (typeArgument.isStarProjection) JKStarProjectionTypeImpl
                     else fromKotlinType(typeArgument.type)
                 },
-                if (type.isNullable()) Nullability.Nullable else Nullability.NotNull
+                if (type.isNullable()) Nullable else NotNull
             )
         }
     }

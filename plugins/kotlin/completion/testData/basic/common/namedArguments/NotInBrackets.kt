@@ -6,5 +6,5 @@ fun bar() {
     ""[<caret>]
 }
 
-// ABSENT: p1
-// ABSENT: p2
+// ABSENT: "p1 ="
+// ABSENT: "p2 ="

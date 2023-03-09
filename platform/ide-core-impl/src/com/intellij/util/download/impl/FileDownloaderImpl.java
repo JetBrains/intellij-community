@@ -286,7 +286,7 @@ class FileDownloaderImpl implements FileDownloader {
     return IdeUiService.getInstance().chooseFile(descriptor, parentComponent, project, baseDir);
   }
 
-  private static List<Pair<File, DownloadableFileDescription>> moveToDir(List<Pair<File, DownloadableFileDescription>> downloadedFiles,
+  private static List<Pair<File, DownloadableFileDescription>> moveToDir(List<? extends Pair<File, DownloadableFileDescription>> downloadedFiles,
                                                                          final File targetDir) throws IOException {
     FileUtil.createDirectory(targetDir);
     List<Pair<File, DownloadableFileDescription>> result = new ArrayList<>();
@@ -301,7 +301,7 @@ class FileDownloaderImpl implements FileDownloader {
   }
 
   @NotNull
-  private static List<Pair<VirtualFile, DownloadableFileDescription>> findVirtualFiles(@NotNull List<Pair<File, DownloadableFileDescription>> ioFiles) {
+  private static List<Pair<VirtualFile, DownloadableFileDescription>> findVirtualFiles(@NotNull List<? extends Pair<File, DownloadableFileDescription>> ioFiles) {
     List<Pair<VirtualFile,DownloadableFileDescription>> result = new ArrayList<>();
     for (final Pair<File, DownloadableFileDescription> pair : ioFiles) {
       final File ioFile = pair.getFirst();
@@ -317,7 +317,7 @@ class FileDownloaderImpl implements FileDownloader {
     return result;
   }
 
-  private static void deleteFiles(final List<Pair<File, DownloadableFileDescription>> pairs) {
+  private static void deleteFiles(final List<? extends Pair<File, DownloadableFileDescription>> pairs) {
     for (Pair<File, DownloadableFileDescription> pair : pairs) {
       FileUtil.delete(pair.getFirst());
     }

@@ -2,6 +2,9 @@
 
 package org.jetbrains.kotlin.idea.maven
 
+import com.intellij.externalSystem.ImportedLibraryType
+import com.intellij.notification.BrowseNotificationAction
+import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.PersistentStateComponent
@@ -51,6 +54,7 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.io.File
+import java.lang.ref.WeakReference
 import java.util.*
 
 interface MavenProjectImportHandler {
@@ -85,14 +89,14 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     }
 
     override fun process(
-        modifiableModelsProvider: IdeModifiableModelsProvider,
-        module: Module,
-        rootModel: MavenRootModelAdapter,
-        mavenModel: MavenProjectsTree,
-        mavenProject: MavenProject,
-        changes: MavenProjectChanges,
-        mavenProjectToModuleName: MutableMap<MavenProject, String>,
-        postTasks: MutableList<MavenProjectsProcessorTask>
+      modifiableModelsProvider: IdeModifiableModelsProvider,
+      module: Module,
+      rootModel: MavenRootModelAdapter,
+      mavenModel: MavenProjectsTree,
+      mavenProject: MavenProject,
+      changes: MavenProjectChanges,
+      mavenProjectToModuleName: MutableMap<MavenProject, String>,
+      postTasks: MutableList<MavenProjectsProcessorTask>
     ) {
 
         if (changes.hasPluginsChanges()) {
@@ -129,7 +133,8 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             val targetLibraryKind = detectPlatformByExecutions(mavenProject)?.tooling?.libraryKind
             if (targetLibraryKind != null) {
                 modifiableModelsProvider.getModifiableRootModel(module).orderEntries().forEachLibrary { library ->
-                    if ((library as LibraryEx).kind == null) {
+                    val libraryKind = (library as LibraryEx).kind
+                    if (libraryKind == null || libraryKind == ImportedLibraryType.IMPORTED_LIBRARY_KIND) {
                         val model = modifiableModelsProvider.getModifiableLibraryModel(library) as LibraryEx.ModifiableModelEx
                         detectLibraryKind(library, project)?.let { model.kind = it }
                     }
@@ -303,6 +308,8 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         KotlinMavenConfigurator.MAVEN_PLUGIN_ID,
     )
 
+    private var kotlinJsCompilerWarning = WeakReference<Notification>(null)
+
     private fun configureFacet(mavenProject: MavenProject, modifiableModelsProvider: IdeModifiableModelsProvider, module: Module) {
         val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return
         val compilerVersion = mavenPlugin.compilerVersion
@@ -331,6 +338,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         }
         if (facetSettings.compilerArguments is K2JSCompilerArguments) {
             configureJSOutputPaths(mavenProject, modifiableModelsProvider.getModifiableRootModel(module), facetSettings, mavenPlugin)
+            deprecatedKotlinJsCompiler(module.project, compilerVersion.kotlinVersion)
         }
 
         MavenProjectImportHandler.getInstances(module.project).forEach { it(kotlinFacet, mavenProject) }
@@ -343,6 +351,34 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             module.project.putUserData(KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED, true)
             displayJvmTarget6UsageNotification(module.project)
         }
+    }
+
+    private fun deprecatedKotlinJsCompiler(
+        project: Project,
+        kotlinVersion: KotlinVersion,
+    ) {
+
+        if (!kotlinVersion.isAtLeast(1, 7)) return
+
+        if (kotlinJsCompilerWarning.get() != null) return
+
+        NotificationGroupManager.getInstance()
+            .getNotificationGroup("Kotlin/JS compiler Maven")
+            .createNotification(
+                KotlinMavenBundle.message("notification.text.kotlin.js.compiler.title"),
+                KotlinMavenBundle.message("notification.text.kotlin.js.compiler.body"),
+                NotificationType.WARNING
+            )
+            .addAction(
+                BrowseNotificationAction(
+                    KotlinMavenBundle.message("notification.text.kotlin.js.compiler.learn.more"),
+                    KotlinMavenBundle.message("notification.text.kotlin.js.compiler.link"),
+                )
+            )
+            .also {
+                kotlinJsCompilerWarning = WeakReference(it)
+            }
+            .notify(project)
     }
 
     private fun detectPlatform(mavenProject: MavenProject) =

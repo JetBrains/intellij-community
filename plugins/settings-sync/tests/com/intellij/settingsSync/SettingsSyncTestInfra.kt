@@ -19,9 +19,9 @@ import java.nio.charset.StandardCharsets
 import java.time.Instant
 
 @ApiStatus.Internal
-fun SettingsSnapshot.assertSettingsSnapshot(buildExpectedSnapshot: SettingsSnapshotBuilder.() -> Unit) {
+fun SettingsSnapshot.assertSettingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
   val settingsSnapshotBuilder = SettingsSnapshotBuilder()
-  settingsSnapshotBuilder.buildExpectedSnapshot()
+  settingsSnapshotBuilder.build()
   assertFileStates(settingsSnapshotBuilder.fileStates, fileStates)
   assertFileStates(settingsSnapshotBuilder.additionalFiles, additionalFiles)
   assertEquals(settingsSnapshotBuilder.plugins, plugins?.plugins ?: emptyMap<PluginId, PluginData>())
@@ -67,16 +67,13 @@ internal fun settingsSnapshot(metaInfo: MetaInfo = MetaInfo(Instant.now(), getLo
                               build: SettingsSnapshotBuilder.() -> Unit) : SettingsSnapshot {
   val builder = SettingsSnapshotBuilder()
   builder.build()
-  return SettingsSnapshot(metaInfo, builder.fileStates.toSet(),
-                          if (builder.pluginInformationExists) SettingsSyncPluginsState(builder.plugins) else null,
-                          builder.additionalFiles.toSet())
+  return SettingsSnapshot(metaInfo, builder.fileStates.toSet(), SettingsSyncPluginsState(builder.plugins), builder.additionalFiles.toSet())
 }
 
 @ApiStatus.Internal
 class SettingsSnapshotBuilder {
   val fileStates = mutableListOf<FileState>()
   val plugins = mutableMapOf<PluginId, PluginData>()
-  var pluginInformationExists = false
   val additionalFiles = mutableListOf<FileState>()
 
   fun fileState(function: () -> PersistentStateComponent<*>) {
@@ -96,12 +93,8 @@ class SettingsSnapshotBuilder {
   fun plugin(id: String,
              enabled: Boolean = true,
              category: SettingsCategory = SettingsCategory.PLUGINS,
-             dependencies: Set<String> = emptySet()): Pair<PluginId, PluginData> {
-    pluginInformationExists = true
-    val pluginId = PluginId.getId(id)
-    val pluginData = PluginData(enabled, category, dependencies)
-    plugins[pluginId] = pluginData
-    return pluginId to pluginData
+             dependencies: Set<String> = emptySet()) {
+    plugins[PluginId.getId(id)] = PluginData(enabled, category, dependencies)
   }
 
   fun additionalFile(file: String, content: String) {

@@ -19,7 +19,7 @@ import java.util.*;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class KeywordArgumentCompletionUtil {
+public final class KeywordArgumentCompletionUtil {
   public static void collectFunctionArgNames(PyElement element,
                                              List<? super LookupElement> ret,
                                              @NotNull final TypeEvalContext context,

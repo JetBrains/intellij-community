@@ -95,12 +95,11 @@ public abstract class RunAnythingSearchListModel extends CollectionListModel<Obj
       Function<Map.Entry<@Nls String, List<RunAnythingProvider>>, RunAnythingGroup> mapping =
         entry -> new RunAnythingHelpGroup(entry.getKey(), entry.getValue());
 
-      myGroups = ContainerUtil.map(StreamEx.of(RunAnythingProvider.EP_NAME.getExtensionList().stream())
+      myGroups = ContainerUtil.concat(ContainerUtil.map(StreamEx.of(RunAnythingProvider.EP_NAME.getExtensionList().stream())
                                      .filter(provider -> provider.getHelpGroupTitle() != null)
                                      .groupingBy(provider -> provider.getHelpGroupTitle())
-                                     .entrySet(), mapping);
-
-      myGroups.addAll(RunAnythingHelpGroup.EP_NAME.getExtensionList());
+                                     .entrySet(), mapping),
+      RunAnythingHelpGroup.EP_NAME.getExtensionList());
     }
 
     @NotNull

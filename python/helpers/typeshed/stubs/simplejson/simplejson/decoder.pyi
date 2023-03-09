@@ -1,4 +1,5 @@
-from typing import Any, Match
+from re import Match
+from typing import Any
 
 class JSONDecoder:
     def __init__(self, **kwargs: Any) -> None: ...

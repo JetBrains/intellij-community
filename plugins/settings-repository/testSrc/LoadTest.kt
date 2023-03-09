@@ -9,7 +9,6 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.util.io.exists
 import com.intellij.util.io.write
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -25,6 +24,7 @@ import org.jetbrains.settingsRepository.git.commit
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.io.path.exists
 
 class LoadTest : LoadTestBase() {
 

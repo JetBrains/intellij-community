@@ -124,7 +124,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
                          int toRow,
                          int fromCol,
                          int toCol,
-                         @NotNull Consumer<ArrayChunk> whenLoaded) {
+                         @NotNull Consumer<? super ArrayChunk> whenLoaded) {
 
     myQueue.queue(new Update(updateMessage) {
       @Override

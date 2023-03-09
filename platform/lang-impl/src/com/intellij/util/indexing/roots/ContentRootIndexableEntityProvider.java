@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
@@ -8,29 +8,30 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.util.indexing.roots.kind.IndexableSetIterableOrigin;
-import com.intellij.util.indexing.roots.origin.ModuleRootIterableOriginImpl;
-import com.intellij.workspaceModel.ide.impl.UtilsKt;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-class ContentRootIndexableEntityProvider implements IndexableEntityProvider.ParentEntityDependent<ContentRootEntity, ModuleEntity>,
-                                                    IndexableEntityProvider.ExistingEx<ContentRootEntity> {
+import static com.intellij.util.indexing.roots.IndexableEntityProvider.DependencyOnParent.create;
+
+class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Existing<ContentRootEntity> {
 
   @Override
   public @NotNull Class<ContentRootEntity> getEntityClass() {
     return ContentRootEntity.class;
+  }
+
+  @Override
+  public @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
+    return Collections.singletonList(create(ModuleEntity.class, ContentRootIndexableEntityProvider::getReplacedParentEntityIteratorBuilder));
   }
 
   @Override
@@ -41,22 +42,6 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
   }
 
   @Override
-  public @Nullable IndexableSetIterableOrigin getExistingEntityIteratorOrigins(@NotNull ContentRootEntity entity,
-                                                                                    @NotNull EntityStorage storage,
-                                                                                    @NotNull Project project) {
-    ModuleEntity moduleEntity = entity.getModule();
-    ModuleBridge module = ModuleEntityUtils.findModule(moduleEntity, storage);
-    if (module == null) {
-      return null;
-    }
-    VirtualFile root = UtilsKt.getVirtualFile(entity.getUrl());
-    if (root == null) return null;
-    List<VirtualFile> excludedFiles =
-      IndexableEntityProviderMethods.INSTANCE.getExcludedFiles(entity);//todo[lene] add excluded root condition
-    return new ModuleRootIterableOriginImpl(module, Collections.singletonList(root), excludedFiles);
-  }
-
-  @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull ContentRootEntity entity,
                                                                                                 @NotNull Project project) {
     return IndexableIteratorBuilders.INSTANCE.forModuleRoots(entity.getModule().getSymbolicId(), entity.getUrl());
@@ -64,7 +49,8 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ContentRootEntity oldEntity,
-                                                                                                   @NotNull ContentRootEntity newEntity) {
+                                                                                                   @NotNull ContentRootEntity newEntity,
+                                                                                                   @NotNull Project project) {
     if (!(newEntity.getExcludedPatterns().equals(oldEntity.getExcludedPatterns()))) {
       return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getModule().getSymbolicId(), newEntity.getUrl());
     }
@@ -91,7 +77,7 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
   }
 
   @NotNull
-  static List<VirtualFileUrl> collectRootUrls(List<ContentRootEntity> newContentRoots) {
+  static List<VirtualFileUrl> collectRootUrls(List<? extends ContentRootEntity> newContentRoots) {
     return ContainerUtil.map(newContentRoots, o -> o.getUrl());
   }
 
@@ -107,15 +93,8 @@ class ContentRootIndexableEntityProvider implements IndexableEntityProvider.Pare
     return Collections.emptyList();
   }
 
-  @Override
-  public @NotNull Class<ModuleEntity> getParentEntityClass() {
-    return ModuleEntity.class;
-  }
-
-  @Override
-  public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
-                                                                                                        @NotNull ModuleEntity newEntity,
-                                                                                                        @NotNull Project project) {
+  private static @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedParentEntityIteratorBuilder(@NotNull ModuleEntity oldEntity,
+                                                                                                                @NotNull ModuleEntity newEntity) {
     List<VirtualFileUrl> newRoots = collectRootUrls(newEntity.getContentRoots());
     List<VirtualFileUrl> oldRoots = collectRootUrls(oldEntity.getContentRoots());
     return IndexableIteratorBuilders.INSTANCE.forModuleRoots(newEntity.getSymbolicId(), newRoots, oldRoots);

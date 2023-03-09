@@ -33,7 +33,7 @@ public final class EditorConfigActionUtil {
 
   public static AnAction[] createNavigationActions(@NotNull PsiFile file) {
     EditorConfigNavigationActionsFactory navigationActionsFactory =
-      EditorConfigNavigationActionsFactory.getInstance(file);
+      EditorConfigNavigationActionsFactory.Companion.getInstance(file);
     if (navigationActionsFactory == null) {
       return AnAction.EMPTY_ARRAY;
     }

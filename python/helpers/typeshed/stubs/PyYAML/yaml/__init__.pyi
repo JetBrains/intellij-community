@@ -1,5 +1,6 @@
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from typing import Any, Pattern, TypeVar, overload
+from re import Pattern
+from typing import Any, TypeVar, overload
 from typing_extensions import TypeAlias
 
 from . import resolver as resolver  # Help mypy a bit; this is implied by loader and dumper

@@ -3,7 +3,7 @@ package com.intellij.execution.junit.codeInsight;
 
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 
-public class JUnit5TestFrameworkSetupUtil {
+public final class JUnit5TestFrameworkSetupUtil {
   public static JavaCodeInsightTestFixture setupJUnit5Library(JavaCodeInsightTestFixture fixture) {
     fixture.addClass( "package org.junit.jupiter.params.provider;\n" +
                         "public @interface MethodSource {String[] value() default \"\";}");

@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.MathUtil;
@@ -41,6 +42,21 @@ public final class PersistentHashMapValueStorage {
   static final long SOFT_MAX_RETAINED_LIMIT = 10 * 1024 * 1024;
   static final int BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT = 1024;
 
+  /**
+   * Default options for {@link PersistentHashMap} and {@link PersistentHashMapValueStorage}.
+   * <br/>
+   * Why: Both PHMap and its components (like PHMValueStorage) are frequently initialized quite deeply
+   * inside some wrapping code. Also, it could be >1 instances of PHMap/ValueStorage to support single
+   * top-level structure, and params like READONLY should be the same for all them. But it is quite
+   * daunting to pass parameters like READONLY through all the ctors and intermediate methods down to
+   * the point of actual initialization (e.g. READONLY is used in {@linkplain #com.intellij.util.io.PagedFileStorage}
+   * even). CreationTimeOptions allows to set those arguments in thread-local instance, and get them
+   * there they are needed.
+   * <br/>
+   * Instances of the class are immutable, all mutation methods return new instances -- one could
+   * safely keep any instance of this class for later use.
+   */
+  //@Immutable
   public static final class CreationTimeOptions {
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<>();
     public static final ThreadLocal<Boolean> COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION = new ThreadLocal<>();
@@ -83,8 +99,7 @@ public final class PersistentHashMapValueStorage {
       return myUseCompression;
     }
 
-    @NotNull
-    CreationTimeOptions setReadOnly() {
+    public CreationTimeOptions setReadOnly() {
       return new CreationTimeOptions(
         myIOCancellationCallback,
         true,
@@ -94,14 +109,57 @@ public final class PersistentHashMapValueStorage {
       );
     }
 
+    public CreationTimeOptions readOnly(final boolean readOnly) {
+      return new CreationTimeOptions(
+        myIOCancellationCallback,
+        readOnly,
+        myCompactChunksWithValueDeserialization,
+        myHasNoChunks,
+        myUseCompression
+      );
+    }
+
+    public CreationTimeOptions setCompactChunksWithValueDeserialization(){
+      return new CreationTimeOptions(myIOCancellationCallback, myReadOnly,
+                                     true,
+                                     myHasNoChunks, myUseCompression);
+    }
+
+    public CreationTimeOptions setHasNoChunks(){
+      return new CreationTimeOptions(myIOCancellationCallback, myReadOnly,
+                                     myCompactChunksWithValueDeserialization,
+                                     true,
+                                     myUseCompression);
+    }
+
+    public <T, E extends Throwable> T with(final @NotNull ThrowableComputable<T, E> func) throws E {
+      final CreationTimeOptions previousOptions = setThreadLocalOptions(this);
+      try {
+        return func.compute();
+      }
+      finally {
+        setThreadLocalOptions(previousOptions);
+      }
+    }
+
     @NotNull
-    static CreationTimeOptions threadLocalOptions() {
+    public static CreationTimeOptions threadLocalOptions() {
       return new CreationTimeOptions(
         IOCancellationCallbackHolder.INSTANCE.getUsedIoCallback(),
         READONLY.get() == Boolean.TRUE,
         COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.get() == Boolean.TRUE,
         HAS_NO_CHUNKS.get() == Boolean.TRUE,
         DO_COMPRESSION.get() == Boolean.TRUE);
+    }
+
+    @NotNull
+    public static CreationTimeOptions setThreadLocalOptions(final CreationTimeOptions options){
+      final CreationTimeOptions currentOptions = threadLocalOptions();
+      READONLY.set(options.myReadOnly);
+      COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(options.myCompactChunksWithValueDeserialization);
+      HAS_NO_CHUNKS.set(options.myHasNoChunks);
+      DO_COMPRESSION.set(options.myUseCompression);
+      return currentOptions;
     }
   }
 

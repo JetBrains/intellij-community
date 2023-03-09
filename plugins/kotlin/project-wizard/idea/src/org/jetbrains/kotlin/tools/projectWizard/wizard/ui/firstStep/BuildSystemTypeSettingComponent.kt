@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.setting.ValidationIndi
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.Dimension
 import java.awt.Insets
+import java.util.function.Supplier
 import javax.swing.JComponent
 
 class BuildSystemTypeSettingComponent(
@@ -97,7 +98,7 @@ class BuildSystemTypeSettingComponent(
             look: ActionButtonLook?,
             place: String,
             presentation: Presentation,
-            minimumSize: Dimension
+            minimumSize: Supplier<out Dimension>
         ): ActionButton = BuildSystemChooseButton(action as BuildSystemTypeAction, presentation, place, minimumSize)
     }
 
@@ -105,7 +106,7 @@ class BuildSystemTypeSettingComponent(
         action: BuildSystemTypeAction,
         presentation: Presentation,
         place: String,
-        minimumSize: Dimension
+        minimumSize: Supplier<out Dimension>
     ) : ActionButtonWithText(action, presentation, place, minimumSize) {
         override fun getInsets(): Insets = super.getInsets().apply {
             right += left

@@ -29,9 +29,9 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
-import com.intellij.util.io.exists
+import com.intellij.ui.layout.chooseFile
+import com.intellij.ui.layout.listCellRenderer
+import com.intellij.ui.layout.selected
 import com.intellij.util.io.isDirectory
 import com.intellij.util.text.nullize
 import java.io.File
@@ -39,6 +39,7 @@ import java.nio.file.Paths
 import javax.swing.JCheckBox
 import javax.swing.JPanel
 import javax.swing.JRadioButton
+import kotlin.io.path.exists
 
 class PasswordSafeConfigurable : ConfigurableBase<PasswordSafeConfigurableUi, PasswordSafeSettings>("application.passwordSafe",
                                                                                                              CredentialStoreBundle.message("password.safe.configurable"),

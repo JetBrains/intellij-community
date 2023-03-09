@@ -79,6 +79,15 @@ class TargetedCommandLine internal constructor(private val exePath: TargetValue<
       ?: throw ExecutionException(ExecutionBundle.message("targeted.command.line.resolved.env.value.is.null", name))
     }
 
+  override fun toString(): String =
+    listOf(exePath).plus(parameters).joinToString(
+      separator = " ",
+      prefix = super.toString() + ": ",
+      transform = { promise ->
+        runCatching { promise.targetValue.blockingGet(0) }.getOrElse { if (it is TimeoutException) "..." else "<ERROR>" } ?: ""
+      }
+    )
+
   companion object {
     @Throws(ExecutionException::class)
     private fun Promise<String>.resolve(debugName: String): String? =

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.function.Consumer;
 
-public class MavenServerParallelRunner {
+public final class MavenServerParallelRunner {
   public static <T> void runInParallel(@NotNull Collection<T> collection, @NotNull Consumer<T> method) {
     collection.parallelStream().forEach(method);
   }

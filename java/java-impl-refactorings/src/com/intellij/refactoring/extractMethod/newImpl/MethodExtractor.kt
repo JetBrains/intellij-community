@@ -132,7 +132,9 @@ class MethodExtractor {
     val optionsWithStatic = ExtractMethodPipeline.withForcedStatic(analyzer, options)
     val makeStaticAndPassFields = optionsWithStatic?.inputParameters?.size != options.inputParameters.size
     val showStatic = !options.isStatic && optionsWithStatic != null
-    val defaultStatic = if (!makeStaticAndPassFields) JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD else false
+    val defaultStatic = with (JavaRefactoringSettings.getInstance()) {
+      if (makeStaticAndPassFields) EXTRACT_STATIC_METHOD_AND_PASS_FIELDS else EXTRACT_STATIC_METHOD
+    }
     val hasAnnotation = options.dataOutput.nullability != Nullability.UNKNOWN && options.dataOutput.type !is PsiPrimitiveType
     val annotationAvailable = ExtractMethodHelper.isNullabilityAvailable(options)
     return ExtractMethodPopupProvider(

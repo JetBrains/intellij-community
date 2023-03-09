@@ -15,7 +15,10 @@ import java.awt.event.*;
 
 /**
  * @author evgeny zakrevsky
+ *
+ * @deprecated Use Kotlin UI DSL 2, see Panel#collapsibleGroup
  */
+@Deprecated
 public class HideableDecorator {
   private static final String ACTION_KEY = "Collapse/Expand on mnemonic";
 
@@ -44,6 +47,7 @@ public class HideableDecorator {
         registerMnemonic();
       }
     };
+    UIUtil.applyDeprecatedBackground(myTitledSeparator);
 
     JPanel northPanel = new JPanel(new BorderLayout());
     northPanel.add(myTitledSeparator, BorderLayout.CENTER);

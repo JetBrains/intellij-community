@@ -2,8 +2,6 @@
 package org.intellij.plugins.markdown.editor.tables
 
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.RegistryKeyRule
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -11,9 +9,6 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 @Suppress("MarkdownIncorrectTableFormatting")
 class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
-  @get:Rule
-  val rule = RegistryKeyRule("markdown.tables.editing.support.enable", true)
-
   @Test
   fun `test right after cell content`() {
     // language=Markdown
@@ -132,12 +127,10 @@ class MarkdownTableColumnShrinkTest: LightPlatformCodeInsightTestCase() {
   }
 
   private fun doTest(content: String, expected: String, count: Int = 1) {
-    TableTestUtils.runWithChangedSettings(project) {
-      configureFromFileText("some.md", content)
-      repeat(count) {
-        backspace()
-      }
-      checkResultByText(expected)
+    configureFromFileText("some.md", content)
+    repeat(count) {
+      backspace()
     }
+    checkResultByText(expected)
   }
 }

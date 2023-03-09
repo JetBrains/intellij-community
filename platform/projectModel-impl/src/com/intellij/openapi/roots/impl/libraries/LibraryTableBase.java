@@ -381,10 +381,9 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     @Override
     public void writeExternal(Element element) {
-      final List<Library> libraries = ContainerUtil.findAll(myLibraries, library -> !((LibraryEx)library).isDisposed());
-
+      final List<Library> libraries = ContainerUtil.sorted(ContainerUtil.findAll(myLibraries, library -> !((LibraryEx)library).isDisposed()),
       // todo: do not sort if project is directory-based
-      ContainerUtil.sort(libraries, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
+      (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
 
       for (final Library library : libraries) {
         if (library.getName() != null) {

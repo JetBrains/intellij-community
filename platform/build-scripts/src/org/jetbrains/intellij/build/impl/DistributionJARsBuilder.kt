@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "BlockingMethodInNonBlockingContext", "ReplaceNegatedIsEmptyWithIsNotEmpty", "PrivatePropertyName")
 
 package org.jetbrains.intellij.build.impl
@@ -25,7 +25,6 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
-import org.jetbrains.intellij.build.impl.SVGPreBuilder.createPrebuildSvgIconsJob
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.intellij.build.tasks.ZipSource
@@ -567,7 +566,7 @@ fun getPluginLayoutsByJpsModuleNames(modules: Collection<String>, productLayout:
   for (moduleName in modules) {
     val customLayouts = pluginLayoutsByMainModule.get(moduleName)
     if (customLayouts == null) {
-      check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.simplePlugin(moduleName))) {
+      check(moduleName == "kotlin-ultimate.kmm-plugin" || result.add(PluginLayout.plugin(moduleName))) {
         "Plugin layout for module $moduleName is already added (duplicated module name?)"
       }
     }
@@ -858,13 +857,9 @@ fun satisfiesBundlingRequirements(plugin: PluginLayout,
     return false
   }
 
-  if (bundlingRestrictions == PluginBundlingRestrictions.EPHEMERAL) {
+  if (bundlingRestrictions === PluginBundlingRestrictions.EPHEMERAL) {
     if (!withEphemeral) return false
     else return osFamily == null && arch == null
-  }
-
-  if (bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE) {
-    return false
   }
 
   return when {

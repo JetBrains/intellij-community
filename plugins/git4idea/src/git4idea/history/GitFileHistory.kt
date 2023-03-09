@@ -57,7 +57,7 @@ class GitFileHistory private constructor(private val project: Project,
 
   @Throws(VcsException::class)
   private fun load(consumer: Consumer<in GitFileRevision>, vararg parameters: String) {
-    val logParser = createLogParser()
+    val logParser = createLogParser(project)
     var startRevision: String? = startingRevision.asString()
     var startPath = path
     while (startRevision != null) {
@@ -82,7 +82,7 @@ class GitFileHistory private constructor(private val project: Project,
       if (record.statusInfos.firstOrNull()?.type == Change.Type.NEW && !path.isDirectory) {
         skipFurtherOutput = true
       }
-      val revision = createGitFileRevision(record, startPath)
+      val revision = createGitFileRevision(project, root, record, startPath)
       lastCommit = record.hash
       consumer.consume(revision)
     }
@@ -122,23 +122,6 @@ class GitFileHistory private constructor(private val project: Project,
     return null
   }
 
-  private fun createGitFileRevision(record: GitLogFullRecord, lastPath: FilePath): GitFileRevision {
-    val revision = GitRevisionNumber(record.hash, record.date)
-    val authorPair = Couple.of(record.authorName, record.authorEmail)
-    val committerPair = Couple.of(record.committerName, record.committerEmail)
-    val parents = listOf(*record.parentsHashes)
-    val revisionPath = record.filePath() ?: lastPath
-    val deleted = record.statusInfos.firstOrNull()?.type == Change.Type.DELETED
-    return GitFileRevision(project, root, revisionPath, revision, Couple.of(authorPair, committerPair),
-                           record.fullMessage,
-                           null, Date(record.authorTimeStamp), parents, deleted)
-  }
-
-  private fun GitLogFullRecord.filePath(): FilePath? {
-    val statusInfo = statusInfos.firstOrNull() ?: return null
-    return VcsUtil.getFilePath(root.path + "/" + (statusInfo.secondPath ?: statusInfo.firstPath), false)
-  }
-
   private fun createLogHandler(parser: GitLogParser<GitLogFullRecord>,
                                path: FilePath,
                                lastCommit: @NonNls String,
@@ -157,15 +140,32 @@ class GitFileHistory private constructor(private val project: Project,
     return h
   }
 
-  private fun createLogParser(): GitLogParser<GitLogFullRecord> {
-    return GitLogParser.createDefaultParser(project, GitLogParser.NameStatus.STATUS, GitLogOption.HASH, GitLogOption.COMMIT_TIME,
-                                            GitLogOption.AUTHOR_NAME, GitLogOption.AUTHOR_EMAIL, GitLogOption.COMMITTER_NAME,
-                                            GitLogOption.COMMITTER_EMAIL, GitLogOption.PARENTS,
-                                            GitLogOption.SUBJECT, GitLogOption.BODY, GitLogOption.RAW_BODY,
-                                            GitLogOption.AUTHOR_TIME)
-  }
-
   companion object {
+    private fun GitLogFullRecord.filePath(root: VirtualFile): FilePath? {
+      val statusInfo = statusInfos.firstOrNull() ?: return null
+      return VcsUtil.getFilePath(root.path + "/" + (statusInfo.secondPath ?: statusInfo.firstPath), false)
+    }
+
+    internal fun createGitFileRevision(project: Project, root: VirtualFile, record: GitLogFullRecord, filePath: FilePath): GitFileRevision {
+      val revision = GitRevisionNumber(record.hash, record.date)
+      val authorPair = Couple.of(record.authorName, record.authorEmail)
+      val committerPair = Couple.of(record.committerName, record.committerEmail)
+      val parents = listOf(*record.parentsHashes)
+      val revisionPath = record.filePath(root) ?: filePath
+      val deleted = record.statusInfos.firstOrNull()?.type == Change.Type.DELETED
+      return GitFileRevision(project, root, revisionPath, revision, Couple.of(authorPair, committerPair),
+                             record.fullMessage,
+                             null, Date(record.authorTimeStamp), parents, deleted)
+    }
+
+    internal fun createLogParser(project: Project): GitLogParser<GitLogFullRecord> {
+      return GitLogParser.createDefaultParser(project, GitLogParser.NameStatus.STATUS, GitLogOption.HASH, GitLogOption.COMMIT_TIME,
+                                              GitLogOption.AUTHOR_NAME, GitLogOption.AUTHOR_EMAIL, GitLogOption.COMMITTER_NAME,
+                                              GitLogOption.COMMITTER_EMAIL, GitLogOption.PARENTS,
+                                              GitLogOption.SUBJECT, GitLogOption.BODY, GitLogOption.RAW_BODY,
+                                              GitLogOption.AUTHOR_TIME)
+    }
+
     private fun loadHistory(project: Project,
                             path: FilePath,
                             startingFrom: VcsRevisionNumber?,

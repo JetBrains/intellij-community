@@ -1,8 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.IntObjectLRUMap;
 import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +13,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 
 public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements Closeable {
@@ -45,6 +48,9 @@ public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements
   private volatile int myNextVersion;
   private volatile int myWrittenNextVersion;
 
+  // only initialized on first request to valueOf()
+  private volatile IntObjectLRUMap<Ref<SubIndexerVersion>> myValueOfCache = null;
+
   public PersistentSubIndexerVersionEnumerator(@NotNull File file,
                                                @NotNull KeyDescriptor<SubIndexerVersion> subIndexerTypeDescriptor) throws IOException {
     myFile = file;
@@ -64,13 +70,36 @@ public class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements
    * should not be used in production code, only testing purposes
    */
   public SubIndexerVersion valueOf(int idx) throws IOException {
-    for (SubIndexerVersion version : myMap.getAllKeysWithExistingMapping()) {
-      Integer versionIdx = myMap.get(version);
-      if (Comparing.equal(idx, versionIdx)) {
-        return version;
+    if (myValueOfCache == null) {
+      synchronized (this) {
+        if (myValueOfCache == null) {
+          myValueOfCache = new IntObjectLRUMap<>(256);
+        }
       }
     }
-    return null;
+    synchronized (this) {
+      var cached = myValueOfCache.getEntry(idx);
+      if (cached != null) return cached.value.get();
+    }
+    Ref<SubIndexerVersion> ref = new Ref<>();
+    myMap.processKeysWithExistingMapping(version -> {
+      Integer versionIdx;
+      try {
+        versionIdx = myMap.get(version);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      if (Comparing.equal(idx, versionIdx)) {
+        ref.set(version);
+        return false;
+      }
+      return true;
+    });
+    synchronized (this) {
+      myValueOfCache.putEntry(new IntObjectLRUMap.MapEntry<>(idx, ref));
+    }
+    return ref.get();
   }
 
   private void init() throws IOException {

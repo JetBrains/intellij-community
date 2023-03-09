@@ -20,12 +20,15 @@ import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.GridLayout
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
@@ -37,8 +40,12 @@ import javax.swing.JPanel
 
 private const val PLACE = "SegmentedButton"
 
+internal val NO_TOOLTIP_RENDERER: (Any?) -> @Nls String? = { null }
+
 @ApiStatus.Internal
-internal class SegmentedButtonComponent<T>(items: Collection<T>, private val renderer: (T) -> String) : JPanel(GridLayout()) {
+internal class SegmentedButtonComponent<T>(items: Collection<T>,
+                                           private val renderer: (T) -> @Nls String,
+                                           private val tooltipRenderer: (T) -> @Nls String? = NO_TOOLTIP_RENDERER) : JPanel(GridLayout()) {
 
   var spacing: SpacingConfiguration = EmptySpacingConfiguration()
     set(value) {
@@ -71,6 +78,7 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
     isFocusable = true
     border = SegmentedButtonBorder()
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(size = DarculaUIUtil.BW.get()))
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap(true, true))
 
     this.items = items
     addFocusListener(object : FocusListener {
@@ -133,7 +141,9 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
     for (item in items) {
       val action = SegmentedButtonAction(this, item, renderer.invoke(item))
       val button = SegmentedButton(action, presentationFactory.getPresentation(action), spacing)
-      builder.cell(button)
+      button.toolTipText = tooltipRenderer.invoke(item)
+
+      builder.cell(button, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
     }
 
     for (listener in listenerList.getListeners(ModelListener::class.java)) {
@@ -276,6 +286,10 @@ private class SegmentedButton<T>(
 
   init {
     setLook(SegmentedButtonLook)
+  }
+
+  override fun setToolTipText(toolTipText: String?) {
+    setCustomToolTipText(toolTipText)
   }
 
   override fun getPreferredSize(): Dimension {

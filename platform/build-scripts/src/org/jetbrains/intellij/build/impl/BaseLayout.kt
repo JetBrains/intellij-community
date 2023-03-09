@@ -15,12 +15,7 @@ open class BaseLayout {
   }
 
   // one module can be packed into several JARs, that's why we have map "jar to modules" and not "module to jar"
-  @Suppress("PropertyName")
-  @JvmField
-  protected val _jarToModules = TreeMap<String, MutableList<String>>()
-  // only as guard for checkAndAssociateModuleNameWithJarPath - do not use it, because strictly speaking for one module maybe several JARs
-  @JvmField
-  protected val moduleNameToJarPath = HashMap<String, String>()
+  private val _jarToModules = TreeMap<String, MutableList<String>>()
 
   /** JAR name (or path relative to 'lib' directory) to names of modules */
   val jarToModules: Map<String, List<String>>
@@ -47,15 +42,17 @@ open class BaseLayout {
   val projectLibrariesToUnpack: MultiMap<String, String> = MultiMap.createLinked()
   val modulesWithExcludedModuleLibraries: MutableList<String> = mutableListOf()
 
-  val includedModuleNames: Sequence<String>
-    get() = _jarToModules.values.asSequence().flatten().distinct()
+  // only as guard for checkAndAssociateModuleNameWithJarPath - do not use it, because strictly speaking for one module maybe several JARs
+  private val _includedModuleNamesToJarPath = mutableMapOf<String, String>()
+  val includedModuleNames: Set<String>
+    get() = Collections.unmodifiableSet(_includedModuleNamesToJarPath.keys)
 
   fun withModule(moduleName: String, relativeJarPath: String) {
-    checkAndAssociateModuleNameWithJarPath(moduleName, relativeJarPath)
-  }
+    require(!moduleName.isEmpty()) {
+      "Module name must be not empty"
+    }
 
-  private fun checkAndAssociateModuleNameWithJarPath(moduleName: String, relativeJarPath: String) {
-    val previousJarPath = moduleNameToJarPath.putIfAbsent(moduleName, relativeJarPath)
+    val previousJarPath = _includedModuleNamesToJarPath.put(moduleName, relativeJarPath)
     if (previousJarPath != null && moduleName != "intellij.maven.artifactResolver.common") {
       if (previousJarPath == relativeJarPath) {
         // already added
@@ -65,7 +62,7 @@ open class BaseLayout {
       // allow to put module to several JARs if JAR located in another dir
       // (e.g. intellij.spring.customNs packed into main JAR and customNs/customNs.jar)
       check(previousJarPath.contains('/') || relativeJarPath.contains('/')) {
-        "$moduleName cannot be packed into $relativeJarPath because it is already configured to be packed into $previousJarPath"
+        "Module '$moduleName' cannot be packed into $relativeJarPath because it is already configured to be packed into $previousJarPath"
       }
     }
 
@@ -73,11 +70,7 @@ open class BaseLayout {
   }
 
   open fun withModule(moduleName: String) {
-    checkAndAssociateModuleNameWithJarPath(moduleName, "${convertModuleNameToFileName(moduleName)}.jar")
-  }
-
-  protected fun withModuleImpl(moduleName: String, jarPath: String) {
-    checkAndAssociateModuleNameWithJarPath(moduleName, jarPath)
+    withModule(moduleName, "${convertModuleNameToFileName(moduleName)}.jar")
   }
 
   fun withProjectLibraryUnpackedIntoJar(libraryName: String, jarName: String) {

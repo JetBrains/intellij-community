@@ -10,11 +10,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 internal class PlaceholderImpl(parent: RowImpl) : PlaceholderBaseImpl<Placeholder>(parent), Placeholder {
 
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Placeholder {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): Placeholder {
     super.verticalAlign(verticalAlign)
     return this

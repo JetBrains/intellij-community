@@ -220,7 +220,7 @@ public final class XFramesView extends XDebugView {
     }
   }
 
-  public void onFrameSelectionKeyPressed(@NotNull Consumer<XStackFrame> handler) {
+  public void onFrameSelectionKeyPressed(@NotNull Consumer<? super XStackFrame> handler) {
     myFramesList.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {

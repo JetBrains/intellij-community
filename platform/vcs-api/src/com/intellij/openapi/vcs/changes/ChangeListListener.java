@@ -29,9 +29,9 @@ public interface ChangeListListener extends EventListener {
     defaultListChanged(oldDefaultList, newDefaultList);
   }
 
-  default void changesAdded(Collection<Change> changes, ChangeList toList) {}
-  default void changesRemoved(Collection<Change> changes, ChangeList fromList) {}
-  default void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {}
+  default void changesAdded(Collection<? extends Change> changes, ChangeList toList) {}
+  default void changesRemoved(Collection<? extends Change> changes, ChangeList fromList) {}
+  default void changesMoved(Collection<? extends Change> changes, ChangeList fromList, ChangeList toList) {}
   default void allChangeListsMappingsChanged() {}
 
 

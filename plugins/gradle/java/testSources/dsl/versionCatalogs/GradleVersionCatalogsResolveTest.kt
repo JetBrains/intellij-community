@@ -123,7 +123,7 @@ class GradleVersionCatalogsResolveTest : GradleCodeInsightTestCase() {
         withSettingsFile {
           setProjectName("GradleVersionCatalogs-completion")
           enableFeaturePreview("VERSION_CATALOGS")
-          raw("""
+          addCode("""
             dependencyResolutionManagement {
                 versionCatalogs {
                     libs2 {

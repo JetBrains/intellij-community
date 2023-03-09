@@ -527,7 +527,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vfile);
     assertTrue(String.valueOf(psiFile), psiFile instanceof PsiPlainTextFile);
     SmartPointerManagerImpl manager = getPointerManager();
-    TextRange range1 = TextRange.from(text.indexOf(xxx), xxx.length());
+    TextRange range1 = TextRange.from(0, xxx.length());
     SmartPsiFileRange pointer1 = manager.createSmartPsiFileRangePointer(psiFile, range1);
     TextRange range2 = TextRange.from(text.lastIndexOf(xxx), xxx.length());
     SmartPsiFileRange pointer2 = manager.createSmartPsiFileRangePointer(psiFile, range2);

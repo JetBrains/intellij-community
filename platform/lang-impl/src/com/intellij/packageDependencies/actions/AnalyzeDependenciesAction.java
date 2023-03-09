@@ -26,7 +26,7 @@ public class AnalyzeDependenciesAction extends BaseAnalysisAction {
 
   @Override
   @Nullable
-  protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
+  protected JComponent getAdditionalActionSettings(final @NotNull Project project, final BaseAnalysisActionDialog dialog) {
     myPanel = new AnalyzeDependenciesAdditionalUi();
     return myPanel.getPanel();
   }

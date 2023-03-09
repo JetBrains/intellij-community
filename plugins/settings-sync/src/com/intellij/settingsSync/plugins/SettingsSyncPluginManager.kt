@@ -1,6 +1,5 @@
 package com.intellij.settingsSync.plugins
 
-import com.intellij.ide.plugins.DisabledPluginsState
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginStateListener
 import com.intellij.ide.plugins.PluginStateManager
@@ -174,8 +173,6 @@ internal class SettingsSyncPluginManager : Disposable {
     LOG.info("Installing plugins: $pluginsToInstall")
     pluginManagerProxy.createInstaller().installPlugins(pluginsToInstall)
   }
-
-  private fun isPluginEnabled(pluginId: PluginId) = !DisabledPluginsState.getDisabledIds().contains(pluginId)
 
   private fun findPlugin(idString: String): IdeaPluginDescriptor? {
     return PluginId.findId(idString)?.let { PluginManagerProxy.getInstance().findPlugin(it) }

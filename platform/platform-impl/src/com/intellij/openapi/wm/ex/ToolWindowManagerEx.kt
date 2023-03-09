@@ -8,7 +8,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.DesktopLayout
-import com.intellij.ui.AppUIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -16,13 +15,6 @@ abstract class ToolWindowManagerEx : ToolWindowManager() {
   companion object {
     @JvmStatic
     fun getInstanceEx(project: Project): ToolWindowManagerEx = getInstance(project) as ToolWindowManagerEx
-
-    fun hideToolWindowBalloon(id: String, project: Project) {
-      AppUIUtil.invokeLaterIfProjectAlive(project) {
-        val balloon = getInstance(project).getToolWindowBalloon(id)
-        balloon?.hide()
-      }
-    }
   }
 
   @get:Internal

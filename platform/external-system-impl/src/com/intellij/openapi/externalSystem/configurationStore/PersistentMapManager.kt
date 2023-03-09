@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.DataWriter
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.*
 import org.jdom.Element
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 private val LOG = logger<FileSystemExternalSystemStorage>()
 

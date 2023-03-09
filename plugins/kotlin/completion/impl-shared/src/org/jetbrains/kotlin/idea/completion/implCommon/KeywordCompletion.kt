@@ -533,8 +533,7 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
                 keywordTokenType !is KtModifierKeywordToken -> return true
 
                 else -> {
-                    if (elementAt.parent !is KtModifierList) return true
-                    val container = elementAt.parent.parent
+                    val container = (elementAt.parent as? KtModifierList)?.parent ?: return true
                     val possibleTargets = when (container) {
                         is KtParameter -> {
                             if (container.ownerFunction is KtPrimaryConstructor)

@@ -5,3 +5,5 @@ interface Foos {
         operator fun invoke() = 1
     }
 }
+
+// FIR_COMPARISON

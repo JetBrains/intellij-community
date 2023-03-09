@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.impl.BundledKeymapBean;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -33,7 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-final class PluginModuleConvertToGradleStartupActivity implements StartupActivity.Background {
+final class PluginModuleConvertToGradleStartupActivity implements StartupActivity, DumbAware {
   @NonNls
   private static final String ID = "Migrate DevKit plugin to Gradle";
 

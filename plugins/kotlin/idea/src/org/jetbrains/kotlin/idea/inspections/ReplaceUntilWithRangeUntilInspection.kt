@@ -47,7 +47,7 @@ class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection() {
             val element = descriptor.psiElement as? KtExpression ?: return
             val (left, right) = element.getArguments() ?: return
             if (left == null || right == null) return
-            element.replace(KtPsiFactory(element).createExpressionByPattern("$0..<$1", left, right))
+            element.replace(KtPsiFactory(project).createExpressionByPattern("$0..<$1", left, right))
         }
     }
 

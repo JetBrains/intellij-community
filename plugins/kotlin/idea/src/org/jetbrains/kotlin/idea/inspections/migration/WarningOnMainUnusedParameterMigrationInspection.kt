@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections.migration
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactoryWithPsiElement
@@ -28,8 +29,8 @@ class WarningOnMainUnusedParameterMigrationInspection :
         return migrationInfo.isLanguageVersionUpdate(LanguageVersion.KOTLIN_1_3, LanguageVersion.KOTLIN_1_4)
     }
 
-    override val diagnosticFactory: DiagnosticFactoryWithPsiElement<KtParameter, *>
-        get() = Errors.UNUSED_PARAMETER
+    override fun getDiagnosticFactory(languageVersionSettings: LanguageVersionSettings): DiagnosticFactoryWithPsiElement<KtParameter, *> =
+        Errors.UNUSED_PARAMETER
 
     override fun customIntentionFactory(): (Diagnostic) -> IntentionAction? = fun(diagnostic: Diagnostic): IntentionAction? {
         val parameter = diagnostic.psiElement as? KtParameter ?: return null

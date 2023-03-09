@@ -1,71 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.*;
-import java.util.stream.Collectors;
-
 public class DumpTestEnvironmentTest {
-  @Test
-  public void dumpEnvironment() throws Exception {
-    Properties properties = System.getProperties();
-    StreamEx.ofKeys(properties).map(String.class::cast).sorted()
-      .map(propertyName -> "PROPERTY " + propertyName + " = " + (isSecretParameter(propertyName) ? "[REDACTED]" : properties.getProperty(propertyName)))
-      .forEach(System.out::println);
-
-    StreamEx.ofKeys(System.getenv()).sorted()
-      .map(key -> "ENV " + key + " = " + (isSecretParameter(key) ? "[REDACTED]" : System.getenv(key)))
-      .forEach(System.out::println);
-
-    System.out.println("*** Classloaders NOT SORTED CLASSPATH ***");
-    dumpClassloader(getClass().getClassLoader(), false, 0);
-    System.out.println("*** END NOT SORTED CLASSPATH ***");
-
-    System.out.println();
-
-    System.out.println("*** Classloaders SORTED CLASSPATH ***");
-    dumpClassloader(getClass().getClassLoader(), true, 0);
-    System.out.println("*** END SORTED CLASSPATH ***");
-  }
-
-  private static void dumpClassloader(ClassLoader loader, boolean sorted, int indent) throws Exception {
-    System.out.print(StringUtil.repeatSymbol(' ', indent));
-    System.out.print("CLASSLOADER ");
-    System.out.println(loader.getClass().getName());
-
-    Method getUrlsMethod = ReflectionUtil.getMethod(loader.getClass(), "getUrls");
-
-    List<String> urls = new ArrayList<>();
-    if (loader instanceof URLClassLoader) {
-      urls.addAll(ContainerUtil.map(((URLClassLoader)loader).getURLs(), url -> url.toString()));
-    } else if (getUrlsMethod != null) {
-      //noinspection unchecked
-      urls.addAll(ContainerUtil.map(((Collection<URL>)getUrlsMethod.invoke(loader)), url -> url.toString()));
-    }
-
-    if (sorted) {
-      Collections.sort(urls);
-    }
-
-    for (String url : urls) {
-      System.out.print(StringUtil.repeatSymbol(' ', indent));
-      System.out.println(" - " + url);
-    }
-
-    if (loader.getParent() != null) {
-      dumpClassloader(loader.getParent(), sorted, indent + 1);
-    }
-  }
-
   @Test
   public void testSecretParameters() {
     Assert.assertTrue(isSecretParameter("bla-token"));

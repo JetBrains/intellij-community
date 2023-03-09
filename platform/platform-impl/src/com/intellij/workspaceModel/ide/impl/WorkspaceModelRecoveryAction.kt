@@ -12,11 +12,13 @@ import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 
+@ApiStatus.Internal
 class WorkspaceModelRecoveryAction : RecoveryAction {
   override val performanceRate: Int
     get() = 4000

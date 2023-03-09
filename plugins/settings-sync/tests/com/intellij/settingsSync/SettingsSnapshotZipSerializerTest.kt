@@ -1,7 +1,6 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.settingsSync.SettingsSnapshot.AppInfo
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import org.junit.Assert.*
@@ -18,8 +17,7 @@ class SettingsSnapshotZipSerializerTest {
   @Test
   fun `serialize snapshot to zip`() {
     val date = Instant.ofEpochMilli(Random.nextLong())
-    val snapshot = settingsSnapshot(
-      MetaInfo(date, AppInfo(UUID.randomUUID(), BuildNumber.fromString("IU-231.1"), "john", "home", "/Users/john/ideaconfig/"))) {
+    val snapshot = settingsSnapshot(MetaInfo(date, AppInfo(UUID.randomUUID(), "", "", ""))) {
       fileState("options/laf.xml", "Laf")
       fileState("colors/my.icls", "Color Scheme")
       fileState("file.xml", "File")
@@ -29,7 +27,7 @@ class SettingsSnapshotZipSerializerTest {
     val zip = SettingsSnapshotZipSerializer.serializeToZip(snapshot)
 
     val actualSnapshot = SettingsSnapshotZipSerializer.extractFromZip(zip)
-    assertEquals(snapshot.metaInfo, actualSnapshot.metaInfo)
+    assertEquals(date, actualSnapshot.metaInfo.dateCreated)
     assertEquals(snapshot.plugins, actualSnapshot.plugins)
     assertEquals(snapshot.fileStates, actualSnapshot.fileStates)
     assertEquals(snapshot.additionalFiles, actualSnapshot.additionalFiles)

@@ -1,4 +1,4 @@
-// "Add label to loop" "true"
+// "Add label to the loop" "true"
 // LANGUAGE_VERSION: 1.3
 
 fun breakContinueInWhen(i: Int) {

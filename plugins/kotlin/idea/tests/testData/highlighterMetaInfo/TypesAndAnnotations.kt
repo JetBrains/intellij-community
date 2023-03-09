@@ -1,8 +1,8 @@
 // FIR_IDENTICAL
-interface TheTrait {
+interface TheInterface {
 }
 
-class TheClass : TheTrait {
+class TheClass : TheInterface {
 }
 
 annotation class magnificent

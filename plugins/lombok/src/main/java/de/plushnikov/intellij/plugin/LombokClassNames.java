@@ -29,6 +29,7 @@ public interface LombokClassNames {
   @NonNls String FIELD_NAME_CONSTANTS_INCLUDE = "lombok.experimental.FieldNameConstants.Include";
   @NonNls String FLOGGER = "lombok.extern.flogger.Flogger";
   @NonNls String GETTER = "lombok.Getter";
+  @NonNls String JACKSONIZED = "lombok.extern.jackson.Jacksonized";
   @NonNls String JAVA_LOG = "lombok.extern.java.Log";
   @NonNls String JBOSS_LOG = "lombok.extern.jbosslog.JBossLog";
   @NonNls String LOG_4_J = "lombok.extern.log4j.Log4j";

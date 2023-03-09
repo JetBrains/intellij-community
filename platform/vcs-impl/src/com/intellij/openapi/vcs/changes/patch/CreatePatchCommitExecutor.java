@@ -103,7 +103,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     }
 
     @Override
-    public JComponent getAdditionalConfigurationUI(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
+    public JComponent getAdditionalConfigurationUI(@NotNull Collection<? extends Change> changes, @Nullable String commitMessage) {
       String patchPath = StringUtil.nullize(PropertiesComponent.getInstance(myProject).getValue(VCS_PATCH_PATH_KEY));
       if (patchPath == null) {
         patchPath = VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION;
@@ -125,12 +125,12 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     }
 
     @Override
-    public boolean canExecute(Collection<Change> changes, String commitMessage) {
+    public boolean canExecute(Collection<? extends Change> changes, String commitMessage) {
       return myPanel.isOkToExecute();
     }
 
     @Override
-    public void execute(@NotNull Collection<Change> changes, @Nullable String commitMessage) {
+    public void execute(@NotNull Collection<? extends Change> changes, @Nullable String commitMessage) {
       PropertiesComponent.getInstance(myProject).setValue(VCS_PATCH_TO_CLIPBOARD, myPanel.isToClipboard());
       try {
         Path baseDir = Paths.get(myPanel.getBaseDirName());

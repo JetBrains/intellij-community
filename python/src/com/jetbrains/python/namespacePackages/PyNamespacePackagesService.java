@@ -155,7 +155,7 @@ public class PyNamespacePackagesService implements PersistentStateComponent<PyNa
   }
 
   private void refreshView() {
-    if (!ApplicationManager.getApplication().isWriteThread()) return;
+    if (!ApplicationManager.getApplication().isWriteIntentLockAcquired()) return;
     if (myModule == null) return;
     Project project = myModule.getProject();
     ProjectView.getInstance(project).refresh();

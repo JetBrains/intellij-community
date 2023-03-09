@@ -4,13 +4,12 @@ package org.jetbrains.kotlin.idea.macros
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.ProjectPostStartupActivity
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -23,14 +22,14 @@ import kotlin.io.path.listDirectoryEntries
  * Component forces update for built-in libraries in plugin directory. They are ignored because of
  * com.intellij.util.indexing.FileBasedIndex.isUnderConfigOrSystem()
  */
-internal class KotlinBundledRefresher : StartupActivity.DumbAware {
+internal class KotlinBundledRefresher : ProjectPostStartupActivity {
     init {
         if (isUnitTestMode()) {
             throw ExtensionNotApplicableException.create()
         }
     }
 
-    override fun runActivity(project: Project) {
+    override suspend fun execute(project: Project) {
         val propertiesComponent = PropertiesComponent.getInstance()
         val installedKotlinVersion = propertiesComponent.getValue(INSTALLED_KOTLIN_VERSION)
 

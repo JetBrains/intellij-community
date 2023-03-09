@@ -19,7 +19,7 @@ public class MockThreadReference extends MockObjectReference implements ThreadRe
   }
 
   public Thread getThread() {
-    return (Thread) getValue();
+    return (Thread)getValue();
   }
 
   @Override
@@ -84,7 +84,7 @@ public class MockThreadReference extends MockObjectReference implements ThreadRe
   }
 
   @Override
-  public List<StackFrame> frames(int i,int i1) {
+  public List<StackFrame> frames(int i, int i1) {
     throw new UnsupportedOperationException("Not implemented: \"frames\" in " + getClass().getName());
   }
 

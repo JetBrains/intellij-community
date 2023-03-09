@@ -129,7 +129,7 @@ class SimplifiableCallInspection : AbstractKotlinInspection() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val callExpression = descriptor.psiElement.parent as? KtCallExpression ?: return
-            callExpression.replace(KtPsiFactory(callExpression).createExpression(replacement))
+            callExpression.replace(KtPsiFactory(project).createExpression(replacement))
         }
     }
 }

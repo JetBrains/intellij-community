@@ -31,6 +31,7 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.flavors.conda.fixCondaPathEnvIfNeeded
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAddedByUser
 import java.nio.file.Path
@@ -58,9 +59,8 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   for (parameter in parameters) {
     commandLineBuilder.addParameter(parameter.apply(targetEnvironment))
   }
-  sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.forEach { path ->
-    appendToPythonPath(constant(path), targetEnvironment.targetPlatform)
-  }
+  val userPathList = sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
+  initPythonPath(envs, true, userPathList, targetEnvironment.request, false)
   for ((name, value) in envs) {
     commandLineBuilder.addEnvironmentVariable(name, value.apply(targetEnvironment))
   }
@@ -74,6 +74,11 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   if (isUsePty) {
     commandLineBuilder.ptyOptions = LocalTargetPtyOptions(LocalPtyOptions.DEFAULT)
   }
+
+  // This fix shouldn't be here, since flavor patches envs (see configureBuilderToRunPythonOnTarget), but envs
+  // then overwritten by patchEnvironmentVariablesForVirtualenv and envs
+  // Fix must be removed after path merging implementation
+  commandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
   return commandLineBuilder.build()
 }
 
@@ -166,6 +171,7 @@ fun appendToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String
 fun appendToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                        paths: Collection<TargetEnvironmentFunction<String>>,
                        targetPlatform: TargetPlatform) {
+  if (paths.isEmpty()) return
   val value = paths.joinToPathValue(targetPlatform)
   envs.merge(PYTHONPATH_ENV, value) { whole, suffix ->
     listOf(whole, suffix).joinToPathValue(targetPlatform)

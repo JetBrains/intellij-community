@@ -10,4 +10,3 @@ fun main() {
 // ADDITIONAL_BREAKPOINT: ReadWrite.kt / public fun Reader.copyTo( / fun
 // STEP_OVER: 2
 // STEP_INTO: 1
-// IGNORE_K2

@@ -176,14 +176,12 @@ public class GrChangeInfoImpl implements JavaChangeInfo {
     PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
     defaultValues = new PsiExpression[parameters.size()];
     for (int i = 0; i < parameters.size(); i++) {
-      JavaParameterInfo info = parameters.get(i);
+      GrParameterInfo info = parameters.get(i);
       if (info.getOldIndex() < 0 && !info.isVarargType()) {
-        if (info.getDefaultValue() == null) continue;
         try {
           defaultValues[i] = factory.createExpressionFromText(info.getDefaultValue(), method);
         }
-        catch (IncorrectOperationException e) {
-//          LOG.error(e);
+        catch (IncorrectOperationException ignored) {
         }
       }
     }

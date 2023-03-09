@@ -47,7 +47,7 @@ public class CopyRevisionNumberAction extends DumbAwareAction {
   }
 
   @NotNull
-  private static String getHashesAsString(@NotNull List<VcsRevisionNumber> revisions) {
+  private static String getHashesAsString(@NotNull List<? extends VcsRevisionNumber> revisions) {
     return StringUtil.join(revisions, VcsRevisionNumber::asString, " ");
   }
 

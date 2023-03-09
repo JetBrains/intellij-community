@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.idea.base.searching.usages.KotlinElementDescriptionProviderBase
 import org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler
 import org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinPropertyProcessor
 

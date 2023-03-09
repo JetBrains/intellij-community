@@ -3,9 +3,9 @@ package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.intellij.collaboration.api.dto.GraphQLFragment
+import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.diff.util.Side
 import org.jetbrains.plugins.github.api.data.GHNode
-import org.jetbrains.plugins.github.api.data.GHNodes
 
 @GraphQLFragment("/graphql/fragment/pullRequestReviewThread.graphql")
 class GHPullRequestReviewThread(id: String,
@@ -15,7 +15,7 @@ class GHPullRequestReviewThread(id: String,
                                 @JsonProperty("diffSide") val side: Side,
                                 val line: Int,
                                 val startLine: Int?,
-                                @JsonProperty("comments") comments: GHNodes<GHPullRequestReviewComment>)
+                                @JsonProperty("comments") comments: GraphQLNodesDTO<GHPullRequestReviewComment>)
   : GHNode(id) {
   val comments = comments.nodes
   private val root = comments.nodes.first()

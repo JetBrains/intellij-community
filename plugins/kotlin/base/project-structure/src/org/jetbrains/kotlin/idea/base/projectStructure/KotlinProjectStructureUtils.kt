@@ -152,11 +152,6 @@ fun IdeaModuleInfo.supportsFeature(project: Project, feature: LanguageFeature): 
 }
 
 @ApiStatus.Internal
-fun IdeaModuleInfo.supportsAdditionalBuiltInsMembers(project: Project): Boolean {
-    return supportsFeature(project, LanguageFeature.AdditionalBuiltInsMembers)
-}
-
-@ApiStatus.Internal
 fun JpsModuleSourceRoot.getMigratedSourceRootTypeWithProperties(): Pair<JpsModuleSourceRootType<JpsElement>, JpsElement>? {
     val currentRootType = rootType
 

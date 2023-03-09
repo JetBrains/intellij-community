@@ -169,7 +169,7 @@ public class DependencyResultsTransformer {
 
       for (Configuration it : dependencyConfigurations) {
         DefaultExternalProjectDependency dependency =
-          createProjectDependency(dependencyResult, componentResult, projectPath, it);
+          createProjectDependency(componentResult, projectPath, it);
 
         if (!componentResult.equals(dependencyResult.getFrom())) {
           dependency.getDependencies().addAll(
@@ -182,7 +182,7 @@ public class DependencyResultsTransformer {
         if (!it.getName().equals(Dependency.DEFAULT_CONFIGURATION)) {
           List<File> files = new ArrayList<File>();
           PublishArtifactSet artifacts = it.getArtifacts();
-          if (artifacts != null && !artifacts.isEmpty()) {
+          if (!artifacts.isEmpty()) {
             PublishArtifact artifact = artifacts.iterator().next();
             final MetaProperty taskProperty = DefaultGroovyMethods.hasProperty(artifact, "archiveTask");
             if (taskProperty != null && (taskProperty.getProperty(artifact) instanceof AbstractArchiveTask)) {
@@ -244,7 +244,7 @@ public class DependencyResultsTransformer {
 
       if (artifacts != null) {
         for (ResolvedArtifact artifact : artifacts) {
-          String packaging = artifact.getExtension() != null ? artifact.getExtension() : "jar";
+          String packaging = artifact.getExtension();
           String classifier = artifact.getClassifier();
           final ExternalDependency dependency;
           if (isProjectDependencyArtifact(artifact)) {
@@ -312,7 +312,7 @@ public class DependencyResultsTransformer {
     return result;
   }
 
-  private ComponentResultKey getKey(ResolvedComponentResult result) {
+  private static ComponentResultKey getKey(ResolvedComponentResult result) {
     if (is46rBetter) {
       return new AttributesBasedKey(result.getId(), result.getVariant().getAttributes());
     } else {
@@ -387,8 +387,7 @@ public class DependencyResultsTransformer {
 
 
   @NotNull
-  private DefaultExternalProjectDependency createProjectDependency(DependencyResult dependencyResult,
-                                                                   ResolvedComponentResult componentResult,
+  private DefaultExternalProjectDependency createProjectDependency(ResolvedComponentResult componentResult,
                                                                    String projectPath,
                                                                    Configuration it) {
     String name = componentResult.getModuleVersion().getName();
@@ -414,7 +413,7 @@ public class DependencyResultsTransformer {
     if (it.getArtifacts().size() == 1) {
       PublishArtifact publishArtifact = it.getAllArtifacts().iterator().next();
       dependency.setClassifier(publishArtifact.getClassifier());
-      dependency.setPackaging(publishArtifact.getExtension() != null ? publishArtifact.getExtension() : "jar");
+      dependency.setPackaging(publishArtifact.getExtension());
     }
     return dependency;
   }

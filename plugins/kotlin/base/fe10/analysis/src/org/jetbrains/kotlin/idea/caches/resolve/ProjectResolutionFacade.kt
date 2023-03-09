@@ -20,10 +20,12 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
-import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
-import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.NotUnderContentRootModuleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.checkValidity
+import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
+import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
+import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
 import org.jetbrains.kotlin.js.resolve.diagnostics.ErrorsJs
 import org.jetbrains.kotlin.psi.KtElement
@@ -32,7 +34,6 @@ import org.jetbrains.kotlin.resolve.CompositeBindingContext
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.konan.diagnostics.ErrorsNative
 import org.jetbrains.kotlin.storage.CancellableSimpleLock
-import org.jetbrains.kotlin.storage.SimpleLock
 import org.jetbrains.kotlin.storage.guarded
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
@@ -126,7 +127,12 @@ internal class ProjectResolutionFacade(
             reuseDataFrom?.cachedResolverForProject ?: EmptyResolverForProject()
 
         val allModuleInfos = (allModules ?: getModuleInfosFromIdeaModel(project, (settings as? PlatformAnalysisSettingsImpl)?.platform))
-            .toMutableSet()
+            .toMutableSet().also {
+                it.checkValidity {
+                    ("allModules".takeIf { allModules != null }
+                        ?: "getModuleInfosFromIdeaModel(${(settings as? PlatformAnalysisSettingsImpl)?.platform})") + toString()
+                }
+            }
 
         val syntheticFilesByModule = syntheticFiles.groupBy { it.moduleInfo }
         val syntheticFilesModules = syntheticFilesByModule.keys
@@ -169,7 +175,7 @@ internal class ProjectResolutionFacade(
             }
         }
 
-        return cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo)
+        return cachedResolverForProject.tryGetResolverForModule(NotUnderContentRootModuleInfo(project))
             ?: cachedResolverForProject.diagnoseUnknownModuleInfo(moduleInfos.toList())
     }
 

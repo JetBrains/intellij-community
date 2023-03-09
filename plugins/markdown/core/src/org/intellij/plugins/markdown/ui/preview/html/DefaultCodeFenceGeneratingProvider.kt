@@ -3,7 +3,6 @@ package org.intellij.plugins.markdown.ui.preview.html
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Base64
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
@@ -113,7 +112,7 @@ internal class DefaultCodeFenceGeneratingProvider(
   }
 
   private fun addCopyButton(visitor: HtmlGenerator.HtmlGeneratingVisitor, content: String) {
-    val encodedContent = Base64.encode(content.toByteArray())
+    val encodedContent = PreviewEncodingUtil.encodeContent(content)
     // language=HTML
     val html = """
     <div class="code-fence-highlighter-copy-button" data-fence-content="$encodedContent">

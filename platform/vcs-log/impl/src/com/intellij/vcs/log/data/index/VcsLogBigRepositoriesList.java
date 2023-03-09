@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -17,8 +17,8 @@ import java.util.TreeSet;
 @State(name = "Vcs.Log.Big.Repositories", storages = @Storage(StoragePathMacros.CACHE_FILE))
 @Service(Service.Level.APP)
 public final class VcsLogBigRepositoriesList implements PersistentStateComponent<VcsLogBigRepositoriesList.State> {
-  @NotNull private final Object myLock = new Object();
-  @NotNull private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
+  private final @NotNull Object myLock = new Object();
+  private final @NotNull EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   private State myState;
 
   public VcsLogBigRepositoriesList() {
@@ -70,7 +70,7 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
     }
   }
 
-  public int getRepositoriesCount() {
+  public int getRepositoryCount() {
     synchronized (myLock) {
       return myState.repositories.size();
     }
@@ -80,8 +80,7 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
     myDispatcher.addListener(listener, disposable);
   }
 
-  @NotNull
-  public static VcsLogBigRepositoriesList getInstance() {
+  public static @NotNull VcsLogBigRepositoriesList getInstance() {
     return ApplicationManager.getApplication().getService(VcsLogBigRepositoriesList.class);
   }
 

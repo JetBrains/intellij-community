@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.PySdkBundle
@@ -33,7 +33,6 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.jetbrains.python.sdk.PythonSdkUtil
 import java.nio.file.Paths
-import javax.swing.DefaultComboBoxModel
 
 
 /**
@@ -179,32 +178,28 @@ private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirem
   val ref = Ref.create(false)
   val descriptor = FileChooserDescriptor(true, false, false, false, false, false)
   val panel = panel {
-    row {
-      label(PyBundle.message("form.integrated.tools.package.requirements.file"))
-      textFieldWithBrowseButton({ settings.requirementsPath },
-                                { settings.requirementsPath = it },
-                                fileChooserDescriptor = descriptor).focused()
+    row(PyBundle.message("form.integrated.tools.package.requirements.file")) {
+      textFieldWithBrowseButton(fileChooserDescriptor = descriptor)
+        .bindText(settings::getRequirementsPath, settings::setRequirementsPath)
+        .align(AlignX.FILL)
+        .focused()
+    }
+    row(PyBundle.message("python.requirements.version.label")) {
+      comboBox(PyRequirementsVersionSpecifierType.values().asList())
+        .bindItem(settings::getVersionSpecifier, settings::setVersionSpecifier)
+        .align(AlignX.FILL)
     }
     row {
-      label(PyBundle.message("python.requirements.version.label"))
-      comboBox(DefaultComboBoxModel(PyRequirementsVersionSpecifierType.values()),
-               { settings.versionSpecifier },
-               { settings.versionSpecifier = it }).constraints(growX)
+      checkBox(PyBundle.message("python.requirements.remove.unused"))
+        .bindSelected(settings::getRemoveUnused, settings::setRemoveUnused)
     }
     row {
-      checkBox(PyBundle.message("python.requirements.remove.unused"),
-               { settings.removeUnused },
-               { settings.removeUnused = it })
+      checkBox(PyBundle.message("python.requirements.modify.base.files"))
+        .bindSelected(settings::getModifyBaseFiles, settings::setModifyBaseFiles)
     }
     row {
-      checkBox(PyBundle.message("python.requirements.modify.base.files"),
-               { settings.modifyBaseFiles },
-               { settings.modifyBaseFiles = it })
-    }
-    row {
-      checkBox(PyBundle.message("python.requirements.keep.matching.specifier"),
-               { settings.keepMatchingSpecifier },
-               { settings.keepMatchingSpecifier = it })
+      checkBox(PyBundle.message("python.requirements.keep.matching.specifier"))
+        .bindSelected(settings::getKeepMatchingSpecifier, settings::setKeepMatchingSpecifier)
     }
   }
   val dialog = dialog(title = PyBundle.message("python.requirements.action.name"),

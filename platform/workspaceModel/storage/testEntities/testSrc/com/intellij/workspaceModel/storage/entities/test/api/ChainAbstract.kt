@@ -5,6 +5,9 @@ import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Abstract
@@ -23,6 +26,9 @@ interface ParentChainEntity : WorkspaceEntity {
   }
 
   companion object : Type<ParentChainEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): ParentChainEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -52,6 +58,9 @@ interface SimpleAbstractEntity : WorkspaceEntity {
   }
 
   companion object : Type<SimpleAbstractEntity, Builder<SimpleAbstractEntity>>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder<SimpleAbstractEntity>.() -> Unit)? = null): SimpleAbstractEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -79,6 +88,9 @@ interface CompositeAbstractEntity : SimpleAbstractEntity {
   }
 
   companion object : Type<CompositeAbstractEntity, Builder<CompositeAbstractEntity>>(SimpleAbstractEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder<CompositeAbstractEntity>.() -> Unit)? = null): CompositeAbstractEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -101,6 +113,9 @@ interface CompositeChildAbstractEntity : CompositeAbstractEntity {
   }
 
   companion object : Type<CompositeChildAbstractEntity, Builder>(CompositeAbstractEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): CompositeChildAbstractEntity {
       val builder = builder()
       builder.entitySource = entitySource
@@ -127,6 +142,9 @@ interface SimpleChildAbstractEntity : SimpleAbstractEntity {
   }
 
   companion object : Type<SimpleChildAbstractEntity, Builder>(SimpleAbstractEntity) {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SimpleChildAbstractEntity {
       val builder = builder()
       builder.entitySource = entitySource

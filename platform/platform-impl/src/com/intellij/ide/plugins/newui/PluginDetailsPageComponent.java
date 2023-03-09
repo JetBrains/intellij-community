@@ -819,7 +819,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             MarketplaceRequests marketplace = MarketplaceRequests.getInstance();
 
             if (node.getScreenShots() == null && node.getExternalPluginIdForScreenShots() != null) {
-              IntellijPluginMetadata metadata = marketplace.loadPluginMetadata(node, node.getExternalPluginIdForScreenShots());
+              IntellijPluginMetadata metadata = marketplace.loadPluginMetadata(node.getExternalPluginIdForScreenShots());
               if (metadata != null) {
                 if (metadata.getScreenshots() != null) {
                   node.setScreenShots(metadata.getScreenshots());
@@ -878,6 +878,12 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     showPlugin();
 
     select(0, true);
+
+    if (myPlugin instanceof PluginNode) {
+      if (((PluginNode)myPlugin).getSuggestedCommercialIde() != null) {
+        myInstallButton.setText(IdeBundle.message("action.AnActionButton.text.upgrade"));
+      }
+    }
   }
 
   private enum EmptyState {
@@ -985,7 +991,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
     String vendor = myPlugin.isBundled() ? null : Strings.trim(myPlugin.getVendor());
     String organization = myPlugin.isBundled() ? null : Strings.trim(myPlugin.getOrganization());
-    if (Strings.isEmptyOrSpaces(vendor)) {
+    if (Strings.isEmptyOrSpaces(vendor) && Strings.isEmptyOrSpaces(organization)) {
       myAuthor.hide();
     }
     else {

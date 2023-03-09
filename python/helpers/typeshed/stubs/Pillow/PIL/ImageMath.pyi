@@ -1,7 +1,5 @@
 from typing import Any
 
-VERBOSE: int
-
 class _Operand:
     im: Any
     def __init__(self, im) -> None: ...

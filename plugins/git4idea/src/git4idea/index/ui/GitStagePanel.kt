@@ -34,12 +34,9 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.*
 import com.intellij.util.ui.JBUI.Borders.empty
-import com.intellij.util.ui.JBUI.Panels.simplePanel
-import com.intellij.util.ui.ProportionKey
-import com.intellij.util.ui.ThreeStateCheckBox
-import com.intellij.util.ui.TwoKeySplitter
+import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
@@ -73,8 +70,8 @@ import java.util.*
 import javax.swing.JPanel
 
 internal class GitStagePanel(private val tracker: GitStageTracker,
-                             isVertical: Boolean,
-                             isEditorDiffPreview: Boolean,
+                             private val isVertical: () -> Boolean,
+                             private val isEditorDiffPreview: () -> Boolean,
                              disposableParent: Disposable,
                              private val activate: () -> Unit) :
   JPanel(BorderLayout()), DataProvider, Disposable {
@@ -137,7 +134,9 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       addToLeft(commitPanel.toolbar.component)
     }
     val sideBorder = if (ExperimentalUI.isNewUI()) SideBorder.NONE else SideBorder.TOP
-    val treePanel = simplePanel(createScrollPane(tree, sideBorder)).addToBottom(statusPanel)
+    val treePanel = GitStageTreePanel()
+      .addToCenter(createScrollPane(tree, sideBorder))
+      .addToBottom(statusPanel)
     progressStripe = ProgressStripe(treePanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
     val treePanelWithToolbar = JPanel(BorderLayout())
     treePanelWithToolbar.add(toolbar.component, BorderLayout.NORTH)
@@ -156,7 +155,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     add(commitDiffSplitter, BorderLayout.CENTER)
     add(changesStatusPanel, BorderLayout.SOUTH)
 
-    updateLayout(isVertical, isEditorDiffPreview, forceDiffPreview = true)
+    updateLayout(isInitial = true)
 
     tracker.addListener(MyGitStageTrackerListener(), this)
     val busConnection = project.messageBus.connect(this)
@@ -208,18 +207,25 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     return null
   }
 
-  fun updateLayout(isVertical: Boolean, canUseEditorDiffPreview: Boolean, forceDiffPreview: Boolean = false) {
-    val isEditorDiffPreview = canUseEditorDiffPreview || isVertical
-    val isMessageSplitterVertical = isVertical || !isEditorDiffPreview
+  fun updateLayout() {
+    updateLayout(isInitial = false)
+  }
+
+  private fun updateLayout(isInitial: Boolean) {
+    val isVertical = isVertical()
+    val isEditorDiffPreview = isEditorDiffPreview()
+    val isInEditor = isEditorDiffPreview || isVertical
+    val isMessageSplitterVertical = !isEditorDiffPreview || isVertical
     if (treeMessageSplitter.orientation != isMessageSplitterVertical) {
       treeMessageSplitter.orientation = isMessageSplitterVertical
     }
-    setDiffPreviewInEditor(isEditorDiffPreview, forceDiffPreview)
+    setDiffPreviewInEditor(isInEditor, isInitial)
   }
 
-  private fun setDiffPreviewInEditor(isInEditor: Boolean, force: Boolean = false) {
+  private fun setDiffPreviewInEditor(isInEditor: Boolean, isInitial: Boolean) {
     if (disposableFlag.isDisposed) return
-    if (!force && (isInEditor == (editorTabPreview != null))) return
+    val needUpdatePreviews = isInEditor != (editorTabPreview != null)
+    if (!isInitial && !needUpdatePreviews) return
 
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
     diffPreviewProcessor = GitStageDiffPreview(project, _tree, tracker, isInEditor, this)
@@ -469,6 +475,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
         hasPendingUpdates = false
         update()
       }
+    }
+  }
+
+  private class GitStageTreePanel : BorderLayoutPanel() {
+    override fun updateUI() {
+      super.updateUI()
+      background = UIUtil.getTreeBackground()
     }
   }
 

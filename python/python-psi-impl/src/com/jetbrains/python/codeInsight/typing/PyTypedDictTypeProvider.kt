@@ -126,7 +126,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
         parameters.add(PyCallableParameterImpl.nonPsi(TYPED_DICT_FIELDS_PARAMETER,
                                                       if (dictClassType != null) PyCollectionTypeImpl(dictClassType.pyClass, false,
                                                                                                       listOf(builtinCache.strType, null))
-                                                      else dictClassType))
+                                                      else null))
         parameters.add(
           PyCallableParameterImpl.nonPsi(TYPED_DICT_TOTAL_PARAMETER,
                                          builtinCache.boolType,

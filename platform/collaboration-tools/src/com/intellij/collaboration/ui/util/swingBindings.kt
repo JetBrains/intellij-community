@@ -2,13 +2,13 @@
 package com.intellij.collaboration.ui.util
 
 import com.intellij.collaboration.ui.ComboBoxWithActionsModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.awaitCancellation
+import com.intellij.openapi.util.Disposer
+import com.intellij.util.ui.update.Activatable
+import com.intellij.util.ui.update.UiNotifyConnector
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 import javax.swing.Action
 import javax.swing.ComboBoxModel
@@ -16,6 +16,7 @@ import javax.swing.JComponent
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import javax.swing.text.JTextComponent
+import kotlin.coroutines.CoroutineContext
 
 //TODO: generalise
 fun <T : Any> ComboBoxWithActionsModel<T>.bind(scope: CoroutineScope,
@@ -67,7 +68,8 @@ private fun <T> ComboBoxModel<T>.addSelectionChangeListener(scope: CoroutineScop
     try {
       addListDataListener(dataListener)
       awaitCancellation()
-    } finally {
+    }
+    finally {
       removeListDataListener(dataListener)
     }
   }
@@ -94,5 +96,47 @@ fun JTextComponent.bindText(scope: CoroutineScope, textFlow: Flow<@Nls String>) 
     textFlow.collect {
       text = it
     }
+  }
+}
+
+private typealias Block = CoroutineScope.() -> Unit
+
+class ActivatableCoroutineScopeProvider(private val context: () -> CoroutineContext = { SupervisorJob() + Dispatchers.Main.immediate })
+  : Activatable {
+
+  private var scope: CoroutineScope? = null
+  private var blocks = mutableListOf<Block>()
+
+  private var currentConnection: UiNotifyConnector? = null
+
+  fun launchInScope(block: suspend CoroutineScope.() -> Unit) = doInScope {
+    launch { block() }
+  }
+
+  private fun doInScope(block: Block) {
+    blocks.add(block)
+    scope?.run {
+      block()
+    }
+  }
+
+  override fun showNotify() {
+    scope = CoroutineScope(context()).apply {
+      for (block in blocks) {
+        launch { block() }
+      }
+    }
+  }
+
+  override fun hideNotify() {
+    scope?.cancel()
+    scope = null
+  }
+
+  fun activateWith(component: JComponent) {
+    currentConnection?.let {
+      Disposer.dispose(it)
+    }
+    currentConnection = UiNotifyConnector(component, this, false)
   }
 }

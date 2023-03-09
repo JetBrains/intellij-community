@@ -47,6 +47,6 @@ private class ConvertArgumentToSetFix : LocalQuickFix {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement ?: return
-        element.replace(KtPsiFactory(element).createExpressionByPattern("$0.toSet()", element))
+        element.replace(KtPsiFactory(project).createExpressionByPattern("$0.toSet()", element))
     }
 }

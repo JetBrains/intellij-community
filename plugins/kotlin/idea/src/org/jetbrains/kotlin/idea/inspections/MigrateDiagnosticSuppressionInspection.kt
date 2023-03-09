@@ -51,7 +51,7 @@ class MigrateDiagnosticSuppressionInspection : AbstractKotlinInspection(), Clean
             val expression = descriptor.psiElement as? KtStringTemplateExpression ?: return
             if (!FileModificationService.getInstance().preparePsiElementForWrite(expression)) return
 
-            val psiFactory = KtPsiFactory(expression)
+            val psiFactory = KtPsiFactory(project)
             expression.replace(psiFactory.createExpression("\"$diagnosticFactoryName\""))
         }
     }

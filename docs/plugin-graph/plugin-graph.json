@@ -2903,18 +2903,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "p3",
-    "name": "intellij.smart.update",
-    "n": "i.smart.update",
-    "package": "com.intellij.smartUpdate",
-    "sourceModule": "intellij.smart.update",
-    "descriptor": "plugins/smart-update/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.idea.smartUpdate",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "cmA",
     "n": "com.jetbrains.space"
   }
@@ -3626,18 +3614,6 @@
     "pluginId": "Git4Idea",
     "parent": "cJP",
     "type": 2
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "TO",
-    "name": "intellij.vcs.git/terminal",
-    "n": "i.vcs.git/terminal",
-    "package": "git4idea.terminal",
-    "sourceModule": "intellij.vcs.git",
-    "descriptor": "community/plugins/git4idea/resources/intellij.vcs.git.terminal.xml",
-    "parent": "cJP",
-    "type": 0
   }
 }, {
   "group": "nodes",

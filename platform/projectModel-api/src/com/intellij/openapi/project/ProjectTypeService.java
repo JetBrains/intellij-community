@@ -6,6 +6,8 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
+import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,6 +24,9 @@ import static java.util.Collections.emptyList;
 @Service(Service.Level.PROJECT)
 @State(name = "ProjectType")
 public final class ProjectTypeService implements PersistentStateComponent<ProjectType> {
+
+  private static final Key<CachedValue<Collection<ProjectType>>> PROJECT_TYPES_KEY = Key.create("PROJECT_TYPES");
+
   private ProjectType myProjectType;
 
   /**
@@ -48,11 +53,11 @@ public final class ProjectTypeService implements PersistentStateComponent<Projec
     if (project == null) return emptyList();
     if (project.isDefault()) return emptyList();
 
-    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+    return CachedValuesManager.getManager(project).getCachedValue(project, PROJECT_TYPES_KEY, () -> {
       return Result.create(findProjectTypes(project),
                            ProjectRootManager.getInstance(project),
                            DumbService.getInstance(project));
-    });
+    }, false);
   }
 
   private static Collection<ProjectType> findProjectTypes(@NotNull Project project) {

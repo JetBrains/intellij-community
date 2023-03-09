@@ -383,10 +383,10 @@ public final class GitMergeUtil {
       }
     }
 
-    String[] addParameters = GitVersionSpecialty.ADD_REJECTS_SPARSE_FILES_FOR_CONFLICTS.existsIn(project)
-                             ? new String[]{"--sparse"} : ArrayUtil.EMPTY_STRING_ARRAY;
-    GitFileUtils.addPaths(project, root, toAdd, true, false, addParameters);
-    GitFileUtils.deletePaths(project, root, toDelete);
+    String[] parameters = GitVersionSpecialty.ADD_REJECTS_SPARSE_FILES_FOR_CONFLICTS.existsIn(project)
+                          ? new String[]{"--sparse"} : ArrayUtil.EMPTY_STRING_ARRAY;
+    GitFileUtils.addPaths(project, root, toAdd, true, false, parameters);
+    GitFileUtils.deletePaths(project, root, toDelete, parameters);
   }
 
   public static boolean isReverseRoot(@NotNull GitRepository repository) {

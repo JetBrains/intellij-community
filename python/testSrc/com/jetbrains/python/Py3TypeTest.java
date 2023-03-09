@@ -1634,6 +1634,21 @@ public class Py3TypeTest extends PyTestCase {
     // TODO add tests on more complex substitutions, e.g T -> list[T2], T2 -> T. These are not implemented at the moment.
   }
 
+  // PY-37678
+  public void testDataclassesReplace() {
+    doTest("Foo",
+           """
+             import dataclasses as dc
+
+             @dc.dataclass
+             class Foo:
+                 x: int
+                 y: int
+
+             foo = Foo(1, 2)
+             expr = dc.replace(foo, x=3)""");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

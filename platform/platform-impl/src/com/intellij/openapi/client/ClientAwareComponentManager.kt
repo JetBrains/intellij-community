@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
@@ -13,7 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-abstract class ClientAwareComponentManager constructor(
+abstract class ClientAwareComponentManager(
   internal val parent: ComponentManagerImpl?,
   setExtensionsRootArea: Boolean = parent == null
 ) : ComponentManagerImpl(parent, setExtensionsRootArea) {
@@ -43,11 +43,16 @@ abstract class ClientAwareComponentManager constructor(
                                   app: Application?,
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
-    super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+    super.registerComponents(modules = modules,
+                             app = app,
+                             precomputedExtensionModel = precomputedExtensionModel,
+                             listenerCallbacks = listenerCallbacks)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(ClientKind.ALL)) {
-      (session as? ClientSessionImpl)?.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+      (session as? ClientSessionImpl)?.registerComponents(modules = modules, app = app,
+                                                          precomputedExtensionModel = precomputedExtensionModel,
+                                                          listenerCallbacks = listenerCallbacks)
     }
   }
 
@@ -67,7 +72,7 @@ abstract class ClientAwareComponentManager constructor(
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(ClientKind.ALL)) {
       session as? ClientSessionImpl ?: continue
-      session.preloadServices(modules, activityPrefix, syncScope, onlyIfAwait)
+      session.preloadServices(modules, activityPrefix, syncScope, onlyIfAwait, getCoroutineScope())
     }
   }
 

@@ -133,6 +133,16 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     return myExtension;
   }
 
+  public String getPackaging() {
+    if (MavenConstants.TYPE_TEST_JAR.equals(myType)) {
+      return "jar";
+    }
+    if (MavenConstants.TYPE_EJB_CLIENT.equals(myType)) {
+      return "ejb";
+    }
+    return myType;
+  }
+
   /**
    * @deprecated use MavenArtifactUtilKt#resolved
    */

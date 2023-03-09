@@ -78,9 +78,9 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
       g2.fill(path);
 
       if (c.hasFocus()) {
-        Object op = c.getClientProperty("JComponent.outline");
+        DarculaUIUtil.Outline op = DarculaUIUtil.getOutline(c);
         if (op != null) {
-          DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, arc, true, true, DarculaUIUtil.Outline.valueOf(op.toString()));
+          DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, arc, true, true, op);
         }
         else {
           DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);

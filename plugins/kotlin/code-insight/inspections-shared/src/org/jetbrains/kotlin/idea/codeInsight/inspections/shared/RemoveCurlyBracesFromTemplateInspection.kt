@@ -2,13 +2,14 @@
 package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.canDropCurlyBrackets
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
 
@@ -29,9 +30,9 @@ class RemoveCurlyBracesFromTemplateInspection(@JvmField var reportWithoutWhitesp
         element.dropCurlyBracketsIfPossible()
     }
 
-    override fun createOptionsPanel() = MultipleCheckboxOptionsPanel(this).apply {
-        addCheckbox(KotlinBundle.message("report.also.for.a.variables.without.a.whitespace.around"), "reportWithoutWhitespace")
-    }
+    override fun getOptionsPane() = pane(
+        checkbox("reportWithoutWhitespace", KotlinBundle.message("report.also.for.a.variables.without.a.whitespace.around"))
+    )
 }
 
 private fun KtBlockStringTemplateEntry.hasWhitespaceAround(): Boolean =

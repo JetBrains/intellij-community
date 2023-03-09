@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -33,6 +32,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   private final boolean myRememberScope;
   private final boolean myShowInspectTestSource;
   private final @NlsContexts.Separator String myScopeTitle;
+  @NotNull
   private final Project myProject;
   private final ArrayList<JRadioButton> radioButtons = new ArrayList<>();
   private final JCheckBox myInspectTestSource = new JCheckBox();
@@ -180,25 +180,6 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       .findFirst().map(x -> x.button.isSelected()).orElse(false);
   }
 
-  public boolean isModuleScopeSelected() {
-    return myViewItems.stream()
-      .filter(x -> x.scopeId == AnalysisScope.MODULE)
-      .findFirst().map(x -> x.button.isSelected()).orElse(false);
-  }
-
-  public boolean isUncommittedFilesSelected(){
-    return myViewItems.stream()
-      .filter(x -> x.scopeId == AnalysisScope.UNCOMMITTED_FILES)
-      .findFirst().map(x -> x.button.isSelected()).orElse(false);
-  }
-
-  @Nullable
-  public SearchScope getCustomScope(){
-    return myViewItems.stream()
-      .filter(x -> x.scopeId == AnalysisScope.CUSTOM && x.button.isSelected())
-      .findFirst().map(x -> x.model.getScope().toSearchScope()).orElse(null);
-  }
-
   public boolean isInspectTestSources() {
     return myInspectTestSource.isSelected();
   }
@@ -248,7 +229,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   @Nullable
-  protected JComponent getAdditionalActionSettings(final Project project) {
+  protected JComponent getAdditionalActionSettings(@NotNull Project project) {
     return null;
   }
 

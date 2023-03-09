@@ -21,7 +21,7 @@ class ReplaceToStringWithStringTemplateInspection : AbstractApplicabilityBasedIn
 
     override fun applyTo(element: KtDotQualifiedExpression, project: Project, editor: Editor?) {
         val variable = element.receiverExpression.text
-        val replaced = element.replace(KtPsiFactory(element).createExpression("\"\${$variable}\""))
+        val replaced = element.replace(KtPsiFactory(project).createExpression("\"\${$variable}\""))
         val blockStringTemplateEntry = (replaced as? KtStringTemplateExpression)?.entries?.firstOrNull() as? KtBlockStringTemplateEntry
         blockStringTemplateEntry?.dropCurlyBracketsIfPossible()
     }

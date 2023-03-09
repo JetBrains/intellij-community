@@ -40,7 +40,7 @@ class RemoveToStringFix : LocalQuickFix {
             templateEntry != null &&
             canPlaceAfterSimpleNameEntry(templateEntry.nextSibling)
         ) {
-            val factory = KtPsiFactory(templateEntry)
+            val factory = KtPsiFactory(project)
             templateEntry.replace(factory.createSimpleNameStringTemplateEntry(receiverExpression.getReferencedName()))
         } else {
             element.replace(receiverExpression)

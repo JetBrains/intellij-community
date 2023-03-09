@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -60,31 +60,23 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
       throw new ConfigurationException(JavaDebuggerBundle.message("error.array.renderer.configurable.end.index.less.than.start"));
     }
 
-    if (newStartIndex >= 0 && newEndIndex >= 0) {
-      if (newStartIndex > newEndIndex) {
-        int currentStartIndex = renderer.START_INDEX;
-        int currentEndIndex = renderer.END_INDEX;
-        newEndIndex = newStartIndex + (currentEndIndex - currentStartIndex);
-      }
+    if (newLimit <= 0) {
+      newLimit = 1;
+    }
 
-      if(newLimit <= 0) {
-        newLimit = 1;
-      }
-
-      if(showBigRangeWarning && (newEndIndex - newStartIndex > 10000)) {
-        final int answer = Messages.showOkCancelDialog(
-          myPanel.getRootPane(),
-          JavaDebuggerBundle.message("warning.range.too.big", ApplicationNamesInfo.getInstance().getProductName()),
-          JavaDebuggerBundle.message("title.range.too.big"),
-          Messages.getWarningIcon());
-        if(answer != Messages.OK) {
-          return;
-        }
+    if (showBigRangeWarning && (newEndIndex - newStartIndex > 10000)) {
+      final int answer = Messages.showOkCancelDialog(
+        myPanel.getRootPane(),
+        JavaDebuggerBundle.message("warning.range.too.big", ApplicationNamesInfo.getInstance().getProductName()),
+        JavaDebuggerBundle.message("title.range.too.big"),
+        Messages.getWarningIcon());
+      if (answer != Messages.OK) {
+        return;
       }
     }
 
-    renderer.START_INDEX   = newStartIndex;
-    renderer.END_INDEX     = newEndIndex;
+    renderer.START_INDEX = newStartIndex;
+    renderer.END_INDEX = newEndIndex;
     renderer.ENTRIES_LIMIT = newLimit;
   }
 
@@ -139,16 +131,19 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
           myIndexUpdateEnabled = state;
         }
       }
+
       @Override
       public void changedUpdate(DocumentEvent e) {
         updateEntriesLimit();
       }
+
       @Override
-      public void insertUpdate (DocumentEvent e) {
+      public void insertUpdate(DocumentEvent e) {
         updateEntriesLimit();
       }
+
       @Override
-      public void removeUpdate (DocumentEvent e) {
+      public void removeUpdate(DocumentEvent e) {
         updateEntriesLimit();
       }
     };
@@ -167,6 +162,7 @@ public class ArrayRendererConfigurable implements UnnamedConfigurable, Configura
           myEntriesLimitUpdateEnabled = state;
         }
       }
+
       @Override
       public void insertUpdate(DocumentEvent e) {
         updateEndIndex();

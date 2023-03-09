@@ -15,6 +15,7 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieCustomFixWrappe
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieRuleSettingsAction
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
+import com.intellij.lang.LanguageExtension
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -27,7 +28,6 @@ import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.util.parents
 import com.intellij.refactoring.suggested.startOffset
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 
 class CheckerRunner(val text: TextContent) {
   private val tokenizer
@@ -68,7 +68,7 @@ class CheckerRunner(val text: TextContent) {
     if (isSuppressed(problem) ||
         hasIgnoredCategory(problem) ||
         isIgnoredByStrategies(problem) ||
-        ProblemFilter.allIgnoringFilters(problem).findAny().isPresent) {
+        isIgnoredByFilters(problem)) {
       return false
     }
 
@@ -110,6 +110,9 @@ class CheckerRunner(val text: TextContent) {
       return tooltip
     }
   }
+
+  private fun isIgnoredByFilters(problem: TextProblem) =
+    filterEp.allForLanguageOrAny(problem.text.commonParent.language).any { it.shouldIgnore(problem) }
 
   private fun isIgnoredByStrategies(descriptor: TextProblem): Boolean {
     for (root in text.findPsiElementAt(0).parents(withSelf = true)) {
@@ -211,3 +214,5 @@ class CheckerRunner(val text: TextContent) {
   private fun highlightSpan(problem: TextProblem) =
     TextRange(problem.highlightRanges[0].startOffset, problem.highlightRanges.last().endOffset)
 }
+
+private val filterEp = LanguageExtension<ProblemFilter>("com.intellij.grazie.problemFilter")

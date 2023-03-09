@@ -222,7 +222,6 @@ class CompilerArgumentsCachingTest {
         phasesToDumpBefore = generateRandomStringArray(20)
         phasesToDumpAfter = generateRandomStringArray(20)
         phasesToDump = generateRandomStringArray(20)
-        namesExcludedFromDumping = generateRandomStringArray(20)
         phasesToValidateBefore = generateRandomStringArray(20)
         phasesToValidateAfter = generateRandomStringArray(20)
         phasesToValidate = generateRandomStringArray(20)
@@ -326,7 +325,6 @@ class CompilerArgumentsCachingTest {
         typedArrays = Random.nextBoolean()
         friendModulesDisabled = Random.nextBoolean()
         metadataOnly = Random.nextBoolean()
-        enableJsScripting = Random.nextBoolean()
         fakeOverrideValidator = Random.nextBoolean()
         wasm = Random.nextBoolean()
 
@@ -494,7 +492,6 @@ class CompilerArgumentsCachingTest {
             "phasesToDumpBefore",
             "phasesToDumpAfter",
             "phasesToDump",
-            "namesExcludedFromDumping",
             "phasesToValidateBefore",
             "phasesToValidateAfter",
             "phasesToValidate"
@@ -604,7 +601,6 @@ class CompilerArgumentsCachingTest {
             "typedArrays",
             "friendModulesDisabled",
             "metadataOnly",
-            "enableJsScripting",
             "fakeOverrideValidator",
             "wasm"
         )

@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.resources.ImplicitResourceCloser;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
@@ -16,6 +17,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
 import com.intellij.util.ui.UI;
@@ -84,6 +86,12 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       .finishDefault();
   }
 
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    // To temporarily salvage createOptionsPanel() until we support tables
+    return OptPane.EMPTY;
+  }
+
   /**
    * Warning! This class has to manually save settings to xml using its {@code readSettings()} and {@code writeSettings()} methods
    */
@@ -109,12 +117,12 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       UI.PanelFactory.panel(UiUtils.createAddRemoveTreeClassChooserPanel(table2, JavaBundle.message("dialog.title.choose.class")))
         .withLabel(InspectionGadgetsBundle.message("inspection.autocloseable.resource.ignored.methods.title")).moveLabelOnTop()
         .resizeY(true).createPanel();
-    panel.add(tablePanel, "growx, wrap");
-    panel.add(tablePanel2, "growx, wrap");
+    panel.addGrowing(tablePanel);
+    panel.addGrowing(tablePanel2);
     final CheckBox checkBox =
       new CheckBox(InspectionGadgetsBundle.message("auto.closeable.resource.returned.option"), this, "ignoreFromMethodCall");
     checkBox.addItemListener(e -> table2.setEnabled(e.getStateChange() == ItemEvent.DESELECTED));
-    panel.add(checkBox, "growx, wrap");
+    panel.addComponent(checkBox);
     panel.addCheckbox(InspectionGadgetsBundle.message("any.method.may.close.resource.argument"), "anyMethodMayClose");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.constructor.method.references"), "ignoreConstructorMethodReferences");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.getters.returning.resource"), "ignoreGettersReturningResource");
@@ -223,7 +231,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (methodCallExpression == null) {
@@ -259,12 +267,7 @@ public class AutoCloseableResourceInspection extends ResourceInspection {
       PsiExpression[] arguments = expression.getArgumentList().getExpressions();
       PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
       if (returnedValue != null && qualifier == returnedValue) return true;
-      for (PsiExpression argument : arguments) {
-        if (returnedValue == argument) {
-          return true;
-        }
-      }
-      return false;
+      return ArrayUtil.indexOfIdentity(arguments, returnedValue) != -1;
     }
 
     @Override

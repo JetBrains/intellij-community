@@ -26,71 +26,77 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
   }
 
   @Test
   public void testGroupIdCompletion() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId><caret></groupId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId><caret></groupId>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "junit", "jmock", "test");
   }
 
   @Test 
   public void testArtifactIdCompletion() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId><caret></artifactId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId><caret></artifactId>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     assertCompletionVariants(myProjectPom, RENDERING_TEXT, "junit");
   }
 
   @Test 
   public void testDoNotCompleteArtifactIdOnUnknownGroup() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>unknown</groupId>" +
-                     "    <artifactId><caret></artifactId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>unknown</groupId>
+                           <artifactId><caret></artifactId>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     assertCompletionVariants(myProjectPom);
   }
 
   @Test 
   public void testVersionCompletion() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version><caret></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <version><caret></version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     List<String> variants = getCompletionVariants(myProjectPom);
     assertEquals(Arrays.asList("4.0", "3.8.2", "3.8.1"), variants);
@@ -98,53 +104,60 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testDoNotCompleteVersionIfNoGroupIdAndArtifactId() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <version><caret></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <version><caret></version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     assertCompletionVariants(myProjectPom); // should not throw
   }
 
   @Test 
   public void testAddingLocalProjectsIntoCompletion() {
-    createProjectPom("<groupId>project-group</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     " <module>m1</module>" +
-                     " <module>m2</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>project-group</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                        <module>m1</module>
+                        <module>m2</module>
+                       </modules>
+                       """);
 
     createModulePom("m1",
-                    "<groupId>project-group</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>project-group</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      """);
 
     VirtualFile m = createModulePom("m2",
-                                    "<groupId>project-group</groupId>" +
-                                    "<artifactId>m2</artifactId>" +
-                                    "<version>2</version>");
+                                    """
+                                      <groupId>project-group</groupId>
+                                      <artifactId>m2</artifactId>
+                                      <version>2</version>
+                                      """);
 
     importProject();
 
-    createModulePom("m2", "<groupId>project-group</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>2</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>project-group</groupId>" +
-                          "    <artifactId><caret></artifactId>" +
-                          "  </dependency>" +
-                          "</dependencies>");
+    createModulePom("m2", """
+      <groupId>project-group</groupId>
+      <artifactId>m2</artifactId>
+      <version>2</version>
+      <dependencies>
+        <dependency>
+          <groupId>project-group</groupId>
+          <artifactId><caret></artifactId>
+        </dependency>
+      </dependencies>
+      """);
 
     assertCompletionVariants(m, LOOKUP_STRING, "project-group:project:1", "project-group:m1:1", "project-group:m2:2");
     assertCompletionVariants(m, RENDERING_TEXT, "project", "m1", "m2");
@@ -152,123 +165,140 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testResolvingPropertiesForLocalProjectsInCompletion() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<properties>" +
-                     "  <module1Name>module1</module1Name>" +
-                     "</properties>" +
-
-                     "<modules>" +
-                     " <module>m1</module>" +
-                     " <module>m2</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <properties>
+                         <module1Name>module1</module1Name>
+                       </properties>
+                       <modules>
+                        <module>m1</module>
+                        <module>m2</module>
+                       </modules>
+                       """);
 
     createModulePom("m1",
-                    "<groupId>${pom.parent.groupId}</groupId>" +
-                    "<artifactId>${module1Name}</artifactId>" +
-
-                    "<parent>" +
-                    "  <groupId>test</groupId>" +
-                    "  <artifactId>project</artifactId>" +
-                    "  <version>1</version>" +
-                    "</parent>");
+                    """
+                      <groupId>${pom.parent.groupId}</groupId>
+                      <artifactId>${module1Name}</artifactId>
+                      <parent>
+                        <groupId>test</groupId>
+                        <artifactId>project</artifactId>
+                        <version>1</version>
+                      </parent>
+                      """);
 
     VirtualFile m = createModulePom("m2",
-                                    "<groupId>test</groupId>" +
-                                    "<artifactId>module2</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>test</groupId>
+                                      <artifactId>module2</artifactId>
+                                      <version>1</version>
+                                      """);
 
     importProject();
     assertModules("project", mn("project", "module1"), "module2");
 
-    createModulePom("m2", "<groupId>test</groupId>" +
-                    "<artifactId>module2</artifactId>" +
-                    "<version>1</version>" +
-                    "<dependencies>" +
-                    "  <dependency>" +
-                    "    <groupId>test</groupId>" +
-                    "    <artifactId>module1</artifactId>" +
-                    "    <version><caret></version>" +
-                    "  </dependency>" +
-                    "</dependencies>");
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>module2</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>module1</artifactId>
+          <version><caret></version>
+        </dependency>
+      </dependencies>
+      """);
 
     assertCompletionVariants(m, "1");
 
-    createModulePom("m2", "<groupId>test</groupId>" +
-                    "<artifactId>module2</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<dependencies>" +
-                    "  <dependency>" +
-                    "    <groupId>test</groupId>" +
-                    "    <artifactId>module1</artifactId>" +
-                    "    <version>1</version>" +
-                    "  </dependency>" +
-                    "</dependencies>");
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>module2</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId>module1</artifactId>
+          <version>1</version>
+        </dependency>
+      </dependencies>
+      """);
 
     checkHighlighting(m);
   }
 
   @Test 
   public void testChangingExistingProjects() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     " <module>m1</module>" +
-                     " <module>m2</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                        <module>m1</module>
+                        <module>m2</module>
+                       </modules>
+                       """);
 
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
 
     createModulePom("m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      """);
     importProject();
 
-    createModulePom("m1", "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<dependencies>" +
-                    "  <dependency>" +
-                    "    <groupId>test</groupId>" +
-                    "    <artifactId><caret></artifactId>" +
-                    "  </dependency>" +
-                    "</dependencies>");
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId><caret></artifactId>
+        </dependency>
+      </dependencies>
+      """);
 
     assertCompletionVariants(m1, LOOKUP_STRING, "test:project:1", "test:m1:1", "test:m2:1");
     assertCompletionVariants(m1, RENDERING_TEXT, "project", "m1", "m2");
 
-    createModulePom("m1", "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>");
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      """);
 
-    createModulePom("m2", "<groupId>test</groupId>" +
-                    "<artifactId>m2_new</artifactId>" +
-                    "<version>1</version>");
+    createModulePom("m2", """
+      <groupId>test</groupId>
+      <artifactId>m2_new</artifactId>
+      <version>1</version>
+      """);
 
     importProject();
 
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>test</groupId>" +
-                          "    <artifactId><caret></artifactId>" +
-                          "  </dependency>" +
-                          "</dependencies>");
+    createModulePom("m1", """
+      <groupId>test</groupId>
+      <artifactId>m1</artifactId>
+      <version>1</version>
+      <dependencies>
+        <dependency>
+          <groupId>test</groupId>
+          <artifactId><caret></artifactId>
+        </dependency>
+      </dependencies>
+      """);
 
     assertCompletionVariants(m1, LOOKUP_STRING, "test:project:1", "test:m1:1", "test:m2_new:1");
     assertCompletionVariants(m1, RENDERING_TEXT, "project", "m1", "m2_new");
@@ -277,20 +307,23 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   @Test 
   public void testChangingExistingProjectsWithArtifactIdsRemoval() {
     VirtualFile m = createModulePom("m1",
-                                    "<groupId>project-group</groupId>" +
-                                    "<artifactId>m1</artifactId>" +
-                                    "<version>1</version>");
+                                    """
+                                      <groupId>project-group</groupId>
+                                      <artifactId>m1</artifactId>
+                                      <version>1</version>
+                                      """);
 
-    configureProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>project-group</groupId>" +
-                     "    <artifactId><caret></artifactId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    configureProjectPom("""
+                          <groupId>test</groupId>
+                          <artifactId>project</artifactId>
+                          <version>1</version>
+                          <dependencies>
+                            <dependency>
+                              <groupId>project-group</groupId>
+                              <artifactId><caret></artifactId>
+                            </dependency>
+                          </dependencies>
+                          """);
 
     importProjectsWithErrors(myProjectPom, m);
 
@@ -299,16 +332,17 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     createModulePom("m1", "");
     importProjectsWithErrors(myProjectPom, m);
 
-    configureProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>project-group</groupId>" +
-                     "    <artifactId><caret></artifactId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    configureProjectPom("""
+                          <groupId>test</groupId>
+                          <artifactId>project</artifactId>
+                          <version>1</version>
+                          <dependencies>
+                            <dependency>
+                              <groupId>project-group</groupId>
+                              <artifactId><caret></artifactId>
+                            </dependency>
+                          </dependencies>
+                          """);
 
     assertCompletionVariants(myProjectPom);
   }
@@ -316,25 +350,30 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   @Test 
   public void testRemovingExistingProjects() throws IOException {
     final VirtualFile m1 = createModulePom("m1",
-                                          "<groupId>project-group</groupId>" +
-                                          "<artifactId>m1</artifactId>" +
-                                          "<version>1</version>");
+                                           """
+                                             <groupId>project-group</groupId>
+                                             <artifactId>m1</artifactId>
+                                             <version>1</version>
+                                             """);
 
     final VirtualFile m2 = createModulePom("m2",
-                                          "<groupId>project-group</groupId>" +
-                                          "<artifactId>m2</artifactId>" +
-                                          "<version>1</version>");
+                                           """
+                                             <groupId>project-group</groupId>
+                                             <artifactId>m2</artifactId>
+                                             <version>1</version>
+                                             """);
 
-    configureProjectPom("<groupId>test</groupId>" +
-                        "<artifactId>project</artifactId>" +
-                        "<version>1</version>" +
-
-                        "<dependencies>" +
-                        "  <dependency>" +
-                        "    <groupId>project-group</groupId>" +
-                        "    <artifactId><caret></artifactId>" +
-                        "  </dependency>" +
-                        "</dependencies>");
+    configureProjectPom("""
+                          <groupId>test</groupId>
+                          <artifactId>project</artifactId>
+                          <version>1</version>
+                          <dependencies>
+                            <dependency>
+                              <groupId>project-group</groupId>
+                              <artifactId><caret></artifactId>
+                            </dependency>
+                          </dependencies>
+                          """);
 
     importProjectsWithErrors(myProjectPom, m1, m2);
 
@@ -351,17 +390,18 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testResolutionOutsideTheProject() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId><caret>junit</artifactId>" +
-                     "    <version>4.0</version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId><caret>junit</artifactId>
+                           <version>4.0</version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
@@ -376,14 +416,14 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     String relativePathUnixSeparator =
       FileUtil.getRelativePath(new File(myProjectRoot.getPath()), new File(filePath)).replaceAll("\\\\", "/");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<parent>" +
-                     "  <groupId>org.example</groupId>" +
-                     "  <artifactId>example</artifactId>" +
-                     "  <version>1.0</version>" +
-                     "  <relativePath>" + relativePathUnixSeparator + "<caret></relativePath>" +
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>project</artifactId>\n" +
+                     "<version>1</version>\n" +
+                     "<parent>\n" +
+                     "  <groupId>org.example</groupId>\n" +
+                     "  <artifactId>example</artifactId>\n" +
+                     "  <version>1.0</version>\n" +
+                     "  <relativePath>\n" + relativePathUnixSeparator + "<caret></relativePath>\n" +
                      "</parent>"
     );
 
@@ -393,26 +433,26 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testResolveManagedDependency() throws Exception {
-    configureProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencyManagement>" +
-                     "  <dependencies>" +
-                     "    <dependency>" +
-                     "      <groupId>junit</groupId>" +
-                     "      <artifactId>junit</artifactId>" +
-                     "      <version>4.0</version>" +
-                     "    </dependency>" +
-                     "  </dependencies>" +
-                     "</dependencyManagement>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit<caret></artifactId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    configureProjectPom("""
+                          <groupId>test</groupId>
+                          <artifactId>project</artifactId>
+                          <version>1</version>
+                          <dependencyManagement>
+                            <dependencies>
+                              <dependency>
+                                <groupId>junit</groupId>
+                                <artifactId>junit</artifactId>
+                                <version>4.0</version>
+                              </dependency>
+                            </dependencies>
+                          </dependencyManagement>
+                          <dependencies>
+                            <dependency>
+                              <groupId>junit</groupId>
+                              <artifactId>junit<caret></artifactId>
+                            </dependency>
+                          </dependencies>
+                          """);
     importProject();
 
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
@@ -426,29 +466,31 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     String repoPath = helper.getTestDataPath("local1");
     setRepositoryPath(repoPath);
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <dependencies>
+                      <dependency>
+                        <groupId>junit</groupId>
+                        <artifactId>junit</artifactId>
+                        <version>[1,4.0]</version>
+                      </dependency>
+                    </dependencies>
+                    """);
 
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>[1,4.0]</version>" +
-                  "  </dependency>" +
-                  "</dependencies>");
-
-    createProjectPom("<groupId>test</groupId>" +
-                      "<artifactId>project</artifactId>" +
-                      "<version>1</version>" +
-
-                      "<dependencies>" +
-                      "  <dependency>" +
-                      "    <groupId>junit</groupId>" +
-                      "    <artifactId>junit<caret></artifactId>" +
-                      "    <version>[1,4.0]</version>" +
-                      "  </dependency>" +
-                      "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit<caret></artifactId>
+                           <version>[1,4.0]</version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
@@ -458,18 +500,19 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testResolutionIsTypeBased() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId><caret>junit</artifactId>" +
-                     "    <version>4.0</version>" +
-                     "    <type>pom</type>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId><caret>junit</artifactId>
+                           <version>4.0</version>
+                           <type>pom</type>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
@@ -479,29 +522,34 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   @Test 
   public void testResolutionInsideTheProject() throws Exception {
     VirtualFile m1 = createModulePom("m1",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m1</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m1</artifactId>
+                                       <version>1</version>
+                                       """);
 
     VirtualFile m2 = createModulePom("m2",
-                                     "<groupId>test</groupId>" +
-                                     "<artifactId>m2</artifactId>" +
-                                     "<version>1</version>");
+                                     """
+                                       <groupId>test</groupId>
+                                       <artifactId>m2</artifactId>
+                                       <version>1</version>
+                                       """);
 
     importProjects(myProjectPom, m1, m2);
 
     createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<dependencies>" +
-                    "  <dependency>" +
-                    "    <groupId>test</groupId>" +
-                    "    <artifactId><caret>m2</artifactId>" +
-                    "    <version>1</version>" +
-                    "  </dependency>" +
-                    "</dependencies>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      <dependencies>
+                        <dependency>
+                          <groupId>test</groupId>
+                          <artifactId><caret>m2</artifactId>
+                          <version>1</version>
+                        </dependency>
+                      </dependencies>
+                      """);
 
     assertResolved(m1, findPsiFile(m2));
   }
@@ -510,19 +558,19 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   public void testResolvingSystemScopeDependencies() throws Throwable {
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>project</artifactId>\n" +
+                     "<version>1</version>\n" +
 
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>xxx</groupId>" +
-                     "    <artifactId>xxx</artifactId>" +
-                     "    <version><caret>xxx</version>" +
-                     "    <scope>system</scope>" +
-                     "    <systemPath>" + libPath + "</systemPath>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+                     "<dependencies>\n" +
+                     "  <dependency>\n" +
+                     "    <groupId>xxx</groupId>\n" +
+                     "    <artifactId>xxx</artifactId>\n" +
+                     "    <version><caret>xxx</version>\n" +
+                     "    <scope>system</scope>\n" +
+                     "    <systemPath>\n" + libPath + "</systemPath>\n" +
+                     "  </dependency>\n" +
+                     "</dependencies>\n");
 
     assertResolved(myProjectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)));
     checkHighlighting();
@@ -530,18 +578,19 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testHighlightInvalidSystemScopeDependencies() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId><error  descr=\"Dependency 'xxx:xxx:xxx' not found\">xxx</error></groupId>" +
-                     "    <artifactId><error  descr=\"Dependency 'xxx:xxx:xxx' not found\">xxx</error></artifactId>" +
-                     "    <version><error  descr=\"Dependency 'xxx:xxx:xxx' not found\">xxx</error></version>" +
-                     "    <scope>system</scope>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId><error  descr="Dependency 'xxx:xxx:xxx' not found">xxx</error></groupId>
+                           <artifactId><error  descr="Dependency 'xxx:xxx:xxx' not found">xxx</error></artifactId>
+                           <version><error  descr="Dependency 'xxx:xxx:xxx' not found">xxx</error></version>
+                           <scope>system</scope>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
@@ -550,19 +599,19 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   public void testDoNotHighlightValidSystemScopeDependencies() {
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>project</artifactId>\n" +
+                     "<version>1</version>\n" +
 
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>xxx</groupId>" +
-                     "    <artifactId>xxx</artifactId>" +
-                     "    <version>xxx</version>" +
-                     "    <scope>system</scope>" +
-                     "    <systemPath>" + libPath + "</systemPath>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+                     "<dependencies>\n" +
+                     "  <dependency>\n" +
+                     "    <groupId>xxx</groupId>\n" +
+                     "    <artifactId>xxx</artifactId>\n" +
+                     "    <version>xxx</version>\n" +
+                     "    <scope>system</scope>\n" +
+                     "    <systemPath>\n" + libPath + "</systemPath>\n" +
+                     "  </dependency>\n" +
+                     "</dependencies>\n");
     checkHighlighting();
   }
 
@@ -570,23 +619,23 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   public void testResolvingSystemScopeDependenciesWithProperties() throws Throwable {
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>project</artifactId>\n" +
+                     "<version>1</version>\n" +
 
-                     "<properties>" +
-                     "  <depPath>" + libPath + "</depPath>" +
-                     "</properties>" +
+                     "<properties>\n" +
+                     "  <depPath>\n" + libPath + "</depPath>\n" +
+                     "</properties>\n" +
 
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>xxx</groupId>" +
-                     "    <artifactId>xxx</artifactId>" +
-                     "    <version><caret>xxx</version>" +
-                     "    <scope>system</scope>" +
-                     "    <systemPath>${depPath}</systemPath>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+                     "<dependencies>\n" +
+                     "  <dependency>\n" +
+                     "    <groupId>xxx</groupId>\n" +
+                     "    <artifactId>xxx</artifactId>\n" +
+                     "    <version><caret>xxx</version>\n" +
+                     "    <scope>system</scope>\n" +
+                     "    <systemPath>${depPath}</systemPath>\n" +
+                     "  </dependency>\n" +
+                     "</dependencies>\n");
 
     assertResolved(myProjectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)));
     checkHighlighting();
@@ -596,23 +645,23 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   public void testCompletionSystemScopeDependenciesWithProperties() {
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>project</artifactId>\n" +
+                     "<version>1</version>\n" +
 
-                     "<properties>" +
-                     "  <depDir>" + new File(libPath).getParent() + "</depDir>" +
-                     "</properties>" +
+                     "<properties>\n" +
+                     "  <depDir>\n" + new File(libPath).getParent() + "</depDir>\n" +
+                     "</properties>\n" +
 
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>xxx</groupId>" +
-                     "    <artifactId>xxx</artifactId>" +
-                     "    <version>xxx</version>" +
-                     "    <scope>system</scope>" +
-                     "    <systemPath>${depDir}/<caret></systemPath>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+                     "<dependencies>\n" +
+                     "  <dependency>\n" +
+                     "    <groupId>xxx</groupId>\n" +
+                     "    <artifactId>xxx</artifactId>\n" +
+                     "    <version>xxx</version>\n" +
+                     "    <scope>system</scope>\n" +
+                     "    <systemPath>${depDir}/<caret></systemPath>\n" +
+                     "  </dependency>\n" +
+                     "</dependencies>\n");
 
     assertCompletionVariants(myProjectPom, RENDERING_TEXT, "junit-4.0.jar");
   }
@@ -621,19 +670,19 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
   public void testResolvingSystemScopeDependenciesFromSystemPath() throws Throwable {
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+    createProjectPom("<groupId>test</groupId>\n" +
+                     "<artifactId>project</artifactId>\n" +
+                     "<version>1</version>\n" +
 
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>xxx</groupId>" +
-                     "    <artifactId>xxx</artifactId>" +
-                     "    <version>xxx</version>" +
-                     "    <scope>system</scope>" +
-                     "    <systemPath>" + libPath + "<caret></systemPath>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+                     "<dependencies>\n" +
+                     "  <dependency>\n" +
+                     "    <groupId>xxx</groupId>\n" +
+                     "    <artifactId>xxx</artifactId>\n" +
+                     "    <version>xxx</version>\n" +
+                     "    <scope>system</scope>\n" +
+                     "    <systemPath>\n" + libPath + "<caret></systemPath>\n" +
+                     "  </dependency>\n" +
+                     "</dependencies>\n");
 
     assertResolved(myProjectPom, findPsiFile(LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath)));
     checkHighlighting();
@@ -641,18 +690,19 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testChooseFileIntentionForSystemDependency() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency><caret>" +
-                     "    <groupId>xxx</groupId>" +
-                     "    <artifactId>xxx</artifactId>" +
-                     "    <version>xxx</version>" +
-                     "    <scope>system</system>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency><caret>
+                           <groupId>xxx</groupId>
+                           <artifactId>xxx</artifactId>
+                           <version>xxx</version>
+                           <scope>system</system>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     IntentionAction action = getIntentionAtCaret("Choose File");
     assertNotNull(action);
@@ -684,18 +734,19 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testNoChooseFileIntentionForNonSystemDependency() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency><caret>" +
-                     "    <groupId>xxx</groupId>" +
-                     "    <artifactId>xxx</artifactId>" +
-                     "    <version>xxx</version>" +
-                     "    <scope>compile</system>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency><caret>
+                           <groupId>xxx</groupId>
+                           <artifactId>xxx</artifactId>
+                           <version>xxx</version>
+                           <scope>compile</system>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     IntentionAction action = getIntentionAtCaret("Choose File");
     assertNull(action);
@@ -703,15 +754,16 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testTypeCompletion() {
-    configureProjectPom("<groupId>test</groupId>" +
-                        "<artifactId>project</artifactId>" +
-                        "<version>1</version>" +
-
-                        "<dependencies>" +
-                        "  <dependency>" +
-                        "    <type><caret></type>" +
-                        "  </dependency>" +
-                        "</dependencies>");
+    configureProjectPom("""
+                          <groupId>test</groupId>
+                          <artifactId>project</artifactId>
+                          <version>1</version>
+                          <dependencies>
+                            <dependency>
+                              <type><caret></type>
+                            </dependency>
+                          </dependencies>
+                          """);
 
     assertCompletionVariants(myProjectPom, RENDERING_TEXT, "jar", "test-jar", "pom", "ear", "ejb", "ejb-client", "war", "bundle",
                              "jboss-har", "jboss-sar", "maven-plugin");
@@ -719,107 +771,112 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testDoNotHighlightUnknownType() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version>4.0</version>" +
-                     "    <type>xxx</type>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <version>4.0</version>
+                           <type>xxx</type>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting(myProjectPom);
   }
 
   @Test 
   public void testScopeCompletion() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <scope><caret></scope>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <scope><caret></scope>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     assertCompletionVariants(myProjectPom, RENDERING_TEXT, "compile", "provided", "runtime", "test", "system");
   }
 
   @Test 
   public void testDoNotHighlightUnknownScopes() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version>4.0</version>" +
-                     "    <scope>xxx</scope>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <version>4.0</version>
+                           <scope>xxx</scope>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting(myProjectPom);
   }
 
   @Test 
   public void testPropertiesInScopes() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <my.scope>compile</my.scope>" +
-                     "</properties>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version>4.0</version>" +
-                     "    <scope>${my.scope}</scope>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <my.scope>compile</my.scope>
+                       </properties>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <version>4.0</version>
+                           <scope>${my.scope}</scope>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting(myProjectPom);
   }
 
   @Test 
   public void testDoesNotHighlightCorrectValues() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version>4.0</version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <version>4.0</version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testHighlightingVersionIfVersionIsWrong() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <version><error>4.0.wrong</error></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <version><error>4.0.wrong</error></version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
@@ -827,201 +884,211 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testHighlightingArtifactIdAndVersionIfGroupIsUnknown() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId><error>unknown</error></groupId>" +
-                     "    <artifactId><error>junit</error></artifactId>" +
-                     "    <version><error>4.0</error></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId><error>unknown</error></groupId>
+                           <artifactId><error>junit</error></artifactId>
+                           <version><error>4.0</error></version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testHighlightingArtifactAndVersionIfGroupIsEmpty() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId><error></error></groupId>" +
-                     "    <artifactId><error>junit</error></artifactId>" +
-                     "    <version><error>4.0</error></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId><error></error></groupId>
+                           <artifactId><error>junit</error></artifactId>
+                           <version><error>4.0</error></version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testHighlightingVersionAndArtifactIfArtifactTheyAreFromAnotherGroup() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>jmock</groupId>" +
-                     "    <artifactId><error>junit</error></artifactId>" +
-                     "    <version><error>4.0</error></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>jmock</groupId>
+                           <artifactId><error>junit</error></artifactId>
+                           <version><error>4.0</error></version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testHighlightingVersionIfArtifactIsEmpty() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId><error></error></artifactId>" +
-                     "    <version><error>4.0</error></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId><error></error></artifactId>
+                           <version><error>4.0</error></version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testHighlightingVersionIfArtifactIsUnknown() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId><error>unknown</error></artifactId>" +
-                     "    <version><error>4.0</error></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId><error>unknown</error></artifactId>
+                           <version><error>4.0</error></version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testHighlightingVersionItIsFromAnotherGroup() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>jmock</groupId>" +
-                     "    <artifactId>jmock</artifactId>" +
-                     "    <version><error>4.0</error></version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>jmock</groupId>
+                           <artifactId>jmock</artifactId>
+                           <version><error>4.0</error></version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testHighlightingCoordinatesWithClosedTags() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId/><error></error>" +
-                     "    <artifactId/><error></error>" +
-                     "    <version/><error></error>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId/><error></error>
+                           <artifactId/><error></error>
+                           <version/><error></error>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testHandlingProperties() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <dep.groupId>junit</dep.groupId>" +
-                     "  <dep.artifactId>junit</dep.artifactId>" +
-                     "  <dep.version>4.0</dep.version>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <dep.groupId>junit</dep.groupId>
+                         <dep.artifactId>junit</dep.artifactId>
+                         <dep.version>4.0</dep.version>
+                       </properties>
+                       """);
     importProject();
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     // properties are taken from loaded project
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>${dep.groupId}</groupId>" +
-                     "    <artifactId>${dep.artifactId}</artifactId>" +
-                     "    <version>${dep.version}</version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    // properties are taken from loaded project
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>${dep.groupId}</groupId>
+                           <artifactId>${dep.artifactId}</artifactId>
+                           <version>${dep.version}</version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testHandlingPropertiesWhenProjectIsNotYetLoaded() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <dep.groupId>junit</dep.groupId>" +
-                     "  <dep.artifactId>junit</dep.artifactId>" +
-                     "  <dep.version>4.0</dep.version>" +
-                     "</properties>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>${dep.groupId}</groupId>" +
-                     "    <artifactId>${dep.artifactId}</artifactId>" +
-                     "    <version>${dep.version}</version>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <dep.groupId>junit</dep.groupId>
+                         <dep.artifactId>junit</dep.artifactId>
+                         <dep.version>4.0</dep.version>
+                       </properties>
+                       <dependencies>
+                         <dependency>
+                           <groupId>${dep.groupId}</groupId>
+                           <artifactId>${dep.artifactId}</artifactId>
+                           <version>${dep.version}</version>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testDontHighlightProblemsInNonManagedPom1() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <junitVersion>4.0</junitVersion>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <junitVersion>4.0</junitVersion>
+                       </properties>
+                       """);
 
     VirtualFile m = createModulePom("m1",
-                                    "<artifactId>m1</artifactId>" +
-
-                                    "<parent>" +
-                                    "  <groupId>test</groupId>" +
-                                    "  <artifactId>project</artifactId>" +
-                                    "  <version>1</version>" +
-                                    "</parent>" +
-                                    "<dependencies>" +
-                                    " <dependency>" +
-                                    " <groupId>junit</groupId>" +
-                                    " <artifactId>junit</artifactId>" +
-                                    " <version>${junitVersion}</version>" +
-                                    " </dependency>" +
-                                    "</dependencies>");
+                                    """
+                                      <artifactId>m1</artifactId>
+                                      <parent>
+                                        <groupId>test</groupId>
+                                        <artifactId>project</artifactId>
+                                        <version>1</version>
+                                      </parent>
+                                      <dependencies>
+                                       <dependency>
+                                       <groupId>junit</groupId>
+                                       <artifactId>junit</artifactId>
+                                       <version>${junitVersion}</version>
+                                       </dependency>
+                                      </dependencies>
+                                      """);
 
     importProject();
 
@@ -1030,25 +1097,27 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testDontHighlightProblemsInNonManagedPom2() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<properties>" +
-                     "  <junitVersion>4.0</junitVersion>" +
-                     "</properties>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <properties>
+                         <junitVersion>4.0</junitVersion>
+                       </properties>
+                       """);
 
     VirtualFile m = createModulePom("m1",
-                                    "<artifactId>m1</artifactId>" +
-
-                                    "<parent>" +
-                                    "  <groupId>test</groupId>" +
-                                    "  <artifactId>project</artifactId>" +
-                                    "  <version>1</version>" +
-                                    "</parent>" +
-                                    "<properties>" +
-                                    " <aaa>${junitVersion}</aaa>" +
-                                    "</properties>");
+                                    """
+                                      <artifactId>m1</artifactId>
+                                      <parent>
+                                        <groupId>test</groupId>
+                                        <artifactId>project</artifactId>
+                                        <version>1</version>
+                                      </parent>
+                                      <properties>
+                                       <aaa>${junitVersion}</aaa>
+                                      </properties>
+                                      """);
 
     importProject();
     checkHighlighting(m, true, false, true);
@@ -1056,22 +1125,23 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testExclusionCompletion() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <exclusions>" +
-                     "      <exclusion>" +
-                     "        <groupId>jmock</groupId>" +
-                     "        <artifactId><caret></artifactId>" +
-                     "      </exclusion>" +
-                     "    </exclusions>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <exclusions>
+                             <exclusion>
+                               <groupId>jmock</groupId>
+                               <artifactId><caret></artifactId>
+                             </exclusion>
+                           </exclusions>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     assertCompletionVariants(myProjectPom, RENDERING_TEXT, "jmock");
   }
@@ -1079,101 +1149,108 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
   @Test 
   public void testDoNotHighlightUnknownExclusions() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <exclusions>" +
-                     "      <exclusion>" +
-                     "        <groupId>foo</groupId>" +
-                     "        <artifactId>bar</artifactId>" +
-                     "      </exclusion>" +
-                     "    </exclusions>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <exclusions>
+                             <exclusion>
+                               <groupId>foo</groupId>
+                               <artifactId>bar</artifactId>
+                             </exclusion>
+                           </exclusions>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testExclusionHighlightingAbsentGroupId() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <exclusions>" +
-                     "      <<error descr=\"'groupId' child tag should be defined\">exclusion</error>>" +
-                     "        <artifactId>jmock</artifactId>" +
-                     "      </exclusion>" +
-                     "    </exclusions>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <exclusions>
+                             <<error descr="'groupId' child tag should be defined">exclusion</error>>
+                               <artifactId>jmock</artifactId>
+                             </exclusion>
+                           </exclusions>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test 
   public void testExclusionHighlightingAbsentArtifactId() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <groupId>junit</groupId>" +
-                     "    <artifactId>junit</artifactId>" +
-                     "    <exclusions>" +
-                     "      <<error descr=\"'artifactId' child tag should be defined\">exclusion</error>>" +
-                     "        <groupId>jmock</groupId>" +
-                     "      </exclusion>" +
-                     "    </exclusions>" +
-                     "  </dependency>" +
-                     "</dependencies>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <dependencies>
+                         <dependency>
+                           <groupId>junit</groupId>
+                           <artifactId>junit</artifactId>
+                           <exclusions>
+                             <<error descr="'artifactId' child tag should be defined">exclusion</error>>
+                               <groupId>jmock</groupId>
+                             </exclusion>
+                           </exclusions>
+                         </dependency>
+                       </dependencies>
+                       """);
 
     checkHighlighting();
   }
 
   @Test
   public void testImportDependencyChainedProperty() throws IOException {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-                     "<modules>" +
-                     "   <module>m1</module>" +
-                     "</modules>" +
-                     "<dependencyManagement>" +
-                     "    <dependencies>" +
-                     "        <dependency>" +
-                     "            <groupId>org.deptest</groupId>" +
-                     "            <artifactId>bom-depparent</artifactId>" +
-                     "            <version>1.0</version>" +
-                     "            <type>pom</type>" +
-                     "            <scope>import</scope>" +
-                     "        </dependency>" +
-                     "    </dependencies>" +
-                     "</dependencyManagement>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                          <module>m1</module>
+                       </modules>
+                       <dependencyManagement>
+                           <dependencies>
+                               <dependency>
+                                   <groupId>org.deptest</groupId>
+                                   <artifactId>bom-depparent</artifactId>
+                                   <version>1.0</version>
+                                   <type>pom</type>
+                                   <scope>import</scope>
+                               </dependency>
+                           </dependencies>
+                       </dependencyManagement>
+                       """);
 
-    createModulePom("m1", "<parent>" +
-                          "    <groupId>test</groupId>" +
-                          "    <artifactId>project</artifactId>" +
-                          "    <version>1</version>" +
-                          "  </parent>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>org.example</groupId>" +
-                          "    <artifactId>something</artifactId>" +
-                          "  </dependency>" +
-                          "</dependencies>");
+    createModulePom("m1", """
+      <parent>
+          <groupId>test</groupId>
+          <artifactId>project</artifactId>
+          <version>1</version>
+        </parent>
+      <artifactId>m1</artifactId>
+      <dependencies>
+        <dependency>
+          <groupId>org.example</groupId>
+          <artifactId>something</artifactId>
+        </dependency>
+      </dependencies>
+      """);
     importProjectWithErrors();
 
     MavenDomProjectModel model = MavenDomUtil.getMavenDomModel(myProject, myProjectPom, MavenDomProjectModel.class);

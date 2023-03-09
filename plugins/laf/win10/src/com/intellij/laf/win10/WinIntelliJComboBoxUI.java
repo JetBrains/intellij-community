@@ -231,9 +231,9 @@ public final class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           JBInsets.removeFrom(outerRect, JBUI.insets(1));
 
           int bw = 1;
-          Object op = comboBox.getClientProperty("JComponent.outline");
+          Outline op = DarculaUIUtil.getOutline(comboBox);
           if (op != null) {
-            Outline.valueOf(op.toString()).setGraphicsColor(g2, hasFocus);
+            op.setGraphicsColor(g2, hasFocus);
             bw = DarculaUIUtil.isTableCellEditor(comboBox) ? 1 : 2;
           }
 
@@ -413,9 +413,9 @@ public final class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       int bw = 1;
 
       if (comboBox.isEnabled()) {
-        Object op = comboBox.getClientProperty("JComponent.outline");
+        Outline op = DarculaUIUtil.getOutline(comboBox);
         if (op != null) {
-          Outline.valueOf(op.toString()).setGraphicsColor(g2, hasFocus);
+          op.setGraphicsColor(g2, hasFocus);
           bw = isCellRenderer ? 1 : 2;
         }
         else if (comboBox.isEditable()) {

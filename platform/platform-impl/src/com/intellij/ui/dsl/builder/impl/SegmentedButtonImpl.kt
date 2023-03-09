@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.builder.components.NO_TOOLTIP_RENDERER
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.bind
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent.Companion.whenItemSelected
@@ -19,21 +20,53 @@ import com.intellij.ui.dsl.gridLayout.Constraints
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.validation.CellValidation
+import com.intellij.ui.dsl.validation.impl.CompoundCellValidation
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
 
 @ApiStatus.Internal
-internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T) -> String) :
-  PlaceholderBaseImpl<SegmentedButton<T>>(parent), SegmentedButton<T> {
+internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
+                                      parent: RowImpl,
+                                      private val renderer: (T) -> @Nls String,
+                                      tooltipRenderer: (T) -> @Nls String? = NO_TOOLTIP_RENDERER
+) : PlaceholderBaseImpl<SegmentedButton<T>>(parent), SegmentedButton<T> {
 
   private var items: Collection<T> = emptyList()
   private var property: ObservableProperty<T>? = null
   private var maxButtonsCount = SegmentedButton.DEFAULT_MAX_BUTTONS_COUNT
 
   private val comboBox = ComboBox<T>()
-  private val segmentedButtonComponent = SegmentedButtonComponent(items, renderer)
+  private val segmentedButtonComponent = SegmentedButtonComponent(items, renderer, tooltipRenderer)
+
+  private val cellValidation = CompoundCellValidation(
+    CellValidationImpl(dialogPanelConfig, this, comboBox),
+    CellValidationImpl(dialogPanelConfig, this, segmentedButtonComponent))
+
+  override var selectedItem: T?
+    get() {
+      val result = property?.get()
+      if (result != null) {
+        return result
+      }
+
+      @Suppress("UNCHECKED_CAST")
+      return when (component) {
+        comboBox -> comboBox.selectedItem as? T
+        segmentedButtonComponent -> segmentedButtonComponent.selectedItem
+        else -> null
+      }
+    }
+
+    set(value) {
+      when (component) {
+        comboBox -> comboBox.selectedItem = value
+        segmentedButtonComponent -> segmentedButtonComponent.selectedItem = value
+      }
+    }
 
   init {
     comboBox.renderer = listCellRenderer { value, _, _ -> text = renderer(value) }
@@ -41,11 +74,13 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
     rebuild()
   }
 
+  @Deprecated("Use align method instead")
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): SegmentedButton<T> {
     super.horizontalAlign(horizontalAlign)
     return this
   }
 
+  @Deprecated("Use align method instead")
   override fun verticalAlign(verticalAlign: VerticalAlign): SegmentedButton<T> {
     super.verticalAlign(verticalAlign)
     return this
@@ -113,6 +148,11 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
     return this
   }
 
+  override fun validation(init: CellValidation<SegmentedButton<T>>.() -> Unit): SegmentedButton<T> {
+    cellValidation.init()
+    return this
+  }
+
   override fun init(panel: DialogPanel, constraints: Constraints, spacing: SpacingConfiguration) {
     super.init(panel, constraints, spacing)
     segmentedButtonComponent.spacing = spacing
@@ -130,35 +170,20 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
   }
 
   private fun fillComboBox() {
-    val selectedItem = getSelectedItem()
+    val oldSelectedItem = selectedItem
     val model = DefaultComboBoxModel<T>()
     model.addAll(items)
     comboBox.model = model
-    if (selectedItem != null && items.contains(selectedItem)) {
-      comboBox.selectedItem = selectedItem
+    if (oldSelectedItem != null && items.contains(oldSelectedItem)) {
+      comboBox.selectedItem = oldSelectedItem
     }
   }
 
   private fun fillSegmentedButtonComponent() {
-    val selectedItem = getSelectedItem()
+    val oldSelectedItem = selectedItem
     segmentedButtonComponent.items = items
-    if (selectedItem != null && items.contains(selectedItem)) {
-      segmentedButtonComponent.selectedItem = selectedItem
-    }
-  }
-
-  private fun getSelectedItem(): T? {
-    val result = property?.get()
-    if (result != null) {
-      return result
-    }
-
-    val c = component
-    @Suppress("UNCHECKED_CAST")
-    return when (c) {
-      comboBox -> comboBox.selectedItem as? T
-      segmentedButtonComponent -> segmentedButtonComponent.selectedItem
-      else -> null
+    if (oldSelectedItem != null && items.contains(oldSelectedItem)) {
+      segmentedButtonComponent.selectedItem = oldSelectedItem
     }
   }
 }

@@ -28,7 +28,7 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereElementFeaturesPro
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
-    val item = SearchEverywherePsiElementFeaturesProvider.getPsiElement(element) ?: return emptyList()
+    val item = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element) ?: return emptyList()
 
     val data = arrayListOf<EventPair<*>>()
     ReadAction.run<Nothing> {

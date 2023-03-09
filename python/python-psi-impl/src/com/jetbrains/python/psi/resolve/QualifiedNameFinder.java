@@ -35,7 +35,7 @@ import java.util.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
-public class QualifiedNameFinder {
+public final class QualifiedNameFinder {
   /**
    * Looks for a way to import given file.
    *

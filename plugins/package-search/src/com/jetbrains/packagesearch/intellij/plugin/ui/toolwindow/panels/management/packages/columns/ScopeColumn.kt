@@ -41,9 +41,9 @@ internal class ScopeColumn(
     override fun valueOf(item: PackagesTableItem<*>) = item
 
     override fun setValue(item: PackagesTableItem<*>?, value: PackagesTableItem<*>?) {
-        if (value == null) return
-        if (value.uiPackageModel.selectedScope == item?.uiPackageModel?.selectedScope) return
+        if (value == null || item == null) return
+        if (value.uiPackageModel.selectedScope == item.uiPackageModel.selectedScope) return
 
-        scopeSetter(value.uiPackageModel, value.uiPackageModel.selectedScope)
+        scopeSetter(item.uiPackageModel, value.uiPackageModel.selectedScope)
     }
 }

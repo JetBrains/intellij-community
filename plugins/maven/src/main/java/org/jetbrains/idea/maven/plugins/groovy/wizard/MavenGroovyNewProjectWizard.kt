@@ -6,12 +6,14 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.BuildSystem.logA
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.MAVEN
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
-import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
@@ -24,6 +26,7 @@ import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.asSafely
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.config.loadLatestGroovyVersions
@@ -46,51 +49,58 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     BuildSystemGroovyNewProjectWizardData by parent {
 
     private val addSampleCodeProperty = propertyGraph.property(true)
-      .bindBooleanStorage("NewProjectWizard.addSampleCodeState")
+      .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
     private var addSampleCode by addSampleCodeProperty
 
-    override fun setupSettingsUI(builder: Panel) {
-      super.setupSettingsUI(builder)
-      with(builder) {
-        row(GroovyBundle.message("label.groovy.sdk")) {
-          mavenGroovySdkComboBox(groovySdkProperty)
-        }.bottomGap(BottomGap.SMALL)
-        row {
-          checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
-            .bindSelected(addSampleCodeProperty)
-            .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
-        }.topGap(TopGap.SMALL)
+    private fun setupGroovySdkUI(builder: Panel) {
+      builder.row(GroovyBundle.message("label.groovy.sdk")) {
+        comboBox(getInitializedModel(), fallbackAwareRenderer)
+          .columns(COLUMNS_MEDIUM)
+          .bindItem(groovySdkProperty)
+          .validationOnInput { validateGroovySdk(groovySdk) }
+          .whenItemSelectedFromUi { logGroovySdkChanged(groovySdk) }
+      }.bottomGap(BottomGap.SMALL)
+    }
+
+    private fun setupSampleCodeUI(builder: Panel) {
+      builder.row {
+        checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+          .bindSelected(addSampleCodeProperty)
+          .whenStateChangedFromUi { logAddSampleCodeChanged(it) }
       }
     }
 
-    override fun setupProject(project: Project) {
-      super.setupProject(project)
+    override fun setupSettingsUI(builder: Panel) {
+      setupJavaSdkUI(builder)
+      setupGroovySdkUI(builder)
+      setupParentsUI(builder)
+      setupSampleCodeUI(builder)
+    }
 
-      val groovySdkVersion = groovySdk.getVersion() ?: GROOVY_SDK_FALLBACK_VERSION
-      val builder = MavenGroovyNewProjectBuilder(groovySdkVersion).apply {
+    override fun setupAdvancedSettingsUI(builder: Panel) {
+      setupGroupIdUI(builder)
+      setupArtifactIdUI(builder)
+    }
+
+    override fun setupProject(project: Project) {
+      val builder = MavenGroovyNewProjectBuilder(groovySdk.getVersion() ?: GROOVY_SDK_FALLBACK_VERSION).apply {
         moduleJdk = sdk
         name = parentStep.name
-        contentEntryPath = "${parentStep.path}/${parentStep.name}"
-
-        isCreatingNewProject = context.isCreatingNewProject
-
         parentProject = parentData
+        contentEntryPath = "${parentStep.path}/${parentStep.name}"
         aggregatorProject = parentData
         projectId = MavenId(groupId, artifactId, version)
         isInheritGroupId = parentData?.mavenId?.groupId == groupId
         isInheritVersion = parentData?.mavenId?.version == version
         createSampleCode = addSampleCode
       }
-      builder.commit(project)
-    }
 
-    private fun Row.mavenGroovySdkComboBox(property: ObservableMutableProperty<DistributionInfo?>) {
-      comboBox(getInitializedModel(), fallbackAwareRenderer)
-        .columns(COLUMNS_MEDIUM)
-        .bindItem(property)
-        .validationOnInput { validateGroovySdk(property.get()) }
-        .whenItemSelectedFromUi { logGroovySdkChanged(context, property.get()) }
+      ExternalProjectsManagerImpl.setupCreatedProject(project)
+      MavenProjectsManager.setupCreatedMavenProject(project)
+
+      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
+      builder.commit(project)
     }
 
     private fun ValidationInfoBuilder.validateGroovySdk(sdk: DistributionInfo?): ValidationInfo? {
@@ -114,7 +124,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     private fun getInitializedModel(): ComboBoxModel<DistributionInfo?> {
       val model = CollectionComboBoxModel<DistributionInfo?>()
       loadLatestGroovyVersions(object : DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
-        override fun onSuccess(versions: MutableList<out FrameworkLibraryVersion>) {
+        override fun onSuccess(versions: List<FrameworkLibraryVersion>) {
           SwingUtilities.invokeLater {
             for (version in versions.sortedWith(::moveUnstableVersionToTheEnd)) {
               model.add(FrameworkLibraryDistributionInfo(version))
@@ -135,9 +145,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   private class AssetsStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
     override fun setupAssets(project: Project) {
       outputDirectory = "$path/$name"
-      if (gitData?.git == true) {
-        addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
-      }
+      addAssets(StandardAssetsProvider().getMavenIgnoreAssets())
     }
   }
 }

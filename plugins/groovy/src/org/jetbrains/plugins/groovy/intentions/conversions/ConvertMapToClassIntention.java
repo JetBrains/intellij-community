@@ -177,18 +177,13 @@ public class ConvertMapToClassIntention extends Intention {
   @Nullable
   private static GrParameter getParameterByArgument(GrExpression arg) {
     PsiElement parent = PsiUtil.skipParentheses(arg.getParent(), true);
-    if (!(parent instanceof GrArgumentList)) return null;
-    final GrArgumentList argList = (GrArgumentList)parent;
+    if (!(parent instanceof final GrArgumentList argList)) return null;
 
     parent = parent.getParent();
-    if (!(parent instanceof GrMethodCall)) return null;
+    if (!(parent instanceof final GrMethodCall methodCall)) return null;
+    if (!(methodCall.getInvokedExpression() instanceof GrReferenceExpression ref)) return null;
 
-    final GrMethodCall methodCall = (GrMethodCall)parent;
-    final GrExpression expression = methodCall.getInvokedExpression();
-    if (!(expression instanceof GrReferenceExpression)) return null;
-
-    final GroovyResolveResult resolveResult = ((GrReferenceExpression)expression).advancedResolve();
-    if (resolveResult == null) return null;
+    final GroovyResolveResult resolveResult = ref.advancedResolve();
 
     GrClosableBlock[] closures = methodCall.getClosureArguments();
     final Map<GrExpression, Pair<PsiParameter, PsiType>> mapToParams = GrClosureSignatureUtil

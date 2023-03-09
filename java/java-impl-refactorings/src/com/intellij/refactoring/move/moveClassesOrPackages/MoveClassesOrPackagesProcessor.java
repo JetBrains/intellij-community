@@ -512,7 +512,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     PsiElement[] elementsToMove = myElementsToMove.clone();
     List<RefactoringElementListener> listeners =
       ContainerUtil.map(elementsToMove, psiElement -> getTransaction().getElementListener(psiElement));
-    List<@Nullable SmartPsiElementPointer<?>> movedElements = ContainerUtil.map(listeners, __ -> null);
+    List<@Nullable SmartPsiElementPointer<?>> movedElements = new ArrayList<>(Collections.nCopies(listeners.size(), null));
 
     if (branch != null) {
       for (int i = 0; i < elementsToMove.length; i++) {

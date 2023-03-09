@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
-import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
@@ -21,7 +20,7 @@ public interface InjectedFileChangesHandlerProvider {
   LanguageExtension<InjectedFileChangesHandlerProvider> EP =
     new LanguageExtension<>("com.intellij.editor.injectedFileChangesHandlerProvider");
 
-  InjectedFileChangesHandler createFileChangesHandler(List<PsiLanguageInjectionHost.Shred> shreds,
+  InjectedFileChangesHandler createFileChangesHandler(List<? extends PsiLanguageInjectionHost.Shred> shreds,
                                                       Editor hostEditor,
                                                       Document newDocument,
                                                       PsiFile injectedFile);

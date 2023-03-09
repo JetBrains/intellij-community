@@ -10,6 +10,11 @@ import com.intellij.util.SlowOperations;
 
 import java.awt.*;
 
+/**
+ * @see CommonDataKeys
+ * @see com.intellij.openapi.actionSystem.LangDataKeys
+ * @see com.intellij.openapi.actionSystem.PlatformDataKeys
+ */
 public class PlatformCoreDataKeys extends CommonDataKeys {
   public static final DataKey<VirtualFile> PROJECT_FILE_DIRECTORY = DataKey.create("context.ProjectFileDirectory");
 

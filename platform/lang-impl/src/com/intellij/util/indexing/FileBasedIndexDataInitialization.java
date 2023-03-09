@@ -23,6 +23,7 @@ import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
+import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.ints.IntSets;
@@ -50,6 +51,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
   @NotNull
   private final IntSet myStaleIds = IntSets.synchronize(new IntOpenHashSet());
   @NotNull
+  private final IntSet myDirtyFileIds = IntSets.synchronize(new IntOpenHashSet());
+  @NotNull
   private final IndexVersionRegistrationSink myRegistrationResultSink = new IndexVersionRegistrationSink();
   @NotNull
   private final IndexConfiguration myState = new IndexConfiguration();
@@ -66,6 +69,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     Iterator<FileBasedIndexExtension<?, ?>> extensions = extPoint.iterator();
     List<ThrowableRunnable<?>> tasks = new ArrayList<>(extPoint.size());
 
+    myDirtyFileIds.addAll(PersistentDirtyFilesQueue.INSTANCE.readIndexingQueue());
     // todo: init contentless indices first ?
     while (extensions.hasNext()) {
       FileBasedIndexExtension<?, ?> extension = extensions.next();
@@ -84,7 +88,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
           FileBasedIndexImpl.registerIndexer(extension,
                                              myState,
                                              myRegistrationResultSink,
-                                             myStaleIds);
+                                             myStaleIds,
+                                             myDirtyFileIds);
         }
         catch (IOException io) {
           throw io;
@@ -175,11 +180,13 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCounting();
       FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes();
       myFileBasedIndex.addStaleIds(myStaleIds);
+      myFileBasedIndex.addStaleIds(myDirtyFileIds);
       myFileBasedIndex.setUpFlusher();
       myFileBasedIndex.setUpHealthCheck();
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
       myRegisteredIndexes.markInitialized();  // this will ensure that all changes to component's state will be visible to other threads
       saveRegisteredIndicesAndDropUnregisteredOnes(myState.getIndexIDs());
+      PersistentDirtyFilesQueue.INSTANCE.removeCurrentFile();
     }
   }
 

@@ -32,7 +32,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
     boolean processed = false;
 
     while (true) {
-      @SuppressWarnings("unchecked")
+      //noinspection unchecked
       ValueReference<K, V> ref = (ValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
       myMap.remove(ref.getKey(), ref);
@@ -75,7 +75,7 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   }
 
   @Override
-  public boolean remove(final @NotNull Object key, @NotNull Object value) {
+  public boolean remove(@NotNull Object key, @NotNull Object value) {
     //noinspection unchecked
     boolean removed = myMap.remove(key, createValueReference((K)key, (V)value));
     processQueue();
@@ -83,14 +83,14 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   }
 
   @Override
-  public boolean replace(final @NotNull K key, final @NotNull V oldValue, final @NotNull V newValue) {
+  public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
     boolean replaced = myMap.replace(key, createValueReference(key, oldValue), createValueReference(key, newValue));
     processQueue();
     return replaced;
   }
 
   @Override
-  public V replace(final @NotNull K key, final @NotNull V value) {
+  public V replace(@NotNull K key, @NotNull V value) {
     ValueReference<K, V> ref = myMap.replace(key, createValueReference(key, value));
     processQueue();
     return ref == null ? null : ref.get();
@@ -151,9 +151,9 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
   @Override
   public @NotNull Collection<V> values() {
     Collection<V> result = new ArrayList<>();
-    final Collection<ValueReference<K, V>> refs = myMap.values();
+    Collection<ValueReference<K, V>> refs = myMap.values();
     for (ValueReference<K, V> ref : refs) {
-      final V value = ref.get();
+      V value = ref.get();
       if (value != null) {
         result.add(value);
       }
@@ -163,11 +163,11 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
 
   @Override
   public @NotNull Set<Entry<K, V>> entrySet() {
-    final Set<K> keys = keySet();
+    Set<K> keys = keySet();
     Set<Entry<K, V>> entries = new HashSet<>();
 
-    for (final K key : keys) {
-      final V value = get(key);
+    for (K key : keys) {
+      V value = get(key);
       if (value != null) {
         entries.add(new Entry<K, V>() {
           @Override

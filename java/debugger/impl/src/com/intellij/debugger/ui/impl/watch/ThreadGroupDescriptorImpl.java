@@ -25,7 +25,7 @@ import com.intellij.debugger.ui.tree.ThreadGroupDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.sun.jdi.ObjectCollectedException;
 
-public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements ThreadGroupDescriptor{
+public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements ThreadGroupDescriptor {
   private final ThreadGroupReferenceProxyImpl myThreadGroup;
   private boolean myIsCurrent;
   private String myName = null;
@@ -69,15 +69,15 @@ public class ThreadGroupDescriptorImpl extends NodeDescriptorImpl implements Thr
 
   @Override
   public void setContext(EvaluationContextImpl context) {
-    ThreadReferenceProxyImpl threadProxy = context != null? context.getSuspendContext().getThread() : null;
+    ThreadReferenceProxyImpl threadProxy = context != null ? context.getSuspendContext().getThread() : null;
     myIsCurrent = threadProxy != null && isDescendantGroup(threadProxy.threadGroupProxy());
     myIsExpandable = calcExpandable();
   }
 
   private boolean isDescendantGroup(ThreadGroupReferenceProxyImpl group) {
-    if(group == null) return false;
+    if (group == null) return false;
 
-    if(getThreadGroupReference() == group) return true;
+    if (getThreadGroupReference() == group) return true;
 
     return isDescendantGroup(group.parent());
   }

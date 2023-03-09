@@ -23,7 +23,7 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
     this(project, ChangeListManager.getInstance(project).getUnversionedFilesPaths());
   }
 
-  public UnversionedViewDialog(@NotNull Project project, @NotNull List<FilePath> filePaths) {
+  public UnversionedViewDialog(@NotNull Project project, @NotNull List<? extends FilePath> filePaths) {
     super(project, VcsBundle.message("dialog.title.unversioned.files"), ChangesListView.UNVERSIONED_FILE_PATHS_DATA_KEY, filePaths);
   }
 

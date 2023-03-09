@@ -72,6 +72,10 @@ public class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableI
     return myPersistentMap.containsMapping(key);
   }
 
+  public PersistentMap<Integer, ByteArraySequence> getUnderlyingMap(){
+    return myPersistentMap;
+  }
+
   @NotNull
   private static PersistentMap<Integer, ByteArraySequence> createMap(@NotNull Path file,
                                                                      boolean useChunks,

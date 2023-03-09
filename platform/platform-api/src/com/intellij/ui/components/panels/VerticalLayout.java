@@ -18,7 +18,10 @@ import java.util.List;
  * and the double gap is added between groups of components. The gap will be scaled automatically.
  * <p><b>NB!: this class must be modified together with the {@code HorizontalLayout} class accordingly</b></p>
  *
+ * For simpler cases without groups {@code ListLayout} should be better
+ *
  * @see HorizontalLayout
+ * @see ListLayout
  */
 public final class VerticalLayout implements LayoutManager2 {
   public static final int FILL = -1;

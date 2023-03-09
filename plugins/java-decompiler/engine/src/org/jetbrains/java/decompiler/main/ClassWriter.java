@@ -634,9 +634,8 @@ public class ClassWriter {
     try {
       boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
       boolean isAnnotation = cl.hasModifier(CodeConstants.ACC_ANNOTATION);
-      boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
       boolean isDeprecated = mt.hasAttribute(StructGeneralAttribute.ATTRIBUTE_DEPRECATED);
-      boolean clInit = false, init = false, dInit = false;
+      boolean clInit = false, dInit = false;
 
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
 
@@ -677,9 +676,6 @@ public class ClassWriter {
             if (mask != null) {
               actualParams = mask.stream().filter(Objects::isNull).count();
             }
-            else if (isEnum && init) {
-              actualParams -= 2;
-            }
             if (actualParams != descriptor.parameterTypes.size()) {
               String message = "Inconsistent generic signature in method " + mt.getName() + " " + mt.getDescriptor() + " in " + cl.qualifiedName;
               DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
@@ -700,6 +696,7 @@ public class ClassWriter {
       }
 
       String name = mt.getName();
+      boolean init = false;
       if (CodeConstants.INIT_NAME.equals(name)) {
         if (node.type == ClassNode.CLASS_ANONYMOUS) {
           name = "";

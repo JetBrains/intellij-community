@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,7 +25,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class LambdaParameterHidingMemberVariableInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
@@ -55,11 +56,10 @@ public class LambdaParameterHidingMemberVariableInspection extends BaseInspectio
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(InspectionGadgetsBundle.message("lambda.parameter.hides.member.variable.ignore.invisible.option"),
-                             "m_ignoreInvisibleFields");
-    return optionsPanel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreInvisibleFields",
+               InspectionGadgetsBundle.message("lambda.parameter.hides.member.variable.ignore.invisible.option")));
   }
 
   @Override

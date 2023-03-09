@@ -2,21 +2,23 @@
 package org.jetbrains.kotlin.idea.gradle.diagnostic
 
 import com.intellij.diagnostic.KotlinCompilerCrash
+import com.intellij.diagnostic.LogMessage
+import com.intellij.diagnostic.MessagePool
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.openapi.startup.ProjectPostStartupActivity
+import kotlinx.coroutines.delay
 import java.io.File
 import java.io.FileReader
-import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * This class schedules checks of Kotlin Compiler crashes which took place outside IDE, e.g. when compilation
  * was executed from Gradle.
  */
-class KotlinGradleBuildErrorsChecker : StartupActivity.DumbAware, Runnable {
-
+class KotlinGradleBuildErrorsChecker : ProjectPostStartupActivity {
     companion object {
         const val EXECUTION_DELAY_MIN = 2L
         const val BUILD_ERROR_REPORTS_FOLDER = ".gradle/kotlin/errors"
@@ -59,31 +61,37 @@ class KotlinGradleBuildErrorsChecker : StartupActivity.DumbAware, Runnable {
 
     private var buildErrorsDir: File? = null
 
-    override fun runActivity(project: Project) {
+    override suspend fun execute(project: Project) {
         buildErrorsDir = project.basePath?.let { File(it).resolve(BUILD_ERROR_REPORTS_FOLDER) }
 
-        AppExecutorUtil.getAppScheduledExecutorService()
-            .scheduleWithFixedDelay(this, EXECUTION_DELAY_MIN, EXECUTION_DELAY_MIN, TimeUnit.SECONDS)
+        while (true) {
+            delay(EXECUTION_DELAY_MIN.minutes)
+            run()
+        }
     }
 
-    override fun run() {
+    private fun run() {
         buildErrorsDir?.listFiles()?.filter { it.isFile && it.nameWithoutExtension.startsWith(BUILD_ERROR_REPORTS_FILE_PREFIX) }
             ?.forEach {
                 try {
                     readErrorFileAndProcessEvent(it) { crashException, rawException ->
-                        logger.error("Exception happen during Kotlin compilation", crashException,
-                                     Attachment("Kotlin version", crashException.version),
-                                     Attachment("raw exception", rawException)
+                        val logMessage = crashException.message!! // KotlinCompilerCrash guaranties that message is nonnull field
+                        val logEvent = LogMessage.createEvent(
+                            crashException,
+                            logMessage,
+                            Attachment("raw exception", rawException),
+                            Attachment("Kotlin version", crashException.version)
                         )
+                        val ideaEvent =
+                            IdeaLoggingEvent(logMessage, RuntimeException("Kotlin build exception: $it"), logEvent.data)
+                        //Add compilation exception to idea.log for AndroidStudio
+                        logger.error("Exception happen during Kotlin compilation", crashException)
+                        MessagePool.getInstance().addIdeFatalMessage(ideaEvent)
                     }
                     it.delete()
                 } catch (e: Exception) {
                     throw Exception("Could not parse build error file", e)
                 }
             }
-
     }
-
-
-
 }

@@ -12,7 +12,6 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -71,8 +70,8 @@ internal object GHPRDetailsComponent {
       isOpaque = false
       border = JBUI.Borders.empty(8)
 
-      add(branches, CC().gapBottom("${UI.scale(8)}"))
-      add(title, CC().gapBottom("${UI.scale(8)}"))
+      add(branches, CC().gapBottom("8"))
+      add(title, CC().gapBottom("8"))
       add(description, CC().grow().push().minHeight("0"))
       add(timelineLink, CC().gapBottom("push"))
     }

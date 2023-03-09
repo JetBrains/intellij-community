@@ -564,12 +564,18 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   @Override
   public void loadState(@NotNull State state) {
-    themeIsCustomized = true;
     myState = state;
-    EditorColorsScheme colorsScheme = mySchemeManager.findSchemeByName(myState.colorScheme);
-    setGlobalSchemeInner(myState.colorScheme == null ? getDefaultScheme() : colorsScheme);
-
-    notifyAboutSolarizedColorSchemeDeprecationIfSet(colorsScheme);
+    EditorColorsScheme colorsScheme = myState.colorScheme != null ? mySchemeManager.findSchemeByName(myState.colorScheme) : null;
+    if (colorsScheme == null) {
+      if (myState.colorScheme != null) {
+        LOG.warn(myState.colorScheme + " color scheme is missing");
+      }
+      noStateLoaded();
+    } else {
+      themeIsCustomized = true;
+      setGlobalSchemeInner(colorsScheme);
+      notifyAboutSolarizedColorSchemeDeprecationIfSet(colorsScheme);
+    }
   }
 
   @Override

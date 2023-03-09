@@ -3,7 +3,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
@@ -86,37 +86,38 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
    * Adds Link at the bottom of the text that
    * opens tab in target editor
    */
-  private fun linkThatNavigatesToEditor(@NlsContexts.LinkLabel text: String, editorProviderId: String, project: Project, editor: FileEditor) =
+  private fun linkThatNavigatesToEditor(@NlsContexts.LinkLabel text: String, editorProviderId: String, project: Project, editor: FileEditor) {
     link(text) {
-      editor.tryOpenTab(project, editorProviderId)
+      tryOpenTab(fileEditor = editor, project = project, editorProviderId = editorProviderId)
     }
+  }
 
   /**
    * Adds Link at the bottom of the text that
    * opens text tab in target editor
    */
-  fun linkThatNavigatesToTextEditor(@NlsContexts.LinkLabel text: String, project: Project, editor: FileEditor) =
-    linkThatNavigatesToEditor(text,
-                              "text-editor",
-                              project,
-                              editor)
+  fun linkThatNavigatesToTextEditor(@NlsContexts.LinkLabel text: String, project: Project, editor: FileEditor) {
+    linkThatNavigatesToEditor(text = text,
+                              editorProviderId = "text-editor",
+                              project = project,
+                              editor = editor)
+  }
 
   /**
    * Opens tab in target editor
    */
-  private fun FileEditor.tryOpenTab(project: Project, editorProviderId: String): Boolean {
-    val impl = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return false
-
-    for (window in impl.windows) {
-      for (composite in window.composites.toList()) {
+  private fun tryOpenTab(fileEditor: FileEditor, project: Project, editorProviderId: String): Boolean {
+    val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
+    for (window in fileEditorManager.windows) {
+      for (composite in window.getComposites().toList()) {
         for (tab in composite.allEditors) {
-          if (tab == this) {
-            //move focus to current window
+          if (tab == fileEditor) {
+            // move focus to the current window
             window.setAsCurrentWindow(true)
-            //select editor
-            window.setSelectedComposite(composite, true)
-            //open tab
-            composite.fileEditorManager.setSelectedEditor(composite.file, editorProviderId)
+            // select editor
+            window.setSelectedComposite(composite = composite, focusEditor = true)
+            // open tab
+            fileEditorManager.setSelectedEditor(composite.file, editorProviderId)
             return true
           }
         }
@@ -137,10 +138,13 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
       }
     }
 
-    if (wrap)
+    if (wrap) {
       drawMessagePane()
-    else //draw label otherwise to avoid wrapping on resize
+    }
+    else {
+      //draw label otherwise to avoid wrapping on resize
       drawLabel()
+    }
 
     for ((text, action) in myButtons) {
       add(Link(text, null, action), "alignx center, gapbottom ${UIUtil.DEFAULT_VGAP}")
@@ -190,9 +194,7 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
     }
   }
 
-  private fun getGapAfterMessage() =
-    if (myButtons.count() > 1)
-      UIUtil.DEFAULT_VGAP + 1
-    else
-      UIUtil.DEFAULT_VGAP
+  private fun getGapAfterMessage(): Int {
+    return if (myButtons.count() > 1) UIUtil.DEFAULT_VGAP + 1 else UIUtil.DEFAULT_VGAP
+  }
 }

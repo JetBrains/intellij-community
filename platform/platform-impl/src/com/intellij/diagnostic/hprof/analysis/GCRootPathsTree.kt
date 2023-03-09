@@ -29,7 +29,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import java.util.*
 
-internal class GCRootPathsTree(
+class GCRootPathsTree(
   val analysisContext: AnalysisContext,
   private val treeDisplayOptions: AnalysisConfig.TreeDisplayOptions,
   allObjectsOfClass: ClassDefinition?

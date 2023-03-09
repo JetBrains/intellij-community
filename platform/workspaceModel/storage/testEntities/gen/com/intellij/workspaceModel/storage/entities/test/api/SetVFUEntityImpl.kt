@@ -18,6 +18,9 @@ import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceLis
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceSet
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 
@@ -68,7 +71,7 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
       // Builder may switch to snapshot at any moment and lock entity data to modification
       this.currentEntityData = null
 
-      index(this, "fileProperty", this.fileProperty.toHashSet())
+      index(this, "fileProperty", this.fileProperty)
       // Process linked entities that are connected without a builder
       processLinkedEntities(builder)
       checkInitialization() // TODO uncomment and check failed tests
@@ -104,8 +107,7 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource.data) this.data = dataSource.data
       if (this.fileProperty != dataSource.fileProperty) this.fileProperty = dataSource.fileProperty.toMutableSet()
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 
@@ -128,7 +130,7 @@ open class SetVFUEntityImpl(val dataSource: SetVFUEntityData) : SetVFUEntity, Wo
 
     private val filePropertyUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
       val _diff = diff
-      if (_diff != null) index(this, "fileProperty", value.toHashSet())
+      if (_diff != null) index(this, "fileProperty", value)
       changedProperty.add("fileProperty")
     }
     override var fileProperty: MutableSet<VirtualFileUrl>

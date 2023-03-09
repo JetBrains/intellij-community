@@ -5,6 +5,9 @@ import git4idea.remote.hosting.HostedGitRepositoryConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
@@ -12,8 +15,11 @@ class GitLabProjectConnection(
   private val scope: CoroutineScope,
   override val repo: GitLabProjectMapping,
   override val account: GitLabAccount,
-  val apiClient: GitLabApi
+  val currentUser: GitLabUserDTO,
+  val apiClient: GitLabApi,
+  tokenState: Flow<String>
 ) : HostedGitRepositoryConnection<GitLabProjectMapping, GitLabAccount> {
+  val tokenRefreshFlow: Flow<Unit> = tokenState.map { }
 
   override suspend fun close() {
     try {

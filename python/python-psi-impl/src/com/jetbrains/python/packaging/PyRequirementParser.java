@@ -31,7 +31,7 @@ import java.util.stream.StreamSupport;
  * @see PyPackageManager#parseRequirements(String)
  * @see PyPackageManager#parseRequirements(VirtualFile)
  */
-public class PyRequirementParser {
+public final class PyRequirementParser {
 
   // common regular expressions
 

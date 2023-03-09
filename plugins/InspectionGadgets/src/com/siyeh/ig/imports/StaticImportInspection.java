@@ -15,8 +15,9 @@
  */
 package com.siyeh.ig.imports;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -34,14 +35,14 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 public class StaticImportInspection extends BaseInspection {
 
@@ -67,16 +68,13 @@ public class StaticImportInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    final JPanel chooserList =
-      UiUtils.createTreeClassChooserList(allowedClasses, InspectionGadgetsBundle.message("static.import.options.border.title"),
-                                         InspectionGadgetsBundle.message("static.import.options.chooserTitle"));
-    panel.add(chooserList, "growx, wrap");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.single.field.static.imports.option"), "ignoreSingleFieldImports");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.single.method.static.imports.option"), "ignoreSingeMethodImports");
-
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringSet("allowedClasses", InspectionGadgetsBundle.message("static.import.options.border.title"),
+                new JavaClassValidator().withTitle(InspectionGadgetsBundle.message("static.import.options.chooserTitle"))),
+      checkbox("ignoreSingleFieldImports", InspectionGadgetsBundle.message("ignore.single.field.static.imports.option")),
+      checkbox("ignoreSingeMethodImports", InspectionGadgetsBundle.message("ignore.single.method.static.imports.option"))
+    );
   }
 
   @Override
@@ -110,7 +108,7 @@ public class StaticImportInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiImportStaticStatement importStatement = (PsiImportStaticStatement)descriptor.getPsiElement();
       final PsiJavaCodeReferenceElement importReference = importStatement.getImportReference();
       if (importReference == null) {

@@ -49,7 +49,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
 
 
   @Override
-  public void findUsages(@NotNull List<FixableUsageInfo> usages) {
+  public void findUsages(@NotNull List<? super FixableUsageInfo> usages) {
     for (final MemberInfo memberInfo : myDelegateMethodInfos) {
       if (!memberInfo.isChecked()) continue;
       final PsiMethod method = (PsiMethod)memberInfo.getMember();
@@ -77,7 +77,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
   }
 
   private void processUsagesForMethod(final boolean deleteMethodHierarchy, PsiMethod method, int[] paramPermutation, String getterName, PsiMethod delegatedMethod,
-                                        List<FixableUsageInfo> usages) {
+                                      List<? super FixableUsageInfo> usages) {
     for (PsiReference reference : ReferencesSearch.search(method)) {
       final PsiElement referenceElement = reference.getElement();
       final PsiMethodCallExpression call = (PsiMethodCallExpression)referenceElement.getParent();

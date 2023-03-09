@@ -29,7 +29,7 @@ internal class SearchEverywhereSymbolFeaturesProvider
                                   searchQuery: String,
                                   elementPriority: Int,
                                   cache: FeaturesProviderCache?): List<EventPair<*>> {
-    val psiElement = SearchEverywherePsiElementFeaturesProvider.getPsiElement(element) ?: return emptyList()
+    val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElement(element) ?: return emptyList()
     return getParentStatisticianFeatures(psiElement)
   }
 

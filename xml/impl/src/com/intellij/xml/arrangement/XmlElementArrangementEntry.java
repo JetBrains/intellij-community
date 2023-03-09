@@ -44,9 +44,8 @@ public class XmlElementArrangementEntry extends DefaultArrangementEntry
     return myNamespace;
   }
 
-  @NotNull
   @Override
-  public Set<ArrangementSettingsToken> getTypes() {
+  public @NotNull Set<? extends ArrangementSettingsToken> getTypes() {
     return Collections.singleton(myType);
   }
 }

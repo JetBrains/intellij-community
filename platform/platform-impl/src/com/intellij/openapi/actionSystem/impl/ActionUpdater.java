@@ -6,6 +6,7 @@ import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -67,7 +68,6 @@ final class ActionUpdater {
   private static final Executor ourFastTrackExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Fast)", 1);
 
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
-  private static final List<CancellablePromise<?>> ourToolbarPromises = new CopyOnWriteArrayList<>();
   private static FList<String> ourInEDTActionOperationStack = FList.emptyList();
   private static boolean ourNoRulesInEDTSection;
 
@@ -170,7 +170,7 @@ final class ActionUpdater {
     boolean shallAsync = updateThread == ActionUpdateThread.BGT;
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean shallEDT = !(canAsync && shallAsync);
-    if (isEDT && !shallEDT && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM) &&
+    if (isEDT && !shallEDT && !SlowOperations.isInSection(SlowOperations.ACTION_PERFORM) &&
         !ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error("Calling on EDT " + operationName + " that requires " + updateThread +
                 (myForcedUpdateThread != null ? " (forced)" : ""));
@@ -366,6 +366,11 @@ final class ActionUpdater {
                  Utils.operationName(group, null, myPlace) + ". Use `ActionUpdateThread.BGT`.");
       }
     });
+
+    if (myToolbarAction) {
+      cancelOnUserActivity(promise, disposableParent);
+    }
+
     Computable<Computable<Void>> computable = () -> {
       indicator.checkCanceled();
       if (myTestDelayMillis > 0) waitTheTestDelay();
@@ -381,9 +386,8 @@ final class ActionUpdater {
         return null;
       };
     };
-    List<CancellablePromise<?>> targetPromises = myToolbarAction ? ourToolbarPromises : ourPromises;
-    targetPromises.add(promise);
-    boolean isFastTrack = myLaterInvocator != null && SlowOperations.isInsideActivity(SlowOperations.FAST_TRACK);
+    ourPromises.add(promise);
+    boolean isFastTrack = myLaterInvocator != null && SlowOperations.isInSection(SlowOperations.FAST_TRACK);
     Executor executor = isFastTrack ? ourFastTrackExecutor : ourCommonExecutor;
     executor.execute(Context.current().wrap(() -> {
       Ref<Computable<Void>> applyRunnableRef = Ref.create();
@@ -404,7 +408,7 @@ final class ActionUpdater {
         }
       }
       finally {
-        targetPromises.remove(promise);
+        ourPromises.remove(promise);
         if (!promise.isDone()) {
           cancelPromise(promise, "unknown reason");
           LOG.error(new Throwable("'" + myPlace + "' update exited incorrectly (" + !applyRunnableRef.isNull() + ")"));
@@ -425,17 +429,11 @@ final class ActionUpdater {
   }
 
   static void cancelAllUpdates(@NotNull String reason) {
-    String adjusted = reason + " (cancelling all updates)";
-    cancelPromises(ourToolbarPromises, adjusted);
-    cancelPromises(ourPromises, adjusted);
-  }
-
-  private static void cancelPromises(@NotNull List<CancellablePromise<?>> promises, @NotNull Object reason) {
-    if (promises.isEmpty()) return;
-    CancellablePromise<?>[] copy = promises.toArray(new CancellablePromise[0]);
-    promises.clear();
+    if (ourPromises.isEmpty()) return;
+    CancellablePromise<?>[] copy = ourPromises.toArray(new CancellablePromise[0]);
+    ourPromises.clear();
     for (CancellablePromise<?> promise : copy) {
-      cancelPromise(promise, reason);
+      cancelPromise(promise, reason + " (cancelling all updates)");
     }
   }
 
@@ -499,14 +497,18 @@ final class ActionUpdater {
     }
   }
 
-  static {
+  private static void cancelOnUserActivity(@NotNull CancellablePromise<?> promise,
+                                           @NotNull Disposable disposableParent) {
+    Disposable disposable = Disposer.newDisposable("Action Update");
+    Disposer.register(disposableParent, disposable);
     IdeEventQueue.getInstance().addPreprocessor(event -> {
       if (event instanceof KeyEvent && ((KeyEvent)event).getKeyCode() != 0 ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
-        cancelPromises(ourToolbarPromises, event);
+        cancelPromise(promise, event);
       }
       return false;
-    }, ApplicationManager.getApplication());
+    }, disposable);
+    promise.onProcessed(__ -> Disposer.dispose(disposable));
   }
 
   private List<AnAction> doExpandActionGroup(ActionGroup group, boolean hideDisabled, UpdateStrategy strategy) {
@@ -773,15 +775,8 @@ final class ActionUpdater {
 
   private enum Op { update, getChildren }
 
-  private static class UpdateStrategy {
-    final NullableFunction<? super AnAction, Presentation> update;
-    final NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren;
-
-    UpdateStrategy(NullableFunction<? super AnAction, Presentation> update,
-                   NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren) {
-      this.update = update;
-      this.getChildren = getChildren;
-    }
+  private record UpdateStrategy(NullableFunction<? super AnAction, Presentation> update,
+                                NotNullFunction<? super ActionGroup, ? extends AnAction[]> getChildren) {
   }
 
   static @NotNull ActionUpdater getActionUpdater(@NotNull UpdateSession session) {

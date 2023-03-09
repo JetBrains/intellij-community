@@ -74,7 +74,7 @@ public final class IdeMouseEventDispatcher {
   public IdeMouseEventDispatcher() {
   }
 
-  private static void fillActionsList(@NotNull List<AnAction> actions,
+  private static void fillActionsList(@NotNull List<? super AnAction> actions,
                                       @NotNull Component component,
                                       @NotNull MouseShortcut mouseShortcut,
                                       boolean recursive) {

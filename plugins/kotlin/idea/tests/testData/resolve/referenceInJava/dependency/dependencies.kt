@@ -43,7 +43,7 @@ public object KotlinObject {
     fun f() = 1
 }
 
-public interface StaticFieldInClassObjectInTrait {
+public interface StaticFieldInClassObjectInInterface {
     companion object {
         public const val XX: String = "xx"
     }
@@ -55,17 +55,17 @@ object PlatformStaticFun {
     }
 }
 
-interface TraitNoImpl {
+interface InterfaceNoImpl {
     fun foo()
 }
 
-public class TraitWithDelegatedNoImpl(f: TraitNoImpl): TraitNoImpl by f
+public class InterfaceWithDelegatedNoImpl(f: InterfaceNoImpl): InterfaceNoImpl by f
 
-interface TraitWithImpl {
+interface InterfaceWithImpl {
     fun foo() = 1
 }
 
-public class TraitWithDelegatedWithImpl(f: TraitWithImpl) : TraitWithImpl by f
+public class InterfaceWithDelegatedWithImpl(f: InterfaceWithImpl) : InterfaceWithImpl by f
 
 @kotlin.jvm.JvmOverloads
 public fun withJvmOverloads(i: Int, b: Boolean = false, s: String="hello") {}

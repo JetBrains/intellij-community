@@ -310,8 +310,8 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
   private fun getDecorator(relativePoint: RelativePoint): InternalDecoratorImpl? {
     val rootPane = pane.rootPane
     if (rootPane is IdeRootPane) {
-      val point = relativePoint.getPoint(rootPane.toolWindowPane)
-      val component = SwingUtilities.getDeepestComponentAt(rootPane.toolWindowPane, point.x, point.y)
+      val point = relativePoint.getPoint(rootPane.getToolWindowPane())
+      val component = SwingUtilities.getDeepestComponentAt(rootPane.getToolWindowPane(), point.x, point.y)
       return InternalDecoratorImpl.findNearestDecorator(component)
     }
     return null

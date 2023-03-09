@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
@@ -40,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -539,6 +541,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       try {
         initDescriptions(page, descriptions, scheme);
       }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
       catch (Exception e) {
         LOG.error(e);
       }
@@ -546,6 +551,9 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     for (ColorAndFontDescriptorsProvider provider : ColorAndFontDescriptorsProvider.EP_NAME.getExtensionList()) {
       try {
         initDescriptions(provider, descriptions, scheme);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (Exception e) {
         LOG.error(e);
@@ -1351,6 +1359,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         });
       }
       return mySubPanel;
+    }
+
+    @Override
+    public void focusOn(@Nls @NotNull String label) {
+      createPanel().showOption(label);
     }
 
     @Override

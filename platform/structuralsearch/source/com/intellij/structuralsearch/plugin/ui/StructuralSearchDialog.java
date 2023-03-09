@@ -13,6 +13,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.lang.Language;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -224,7 +225,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
         close(CANCEL_EXIT_CODE);
       }
     });
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
         if (project == myProject) {
@@ -1238,8 +1239,8 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       if (editorTextField == null) {
         return;
       }
-      final Object object = editorTextField.getClientProperty("JComponent.outline");
-      if ("error".equals(object) || "warning".equals(object)) {
+      DarculaUIUtil.Outline object = DarculaUIUtil.getOutline(editorTextField);
+      if (DarculaUIUtil.isWarningOrError(object)) {
         myErrorBorder.paintBorder(c, g, x, y, width, height);
       }
     }
@@ -1280,7 +1281,6 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
     }
 
     private void init() {
-      getTemplatePresentation().setText(SSRBundle.messagePointer(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
       getTemplatePresentation().setIcon(AllIcons.Actions.Refresh);
       final ActionManager actionManager = ActionManager.getInstance();
       final ShortcutSet searchShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet();
@@ -1289,6 +1289,16 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
                                       ? new CompositeShortcutSet(searchShortcutSet, replaceShortcutSet)
                                       : new CompositeShortcutSet(replaceShortcutSet, searchShortcutSet);
       registerCustomShortcutSet(shortcutSet, getRootPane());
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setText(SSRBundle.messagePointer(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.BGT;
     }
   }
 

@@ -10,8 +10,12 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
+import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.newTests.TestWithKotlinPluginAndGradleVersions
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.OrderEntriesFilteringTestFeature
+import org.jetbrains.kotlin.gradle.workspace.WorkspacePrintingMode
+import org.jetbrains.kotlin.gradle.workspace.checkWorkspaceModel
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_4_32
-import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_5_32
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_6_21
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_7_20
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
@@ -20,7 +24,9 @@ import org.junit.Rule
 import org.junit.runners.Parameterized
 
 @Suppress("ACCIDENTAL_OVERRIDE")
-abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase() {
+abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImportingTestCase(), TestWithKotlinPluginAndGradleVersions {
+
+    annotation class AndroidImportingTest
 
     sealed class KotlinVersionRequirement {
         data class Exact(val version: KotlinToolingVersion) : KotlinVersionRequirement()
@@ -40,14 +46,21 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     @JvmField
     var gradleAndKotlinPluginVersionMatchingRule = PluginTargetVersionsRule()
 
+    @Rule
+    @JvmField
+    var androidImportingTestRule = AndroidImportingTestRule()
+
     @JvmField
     @Parameterized.Parameter(1)
     var kotlinPluginVersionParam: KotlinPluginVersionParam? = null
 
-    val kotlinPluginVersion: KotlinToolingVersion
+    override val kotlinPluginVersion: KotlinToolingVersion
         get() = checkNotNull(kotlinPluginVersionParam) {
             "Missing 'kotlinPluginVersionParam'"
         }.version
+
+    override val gradleVersion: String
+        get() = super.gradleVersion
 
     override fun setUp() {
         super.setUp()
@@ -79,6 +92,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         }
     }
 
+
     companion object {
         const val kotlinAndGradleParametersName: String = "Gradle-{0}, KotlinGradlePlugin-{1}"
 
@@ -107,13 +121,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         }
     }
 
-    val androidProperties: Map<String, String>
-        get() = mapOf(
-            "android_gradle_plugin_version" to "7.3.0",
-            "compile_sdk_version" to "31",
-            "build_tools_version" to "28.0.3",
-        )
-
     val isHmppEnabledByDefault get() = kotlinPluginVersion.isHmppEnabledByDefault
 
     protected val hmppProperties: Map<String, String>
@@ -138,7 +145,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {
-            putAll(androidProperties)
+            putAll(androidImportingTestRule.properties)
             putAll(hmppProperties)
             put("kotlin_plugin_version", kotlinPluginVersion.toString())
             put("kotlin_plugin_repositories", repositories(false))
@@ -179,6 +186,24 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     fun checkHighlightingOnAllModules(testLineMarkers: Boolean = true) {
         createHighlightingCheck(testLineMarkers).invokeOnAllModules()
+    }
+
+    fun checkWorkspaceModel(testClassifier: String? = null) {
+        val testConfiguration = TestConfiguration().apply {
+            // Temporary hack for older usages (they were expecting K/N Dist to be leniently folded)
+            getConfiguration(OrderEntriesFilteringTestFeature).hideKonanDist = true
+        }
+
+        checkWorkspaceModel(
+            myProject,
+            testDataDirectory(),
+            myProjectRoot.toNioPath().toFile(),
+            kotlinPluginVersion,
+            gradleVersion,
+            listOf(WorkspacePrintingMode.MODULE_DEPENDENCIES),
+            testClassifier = testClassifier,
+            testConfiguration = testConfiguration
+        )
     }
 }
 

@@ -39,6 +39,21 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
         return false
     }
 
+    override fun correctPositionForParameter(context: CompletionInitializationContext) {
+        val offset = context.startOffset
+        val psiFile = context.file
+        val tokenAt = psiFile.findElementAt(max(0, offset)) ?: return
+
+        // IDENTIFIER when 'f<caret>oo: Foo'
+        // COLON when 'foo<caret>: Foo'
+        if (tokenAt.node.elementType == KtTokens.IDENTIFIER || tokenAt.node.elementType == KtTokens.COLON) {
+            val parameter = tokenAt.parent as? KtParameter
+            if (parameter != null) {
+                context.replacementOffset = parameter.endOffset
+            }
+        }
+    }
+
     override fun provideDummyIdentifier(context: CompletionInitializationContext): String {
         val psiFile = context.file
         if (psiFile !is KtFile) {
@@ -63,6 +78,7 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
                 ?: specialExtensionReceiverDummyIdentifier(tokenBefore)
                 ?: specialInTypeArgsDummyIdentifier(tokenBefore)
                 ?: specialInArgumentListDummyIdentifier(tokenBefore)
+                ?: specialInNameWithQuotes(tokenBefore)
                 ?: specialInBinaryExpressionDummyIdentifier(tokenBefore)
                 ?: isInValueOrTypeParametersList(tokenBefore)
                 ?: handleDefaultCase(context)
@@ -108,6 +124,17 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
     private fun specialInBinaryExpressionDummyIdentifier(tokenBefore: PsiElement?): String? {
         if (tokenBefore.elementType == KtTokens.IDENTIFIER && tokenBefore?.context?.context is KtBinaryExpression)
             return CompletionUtilCore.DUMMY_IDENTIFIER
+        return null
+    }
+
+    private fun specialInNameWithQuotes(tokenBefore: PsiElement?): String? {
+        val badCharacterBefore = when (tokenBefore?.elementType) {
+            TokenType.BAD_CHARACTER -> tokenBefore
+            KtTokens.IDENTIFIER -> tokenBefore?.prevLeaf(skipEmptyElements = true)?.takeIf { it.elementType == TokenType.BAD_CHARACTER }
+            else -> null
+        }
+        val quote = "`"
+        if (badCharacterBefore?.text == quote) return CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + quote + "$"
         return null
     }
 
@@ -227,12 +254,15 @@ abstract class AbstractCompletionDummyIdentifierProviderService : CompletionDumm
 
 
     private fun specialInArgumentListDummyIdentifier(tokenBefore: PsiElement?): String? {
-        // If we insert $ in the argument list of a delegation specifier, this will break parsing
+        // If we insert `$` in the argument list of a delegation specifier, this will break parsing
         // and the following block will not be attached as a body to the constructor. Therefore
         // we need to use a regular identifier.
         val argumentList = tokenBefore?.getNonStrictParentOfType<KtValueArgumentList>() ?: return null
         if (argumentList.parent is KtConstructorDelegationCall) return CompletionUtil.DUMMY_IDENTIFIER_TRIMMED
-        return null
+        // If there is = in the argument list after caret, then breaking parsing with just $ prevents K2 from resolving function call,
+        // i.e. `f ($ = )` is resolved to variable assignment and left part `f ($` is resolved to erroneous name reference,
+        // so we need to use `$,` to avoid resolving to variable assignment
+        return CompletionUtil.DUMMY_IDENTIFIER_TRIMMED + "$,"
     }
 
     private companion object {

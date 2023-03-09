@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 
 class KotlinFocusModeProvider : FocusModeProvider {
-    override fun calcFocusZones(file: PsiFile): MutableList<out Segment> =
+    override fun calcFocusZones(file: PsiFile): List<Segment> =
         SyntaxTraverser.psiTraverser(file)
             .postOrderDfsTraversal()
             .filter {

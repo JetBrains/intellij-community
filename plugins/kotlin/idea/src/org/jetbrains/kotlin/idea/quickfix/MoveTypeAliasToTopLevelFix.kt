@@ -23,7 +23,7 @@ class MoveTypeAliasToTopLevelFix(element: KtTypeAlias) : KotlinQuickFixAction<Kt
         val containingFile = parents.firstOrNull() as? KtFile ?: return
         val target = parents.getOrNull(1) ?: return
         containingFile.addAfter(typeAlias, target)
-        containingFile.addAfter(KtPsiFactory(typeAlias).createNewLine(2), target)
+        containingFile.addAfter(KtPsiFactory(project).createNewLine(2), target)
         typeAlias.delete()
     }
 

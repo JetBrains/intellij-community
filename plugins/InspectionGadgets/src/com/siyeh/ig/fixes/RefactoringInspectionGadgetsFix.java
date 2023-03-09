@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class RefactoringInspectionGadgetsFix extends InspectionGadgetsFix implements RefactoringQuickFix {
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     doFix(descriptor.getPsiElement());
   }
 

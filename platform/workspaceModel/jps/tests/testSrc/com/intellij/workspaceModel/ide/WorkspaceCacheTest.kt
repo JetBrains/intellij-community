@@ -14,7 +14,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.workspaceModel.updateProjectModel
-import com.intellij.util.io.exists
+import com.intellij.workspaceModel.ide.impl.AbstractWorkspaceModelCache
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
@@ -29,6 +29,7 @@ import org.apache.commons.lang.RandomStringUtils
 import org.junit.*
 import org.junit.Assert.*
 import java.io.File
+import kotlin.io.path.exists
 
 class WorkspaceCacheTest {
   @Rule
@@ -46,7 +47,7 @@ class WorkspaceCacheTest {
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager, WorkspaceModelCacheImpl::collectExternalCacheVersions)
+    serializer = EntityStorageSerializerImpl(AbstractWorkspaceModelCache.PluginAwareEntityTypesResolver, virtualFileManager, WorkspaceModelCacheImpl::collectExternalCacheVersions)
   }
 
   @After

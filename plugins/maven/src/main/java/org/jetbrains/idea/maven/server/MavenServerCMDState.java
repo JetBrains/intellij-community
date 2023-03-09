@@ -167,7 +167,7 @@ public class MavenServerCMDState extends CommandLineState {
       }
       throw new IllegalStateException("Maven distribution at" + distribution.getMavenHome().toAbsolutePath() + " is not supported");
     }
-    MavenLog.LOG.warn("Using extension " + extension + " to start MavenServer");
+    MavenLog.LOG.info("Using extension " + extension + " to start MavenServer");
     return extension.collectClassPathAndLibsFolder(distribution);
   }
 

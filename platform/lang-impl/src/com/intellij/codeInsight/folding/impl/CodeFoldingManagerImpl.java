@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -52,7 +52,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull KeyedLazyInstance<FoldingBuilder> extension, @NotNull PluginDescriptor pluginDescriptor) {
-          // Asynchronously remove foldings when extension is added
+          // Asynchronously update foldings when an extension is added
           for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
             if (fileEditor instanceof TextEditor) {
               scheduleAsyncFoldingUpdate(((TextEditor)fileEditor).getEditor());
@@ -62,7 +62,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
 
         @Override
         public void extensionRemoved(@NotNull KeyedLazyInstance<FoldingBuilder> extension, @NotNull PluginDescriptor pluginDescriptor) {
-          // Synchronously remove foldings when extension is removed
+          // Synchronously remove foldings when an extension is removed
           for (FileEditor fileEditor : FileEditorManager.getInstance(project).getAllEditors()) {
             if (fileEditor instanceof TextEditor) {
               updateFoldRegions(((TextEditor)fileEditor).getEditor());

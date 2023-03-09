@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.ReflectionUtil;
@@ -11,8 +11,7 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 
 @ApiStatus.Internal
-public
-class Unsafe {
+public final class Unsafe {
   private static final MethodHandle putObjectVolatile;
   private static final MethodHandle putOrderedLong;
   private static final MethodHandle getObjectVolatile;

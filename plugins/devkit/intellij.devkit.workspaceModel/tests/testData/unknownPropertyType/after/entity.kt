@@ -19,6 +19,9 @@ interface UnknownPropertyTypeEntity : WorkspaceEntity {
   }
 
   companion object : Type<UnknownPropertyTypeEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(date: Date, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): UnknownPropertyTypeEntity {
       val builder = builder()
       builder.date = date

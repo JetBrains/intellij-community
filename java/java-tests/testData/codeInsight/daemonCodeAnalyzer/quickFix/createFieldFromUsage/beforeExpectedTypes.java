@@ -1,4 +1,4 @@
-// "Create field 'panel'" "true"
+// "Create field 'panel'" "true-preview"
 import java.io.*;
 
 class Test {

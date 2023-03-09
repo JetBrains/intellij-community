@@ -53,7 +53,7 @@ public class ScopeViewTest extends TestSourceBasedTestCase {
    JTree tree = new Tree();
    TreeTestUtil.assertTreeUI(tree);
    tree.setModel(model);
-   TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
    PlatformTestUtil.assertTreeEqual(tree,
                                     """
                                       -Root
@@ -70,7 +70,7 @@ public class ScopeViewTest extends TestSourceBasedTestCase {
    panelSettings.UI_COMPACT_EMPTY_MIDDLE_PACKAGES = true;
    model = FileTreeModelBuilder.createTreeModel(getProject(), false, set, ALL_MARKED, panelSettings);
    tree.setModel(model);
-   TreeUtil.expandAll(tree);
+   PlatformTestUtil.expandAll(tree);
    TreeUtil.traverse((TreeNode)model.getRoot(), node -> {
      ((DefaultMutableTreeNode)node).setUserObject(node.toString());
      return true;
@@ -90,7 +90,7 @@ public class ScopeViewTest extends TestSourceBasedTestCase {
    panelSettings.UI_FLATTEN_PACKAGES = true;
    model = FileTreeModelBuilder.createTreeModel(getProject(), false, set, ALL_MARKED, panelSettings);
    tree.setModel(model);
-   TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
    PlatformTestUtil.assertTreeEqual(tree,
                                     """
                                       -Root
@@ -117,7 +117,7 @@ public class ScopeViewTest extends TestSourceBasedTestCase {
     TreeModel model = FileTreeModelBuilder.createTreeModel(getProject(), false, files, ALL_MARKED, settings);
     JTree tree = new Tree(model);
     TreeTestUtil.assertTreeUI(tree);
-    TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
     PlatformTestUtil.assertTreeEqual(tree, """
       -Root
        -a
@@ -149,7 +149,7 @@ public class ScopeViewTest extends TestSourceBasedTestCase {
     JTree tree = new Tree();
     TreeTestUtil.assertTreeUI(tree);
     tree.setModel(model);
-    TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
     PlatformTestUtil.assertTreeEqual(tree,
                                      """
                                        -Root

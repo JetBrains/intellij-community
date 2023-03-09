@@ -105,6 +105,10 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     if (!PsiUtil.isLanguageLevel5OrHigher(targetClass)) {
       return false;
     }
+    if (targetClass.isRecord() && superMethod.getParameterList().isEmpty()) {
+      PsiMethod method = targetClass.findMethodBySignature(superMethod, false);
+      if (method != null && !method.isPhysical()) return false;
+    }
     if (PsiUtil.isLanguageLevel6OrHigher(targetClass)) return true;
     PsiClass superClass = superMethod.getContainingClass();
     return superClass != null && !superClass.isInterface();

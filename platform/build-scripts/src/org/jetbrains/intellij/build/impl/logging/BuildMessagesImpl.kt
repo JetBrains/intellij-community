@@ -78,12 +78,6 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     get() = debugLogger.getOutputFile()
 
   override fun error(message: String) {
-    try {
-      TraceManager.finish()
-    }
-    catch (e: Throwable) {
-      System.err.println("Cannot finish tracing: $e")
-    }
     throw BuildScriptsLoggedError(message)
   }
 

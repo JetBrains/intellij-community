@@ -3,9 +3,12 @@
 <p>Reports <code>object</code> that can be converted to <code>data object</code></p>
 <p><code>data object</code> auto-generates <code>toString</code>, <code>equals</code>, <code>hashCode</code> and <code>readResolve</code> if
     the <code>object</code> is annotated with <code>java.io.Serializable</code></p>
-<p>There are mainly two cases when you should consider converting <code>object</code> to <code>data object</code>. The first one is when
-    custom <code>toString</code> returns name of the class. The second one is when the <code>object</code> implements
-    <code>java.io.Serializable</code></p>
+<p>The inspection suggests to convert <code>object</code> to <code>data object</code> in 3 cases:</p>
+<ul>
+    <li>When custom <code>toString</code> returns name of the class</li>
+    <li>When <code>object</code> implements <code>java.io.Serializable</code></li>
+    <li>When <code>object</code> inherits sealed <code>class</code>/<code>interface</code></li>
+</ul>
 <p><b>Example:</b></p>
 <pre><code>
     object Foo {

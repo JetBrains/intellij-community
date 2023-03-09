@@ -81,6 +81,10 @@ public final class ClassRepr extends ClassFileRepr {
     return (access & Opcodes.ACC_INTERFACE) != 0;
   }
 
+  public boolean isEnum() {
+    return (access & Opcodes.ACC_ENUM) != 0;
+  }
+
   public abstract static class Diff extends DifferenceImpl {
 
     Diff(@NotNull Difference delegate) {

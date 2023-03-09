@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisAllowanceManager
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.miniStdLib.annotations.PrivateForInline
 import kotlin.experimental.ExperimentalTypeInference
 import kotlin.reflect.KClass
@@ -28,7 +27,7 @@ sealed class KotlinApplicator<in PSI : PsiElement, in INPUT : KotlinApplicatorIn
      * Applies some fix to given [psi], can not use resolve, so all needed data should be precalculated and stored in [input]
      *
      * @param psi a [PsiElement] to apply fix to
-     * @param input additional data needed to apply the fix, the [input] can be collected by [KotlinApplicatorInputProvider]
+     * @param input additional data needed to apply the fix
      */
     fun applyTo(psi: PSI, input: INPUT, project: Project, editor: Editor?) {
         applyToImpl(psi, input, project, editor)
@@ -196,19 +195,3 @@ fun <PSI : PsiElement, INPUT : KotlinApplicatorInput> applicator(
     init: KotlinApplicatorBuilder<PSI, INPUT>.() -> Unit,
 ): KotlinApplicator<PSI, INPUT> =
     KotlinApplicatorBuilder<PSI, INPUT>().apply(init).build()
-
-/**
- * Builds a new applicator that uses a [KotlinPsiOnlyQuickFixAction] to apply the fix to the PSI
- *
- * @see KotlinApplicator
- */
-fun <PSI : PsiElement, INPUT : KotlinApplicatorInput, QUICK_FIX : KotlinPsiOnlyQuickFixAction<PSI>> applicatorByQuickFix(
-    getFamilyName: () -> @IntentionFamilyName String,
-    isApplicableByPsi: (PSI) -> Boolean = { true },
-    quickFixByInput: (PSI, INPUT) -> QUICK_FIX,
-): KotlinApplicator<PSI, INPUT> = KotlinApplicatorImpl(
-    applyTo = { psi, input, project, editor -> quickFixByInput(psi, input).invoke(project, editor, psi.containingFile) },
-    isApplicableByPsi = isApplicableByPsi,
-    getActionName = { psi, input -> quickFixByInput(psi, input).text },
-    getFamilyName = getFamilyName
-)

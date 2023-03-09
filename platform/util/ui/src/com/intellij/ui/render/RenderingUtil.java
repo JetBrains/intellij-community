@@ -11,20 +11,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public final class RenderingUtil {
-  /**
-   * This key can be set to a predicate,
-   * which return "true" in case if it's necessary to paint horizontal separator in tree before the given path.
-   *
-   * @see JComponent#putClientProperty
-   */
-  public static final Key<Predicate<TreePath>> SEPARATOR_ABOVE_PREDICATE = Key.create("SEPARATOR_ABOVE_PREDICATE");
-
   /**
    * This key can be set to a list or a tree to paint unfocused selection as focused.
    *

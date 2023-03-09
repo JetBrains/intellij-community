@@ -19,6 +19,7 @@ import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMa
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileIndex.MutableVirtualFileIndex.Companion.VIRTUAL_FILE_INDEX_ENTITY_SOURCE_PROPERTY
 import com.intellij.workspaceModel.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlIndex
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -528,7 +529,7 @@ internal class MutableEntityStorageImpl(
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T> {
+  override fun <T> getMutableExternalMapping(identifier: @NonNls String): MutableExternalEntityMapping<T> {
     try {
       lockWrite()
       val mapping = indexes.externalMappings.computeIfAbsent(
@@ -554,7 +555,8 @@ internal class MutableEntityStorageImpl(
   }
 
   internal fun addDiffAndReport(message: String, left: EntityStorage?, right: EntityStorage) {
-    reportConsistencyIssue(message, AddDiffException(message), null, left, right, this)
+    this.reportConsistencyIssue(message, AddDiffException(message), null, left, right,
+                                ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS)
   }
 
   private fun applyDiffProtection(diff: AbstractEntityStorage, method: String) {
@@ -795,7 +797,7 @@ internal sealed class AbstractEntityStorage : EntityStorage {
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T> {
+  override fun <T> getExternalMapping(identifier: @NonNls String): ExternalEntityMapping<T> {
     val index = indexes.externalMappings[identifier] as? ExternalEntityMappingImpl<T>
     if (index == null) return EmptyExternalEntityMapping as ExternalEntityMapping<T>
     index.setTypedEntityStorage(this)
@@ -819,15 +821,25 @@ internal sealed class AbstractEntityStorage : EntityStorage {
       }
       catch (e: Throwable) {
         brokenConsistency = true
-        val storage = if (this is MutableEntityStorage) this.toSnapshot() as AbstractEntityStorage else this
-        val report = { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
-        if (ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS) {
-          consistencyChecker.execute(report)
-        }
-        else {
-          report()
-        }
+        reportConsistencyIssue(message, e, sourceFilter, left, right,
+                               ConsistencyCheckingMode.current == ConsistencyCheckingMode.ASYNCHRONOUS)
       }
+    }
+  }
+
+  internal fun reportConsistencyIssue(message: String,
+                                     e: Throwable,
+                                     sourceFilter: ((EntitySource) -> Boolean)?,
+                                     left: EntityStorage?,
+                                     right: EntityStorage?,
+                                     reportInBackgroundThread: Boolean) {
+    val storage = if (this is MutableEntityStorage) this.toSnapshot() as AbstractEntityStorage else this
+    val report = { reportConsistencyIssue(message, e, sourceFilter, left, right, storage) }
+    if (reportInBackgroundThread) {
+      consistencyChecker.execute(report)
+    }
+    else {
+      report()
     }
   }
 

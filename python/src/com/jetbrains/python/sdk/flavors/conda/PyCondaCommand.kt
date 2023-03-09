@@ -6,9 +6,6 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.openapi.project.Project
-import com.intellij.execution.target.FullPathOnTarget
-import com.jetbrains.python.sdk.flavors.conda.CondaPathFix.Companion.shouldBeFixed
-import java.nio.file.Path
 
 /**
  * Encapsulates conda binary command to simplify target request creation
@@ -25,7 +22,7 @@ class PyCondaCommand(
       if (pathInfo == null) {
         return Result.failure(Exception("$fullCondaPathOnTarget does not exist"))
       }
-      if (pathInfo != PathInfo.Unknown && (pathInfo as? PathInfo.RegularFile)?.executable != true) {
+      if ((pathInfo as? PathInfo.RegularFile)?.executable != true) {
         return Result.failure(Exception("$fullCondaPathOnTarget is not executable file"))
       }
     }
@@ -38,9 +35,7 @@ class PyCondaCommand(
     val env = request.prepareEnvironment(indicator)
     val commandLineBuilder = TargetedCommandLineBuilder(request).apply {
       setExePath(fullCondaPathOnTarget)
-      if (shouldBeFixed) {
-        CondaPathFix.ByCondaFullPath(Path.of(fullCondaPathOnTarget)).fix(this)
-      }
+      fixCondaPathEnvIfNeeded(fullCondaPathOnTarget)
     }
     return Result.success(Triple(request, env, commandLineBuilder))
   }

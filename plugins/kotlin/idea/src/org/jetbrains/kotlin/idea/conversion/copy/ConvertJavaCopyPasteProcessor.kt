@@ -211,7 +211,7 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
             append(contextSuffix)
         }
 
-        val dummyFile = KtPsiFactory(targetFile.project).createAnalyzableFile("dummy.kt", fileText, targetFile)
+        val dummyFile = KtPsiFactory.contextual(targetFile).createFile("dummy.kt", fileText)
         val startOffset = blockStart
         val endOffset = blockEnd
         return KotlinCopyPasteReferenceProcessor().collectReferenceData(dummyFile, intArrayOf(startOffset), intArrayOf(endOffset)).map {
@@ -350,7 +350,7 @@ fun runPostProcessing(
         ProgressManager.getInstance().runProcessWithProgressSynchronously(
             {
                 val processor =
-                    J2kConverterExtension.extension(useNewJ2k).createWithProgressProcessor(
+                    J2kConverterExtension.extension(useNewJ2k = true).createWithProgressProcessor(
                         ProgressManager.getInstance().progressIndicator!!,
                         emptyList(),
                         postProcessor.phasesCount

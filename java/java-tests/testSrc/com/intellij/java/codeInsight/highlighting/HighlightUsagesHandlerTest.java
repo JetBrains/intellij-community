@@ -285,8 +285,8 @@ public class HighlightUsagesHandlerTest extends DaemonAnalyzerTestCase {
         }""");
 
       IdentifierHighlighterPassFactory.waitForIdentifierHighlighting();
-      //import highlighted twice: for each overloaded usage target
-      assertEquals(3, getIdentifierHighlighters()
+
+      assertEquals(2, getIdentifierHighlighters()
         .stream()
         .filter(info -> getFile().getText().substring(info.startOffset, info.endOffset).equals("foo"))
         .count());

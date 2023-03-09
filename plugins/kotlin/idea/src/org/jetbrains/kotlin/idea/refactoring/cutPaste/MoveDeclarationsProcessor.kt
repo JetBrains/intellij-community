@@ -58,7 +58,7 @@ class MoveDeclarationsProcessor(
 
             if (targetPsiFile == sourceContainer) return null
 
-            val declarations = MoveDeclarationsCopyPasteProcessor.rangeToDeclarations(targetPsiFile, range.startOffset, range.endOffset)
+            val declarations = MoveDeclarationsCopyPasteProcessor.rangeToDeclarations(targetPsiFile, range)
             if (declarations.isEmpty() || declarations.any { it.parent !is KtFile }) return null
 
             if (sourceContainer == sourcePsiFile && sourcePsiFile.packageFqName == targetPsiFile.packageFqName) return null
@@ -187,9 +187,7 @@ class MoveDeclarationsProcessor(
         val declarations =
             MoveDeclarationsCopyPasteProcessor.rangeToDeclarations(
                 sourcePsiFile,
-                insertedRange.startOffset,
-                insertedRange.endOffset
-            )
+                insertedRange.textRange)
 
         return Pair(insertedRange, declarations)
     }

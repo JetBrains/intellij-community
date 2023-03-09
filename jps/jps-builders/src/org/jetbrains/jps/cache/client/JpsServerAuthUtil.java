@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.client;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class JpsServerAuthUtil {
+public final class JpsServerAuthUtil {
   private static Map<String, String> requestHeaders;
 
   public static @NotNull Map<String, String> getRequestHeaders() {

@@ -61,6 +61,7 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
     get() = true
 
   init {
+    @Suppress("DEPRECATION")
     val scope = ApplicationManager.getApplication().coroutineScope
     val updatePathJob = scope.launch {
       updatePathRequests
@@ -380,9 +381,10 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
     label.text = titleString
     HelpTooltip.dispose(label)
 
-    (if (isClipped || basePaths.firstOrNull{!it.active} != null) {
+    (if (isClipped || basePaths.firstOrNull { !it.active } != null) {
       components.filter { it.active || basePaths.contains(it) }.joinToString(separator = "", transform = { it.toolTipPart })
-    } else null)?.let {
+    }
+    else null)?.let {
       HelpTooltip().setTitle(it).installOn(label)
     }
 

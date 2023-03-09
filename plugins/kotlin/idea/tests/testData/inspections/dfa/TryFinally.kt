@@ -16,7 +16,7 @@ private fun unzip(zip: ZipFile) {
         errorUnpacking = false
     }
     finally {
-        if (<weak_warning descr="Value of 'errorUnpacking' is always false">errorUnpacking</weak_warning>) {
+        if (<warning descr="Condition 'errorUnpacking' is always false">errorUnpacking</warning>) {
         }
     }
 }

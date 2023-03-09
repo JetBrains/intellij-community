@@ -8,7 +8,7 @@ import java.util.logging.Logger;
 /**
  * Copied from {@link org.jetbrains.idea.maven.aether.RetryProvider}
  */
-class Retry {
+final class Retry {
   private static final Logger LOG = Logger.getLogger(Retry.class.getName());
   private static final Random RANDOM = new Random();
   private static final double EXP_BACKOFF_FACTOR = 2;

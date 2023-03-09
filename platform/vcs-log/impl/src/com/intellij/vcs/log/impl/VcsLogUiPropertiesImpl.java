@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -24,21 +24,19 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
                              MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES,
                              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
                              MainVcsLogUiProperties.TEXT_FILTER_REGEX);
-  @NotNull private final EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
-  @NotNull private final VcsLogApplicationSettings myAppSettings;
+  private final @NotNull EventDispatcher<PropertiesChangeListener> myEventDispatcher = EventDispatcher.create(PropertiesChangeListener.class);
+  private final @NotNull VcsLogApplicationSettings myAppSettings;
 
   public VcsLogUiPropertiesImpl(@NotNull VcsLogApplicationSettings appSettings) {
     myAppSettings = appSettings;
   }
 
-  @NotNull
   @Override
-  public abstract S getState();
+  public abstract @NotNull S getState();
 
   @SuppressWarnings("unchecked")
-  @NotNull
   @Override
-  public <T> T get(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
+  public @NotNull <T> T get(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
     if (myAppSettings.exists(property)) {
       return myAppSettings.get(property);
     }
@@ -122,8 +120,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     return false;
   }
 
-  @NotNull
-  private TextFilterSettings getTextFilterSettings() {
+  private @NotNull TextFilterSettings getTextFilterSettings() {
     TextFilterSettings settings = getState().TEXT_FILTER_SETTINGS;
     if (settings == null) {
       settings = new TextFilterSettings();
@@ -142,9 +139,8 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     }
   }
 
-  @Nullable
   @Override
-  public List<String> getFilterValues(@NotNull String filterName) {
+  public @Nullable List<String> getFilterValues(@NotNull String filterName) {
     return getState().FILTERS.get(filterName);
   }
 

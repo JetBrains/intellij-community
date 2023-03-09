@@ -75,7 +75,7 @@ public class DefaultStubBuilder implements StubBuilder {
       IElementType nodeType = node.getElementType();
 
       if (nodeType instanceof IStubElementType) {
-        final IStubElementType type = (IStubElementType)nodeType;
+        IStubElementType type = (IStubElementType)nodeType;
 
         if (type.shouldCreateStub(node)) {
           PsiElement element = node.getPsi();

@@ -45,6 +45,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation
 import com.intellij.usages.Usage
 import com.intellij.util.ObjectUtils.coalesce
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
 import com.intellij.webSymbols.declarations.WebSymbolDeclarationProvider
@@ -362,6 +363,7 @@ fun CodeInsightTestFixture.findUsages(target: SearchTarget): MutableCollection<o
 }
 
 @JvmOverloads
+@RequiresEdt
 fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUsageHandler2.GTDUOutcome?, signature: String? = null) {
   if (signature != null) {
     moveToOffsetBySignature(signature)
@@ -373,9 +375,10 @@ fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUs
     file = editor.injectedFile
     offset -= InjectedLanguageManager.getInstance(project).injectedToHost(file, 0)
   }
+  val gtduOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(editor, file, offset)
   Assert.assertEquals(signature,
                       expectedOutcome,
-                      GotoDeclarationOrUsageHandler2.testGTDUOutcome(editor, file, offset))
+                      gtduOutcome)
 }
 
 fun CodeInsightTestFixture.checkGotoDeclaration(signature: String, expectedOffset: Int, expectedFileName: String? = null) {

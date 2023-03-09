@@ -14,10 +14,8 @@ import java.util.*;
 public class FileIndexesValuesApplier {
   private final FileBasedIndexImpl myIndex;
   private final int fileId;
-  @NotNull
-  private final List<SingleIndexValueApplier<?>> appliers;
-  @NotNull
-  private final List<SingleIndexValueRemover> removers;
+  private final @NotNull List<? extends SingleIndexValueApplier<?>> appliers;
+  private final @NotNull List<? extends SingleIndexValueRemover> removers;
   private final boolean removeDataFromIndicesForFile;
   private boolean shouldMarkFileAsIndexed;
   private final long fileStatusLockObject;
@@ -28,8 +26,8 @@ public class FileIndexesValuesApplier {
 
   FileIndexesValuesApplier(FileBasedIndexImpl index, int fileId,
                            @NotNull VirtualFile file,
-                           @NotNull List<SingleIndexValueApplier<?>> appliers,
-                           @NotNull List<SingleIndexValueRemover> removers,
+                           @NotNull List<? extends SingleIndexValueApplier<?>> appliers,
+                           @NotNull List<? extends SingleIndexValueRemover> removers,
                            boolean removeDataFromIndicesForFile,
                            boolean shouldMarkFileAsIndexed,
                            boolean writeValuesSeparately,
@@ -47,8 +45,8 @@ public class FileIndexesValuesApplier {
   }
 
   private FileIndexingStatistics createStats(@NotNull VirtualFile file,
-                                             @NotNull List<SingleIndexValueApplier<?>> appliers,
-                                             @NotNull List<SingleIndexValueRemover> removers,
+                                             @NotNull List<? extends SingleIndexValueApplier<?>> appliers,
+                                             @NotNull List<? extends SingleIndexValueRemover> removers,
                                              @NotNull FileType fileType,
                                              boolean logEmptyProvidedIndexes) {
     Set<ID<?, ?>> indexesProvidedByExtensions = new HashSet<>();

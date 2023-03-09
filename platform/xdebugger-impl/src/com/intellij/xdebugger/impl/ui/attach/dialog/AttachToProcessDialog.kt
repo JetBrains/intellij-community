@@ -37,10 +37,13 @@ import com.intellij.xdebugger.impl.actions.AttachToProcessActionBase.AttachToPro
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogUiInvisibleDebuggerProvider
 import com.intellij.xdebugger.impl.ui.attach.dialog.extensions.getActionPresentation
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
+import com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayoutService
 import com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Container
+import java.awt.Dimension
 import java.awt.event.*
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -95,16 +98,17 @@ open class AttachToProcessDialog(
 
   private var filteringPattern: String = ""
 
-  private val localAttachView = AttachToLocalProcessView(project, state, attachDebuggerProviders)
-  private val remoteAttachView = AttachToRemoteProcessView(project, state, attachHostProviders, attachDebuggerProviders)
+  private val columnsLayout = application.getService(AttachDialogColumnsLayoutService::class.java).getColumnsLayout()
+
+  private val localAttachView = AttachToLocalProcessView(project, state, columnsLayout, attachDebuggerProviders)
+  private val remoteAttachView = AttachToRemoteProcessView(project, state, columnsLayout, attachHostProviders, attachDebuggerProviders)
   private val allViews = listOf(localAttachView, remoteAttachView)
   private var currentAttachView = AtomicLazyProperty<AttachToProcessView> { localAttachView }
 
   private val viewsPanel = panel { row { segmentedButton(allViews) { it.getName() }.bind(currentAttachView) } }
 
-
   private val viewPanel = JPanel(MigLayout("ins 0, fill, gap 0, novisualpadding")).apply {
-    minimumSize = AttachToProcessView.DEFAULT_DIMENSION
+    minimumSize = Dimension(columnsLayout.getMinimumViewWidth(), JBUI.scale(400))
     border = JBUI.Borders.customLine(JBColor.border(), 1, 1, 1, 1)
   }
 
@@ -202,7 +206,7 @@ open class AttachToProcessDialog(
     }
   }
 
-  private fun updateProblemStripe(text: String? = null) {
+  private fun updateProblemStripe(@Nls text: String? = null) {
     if (text == null) {
       setErrorInfoAll(emptyList())
       return
@@ -292,6 +296,7 @@ open class AttachToProcessDialog(
     actions.add(RefreshActionButton())
     actions.add(SelectedViewAction())
     actions.add(DebuggerFilterComboBox())
+    actions.add(ActionManager.getInstance().getAction("XDebugger.Attach.Dialog.Settings"))
 
     return ActionManager.getInstance().createActionToolbar(ActionPlaces.ATTACH_DIALOG_TOOLBAR, DefaultActionGroup(actions), true)
   }

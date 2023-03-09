@@ -47,6 +47,7 @@ import org.jetbrains.concurrency.Promises;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public abstract class TodoTreeBuilder implements Disposable {
@@ -70,7 +71,7 @@ public abstract class TodoTreeBuilder implements Disposable {
    * <p>
    * Mutate in a background thread only.
    */
-  protected final HashSet<VirtualFile> myDirtyFileSet = new HashSet<>();
+  protected final Set<VirtualFile> myDirtyFileSet = ConcurrentHashMap.newKeySet();
 
   //used from EDT and from StructureTreeModel invoker thread
   protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap();
@@ -145,7 +146,8 @@ public abstract class TodoTreeBuilder implements Disposable {
     try {
       rebuildCache();
     }
-    catch (IndexNotReadyException ignore) {}
+    catch (IndexNotReadyException ignore) {
+    }
 
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener, this);
   }
@@ -183,11 +185,11 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   /**
    * @return read-only iterator of all current PSI files that can contain TODOs.
-   *         Don't invoke its {@code remove} method. For "removing" use {@code markFileAsDirty} method.
-   *         <b>Note, that {@code next()} method of iterator can return {@code null} elements.</b>
-   *         These {@code null} elements correspond to the invalid PSI files (PSI file cannot be found by
-   *         virtual file, or virtual file is invalid).
-   *         The reason why we return such "dirty" iterator is the performance.
+   * Don't invoke its {@code remove} method. For "removing" use {@code markFileAsDirty} method.
+   * <b>Note, that {@code next()} method of iterator can return {@code null} elements.</b>
+   * These {@code null} elements correspond to the invalid PSI files (PSI file cannot be found by
+   * virtual file, or virtual file is invalid).
+   * The reason why we return such "dirty" iterator is the performance.
    */
   public Iterator<PsiFile> getAllFiles() {
     final Iterator<VirtualFile> iterator = myFileTree.getFileIterator();
@@ -219,7 +221,7 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   /**
    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-   *         and which are located under specified {@code psiDirectory}.
+   * and which are located under specified {@code psiDirectory}.
    * @see FileTree#getFiles(VirtualFile)
    */
   public Iterator<PsiFile> getFiles(PsiDirectory psiDirectory) {
@@ -228,7 +230,7 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   /**
    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-   *         and which are located under specified {@code psiDirectory}.
+   * and which are located under specified {@code psiDirectory}.
    * @see FileTree#getFiles(VirtualFile)
    */
   public Iterator<PsiFile> getFiles(PsiDirectory psiDirectory, final boolean skip) {
@@ -256,7 +258,7 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   /**
    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-   *         and which are located under specified {@code psiDirectory}.
+   * and which are located under specified {@code psiDirectory}.
    * @see FileTree#getFiles(VirtualFile)
    */
   public Iterator<PsiFile> getFilesUnderDirectory(PsiDirectory psiDirectory) {
@@ -280,13 +282,12 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
 
-
   /**
-    * @return read-only iterator of all valid PSI files that can have T.O.D.O items
-    *         and which in specified {@code module}.
-    * @see FileTree#getFiles(VirtualFile)
-    */
-   public Iterator<PsiFile> getFiles(Module module) {
+   * @return read-only iterator of all valid PSI files that can have T.O.D.O items
+   * and which in specified {@code module}.
+   * @see FileTree#getFiles(VirtualFile)
+   */
+  public Iterator<PsiFile> getFiles(Module module) {
     if (module.isDisposed()) return Collections.emptyIterator();
     ArrayList<PsiFile> psiFileList = new ArrayList<>();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
@@ -305,15 +306,15 @@ public abstract class TodoTreeBuilder implements Disposable {
       }
     }
     return psiFileList.iterator();
-   }
+  }
 
 
   /**
    * @return {@code true} if specified {@code psiFile} can contains too items.
-   *         It means that file is in "dirty" file set or in "current" file set.
+   * It means that file is in "dirty" file set or in "current" file set.
    */
   private boolean canContainTodoItems(PsiFile psiFile) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     VirtualFile vFile = psiFile.getVirtualFile();
     return myFileTree.contains(vFile) || myDirtyFileSet.contains(vFile);
   }
@@ -344,7 +345,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   }
 
   @RequiresBackgroundThread
-  protected void collectFiles(@NotNull Consumer<? super PsiFile> consumer) {
+  protected void collectFiles(@NotNull Consumer<? super @NotNull PsiFile> consumer) {
     TodoTreeStructure treeStructure = getTodoTreeStructure();
     PsiTodoSearchHelper searchHelper = getSearchHelper();
     searchHelper.processFilesWithTodoItems(psiFile -> {
@@ -411,7 +412,7 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   /**
    * @return first {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
-   *         If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
+   * If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
    */
   public TodoItemNode getFirstPointerForElement(@Nullable Object element) {
     if (element instanceof TodoItemNode) {
@@ -437,7 +438,7 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   /**
    * @return last {@code SmartTodoItemPointer} that is the children (in depth) of the specified {@code element}.
-   *         If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
+   * If {@code element} itself is a {@code TodoItem} then the method returns the {@code element}.
    */
   public TodoItemNode getLastPointerForElement(Object element) {
     if (element instanceof TodoItemNode) {
@@ -554,12 +555,13 @@ public abstract class TodoTreeBuilder implements Disposable {
     try {
       rebuildCache();
     }
-    catch (IndexNotReadyException ignored) {}
+    catch (IndexNotReadyException ignored) {
+    }
   }
 
   /**
    * @return next {@code TodoItem} for the passed {@code pointer}. Returns {@code null}
-   *         if the {@code pointer} is the last t.o.d.o item in the tree.
+   * if the {@code pointer} is the last t.o.d.o item in the tree.
    */
   public TodoItemNode getNextPointer(TodoItemNode pointer) {
     Object sibling = getNextSibling(pointer);
@@ -576,7 +578,7 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   /**
    * @return next sibling of the passed element. If there is no sibling then
-   *         returns {@code null}.
+   * returns {@code null}.
    */
   Object getNextSibling(Object obj) {
     Object parent = getTodoTreeStructure().getParentElement(obj);
@@ -605,7 +607,7 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   /**
    * @return next {@code SmartTodoItemPointer} for the passed {@code pointer}. Returns {@code null}
-   *         if the {@code pointer} is the last t.o.d.o item in the tree.
+   * if the {@code pointer} is the last t.o.d.o item in the tree.
    */
   public TodoItemNode getPreviousPointer(TodoItemNode pointer) {
     Object sibling = getPreviousSibling(pointer);
@@ -622,7 +624,7 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   /**
    * @return previous sibling of the element of passed type. If there is no sibling then
-   *         returns {@code null}.
+   * returns {@code null}.
    */
   Object getPreviousSibling(Object obj) {
     Object parent = getTodoTreeStructure().getParentElement(obj);
@@ -652,7 +654,7 @@ public abstract class TodoTreeBuilder implements Disposable {
 
   /**
    * @return {@code SelectInEditorManager} for the specified {@code psiFile}. Highlighters are
-   *         lazy created and initialized.
+   * lazy created and initialized.
    */
   public EditorHighlighter getHighlighter(PsiFile psiFile, Document document) {
     VirtualFile file = psiFile.getVirtualFile();
@@ -665,7 +667,7 @@ public abstract class TodoTreeBuilder implements Disposable {
     return highlighter;
   }
 
-  public boolean isDirectoryEmpty(@NotNull PsiDirectory psiDirectory){
+  public boolean isDirectoryEmpty(@NotNull PsiDirectory psiDirectory) {
     return myFileTree.isDirectoryEmpty(psiDirectory.getVirtualFile());
   }
 

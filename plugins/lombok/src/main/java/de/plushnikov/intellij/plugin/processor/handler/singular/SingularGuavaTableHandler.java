@@ -91,6 +91,7 @@ class SingularGuavaTableHandler extends SingularMapHandler {
   @Override
   protected String getAllMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
     final String codeBlockTemplate = """
+      if({0}==null)'{'throw new NullPointerException("{0} cannot be null");'}'
       if (this.{0} == null) this.{0} = {1}.{2};\s
       this.{0}.putAll({0});
       return {3};""";
@@ -118,7 +119,7 @@ class SingularGuavaTableHandler extends SingularMapHandler {
   }
 
   @Override
-  protected String getEmptyCollectionCall() {
+  protected String getEmptyCollectionCall(@NotNull BuilderInfo info) {
     return collectionQualifiedName + '.' + "builder()";
   }
 }

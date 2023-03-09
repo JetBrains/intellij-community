@@ -253,13 +253,13 @@ class PerformanceSuite {
                     fixture.openInEditor()
                 }
                 test = {
-                    fixture.highlight()
+                    fixture.highlight().also { fixture.checkNoErrors(it) }
                 }
                 after = {
                     fixture.close()
                     project.cleanupCaches()
                 }
-            }.onEach { fixture.checkNoErrors(it) }
+            }
         }
 
         fun typeAndMeasureAutoCompletion(fixture: Fixture, vararg name: String, clearCaches: Boolean = true, f: TypeAndAutoCompletionMeasurementScope.() -> Unit): List<String?> {

@@ -277,7 +277,7 @@ public final class AuthenticationService {
     CommonProxy.getInstance().removeNoProxy(url.getProtocol(), url.getHost(), url.getPort());
 
     final List<Proxy> proxies = CommonProxy.getInstance().select(URI.create(url.toString()));
-    if (proxies != null && !proxies.isEmpty()) {
+    if (!proxies.isEmpty()) {
       for (Proxy proxy : proxies) {
         if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP.equals(proxy.type())) {
           return proxy;

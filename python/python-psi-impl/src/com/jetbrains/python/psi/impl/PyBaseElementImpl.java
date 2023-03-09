@@ -158,9 +158,9 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences,
                                     PyResolveContext resolveContext) {
     final PsiReference[] references;
-    if (element instanceof PyReferenceOwner) {
-      final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(resolveContext);
-      references = reference == null ? PsiReference.EMPTY_ARRAY : new PsiReference[]{reference};
+    if (element instanceof PyReferenceOwner owner) {
+      final PsiPolyVariantReference reference = owner.getReference(resolveContext);
+      references = new PsiReference[]{reference};
     }
     else {
       references = element.getReferences();

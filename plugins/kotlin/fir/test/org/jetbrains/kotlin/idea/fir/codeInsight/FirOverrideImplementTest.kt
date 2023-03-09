@@ -7,9 +7,7 @@ import org.jetbrains.kotlin.idea.codeInsight.OverrideImplementTest
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.runAll
-import org.junit.Ignore
 import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.jupiter.api.Disabled
 import org.junit.runner.RunWith
 
 @Suppress("RedundantOverride") // overrides are for easier test debugging
@@ -68,8 +66,8 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testJavaParameters()
     }
 
-    override fun testFunctionFromTraitInJava() {
-        super.testFunctionFromTraitInJava()
+    override fun testFunctionFromInterfaceInJava() {
+        super.testFunctionFromInterfaceInJava()
     }
 
     override fun testGenericMethod() {
@@ -84,8 +82,8 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testProperty()
     }
 
-    override fun testTraitGenericImplement() {
-        super.testTraitGenericImplement()
+    override fun testInterfaceGenericImplement() {
+        super.testInterfaceGenericImplement()
     }
 
     override fun testDefaultValues() {
@@ -100,8 +98,8 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testGenerateMulti()
     }
 
-    override fun testTraitNullableFunction() {
-        super.testTraitNullableFunction()
+    override fun testInterfaceNullableFunction() {
+        super.testInterfaceNullableFunction()
     }
 
     override fun testOverrideUnitFunction() {

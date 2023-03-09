@@ -75,7 +75,7 @@ class ActionStepBuilder {
     }
   }
 
-  private void calcMaxIconSize(@NotNull List<AnAction> actions) {
+  private void calcMaxIconSize(@NotNull List<? extends AnAction> actions) {
     for (AnAction action : actions) {
       if (action instanceof Separator) continue;
       Presentation presentation = myPresentationFactory.getPresentation(action);
@@ -143,7 +143,7 @@ class ActionStepBuilder {
     mySeparatorText = null;
   }
 
-  private List<PopupFactoryImpl.InlineActionItem> createInlineActionsItems(@NotNull List<AnAction> inlineActions) {
+  private List<PopupFactoryImpl.InlineActionItem> createInlineActionsItems(@NotNull List<? extends AnAction> inlineActions) {
     var inlineActionGroup = new DefaultActionGroup(inlineActions);
     List<PopupFactoryImpl.InlineActionItem> res = new ArrayList<>();
     for (AnAction action : Utils.expandActionGroup(inlineActionGroup, myPresentationFactory, myDataContext, myActionPlace)) {

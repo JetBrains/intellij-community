@@ -16,33 +16,34 @@
 
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns
 
-import com.intellij.openapi.project.Project
 import com.intellij.util.ui.ColumnInfo
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageSearchModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.repositoryToAddWhenInstallingOrUpgrading
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementOperationExecutor
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTable
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesTableItem
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.renderers.PackageActionsTableCellRendererAndEditor
-import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.Nls
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
 internal class ActionsColumn(
-    private val project: Project,
-    private val operationExecutor: (Deferred<List<PackageSearchOperation<*>>>) -> Unit
+    private val operationExecutor: (PackageManagementOperationExecutor.() -> Unit) -> Unit
 ) : ColumnInfo<PackagesTableItem<*>, Any>(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.columns.actions")) {
 
     private var targetModules: TargetModules = TargetModules.None
-    private var knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY
+    private var knownRepositoriesInTargetModules: Map<PackageSearchModule, List<RepositoryModel>> = emptyMap()
+    private val allKnownRepositories: List<RepositoryModel> = emptyList()
     private var onlyStable = false
 
     private val cellRendererAndEditor = PackageActionsTableCellRendererAndEditor {
-        operationExecutor(it.operations)
+        operationExecutor(it)
     }
 
     override fun getRenderer(item: PackagesTableItem<*>): TableCellRenderer = cellRendererAndEditor
@@ -51,22 +52,18 @@ internal class ActionsColumn(
 
     override fun isCellEditable(item: PackagesTableItem<*>) = getOperationTypeFor(item) != null
 
-    fun updateData(
-        onlyStable: Boolean,
-        targetModules: TargetModules,
-        knownRepositoriesInTargetModules: KnownRepositories.InTargetModules
-    ) {
-        this.onlyStable = onlyStable
-        this.targetModules = targetModules
-        this.knownRepositoriesInTargetModules = knownRepositoriesInTargetModules
+    fun updateData(viewModel: PackagesTable.ViewModel) {
+        this.onlyStable = viewModel.onlyStable
+        this.targetModules = viewModel.targetModules
+        this.knownRepositoriesInTargetModules = viewModel.knownRepositoriesInTargetModules
     }
 
     override fun valueOf(item: PackagesTableItem<*>): ActionViewModel {
         val operationType = getOperationTypeFor(item)
         return ActionViewModel(
             item.packageModel,
-            item.uiPackageModel.packageOperations.primaryOperations,
             operationType,
+            item.uiPackageModel.packageOperations.primaryOperations,
             generateMessageFor(item),
             isSearchResult = item is PackagesTableItem.InstallablePackage
         )
@@ -89,24 +86,20 @@ internal class ActionsColumn(
 
     @Nls
     private fun generateMessageFor(item: PackagesTableItem<*>): String? {
-        val packageModel = item.packageModel
-
-        val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
-            project = project,
-            packageModel = packageModel,
-            selectedVersion = item.uiPackageModel.selectedVersion.originalVersion
-        ) ?: return null
-
+        val repoToInstall = item.packageModel
+            .repositoryToAddWhenInstallingOrUpgrading(targetModules, knownRepositoriesInTargetModules, allKnownRepositories)
+        if (repoToInstall.isEmpty()) return null
         return PackageSearchBundle.message(
-            "packagesearch.repository.willBeAddedOnInstall",
-            repoToInstall.displayName
+            "packagesearch.repository.willBeAddedOnInstall.withModules",
+            repoToInstall.values.first().displayName,
+            repoToInstall.keys.joinToString { it.name }
         )
     }
 
     data class ActionViewModel(
         val packageModel: PackageModel,
-        val operations: Deferred<List<PackageSearchOperation<*>>>,
         val operationType: PackageOperationType?,
+        val operations: PackageManagementOperationExecutor.() -> Unit,
         @Nls val infoMessage: String?,
         val isSearchResult: Boolean
     )

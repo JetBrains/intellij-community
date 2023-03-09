@@ -16,7 +16,7 @@ import java.util.Set;
 public final class ImportsHighlightUtil {
   public static final Key<Set<String>> IMPORTS_FROM_TEMPLATE = Key.create("IMPORT_FROM_FILE_TEMPLATE");
 
-  static HighlightInfo checkStaticOnDemandImportResolvesToClass(@NotNull PsiImportStaticStatement statement) {
+  static HighlightInfo.Builder checkStaticOnDemandImportResolvesToClass(@NotNull PsiImportStaticStatement statement) {
     if (statement.isOnDemand() && statement.resolveTargetClass() == null) {
       PsiJavaCodeReferenceElement ref = statement.getImportReference();
       if (ref != null) {
@@ -24,7 +24,7 @@ public final class ImportsHighlightUtil {
         if (resolve != null) {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .range(ObjectUtils.notNull(ref.getReferenceNameElement(), ref))
-            .descriptionAndTooltip(JavaAnalysisBundle.message("error.class.not.found", ref.getCanonicalText())).create();
+            .descriptionAndTooltip(JavaAnalysisBundle.message("error.class.not.found", ref.getCanonicalText()));
         }
       }
     }

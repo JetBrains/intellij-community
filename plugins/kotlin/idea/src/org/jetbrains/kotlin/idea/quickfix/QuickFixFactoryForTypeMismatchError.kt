@@ -366,7 +366,7 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
 
     private fun KtExpression.getActualType(declaration: KtCallableDeclaration, context: BindingContext): KotlinType? {
         if (declaration.typeReference == null) return getType(context)
-        val property = KtPsiFactory(declaration).createDeclarationByPattern<KtProperty>("val x = $0", this)
+        val property = KtPsiFactory(project).createDeclarationByPattern<KtProperty>("val x = $0", this)
         val newContext = property.analyzeAsReplacement(this, context)
         return property.initializer?.getType(newContext)
     }

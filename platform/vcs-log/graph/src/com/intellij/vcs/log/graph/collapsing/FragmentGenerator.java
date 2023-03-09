@@ -101,7 +101,7 @@ public class FragmentGenerator {
   }
 
   @NotNull
-  private Set<Integer> getWalkNodes(int startNode, boolean isUp, Condition<Integer> stopFunction) {
+  private Set<Integer> getWalkNodes(int startNode, boolean isUp, Condition<? super Integer> stopFunction) {
     Set<Integer> walkNodes = new HashSet<>();
 
     TreeSetNodeIterator walker = new TreeSetNodeIterator(startNode, isUp);

@@ -55,7 +55,7 @@ class ReplaceArrayOfWithLiteralInspection : AbstractKotlinInspection() {
             valueArgument?.getSpreadElement()?.delete()
 
             val arguments = callExpression.valueArguments
-            val arrayLiteral = KtPsiFactory(callExpression).buildExpression {
+            val arrayLiteral = KtPsiFactory(project).buildExpression {
                 appendFixedText("[")
                 for ((index, argument) in arguments.withIndex()) {
                     appendExpression(argument.getArgumentExpression())

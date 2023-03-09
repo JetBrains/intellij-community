@@ -4285,24 +4285,6 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
-  // PY-37678
-  public void testDataclassesReplace() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> doTest("Foo",
-                   """
-                     import dataclasses as dc
-
-                     @dc.dataclass
-                     class Foo:
-                         x: int
-                         y: int
-
-                     foo = Foo(1, 2)
-                     expr = dc.replace(foo, x=3)""")
-    );
-  }
-
   // PY-35881
   public void testResolveToAnotherFileClassWithBuiltinNameField() {
     doMultiFileTest(

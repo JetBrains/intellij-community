@@ -6,7 +6,9 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import jetbrains.buildServer.messages.serviceMessages.PublishArtifacts;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil;
+import org.jetbrains.intellij.build.dependencies.DotNetPackagesCredentials;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.build.Standalone;
@@ -27,7 +29,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.*;
+import static org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.underTeamCity;
 
 public final class JpsBuild {
   public static final String CLASSES_FROM_JPS_BUILD_ENV_NAME = "JPS_BOOTSTRAP_CLASSES_FROM_JPS_BUILD";
@@ -80,11 +83,14 @@ public final class JpsBuild {
    */
   public void resolveProjectDependencies() throws Exception {
     info("Resolving project dependencies...");
-    var spaceUsername = System.getProperty("jps.auth.spaceUsername");
-    var spacePassword = System.getProperty("jps.auth.spacePassword");
+    var spaceUsername = System.getProperty(BuildDependenciesConstants.JPS_AUTH_SPACE_USERNAME);
+    var spacePassword = System.getProperty(BuildDependenciesConstants.JPS_AUTH_SPACE_PASSWORD);
     if (spaceUsername == null || spaceUsername.isBlank() || spacePassword == null || spacePassword.isBlank()) {
-      warn("Space credentials are not provided via -Djps.auth.spaceUsername and -Djps.auth.spacePassword. " +
-        "Private Space Maven dependencies, if not available locally, will fail to be resolved.");
+      if (!DotNetPackagesCredentials.setupSystemCredentials()) {
+        warn("Space credentials are not provided via -D" + BuildDependenciesConstants.JPS_AUTH_SPACE_USERNAME
+          + " and -D" + BuildDependenciesConstants.JPS_AUTH_SPACE_PASSWORD
+          + ". Private Space Maven dependencies, if not available locally, will fail to be resolved.");
+      }
     }
 
     final long buildStart = System.currentTimeMillis();

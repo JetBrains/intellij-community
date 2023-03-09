@@ -26,7 +26,7 @@ object CreateGetFunctionActionFactory : CreateGetSetFunctionActionFactory(isGet 
             returnType,
             emptyList(),
             parameters,
-            modifierList = KtPsiFactory(element).createModifierList(KtTokens.OPERATOR_KEYWORD)
+            modifierList = KtPsiFactory(element.project).createModifierList(KtTokens.OPERATOR_KEYWORD)
         )
     }
 }

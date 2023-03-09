@@ -66,7 +66,7 @@ public class ComparisonToNaNInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiReferenceExpression nanExpression = (PsiReferenceExpression)descriptor.getPsiElement();
       final PsiElement target = nanExpression.resolve();
       if (!(target instanceof PsiField)) {

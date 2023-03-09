@@ -17,15 +17,20 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction
 import com.intellij.openapi.vfs.encoding.EncodingUtil
 import com.intellij.ui.EditorNotificationPanel
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.ArrayUtil
 import org.editorconfig.language.filetype.EditorConfigFileConstants
 import java.util.*
+import java.util.function.Function
+import javax.swing.JComponent
 
-class EditorConfigWrongFileEncodingNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>(), DumbAware {
-  override fun getKey() = KEY
+class EditorConfigWrongFileEncodingNotificationProvider : EditorNotificationProvider, DumbAware {
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    return Function { createNotificationPanel(file, it, project) }
+  }
 
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+  private fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
     if (fileEditor !is TextEditor) return null
     val editor = fileEditor.editor
     if (editor.getUserData(HIDDEN_KEY) != null) return null
@@ -112,7 +117,6 @@ class EditorConfigWrongFileEncodingNotificationProvider : EditorNotifications.Pr
   }
 
   private companion object {
-    private val KEY = Key.create<EditorNotificationPanel>("editorconfig.wrong.encoding.notification")
     private val HIDDEN_KEY = Key.create<Boolean>("editorconfig.wrong.encoding.notification.hidden")
     private const val DISABLE_KEY = "editorconfig.wrong.encoding.notification.disabled"
   }

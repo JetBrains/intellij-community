@@ -29,9 +29,7 @@ import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.ui.GroovyComboboxVisibilityPanel;
 
@@ -102,28 +100,6 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
     table.getSelectionModel().setSelectionInterval(0, 0);
     table.setSurrendersFocusOnKeystroke(true);
 
-   /* myPropExceptionsButton = new AnActionButton(              //todo propagate parameters
-      RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, PlatformIcons.NEW_EXCEPTION) {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        final Ref<JavaCallerChooser> chooser = new Ref<JavaCallerChooser>();
-        Consumer<Set<PsiMethod>> callback = new Consumer<Set<PsiMethod>>() {
-          @Override
-          public void consume(Set<PsiMethod> psiMethods) {
-            myMethodsToPropagateExceptions = psiMethods;
-            myExceptionPropagationTree = chooser.get().getTree();
-          }
-        };
-        chooser.set(new JavaCallerChooser(myMethod.getMethod(),
-                                          myProject,
-                                          RefactoringBundle.message("changeSignature.exception.caller.chooser"),
-                                          myExceptionPropagationTree,
-                                          callback));
-        chooser.get().show();
-      }
-    };
-    myPropExceptionsButton.setShortcut(CustomShortcutSet.fromString("alt X"));*/
-
     final JPanel panel = ToolbarDecorator.createDecorator(table).createPanel();
       //.addExtraAction(myPropExceptionsButton).createPanel();
     panel.setBorder(JBUI.Borders.empty());
@@ -161,18 +137,6 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
   @Override
   protected CallerChooserBase<PsiMethod> createCallerChooser(String title, Tree treeToReuse, Consumer<? super Set<PsiMethod>> callback) {
     return null; //todo next iteration
-  }
-
-
-  private boolean isGroovyMethodName(String name) {
-    String methodText = "def " + name + "(){}";
-    try {
-      final GrMethod method = GroovyPsiElementFactory.getInstance(getProject()).createMethodFromText(methodText);
-      return method != null;
-    }
-    catch (Throwable e) {
-      return false;
-    }
   }
 
   private static boolean checkType(PsiTypeCodeFragment typeCodeFragment, boolean allowEllipsis) {

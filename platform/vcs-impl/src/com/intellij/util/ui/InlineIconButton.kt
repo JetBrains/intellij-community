@@ -20,7 +20,7 @@ import kotlin.properties.Delegates.observable
 class InlineIconButton @JvmOverloads constructor(icon: Icon,
                                                  hoveredIcon: Icon? = null,
                                                  disabledIcon: Icon? = null,
-                                                 @NlsContexts.Tooltip val tooltip: String? = null,
+                                                 tooltip: @NlsContexts.Tooltip String? = null,
                                                  var shortcut: ShortcutSet? = null)
   : JComponent() {
 
@@ -35,6 +35,9 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
   }
   var disabledIcon by observable(disabledIcon) { _, old, new ->
     firePropertyChange(DISABLED_ICON_PROPERTY, old, new)
+  }
+  var tooltip by observable(tooltip) { _, old, new ->
+    firePropertyChange(TOOL_TIP_TEXT_KEY, old, new)
   }
 
   init {
@@ -108,7 +111,7 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
       }
       c.addKeyListener(spaceKeyListener)
 
-      tooltipConnector = UiNotifyConnector(c, object : Activatable {
+      val tooltipActivatable = object : Activatable {
         override fun showNotify() {
           if (c.tooltip != null) {
             HelpTooltip()
@@ -121,9 +124,14 @@ class InlineIconButton @JvmOverloads constructor(icon: Icon,
         override fun hideNotify() {
           HelpTooltip.dispose(c)
         }
-      })
+      }
+      tooltipConnector = UiNotifyConnector(c, tooltipActivatable)
 
       propertyListener = PropertyChangeListener {
+        tooltipConnector?.let {
+          Disposer.dispose(it)
+        }
+        tooltipConnector = UiNotifyConnector(c, tooltipActivatable)
         c.revalidate()
         c.repaint()
       }

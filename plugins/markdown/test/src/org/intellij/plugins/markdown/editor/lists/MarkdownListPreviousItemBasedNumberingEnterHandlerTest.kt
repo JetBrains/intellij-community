@@ -2,18 +2,12 @@ package org.intellij.plugins.markdown.editor.lists
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import com.intellij.testFramework.RegistryKeyRule
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class MarkdownListPreviousItemBasedNumberingEnterHandlerTest: LightPlatformCodeInsightTestCase() {
-  @Rule
-  @JvmField
-  val rule = RegistryKeyRule("markdown.lists.renumber.on.type.enable", false)
-
   @Test
   fun `test simple list`() {
     // language=Markdown

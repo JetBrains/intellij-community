@@ -72,6 +72,9 @@ public final class ChangesViewWorkflowManager implements Disposable {
 
         activity.end();
       }
+      else {
+        myCommitWorkflowHandler.resetActivation();
+      }
     }
     else {
       if (myCommitWorkflowHandler != null) {

@@ -22,6 +22,7 @@ import java.io.IOException;
 public interface DataEnumerator<Data> {
   int enumerate(@Nullable Data value) throws IOException;
 
+  /** @return value for the id, or null, if such a value not known to this enumerator */
   @Nullable
   Data valueOf(int idx) throws IOException;
 }

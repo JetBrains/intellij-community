@@ -21,7 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +120,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = true;
     InspectionTree tree = updateTree();
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     PlatformTestUtil.assertTreeEqual(tree, """
                                        -Inspection Results
@@ -166,7 +165,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = true;
     InspectionTree tree = updateTree();
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     PlatformTestUtil.assertTreeEqual(tree, """
                                        -Inspection Results
@@ -206,7 +205,7 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
     myView.getGlobalInspectionContext().getUIOptions().SHOW_STRUCTURE = false;
     tree = updateTree();
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
-    TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     PlatformTestUtil.assertTreeEqual(tree, """
                                        -Inspection Results
@@ -275,8 +274,9 @@ public class OfflineInspectionResultViewTest extends TestSourceBasedTestCase {
 
   private InspectionTree updateTree() throws InterruptedException {
     myView.update();
+    myView.dispatchTreeUpdate();
     final InspectionTree tree = myView.getTree();
-    TreeUtil.expandAll(tree);
+    PlatformTestUtil.expandAll(tree);
     PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
     return tree;
   }

@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.JavaValueModifier;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -23,7 +23,7 @@ import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
+public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl {
   private final DecompiledLocalVariable myVariable;
 
   public ArgumentValueDescriptorImpl(Project project, DecompiledLocalVariable variable, Value value) {

@@ -1,9 +1,12 @@
+from _typeshed import Incomplete
+from collections.abc import Callable
+from threading import Lock
 from typing import Any, ClassVar, Generic
 
 from redis.client import PubSub
 from redis.commands import RedisClusterCommands
 from redis.commands.core import _StrType
-from redis.connection import DefaultParser
+from redis.connection import BaseParser, Encoder
 from redis.exceptions import RedisError
 
 def get_node_name(host, port): ...
@@ -21,8 +24,8 @@ READ_COMMANDS: Any
 
 def cleanup_kwargs(**kwargs): ...
 
-class ClusterParser(DefaultParser):
-    EXCEPTION_CLASSES: Any
+# It uses `DefaultParser` in real life, but it is a dynamic base class.
+class ClusterParser(BaseParser): ...
 
 class RedisCluster(RedisClusterCommands[_StrType], Generic[_StrType]):
     RedisClusterRequestTTL: ClassVar[int]
@@ -43,21 +46,22 @@ class RedisCluster(RedisClusterCommands[_StrType], Generic[_StrType]):
     node_flags: Any
     read_from_replicas: Any
     reinitialize_counter: int
-    reinitialize_steps: Any
+    reinitialize_steps: int
     nodes_manager: Any
     cluster_response_callbacks: Any
     result_callbacks: Any
     commands_parser: Any
     def __init__(
         self,
-        host: Any | None = ...,
+        host: Incomplete | None = ...,
         port: int = ...,
-        startup_nodes: Any | None = ...,
+        startup_nodes: Incomplete | None = ...,
         cluster_error_retry_attempts: int = ...,
         require_full_coverage: bool = ...,
         reinitialize_steps: int = ...,
         read_from_replicas: bool = ...,
-        url: Any | None = ...,
+        dynamic_startup_nodes: bool = ...,
+        url: Incomplete | None = ...,
         **kwargs,
     ) -> None: ...
     def __enter__(self): ...
@@ -79,9 +83,18 @@ class RedisCluster(RedisClusterCommands[_StrType], Generic[_StrType]):
     def monitor(self, target_node: Any | None = ...): ...
     def pubsub(self, node: Any | None = ..., host: Any | None = ..., port: Any | None = ..., **kwargs): ...
     def pipeline(self, transaction: Any | None = ..., shard_hint: Any | None = ...): ...
+    def lock(
+        self,
+        name: str,
+        timeout: float | None = ...,
+        sleep: float = ...,
+        blocking: bool = ...,
+        blocking_timeout: float | None = ...,
+        lock_class: type[Incomplete] | None = ...,
+        thread_local: bool = ...,
+    ): ...
     def keyslot(self, key): ...
     def determine_slot(self, *args): ...
-    def reinitialize_caches(self) -> None: ...
     def get_encoder(self): ...
     def get_connection_kwargs(self): ...
     def execute_command(self, *args, **kwargs): ...
@@ -113,7 +126,13 @@ class NodesManager:
     connection_kwargs: Any
     read_load_balancer: Any
     def __init__(
-        self, startup_nodes, from_url: bool = ..., require_full_coverage: bool = ..., lock: Any | None = ..., **kwargs
+        self,
+        startup_nodes,
+        from_url: bool = ...,
+        require_full_coverage: bool = ...,
+        lock: Incomplete | None = ...,
+        dynamic_startup_nodes: bool = ...,
+        **kwargs,
     ) -> None: ...
     def get_node(self, host: Any | None = ..., port: Any | None = ..., node_name: Any | None = ...): ...
     def update_moved_exception(self, exception) -> None: ...
@@ -139,29 +158,30 @@ class ClusterPubSub(PubSub):
     def get_redis_connection(self): ...
 
 class ClusterPipeline(RedisCluster[_StrType], Generic[_StrType]):
-    command_stack: Any
-    nodes_manager: Any
+    command_stack: list[Incomplete]
+    nodes_manager: Incomplete
     refresh_table_asap: bool
-    result_callbacks: Any
-    startup_nodes: Any
-    read_from_replicas: Any
-    command_flags: Any
-    cluster_response_callbacks: Any
-    cluster_error_retry_attempts: Any
+    result_callbacks: Incomplete
+    startup_nodes: Incomplete
+    read_from_replicas: bool
+    command_flags: Incomplete
+    cluster_response_callbacks: Incomplete
+    cluster_error_retry_attempts: int
     reinitialize_counter: int
-    reinitialize_steps: Any
-    encoder: Any
-    commands_parser: Any
+    reinitialize_steps: int
+    encoder: Encoder
+    commands_parser: Incomplete
     def __init__(
         self,
         nodes_manager,
         commands_parser,
-        result_callbacks: Any | None = ...,
-        cluster_response_callbacks: Any | None = ...,
-        startup_nodes: Any | None = ...,
+        result_callbacks: Incomplete | None = ...,
+        cluster_response_callbacks: Incomplete | None = ...,
+        startup_nodes: Incomplete | None = ...,
         read_from_replicas: bool = ...,
         cluster_error_retry_attempts: int = ...,
         reinitialize_steps: int = ...,
+        lock: Lock | None = ...,
         **kwargs,
     ) -> None: ...
     def __enter__(self): ...
@@ -189,7 +209,7 @@ class ClusterPipeline(RedisCluster[_StrType], Generic[_StrType]):
     def script_load_for_pipeline(self, *args, **kwargs) -> None: ...
     def delete(self, *names): ...
 
-def block_pipeline_command(func): ...
+def block_pipeline_command(name: str) -> Callable[..., Any]: ...
 
 class PipelineCommand:
     args: Any

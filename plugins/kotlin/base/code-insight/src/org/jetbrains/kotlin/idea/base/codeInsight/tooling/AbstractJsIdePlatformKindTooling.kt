@@ -38,7 +38,7 @@ abstract class AbstractJsIdePlatformKindTooling : IdePlatformKindTooling() {
 
     override val mavenLibraryIds = listOf(PathUtil.JS_LIB_NAME, MAVEN_OLD_JS_STDLIB_ID)
     override val gradlePluginId = "kotlin-platform-js"
-    override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.JS)
+    override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.JS, KotlinPlatform.WASM)
 
     override val libraryKind = KotlinJavaScriptLibraryKind
 

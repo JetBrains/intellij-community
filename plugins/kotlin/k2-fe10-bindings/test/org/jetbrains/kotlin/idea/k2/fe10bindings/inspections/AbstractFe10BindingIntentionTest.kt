@@ -6,12 +6,12 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiFile
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
-import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTest
+import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTestBase
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
-abstract class AbstractFe10BindingIntentionTest : AbstractIntentionTest() {
+abstract class AbstractFe10BindingIntentionTest : AbstractIntentionTestBase() {
     override fun isFirPlugin() = true
 
     // left empty because error reporting in FIR and old FE is different

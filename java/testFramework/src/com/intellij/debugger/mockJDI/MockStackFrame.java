@@ -37,13 +37,13 @@ public class MockStackFrame extends MockMirror implements StackFrame {
   }
 
   public void addVariable(String name, MockValue value) {
-    myLocalVariables.add(new MockLocalVariable(myVirtualMachine, name, (MockType) value.type(), value));
+    myLocalVariables.add(new MockLocalVariable(myVirtualMachine, name, (MockType)value.type(), value));
   }
 
   public void addVariable(MockLocalVariable var) {
     myLocalVariables.add(var);
   }
-  
+
   public void setThisValue(MockObjectReference val) {
     myThisValue = val;
   }
@@ -102,7 +102,7 @@ public class MockStackFrame extends MockMirror implements StackFrame {
 
   @Override
   public Value getValue(LocalVariable localVariable) {
-    return ((MockLocalVariable) localVariable).getValue();
+    return ((MockLocalVariable)localVariable).getValue();
   }
 
   @Override
@@ -115,7 +115,7 @@ public class MockStackFrame extends MockMirror implements StackFrame {
   }
 
   @Override
-  public void setValue(LocalVariable localVariable,Value value) {
+  public void setValue(LocalVariable localVariable, Value value) {
     throw new UnsupportedOperationException("Not implemented: \"setValue\" in " + getClass().getName());
   }
 

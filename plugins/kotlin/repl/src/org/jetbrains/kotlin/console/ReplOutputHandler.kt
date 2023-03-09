@@ -91,7 +91,7 @@ class ReplOutputHandler(
         }
         // there are several INITIAL_PROMPT messages, the 1st starts with `Welcome to Kotlin version ...`
         if (content.startsWith("Welcome")) {
-            outputProcessor.printUserOutput(KotlinIdeaReplBundle.message("repl.is.in.experimental.stage") + "\n")
+            outputProcessor.printUserOutput(KotlinIdeaReplBundle.message("kotlin.repl.is.experimental") + "\n")
         }
         outputProcessor.printInitialPrompt(content)
     }

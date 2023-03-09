@@ -34,6 +34,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcs.commit.CommitSessionCollector;
@@ -52,6 +53,8 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
@@ -229,6 +232,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }.installOn(this);
   }
 
+  /**
+   * @see #installGroupingSupport(ChangesTree, ChangesGroupingSupport, Supplier, Consumer)
+   */
   @NotNull
   protected ChangesGroupingSupport installGroupingSupport() {
     ChangesGroupingSupport result = new ChangesGroupingSupport(myProject, this, false);
@@ -243,15 +249,29 @@ public abstract class ChangesTree extends Tree implements DataProvider {
                                                @NotNull ChangesGroupingSupport groupingSupport,
                                                @NotNull @NonNls String propertyName,
                                                @NonNls List<String> defaultGroupingKeys) {
-    groupingSupport.setGroupingKeysOrSkip(
-      Set.copyOf(Objects.requireNonNullElse(PropertiesComponent.getInstance(tree.getProject()).getList(propertyName),
-                                            defaultGroupingKeys)));
-    groupingSupport.addPropertyChangeListener(e -> {
-      PropertiesComponent.getInstance(tree.getProject()).setList(propertyName, groupingSupport.getGroupingKeys());
+    installGroupingSupport(tree, groupingSupport,
+                           () -> {
+                             List<String> storedList = PropertiesComponent.getInstance(tree.getProject()).getList(propertyName);
+                             return Objects.requireNonNullElse(storedList, defaultGroupingKeys);
+                           },
+                           newValue -> PropertiesComponent.getInstance(tree.getProject()).setList(propertyName, newValue));
+  }
 
-      List<Object> oldSelection = selected(tree).userObjects();
-      tree.rebuildTree();
-      tree.setSelectedChanges(oldSelection);
+  protected static void installGroupingSupport(@NotNull ChangesTree tree,
+                                               @NotNull ChangesGroupingSupport groupingSupport,
+                                               @NotNull Supplier<? extends Collection<String>> settingsGetter,
+                                               @NotNull Consumer<? super Collection<String>> settingsSetter) {
+    installGroupingSupport(groupingSupport, settingsGetter, settingsSetter, () -> tree.onGroupingChanged());
+  }
+
+  public static void installGroupingSupport(@NotNull ChangesGroupingSupport groupingSupport,
+                                            @NotNull Supplier<? extends Collection<String>> settingsGetter,
+                                            @NotNull Consumer<? super Collection<String>> settingsSetter,
+                                            @NotNull Runnable refresh) {
+    groupingSupport.setGroupingKeysOrSkip(settingsGetter.get());
+    groupingSupport.addPropertyChangeListener(e -> {
+      settingsSetter.accept(ContainerUtil.sorted(groupingSupport.getGroupingKeys()));
+      refresh.run();
     });
   }
 
@@ -321,6 +341,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return this;
   }
 
+  /**
+   * @see #installGroupingSupport()
+   */
   public void addGroupingChangeListener(@NotNull PropertyChangeListener listener) {
     myGroupingSupport.addPropertyChangeListener(listener);
   }
@@ -382,6 +405,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
 
     return isFlat;
+  }
+
+  public void onGroupingChanged() {
+    List<Object> oldSelection = selected(this).userObjects();
+    rebuildTree();
+    setSelectedChanges(oldSelection);
   }
 
   public abstract void rebuildTree();
@@ -779,7 +808,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public Color getFileColorForPath(@NotNull TreePath path) {
     Object component = path.getLastPathComponent();
     if (component instanceof ChangesBrowserNode<?>) {
-      return ((ChangesBrowserNode<?>)component).getBackgroundColor(myProject);
+      return ((ChangesBrowserNode<?>)component).getBackgroundColorCached(myProject);
     }
     return null;
   }

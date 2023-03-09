@@ -32,15 +32,15 @@ import java.util.Set;
 
 abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
   private final PsiMethod myMethod;
-  private final ArrayList<? super UsageInfo> myResult;
+  private final List<? super UsageInfo> myResult;
 
-  SafeDeleteJavaCallerChooser(PsiMethod method, Project project, ArrayList<? super UsageInfo> result) {
+  SafeDeleteJavaCallerChooser(@NotNull PsiMethod method, @NotNull Project project, @NotNull List<? super UsageInfo> result) {
     super(method, project, JavaRefactoringBundle.message("safe.delete.select.methods.to.propagate.delete.parameters.dialog.title"), null, EmptyConsumer.getInstance());
     myMethod = method;
     myResult = result;
   }
 
-  protected abstract ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> getTopLevelItems();
+  protected abstract @NotNull List<SafeDeleteParameterCallHierarchyUsageInfo> getTopLevelItems();
   protected abstract int getParameterIdx();
 
   @Override
@@ -150,7 +150,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
                     return true;
                   }
 
-                  private boolean usedInQualifier(PsiElement element, PsiCallExpression parent, int parameterIndex) {
+                  private static boolean usedInQualifier(PsiElement element, PsiCallExpression parent, int parameterIndex) {
                     PsiExpression qualifier = null;
                     if (parent instanceof PsiMethodCallExpression) {
                       qualifier = ((PsiMethodCallExpression)parent).getMethodExpression();
@@ -200,7 +200,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     return ref.get();
   }
 
-  protected int getCallerParameterIndex(PsiMethod called, int paramIdx, PsiMethod caller) {
+  private int getCallerParameterIndex(PsiMethod called, int paramIdx, PsiMethod caller) {
     final PsiParameter parameter = getParameterInCaller(called, paramIdx, caller);
     return parameter != null ? caller.getParameterList().getParameterIndex(parameter) : -1;
   }
@@ -226,7 +226,7 @@ abstract class SafeDeleteJavaCallerChooser extends JavaCallerChooser {
     @Override
     protected List<PsiMethod> computeCallers() {
       if (getTopMember().equals(getMember())) {
-        final ArrayList<SafeDeleteParameterCallHierarchyUsageInfo> items = getTopLevelItems();
+        List<SafeDeleteParameterCallHierarchyUsageInfo> items = getTopLevelItems();
         return ContainerUtil.map(items, info -> info.getCallerMethod());
       }
       final List<PsiMethod> methods = super.computeCallers();

@@ -30,7 +30,7 @@ object CreateHasNextFunctionActionFactory : CreateCallableMemberFromUsageFactory
             OperatorNameConventions.HAS_NEXT.asString(),
             ownerType,
             returnType,
-            modifierList = KtPsiFactory(element).createModifierList(KtTokens.OPERATOR_KEYWORD)
+            modifierList = KtPsiFactory(element.project).createModifierList(KtTokens.OPERATOR_KEYWORD)
         )
     }
 }

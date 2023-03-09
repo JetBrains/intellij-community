@@ -37,7 +37,8 @@ public abstract class TreeBuilder implements TreeModel {
   }
 
   public abstract void buildChildren(TreeBuilderNode node);
-  public abstract boolean isExpandable (TreeBuilderNode node);
+
+  public abstract boolean isExpandable(TreeBuilderNode node);
 
   public void setRoot(TreeBuilderNode root) {
     myRoot = root;
@@ -50,12 +51,12 @@ public abstract class TreeBuilder implements TreeModel {
 
   @Override
   public int getChildCount(Object parent) {
-    return ((TreeBuilderNode) parent).getChildCount();
+    return ((TreeBuilderNode)parent).getChildCount();
   }
 
   @Override
   public boolean isLeaf(Object node) {
-    return ((TreeBuilderNode) node).isLeaf();
+    return ((TreeBuilderNode)node).isLeaf();
   }
 
   @Override
@@ -70,17 +71,17 @@ public abstract class TreeBuilder implements TreeModel {
 
   @Override
   public Object getChild(Object parent, int index) {
-    return ((TreeBuilderNode) parent).getChildAt(index);
+    return ((TreeBuilderNode)parent).getChildAt(index);
   }
 
   @Override
   public int getIndexOfChild(Object parent, Object child) {
-    return ((TreeBuilderNode) parent).getIndex((TreeNode) child);
+    return ((TreeBuilderNode)parent).getIndex((TreeNode)child);
   }
 
   @Override
   public void valueForPathChanged(TreePath path, Object newValue) {
-    TreeBuilderNode  aNode = (TreeBuilderNode) path.getLastPathComponent();
+    TreeBuilderNode aNode = (TreeBuilderNode)path.getLastPathComponent();
 
     aNode.setUserObject(newValue);
     nodeChanged(aNode);
@@ -91,8 +92,9 @@ public abstract class TreeBuilder implements TreeModel {
     TreeNode parent = node.getParent();
     if (parent != null) {
       int anIndex = parent.getIndex(node);
-      event = new TreeModelEvent(this, getPathToRoot(parent, 0), new int[] {anIndex}, new Object[] {node});
-    } else if (node == getRoot()) {
+      event = new TreeModelEvent(this, getPathToRoot(parent, 0), new int[]{anIndex}, new Object[]{node});
+    }
+    else if (node == getRoot()) {
       event = new TreeModelEvent(this, getPathToRoot(node, 0), null, null);
     }
     if (event != null) {
@@ -106,22 +108,26 @@ public abstract class TreeBuilder implements TreeModel {
   }
 
   protected TreeNode[] getPathToRoot(TreeNode aNode, int depth) {
-      TreeNode[]              retNodes;
-      if(aNode == null) {
-          if(depth == 0)
-              return null;
-          else
-              retNodes = new TreeNode[depth];
+    TreeNode[] retNodes;
+    if (aNode == null) {
+      if (depth == 0) {
+        return null;
       }
       else {
-          depth++;
-          if(aNode == myRoot)
-              retNodes = new TreeNode[depth];
-          else
-              retNodes = getPathToRoot(aNode.getParent(), depth);
-          retNodes[retNodes.length - depth] = aNode;
+        retNodes = new TreeNode[depth];
       }
-      return retNodes;
+    }
+    else {
+      depth++;
+      if (aNode == myRoot) {
+        retNodes = new TreeNode[depth];
+      }
+      else {
+        retNodes = getPathToRoot(aNode.getParent(), depth);
+      }
+      retNodes[retNodes.length - depth] = aNode;
+    }
+    return retNodes;
   }
 
   public void removeNodeFromParent(TreeBuilderNode node) {
@@ -130,5 +136,4 @@ public abstract class TreeBuilder implements TreeModel {
       parent.remove(node);
     }
   }
-
 }

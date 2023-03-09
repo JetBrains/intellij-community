@@ -21,8 +21,8 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
-import org.jetbrains.kotlin.resolve.calls.util.getFirstArgumentExpression
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getFirstArgumentExpression
 import org.jetbrains.kotlin.resolve.calls.util.getParameterForArgument
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -100,4 +100,5 @@ internal object CoroutineBlockingCallInspectionUtils {
     const val FLOW_PACKAGE_FQN = "kotlinx.coroutines.flow"
     private const val FLOW_FQN = "kotlinx.coroutines.flow.Flow"
     const val WITH_CONTEXT_FQN = "kotlinx.coroutines.withContext"
+    const val COROUTINE_NAME = "kotlinx.coroutines.CoroutineName"
 }

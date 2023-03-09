@@ -52,7 +52,7 @@ class ConnectorTable : ListTableWithButtons<MavenServerConnector>() {
   }
 
   override fun createListModel(): ListTableModel<MavenServerConnector> {
-    val project = TableColumn(MavenConfigurableBundle.message("connector.ui.project")) { it.project.name }
+    val project = TableColumn(MavenConfigurableBundle.message("connector.ui.project")) { it.project?.name?: "!Indexer" }
     val jdk = TableColumn(MavenConfigurableBundle.message("connector.ui.jdk")) { it.jdk.name }
     val vmopts = TableColumn(MavenConfigurableBundle.message("connector.ui.vmOptions")) { it.vmOptions }
     val dir = TableColumn(MavenConfigurableBundle.message("connector.ui.dir")) { it.multimoduleDirectories.joinToString(separator = ",") }

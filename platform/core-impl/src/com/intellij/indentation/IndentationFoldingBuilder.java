@@ -25,7 +25,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode astNode, @NotNull Document document) {
     List<FoldingDescriptor> descriptors = new LinkedList<>();
     collectDescriptors(astNode, descriptors);
-    return descriptors.toArray(FoldingDescriptor.EMPTY);
+    return descriptors.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
   private void collectDescriptors(@NotNull final ASTNode node, @NotNull final List<? super FoldingDescriptor> descriptors) {

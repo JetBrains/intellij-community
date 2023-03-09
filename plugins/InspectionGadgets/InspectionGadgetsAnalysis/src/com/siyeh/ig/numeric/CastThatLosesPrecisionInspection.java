@@ -19,7 +19,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -32,7 +32,8 @@ import com.siyeh.ig.psiutils.TypeUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CastThatLosesPrecisionInspection extends BaseInspection {
 
@@ -61,11 +62,10 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("cast.that.loses.precision.option"), "ignoreIntegerCharCasts");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.overflowing.byte.casts.option"), "ignoreOverflowingByteCasts");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("ignoreIntegerCharCasts", InspectionGadgetsBundle.message("cast.that.loses.precision.option")),
+      checkbox("ignoreOverflowingByteCasts", InspectionGadgetsBundle.message("ignore.overflowing.byte.casts.option")));
   }
 
   @Override

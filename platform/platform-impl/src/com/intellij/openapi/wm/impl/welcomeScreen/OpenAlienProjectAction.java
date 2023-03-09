@@ -39,6 +39,7 @@ public class OpenAlienProjectAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    if (myProjectPaths == null) return;
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     for (@NlsSafe String path : myProjectPaths) {
       actionGroup.add(new AnAction(path) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.python.testing;
 
 import com.intellij.execution.ExecutionException;
@@ -39,7 +39,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
@@ -931,10 +931,9 @@ public final class PythonUnitTestingTest extends PythonUnitTestingLikeTest<PyUni
       super(relativePathToTestData, scriptName, rerunFailedTests, PythonUnitTestingTest.this::createTestRunner);
     }
 
-    @NotNull
     @Override
-    public Iterable<Class<?>> getClassesToEnableDebug() {
-      return Collections.singletonList(GeneralIdBasedToSMTRunnerEventsConvertor.class);
+    public @NotNull Collection<Class<?>> getClassesToEnableDebug() {
+      return List.of(GeneralIdBasedToSMTRunnerEventsConvertor.class);
     }
   }
 

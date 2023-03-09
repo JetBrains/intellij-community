@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.decompiler.navigation;
 
@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.types.KotlinType;
 import java.util.List;
 import java.util.Set;
 
-public class MemberMatching {
+public final class MemberMatching {
     /* DECLARATIONS ROUGH MATCHING */
     @Nullable
     private static KtTypeReference getReceiverType(@NotNull KtNamedDeclaration propertyOrFunction) {

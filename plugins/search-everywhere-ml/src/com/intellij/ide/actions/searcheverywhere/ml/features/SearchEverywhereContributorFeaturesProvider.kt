@@ -20,16 +20,20 @@ internal class SearchEverywhereContributorFeaturesProvider {
       "TextSearchContributor", "DbSETablesContributor", "third.party"
     )
 
-    private val CONTRIBUTOR_INFO_ID = EventFields.String("id", SE_TABS)
-    private val CONTRIBUTOR_PRIORITY = EventFields.Int("priority")
-    private val CONTRIBUTOR_WEIGHT = EventFields.Int("weight")
-    private val CONTRIBUTOR_IS_MOST_POPULAR = EventFields.Boolean("isMostPopular")
-    private val CONTRIBUTOR_POPULARITY_INDEX = EventFields.Int("popularityIndex")
+    private val CONTRIBUTOR_INFO_ID = EventFields.String("contributorId", SE_TABS)
+    private val CONTRIBUTOR_PRIORITY = EventFields.Int("contributorPriority")
+    private val CONTRIBUTOR_WEIGHT = EventFields.Int("contributorWeight")
+    private val CONTRIBUTOR_IS_MOST_POPULAR = EventFields.Boolean("contributorIsMostPopular")
+    private val CONTRIBUTOR_POPULARITY_INDEX = EventFields.Int("contributorPopularityIndex")
 
     fun getFeaturesDeclarations(): List<EventField<*>> = listOf(
       CONTRIBUTOR_INFO_ID, CONTRIBUTOR_PRIORITY, CONTRIBUTOR_WEIGHT,
       CONTRIBUTOR_IS_MOST_POPULAR, CONTRIBUTOR_POPULARITY_INDEX
     )
+  }
+
+  fun getContributorIdFeature(contributor: SearchEverywhereContributor<*>): EventPair<*> {
+    return CONTRIBUTOR_INFO_ID.with(contributor.searchProviderId)
   }
 
   fun getFeatures(contributor: SearchEverywhereContributor<*>, mixedListInfo: SearchEverywhereMixedListInfo): List<EventPair<*>> {

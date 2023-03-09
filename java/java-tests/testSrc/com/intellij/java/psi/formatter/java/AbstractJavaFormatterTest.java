@@ -59,16 +59,12 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
 
     boolean first = true;
     for (byte[] line : lines) {
-      try {
-        if (!first) result.append('\n');
-        if (line.length > 0 || shiftEmptyLines) {
-          StringUtil.repeatSymbol(result, ' ', i);
-        }
-        result.append(new String(line, StandardCharsets.UTF_8));
+      if (!first) result.append('\n');
+      if (line.length > 0 || shiftEmptyLines) {
+        StringUtil.repeatSymbol(result, ' ', i);
       }
-      finally {
-        first = false;
-      }
+      result.append(new String(line, StandardCharsets.UTF_8));
+      first = false;
     }
 
     return result.toString();

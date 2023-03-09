@@ -13,10 +13,10 @@ import com.sun.jdi.Location;
 import com.sun.jdi.request.StepRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtil;
 import org.jetbrains.kotlin.idea.debugger.base.util.SafeUtilKt;
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtil;
 
-public class DebuggerSteppingHelper {
+public final class DebuggerSteppingHelper {
     public static DebugProcessImpl.ResumeCommand createStepOverCommand(
             SuspendContextImpl suspendContext,
             boolean ignoreBreakpoints,

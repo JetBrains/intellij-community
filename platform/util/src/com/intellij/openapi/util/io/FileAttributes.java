@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -164,6 +164,10 @@ public final class FileAttributes {
     return new FileAttributes(newFlags, length, lastModified);
   }
 
+  public @NotNull FileAttributes withTimeStamp(long timestamp) {
+    return new FileAttributes(flags, length, timestamp);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -188,25 +192,19 @@ public final class FileAttributes {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-
     sb.append("[type:").append(getType());
-
     if (isSet(flags, SYM_LINK)) sb.append(" l");
     if (isSet(flags, HIDDEN)) sb.append(" .");
     if (isSet(flags, READ_ONLY)) sb.append(" ro");
-
     sb.append(" length:").append(length);
-
     sb.append(" modified:").append(lastModified);
-    sb.append(" case sensitive: ").append(areChildrenCaseSensitive());
+    sb.append(" case-sensitive: ").append(areChildrenCaseSensitive());
     sb.append(']');
     return sb.toString();
   }
 
   public static @NotNull FileAttributes fromNio(@NotNull Path path, @NotNull BasicFileAttributes attrs) {
-    boolean isSymbolicLink =
-      attrs.isSymbolicLink() ||
-      SystemInfo.isWindows && attrs.isOther() && attrs.isDirectory() && path.getParent() != null;  // marking reparse points as symlinks (except roots)
+    boolean isSymbolicLink = attrs.isSymbolicLink() || SystemInfo.isWindows && attrs.isOther() && attrs.isDirectory() && path.getParent() != null;
 
     if (isSymbolicLink) {
       try {
@@ -224,13 +222,12 @@ public final class FileAttributes {
       isWritable = attrs.isDirectory() || !((DosFileAttributes)attrs).isReadOnly();
     }
     else {
-      try { isWritable = Files.isWritable(path); }
+      try { isWritable = attrs.isDirectory() || Files.isWritable(path); }
       catch (SecurityException ignored) { }
     }
 
     long lastModified = attrs.lastModifiedTime().toMillis();
 
-    boolean isSpecial = attrs.isOther() && !(SystemInfo.isWindows && attrs.isDirectory());  // reparse points are directories (not special files)
-    return new FileAttributes(attrs.isDirectory(), isSpecial, isSymbolicLink, isHidden, attrs.size(), lastModified, isWritable);
+    return new FileAttributes(attrs.isDirectory(), attrs.isOther(), isSymbolicLink, isHidden, attrs.size(), lastModified, isWritable);
   }
 }

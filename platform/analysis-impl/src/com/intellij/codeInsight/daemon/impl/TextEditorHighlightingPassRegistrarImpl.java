@@ -95,16 +95,9 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     return serializeCodeInsightPasses;
   }
 
-  private static final class PassConfig {
-    private final TextEditorHighlightingPassFactory passFactory;
-    private final int[] startingPredecessorIds;
-    private final int[] completionPredecessorIds;
-
-    private PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory, int @NotNull [] completionPredecessorIds, int @NotNull [] startingPredecessorIds) {
-      this.completionPredecessorIds = completionPredecessorIds;
-      this.startingPredecessorIds = startingPredecessorIds;
-      this.passFactory = passFactory;
-    }
+  private record PassConfig(@NotNull TextEditorHighlightingPassFactory passFactory,
+                            int @NotNull [] completionPredecessorIds,
+                            int @NotNull [] startingPredecessorIds) {
   }
 
   @Override
@@ -126,7 +119,7 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     assertPassIdsAreNotCrazy(afterStartingOf, "afterStartingOf");
     assertPassIdsAreNotCrazy(afterCompletionOf, "afterCompletionOf");
     PassConfig info = new PassConfig(factory, afterCompletionOf, afterStartingOf);
-    int passId = forcedPassId == -1 ? nextAvailableId.incrementAndGet() : forcedPassId;
+    int passId = forcedPassId == -1 ? getNextAvailableId() : forcedPassId;
     PassConfig registered = myRegisteredPassFactories.get(passId);
     assert registered == null: "Pass id "+passId +" has already been registered in: "+ registered.passFactory;
     myRegisteredPassFactories.put(passId, info);
@@ -158,9 +151,8 @@ public final class TextEditorHighlightingPassRegistrarImpl extends TextEditorHig
     }
   }
 
-  @NotNull
-  AtomicInteger getNextAvailableId() {
-    return nextAvailableId;
+  int getNextAvailableId() {
+    return nextAvailableId.incrementAndGet();
   }
 
   @Override

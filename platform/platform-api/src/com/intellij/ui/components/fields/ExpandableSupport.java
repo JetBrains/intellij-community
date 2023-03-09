@@ -3,6 +3,7 @@ package com.intellij.ui.components.fields;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
@@ -175,7 +176,9 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
           return false;
         }
       }).createPopup();
-    popup.show(new RelativePoint(location));
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      popup.show(new RelativePoint(location));
+    }
   }
 
   @NotNull
@@ -196,26 +199,26 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
 
   @NotNull
   public static JLabel createLabel(@NotNull Extension extension) {
-    return new JLabel(extension.getIcon(false)) {{
-      setToolTipText(extension.getTooltip());
-      setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-      addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseEntered(MouseEvent event) {
-          setIcon(extension.getIcon(true));
-        }
+    JLabel label = new JLabel(extension.getIcon(false));
+    label.setToolTipText(extension.getTooltip());
+    label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    label.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent event) {
+        label.setIcon(extension.getIcon(true));
+      }
 
-        @Override
-        public void mouseExited(MouseEvent event) {
-          setIcon(extension.getIcon(false));
-        }
+      @Override
+      public void mouseExited(MouseEvent event) {
+        label.setIcon(extension.getIcon(false));
+      }
 
-        @Override
-        public void mouseClicked(MouseEvent event) {
-          Runnable action = extension.getActionOnClick(event);
-          if (action != null) action.run();
-        }
-      });
-    }};
+      @Override
+      public void mouseClicked(MouseEvent event) {
+        Runnable action = extension.getActionOnClick(event);
+        if (action != null) action.run();
+      }
+    });
+    return label;
   }
 }

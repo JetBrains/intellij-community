@@ -26,4 +26,9 @@ public class PyVerSpecificSuperSignatureMacro extends Macro {
     }
     return new TextResult("");
   }
+
+  @Override
+  public boolean isAcceptableInContext(TemplateContextType context) {
+    return context instanceof PythonTemplateContextType;
+  }
 }

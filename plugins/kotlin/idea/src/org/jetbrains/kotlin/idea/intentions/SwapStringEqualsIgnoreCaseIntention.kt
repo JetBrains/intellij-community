@@ -45,7 +45,7 @@ class SwapStringEqualsIgnoreCaseIntention : SelfTargetingRangeIntention<KtDotQua
         val valueArguments = callExpression.valueArguments
         val offset = (editor?.caretModel?.offset ?: 0) - (callExpression.calleeExpression?.startOffset ?: 0)
         val receiverExpression = element.receiverExpression
-        val newElement = KtPsiFactory(element).createExpressionByPattern(
+        val newElement = KtPsiFactory(element.project).createExpressionByPattern(
             "$0.equals($1, $2)",
             valueArguments[0].getArgumentExpression()!!,
             receiverExpression,

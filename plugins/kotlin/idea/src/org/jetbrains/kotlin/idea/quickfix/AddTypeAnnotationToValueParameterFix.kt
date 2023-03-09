@@ -60,7 +60,7 @@ class AddTypeAnnotationToValueParameterFix(element: KtParameter) : KotlinQuickFi
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         if (typeName != null) {
-            element.typeReference = KtPsiFactory(element).createType(typeName)
+            element.typeReference = KtPsiFactory(project).createType(typeName)
             ShortenReferences.DEFAULT.process(element)
         }
     }

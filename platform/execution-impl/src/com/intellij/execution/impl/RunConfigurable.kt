@@ -45,7 +45,6 @@ import com.intellij.ui.popup.PopupState
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Alarm
 import com.intellij.util.ArrayUtilRt
-import com.intellij.util.IconUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.TreeTraversal
@@ -342,7 +341,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
   private fun showFolderField(node: DefaultMutableTreeNode, @Nls folderName: String) {
     rightPanel.removeAll()
-    val p = JPanel(MigLayout("ins ${toolbarDecorator!!.actionsPanel.height} 5 0 0, flowx"))
+    val p = JPanel(MigLayout("ins ${toolbarDecorator!!.actionsPanel.height}px 5 0 0, flowx"))
     val textField = JTextField(folderName)
     textField.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
@@ -919,8 +918,8 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   }
 
   protected inner class MyToolbarAddAction : AnAction(ExecutionBundle.message("add.new.run.configuration.action2.name"),
-                                                    ExecutionBundle.message("add.new.run.configuration.action2.name"),
-                                                    IconUtil.getAddIcon()), AnActionButtonRunnable {
+                                                      ExecutionBundle.message("add.new.run.configuration.action2.name"),
+                                                      AllIcons.General.Add), AnActionButtonRunnable {
     private val myPopupState = PopupState.forPopup()
 
     init {
@@ -958,7 +957,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
   protected inner class MyRemoveAction : AnAction(ExecutionBundle.message("remove.run.configuration.action.name"),
                                                   ExecutionBundle.message("remove.run.configuration.action.name"),
-                                                  IconUtil.getRemoveIcon()), AnActionButtonRunnable, AnActionButtonUpdater {
+                                                  AllIcons.General.Remove), AnActionButtonRunnable, AnActionButtonUpdater {
     init {
       registerCustomShortcutSet(CommonShortcuts.getDelete(), tree)
     }

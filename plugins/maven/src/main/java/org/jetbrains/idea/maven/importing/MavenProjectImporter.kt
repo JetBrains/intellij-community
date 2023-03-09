@@ -27,8 +27,8 @@ interface MavenProjectImporter {
                        importingSettings: MavenImportingSettings,
                        previewModule: Module?,
                        importingActivity: StructuredIdeActivity): MavenProjectImporter {
-      val importer = createImporter(project, projectsTree, projectsToImportWithChanges, importModuleGroupsRequired, modelsProvider,
-                                    importingSettings, previewModule)
+      val importer = createImporter(project, projectsTree, projectsToImportWithChanges,
+                                    importModuleGroupsRequired, modelsProvider, importingSettings, previewModule)
       return object : MavenProjectImporter {
         override fun importProject(): List<MavenProjectsProcessorTask>? {
           val activity = MavenImportStats.startApplyingModelsActivity(project, importingActivity)

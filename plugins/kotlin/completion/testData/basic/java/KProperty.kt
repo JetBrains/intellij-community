@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 /* Number of result in completion should be fixed after removing duplicates */
 package first
 

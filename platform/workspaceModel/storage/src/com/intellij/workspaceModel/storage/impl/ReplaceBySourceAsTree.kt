@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.TestOnly
 import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * # Replace By Source ~~as tree~~
@@ -124,6 +125,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
           }
           targetStorage.entityDataByIdOrDie(targetEntityId).createEntity(targetStorage)
         }
+        // Here we get all parents which should be assosiated with the current entity in the target storage
         targetStorage.modifyEntity(WorkspaceEntity.Builder::class.java, targetEntity) {
           (this as ModifiableWorkspaceEntityBase<*, *>).relabel(replaceWithEntity, parents)
         }
@@ -148,7 +150,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       // Here we bind them again, so I guess we can remove "parents binding" from [createDetachedEntity], but let's do it twice for now.
       // Actually, I hope to get rid of [createDetachedEntity] at some moment.
       targetParents.groupBy { it::class }.forEach { (_, ents) ->
-        modifiableEntity.linkExternalEntity(ents.first().getEntityInterface().kotlin, false, ents)
+        modifiableEntity.updateReferenceToEntity(ents.first().getEntityInterface().kotlin, false, ents)
       }
       targetStorage.addEntity(modifiableEntity)
       targetStorage.indexes.updateExternalMappingForEntityId(replaceWithDataSource, modifiableEntity.id, replaceWithStorage.indexes)
@@ -239,11 +241,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       replaceWithEntity as WorkspaceEntityBase
 
       if (replaceWithState[replaceWithEntity.id] != null) return
-
-      val trackToParents = TrackToParents(replaceWithEntity.id)
-      buildRootTrack(trackToParents, replaceWithStorage)
-
-      processEntity(trackToParents)
+      processEntity(TrackToParents(replaceWithEntity.id, replaceWithStorage))
     }
 
     private fun processEntity(replaceWithTrack: TrackToParents): ParentsRef? {
@@ -401,27 +399,26 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
         val parentsAssociation = replaceWithTrack.parents.associateWith { findSameEntityInTargetStore(it) }
         val entriesList = parentsAssociation.entries.toList()
 
-        val targetParents = mutableSetOf<EntityId>()
-        var targetEntityData: WorkspaceEntityData<out WorkspaceEntity>? = null
+        var isNewParent = false
+        // Going through the parents of searchable entity and looking for it in target storage via parent's refs
+        // to detect is it a new entity or existing one
         for (i in entriesList.indices) {
           val value = entriesList[i].value
           if (value is ParentsRef.TargetRef) {
-            targetEntityData = findEntityInTargetStore(replaceWithEntityData, value.targetEntityId, replaceWithTrack.entity.clazz)
+            val targetEntityData = findEntityInTargetStore(replaceWithEntityData, value.targetEntityId, replaceWithTrack.entity.clazz)
             if (targetEntityData != null) {
-              targetParents += entriesList[i].key.entity
-              break
+              return targetEntityData.createEntityId().let { ParentsRef.TargetRef(it) }
+            } else {
+              // If target parent didn't change, but we can't find desired existing child, we suppose it's new child
+              isNewParent = true
             }
           }
-        }
-        if (targetEntityData == null) {
-          for (entry in entriesList) {
-            val value = entry.value
-            if (value is ParentsRef.AddedElement) {
-              return ParentsRef.AddedElement(replaceWithTrack.entity)
-            }
+          else if (value is ParentsRef.AddedElement) {
+            // The simplest case if the entity was already marked as new
+            isNewParent = true
           }
         }
-        return targetEntityData?.createEntityId()?.let { ParentsRef.TargetRef(it) }
+        return if (isNewParent) ParentsRef.AddedElement(replaceWithTrack.entity) else null
       }
     }
 
@@ -440,8 +437,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       replaceWithStorage.refs.getChildrenRefsOfParentBy(replaceWithEntityId.asParent()).values.flatten().forEach {
         val replaceWithChildEntityData = replaceWithStorage.entityDataByIdOrDie(it.id)
         if (!entityFilter(replaceWithChildEntityData.entitySource)) return@forEach
-        val trackToParents = TrackToParents(it.id)
-        buildRootTrack(trackToParents, replaceWithStorage)
+        val trackToParents = TrackToParents(it.id, replaceWithStorage)
         val sameEntity = findSameEntityInTargetStore(trackToParents)
         if (sameEntity is ParentsRef.TargetRef) {
           return@forEach
@@ -457,12 +453,9 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     fun processEntity(targetEntityToReplace: WorkspaceEntity) {
       targetEntityToReplace as WorkspaceEntityBase
 
-      val trackToParents = TrackToParents(targetEntityToReplace.id)
-      buildRootTrack(trackToParents, targetStorage)
-
       // This method not only finds the same entity in the ReplaceWith storage, but also processes all entities it meets.
       // So, for processing an entity, it's enough to call this methos on the entity.
-      findSameEntity(trackToParents)
+      findSameEntity(TrackToParents(targetEntityToReplace.id, targetStorage))
     }
 
 
@@ -639,9 +632,8 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       // This is actually a complicated operation because it's not enough just to find parents in replaceWith storage.
       //   We should also understand if this parent is a new entity or it already exists in the target storage.
       if (replaceWithEntity != null) {
-        val replaceWithTrackToParents = TrackToParents(replaceWithEntity.id)
-        buildRootTrack(replaceWithTrackToParents, replaceWithStorage)
-        val alsoTargetParents = replaceWithTrackToParents.parents.map { ReplaceWithProcessor().findSameEntityInTargetStore(it) }
+        val alsoTargetParents = TrackToParents(replaceWithEntity.id, replaceWithStorage).parents
+          .map { ReplaceWithProcessor().findSameEntityInTargetStore(it) }
         targetParents.addAll(alsoTargetParents.filterNotNull())
       }
       return Pair(targetParents, replaceWithEntity)
@@ -751,7 +743,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     val targetEntityIds = childrenInTarget(targetParentEntityId, childClazz)
     val targetChildrenMap = makeEntityDataCollection(targetEntityIds, targetStorage)
     targetEntityData1 = targetChildrenMap.removeSome(replaceWithEntityData)
-    while (targetEntityData1 != null && replaceWithState[targetEntityData1.createEntityId()] != null) {
+    while (targetEntityData1 != null && targetState[targetEntityData1.createEntityId()] != null) {
       targetEntityData1 = targetChildrenMap.removeSome(replaceWithEntityData)
     }
     return targetEntityData1
@@ -788,20 +780,6 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   }
 
   companion object {
-    /**
-     * Build track from this entity to it's parents. There is no return value, we modify [track] variable.
-     */
-    private fun buildRootTrack(track: TrackToParents,
-                               storage: AbstractEntityStorage) {
-      val parents = storage.refs.getParentRefsOfChild(track.entity.asChild())
-      parents.values.forEach { parentEntityId ->
-        val parentTrack = TrackToParents(parentEntityId.id)
-        buildRootTrack(parentTrack, storage)
-        track.parents += parentTrack
-        parentTrack.child = track
-      }
-    }
-
     private fun childrenInStorage(entityId: EntityId?,
                                   childrenClass: Int,
                                   storage: AbstractEntityStorage,
@@ -878,8 +856,19 @@ sealed interface ParentsRef {
   data class AddedElement(val replaceWithEntityId: EntityId) : ParentsRef
 }
 
-class TrackToParents(
+private class TrackToParents(
   val entity: EntityId,
-  var child: TrackToParents? = null,
-  val parents: MutableList<TrackToParents> = ArrayList(),
-)
+  private val storage: AbstractEntityStorage
+) {
+  private var cachedParents: List<TrackToParents>? = null
+
+  val parents: List<TrackToParents>
+    get() {
+      if (cachedParents == null) {
+        cachedParents = storage.refs.getParentRefsOfChild(entity.asChild()).values.map { parentEntityId ->
+          TrackToParents(parentEntityId.id, storage)
+        }
+      }
+      return cachedParents!!
+    }
+}

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
@@ -178,11 +179,13 @@ private fun startNewConsoleInstance(project: Project,
                                     listener: PydevConsoleRunner.ConsoleListener?,
                                     isRequestFocus: Boolean = false) {
   val consoleRunnerFactory = PythonConsoleRunnerFactory.getInstance()
-  val runner = if (executeInConsole == null || config == null) {
-    consoleRunnerFactory.createConsoleRunner(project, null)
-  }
-  else {
-    consoleRunnerFactory.createConsoleRunnerWithFile(project, config)
+  val runner: PydevConsoleRunner = ApplicationManager.getApplication().runReadAction<PydevConsoleRunner> {
+    if (executeInConsole == null || config == null) {
+      consoleRunnerFactory.createConsoleRunner(project, null)
+    }
+    else {
+      consoleRunnerFactory.createConsoleRunnerWithFile(project, config)
+    }
   }
   runner.addConsoleListener { consoleView ->
     if (consoleView is PyCodeExecutor) {
@@ -222,7 +225,7 @@ private fun showConsole(project: Project,
   else {
     PythonConsoleToolWindow.getInstance(project)?.toolWindow?.let { toolWindow ->
       if (!toolWindow.isVisible) {
-        toolWindow.show(null)
+        ApplicationManager.getApplication().invokeLater { toolWindow.show(null) }
       }
       val contentManager = toolWindow.contentManager
       contentManager.findContent(PyExecuteConsoleCustomizer.instance.getDescriptorName(descriptor))?.let {

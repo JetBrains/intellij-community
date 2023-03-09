@@ -32,7 +32,7 @@ public abstract class KotlinTrySurrounderBase extends KotlinStatementsSurrounder
             return null;
         }
 
-        KtTryExpression tryExpression = (KtTryExpression) KtPsiFactoryKt.KtPsiFactory(project).createExpression(getCodeTemplate());
+        KtTryExpression tryExpression = (KtTryExpression) new KtPsiFactory(project).createExpression(getCodeTemplate());
         tryExpression = (KtTryExpression) container.addAfter(tryExpression, statements[statements.length - 1]);
 
         // TODO move a comment for first statement

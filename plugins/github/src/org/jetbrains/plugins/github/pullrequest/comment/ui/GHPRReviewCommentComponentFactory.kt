@@ -1,8 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.openapi.project.Project
-import com.intellij.ui.components.panels.VerticalLayout
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter
 import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChange
@@ -10,21 +11,21 @@ import org.jetbrains.plugins.github.pullrequest.comment.GHSuggestedChangeApplier
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHelper
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 
 class GHPRReviewCommentComponentFactory(private val project: Project) {
   private val markdownConverter = GHMarkdownToHtmlConverter(project)
 
-  fun createCommentComponent(commentBody: String): JComponent {
+  fun createCommentComponent(commentBody: String, maxTextWidth: Int): JComponent {
     val htmlBody = markdownConverter.convertMarkdown(commentBody)
-    return HtmlEditorPane(htmlBody)
+    return createCommentPane(htmlBody, maxTextWidth)
   }
 
   fun createCommentWithSuggestedChangeComponent(
     thread: GHPRReviewThreadModel,
     suggestedChange: GHSuggestedChange,
-    suggestedChangeHelper: GHPRSuggestedChangeHelper
+    suggestedChangeHelper: GHPRSuggestedChangeHelper,
+    maxTextWidth: Int
   ): JComponent {
     val htmlBody = markdownConverter.convertMarkdownWithSuggestedChange(suggestedChange)
     val content = htmlBody.removePrefix("<body>").removeSuffix("</body>")
@@ -33,17 +34,20 @@ class GHPRReviewCommentComponentFactory(private val project: Project) {
     val suggestedChangeApplier = GHSuggestedChangeApplier(project, suggestedChangeHelper.repository, suggestedChange)
     val suggestedChangeComponent = GHPRReviewSuggestedChangeComponentFactory(project, thread, suggestedChangeApplier, suggestedChangeHelper)
 
-    return JPanel(VerticalLayout(0)).apply {
-      isOpaque = false
-
-      commentBlocks.forEach {
-        when (it.commentType) {
-          CommentType.COMMENT -> add(HtmlEditorPane(it.content))
-          CommentType.SUGGESTED_CHANGE -> add(suggestedChangeComponent.create(it.content))
+    return VerticalListPanel().apply {
+      commentBlocks.forEach { block ->
+        when (block.commentType) {
+          CommentType.COMMENT -> add(createCommentPane(block.content, maxTextWidth))
+          CommentType.SUGGESTED_CHANGE -> add(suggestedChangeComponent.create(block.content))
         }
       }
     }
   }
+
+  private fun createCommentPane(htmlBody: String, maxTextWidth: Int): JComponent =
+    HtmlEditorPane(htmlBody).let {
+      CollaborationToolsUIUtil.wrapWithLimitedSize(it, maxWidth = maxTextWidth)
+    }
 
   @VisibleForTesting
   enum class CommentType {

@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -1164,7 +1165,8 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   }
 
   public void testEncodingWidgetMustBeAvailableForReadonlyFiles() {
-    EncodingPanel panel = new EncodingPanel(getProject()){
+    Project project = getProject();
+    EncodingPanel panel = new EncodingPanel(project, project.getCoroutineScope()) {
       @Override
       protected VirtualFile getSelectedFile() {
         LightVirtualFile file = new LightVirtualFile("x.txt", "xxx");
@@ -1174,5 +1176,6 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     };
     panel.updateInTests(true);
     assertTrue(panel.isActionEnabled());
+    Disposer.dispose(panel);
   }
 }

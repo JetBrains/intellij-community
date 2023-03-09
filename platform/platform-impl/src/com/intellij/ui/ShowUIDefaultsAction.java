@@ -77,6 +77,12 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       public JBTextField mySearchField;
       public JBCheckBox myColorsOnly;
 
+      @Override
+      protected void doOKAction() {
+        super.doOKAction();
+        LafManager.getInstance().updateUI();
+      }
+
       @Nullable
       @Override
       public JComponent getPreferredFocusedComponent() {
@@ -97,7 +103,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           @Override
           public boolean editCellAt(int row, int column, EventObject e) {
             if (isCellEditable(row, column) && e instanceof MouseEvent) {
-              Pair pair = (Pair)getValueAt(row, 0);
+              var pair = (Pair<?, ?>)getValueAt(row, 0);
               Object key = pair.first;
               Object value = pair.second;
               final Ref<Boolean> changed = Ref.create(false);
@@ -165,6 +171,14 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   setValueAt(newValue, row, column);
                   changed.set(true);
                 }
+              } else if (value instanceof Dimension) {
+                Dimension d = (Dimension)value;
+                String oldDimension = String.format("%d,%d", d.width, d.height);
+                Dimension newDimension = editDimension(key.toString(), oldDimension);
+                if (newDimension != null) {
+                  updateValue(pair, newDimension, row, column);
+                  changed.set(true);
+                }
               }
 
               if (changed.get()) {
@@ -176,7 +190,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             return false;
           }
 
-          void updateValue(Pair value, Object newValue, int row, int col) {
+          void updateValue(Pair<?, ?> value, Object newValue, int row, int col) {
             UIManager.getDefaults().remove(value.first);
             UIManager.getDefaults().put(value.first, newValue);
             setValueAt(Pair.create(value.first, newValue), row, col);
@@ -281,7 +295,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                       List<String> result = new ArrayList<>();
                       String tail = rows.length > 1 ? "," : "";
                       for (int row : rows) {
-                        Pair pair = (Pair)myTable.getModel().getValueAt(row, 0);
+                        var pair = (Pair<?, ?>)myTable.getModel().getValueAt(row, 0);
                         if (pair.second instanceof Color) {
                           result.add("\"" + pair.first.toString() + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"" + tail);
                         } else {
@@ -407,7 +421,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       }
 
       @Nullable
-      private Insets parseInsets(String value) {
+      private static Insets parseInsets(String value) {
         String[] parts = value.split(",");
         if(parts.length != 4) {
           return null;
@@ -416,6 +430,41 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         try {
           List<Integer> v = ContainerUtil.map(parts, p -> Integer.parseInt(p));
           return JBUI.insets(v.get(0), v.get(1), v.get(2), v.get(3));
+        } catch (NumberFormatException nex) {
+          return null;
+        }
+      }
+
+      @Nullable
+      private Dimension editDimension(String key, String value) {
+        String newValue = Messages.showInputDialog(getRootPane(),
+                                                   IdeBundle.message("dialog.message.enter.new.value.for.0.in.form.width.height", key),
+                                                   IdeBundle.message("dialog.title.dimension.editor"), null, value,
+                                                   new InputValidator() {
+             @Override
+             public boolean checkInput(String inputString) {
+               return parseDimension(inputString) != null;
+             }
+
+             @Override
+             public boolean canClose(String inputString) {
+               return checkInput(inputString);
+             }
+           });
+
+        return newValue != null ? parseDimension(newValue) : null;
+      }
+
+      @Nullable
+      private static Dimension parseDimension(String value) {
+        String[] parts = value.split(",");
+        if(parts.length != 2) {
+          return null;
+        }
+
+        try {
+          List<Integer> v = ContainerUtil.map(parts, p -> Integer.parseInt(p));
+          return JBUI.size(v.get(0), v.get(1));
         } catch (NumberFormatException nex) {
           return null;
         }
@@ -443,7 +492,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       }
 
       @Nullable
-      private UIUtil.GrayFilter parseGrayFilter(String value) {
+      private static UIUtil.GrayFilter parseGrayFilter(String value) {
         String[] parts = value.split(",");
         if(parts.length != 3) {
           return null;
@@ -478,7 +527,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
       }
 
       @Nullable
-      private Font parseFontSize(Font font, String value) {
+      private static Font parseFontSize(Font font, String value) {
         try {
           int newSize = Integer.parseInt(value);
           return (newSize > 0) ? font.deriveFont((float)newSize) : null;
@@ -492,7 +541,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
   private static Object[] @NotNull [] getUIDefaultsData() {
     final UIDefaults defaults = UIManager.getDefaults();
-    Enumeration keys = defaults.keys();
+    Enumeration<?> keys = defaults.keys();
     final Object[][] data = new Object[defaults.size()][2];
     int i = 0;
     while (keys.hasMoreElements()) {
@@ -521,7 +570,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 value instanceof EmptyBorder ||
                 value instanceof Insets ||
                 value instanceof UIUtil.GrayFilter ||
-                value instanceof Font);
+                value instanceof Font ||
+                value instanceof Dimension);
       }
     };
     FilteringTableModel<Object> filteringTableModel = new FilteringTableModel<>(model, Object.class);

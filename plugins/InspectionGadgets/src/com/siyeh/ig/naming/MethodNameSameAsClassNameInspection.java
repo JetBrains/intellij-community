@@ -80,7 +80,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiMethod method = ObjectUtils.tryCast(element.getParent(), PsiMethod.class);
       if (method == null) return;

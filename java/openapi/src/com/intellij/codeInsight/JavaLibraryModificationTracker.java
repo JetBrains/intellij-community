@@ -19,8 +19,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Use this modification tracker for {@link com.intellij.psi.util.CachedValue} which contains {@link com.intellij.psi.PsiClass} instances
- * from libraries only.
+ * Use this modification tracker for {@link com.intellij.psi.util.CachedValue} which may contain {@link com.intellij.psi.PsiElement}
+ * instances from libraries only. If a cache value contains only simple non-PsiElement values, e.g. String, List of primitives,
+ * Map of primitive values, etc., then you can use {@link ProjectRootManager} as a cache dependency.
  */
 @Service(Service.Level.PROJECT)
 @ApiStatus.Experimental

@@ -168,14 +168,13 @@ class JKLambdaExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitLambdaExpression(this)
 }
 
-
 abstract class JKCallExpression : JKExpression(), JKTypeArgumentListOwner {
-    abstract val identifier: JKMethodSymbol
+    abstract var identifier: JKMethodSymbol
     abstract var arguments: JKArgumentList
 }
 
 class JKDelegationConstructorCall(
-    override val identifier: JKMethodSymbol,
+    override var identifier: JKMethodSymbol,
     expression: JKExpression,
     arguments: JKArgumentList,
     override val expressionType: JKType? = null,
@@ -187,7 +186,7 @@ class JKDelegationConstructorCall(
 }
 
 class JKCallExpressionImpl(
-    override val identifier: JKMethodSymbol,
+    override var identifier: JKMethodSymbol,
     arguments: JKArgumentList = JKArgumentList(),
     typeArgumentList: JKTypeArgumentList = JKTypeArgumentList(),
     override val expressionType: JKType? = null,
@@ -200,7 +199,7 @@ class JKCallExpressionImpl(
 class JKNewExpression(
     val classSymbol: JKClassSymbol,
     arguments: JKArgumentList,
-    typeArgumentList: JKTypeArgumentList,
+    typeArgumentList: JKTypeArgumentList = JKTypeArgumentList(),
     classBody: JKClassBody = JKClassBody(),
     val isAnonymousClass: Boolean = false,
     override val expressionType: JKType? = null,
@@ -210,7 +209,6 @@ class JKNewExpression(
     var classBody by child(classBody)
     override fun accept(visitor: JKVisitor) = visitor.visitNewExpression(this)
 }
-
 
 class JKFieldAccessExpression(
     var identifier: JKFieldSymbol,
@@ -224,7 +222,6 @@ class JKPackageAccessExpression(var identifier: JKPackageSymbol) : JKExpression(
     override fun calculateType(typeFactory: JKTypeFactory): JKType? = null
     override fun accept(visitor: JKVisitor) = visitor.visitPackageAccessExpression(this)
 }
-
 
 class JKClassAccessExpression(
     var identifier: JKClassSymbol, override val expressionType: JKType? = null,
@@ -252,7 +249,6 @@ class JKMethodReferenceExpression(
     override fun accept(visitor: JKVisitor) = visitor.visitMethodReferenceExpression(this)
 }
 
-
 class JKLabeledExpression(
     statement: JKStatement,
     labels: List<JKNameIdentifier>,
@@ -279,7 +275,6 @@ class JKClassLiteralExpression(
         JAVA_VOID_TYPE
     }
 }
-
 
 abstract class JKKtAssignmentChainLink : JKExpression() {
     abstract val receiver: JKExpression
@@ -312,20 +307,12 @@ class JKAssignmentChainLetLink(
     override fun accept(visitor: JKVisitor) = visitor.visitAssignmentChainLetLink(this)
 }
 
-
 class JKIsExpression(expression: JKExpression, type: JKTypeElement) : JKExpression() {
     var type by child(type)
     var expression by child(expression)
     override val expressionType: JKType? get() = null
     override fun calculateType(typeFactory: JKTypeFactory) = typeFactory.types.boolean
     override fun accept(visitor: JKVisitor) = visitor.visitIsExpression(this)
-}
-
-class JKKtThrowExpression(exception: JKExpression) : JKExpression() {
-    var exception: JKExpression by child(exception)
-    override val expressionType: JKType? get() = null
-    override fun calculateType(typeFactory: JKTypeFactory) = typeFactory.types.nothing
-    override fun accept(visitor: JKVisitor) = visitor.visitKtThrowExpression(this)
 }
 
 class JKKtItExpression(override val expressionType: JKType) : JKExpression() {
@@ -353,8 +340,14 @@ class JKKtTryExpression(
     var finallyBlock: JKBlock by child(finallyBlock)
     var catchSections: List<JKKtTryCatchSection> by children(catchSections)
 
-
     override fun accept(visitor: JKVisitor) = visitor.visitKtTryExpression(this)
+}
+
+class JKThrowExpression(exception: JKExpression) : JKExpression() {
+    var exception: JKExpression by child(exception)
+    override val expressionType: JKType? get() = null
+    override fun calculateType(typeFactory: JKTypeFactory) = typeFactory.types.nothing
+    override fun accept(visitor: JKVisitor) = visitor.visitKtThrowExpression(this)
 }
 
 class JKJavaNewEmptyArray(
@@ -376,7 +369,6 @@ class JKJavaNewArray(
     var initializer by children(initializer)
     override fun accept(visitor: JKVisitor) = visitor.visitJavaNewArray(this)
 }
-
 
 class JKJavaAssignmentExpression(
     field: JKExpression,

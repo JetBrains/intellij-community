@@ -76,7 +76,7 @@ public class InvokeIntention extends ActionOnFile {
   }
 
   @Nullable
-  private static IntentionAction chooseIntention(@NotNull Environment env, List<IntentionAction> actions) {
+  private static IntentionAction chooseIntention(@NotNull Environment env, List<? extends IntentionAction> actions) {
     if (actions.isEmpty()) {
       env.logMessage("No intentions found");
       return null;

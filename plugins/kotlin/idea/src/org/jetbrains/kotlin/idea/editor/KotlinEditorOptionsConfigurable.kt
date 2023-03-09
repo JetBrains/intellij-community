@@ -29,7 +29,7 @@ private val cbDontShowJavaToKotlinConversionDialog
 
 private val cbAutoAddValKeywordToCtorParameters
     get() = CheckboxDescriptor(
-        message("editor.checkbox.title.auto.add.val.keyword.to.data.inline.class.constructor.parameters"),
+        message("editor.checkbox.title.auto.add.val.keyword.to.data.value.class.constructor.parameters"),
         PropertyBinding(
             editorOptions::isAutoAddValKeywordToDataClassParameters,
             editorOptions::setAutoAddValKeywordToDataClassParameters

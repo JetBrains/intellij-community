@@ -152,9 +152,9 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
                 typeParameters
             ) {
                 it.addModifier(KtTokens.OVERRIDE_KEYWORD)
-                (parentOfCall ?: call).replaced(
-                    KtPsiFactory(it).createExpression("object : $interfaceName$typeArgumentsText { ${it.text} }")
-                )
+                val psiFactory = KtPsiFactory(call.project)
+                val objectLiteral = psiFactory.createExpression("object : $interfaceName$typeArgumentsText { ${it.text} }")
+                (parentOfCall ?: call).replaced(objectLiteral)
             }
         }
 

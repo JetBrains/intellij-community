@@ -35,23 +35,23 @@ class GitStageCommitWorkflowHandler(
     setupCommitHandlersTracking()
     setupCommitChecksResultTracking()
     vcsesChanged()
-    initCommitMessage(false)
 
-    DelayedCommitMessageProvider.init(project, ui, commitMessagePolicy.getCommitMessage(false))
+    val initialCommitMessage = commitMessagePolicy.init()
+    setCommitMessage(initialCommitMessage)
+    DelayedCommitMessageProvider.init(project, ui, initialCommitMessage)
   }
 
   override fun isCommitEmpty(): Boolean = ui.rootsToCommit.isEmpty()
 
-  override fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
+  override suspend fun updateWorkflow(sessionInfo: CommitSessionInfo): Boolean {
     workflow.trackerState = state
     workflow.commitState = GitStageCommitState(ui.rootsToCommit, getCommitMessage())
     return true
   }
 
-  override fun saveCommitMessage(success: Boolean) = commitMessagePolicy.save(getCommitMessage(), success)
-  override fun refreshChanges(callback: () -> Unit) = callback()
-
-  private fun initCommitMessage(isAfterCommit: Boolean) = setCommitMessage(commitMessagePolicy.getCommitMessage(isAfterCommit))
+  override fun saveCommitMessageBeforeCommit() {
+    commitMessagePolicy.onBeforeCommit(getCommitMessage())
+  }
 
   override fun checkCommit(sessionInfo: CommitSessionInfo): Boolean {
     val superCheckResult = super.checkCommit(sessionInfo)
@@ -71,7 +71,7 @@ class GitStageCommitWorkflowHandler(
   private inner class GitStageCommitStateCleaner : CommitStateCleaner() {
     override fun onSuccess() {
       ui.commitAuthor = null
-      initCommitMessage(true)
+      commitMessagePolicy.onAfterCommit(ui.commitMessageUi)
 
       super.onSuccess()
     }

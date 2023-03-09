@@ -85,13 +85,13 @@ class ShredManager {
   }
 
   private static class ShredsIterator implements Iterator<ShredInfo> {
-    private final List<PsiLanguageInjectionHost.Shred> myShreds;
+    private final @NotNull List<? extends PsiLanguageInjectionHost.Shred> myShreds;
 
     private int myShredIndex = -1;
     private String myShredText;
     private int mySymbolIndex = -1;
 
-    private ShredsIterator(@NotNull List<PsiLanguageInjectionHost.Shred> shreds) {
+    private ShredsIterator(@NotNull List<? extends PsiLanguageInjectionHost.Shred> shreds) {
       myShreds = shreds;
       if (!shreds.isEmpty()) {
         myShredIndex = 0;

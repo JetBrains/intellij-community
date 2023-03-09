@@ -37,9 +37,9 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
       float bw = BW.getFloat();
       float arc = COMPONENT_ARC.getFloat();
 
-      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+      Outline op = getOutline((JComponent)c);
       if (c.isEnabled() && op != null) {
-        paintOutlineBorder(g2, r.width, r.height, arc, true, isFocused(c), Outline.valueOf(op.toString()));
+        paintOutlineBorder(g2, r.width, r.height, arc, true, isFocused(c), op);
       }
       else {
         if (isFocused(c)) {

@@ -2,6 +2,7 @@
 package com.intellij.openapi.observable.properties
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Boolean property provides api for mutable property.
@@ -9,7 +10,8 @@ import com.intellij.openapi.Disposable
  * Set event happens when value is changed from false to true.
  * Reset is opposite, it happens value is changed from true to false.
  */
-@Suppress("DEPRECATION")
+@Deprecated("Use instead MutableBooleanProperty")
+@ApiStatus.ScheduledForRemoval
 interface BooleanProperty : ObservableClearableProperty<Boolean> {
 
   /**

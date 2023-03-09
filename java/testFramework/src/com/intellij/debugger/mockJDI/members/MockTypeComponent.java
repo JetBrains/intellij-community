@@ -1,18 +1,15 @@
-/*
- * Copyright (c) 2000-2004 by JetBrains s.r.o. All Rights Reserved.
- * Use is subject to license terms.
- */
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.mockJDI.members;
 
-import com.sun.jdi.TypeComponent;
-import com.sun.jdi.ReferenceType;
 import com.intellij.debugger.mockJDI.MockAccessibleMirror;
 import com.intellij.debugger.mockJDI.MockVirtualMachine;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.TypeComponent;
 
 import java.lang.reflect.Member;
 import java.lang.reflect.Modifier;
 
-public class MockTypeComponent extends MockAccessibleMirror implements TypeComponent{
+public class MockTypeComponent extends MockAccessibleMirror implements TypeComponent {
   protected Member myMember;
 
   public MockTypeComponent(Member member, final MockVirtualMachine virtualMachine) {

@@ -35,7 +35,7 @@ public class MakeMethodFinalFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement().getParent();
     PsiMethod method = findMethodToFix(element);
     if (method != null) {

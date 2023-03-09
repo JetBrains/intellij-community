@@ -72,7 +72,7 @@ public class RunConfigurationNode extends ExternalSystemNode {
       hint = shortcutHint + ", " + activatorHint;
     }
 
-    setNameAndTooltip(getName(), StringUtil.join(taskExecutionSettings.getTaskNames(), " "), hint);
+    setNameAndTooltip(presentation, getName(), StringUtil.join(taskExecutionSettings.getTaskNames(), " "), hint);
   }
 
   public RunnerAndConfigurationSettings getSettings() {

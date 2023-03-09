@@ -61,7 +61,7 @@ public class UnusedLabelInspection extends BaseInspection implements CleanupLoca
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement label = descriptor.getPsiElement();
       final PsiElement parent = label.getParent();
       if (!(parent instanceof PsiLabeledStatement)) {

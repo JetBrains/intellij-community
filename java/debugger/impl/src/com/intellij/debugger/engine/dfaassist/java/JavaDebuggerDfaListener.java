@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist.java;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -77,7 +77,7 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
       addHint(((ClassCastProblem)problem).getAnchor(), failed == ThreeState.YES ? DfaHint.CCE : DfaHint.NONE);
     }
     else if (problem instanceof NullabilityProblemKind.NullabilityProblem<?>) {
-      var npeProblem = (NullabilityProblemKind.NullabilityProblem<?>) problem;
+      var npeProblem = (NullabilityProblemKind.NullabilityProblem<?>)problem;
       PsiExpression expression = npeProblem.getDereferencedExpression();
       if (expression != null && npeProblem.thrownException() != null) {
         DfaHint hint;
@@ -85,7 +85,8 @@ class JavaDebuggerDfaListener implements JavaDfaListener, DebuggerDfaListener {
           hint = npeProblem.thrownException().equals(CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION)
                  ? DfaHint.NPE
                  : DfaHint.NULL_AS_NOT_NULL;
-        } else {
+        }
+        else {
           hint = DfaHint.NONE;
         }
         addHint(expression, hint);

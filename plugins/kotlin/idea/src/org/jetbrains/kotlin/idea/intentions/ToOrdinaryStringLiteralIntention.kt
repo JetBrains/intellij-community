@@ -47,7 +47,7 @@ class ToOrdinaryStringLiteralIntention : SelfTargetingOffsetIndependentIntention
             append("\"")
         }
 
-        val replaced = (trimIndentCall?.qualifiedExpression ?: element).replaced(KtPsiFactory(element).createExpression(text))
+        val replaced = (trimIndentCall?.qualifiedExpression ?: element).replaced(KtPsiFactory(element.project).createExpression(text))
         val offset = when {
             currentOffset - startOffset < 2 -> startOffset
             endOffset - currentOffset < 2 -> replaced.endOffset

@@ -1,5 +1,6 @@
 from _typeshed import Self
-from typing import IO, Pattern
+from re import Pattern
+from typing import IO
 
 from paramiko.message import Message
 

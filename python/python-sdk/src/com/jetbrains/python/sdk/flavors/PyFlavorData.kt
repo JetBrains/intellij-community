@@ -6,6 +6,10 @@ import com.intellij.remote.RemoteSdkPropertiesPaths
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkUtil
 
+/**
+ * Each [PythonSdkFlavor] is associated with [PyFlavorData].
+ * For example: Conda flavor requires special data (conda binary path) to be stored in sdk additional data
+ */
 interface PyFlavorData {
   /**
    * Prepares [targetCommandLineBuilder] to run python on [sdk]

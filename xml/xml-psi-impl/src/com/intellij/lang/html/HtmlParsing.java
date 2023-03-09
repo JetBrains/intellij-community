@@ -67,7 +67,8 @@ public class HtmlParsing {
       else if (tt == XmlTokenType.XML_REAL_WHITE_SPACE || tt == XmlTokenType.XML_DATA_CHARACTERS) {
         error = flushError(error);
         advance();
-      } else if (tt == XmlTokenType.XML_END_TAG_START) {
+      }
+      else if (tt == XmlTokenType.XML_END_TAG_START) {
         final PsiBuilder.Marker tagEndError = myBuilder.mark();
 
         advance();
@@ -82,7 +83,8 @@ public class HtmlParsing {
       }
       else if (hasCustomTopLevelContent()) {
         error = parseCustomTopLevelContent(error);
-      } else {
+      }
+      else {
         if (error == null) error = mark();
         advance();
       }
@@ -99,7 +101,7 @@ public class HtmlParsing {
     return false;
   }
 
-  protected PsiBuilder.Marker parseCustomTopLevelContent(PsiBuilder.Marker error) {
+  protected @Nullable PsiBuilder.Marker parseCustomTopLevelContent(@Nullable PsiBuilder.Marker error) {
     return error;
   }
 
@@ -107,7 +109,7 @@ public class HtmlParsing {
     return false;
   }
 
-  protected PsiBuilder.Marker parseCustomTagContent(PsiBuilder.Marker xmlText) {
+  protected @Nullable PsiBuilder.Marker parseCustomTagContent(@Nullable PsiBuilder.Marker xmlText) {
     return xmlText;
   }
 
@@ -246,7 +248,8 @@ public class HtmlParsing {
           final String parentTagName = !myTagNamesStack.isEmpty() ? myTagNamesStack.peek() : "";
           if (!parentTagName.equals(endName) && !endName.endsWith(COMPLETION_NAME)) {
             final boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(parentTagName);
-            final boolean hasChancesToMatch = HtmlUtil.isOptionalEndForHtmlTagL(endName) ? childTerminatesParentInStack(endName) : myTagNamesStack.contains(endName);
+            final boolean hasChancesToMatch =
+              HtmlUtil.isOptionalEndForHtmlTagL(endName) ? childTerminatesParentInStack(endName) : myTagNamesStack.contains(endName);
             if (hasChancesToMatch) {
               footer.rollbackTo();
               if (!isOptionalTagEnd) {
@@ -264,7 +267,10 @@ public class HtmlParsing {
 
           advance();
 
-          while (token() != XmlTokenType.XML_TAG_END && token() != XmlTokenType.XML_START_TAG_START && token() != XmlTokenType.XML_END_TAG_START && !eof()) {
+          while (token() != XmlTokenType.XML_TAG_END &&
+                 token() != XmlTokenType.XML_START_TAG_START &&
+                 token() != XmlTokenType.XML_END_TAG_START &&
+                 !eof()) {
             error(XmlPsiBundle.message("xml.parsing.unexpected.token"));
             advance();
           }
@@ -281,12 +287,15 @@ public class HtmlParsing {
           error(XmlPsiBundle.message("xml.parsing.closing.tag.is.not.done"));
         }
         if (hasTags()) doneTag(myTagMarkersStack.peek());
-      } else if ((token() == XmlTokenType.XML_REAL_WHITE_SPACE || token() == XmlTokenType.XML_DATA_CHARACTERS) && !hasTags()) {
+      }
+      else if ((token() == XmlTokenType.XML_REAL_WHITE_SPACE || token() == XmlTokenType.XML_DATA_CHARACTERS) && !hasTags()) {
         xmlText = terminateText(xmlText);
         advance();
-      } else if (hasCustomTagContent()) {
+      }
+      else if (hasCustomTagContent()) {
         xmlText = parseCustomTagContent(xmlText);
-      } else {
+      }
+      else {
         xmlText = startText(xmlText);
         advance();
       }
@@ -355,7 +364,9 @@ public class HtmlParsing {
         if (tt == XmlTokenType.XML_EMPTY_ELEMENT_END ||
             tt == XmlTokenType.XML_TAG_END ||
             tt == XmlTokenType.XML_END_TAG_START ||
-            tt == XmlTokenType.XML_START_TAG_START) break;
+            tt == XmlTokenType.XML_START_TAG_START) {
+          break;
+        }
         advance();
       }
       else {
@@ -454,8 +465,8 @@ public class HtmlParsing {
     while (true) {
       final IElementType tt = token();
       if (tt == XmlTokenType.XML_COMMENT_CHARACTERS || tt == XmlTokenType.XML_CONDITIONAL_COMMENT_START
-        || tt == XmlTokenType.XML_CONDITIONAL_COMMENT_START_END || tt == XmlTokenType.XML_CONDITIONAL_COMMENT_END_START
-        || tt == XmlTokenType.XML_CONDITIONAL_COMMENT_END) {
+          || tt == XmlTokenType.XML_CONDITIONAL_COMMENT_START_END || tt == XmlTokenType.XML_CONDITIONAL_COMMENT_END_START
+          || tt == XmlTokenType.XML_CONDITIONAL_COMMENT_END) {
         advance();
         continue;
       }

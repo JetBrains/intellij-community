@@ -28,7 +28,7 @@ class PyRepositoriesList(val project: Project) : MasterDetailsComponent() {
   override fun createActions(fromPopup: Boolean): List<AnAction> {
     val add = object : DumbAwareAction({ CommonBundle.message("button.add") },
                                        Presentation.NULL_STRING,
-                                       IconUtil.getAddIcon()) {
+                                       IconUtil.addIcon) {
       override fun actionPerformed(e: AnActionEvent) {
         val uniqueName = UniqueNameGenerator.generateUniqueName(
           PyBundle.message("python.packaging.repository.form.default.name"),

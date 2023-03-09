@@ -63,7 +63,7 @@ internal class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtEleme
         }
 
         fun removeBraces(element: KtElement, block: KtBlockExpression, editor: Editor? = null) {
-            val factory = KtPsiFactory(element)
+            val factory = KtPsiFactory(element.project)
             val statement = block.statements.single()
             val caretOnAfterStatement = if (editor != null) editor.caretModel.offset >= statement.endOffset else false
 
@@ -103,7 +103,7 @@ internal class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtEleme
             while (sibling != null) {
                 if (sibling is PsiComment) {
                     //cleans up extra whitespace
-                    val psiFactory = KtPsiFactory(construct)
+                    val psiFactory = KtPsiFactory(construct.project)
                     if (construct.prevSibling is PsiWhiteSpace) {
                         construct.prevSibling!!.replace(psiFactory.createNewLine())
                     }

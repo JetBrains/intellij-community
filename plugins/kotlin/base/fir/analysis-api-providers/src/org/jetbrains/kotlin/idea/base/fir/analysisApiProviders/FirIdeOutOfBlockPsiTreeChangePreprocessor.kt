@@ -4,9 +4,7 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiProviders
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiTreeChangeEvent
+import com.intellij.psi.*
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.impl.PsiTreeChangePreprocessor
@@ -19,8 +17,7 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
         if (!PsiModificationTrackerImpl.canAffectPsi(event) ||
             event.isGenericChange ||
-            event.code == PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_ADDITION ||
-            event.code == PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REPLACEMENT
+            event.code == PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_ADDITION
         ) {
             return
         }
@@ -30,7 +27,11 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
         }
 
         val rootElement = event.parent
-        val child = if (event.code == PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED) rootElement else event.child
+        val child = when (event.code) {
+          PsiTreeChangeEventImpl.PsiEventType.CHILD_REMOVED -> rootElement
+          PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REPLACEMENT -> event.oldChild
+          else -> event.child
+        }
 
         if (rootElement == null || !rootElement.isPhysical) {
             /**
@@ -70,6 +71,11 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
              */
             return true
         }
+
+        if (psi is PsiWhiteSpace || psi is PsiComment) {
+            return false
+        }
+
         val container = psi.getNonLocalContainingInBodyDeclarationWith() ?: return true
         return !isReanalyzableContainer(container)
     }

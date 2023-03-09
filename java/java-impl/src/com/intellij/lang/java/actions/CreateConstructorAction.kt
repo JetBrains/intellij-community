@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.java.actions
 
+import com.intellij.codeInsight.CodeInsightUtil
 import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
 import com.intellij.codeInsight.daemon.QuickFixBundle.message
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassFromNewFix.setupSuperCall
@@ -9,11 +10,11 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilder
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.request.CreateConstructorFromJavaUsageRequest
 import com.intellij.lang.jvm.actions.CreateConstructorRequest
 import com.intellij.openapi.command.WriteCommandAction
@@ -41,11 +42,13 @@ internal class CreateConstructorAction(
   private fun constructorRenderer(project: Project) = JavaConstructorRenderer(project, target, request)
 
   override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-    val constructor = constructorRenderer(project).renderConstructor()
-    return IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", constructor.text)
+    val copyClass = PsiTreeUtil.findSameElementInCopy(target, file)
+    val javaFieldRenderer = JavaConstructorRenderer(project, copyClass, request)
+    javaFieldRenderer.doMagic()
+    return IntentionPreviewInfo.DIFF
   }
 
-  override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+  override fun invoke(project: Project, file: PsiFile, target: PsiClass) {
     constructorRenderer(project).doMagic()
   }
 }
@@ -102,12 +105,16 @@ private class JavaConstructorRenderer(
 
   private fun startTemplate(constructor: PsiMethod, template: Template, superConstructor: PsiMethod?) {
     val targetFile = targetClass.containingFile
-    val targetEditor = CreateFromUsageBaseFix.positionCursor(project, targetFile, constructor) ?: return
+    val targetEditor = CodeInsightUtil.positionCursor(project, targetFile, constructor) ?: return
     val templateListener = object : TemplateEditingAdapter() {
 
       override fun templateFinished(template: Template, brokenOff: Boolean) {
         if (brokenOff) return
-        WriteCommandAction.runWriteCommandAction(project) { setupBody() }
+        if (IntentionPreviewUtils.isIntentionPreviewActive()) {
+          setupBody()
+        } else {
+          WriteCommandAction.runWriteCommandAction(project, message("create.constructor.body.command"), null, { setupBody() }, targetFile)
+        }
       }
 
       private fun setupBody() {

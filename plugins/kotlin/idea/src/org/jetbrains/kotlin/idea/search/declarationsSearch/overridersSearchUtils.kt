@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
@@ -51,22 +52,29 @@ fun forEachKotlinOverride(
             val substitutor = getTypeSubstitution(baseClassDescriptor.defaultType, inheritorDescriptor.defaultType)?.toSubstitutor()
                 ?: return@runReadAction true
 
-            baseDescriptors.forEach { baseDescriptor ->
-                val superMember = baseDescriptor.source.getPsi()!!
-                val overridingDescriptor = (baseDescriptor.substitute(substitutor) as? CallableMemberDescriptor)?.let { memberDescriptor ->
-                    inheritorDescriptor.findCallableMemberBySignature(memberDescriptor)
+            baseDescriptors.asSequence()
+                .mapNotNull { baseDescriptor ->
+                    val superMember = baseDescriptor.source.getPsi()!!
+                    val overridingDescriptor =
+                        (baseDescriptor.substitute(substitutor) as? CallableMemberDescriptor)?.let { memberDescriptor ->
+                            inheritorDescriptor.findCallableMemberBySignature(memberDescriptor)
+                        }
+                    overridingDescriptor?.source?.getPsi()?.let { overridingMember -> superMember to overridingMember }
                 }
-                val overridingMember = overridingDescriptor?.source?.getPsi()
-                if (overridingMember != null) {
-                    if (!processor(superMember, overridingMember)) return@runReadAction false
-                }
-            }
-            true
+                .all { (superMember, overridingMember) -> processor(superMember, overridingMember) }
         }
     })
 
     return true
 }
+
+fun PsiMethod.forEachImplementation(
+    scope: SearchScope = runReadAction { useScope() },
+    processor: (PsiElement) -> Boolean
+): Boolean = forEachOverridingMethod(scope, processor) && FunctionalExpressionSearch.search(
+    this,
+    scope.excludeKotlinSources(project)
+).forEach(Processor { processor(it) })
 
 fun PsiMethod.forEachOverridingMethod(
     scope: SearchScope = runReadAction { useScope() },

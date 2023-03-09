@@ -20,6 +20,7 @@ import com.intellij.openapi.util.UserDataHolder;
 public interface NodeDescriptor extends UserDataHolder {
 
   String getName();
+
   String getLabel();
 
   void displayAs(NodeDescriptor descriptor);

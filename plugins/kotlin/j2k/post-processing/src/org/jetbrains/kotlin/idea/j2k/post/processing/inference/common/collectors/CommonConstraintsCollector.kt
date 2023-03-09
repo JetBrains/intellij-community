@@ -6,7 +6,10 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.*
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.BoundTypeCalculator
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintBuilder
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.InferenceContext
+import org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.asBoundType
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.asAssignment
@@ -19,34 +22,43 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class CommonConstraintsCollector : ConstraintsCollector() {
     override fun ConstraintBuilder.collectConstraints(
-      element: KtElement,
-      boundTypeCalculator: BoundTypeCalculator,
-      inferenceContext: InferenceContext,
-      resolutionFacade: ResolutionFacade
+        element: KtElement,
+        boundTypeCalculator: BoundTypeCalculator,
+        inferenceContext: InferenceContext,
+        resolutionFacade: ResolutionFacade
     ) = with(boundTypeCalculator) {
         when {
             element is KtBinaryExpressionWithTypeRHS && KtPsiUtil.isUnsafeCast(element) -> {
                 element.right?.typeElement?.let { inferenceContext.typeElementToTypeVariable[it] }?.also { typeVariable ->
-                    element.left.isSubtypeOf(typeVariable, org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.ASSIGNMENT)
+                    element.left.isSubtypeOf(
+                        typeVariable,
+                        org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.ASSIGNMENT
+                    )
                 }
             }
 
             element is KtBinaryExpression && element.asAssignment() != null -> {
-                element.right?.isSubtypeOf(element.left ?: return, org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.ASSIGNMENT)
+                element.right?.isSubtypeOf(
+                    element.left ?: return,
+                    org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.ASSIGNMENT
+                )
             }
 
 
             element is KtVariableDeclaration -> {
                 inferenceContext.declarationToTypeVariable[element]?.also { typeVariable ->
-                    element.initializer?.isSubtypeOf(typeVariable, org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.INITIALIZER)
+                    element.initializer?.isSubtypeOf(
+                        typeVariable,
+                        org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.INITIALIZER
+                    )
                 }
             }
 
             element is KtParameter -> {
                 inferenceContext.declarationToTypeVariable[element]?.also { typeVariable ->
                     element.defaultValue?.isSubtypeOf(
-                      typeVariable,
-                      org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.INITIALIZER
+                        typeVariable,
+                        org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.INITIALIZER
                     )
                 }
             }
@@ -58,8 +70,8 @@ class CommonConstraintsCollector : ConstraintsCollector() {
                         inferenceContext.declarationDescriptorToTypeVariable[functionDescriptor]
                     } ?: return
                 element.returnedExpression?.isSubtypeOf(
-                  functionTypeVariable,
-                  org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.RETURN
+                    functionTypeVariable,
+                    org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.RETURN
                 )
             }
 
@@ -70,8 +82,8 @@ class CommonConstraintsCollector : ConstraintsCollector() {
                     }
                 if (targetTypeVariable != null) {
                     element.returnedExpression?.isSubtypeOf(
-                      targetTypeVariable,
-                      org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.RETURN
+                        targetTypeVariable,
+                        org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.RETURN
                     )
                 }
             }
@@ -83,8 +95,8 @@ class CommonConstraintsCollector : ConstraintsCollector() {
                     ?.takeIf { it !is KtReturnExpression }
                     ?.also { implicitReturn ->
                         implicitReturn.isSubtypeOf(
-                          targetTypeVariable,
-                          org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.RETURN
+                            targetTypeVariable,
+                            org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.RETURN
                         )
                     }
             }
@@ -104,8 +116,8 @@ class CommonConstraintsCollector : ConstraintsCollector() {
                             ) ?: return
 
                     boundType.typeParameters.firstOrNull()?.boundType?.isSubtypeOf(
-                      loopParameterTypeVariable.asBoundType(),
-                      org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.ASSIGNMENT
+                        loopParameterTypeVariable.asBoundType(),
+                        org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.ASSIGNMENT
                     )
                 }
             }

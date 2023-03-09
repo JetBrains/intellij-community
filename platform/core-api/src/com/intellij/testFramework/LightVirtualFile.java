@@ -23,7 +23,6 @@ import java.nio.charset.StandardCharsets;
 public class LightVirtualFile extends LightVirtualFileBase {
   private CharSequence myContent;
   private Language myLanguage;
-  private long myCachedLength = Long.MIN_VALUE;
 
   public LightVirtualFile() {
     this("");
@@ -41,7 +40,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     this(name, fileType, text, LocalTimeCounter.currentTime());
   }
 
-  public LightVirtualFile(VirtualFile original, @NotNull CharSequence text, long modificationStamp) {
+  public LightVirtualFile(@NotNull VirtualFile original, @NotNull CharSequence text, long modificationStamp) {
     this(original.getName(), original.getFileType(), text, modificationStamp);
     setCharset(original.getCharset());
   }
@@ -56,21 +55,15 @@ public class LightVirtualFile extends LightVirtualFileBase {
                           Charset charset,
                           long modificationStamp) {
     super(name, fileType, modificationStamp);
-    setContentImpl(text);
+    myContent = text;
     setCharset(charset);
   }
 
   public LightVirtualFile(@NlsSafe @NotNull String name, @NotNull Language language, @NlsSafe @NotNull CharSequence text) {
     super(name, null, LocalTimeCounter.currentTime());
-    setContentImpl(text);
+    myContent = text;
     setLanguage(language);
     setCharset(StandardCharsets.UTF_8);
-  }
-
-  @Override
-  protected void storeCharset(Charset charset) {
-    super.storeCharset(charset);
-    myCachedLength = Long.MIN_VALUE;
   }
 
   public Language getLanguage() {
@@ -92,14 +85,6 @@ public class LightVirtualFile extends LightVirtualFileBase {
   }
 
   @Override
-  public long getLength() {
-    if (myCachedLength == Long.MIN_VALUE) {
-      myCachedLength = super.getLength();
-    }
-    return myCachedLength;
-  }
-
-  @Override
   public @NotNull OutputStream getOutputStream(Object requestor, final long newModificationStamp, long newTimeStamp) throws IOException {
     assertWritable();
     return VfsUtilCore.outputStreamAddingBOM(new ByteArrayOutputStream() {
@@ -109,7 +94,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
 
         setModificationStamp(newModificationStamp);
         try {
-          setContentImpl(toString(getCharset().name()));
+          myContent = toString(getCharset().name());
         }
         catch (UnsupportedEncodingException e) {
           throw new RuntimeException(e);
@@ -127,13 +112,8 @@ public class LightVirtualFile extends LightVirtualFileBase {
 
   public void setContent(Object requestor, @NotNull CharSequence content, boolean fireEvent) {
     assertWritable();
-    setContentImpl(content);
-    setModificationStamp(LocalTimeCounter.currentTime());
-  }
-
-  private void setContentImpl(@NotNull CharSequence content) {
     myContent = content;
-    myCachedLength = Long.MIN_VALUE;
+    setModificationStamp(LocalTimeCounter.currentTime());
   }
 
   public @NotNull CharSequence getContent() {

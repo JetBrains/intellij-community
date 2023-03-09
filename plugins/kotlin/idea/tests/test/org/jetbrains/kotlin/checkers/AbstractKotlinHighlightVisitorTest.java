@@ -13,11 +13,12 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinNameHighlightingStateUtils;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
-import org.jetbrains.kotlin.idea.util.ElementKind;
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager;
 import org.jetbrains.kotlin.idea.highlighter.AbstractKotlinHighlightVisitor;
 import org.jetbrains.kotlin.idea.refactoring.ElementSelectionUtilsKt;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
+import org.jetbrains.kotlin.idea.util.ElementKind;
 import org.jetbrains.kotlin.psi.KtDeclaration;
 import org.jetbrains.kotlin.psi.KtElement;
 import org.jetbrains.kotlin.psi.KtFile;
@@ -39,7 +40,8 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
     }
 
     public void doTest(@NotNull String filePath) throws Exception {
-        myFixture.configureByFile(fileName());
+        PsiFile file = myFixture.configureByFile(fileName());
+        ScriptConfigurationManager.getInstance(getProject()).getConfiguration((KtFile) file); // if it's a script, enable its highlighting (see KotlinProblemHighlightFilter)
         checkHighlighting(true, false, false);
         checkResolveToDescriptor();
     }

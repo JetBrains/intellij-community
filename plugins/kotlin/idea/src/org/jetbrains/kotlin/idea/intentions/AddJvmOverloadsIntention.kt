@@ -67,7 +67,7 @@ class AddJvmOverloadsIntention : SelfTargetingIntention<KtModifierListOwner>(
     override fun applyTo(element: KtModifierListOwner, editor: Editor?) {
         if (element is KtPrimaryConstructor) {
             if (element.getConstructorKeyword() == null) {
-                element.addBefore(KtPsiFactory(element).createConstructorKeyword(), element.valueParameterList)
+                element.addBefore(KtPsiFactory(element.project).createConstructorKeyword(), element.valueParameterList)
             }
             element.addAnnotation(annotationFqName, whiteSpaceText = " ")
         } else {

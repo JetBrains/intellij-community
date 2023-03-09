@@ -5,6 +5,7 @@ import com.intellij.diagnostic.StartUpPerformanceService;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.diagnostic.ExternalSystemSyncDiagnostic;
 import com.intellij.openapi.externalSystem.model.*;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
@@ -58,22 +59,24 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   @Override
   public <T> void importData(@NotNull DataNode<T> node, @NotNull Project project) {
     Application app = ApplicationManager.getApplication();
-    if (!app.isWriteThread() && app.isReadAccessAllowed()) {
+    if (!app.isWriteIntentLockAcquired() && app.isReadAccessAllowed()) {
       throw new IllegalStateException("importData() must not be called with a global read lock on a background thread. " +
                                       "It will deadlock committing project model changes in write action");
     }
 
-    if (app.isWriteThread()) {
+    if (app.isWriteIntentLockAcquired()) {
       if (!myLock.tryLock()) {
         throw new IllegalStateException("importData() can not wait on write thread for imports on background threads." +
                                         " Consider running importData() on background thread.");
       }
-    } else {
+    }
+    else {
       myLock.lock();
     }
     try {
       importData(node, project, createModifiableModelsProvider(project));
-    } finally {
+    }
+    finally {
       myLock.unlock();
     }
   }
@@ -124,7 +127,11 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
 
     long allStartTime = System.currentTimeMillis();
     long activityId = trace.getId();
+
+    ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.DATA_SERVICES.name(), (builder) ->
+      builder.setParent(ExternalSystemSyncDiagnostic.getSpanContext(ExternalSystemSyncDiagnostic.gradleSyncSpanName)));
     ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.DATA_SERVICES);
+
     boolean importSucceeded = false;
     int errorsCount = 0;
 
@@ -163,7 +170,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         postImportTask.run();
       }
 
-      commit(modelsProvider, project, true, "Imported data");
+      commit(modelsProvider, project, true, "Imported data", activityId);
       if (indicator != null) {
         indicator.setIndeterminate(true);
       }
@@ -173,7 +180,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
     }
     catch (Throwable t) {
       errorsCount += 1;
-      topic.onImportFailed(projectPath);
+      topic.onImportFailed(projectPath, t);
       ExternalSystemSyncActionsCollector.logError(null, activityId, t);
       //noinspection ConstantConditions
       ExceptionUtil.rethrowAllAsUnchecked(t);
@@ -191,8 +198,11 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
 
       long timeMs = System.currentTimeMillis() - allStartTime;
       trace.logPerformance("Data import total", timeMs);
+      ExternalSystemSyncDiagnostic.endSpan(Phase.DATA_SERVICES.name());
       ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.DATA_SERVICES, timeMs, errorsCount);
       ExternalSystemSyncActionsCollector.logSyncFinished(project, activityId, importSucceeded);
+      ExternalSystemSyncDiagnostic.endSpan(ExternalSystemSyncDiagnostic.gradleSyncSpanName,
+                                           (span) -> span.setAttribute("project", project.getName()));
 
       Application app = ApplicationManager.getApplication();
       if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
@@ -204,7 +214,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   private static void runFinalTasks(
     @NotNull Project project,
     @Nullable String projectPath,
-    @NotNull List<Runnable> tasks
+    @NotNull List<? extends Runnable> tasks
   ) {
     var topic = project.getMessageBus()
       .syncPublisher(ProjectDataImportListener.TOPIC);
@@ -364,7 +374,7 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
         }
       }
 
-      commit(modelsProvider, project, synchronous, "Removed data");
+      commit(modelsProvider, project, synchronous, "Removed data", null);
     }
     catch (Throwable t) {
       dispose(modelsProvider, project, synchronous);
@@ -420,13 +430,24 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
   private static void commit(@NotNull final IdeModifiableModelsProvider modelsProvider,
                              @NotNull Project project,
                              boolean synchronous,
-                             @NotNull final String commitDesc) {
+                             @NotNull final String commitDesc,
+                             @Nullable Long activityId) {
     ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
       public void execute() {
+        ExternalSystemSyncDiagnostic.getOrStartSpan(Phase.WORKSPACE_MODEL_APPLY.name(), (builder) ->
+          builder.setParent(ExternalSystemSyncDiagnostic.getSpanContext(ExternalSystemSyncDiagnostic.gradleSyncSpanName)));
+
+        if (activityId != null) {
+          ExternalSystemSyncActionsCollector.logPhaseStarted(project, activityId, Phase.WORKSPACE_MODEL_APPLY);
+        }
         final long startTime = System.currentTimeMillis();
         modelsProvider.commit();
         final long timeInMs = System.currentTimeMillis() - startTime;
+        if (activityId != null) {
+          ExternalSystemSyncDiagnostic.endSpan(Phase.WORKSPACE_MODEL_APPLY.name());
+          ExternalSystemSyncActionsCollector.logPhaseFinished(project, activityId, Phase.WORKSPACE_MODEL_APPLY, timeInMs);
+        }
         LOG.debug(String.format("%s committed in %d ms", commitDesc, timeInMs));
       }
     });

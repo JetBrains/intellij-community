@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public final class GoToWslHomeAction extends FileChooserAction implements LightEditCompatible {
+final class GoToWslHomeAction extends FileChooserAction implements LightEditCompatible {
   private static final NotNullLazyValue<Boolean> ourHasWsl = PathExecLazyValue.create("wsl.exe");
 
   @Override

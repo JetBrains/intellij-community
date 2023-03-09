@@ -28,7 +28,7 @@ public abstract class KotlinUnwrapRemoveBase extends AbstractUnwrapper<KotlinUnw
     }
 
     @Override
-    public String getDescription(PsiElement e) {
+    public @NotNull String getDescription(@NotNull PsiElement e) {
         assert e instanceof KtElement;
         return KotlinBundle.message(key, ElementSelectionUtilsKt.getExpressionShortText((KtElement) e));
     }

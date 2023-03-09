@@ -66,7 +66,7 @@ class ServiceViewDeleteProvider implements DeleteProvider {
   }
 
   @NotNull
-  private static List<Pair<ServiceViewItem, Runnable>> filterChildren(List<Pair<ServiceViewItem, Runnable>> items) {
+  private static List<Pair<ServiceViewItem, Runnable>> filterChildren(List<? extends Pair<ServiceViewItem, Runnable>> items) {
     return ContainerUtil.filter(items, item -> {
       ServiceViewItem parent = item.first.getParent();
       while (parent != null) {

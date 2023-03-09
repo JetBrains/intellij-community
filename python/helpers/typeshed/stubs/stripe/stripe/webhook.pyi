@@ -1,13 +1,17 @@
-from typing import Any
+from typing_extensions import Literal
 
-from stripe import error as error
+from stripe import Event, error as error
 
 class Webhook:
     DEFAULT_TOLERANCE: int
     @staticmethod
-    def construct_event(payload, sig_header, secret, tolerance=..., api_key: Any | None = ...): ...
+    def construct_event(
+        payload: bytes | str, sig_header: str, secret: str, tolerance: int = ..., api_key: str | None = ...
+    ) -> Event: ...
 
 class WebhookSignature:
     EXPECTED_SCHEME: str
     @classmethod
-    def verify_header(cls, payload, header, secret, tolerance: Any | None = ...): ...
+    def verify_header(cls, payload: bytes | str, header: str, secret: str, tolerance: int | None = ...) -> Literal[True]: ...
+    @staticmethod
+    def _compute_signature(payload: str, secret: str) -> str: ...

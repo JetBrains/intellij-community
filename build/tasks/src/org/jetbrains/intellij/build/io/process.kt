@@ -5,11 +5,11 @@ package org.jetbrains.intellij.build.io
 
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.diagnostic.telemetry.useWithScope2
+import com.intellij.openapi.util.io.FileUtilRt
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import java.io.BufferedReader
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -101,7 +101,7 @@ suspend fun runJava(mainClass: String,
         }
         finally {
           process?.waitFor()
-          toDelete.forEach(Files::deleteIfExists)
+          toDelete.forEach(FileUtilRt::deleteRecursively)
         }
       }
     }
@@ -186,10 +186,11 @@ suspend fun runProcess(args: List<String>,
     .useWithScope2 { span ->
       withContext(Dispatchers.IO) {
         val toDelete = ArrayList<Path>(3)
+        var process: Process? = null
         try {
           val errorOutputFile = if (inheritOut) null else Files.createTempFile("error-out-", ".txt").also(toDelete::add)
           val outputFile = if (inheritOut) null else Files.createTempFile("out-", ".txt").also(toDelete::add)
-          val process = ProcessBuilder(args)
+          process = ProcessBuilder(args)
             .directory(workingDir?.toFile())
             .also { builder ->
               if (additionalEnvVariables.isNotEmpty()) {
@@ -244,7 +245,8 @@ suspend fun runProcess(args: List<String>,
           }
         }
         finally {
-          toDelete.forEach(Files::deleteIfExists)
+          process?.waitFor()
+          toDelete.forEach(FileUtilRt::deleteRecursively)
         }
       }
     }

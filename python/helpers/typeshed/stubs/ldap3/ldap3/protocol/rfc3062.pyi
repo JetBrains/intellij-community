@@ -1,28 +1,29 @@
 from typing import Any
+from typing_extensions import TypeAlias
 
 # Enable when pyasn1 gets stubs:
 # from pyasn1.type.univ import OctetString, Sequence
-OctetString = Any
-Sequence = Any
+_OctetString: TypeAlias = Any
+_Sequence: TypeAlias = Any
 
-class UserIdentity(OctetString):
+class UserIdentity(_OctetString):
     tagSet: Any
     encoding: str
 
-class OldPasswd(OctetString):
+class OldPasswd(_OctetString):
     tagSet: Any
     encoding: str
 
-class NewPasswd(OctetString):
+class NewPasswd(_OctetString):
     tagSet: Any
     encoding: str
 
-class GenPasswd(OctetString):
+class GenPasswd(_OctetString):
     tagSet: Any
     encoding: str
 
-class PasswdModifyRequestValue(Sequence):
+class PasswdModifyRequestValue(_Sequence):
     componentType: Any
 
-class PasswdModifyResponseValue(Sequence):
+class PasswdModifyResponseValue(_Sequence):
     componentType: Any

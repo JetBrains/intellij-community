@@ -1,25 +1,25 @@
 package sample
 
-interface <lineMarker descr="Is implemented by S1 S2  Click or press ... to navigate">S</lineMarker><T> {
-    fun <lineMarker descr="<html><body>Is implemented in <br>&nbsp;&nbsp;&nbsp;&nbsp;sample.S2</body></html>">foo</lineMarker>(t: T): T
+interface <lineMarker descr="Is implemented by S1 (sample) S2 (sample) Press ... to navigate">S</lineMarker><T> {
+    fun <lineMarker descr="Is implemented in S2 (sample) Press ... to navigate">foo</lineMarker>(t: T): T
 
-    val <lineMarker descr="<html><body>Is implemented in <br/>&nbsp;&nbsp;&nbsp;&nbsp;sample.S2</body></html>">some</lineMarker>: T? get
+    val <lineMarker descr="Is implemented in S2 (sample) Press ... to navigate">some</lineMarker>: T? get
 
-    var <lineMarker descr="<html><body>Is implemented in <br/>&nbsp;&nbsp;&nbsp;&nbsp;sample.S2</body></html>">other</lineMarker>: T?
+    var <lineMarker descr="Is implemented in S2 (sample) Press ... to navigate">other</lineMarker>: T?
         get
         set
 }
 
-open abstract class <lineMarker descr="Is subclassed by S2  Click or press ... to navigate">S1</lineMarker> : S<String>
+open abstract class <lineMarker descr="Is subclassed by S2 (sample) Press ... to navigate">S1</lineMarker> : S<String>
 
 class S2 : S1() {
-    override val <lineMarker descr="Implements property in 'S&lt;T&gt;'">some</lineMarker>: String = "S"
+    override val <lineMarker descr="Implements property in S (sample) Press ... to navigate">some</lineMarker>: String = "S"
 
-    override var <lineMarker descr="Implements property in 'S&lt;T&gt;'">other</lineMarker>: String?
+    override var <lineMarker descr="Implements property in S (sample) Press ... to navigate">other</lineMarker>: String?
         get() = null
         set(value) {}
 
-    override fun <lineMarker descr="Implements function in 'S&lt;T&gt;'">foo</lineMarker>(t: String): String {
+    override fun <lineMarker descr="Implements function in S (sample) Press ... to navigate">foo</lineMarker>(t: String): String {
         return super<S1>.foo(t)
     }
 }

@@ -118,7 +118,7 @@ public class UnnecessaryCallToStringValueOfInspection extends BaseInspection imp
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiMethodCallExpression call = ObjectUtils.tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression arg = tryUnwrapRedundantConversion(call);

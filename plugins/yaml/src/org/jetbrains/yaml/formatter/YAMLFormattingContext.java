@@ -412,12 +412,11 @@ class YAMLFormattingContext {
 
   @Nullable
   private static ASTNode getPreviousNonBlankNode(ASTNode node) {
-    do {
+    while (true) {
       node = TreeUtil.prevLeaf(node);
-      if (!YAMLElementTypes.BLANK_ELEMENTS.contains(PsiUtilCore.getElementType(node))) {
+      if (node == null || !YAMLElementTypes.BLANK_ELEMENTS.contains(PsiUtilCore.getElementType(node))) {
         return node;
       }
-    } while (node != null);
-    return null;
+    }
   }
 }

@@ -52,6 +52,7 @@ public abstract class SmartEnterProcessor {
     final Document doc = editor.getDocument();
     CharSequence chars = doc.getCharsSequence();
     int offset = caret == 0 ? 0 : CharArrayUtil.shiftBackward(chars, caret - 1, " \t");
+    if (offset < 0) offset = 0;
     if (doc.getLineNumber(offset) < doc.getLineNumber(caret)) {
       offset = CharArrayUtil.shiftForward(chars, caret, " \t");
     }

@@ -139,7 +139,7 @@ public final class CreatePackageAction extends DumbAwareAction {
 
   private static void createNewPackage(@NotNull String name,
                                        @NotNull CreateDirectoryOrPackageHandler createHandler,
-                                       @NotNull Consumer<PsiFileSystemItem> consumer) {
+                                       @NotNull Consumer<? super PsiFileSystemItem> consumer) {
     if (createHandler.checkInput(name) && createHandler.canClose(name)) {
       consumer.accept(createHandler.getCreatedElement());
     }

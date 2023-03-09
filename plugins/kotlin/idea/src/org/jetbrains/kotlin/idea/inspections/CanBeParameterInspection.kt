@@ -19,6 +19,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.quickfix.RemoveValVarFromParameterFix
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.psi.psiUtil.parents
 
 internal val CONSTRUCTOR_VAL_VAR_MODIFIERS = listOf(
     OPEN_KEYWORD, FINAL_KEYWORD, OVERRIDE_KEYWORD,
@@ -77,7 +79,7 @@ class CanBeParameterInspection : AbstractKotlinInspection() {
             val name = parameter.name ?: return
             if (parameter.hasModifier(OVERRIDE_KEYWORD) || parameter.hasModifier(ACTUAL_KEYWORD)) return
             if (parameter.annotationEntries.isNotEmpty()) return
-            val constructor = parameter.parent.parent as? KtPrimaryConstructor ?: return
+            val constructor = parameter.parents.match(KtParameterList::class, last = KtPrimaryConstructor::class) ?: return
             val klass = constructor.getContainingClassOrObject() as? KtClass ?: return
             if (klass.isData()) return
 

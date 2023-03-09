@@ -7,9 +7,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
-import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinJsGradleModuleConfigurator
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
+import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import java.io.File
@@ -20,7 +19,7 @@ abstract class AbstractGradleConfigureProjectByChangingFileTest :
     fun doTestGradle(unused: String?) {
         val path = testDataPath
         val (before, after) = beforeAfterFiles()
-        doTest(before, after, if ("js" in path) KotlinJsGradleModuleConfigurator() else KotlinGradleModuleConfigurator())
+        doTest(before, after, KotlinGradleModuleConfigurator())
     }
 
     private fun beforeAfterFiles(): Pair<String, String> {

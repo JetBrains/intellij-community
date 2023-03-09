@@ -2,7 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection.MethodReferenceCandidate;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,11 +15,12 @@ import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(AnonymousCanBeMethodReferenceInspection.class);
@@ -44,10 +45,11 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
     return "Anonymous2MethodRef";
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface"), this, "reportNotAnnotatedInterfaces");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("reportNotAnnotatedInterfaces",
+               JavaAnalysisBundle.message("report.when.interface.is.not.annotated.with.functional.interface")));
   }
 
   @NotNull

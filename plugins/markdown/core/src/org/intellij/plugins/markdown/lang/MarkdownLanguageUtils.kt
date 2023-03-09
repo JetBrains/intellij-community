@@ -5,7 +5,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.vfs.VirtualFile
 
-internal object MarkdownLanguageUtils {
+object MarkdownLanguageUtils {
   fun Language.isMarkdownLanguage(): Boolean {
     return this == MarkdownLanguage.INSTANCE
   }

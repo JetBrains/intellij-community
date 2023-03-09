@@ -13,10 +13,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.psi.canDropCurlyBrackets
-import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.idea.base.psi.dropCurlyBrackets
-import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.psi.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAsReplacement
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -719,7 +716,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
         failedToImportDescriptors: Set<DeclarationDescriptor>
     ) : ShorteningProcessor<KtThisExpression>(file, failedToImportDescriptors) {
 
-        private val simpleThis = KtPsiFactory(file).createExpression("this") as KtThisExpression
+        private val simpleThis = KtPsiFactory(file.project).createExpression("this") as KtThisExpression
 
         override val collectElementsVisitor: CollectElementsVisitor<KtThisExpression> =
             object : CollectElementsVisitor<KtThisExpression>(elementFilter) {
@@ -780,7 +777,7 @@ class ShortenReferences(val options: (KtElement) -> Options = { Options.DEFAULT 
             // TODO: More generic solution may be possible
             if (selectorsSelectorTarget is PropertyDescriptor) {
                 val source = selectorsSelectorTarget.source.getPsi() as? KtProperty
-                if (source != null && isEnumCompanionPropertyWithEntryConflict(source, source.name ?: "")) {
+                if (source != null && KotlinPsiHeuristics.isEnumCompanionPropertyWithEntryConflict(source, source.name ?: "")) {
                     return AnalyzeQualifiedElementResult.Skip
                 }
             }

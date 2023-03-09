@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiTypeParameter;
@@ -26,7 +26,8 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveClassFix;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class InnerClassOnInterfaceInspection extends BaseInspection {
 
@@ -36,10 +37,10 @@ public class InnerClassOnInterfaceInspection extends BaseInspection {
   public boolean m_ignoreInnerInterfaces = false;
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "inner.class.on.interface.ignore.option"),
-                                          this, "m_ignoreInnerInterfaces");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("m_ignoreInnerInterfaces", InspectionGadgetsBundle.message(
+        "inner.class.on.interface.ignore.option")));
   }
 
   @Override

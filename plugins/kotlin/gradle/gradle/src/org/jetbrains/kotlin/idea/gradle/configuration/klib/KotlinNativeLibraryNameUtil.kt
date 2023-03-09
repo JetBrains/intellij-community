@@ -14,7 +14,8 @@ object KotlinNativeLibraryNameUtil {
     const val KOTLIN_NATIVE_LIBRARY_PREFIX_PLUS_SPACE = "$KOTLIN_NATIVE_LIBRARY_PREFIX "
 
     @NonNls
-    internal const val GRADLE_LIBRARY_PREFIX = "Gradle: "
+    @IntellijInternalApi
+    const val GRADLE_LIBRARY_PREFIX = "Gradle: "
 
     private val IDE_LIBRARY_NAME_REGEX = Regex("^$KOTLIN_NATIVE_LIBRARY_PREFIX_PLUS_SPACE([^\\s]+) - ([^\\s]+)( \\[([\\w ,()*]+)])?$")
 

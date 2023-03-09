@@ -3,6 +3,7 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  * */
 
-public abstract class ProjectTreeStructure extends AbstractProjectTreeStructure {
+public abstract class ProjectTreeStructure extends AbstractProjectTreeStructure implements ProjectViewSettings {
   private final String myId;
 
   public ProjectTreeStructure(@NotNull Project project, final String ID) {
@@ -67,4 +68,10 @@ public abstract class ProjectTreeStructure extends AbstractProjectTreeStructure 
   public boolean isShowURL() {
     return ProjectView.getInstance(myProject).isShowURL(myId);
   }
+
+  @Override
+  public boolean isShowVisibilityIcons() {
+    return ProjectView.getInstance(myProject).isShowVisibilityIcons(myId);
+  }
+
 }

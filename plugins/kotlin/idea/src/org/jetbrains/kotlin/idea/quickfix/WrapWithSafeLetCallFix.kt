@@ -40,7 +40,7 @@ class WrapWithSafeLetCallFix(
         val receiverExpression = qualifiedExpression?.receiverExpression
         val canBeReplacedWithInvokeCall = (nullableExpression.parent as? KtCallExpression)?.canBeReplacedWithInvokeCall() == true
 
-        val factory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(project)
         val nullableText = if (receiverExpression != null && canBeReplacedWithInvokeCall) {
             "${receiverExpression.text}${qualifiedExpression.operationSign.value}${nullableExpression.text}"
         } else {
@@ -53,15 +53,15 @@ class WrapWithSafeLetCallFix(
         )
         val name = Fe10KotlinNameSuggester.suggestNameByName("it", validator)
 
-        nullableExpression.replace(factory.createExpression(name))
+        nullableExpression.replace(psiFactory.createExpression(name))
         val underLetExpression = when {
             receiverExpression != null && !canBeReplacedWithInvokeCall ->
-                factory.createExpressionByPattern("$0.$1", receiverExpression, element)
+                psiFactory.createExpressionByPattern("$0.$1", receiverExpression, element)
             else -> element
         }
         val wrapped = when (name) {
-            "it" -> factory.createExpressionByPattern("($0)?.let { $1 }", nullableText, underLetExpression)
-            else -> factory.createExpressionByPattern("($0)?.let { $1 -> $2 }", nullableText, name, underLetExpression)
+            "it" -> psiFactory.createExpressionByPattern("($0)?.let { $1 }", nullableText, underLetExpression)
+            else -> psiFactory.createExpressionByPattern("($0)?.let { $1 -> $2 }", nullableText, name, underLetExpression)
         }
         val replaced = (qualifiedExpression ?: element).replace(wrapped) as KtSafeQualifiedExpression
         val receiver = replaced.receiverExpression

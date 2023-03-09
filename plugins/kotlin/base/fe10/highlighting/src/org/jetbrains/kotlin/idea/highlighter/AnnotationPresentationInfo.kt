@@ -6,12 +6,12 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
-import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.SuppressableProblemGroup
+import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.NlsContexts
@@ -39,35 +39,59 @@ class AnnotationPresentationInfo(
     fun processDiagnostics(
         holder: HighlightInfoHolder,
         diagnostics: Collection<Diagnostic>,
-        highlightInfoBuilderByDiagnostic: MutableMap<Diagnostic, HighlightInfo>? = null,
-        highlightInfoByTextRange: MutableMap<TextRange, HighlightInfo>?,
-        fixesMap: MultiMap<Diagnostic, IntentionAction>?,
-        calculatingInProgress: Boolean
+        diagnosticHighlighted: MutableSet<Diagnostic>,
+        fixesMap: MultiMap<Diagnostic, IntentionAction>
     ) {
         for (range in ranges) {
             for (diagnostic in diagnostics) {
-                create(diagnostic, range) { info ->
-                    holder.add(info)
-                    highlightInfoBuilderByDiagnostic?.put(diagnostic, info)
-                    if (fixesMap != null) {
-                        applyFixes(fixesMap, diagnostic, info)
-                    }
-                    if (calculatingInProgress && highlightInfoByTextRange?.containsKey(range) == false) {
-                        highlightInfoByTextRange[range] = info
-                        QuickFixAction.registerQuickFixAction(info, CalculatingIntentionAction())
-                    }
+                val group = if (diagnostic.severity == Severity.WARNING) {
+                    KotlinSuppressableWarningProblemGroup(diagnostic.factory)
+                } else {
+                    null
                 }
+                val builder = create(diagnostic, range, group)
+                diagnosticHighlighted.add(diagnostic)
+                applyFixes(fixesMap, diagnostic, builder, group)
+                holder.add(builder.createUnconditionally())
             }
         }
     }
 
-    internal fun applyFixes(
+    private fun create(
+        diagnostic: Diagnostic,
+        range: TextRange,
+        group: KotlinSuppressableWarningProblemGroup?
+    ): HighlightInfo.Builder {
+        val message = nonDefaultMessage ?: getDefaultMessage(diagnostic)
+        val textAttributesToApply = if (textAttributes != null) {
+            textAttributes
+        } else {
+            convertSeverityTextAttributes(highlightType, diagnostic.severity)
+        }
+        return HighlightInfo
+            .newHighlightInfo(toHighlightInfoType(highlightType, diagnostic.severity))
+            .range(range)
+            .description(message)
+            .escapedToolTip(getMessage(diagnostic))
+            .also {
+                if (textAttributesToApply != null) {
+                    it.textAttributes(textAttributesToApply)
+                }
+            }
+            .also {
+                if (group != null) {
+                    it.problemGroup(group)
+                }
+            }
+    }
+
+    private fun applyFixes(
         quickFixes: MultiMap<Diagnostic, IntentionAction>,
         diagnostic: Diagnostic,
-        info: HighlightInfo
+        builder: HighlightInfo.Builder,
+        problemGroup: ProblemGroup?
     ) {
         val isWarning = diagnostic.severity == Severity.WARNING
-        val isError = diagnostic.severity == Severity.ERROR
 
         val element = diagnostic.psiElement
 
@@ -88,7 +112,7 @@ class AnnotationPresentationInfo(
 
             if (fix == RegisterQuickFixesLaterIntentionAction) {
                 element.reference?.let {
-                    UnresolvedReferenceQuickFixUpdater.getInstance(element.project).registerQuickFixesLater(it, info)
+                    UnresolvedReferenceQuickFixUpdater.getInstance(element.project).registerQuickFixesLater(it, builder)
                 }
                 continue
             }
@@ -99,31 +123,14 @@ class AnnotationPresentationInfo(
                 options += fix.options
             }
 
-            val problemGroup = info.problemGroup
             if (problemGroup is SuppressableProblemGroup) {
                 options += problemGroup.getSuppressActions(element).mapNotNull { it as IntentionAction }
             }
 
+            val isError = diagnostic.severity == Severity.ERROR
             val message = KotlinBaseFe10HighlightingBundle.message(if (isError) "kotlin.compiler.error" else "kotlin.compiler.warning")
-            info.registerFix(fix, options, message, null, keyForSuppressOptions)
+            builder.registerFix(fix, options, message, null, keyForSuppressOptions)
         }
-    }
-
-    private fun create(diagnostic: Diagnostic, range: TextRange, consumer: (HighlightInfo) -> Unit) {
-        val message = nonDefaultMessage ?: getDefaultMessage(diagnostic)
-        HighlightInfo
-            .newHighlightInfo(toHighlightInfoType(highlightType, diagnostic.severity))
-            .range(range)
-            .description(message)
-            .escapedToolTip(getMessage(diagnostic))
-            .also { builder -> textAttributes?.let(builder::textAttributes) ?: convertSeverityTextAttributes(highlightType, diagnostic.severity)?.let(builder::textAttributes) }
-            .also {
-                if (diagnostic.severity == Severity.WARNING) {
-                    it.problemGroup(KotlinSuppressableWarningProblemGroup(diagnostic.factory))
-                }
-            }
-            .createUnconditionally()
-            .also(consumer)
     }
 
     @NlsContexts.Tooltip

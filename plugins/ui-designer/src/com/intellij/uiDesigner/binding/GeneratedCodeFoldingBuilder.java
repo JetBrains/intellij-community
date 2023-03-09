@@ -21,7 +21,7 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     MyFoldingVisitor visitor = new MyFoldingVisitor();
     root.accept(visitor);
-    return visitor.myFoldingData.toArray(FoldingDescriptor.EMPTY);
+    return visitor.myFoldingData.toArray(FoldingDescriptor.EMPTY_ARRAY);
   }
 
   @Override

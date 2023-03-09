@@ -5,15 +5,22 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
+import com.intellij.internal.inspector.PropertyBean;
+import com.intellij.internal.inspector.UiInspectorContextProvider;
+import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.ui.Gray;
@@ -129,6 +136,8 @@ public final class ListPluginComponent extends JPanel {
       showProgress(false);
     }
     updateColors(EventHandler.SelectionType.NONE);
+
+    UiInspectorUtil.registerProvider(this, new PluginIdUiInspectorContextProvider());
   }
 
   @NotNull PluginsGroup getGroup() { return myGroup; }
@@ -178,7 +187,7 @@ public final class ListPluginComponent extends JPanel {
   }
 
   private void createNotAvailableMarker(boolean compatible) {
-    myInstallButton = new InstallButton(false);
+    myInstallButton = createInstallButton();
     if (!compatible) {
       setupNotCompatibleMarkerButton();
     }
@@ -226,7 +235,7 @@ public final class ListPluginComponent extends JPanel {
 
         boolean showInstall = installedDescriptorForMarketplace == null;
 
-        myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
+        myLayout.addButtonComponent(myInstallButton = createInstallButton());
 
         myInstallButton.addActionListener(
           e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
@@ -265,7 +274,7 @@ public final class ListPluginComponent extends JPanel {
     else {
       if (NewUiUtil.isDeleted(myPlugin)) {
         if (InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId)) {
-          myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
+          myLayout.addButtonComponent(myInstallButton = createInstallButton());
           myInstallButton.setVisible(true);
           myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
           myAfterUpdate = true;
@@ -299,7 +308,12 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  private void createEnableDisableButton(@NotNull Supplier<IdeaPluginDescriptor> descriptorFunction) {
+  private @NotNull InstallButton createInstallButton() {
+    boolean upgradeRequired = myPlugin instanceof PluginNode && ((PluginNode)myPlugin).getSuggestedCommercialIde() != null;
+    return new InstallButton(false, upgradeRequired);
+  }
+
+  private void createEnableDisableButton(@NotNull Supplier<? extends IdeaPluginDescriptor> descriptorFunction) {
     myEnableDisableButton = createEnableDisableButton(__ -> {
       List<IdeaPluginDescriptor> descriptors = List.of(descriptorFunction.get());
       if (myPluginModel.getState(myPlugin).isDisabled()) {
@@ -382,9 +396,11 @@ public final class ListPluginComponent extends JPanel {
       }
     }
 
-    String vendor = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getVendor());
-    if (!StringUtil.isEmptyOrSpaces(vendor)) {
-      myVendor = createRatingLabel(myMetricsPanel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
+    if (!myPlugin.isBundled()) {
+      String vendor = StringUtil.defaultIfEmpty(Strings.trim(myPlugin.getVendor()), Strings.trim(myPlugin.getOrganization()));
+      if (!StringUtil.isEmptyOrSpaces(vendor)) {
+        myVendor = createRatingLabel(myMetricsPanel, TextHorizontalLayout.FIX_LABEL, vendor, null, null, true);
+      }
     }
   }
 
@@ -791,7 +807,7 @@ public final class ListPluginComponent extends JPanel {
 
     if (!needRestartForUninstall &&
         InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(getDescriptorForActions().getPluginId())) {
-      myLayout.addButtonComponent(myInstallButton = new InstallButton(false));
+      myLayout.addButtonComponent(myInstallButton = createInstallButton());
       myInstallButton.setEnabled(false, IdeBundle.message("plugins.configurable.uninstalled"));
     }
   }
@@ -1078,12 +1094,12 @@ public final class ListPluginComponent extends JPanel {
 
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action,
                                                                                                                       @NotNull List<? extends ListPluginComponent> selection,
-                                                                                                                      @NotNull Function<ListPluginComponent, IdeaPluginDescriptor> function) {
+                                                                                                                      @NotNull Function<? super ListPluginComponent, ? extends IdeaPluginDescriptor> function) {
     return new SelectionBasedPluginModelAction.EnableDisableAction<>(myPluginModel, action, true, selection, function);
   }
 
   private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<? extends ListPluginComponent> selection,
-                                                                                                              @NotNull Function<ListPluginComponent, IdeaPluginDescriptor> function) {
+                                                                                                              @NotNull Function<? super ListPluginComponent, ? extends IdeaPluginDescriptor> function) {
     return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel, true, this, selection, function);
   }
 
@@ -1123,6 +1139,18 @@ public final class ListPluginComponent extends JPanel {
       for (JButton button : myButtons) {
         button.doClick();
       }
+    }
+  }
+
+  private class PluginIdUiInspectorContextProvider implements UiInspectorContextProvider {
+    @Override
+    public @NotNull List<PropertyBean> getUiInspectorContext() {
+      ArrayList<PropertyBean> result = new ArrayList<>();
+      result.add(new PropertyBean("Plugin ID", myPlugin.getPluginId(), true));
+      result.add(new PropertyBean("Plugin Dependencies",
+                                  StringUtil.join(myPlugin.getDependencies(),
+                                                  it -> it.getPluginId() + (it.isOptional() ? " (optional)" : ""), ", ")));
+      return result;
     }
   }
 

@@ -39,7 +39,6 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       useAppConfigDir {
         runBlocking { ApplicationManager.getApplication().stateStore.save(forceSavingAllSettings = true) }
 
-        @Suppress("UsePropertyAccessSyntax")
         assertThat(PathManager.getConfigDir())
           .isNotEmptyDirectory()
           .satisfies(Condition(Predicate { ConfigImportHelper.isConfigDirectory(it) }, "A valid config directory"))

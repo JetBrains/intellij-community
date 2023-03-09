@@ -910,7 +910,9 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
         "        }",
         "        integrationTest(JvmTestSuite) { ",
         "            dependencies {",
-        "                implementation project ",
+        isGradleNewerOrSameAs("7.6")
+        ? "                implementation project() "
+        : "                implementation project ",
         "            }",
         "        }",
         "    }",

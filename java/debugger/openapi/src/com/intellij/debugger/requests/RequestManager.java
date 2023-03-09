@@ -23,10 +23,11 @@ import org.jetbrains.annotations.Nullable;
 
 public interface RequestManager {
   void callbackOnPrepareClasses(ClassPrepareRequestor requestor, String classOrPatternToBeLoaded);
+
   void callbackOnPrepareClasses(ClassPrepareRequestor requestor, SourcePosition classPosition) throws EvaluateException;
 
   @Nullable
-  ClassPrepareRequest createClassPrepareRequest(ClassPrepareRequestor requestor, String pattern);  
+  ClassPrepareRequest createClassPrepareRequest(ClassPrepareRequestor requestor, String pattern);
 
   void enableRequest(EventRequest request);
 

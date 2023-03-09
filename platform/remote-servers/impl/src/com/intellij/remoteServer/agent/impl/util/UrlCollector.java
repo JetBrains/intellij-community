@@ -19,7 +19,7 @@ public class UrlCollector {
 
   private List<File> myFiles;
 
-  public URL[] collect(@NotNull Collection<File> libraries) {
+  public URL[] collect(@NotNull Collection<? extends File> libraries) {
     List<File> files = collectFiles(libraries);
     URL[] result = new URL[files.size()];
     for (int i = 0; i < files.size(); i++) {
@@ -33,7 +33,7 @@ public class UrlCollector {
     return result;
   }
 
-  public List<File> collectFiles(Collection<File> libraries) {
+  public List<File> collectFiles(Collection<? extends File> libraries) {
     myFiles = new ArrayList<>();
     for (File library : libraries) {
       if (library.exists()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -63,19 +63,19 @@ public final class BatchEvaluator {
       }
 
       ThreadReference threadReference = thread.getThreadReference();
-      if(threadReference == null) {
+      if (threadReference == null) {
         return false;
       }
 
       try {
         myBatchEvaluatorClass = (ClassType)myDebugProcess.findClass(evaluationContext, BatchEvaluatorServer.class.getName(),
-          evaluationContext.getClassLoader());
+                                                                    evaluationContext.getClassLoader());
       }
       catch (EvaluateException ignored) {
       }
 
       if (myBatchEvaluatorClass != null) {
-          myBatchEvaluatorMethod = DebuggerUtils.findMethod(myBatchEvaluatorClass, "evaluate", "([Ljava/lang/Object;)Ljava/lang/String;");
+        myBatchEvaluatorMethod = DebuggerUtils.findMethod(myBatchEvaluatorClass, "evaluate", "([Ljava/lang/Object;)Ljava/lang/String;");
       }
     }
     return myBatchEvaluatorMethod != null;
@@ -106,7 +106,7 @@ public final class BatchEvaluator {
   public static BatchEvaluator getBatchEvaluator(DebugProcess debugProcess) {
     BatchEvaluator batchEvaluator = debugProcess.getUserData(BATCH_EVALUATOR_KEY);
 
-    if(batchEvaluator == null) {
+    if (batchEvaluator == null) {
       batchEvaluator = new BatchEvaluator(debugProcess);
       debugProcess.putUserData(BATCH_EVALUATOR_KEY, batchEvaluator);
     }

@@ -1,1 +1,1 @@
-SymbolLightClass: B
+KtClass: B

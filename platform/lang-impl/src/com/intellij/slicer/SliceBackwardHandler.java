@@ -45,7 +45,7 @@ class SliceBackwardHandler extends SliceHandler {
       }
 
       @Override
-      protected @Nullable JComponent getAdditionalActionSettings(Project project) {
+      protected @Nullable JComponent getAdditionalActionSettings(@NotNull Project project) {
         if (!supportFilter) return null;
         myUi = new SliceBackwardAdditionalUi();
         final JTextField field = myUi.getField();

@@ -17,7 +17,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -62,8 +61,7 @@ final class DisablePCEAction extends DumbAwareToggleAction {
     }
   }
 
-  @NotNull
-  private static ProgressManager createDebugManager(boolean enabledPCE) {
+  private static @NotNull ProgressManager createDebugManager(boolean enabledPCE) {
     return enabledPCE ? new ProgressManagerImpl() : new ProgressManagerImpl(){
       @Override
       protected void doCheckCanceled() throws ProcessCanceledException {
@@ -78,39 +76,28 @@ final class DisablePCEAction extends DumbAwareToggleAction {
   }
 
   private static final class StatusWidget implements StatusBarWidget, StatusBarWidget.TextPresentation {
-    @NotNull
     @Override
-    public String ID() {
+    public @NotNull String ID() {
       return STATUS_BAR_WIDGET_ID;
     }
 
-    @Nullable
     @Override
-    public WidgetPresentation getPresentation() {
+    public @NotNull WidgetPresentation getPresentation() {
       return this;
     }
 
     @Override
-    public void install(@NotNull StatusBar statusBar) {}
-
-    @Override
-    public void dispose() {}
-
-    @Nullable
-    @Override
-    public String getTooltipText() {
+    public @NotNull String getTooltipText() {
       return "Click to re-enable ProcessCanceledException";
     }
 
-    @Nullable
     @Override
-    public Consumer<MouseEvent> getClickConsumer() {
+    public @NotNull Consumer<MouseEvent> getClickConsumer() {
       return event -> changePCEEnabledStatus(true);
     }
 
-    @NotNull
     @Override
-    public String getText() {
+    public @NotNull String getText() {
       return "WARNING: PCE is disabled!";
     }
 

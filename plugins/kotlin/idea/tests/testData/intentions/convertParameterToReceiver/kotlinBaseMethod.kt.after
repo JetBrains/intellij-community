@@ -1,0 +1,8 @@
+class D : C() {
+    override fun String.foo() {
+    }
+}
+
+open class C {
+    open fun String.foo() { }
+}

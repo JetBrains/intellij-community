@@ -17,6 +17,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -112,8 +115,7 @@ open class KeyParentImpl(val dataSource: KeyParentData) : KeyParent, WorkspaceEn
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.keyField != dataSource.keyField) this.keyField = dataSource.keyField
       if (this.notKeyField != dataSource.notKeyField) this.notKeyField = dataSource.notKeyField
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

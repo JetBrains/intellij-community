@@ -1,4 +1,4 @@
-// "Replace with collect" "true-preview"
+// "Collapse loop with stream 'collect()'" "true-preview"
 import java.util.*;
 
 class Test {

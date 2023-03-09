@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiUtils;
 
-public class CodeInsightUtils {
+public final class CodeInsightUtils {
     /**
      * @deprecated Use org.jetbrains.kotlin.idea.base.psi.CodeInsightUtils.getTopmostElementAtOffset instead
      */

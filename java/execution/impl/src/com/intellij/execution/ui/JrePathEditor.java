@@ -42,7 +42,9 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -88,7 +90,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
       }
     };
     myDefaultJreItem = new DefaultJreItem();
-    buildModel(editable);
+    myComboBoxModel.add(myDefaultJreItem);
     myComboBoxModel.setSelectedItem(myDefaultJreItem);
 
     ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel, JBUI.scale(300));
@@ -143,36 +145,47 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     setText(ExecutionBundle.message("run.configuration.jre.label"));
 
     updateUI();
+
+    updateModel(items -> myComboBoxModel.setAll(items));
+  }
+
+  private void updateModel(Consumer<List<JreComboBoxItem>> consumer) {
+    ReadAction.nonBlocking(() -> buildModel(getComponent().isEditable())).coalesceBy(this).
+      expireWhen(() -> !getComponent().isVisible()).
+      finishOnUiThread(ModalityState.any(), consumer).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   /**
    * @return true if selection update needed
    */
   public boolean updateModel(@NotNull Project project, @Nullable String targetName) {
-    myComboBoxModel.clear();
+    List<JreComboBoxItem> items = new ArrayList<>();
     myRemoteTarget = false;
     TargetEnvironmentConfiguration config = TargetEnvironmentConfigurations.getEffectiveConfiguration(targetName, project);
     if (config != null) {
       myRemoteTarget = true;
-      List<CustomJreItem> items = ContainerUtil.mapNotNull(config.getRuntimes().resolvedConfigs(),
-                                                           configuration -> configuration instanceof JavaLanguageRuntimeConfiguration ?
-                                                                            new CustomJreItem(
-                                                                              (JavaLanguageRuntimeConfiguration)configuration) : null);
+      items.addAll(ContainerUtil.mapNotNull(config.getRuntimes().resolvedConfigs(),
+                                            configuration -> configuration instanceof JavaLanguageRuntimeConfiguration ? new CustomJreItem(
+                                              (JavaLanguageRuntimeConfiguration)configuration) : null));
       myComboBoxModel.addAll(items);
       if (!items.isEmpty()) {
         myComboBoxModel.setSelectedItem(items.get(0));
       }
       return false;
     }
-    buildModel(getComponent().isEditable());
+    updateModel(items1 -> {
+      items.addAll(items1);
+      myComboBoxModel.setAll(items);
+    });
     return true;
   }
 
-  private void buildModel(boolean editable) {
-    myComboBoxModel.add(myDefaultJreItem);
+  private List<JreComboBoxItem> buildModel(boolean editable) {
+    List<JreComboBoxItem> model = new ArrayList<>();
+    model.add(myDefaultJreItem);
     final Sdk[] allJDKs = ProjectJdkTable.getInstance().getAllJdks();
     for (Sdk sdk : allJDKs) {
-      myComboBoxModel.add(new SdkAsJreItem(sdk));
+      model.add(new SdkAsJreItem(sdk));
     }
 
     final Set<String> jrePaths = new HashSet<>();
@@ -181,7 +194,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
         String path = provider.getJrePath();
         if (!StringUtil.isEmpty(path)) {
           jrePaths.add(path);
-          myComboBoxModel.add(new CustomJreItem(provider));
+          model.add(new CustomJreItem(provider));
         }
       }
     }
@@ -189,19 +202,20 @@ public class JrePathEditor extends LabeledComponent<ComboBox<JrePathEditor.JreCo
     for (Sdk jdk : allJDKs) {
       String homePath = jdk.getHomePath();
 
-      if (!SystemInfo.isMac) {
-        final File jre = new File(jdk.getHomePath(), "jre");
-        if (jre.isDirectory()) {
-          homePath = jre.getPath();
+      if (!SystemInfo.isMac && jdk.getHomePath() != null) {
+        Path path = Path.of(jdk.getHomePath(), "jre");
+        if (Files.isDirectory(path)) {
+          homePath = path.toString();
         }
       }
       if (jrePaths.add(homePath)) {
-        myComboBoxModel.add(new CustomJreItem(homePath, null, jdk.getVersionString()));
+        model.add(new CustomJreItem(homePath, null, jdk.getVersionString()));
       }
     }
     if (!editable) {
-      myComboBoxModel.add(new AddJreItem());
+      model.add(new AddJreItem());
     }
+    return model;
   }
 
   @NotNull

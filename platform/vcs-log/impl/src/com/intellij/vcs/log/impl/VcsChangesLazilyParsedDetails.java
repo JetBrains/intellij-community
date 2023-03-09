@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.google.common.base.Supplier;
@@ -30,8 +30,8 @@ import java.util.function.BiFunction;
 public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl implements VcsFullCommitDetails {
   private static final Logger LOG = Logger.getInstance(VcsChangesLazilyParsedDetails.class);
   protected static final Changes EMPTY_CHANGES = new EmptyChanges();
-  @NotNull private final ChangesParser myChangesParser;
-  @NotNull private final AtomicReference<Changes> myChanges = new AtomicReference<>();
+  private final @NotNull ChangesParser myChangesParser;
+  private final @NotNull AtomicReference<Changes> myChanges = new AtomicReference<>();
 
   public VcsChangesLazilyParsedDetails(@NotNull Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime,
                                        @NotNull VirtualFile root,
@@ -46,15 +46,13 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     }));
   }
 
-  @NotNull
   @Override
-  public Collection<Change> getChanges() {
+  public @NotNull Collection<Change> getChanges() {
     return myChanges.get().getMergedChanges();
   }
 
-  @NotNull
   @Override
-  public Collection<Change> getChanges(int parent) {
+  public @NotNull Collection<Change> getChanges(int parent) {
     return myChanges.get().getChanges(parent);
   }
 
@@ -62,8 +60,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
     return myChanges.get().size();
   }
 
-  @NotNull
-  protected Changes getChangesObject() {
+  protected @NotNull Changes getChangesObject() {
     return myChanges.get();
   }
 
@@ -78,15 +75,13 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
   }
 
   protected static class EmptyChanges implements Changes {
-    @NotNull
     @Override
-    public Collection<Change> getMergedChanges() {
+    public @NotNull Collection<Change> getMergedChanges() {
       return ContainerUtil.emptyList();
     }
 
-    @NotNull
     @Override
-    public Collection<Change> getChanges(int parent) {
+    public @NotNull Collection<Change> getChanges(int parent) {
       return ContainerUtil.emptyList();
     }
 
@@ -97,10 +92,10 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
   }
 
   protected class UnparsedChanges implements Changes {
-    @NotNull protected final Project myProject;
-    @NotNull protected final List<List<VcsFileStatusInfo>> myChangesOutput;
-    @NotNull private final VcsStatusMerger<VcsFileStatusInfo> myStatusMerger = new VcsFileStatusInfoMerger();
-    @NotNull private final BiFunction<List<VcsFileStatusInfo>, Integer, List<Change>> myParser;
+    protected final @NotNull Project myProject;
+    protected final @NotNull List<List<VcsFileStatusInfo>> myChangesOutput;
+    private final @NotNull VcsStatusMerger<VcsFileStatusInfo> myStatusMerger = new VcsFileStatusInfoMerger();
+    private final @NotNull BiFunction<List<VcsFileStatusInfo>, Integer, List<Change>> myParser;
 
     public UnparsedChanges(@NotNull Project project,
                            @NotNull List<List<VcsFileStatusInfo>> changesOutput,
@@ -110,8 +105,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
       myParser = parser;
     }
 
-    @NotNull
-    protected ParsedChanges parseChanges() {
+    protected @NotNull ParsedChanges parseChanges() {
       List<Change> mergedChanges = parseMergedChanges();
       List<Collection<Change>> changes = computeChanges(mergedChanges);
       ParsedChanges parsedChanges = new ParsedChanges(mergedChanges, changes);
@@ -119,8 +113,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
       return parsedChanges;
     }
 
-    @NotNull
-    private List<Change> parseMergedChanges() {
+    private @NotNull List<Change> parseMergedChanges() {
       List<MergedStatusInfo<VcsFileStatusInfo>> statuses = getMergedStatusInfo();
       List<Change> changes = myParser.apply(ContainerUtil.map(statuses, MergedStatusInfo::getStatusInfo), 0);
       if (changes.size() != statuses.size()) {
@@ -136,15 +129,13 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
       return wrappedChanges;
     }
 
-    @NotNull
     @Override
-    public Collection<Change> getMergedChanges() {
+    public @NotNull Collection<Change> getMergedChanges() {
       return parseChanges().getMergedChanges();
     }
 
-    @NotNull
     @Override
-    public Collection<Change> getChanges(int parent) {
+    public @NotNull Collection<Change> getChanges(int parent) {
       return parseChanges().getChanges(parent);
     }
 
@@ -157,8 +148,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
       return size;
     }
 
-    @NotNull
-    private List<Collection<Change>> computeChanges(@NotNull Collection<Change> mergedChanges) {
+    private @NotNull List<Collection<Change>> computeChanges(@NotNull Collection<Change> mergedChanges) {
       if (myChangesOutput.size() == 1) {
         return Collections.singletonList(mergedChanges);
       }
@@ -177,14 +167,12 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
      * It calculates statuses for files that were modified in all parents of a merge commit.
      * If a commit is not a merge, all statuses are returned.
      */
-    @NotNull
-    private List<MergedStatusInfo<VcsFileStatusInfo>> getMergedStatusInfo() {
+    private @NotNull List<MergedStatusInfo<VcsFileStatusInfo>> getMergedStatusInfo() {
       return myStatusMerger.merge(myChangesOutput);
     }
 
     @ApiStatus.Internal
-    @NotNull
-    public Collection<VcsFileStatusInfo> getMergedStatuses() {
+    public @NotNull Collection<VcsFileStatusInfo> getMergedStatuses() {
       Collection<VcsFileStatusInfo> result = new HashSet<>();
       for (MergedStatusInfo<VcsFileStatusInfo> mergedStatusInfo : getMergedStatusInfo()) {
         result.add(mergedStatusInfo.getStatusInfo());
@@ -194,7 +182,7 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
   }
 
   private static class MyMergedChange extends MergedChange {
-    @NotNull private final Supplier<List<Change>> mySourceChanges;
+    private final @NotNull Supplier<List<Change>> mySourceChanges;
 
     MyMergedChange(@NotNull Change change, @NotNull MergedStatusInfo<VcsFileStatusInfo> statusInfo,
                    @NotNull BiFunction<List<VcsFileStatusInfo>, Integer, List<Change>> parser) {
@@ -216,23 +204,21 @@ public class VcsChangesLazilyParsedDetails extends VcsCommitMetadataImpl impleme
   }
 
   protected static class ParsedChanges implements Changes {
-    @NotNull private final Collection<Change> myMergedChanges;
-    @NotNull private final List<? extends Collection<Change>> myChanges;
+    private final @NotNull Collection<Change> myMergedChanges;
+    private final @NotNull List<? extends Collection<Change>> myChanges;
 
     ParsedChanges(@NotNull Collection<Change> mergedChanges, @NotNull List<? extends Collection<Change>> changes) {
       myMergedChanges = mergedChanges;
       myChanges = changes;
     }
 
-    @NotNull
     @Override
-    public Collection<Change> getMergedChanges() {
+    public @NotNull Collection<Change> getMergedChanges() {
       return myMergedChanges;
     }
 
-    @NotNull
     @Override
-    public Collection<Change> getChanges(int parent) {
+    public @NotNull Collection<Change> getChanges(int parent) {
       return myChanges.get(parent);
     }
 

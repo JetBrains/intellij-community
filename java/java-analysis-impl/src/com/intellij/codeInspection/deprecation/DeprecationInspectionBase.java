@@ -8,7 +8,8 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptCheckbox;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -148,8 +149,8 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     return outermostClass != null && outermostClass == PsiUtil.getTopLevelClass(elementToHighlight);
   }
 
-  static void addSameOutermostClassCheckBox(MultipleCheckboxOptionsPanel panel) {
-    panel.addCheckbox(JavaAnalysisBundle.message("ignore.in.the.same.outermost.class"), "IGNORE_IN_SAME_OUTERMOST_CLASS");
+  static OptCheckbox getSameOutermostClassCheckBox() {
+    return OptPane.checkbox("IGNORE_IN_SAME_OUTERMOST_CLASS", JavaAnalysisBundle.message("ignore.in.the.same.outermost.class"));
   }
 
   private static PsiField findReplacementInJavaDoc(@NotNull PsiField field, @NotNull PsiReferenceExpression referenceExpression) {

@@ -21,3 +21,5 @@ fun A.foo(s: String) {
 fun X.foo(n: Int) {
 
 }
+
+// FIR_COMPARISON

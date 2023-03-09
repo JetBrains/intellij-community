@@ -54,13 +54,10 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
       return RatedResolveResult.EMPTY_ARRAY;
     }
 
-    if (pyExpression instanceof PyReferenceExpression) {
-      final PsiReference redirectedRef = pyExpression.getReference();
-      if (redirectedRef != null) {
-        PsiElement resolved = redirectedRef.resolve();
-        if (resolved != null) {
-          return new ResolveResult[]{new RatedResolveResult(RatedResolveResult.RATE_HIGH, resolved)};
-        }
+    if (pyExpression instanceof PyReferenceExpression ref) {
+      PsiElement resolved = ref.getReference().resolve();
+      if (resolved != null) {
+        return new ResolveResult[]{new RatedResolveResult(RatedResolveResult.RATE_HIGH, resolved)};
       }
     }
 

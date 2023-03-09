@@ -25,11 +25,6 @@ abstract class AbstractMavenConfigureProjectByChangingFileTest : AbstractConfigu
         doTest(pathWithFile, pathWithFile.replace("pom", "pom_after"), KotlinJavaMavenConfigurator())
     }
 
-    fun doTestWithJSMaven(path: String) {
-        val pathWithFile = MavenConstants.POM_XML
-        doTest(pathWithFile, pathWithFile.replace("pom", "pom_after"), KotlinJavascriptMavenConfigurator())
-    }
-
     override fun runConfigurator(
         module: Module,
         file: PsiFile,

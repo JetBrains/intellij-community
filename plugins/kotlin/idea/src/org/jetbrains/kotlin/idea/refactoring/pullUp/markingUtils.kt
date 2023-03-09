@@ -97,7 +97,7 @@ fun applyMarking(
     declaration: KtNamedDeclaration,
     substitutor: TypeSubstitutor, targetClassDescriptor: ClassDescriptor
 ) {
-    val psiFactory = KtPsiFactory(declaration)
+    val psiFactory = KtPsiFactory(declaration.project)
     val targetThis = psiFactory.createExpression("this@${targetClassDescriptor.name.asString().quoteIfNeeded()}")
     val shorteningOptionsForThis = ShortenReferences.Options(removeThisLabels = true, removeThis = true)
 

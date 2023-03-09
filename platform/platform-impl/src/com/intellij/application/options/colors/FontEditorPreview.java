@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
 import com.intellij.openapi.editor.markup.AnalyzerStatus;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.UIController;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Key;
@@ -228,7 +229,7 @@ public class FontEditorPreview implements PreviewPanel{
   private static class DumbTrafficLightRenderer implements ErrorStripeRenderer {
     @Override
     public @NotNull AnalyzerStatus getStatus() {
-      return new AnalyzerStatus(AllIcons.General.InspectionsOK, "", "", () -> AnalyzerStatus.getEmptyController());
+      return new AnalyzerStatus(AllIcons.General.InspectionsOK, "", "", UIController.EMPTY);
     }
   }
 

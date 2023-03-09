@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesMethod
+import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.SoftDeprecationWeigher
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
@@ -21,9 +23,26 @@ internal object K2SoftDeprecationWeigher {
         symbol: KtSymbol,
         languageVersionSettings: LanguageVersionSettings
     ) {
-        val fqName = (symbol as? KtCallableSymbol)?.callableIdIfNonLocal?.asSingleFqName()
-        lookupElement.isSoftDeprecated = fqName != null &&
+        val callableSymbol = symbol as? KtCallableSymbol ?: return
+        lookupElement.isSoftDeprecated = isLibrarySoftDeprecatedMethod(callableSymbol, languageVersionSettings) ||
+                isEnumValuesSoftDeprecatedMethod(callableSymbol, languageVersionSettings)
+    }
+
+    private fun isLibrarySoftDeprecatedMethod(symbol: KtCallableSymbol, languageVersionSettings: LanguageVersionSettings): Boolean {
+        val fqName = symbol.callableIdIfNonLocal?.asSingleFqName()
+        return fqName != null &&
                 SoftDeprecationWeigher.isSoftDeprecatedFqName(fqName, languageVersionSettings)
+    }
+
+    /**
+     * Lower soft-deprecated `Enum.values()` method in completion.
+     * See [KT-22298](https://youtrack.jetbrains.com/issue/KTIJ-22298/Soft-deprecate-Enumvalues-for-Kotlin-callers).
+     */
+    private fun KtAnalysisSession.isEnumValuesSoftDeprecatedMethod(
+        symbol: KtCallableSymbol,
+        languageVersionSettings: LanguageVersionSettings
+    ): Boolean {
+        return languageVersionSettings.isEnumValuesSoftDeprecateEnabled() && isEnumValuesMethod(symbol)
     }
 
     object Weigher : LookupElementWeigher(SoftDeprecationWeigher.WEIGHER_ID) {

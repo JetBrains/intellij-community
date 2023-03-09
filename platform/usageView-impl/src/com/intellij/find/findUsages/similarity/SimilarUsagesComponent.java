@@ -41,7 +41,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
     Disposer.register(parent, this);
   }
 
-  public void renderSimilarUsages(@NotNull Collection<SimilarUsage> similarUsagesGroupUsages) {
+  public void renderSimilarUsages(@NotNull Collection<? extends SimilarUsage> similarUsagesGroupUsages) {
     similarUsagesGroupUsages.stream().skip(myAlreadyProcessedUsages).limit(SNIPPET_LIMIT).forEach(usage -> {
       final UsageInfo info = usage.getUsageInfo();
       if (myOriginalUsage != info) {
@@ -91,7 +91,7 @@ public class SimilarUsagesComponent extends JPanel implements Disposable {
   public void dispose() {
   }
 
-  public @NotNull JScrollPane createLazyLoadingScrollPane(@NotNull Set<SimilarUsage> usagesToRender) {
+  public @NotNull JScrollPane createLazyLoadingScrollPane(@NotNull Set<? extends SimilarUsage> usagesToRender) {
     JScrollPane similarUsagesScrollPane = ScrollPaneFactory.createScrollPane(this, true);
     renderOriginalUsage();
     BoundedRangeModelThresholdListener.install(similarUsagesScrollPane.getVerticalScrollBar(), () -> {

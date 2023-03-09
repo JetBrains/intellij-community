@@ -11,6 +11,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -24,36 +26,55 @@ import static java.nio.file.StandardOpenOption.*;
  * name, epochStartNanos, epochEndNanos, value
  * <br/>
  * <br/>
- * Expected to be temporary solution for metrics export -- until full-fledged (json?) exporter
- * will be implemented. Hence it is not very performant, and lacks features better to have for
- * production use, like file rolling.
+ * This is expected to be temporary solution for metrics export -- until full-fledged (json?) exporter will be implemented.
+ * That is why implementation is quite limited: only simplest metrics types are supported (e.g. no support for histograms),
+ * no support for attributes, and IO/file format itself is not the most effective one. But until now it seems like this limited
+ * implementation could be enough at least for a while.
  * <p>
  * <br/>
  * <p>
  * TODO not all metrics types are supported now, see .toCSVLine()
- * MAYBE roll output files daily/hourly?
+ * TODO no support for attributes now, see .toCSVLine()
  */
 @ApiStatus.Internal
-final class CsvMetricsExporter implements MetricExporter {
-  private static final Logger LOGGER = Logger.getInstance(CsvMetricsExporter.class);
+public final class CsvMetricsExporter implements MetricExporter {
+  private static final Logger LOG = Logger.getInstance(CsvMetricsExporter.class);
 
-  @NotNull
-  private final Path writeToPath;
+  private static final String HTML_PLOTTER_NAME = "open-telemetry-metrics-plotter.html";
 
-  public CsvMetricsExporter(final @NotNull String writeToPath) throws IOException {
-    this(Path.of(writeToPath));
-  }
 
-  public CsvMetricsExporter(final @NotNull Path writeToPath) throws IOException {
-    this.writeToPath = writeToPath.toAbsolutePath();
-    if (!Files.exists(this.writeToPath)) {
-      final Path parentDir = this.writeToPath.getParent();
-      if(!Files.isDirectory(parentDir)) {
+  private final @NotNull Path writeToFile;
+
+  public CsvMetricsExporter(final @NotNull Path writeToFile) throws IOException {
+    this.writeToFile = writeToFile;
+
+    if (!Files.exists(writeToFile)) {
+      final Path parentDir = writeToFile.getParent();
+      if (!Files.isDirectory(parentDir)) {
         //RC: createDirectories() _does_ throw FileAlreadyExistsException if path is a _symlink_ to a directory, not a directory
         // itself (JDK-8130464). Check !isDirectory() above should work around that case.
         Files.createDirectories(parentDir);
       }
-      Files.write(this.writeToPath, csvHeadersLines(), CREATE, WRITE);
+    }
+    if (!Files.exists(writeToFile) || Files.size(writeToFile) == 0) {
+      Files.write(writeToFile, csvHeadersLines(), CREATE, WRITE);
+    }
+
+    copyHtmlPlotterToOutputDir(writeToFile.getParent());
+  }
+
+  /** Copy html file with plotting scripts into targetDir */
+  private static void copyHtmlPlotterToOutputDir(final @NotNull Path targetDir) throws IOException {
+    final Path targetToCopyTo = targetDir.resolve(HTML_PLOTTER_NAME);
+    final URL plotterHtmlUrl = CsvMetricsExporter.class.getResource(HTML_PLOTTER_NAME);
+    if (plotterHtmlUrl == null) {
+      LOG.info(HTML_PLOTTER_NAME + " is not found in classpath");
+    }
+    else {
+      try (InputStream stream = plotterHtmlUrl.openStream()) {
+        final byte[] bytes = stream.readAllBytes();
+        Files.write(targetToCopyTo, bytes);
+      }
     }
   }
 
@@ -64,20 +85,22 @@ final class CsvMetricsExporter implements MetricExporter {
 
   @Override
   public CompletableResultCode export(final Collection<MetricData> metrics) {
-    final CompletableResultCode result = new CompletableResultCode();
-    if (!metrics.isEmpty()) {
-      final List<String> lines = metrics.stream()
-        .flatMap(CsvMetricsExporter::toCSVLine)
-        .toList();
+    if (metrics.isEmpty()) {
+      return CompletableResultCode.ofSuccess();
+    }
 
-      try {
-        Files.write(writeToPath, lines, CREATE, APPEND);
-        result.succeed();
-      }
-      catch (IOException e) {
-        LOGGER.warn("Can't write metrics into " + writeToPath, e);
-        result.fail();
-      }
+    final CompletableResultCode result = new CompletableResultCode();
+    final List<String> lines = metrics.stream()
+      .flatMap(CsvMetricsExporter::toCSVLine)
+      .toList();
+
+    try {
+      Files.write(writeToFile, lines, CREATE, APPEND);
+      result.succeed();
+    }
+    catch (IOException e) {
+      LOG.warn("Can't write metrics into " + writeToFile.toAbsolutePath(), e);
+      result.fail();
     }
     return result;
   }
@@ -118,7 +141,11 @@ final class CsvMetricsExporter implements MetricExporter {
 
   @NotNull
   private static List<String> csvHeadersLines() {
-    return List.of("name, startEpochNanos, epochNanos, value");
+    return List.of(
+      "# OpenTelemetry Metrics report: .csv, 4 fields (metric name, period start-end nanoseconds, metric value)" +
+      "# See CsvMetricsExporter for details",
+      "name, startEpochNanos, endEpochNanos, value"
+    );
   }
 
   @NotNull

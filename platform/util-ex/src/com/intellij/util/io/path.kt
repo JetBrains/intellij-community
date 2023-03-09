@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.NioFiles
@@ -13,8 +13,11 @@ import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.*
+import kotlin.io.path.exists
 
-fun Path.exists(): Boolean = Files.exists(this)
+@Suppress("DeprecatedCallableAddReplaceWith") // ReplaceWith does not work
+@Deprecated(message = "Use kotlin.io.path.exists", level = DeprecationLevel.ERROR)
+fun Path.exists(): Boolean = exists()
 
 fun Path.createDirectories(): Path = NioFiles.createDirectories(this)
 

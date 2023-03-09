@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl.compilation
 
+import com.intellij.diagnostic.telemetry.use
 import com.intellij.diagnostic.telemetry.useWithScope
 import com.intellij.util.io.Decompressor
 import org.jetbrains.intellij.build.*
@@ -17,14 +18,14 @@ import java.util.concurrent.ForkJoinTask
 private const val COMMITS_COUNT = 1_000
 
 internal class PortableCompilationCacheDownloader(
-  private val  context: CompilationContext,
+  private val context: CompilationContext,
   private val git: Git,
-  remoteCacheUrl: String,
+  private val remoteCache: PortableCompilationCache.RemoteCache,
   private val gitUrl: String,
   private val availableForHeadCommitForced: Boolean,
   private val downloadCompilationOutputsOnly: Boolean,
 ) {
-  private val remoteCacheUrl = remoteCacheUrl.trimEnd('/')
+  private val remoteCacheUrl = remoteCache.url.trimEnd('/')
 
   private val sourcesStateProcessor = SourcesStateProcessor(context.compilationData.dataStorageRoot, context.classesOutputDirectory)
 
@@ -33,14 +34,21 @@ internal class PortableCompilationCacheDownloader(
    */
   val availableForHeadCommit by lazy { availableCommitDepth == 0 }
 
-  private val lastCommits by lazy { git.log(COMMITS_COUNT) }
+  private val lastCommits by lazy {
+    val ultimateHomeDir = context.paths.communityHomeDir.parent
+    git.log(COMMITS_COUNT) + if (git.dir != ultimateHomeDir) {
+      // IntelliJ is checked out inside another repository, Rider for example
+      Git(ultimateHomeDir).log(COMMITS_COUNT)
+    }
+    else emptyList()
+  }
 
   private fun downloadString(url: String): String = retryWithExponentialBackOff {
     if (url.isS3()) {
       awsS3Cli("cp", url, "-")
     }
     else {
-      httpClient.get(url).useSuccessful { it.body.string() }
+      httpClient.get(url, remoteCache.authHeader).useSuccessful { it.body.string() }
     }
   }
 
@@ -51,7 +59,7 @@ internal class PortableCompilationCacheDownloader(
         if (url.isS3()) {
           awsS3Cli("cp", url, "$file")
         } else {
-          httpClient.get(url).useSuccessful { response ->
+          httpClient.get(url, remoteCache.authHeader).useSuccessful { response ->
             Files.newOutputStream(file).use {
               response.body.byteStream().transferTo(it)
             }
@@ -68,9 +76,27 @@ internal class PortableCompilationCacheDownloader(
   }
 
   private val availableCachesKeys by lazy {
-    val json = downloadString("${this.remoteCacheUrl}/${CommitsHistory.JSON_FILE}")
-    CommitsHistory(json).commitsForRemote(gitUrl)
+    val commitHistory = "$remoteCacheUrl/${CommitsHistory.JSON_FILE}"
+    if (isExist(commitHistory)) {
+      val json = downloadString(commitHistory)
+      CommitsHistory(json).commitsForRemote(gitUrl)
+    }
+    else {
+      emptyList()
+    }
   }
+
+  private fun isExist(path: String): Boolean =
+    TraceManager.spanBuilder("head").setAttribute("url", remoteCacheUrl).use {
+      retryWithExponentialBackOff {
+        httpClient.head(path, remoteCache.authHeader).use {
+          check(it.code == 200 || it.code == 404) {
+            "HEAD $path responded with unexpected ${it.code}"
+          }
+          it.code
+        }
+      } == 200
+    }
 
   fun download() {
     if (availableCommitDepth in 0 until lastCommits.count()) {
@@ -90,7 +116,7 @@ internal class PortableCompilationCacheDownloader(
       ForkJoinTask.invokeAll(tasks)
     }
     else {
-      context.messages.warning("Unable to find cache for any of last $COMMITS_COUNT commits.")
+      context.messages.warning("Unable to find cache for any of last ${lastCommits.count()} commits.")
     }
   }
 

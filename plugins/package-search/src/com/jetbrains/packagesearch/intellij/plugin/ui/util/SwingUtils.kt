@@ -28,7 +28,7 @@ import javax.swing.event.DocumentEvent
 @ScaledPixels
 internal fun scrollbarWidth() = UIManager.get("ScrollBar.width") as Int
 
-internal fun CC.compensateForHighlightableComponentMarginLeft() = pad(0, (-2).scaled(), 0, 0)
+internal fun CC.compensateForHighlightableComponentMarginLeft() = pad("0 -2 0 0")
 
 internal fun mouseListener(
     onClick: (e: MouseEvent) -> Unit = {},

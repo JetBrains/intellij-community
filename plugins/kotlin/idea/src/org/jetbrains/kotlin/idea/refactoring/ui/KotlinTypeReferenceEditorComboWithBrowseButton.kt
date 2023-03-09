@@ -25,8 +25,9 @@ class KotlinTypeReferenceEditorComboWithBrowseButton(
 ), TextAccessor {
     companion object {
         private fun createDocument(text: String?, contextElement: PsiElement): Document? {
-            val codeFragment = KtPsiFactory(contextElement).createTypeCodeFragment(text ?: "", contextElement)
-            return PsiDocumentManager.getInstance(contextElement.project).getDocument(codeFragment)
+            val project = contextElement.project
+            val codeFragment = KtPsiFactory(project).createTypeCodeFragment(text ?: "", contextElement)
+            return PsiDocumentManager.getInstance(project).getDocument(codeFragment)
         }
     }
 

@@ -1,9 +1,0 @@
-<idea-plugin>
-  <id>plugin.id</id>
-
-  <extensionPoints>
-    <extensionPoint name="ep.name"/>
-    <extensionPoint qualifiedName="ep.qualified.name"/>
-
-  </extensionPoints>
-</idea-plugin>

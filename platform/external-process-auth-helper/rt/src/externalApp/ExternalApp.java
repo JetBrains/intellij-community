@@ -16,9 +16,10 @@
 package externalApp;
 
 /**
- * Marker interface for external Java applications which are started by the external process (e.g. Git or SSH), when it needs to communicate with user.
+ * Marker interface for external Java applications which are started by the external process (e.g. Git or SSH),
+ * when it needs to communicate with user.
  *
- * @author Kirill Likhodedov
+ * @see ExternalAppHandler
  */
 public interface ExternalApp {
 }

@@ -1,5 +1,4 @@
 import org.gradle.api.JavaVersion.VERSION_1_7
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     application
@@ -21,11 +20,6 @@ dependencies {
 }
 
 // VERSION: 1.6.20-dev-456
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    jvmTarget = "1.8"
-}
-val compileTestKotlin: KotlinCompile by tasks
-compileTestKotlin.kotlinOptions {
-    jvmTarget = "1.8"
+kotlin {
+    jvmToolchain(8)
 }

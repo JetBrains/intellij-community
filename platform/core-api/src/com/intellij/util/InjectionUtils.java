@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.Key;
@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
-public class InjectionUtils {
+public final class InjectionUtils {
   private static final Key<Boolean> INJECT_LANGUAGE_ACTION_ENABLED_FOR_HOST = Key.create("inject language action enabled for host");
   public static void enableInjectLanguageAction(@NotNull PsiElement host, boolean enabled) {
     host.putUserData(INJECT_LANGUAGE_ACTION_ENABLED_FOR_HOST, enabled);

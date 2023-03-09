@@ -13,6 +13,7 @@ import com.intellij.psi.PsiParameter
 import com.intellij.refactoring.rename.inplace.VirtualTemplateElement
 import com.intellij.refactoring.rename.inplace.VirtualTemplateElement.Companion.installOnTemplate
 import java.awt.Color
+import java.awt.Cursor
 import java.util.function.Consumer
 
 fun onClickCallback(psiParameter: PsiParameter): () -> Unit {
@@ -54,8 +55,7 @@ fun createDelegatePresentation(
   }
   installOnTemplate(templateState, templateElement)
 
-  return factory.onClick(factory.withTooltip(JavaBundle.message("introduce.parameter.inlay.tooltip.delegate"), biStatePresentation),
-                         MouseButton.Left) { _, _ ->
-    onSelect()
-  }
+  val presentationWithTooltip = factory.withTooltip(JavaBundle.message("introduce.parameter.inlay.tooltip.delegate"), biStatePresentation)
+  val presentationWithMouseListener = factory.onClick(presentationWithTooltip, MouseButton.Left) { _, _ -> onSelect() }
+  return factory.withCursorOnHover(presentationWithMouseListener, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR))
 }

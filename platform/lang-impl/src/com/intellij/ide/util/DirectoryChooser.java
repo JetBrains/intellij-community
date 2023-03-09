@@ -412,14 +412,7 @@ public class DirectoryChooser extends DialogWrapper {
         defaultSelection = directories[0];
       }
     }
-    int selectionIndex = -1;
-    for(int i = 0; i < directories.length; i++){
-      PsiDirectory directory = directories[i];
-      if (directory.equals(defaultSelection)) {
-        selectionIndex = i;
-        break;
-      }
-    }
+    int selectionIndex = ArrayUtil.indexOf(directories, defaultSelection);
     if (selectionIndex < 0 && directories.length == 1) {
       selectionIndex = 0;
     }

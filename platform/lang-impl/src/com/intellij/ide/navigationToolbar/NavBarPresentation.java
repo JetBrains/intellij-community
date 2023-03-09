@@ -27,6 +27,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI;
@@ -39,7 +40,9 @@ import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
+@Deprecated
 public final class NavBarPresentation {
   private final Project project;
 
@@ -68,7 +71,7 @@ public final class NavBarPresentation {
     }
 
     if (object instanceof Project) {
-      return AllIcons.Nodes.Project;
+      return ExperimentalUI.isNewUI() ? NavBarItem.MODULE_ICON : AllIcons.Nodes.Project;
     }
     if (object instanceof Module) {
       return ModuleType.get(((Module)object)).getIcon();

@@ -116,9 +116,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       FileNameCache.drop();
       myRoots.clear();
       myIdToDirCache.clear();
+      long ms = System.currentTimeMillis();
       LOG.info("VFS dispose started");
       FSRecords.dispose();
-      LOG.info("VFS dispose completed");
+      LOG.info("VFS dispose completed in " + (System.currentTimeMillis() - ms) + "ms.");
     }
   }
 
@@ -329,10 +330,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   // returns `nameId` > 0 if write successful, -1 if not
-  private static int writeAttributesToRecord(int id, int parentId, CharSequence name, boolean cs, FileAttributes attributes, boolean overwriteMissed) {
+  private static int writeAttributesToRecord(int id, int parentId, @NotNull CharSequence name, boolean cs, @NotNull FileAttributes attributes, boolean overwriteMissed) {
     assert id > 0 : id;
     assert parentId >= 0 : parentId; // 0 means there's no parent
-    if (name.length() != 0) {
+    if (!name.isEmpty()) {
       if (Comparing.equal(name, FSRecords.getNameSequence(id), cs)) return -1; // TODO: Handle root attributes change.
     }
     else {
@@ -451,7 +452,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return result.get();
   }
 
-  private static ChildInfo findExistingChildInfo(VirtualFile parent, String childName, List<? extends ChildInfo> children) {
+  private static ChildInfo findExistingChildInfo(@NotNull VirtualFile parent, @NotNull String childName, @NotNull List<? extends ChildInfo> children) {
     if (children.isEmpty()) {
       return null;
     }
@@ -841,9 +842,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     BulkFileListener publisher = getPublisher();
     if (jarDeleteEvents.isEmpty() && outApplyActions.isEmpty()) {
       // optimisation: skip all groupings
-      fireBeforeEvents(publisher, outValidatedEvents);
-      applyEvent(event);
-      fireAfterEvents(publisher, outValidatedEvents);
+      Suppressions.runSuppressing(
+        () -> fireBeforeEvents(publisher, outValidatedEvents),
+        () -> applyEvent(event),
+        () -> fireAfterEvents(publisher, outValidatedEvents)
+      );
     }
     else {
       outApplyActions.add(() -> applyEvent(event));
@@ -1153,12 +1156,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void applyMultipleEvents(@NotNull BulkFileListener publisher,
-                                          @NotNull List<? extends Runnable> applyActions,
-                                          @NotNull List<VFileEvent> applyEvents,
+                                          @NotNull List<? extends @NotNull Runnable> applyActions,
+                                          @NotNull List<? extends @NotNull VFileEvent> applyEvents,
                                           boolean excludeAsyncListeners) {
     PingProgress.interactWithEdtProgress();
     // defensive copying to cope with ill-written listeners that save the passed list for later processing
-    List<VFileEvent> toSend = ContainerUtil.immutableList(applyEvents.toArray(new VFileEvent[0]));
+    List<VFileEvent> toSend = List.of(applyEvents.toArray(new VFileEvent[0]));
     Throwable x = null;
 
     try {
@@ -1198,14 +1201,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private static void fireBeforeEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
-    publisher.before(toSend);
-    ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend);
+    Suppressions.runSuppressing(
+      () -> publisher.before(toSend),
+      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).before(toSend)
+    );
   }
 
   private static void fireAfterEvents(@NotNull BulkFileListener publisher, @NotNull List<? extends VFileEvent> toSend) {
-    CachedFileType.clearCache();
-    ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend);
-    publisher.after(toSend);
+    Suppressions.runSuppressing(
+      () -> CachedFileType.clearCache(),
+      () -> ((BulkFileListener)VirtualFilePointerManager.getInstance()).after(toSend),
+      () -> publisher.after(toSend)
+    );
   }
 
   // remove children from specified directories using VirtualDirectoryImpl.removeChildren() optimised for bulk removals

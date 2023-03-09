@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.google.common.collect.ImmutableSet;
@@ -14,9 +14,12 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
+import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
@@ -27,16 +30,14 @@ import com.intellij.util.indexing.IndexableSetContributor;
 import com.intellij.util.indexing.roots.kind.IndexableSetIterableOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.kind.SdkOrigin;
-import com.intellij.util.indexing.roots.origin.IndexableSetContributorIterableOriginImpl;
 import com.intellij.util.indexing.roots.origin.ModuleRootIterableOriginImpl;
 import com.intellij.util.indexing.roots.origin.SdkIterableOriginImpl;
 import com.intellij.util.indexing.roots.origin.SyntheticLibraryIterableOriginImpl;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.EntityReference;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
+import com.intellij.workspaceModel.storage.*;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +71,19 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
         Sdk newProjectSdk = ProjectRootManager.getInstance(project).getProjectSdk();
         return snapshot.projectJdkChanged(newProjectSdk);
       });
+    });
+    project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+        if (DirectoryIndexImpl.shouldResetOnEvents(events)) {
+          for (VFileEvent event : events) {
+            if (DirectoryIndexImpl.isIgnoredFileCreated(event)) {
+              snapshotHandler.resetSnapshots();
+              break;
+            }
+          }
+        }
+      }
     });
   }
 
@@ -109,6 +123,38 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     return null;
   }
 
+  @Override
+  public @NotNull List<IndexableFilesIterator> getIndexingIterators() {
+    List<IndexableFilesIterator> iterators =
+      new ArrayList<>(ContainerUtil.map(snapshotHandler.getResultingSnapshot(project).origins, origin -> origin.createIterator()));
+
+    List<IndexableSetContributorFilesIterator> indexableSetsIterators =
+      IndexableSetContributor.EP_NAME.getExtensionList().stream().flatMap((contributor) -> {
+        return ReadAction.nonBlocking(() -> {
+          return Arrays.asList(new IndexableSetContributorFilesIterator(contributor, project),
+                               new IndexableSetContributorFilesIterator(contributor));
+        }).expireWith(project).executeSynchronously().stream();
+      }).toList();
+
+    iterators.addAll(indexableSetsIterators);
+    return iterators;
+  }
+
+  @Override
+  public @NotNull Collection<IndexableFilesIterator> getModuleIndexingIterators(@NotNull ModuleEntity entity,
+                                                                                @NotNull EntityStorage entityStorage) {
+    ModuleBridge module = ModuleEntityUtils.findModule(entity, entityStorage);
+    if (module == null) {
+      return Collections.emptyList();
+    }
+    return ContainerUtil.mapNotNull(snapshotHandler.getResultingSnapshot(project).origins, origin -> {
+      if ((origin instanceof ModuleRootOrigin) && module.equals(((ModuleRootOrigin)origin).getModule())) {
+        return origin.createIterator();
+      }
+      return null;
+    });
+  }
+
   private static class ResultingSnapshot {
     private final ImmutableSetMultimap<VirtualFile, IndexableSetIterableOrigin> roots;
     private final ImmutableSet<IndexableSetIterableOrigin> origins;
@@ -116,14 +162,13 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     ResultingSnapshot(@NotNull WorkspaceModelSnapshot status,
                       @NotNull NonWorkspaceModelSnapshot snapshot) {
       Collection<IndexableSetIterableOrigin> origins = new ArrayList<>();
-      Set<VirtualFile> excludedModuleFilesFromPolicies = new HashSet<>(snapshot.excludedFilesFromPolicies);
-      excludedModuleFilesFromPolicies.addAll(
-        ContainerUtil.mapNotNull(snapshot.excludedModuleFilesFromPolicies, pointer -> pointer.getFile()));
+      Set<VirtualFile> excludedModuleFilesFromPolicies = getExcludedFilesFromPolicies(status, snapshot);
+      Collection<VirtualFile> excludedFromModulesFiles = getExcludedFromModulesFiles(snapshot);
       for (IndexableSetIterableOrigin origin : status.getOrigins()) {
-        origin = patchOriginIfNeeded(origin, snapshot, excludedModuleFilesFromPolicies);
+        origin = getPatchedOriginIfNeeded(origin, snapshot, excludedModuleFilesFromPolicies, excludedFromModulesFiles);
         origins.add(origin);
       }
-      origins.addAll(snapshot.indexableSetOrigins);
+      //origins.addAll(snapshot.indexableSetOrigins);
       origins.addAll(snapshot.syntheticLibrariesOrigins);
 
       ImmutableSetMultimap.Builder<VirtualFile, IndexableSetIterableOrigin> rootsBuilder = new ImmutableSetMultimap.Builder<>();
@@ -137,11 +182,12 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     }
 
     @NotNull
-    private static IndexableSetIterableOrigin patchOriginIfNeeded(@NotNull IndexableSetIterableOrigin origin,
-                                                                  @NotNull NonWorkspaceModelSnapshot snapshot,
-                                                                  @NotNull Set<VirtualFile> excludedModuleFilesFromPolicies) {
+    private static IndexableSetIterableOrigin getPatchedOriginIfNeeded(@NotNull IndexableSetIterableOrigin origin,
+                                                                       @NotNull NonWorkspaceModelSnapshot snapshot,
+                                                                       @NotNull Set<? extends VirtualFile> excludedModuleFilesFromPolicies,
+                                                                       @NotNull Collection<VirtualFile> excludedFromModulesFiles) {
       if (origin instanceof SdkIterableOriginImpl) {
-        List<VirtualFile> excludedRootsForSdk = new ArrayList<>();
+        List<VirtualFile> excludedRootsForSdk = new ArrayList<>(excludedModuleFilesFromPolicies);
         for (Function<Sdk, List<VirtualFile>> exclusionFunction : snapshot.sdkExclusionFunctions) {
           List<VirtualFile> roots = exclusionFunction.fun(((SdkOrigin)origin).getSdk());
           if (roots != null && !roots.isEmpty()) {
@@ -152,30 +198,39 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
           return ((SdkIterableOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedRootsForSdk);
         }
       }
-      else if (origin instanceof ModuleRootIterableOriginImpl && !excludedModuleFilesFromPolicies.isEmpty()) {
-        return ((ModuleRootIterableOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedModuleFilesFromPolicies);
+      else if (origin instanceof ModuleRootIterableOriginImpl &&
+               (!excludedModuleFilesFromPolicies.isEmpty() || !excludedFromModulesFiles.isEmpty())) {
+        return ((ModuleRootIterableOriginImpl)origin).copyWithAdditionalExcludedFiles(excludedModuleFilesFromPolicies,
+                                                                                      excludedFromModulesFiles);
       }
       return origin;
     }
   }
 
-  private static class NonWorkspaceModelSnapshot {
-    private final Collection<IndexableSetContributorIterableOriginImpl> indexableSetOrigins;
-    private final Collection<SyntheticLibraryIterableOriginImpl> syntheticLibrariesOrigins;
-    private final Set<VirtualFile> excludedFilesFromPolicies;
-    private final Set<VirtualFilePointer> excludedModuleFilesFromPolicies;
-    private final List<@NotNull Function<Sdk, List<VirtualFile>>> sdkExclusionFunctions;
+  @NotNull
+  private static Set<VirtualFile> getExcludedFilesFromPolicies(@NotNull WorkspaceModelSnapshot status,
+                                                               @NotNull NonWorkspaceModelSnapshot snapshot) {
+    Set<VirtualFile> excludedModuleFilesFromPolicies = new HashSet<>(snapshot.excludedFilesFromPolicies);
+    excludedModuleFilesFromPolicies.addAll(status.getExcludedRoots());
+    return excludedModuleFilesFromPolicies;
+  }
 
-    private NonWorkspaceModelSnapshot(Collection<IndexableSetContributorIterableOriginImpl> indexableSetOrigins,
-                                      Collection<SyntheticLibraryIterableOriginImpl> syntheticLibrariesOrigins,
-                                      Set<VirtualFile> excludedFilesFromPolicies,
-                                      Set<VirtualFilePointer> excludedModuleFilesFromPolicies,
-                                      List<@NotNull Function<Sdk, List<VirtualFile>>> sdkExclusionFunctions) {
-      this.indexableSetOrigins = List.copyOf(indexableSetOrigins);
-      this.syntheticLibrariesOrigins = List.copyOf(syntheticLibrariesOrigins);
-      this.excludedFilesFromPolicies = Set.copyOf(excludedFilesFromPolicies);
-      this.excludedModuleFilesFromPolicies = Set.copyOf(excludedModuleFilesFromPolicies);
-      this.sdkExclusionFunctions = List.copyOf(sdkExclusionFunctions);
+  @NotNull
+  private static Collection<VirtualFile> getExcludedFromModulesFiles(@NotNull NonWorkspaceModelSnapshot snapshot) {
+    return ContainerUtil.mapNotNull(snapshot.excludedModuleFilesFromPolicies, pointer -> pointer.getFile());
+  }
+
+  private record NonWorkspaceModelSnapshot(//Collection<IndexableSetContributorIterableOriginImpl> indexableSetOrigins,
+                                           Collection<SyntheticLibraryIterableOriginImpl> syntheticLibrariesOrigins,
+                                           Set<VirtualFile> excludedFilesFromPolicies,
+                                           Set<VirtualFilePointer> excludedModuleFilesFromPolicies,
+                                           List<@NotNull Function<Sdk, List<VirtualFile>>> sdkExclusionFunctions) {
+    private NonWorkspaceModelSnapshot {
+      //indexableSetOrigins = List.copyOf(indexableSetOrigins);
+      syntheticLibrariesOrigins = List.copyOf(syntheticLibrariesOrigins);
+      excludedFilesFromPolicies = Set.copyOf(excludedFilesFromPolicies);
+      excludedModuleFilesFromPolicies = Set.copyOf(excludedModuleFilesFromPolicies);
+      sdkExclusionFunctions = List.copyOf(sdkExclusionFunctions);
     }
 
     @RequiresReadLock
@@ -194,7 +249,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
           syntheticLibrariesOrigins.add(origin);
         }
       }
-      Collection<IndexableSetContributorIterableOriginImpl> indexableSetOrigins = new ArrayList<>();
+     /* Collection<IndexableSetContributorIterableOriginImpl> indexableSetOrigins = new ArrayList<>();
       for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
         Set<VirtualFile> roots = contributor.getAdditionalRootsToIndex();
         String presentableText = (contributor instanceof ItemPresentation) ? ((ItemPresentation)contributor).getPresentableText() : null;
@@ -205,7 +260,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
         Set<VirtualFile> projectRoots = contributor.getAdditionalProjectRootsToIndex(project);
         indexableSetOrigins.add(new IndexableSetContributorIterableOriginImpl(presentableText, debugName, true,
                                                                               contributor, projectRoots));
-      }
+      }*/
 
       Set<VirtualFile> excludedFilesFromPolicies = new HashSet<>();
       Set<VirtualFilePointer> excludedModuleFilesFromPolicies = new HashSet<>();
@@ -226,7 +281,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
           ContainerUtil.addAll(excludedModuleFilesFromPolicies, policy.getExcludeRootsForModule(model));
         }
       }
-      return new NonWorkspaceModelSnapshot(indexableSetOrigins, syntheticLibrariesOrigins, excludedFilesFromPolicies,
+      return new NonWorkspaceModelSnapshot(/*indexableSetOrigins,*/ syntheticLibrariesOrigins, excludedFilesFromPolicies,
                                            excludedModuleFilesFromPolicies, sdkExclusionFunctions);
     }
 
@@ -246,7 +301,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
             ContainerUtil.addAll(excludedModuleFilesFromPolicies, policy.getExcludeRootsForModule(model));
           }
         }
-        return new NonWorkspaceModelSnapshot(indexableSetOrigins, syntheticLibrariesOrigins, excludedFilesFromPolicies,
+        return new NonWorkspaceModelSnapshot(/*indexableSetOrigins, */syntheticLibrariesOrigins, excludedFilesFromPolicies,
                                              excludedModuleFilesFromPolicies, sdkExclusionFunctions);
       }
       return null;
@@ -260,7 +315,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     });
   }
 
-  public void beforeRootsChanged() {
+  public void resetNonWorkspacePart() {
     snapshotHandler.resetSnapshots();
   }
 
@@ -277,7 +332,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     List<EntityReference<WorkspaceEntity>> referencesToEntitiesWithChangedRoots = EntityIndexingServiceEx.getInstanceEx().getReferencesToEntitiesWithChangedRoots(indexingInfos);
     snapshotHandler.updateSnapshots(snapshots -> {
       WorkspaceModelSnapshot workspaceSnapshot =
-        snapshots.myWorkspaceModelSnapshot.createWithRefreshedEntitiesIfNeeded(referencesToEntitiesWithChangedRoots, project);
+        snapshots.workspaceModelSnapshot.createWithRefreshedEntitiesIfNeeded(referencesToEntitiesWithChangedRoots, project);
       if (workspaceSnapshot != null) {
         snapshots = snapshots.copyWithWorkspaceStatus(workspaceSnapshot);
       }
@@ -308,55 +363,65 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
 
     @NotNull
     private ResultingSnapshot getResultingSnapshot(@NotNull Project project) {
-      ResultingSnapshot resultingSnapshot;
-      NonWorkspaceModelSnapshot nonWorkspaceSnapshot;
-      int nonWorkspaceCounter;
-      WorkspaceModelSnapshot workspaceStatus;
-      int workspaceCounter;
+      Snapshots snapshots;
       while (true) {
         synchronized (LOCK) {
-          workspaceStatus = mySnapshots.myWorkspaceModelSnapshot;
-          workspaceCounter = mySnapshots.myWorkspaceModificationCounter;
-          nonWorkspaceSnapshot = mySnapshots.myNonWorkspaceModelSnapshot;
-          nonWorkspaceCounter = mySnapshots.myNonWorkspaceModificationCounter;
-          resultingSnapshot = mySnapshots.myResultingSnapshot;
+          snapshots = mySnapshots;
         }
-        if (resultingSnapshot != null) return resultingSnapshot;
+        if (snapshots.resultingSnapshot != null) return snapshots.resultingSnapshot;
 
-        if (nonWorkspaceSnapshot == null) {
-          NonWorkspaceModelSnapshot snapshot =
-            ReadAction.nonBlocking(() -> NonWorkspaceModelSnapshot.buildSnapshot(project)).executeSynchronously();
-          synchronized (LOCK) {
-            if (mySnapshots.myNonWorkspaceModificationCounter == nonWorkspaceCounter) {
-              mySnapshots = mySnapshots.copyWithNonWorkspaceSnapshot(snapshot);
-            }
-          }
+        if (snapshots.nonWorkspaceModelSnapshot == null) {
+          snapshots = getSnapshotsWithInitializedNonWorkspaceSnapshot(project);
+          if (snapshots.resultingSnapshot != null) return snapshots.resultingSnapshot;
         }
-        else {
-          ResultingSnapshot snapshot = new ResultingSnapshot(workspaceStatus, nonWorkspaceSnapshot);
-          synchronized (LOCK) {
-            if (mySnapshots.myWorkspaceModificationCounter == workspaceCounter &&
-                mySnapshots.myNonWorkspaceModificationCounter == nonWorkspaceCounter) {
-              mySnapshots = mySnapshots.copyWithResultingSnapshot(snapshot);
-              return snapshot;
-            }
+
+        ResultingSnapshot resultingSnapshot = new ResultingSnapshot(snapshots.workspaceModelSnapshot,
+                                                                    Objects.requireNonNull(snapshots.nonWorkspaceModelSnapshot));
+        synchronized (LOCK) {
+          if (mySnapshots.workspaceModificationCounter == snapshots.workspaceModificationCounter &&
+              mySnapshots.nonWorkspaceModificationCounter == snapshots.nonWorkspaceModificationCounter) {
+            mySnapshots = mySnapshots.copyWithResultingSnapshot(resultingSnapshot);
+            return resultingSnapshot;
           }
         }
       }
     }
 
-    public void updateWorkspaceSnapshot(Function<@NotNull WorkspaceModelSnapshot, @Nullable WorkspaceModelSnapshot> updater) {
+    @NotNull
+    private Snapshots getSnapshotsWithInitializedNonWorkspaceSnapshot(@NotNull Project project) {
+      Snapshots snapshots;
+      while (true) {
+        synchronized (LOCK) {
+          snapshots = mySnapshots;
+        }
+        if (snapshots.nonWorkspaceModelSnapshot != null) return snapshots;
+
+        NonWorkspaceModelSnapshot nonWorkspaceModelSnapshot =
+          ReadAction.nonBlocking(() -> NonWorkspaceModelSnapshot.buildSnapshot(project)).executeSynchronously();
+        synchronized (LOCK) {
+          if (mySnapshots.nonWorkspaceModificationCounter == snapshots.nonWorkspaceModificationCounter) {
+            mySnapshots = mySnapshots.copyWithNonWorkspaceSnapshot(nonWorkspaceModelSnapshot);
+          }
+          else if (mySnapshots.nonWorkspaceModificationCounter > snapshots.nonWorkspaceModificationCounter &&
+                   mySnapshots.nonWorkspaceModelSnapshot != null) {
+            return mySnapshots;
+          }
+        }
+      }
+    }
+
+    public void updateWorkspaceSnapshot(Function<? super @NotNull WorkspaceModelSnapshot, @Nullable WorkspaceModelSnapshot> updater) {
       WorkspaceModelSnapshot status;
       int counter;
       while (true) {
         synchronized (LOCK) {
-          status = mySnapshots.myWorkspaceModelSnapshot;
-          counter = mySnapshots.myWorkspaceModificationCounter;
+          status = mySnapshots.workspaceModelSnapshot;
+          counter = mySnapshots.workspaceModificationCounter;
         }
         WorkspaceModelSnapshot update = updater.fun(status);
         if (update == null) return;
         synchronized (LOCK) {
-          if (mySnapshots.myWorkspaceModificationCounter == counter) {
+          if (mySnapshots.workspaceModificationCounter == counter) {
             mySnapshots = mySnapshots.copyWithWorkspaceStatus(update);
             return;
           }
@@ -364,20 +429,20 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       }
     }
 
-    public void updateNonWorkspaceSnapshot(Function<@Nullable NonWorkspaceModelSnapshot, @Nullable NonWorkspaceModelSnapshot> updater) {
+    public void updateNonWorkspaceSnapshot(Function<? super @Nullable NonWorkspaceModelSnapshot, @Nullable NonWorkspaceModelSnapshot> updater) {
       NonWorkspaceModelSnapshot snapshot;
       int snapshotModificationCounter;
       while (true) {
         synchronized (LOCK) {
-          snapshot = mySnapshots.myNonWorkspaceModelSnapshot;
-          snapshotModificationCounter = mySnapshots.myNonWorkspaceModificationCounter;
+          snapshot = mySnapshots.nonWorkspaceModelSnapshot;
+          snapshotModificationCounter = mySnapshots.nonWorkspaceModificationCounter;
         }
         NonWorkspaceModelSnapshot update = updater.fun(snapshot);
         if (update == null) {
           return;
         }
         synchronized (LOCK) {
-          if (snapshotModificationCounter == mySnapshots.myNonWorkspaceModificationCounter) {
+          if (snapshotModificationCounter == mySnapshots.nonWorkspaceModificationCounter) {
             mySnapshots = mySnapshots.copyWithNonWorkspaceSnapshot(update);
             return;
           }
@@ -389,7 +454,7 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       updateSnapshots(snapshots -> snapshots.copyWithNonWorkspaceSnapshot(null));
     }
 
-    private void updateSnapshots(@NotNull Function<Snapshots, Snapshots> updater) {
+    private void updateSnapshots(@NotNull Function<? super Snapshots, Snapshots> updater) {
       Snapshots snapshots;
       while (true) {
         synchronized (LOCK) {
@@ -443,27 +508,11 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
     snapshotHandler.updateWorkspaceSnapshot(snapshot -> snapshot.referencedSdkRemoved(sdk));
   }
 
-  private static class Snapshots {
-    @NotNull
-    private final WorkspaceModelSnapshot myWorkspaceModelSnapshot;
-    private final int myWorkspaceModificationCounter;
-    @Nullable
-    private final NonWorkspaceModelSnapshot myNonWorkspaceModelSnapshot;
-    private final int myNonWorkspaceModificationCounter;
-    @Nullable
-    private final ResultingSnapshot myResultingSnapshot;
-
-    private Snapshots(@NotNull WorkspaceModelSnapshot workspaceModelSnapshot,
-                      int workspaceModificationCounter,
-                      @Nullable NonWorkspaceModelSnapshot nonWorkspaceModelSnapshot,
-                      int nonWorkspaceModificationCounter,
-                      @Nullable ResultingSnapshot resultingSnapshot) {
-      myWorkspaceModelSnapshot = workspaceModelSnapshot;
-      myWorkspaceModificationCounter = workspaceModificationCounter;
-      myNonWorkspaceModelSnapshot = nonWorkspaceModelSnapshot;
-      myNonWorkspaceModificationCounter = nonWorkspaceModificationCounter;
-      myResultingSnapshot = resultingSnapshot;
-    }
+  private record Snapshots(@NotNull WorkspaceModelSnapshot workspaceModelSnapshot,
+                           int workspaceModificationCounter,
+                           @Nullable NonWorkspaceModelSnapshot nonWorkspaceModelSnapshot,
+                           int nonWorkspaceModificationCounter,
+                           @Nullable ResultingSnapshot resultingSnapshot) {
 
     private static Snapshots create(@NotNull Project project) {
       return new Snapshots(WorkspaceModelSnapshot.create(project), 0, null, 0, null);
@@ -471,22 +520,22 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
 
     @NotNull
     public Snapshots copyWithWorkspaceStatus(@NotNull WorkspaceModelSnapshot update) {
-      return new Snapshots(update, myWorkspaceModificationCounter + 1,
-                           myNonWorkspaceModelSnapshot, myNonWorkspaceModificationCounter,
+      return new Snapshots(update, workspaceModificationCounter + 1,
+                           nonWorkspaceModelSnapshot, nonWorkspaceModificationCounter,
                            null);
     }
 
     @NotNull
     public Snapshots copyWithNonWorkspaceSnapshot(@Nullable NonWorkspaceModelSnapshot update) {
-      return new Snapshots(myWorkspaceModelSnapshot, myWorkspaceModificationCounter,
-                           update, myNonWorkspaceModificationCounter + 1,
+      return new Snapshots(workspaceModelSnapshot, workspaceModificationCounter,
+                           update, nonWorkspaceModificationCounter + 1,
                            null);
     }
 
     @NotNull
     public Snapshots copyWithResultingSnapshot(@NotNull ResultingSnapshot snapshot) {
-      return new Snapshots(myWorkspaceModelSnapshot, myWorkspaceModificationCounter,
-                           myNonWorkspaceModelSnapshot, myNonWorkspaceModificationCounter,
+      return new Snapshots(workspaceModelSnapshot, workspaceModificationCounter,
+                           nonWorkspaceModelSnapshot, nonWorkspaceModificationCounter,
                            snapshot);
     }
   }

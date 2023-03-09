@@ -6,7 +6,8 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Use extension point `com.intellij.applicationInitializedListener` to register listener.
- * Please note - you cannot use [com.intellij.openapi.extensions.ExtensionPointName.findExtension] because this extension point is cleared up after app loading.
+ * Please note - you cannot use [com.intellij.openapi.extensions.ExtensionPointName.findExtension] for this extension point
+ * because this extension point is cleared up after app loading.
  *
  * Not part of [com.intellij.ide.ApplicationLoadListener] to avoid class loading before application initialization.
  */

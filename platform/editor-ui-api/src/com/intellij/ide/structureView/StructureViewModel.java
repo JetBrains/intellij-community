@@ -4,6 +4,7 @@ package com.intellij.ide.structureView;
 import com.intellij.ide.util.treeView.smartTree.TreeModel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.vcs.FileStatus;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,6 +75,13 @@ public interface StructureViewModel extends TreeModel, Disposable {
   void dispose();
 
   boolean shouldEnterElement(Object element);
+
+  /**
+   * @return status of element, whether it's changed or not. May affect the presentation
+   */
+  default @NotNull FileStatus getElementStatus(Object element) {
+    return FileStatus.NOT_CHANGED;
+  }
 
   interface ElementInfoProvider extends StructureViewModel {
     boolean isAlwaysShowsPlus(StructureViewTreeElement element);

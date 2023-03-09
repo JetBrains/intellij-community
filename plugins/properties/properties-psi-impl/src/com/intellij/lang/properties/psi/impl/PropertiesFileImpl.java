@@ -68,6 +68,7 @@ public final class PropertiesFileImpl extends PsiFileBase implements PropertiesF
     else {
       propertiesList = PsiTreeUtil.findChildOfType(this, PropertiesList.class);
     }
+    //noinspection RedundantUnmodifiable
     return Collections.unmodifiableList(PsiTreeUtil.getStubChildrenOfTypeAsList(propertiesList, Property.class));
   }
 

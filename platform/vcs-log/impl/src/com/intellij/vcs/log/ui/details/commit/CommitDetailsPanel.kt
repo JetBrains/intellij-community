@@ -87,7 +87,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
 
     add(mainPanel, CC().grow().push())
     //show at most 4 icons
-    val maxHeight = JBUIScale.scale(22 * 4)
+    val maxHeight = 22 * 4
     add(statusesToolbar.component, CC().hideMode(3).alignY("top").maxHeight("$maxHeight"))
 
     updateStatusToolbar(false)

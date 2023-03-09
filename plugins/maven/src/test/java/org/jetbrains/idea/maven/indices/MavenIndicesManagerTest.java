@@ -73,6 +73,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
 
     MavenProjectsManager.getInstance(myProject).getGeneralSettings().setLocalRepository(localRepo.getPath());
     myIndicesFixture.getIndicesManager().scheduleUpdateIndicesList(null);
+    myIndicesFixture.getIndicesManager().waitForBackgroundTasksInTests();
     MavenIndexHolder indexHolder = myIndicesFixture.getIndicesManager().getIndex();
     MavenIndex localIndex = indexHolder.getLocalIndex();
 
@@ -82,6 +83,7 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
     assertTrue(localIndex.getArtifactIds("junit").isEmpty());
     File artifactFile = myIndicesFixture.getRepositoryHelper().getTestData("local1/junit/junit/4.0/junit-4.0.pom");
     PlatformTestUtil.waitForPromise(MavenIndicesManager.getInstance(myProject).addArtifactIndexAsync(null, artifactFile));
+    myIndicesFixture.getIndicesManager().waitForBackgroundTasksInTests();
     Set<String> versions = localIndex.getVersions("junit", "junit");
     assertFalse(versions.isEmpty());
     assertTrue(versions.contains("4.0"));

@@ -427,7 +427,7 @@ public final class StubGenerator implements ClassItemGenerator {
       TypeWriter.writeType(text, implementsType, typeDefinition, classNameProvider);
       text.append(", ");
     }
-    if (!implementsTypes.isEmpty()) text.delete(text.length() - 2, text.length());
+    text.delete(text.length() - 2, text.length());
     text.append(' ');
   }
 

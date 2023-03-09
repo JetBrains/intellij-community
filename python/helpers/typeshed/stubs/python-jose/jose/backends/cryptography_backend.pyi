@@ -1,11 +1,11 @@
 from typing import Any
 
-from .base import Key as Key
+from .base import Key
 
-def decode_dss_signature(signature: bytes) -> tuple[int, int]: ...
-def encode_dss_signature(r: int, s: int) -> bytes: ...
-def get_random_bytes(num_bytes): ...
+def get_random_bytes(num_bytes: int) -> bytes: ...
 
+# Enable when we can use stubs from installed dependencies:
+# from cryptography.hazmat import backends
 class CryptographyECKey(Key):
     SHA256: Any
     SHA384: Any

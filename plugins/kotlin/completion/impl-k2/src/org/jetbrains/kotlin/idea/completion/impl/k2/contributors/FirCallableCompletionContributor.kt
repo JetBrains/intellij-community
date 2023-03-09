@@ -68,7 +68,7 @@ internal open class FirCallableCompletionContributor(
 
         val extensionChecker = object : ExtensionApplicabilityChecker {
             context(KtAnalysisSession)
-            override fun isApplicable(symbol: KtCallableSymbol): KtExtensionApplicabilityResult {
+            override fun checkApplicability(symbol: KtCallableSymbol): KtExtensionApplicabilityResult {
                 return symbol.checkExtensionIsSuitable(originalKtFile, nameExpression, explicitReceiver)
             }
         }
@@ -170,6 +170,9 @@ internal open class FirCallableCompletionContributor(
             symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, context, visibilityChecker)
 
             symbol is KtNamedClassOrObjectSymbol && symbol.hasImportantStaticMemberScope -> {
+                if (symbol.classKind == KtClassKind.ENUM_CLASS) {
+                    collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, context, extensionChecker, visibilityChecker)
+                }
                 collectNonExtensions(symbol.getStaticMemberScope(), visibilityChecker, scopeNameFilter).forEach { memberSymbol ->
                     addCallableSymbolToCompletion(
                         context,
@@ -228,7 +231,7 @@ internal open class FirCallableCompletionContributor(
                 extensionChecker,
                 context,
                 // Only offer the hint if the type is denotable.
-                smartCastInfo.smartCastType.takeIf { it.approximateToSuperPublicDenotable() == null }
+                smartCastInfo.smartCastType.takeIf { it.approximateToSuperPublicDenotable(true) == null }
             )
         }
 
@@ -297,21 +300,21 @@ internal open class FirCallableCompletionContributor(
             .map { it.getSymbol() as KtCallableSymbol }
             .filter { filter(it) }
             .filter { visibilityChecker.isVisible(it) }
-            .filter { extensionChecker.isApplicable(it).isApplicable }
+            .filter { extensionChecker.checkApplicability(it) is KtExtensionApplicabilityResult.Applicable }
     }
 
     private fun KtAnalysisSession.collectSuitableExtensions(
         scope: KtScope,
         hasSuitableExtensionReceiver: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
-    ): Sequence<Pair<KtCallableSymbol, KtExtensionApplicabilityResult>> =
+    ): Sequence<Pair<KtCallableSymbol, KtExtensionApplicabilityResult.Applicable>> =
         scope.getCallableSymbols(scopeNameFilter)
             .filter { it.isExtension || it is KtVariableLikeSymbol && (it.returnType as? KtFunctionalType)?.hasReceiver == true }
             .filter { visibilityChecker.isVisible(it) }
             .filter { filter(it) }
             .mapNotNull { callable ->
-                val applicabilityResult = hasSuitableExtensionReceiver.isApplicable(callable)
-                if (applicabilityResult.isApplicable) {
+                val applicabilityResult = hasSuitableExtensionReceiver.checkApplicability(callable)
+                if (applicabilityResult is KtExtensionApplicabilityResult.Applicable) {
                     callable to applicabilityResult
                 } else null
             }
@@ -347,13 +350,15 @@ internal class FirCallableReferenceCompletionContributor(
         when (val resolved = explicitReceiver.reference()?.resolveToSymbol()) {
             is KtPackageSymbol -> return
             is KtNamedClassOrObjectSymbol -> {
-                resolved.getMemberScope()
-                    .getCallableSymbols(scopeNameFilter)
-                    .filter { visibilityChecker.isVisible(it) }
-                    .forEach { symbol ->
-                        addCallableSymbolToCompletion(context.withoutExpectedType(), symbol, getOptions(symbol))
+                fun process(callable: KtCallableSymbol) {
+                    if (visibilityChecker.isVisible(callable)) {
+                        addCallableSymbolToCompletion(context.withoutExpectedType(), callable, getOptions(callable))
                     }
+                }
 
+                resolved.getMemberScope().getCallableSymbols(scopeNameFilter).forEach(::process)
+                resolved.companionObject?.getMemberScope()?.getCallableSymbols(scopeNameFilter)?.forEach(::process)
+                resolved.getStaticMemberScope().getCallableSymbols(scopeNameFilter).forEach(::process)
             }
 
             else -> {

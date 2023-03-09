@@ -51,7 +51,7 @@ open class AddFileAnnotationFix(
             else -> "${annotationFqName.render()}($innerText)"
         }
 
-        val psiFactory = KtPsiFactory(fileToAnnotate)
+        val psiFactory = KtPsiFactory(project)
         if (fileToAnnotate.fileAnnotationList == null) {
             // If there are no existing file-level annotations, create an annotation list with the new annotation
             val newAnnotationList = psiFactory.createFileAnnotationListWithAnnotation(annotationText)
@@ -82,7 +82,7 @@ open class AddFileAnnotationFix(
     private fun addArgumentToExistingAnnotation(annotationEntry: SmartPsiElementPointer<KtAnnotationEntry>, argumentText: String) {
         val entry = annotationEntry.element ?: return
         val existingArgumentList = entry.valueArgumentList
-        val psiFactory = KtPsiFactory(entry)
+        val psiFactory = KtPsiFactory(entry.project)
         val newArgumentList = psiFactory.createCallArguments("($argumentText)")
         when {
             existingArgumentList == null -> // use the new argument list

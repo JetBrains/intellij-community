@@ -20,7 +20,7 @@ public interface Binding {
   default void init(@NotNull Type originalType, @NotNull Serializer serializer) {
   }
 
-  static @Nullable Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<Element> nodes) {
+  static @Nullable Object deserializeList(@NotNull Binding binding, @Nullable Object context, @NotNull List<? extends Element> nodes) {
     if (binding instanceof MultiNodeBinding) {
       return ((MultiNodeBinding)binding).deserializeList(context, nodes);
     }

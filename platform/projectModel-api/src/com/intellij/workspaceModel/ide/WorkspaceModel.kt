@@ -12,6 +12,12 @@ import org.jetbrains.annotations.NonNls
  * Provides access to the storage which holds workspace model entities.
  */
 interface WorkspaceModel {
+  /**
+   * Returns snapshot of the workspace model storage. 
+   * The returned value won't be affected by future changes in [WorkspaceModel], so it can be safely used without any locks from any thread.
+   */
+  val currentSnapshot: EntityStorageSnapshot
+  
   val entityStorage: VersionedEntityStorage
 
   /**
@@ -28,21 +34,7 @@ interface WorkspaceModel {
    * Use [description] to briefly describe what do you update. This message will be logged and can be used for debugging purposes.
    *   For testing there is an extension method that doesn't require a description [com.intellij.testFramework.workspaceModel.updateProjectModel].
    */
-  fun <R> updateProjectModel(description: String, updater: (MutableEntityStorage) -> R): R
-
-  @Deprecated("Zhenja please use the update method with the debug message")
-  fun <R> updateProjectModel(updater: (MutableEntityStorage) -> R): R {
-    return updateProjectModel("Project model update (default description)", updater)
-  }
-
-  /**
-   * Update project model without the notification to message bus and without resetting accumulated changes.
-   *
-   * This method doesn't require write action.
-   */
-  @Deprecated("Method will be removed from interface. Use WorkspaceModelImpl#updateProjectModelSilent only " +
-              "if you are absolutely sure you need it")
-  fun <R> updateProjectModelSilent(description: String, updater: (MutableEntityStorage) -> R): R
+  fun updateProjectModel(description: @NonNls String, updater: (MutableEntityStorage) -> Unit)
 
   /**
    * Modifies the current model of unloaded entities by calling [updater] and applying it to the storage.
@@ -94,3 +86,9 @@ interface WorkspaceModel {
     fun getInstance(project: Project): WorkspaceModel = project.service()
   }
 }
+
+/**
+ * Extension property for syntax sugar
+ */
+val Project.workspaceModel: WorkspaceModel
+  get() = WorkspaceModel.getInstance(this)

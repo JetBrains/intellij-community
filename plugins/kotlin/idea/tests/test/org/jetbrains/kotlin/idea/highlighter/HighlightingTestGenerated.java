@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter;
 
@@ -66,6 +66,11 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
             runTest("testData/highlighter/deprecated/Inc.kt");
         }
 
+        @TestMetadata("Interface.kt")
+        public void testInterface() throws Exception {
+            runTest("testData/highlighter/deprecated/Interface.kt");
+        }
+
         @TestMetadata("Invalid.kt")
         public void testInvalid() throws Exception {
             runTest("testData/highlighter/deprecated/Invalid.kt");
@@ -104,11 +109,6 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
         @TestMetadata("SuperCall.kt")
         public void testSuperCall() throws Exception {
             runTest("testData/highlighter/deprecated/SuperCall.kt");
-        }
-
-        @TestMetadata("Trait.kt")
-        public void testTrait() throws Exception {
-            runTest("testData/highlighter/deprecated/Trait.kt");
         }
     }
 
@@ -325,6 +325,11 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
         @TestMetadata("VariablesAsFunctions.kt")
         public void testVariablesAsFunctions() throws Exception {
             runTest("testData/highlighter/VariablesAsFunctions.kt");
+        }
+
+        @TestMetadata("VariablesWithSetter.kt")
+        public void testVariablesWithSetter() throws Exception {
+            runTest("testData/highlighter/VariablesWithSetter.kt");
         }
     }
 }

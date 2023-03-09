@@ -4,7 +4,7 @@ package git4idea.index.vfs
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.impl.VcsBaseContentProvider
-import com.intellij.openapi.vcs.impl.VcsFileStatusProvider.createBaseContent
+import com.intellij.openapi.vcs.impl.LineStatusTrackerBaseContentUtil
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitContentRevision
 import git4idea.GitRevisionNumber
@@ -23,7 +23,7 @@ class GitIndexVirtualFileBaseContentProvider(private val project: Project) : Vcs
 
     val headPath = status.path(ContentVersion.HEAD)
     val currentRevisionNumber = currentRevisionNumber(indexFile.root) ?: return null
-    return createBaseContent(project, GitContentRevision.createRevision(headPath, currentRevisionNumber, project))
+    return LineStatusTrackerBaseContentUtil.createBaseContent(project, GitContentRevision.createRevision(headPath, currentRevisionNumber, project))
   }
 
   private fun currentRevisionNumber(root: VirtualFile): VcsRevisionNumber? {

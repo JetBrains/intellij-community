@@ -56,7 +56,7 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
   private static void calculateFeaturesForUsage(@NotNull Editor editor,
                                                 @NotNull PsiFile file,
                                                 @NotNull Project project,
-                                                @NotNull Ref<PsiFile> featuresDump) {
+                                                @NotNull Ref<? super PsiFile> featuresDump) {
     ProgressManager.getInstance().run(new Task.Modal(project, UsageViewBundle.message(
       "similar.usages.show.usage.features.action.calculating.usage.features.progress.title"), true) {
       @Override

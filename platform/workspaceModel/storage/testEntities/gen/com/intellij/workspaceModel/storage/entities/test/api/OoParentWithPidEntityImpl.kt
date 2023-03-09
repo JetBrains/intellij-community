@@ -17,6 +17,9 @@ import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
 import com.intellij.workspaceModel.storage.impl.extractOneToOneChild
 import com.intellij.workspaceModel.storage.impl.updateOneToOneChildOfParent
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -103,8 +106,7 @@ open class OoParentWithPidEntityImpl(val dataSource: OoParentWithPidEntityData) 
       dataSource as OoParentWithPidEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.parentProperty != dataSource.parentProperty) this.parentProperty = dataSource.parentProperty
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

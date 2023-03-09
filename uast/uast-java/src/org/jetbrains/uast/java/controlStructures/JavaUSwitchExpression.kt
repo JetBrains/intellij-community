@@ -140,7 +140,8 @@ class JavaUSwitchEntry(
         if (addDummyBreak) {
           val lastValueExpressionPsi = expressions.lastOrNull()?.sourcePsi as? PsiExpression
           if (lastValueExpressionPsi != null)
-            expressions[expressions.size - 1] = DummyYieldExpression(lastValueExpressionPsi, this)
+            expressions[expressions.size - 1] = DummyYieldExpression(lastValueExpressionPsi, this,
+                                                                     this@JavaUSwitchEntry.sourcePsi.enclosingSwitchBlock)
         }
 
         this.expressions = expressions
@@ -157,7 +158,8 @@ class JavaUSwitchEntry(
 
 internal class DummyYieldExpression(
   val expressionPsi: PsiExpression,
-  override val uastParent: UElement?
+  override val uastParent: UElement?,
+  private val enclosingSwitchBlock: PsiSwitchBlock?
 ) : UYieldExpression {
   override val javaPsi: PsiElement? = null
   override val sourcePsi: PsiElement? = null
@@ -179,6 +181,9 @@ internal class DummyYieldExpression(
   }
 
   override fun hashCode(): Int = expressionPsi.hashCode()
+
+  override val jumpTarget: UElement?
+    get() = enclosingSwitchBlock?.let { JavaConverter.convertPsiElement(it, null, UElement::class.java) }
 }
 
 @ApiStatus.Internal

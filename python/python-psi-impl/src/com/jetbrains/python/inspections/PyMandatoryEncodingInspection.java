@@ -17,23 +17,25 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.options.OptDropdown;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.Arrays;
+import java.util.function.Function;
+
+import static com.intellij.codeInspection.options.OptPane.*;
 
 /**
  * User : catherine
@@ -73,57 +75,24 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   public boolean myAllPythons = false;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final PythonUiService uiService = PythonUiService.getInstance();
-    final JPanel main = uiService.createMultipleCheckboxOptionsPanel(this);
-
-    main.add(onlyPython2Box());
-    uiService.addRowToOptionsPanel(main, new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.select.default.encoding")), defaultEncodingBox());
-    uiService.addRowToOptionsPanel(main, new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.encoding.comment.format")), encodingFormatBox());
-
-    return main;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("myAllPythons", PyPsiBundle.message("INSP.mandatory.encoding.checkbox.enable.in.python.3")),
+      defaultEncodingDropDown(),
+      encodingFormatDropDown()
+    );
   }
 
   @NotNull
-  private JPanel onlyPython2Box() {
-    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    JCheckBox checkBox =
-      PythonUiService.getInstance().createInspectionCheckBox(PyPsiBundle.message("INSP.mandatory.encoding.checkbox.enable.in.python.3"), this, "myAllPythons");
-    if (checkBox != null) {
-      panel.add(checkBox);
-    }
-    return panel;
+  static OptDropdown defaultEncodingDropDown() {
+    return dropdown("myDefaultEncoding", PyPsiBundle.message("INSP.mandatory.encoding.label.select.default.encoding"),
+                    Arrays.asList(PyEncodingUtil.POSSIBLE_ENCODINGS), Function.identity(), Function.identity());
   }
 
   @NotNull
-  private JComboBox<String> defaultEncodingBox() {
-    final JComboBox<String> box = PythonUiService.getInstance().createComboBox(PyEncodingUtil.POSSIBLE_ENCODINGS);
-
-    box.setSelectedItem(myDefaultEncoding);
-    box.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        myDefaultEncoding = (String)cb.getSelectedItem();
-      }
-    });
-
-    return box;
-  }
-
-  @NotNull
-  private JComboBox<String> encodingFormatBox() {
-    final JComboBox<String> box = PythonUiService.getInstance().createComboBox(PyEncodingUtil.ENCODING_FORMAT);
-
-    box.setSelectedIndex(myEncodingFormatIndex);
-    box.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        JComboBox cb = (JComboBox)e.getSource();
-        myEncodingFormatIndex = cb.getSelectedIndex();
-      }
-    });
-
-    return box;
+  static OptDropdown encodingFormatDropDown() {
+    return dropdown("myEncodingFormatIndex", PyPsiBundle.message("INSP.mandatory.encoding.label.encoding.comment.format"),
+                    EntryStream.of(PyEncodingUtil.ENCODING_FORMAT).mapKeyValue((idx, format) -> option(String.valueOf(idx), format))
+                      .toArray(OptDropdown.Option.class));
   }
 }

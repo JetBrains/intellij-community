@@ -45,7 +45,6 @@ import java.util.List;
 */
 public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction {
 
-  private final Class<? extends DomElement> myClazz;
   private final String myNewName;
   private final List<? extends DomElement> myParents;
   private final DomCollectionChildDescription myChildDescription;
@@ -53,12 +52,11 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
 
   public ResolvingElementQuickFix(final Class<? extends DomElement> clazz, final String newName, final List<? extends DomElement> parents,
                                   final DomCollectionChildDescription childDescription) {
-    myClazz = clazz;
     myNewName = newName;
     myParents = parents;
     myChildDescription = childDescription;
 
-    myTypeName = TypePresentationService.getService().getTypePresentableName(myClazz);
+    myTypeName = TypePresentationService.getService().getTypePresentableName(clazz);
   }
 
   public void setTypeName(final String typeName) {

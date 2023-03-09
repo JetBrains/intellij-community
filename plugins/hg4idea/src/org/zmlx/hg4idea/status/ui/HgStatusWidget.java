@@ -6,7 +6,6 @@ import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
@@ -29,18 +28,18 @@ import java.util.Objects;
 /**
  * Widget to display basic hg status in the status bar.
  */
-public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
+final class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   private static final @NonNls String ID = "hg";
 
   private final @NotNull HgVcs myVcs;
   private final @NotNull HgProjectSettings myProjectSettings;
 
-  public HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project, @NotNull HgProjectSettings projectSettings) {
+  HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project, @NotNull HgProjectSettings projectSettings) {
     super(project, vcs.getShortName());
     myVcs = vcs;
     myProjectSettings = projectSettings;
 
-    project.getMessageBus().connect(this).subscribe(HgVcs.STATUS_TOPIC, (p, root) -> updateLater());
+    myConnection.subscribe(HgVcs.STATUS_TOPIC, (p, root) -> updateLater());
   }
 
   @Override
@@ -49,8 +48,8 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   }
 
   @Override
-  public StatusBarWidget copy() {
-    return new HgStatusWidget(myVcs, myProject, myProjectSettings);
+  public @NotNull StatusBarWidget copy() {
+    return new HgStatusWidget(myVcs, getProject(), myProjectSettings);
   }
 
   @Override
@@ -70,8 +69,9 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   }
 
   @Override
-  protected @Nullable JBPopup getWidgetPopup(@NotNull Project project, @NotNull HgRepository repository) {
-    return HgBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent())).asListPopup();
+  protected JBPopup getWidgetPopup(@NotNull Project project, @NotNull HgRepository repository) {
+    StatusBar statusBar = myStatusBar;
+    return statusBar == null ? null : HgBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(statusBar.getComponent())).asListPopup();
   }
 
   @Override
@@ -79,10 +79,10 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     myProjectSettings.setRecentRootPath(path);
   }
 
-  public static class Listener implements VcsRepositoryMappingListener {
+  static final class Listener implements VcsRepositoryMappingListener {
     private final Project myProject;
 
-    public Listener(@NotNull Project project) {
+    Listener(@NotNull Project project) {
       myProject = project;
     }
 
@@ -92,7 +92,7 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     }
   }
 
-  public static class Factory implements StatusBarWidgetFactory {
+  final static class Factory implements StatusBarWidgetFactory {
     @Override
     public @NotNull String getId() {
       return ID;
@@ -111,16 +111,6 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
     @Override
     public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
       return new HgStatusWidget(Objects.requireNonNull(HgVcs.getInstance(project)), project, HgProjectSettings.getInstance(project));
-    }
-
-    @Override
-    public void disposeWidget(@NotNull StatusBarWidget widget) {
-      Disposer.dispose(widget);
-    }
-
-    @Override
-    public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
-      return true;
     }
   }
 }

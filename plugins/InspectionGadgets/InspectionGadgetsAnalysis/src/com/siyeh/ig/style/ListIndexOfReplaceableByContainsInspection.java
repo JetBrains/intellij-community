@@ -72,7 +72,7 @@ public class ListIndexOfReplaceableByContainsInspection extends BaseInspection i
     extends InspectionGadgetsFix {
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiBinaryExpression expression =
         (PsiBinaryExpression)descriptor.getPsiElement();
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());

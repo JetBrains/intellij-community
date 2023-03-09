@@ -1,3 +1,4 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.testUtil;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -12,7 +13,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-public class ResourceUtil {
+public final class ResourceUtil {
   public static <TC extends TestCase & IdeaCodeInsightTestCase> void copyFiles(TC test) throws IOException {
     try {
       final Method method = test.getClass().getMethod(test.getName());

@@ -1,33 +1,43 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.roots.IndexableEntityInducedChangesProvider.OriginChange;
 import com.intellij.util.indexing.roots.kind.IndexableSetIterableOrigin;
-import com.intellij.util.indexing.roots.origin.LibraryIterableOriginImpl;
+import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.indexing.roots.origin.ModuleRootIterableOriginImpl;
 import com.intellij.util.indexing.roots.origin.SdkIterableOriginImpl;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.ide.impl.UtilsKt;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryEntityUtils;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ContentEntryBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge;
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.*;
 import com.intellij.workspaceModel.storage.bridgeEntities.*;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -35,11 +45,10 @@ import java.util.function.Consumer;
 import static com.intellij.util.indexing.roots.IndexableEntityInducedChangesProvider.OriginAction.RemoveOrigin;
 import static com.intellij.util.indexing.roots.IndexableEntityInducedChangesProvider.OriginAction.SetOrigin;
 
-class WorkspaceModelSnapshot {
+record WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
+                              @NotNull LibrariesSnapshot librariesSnapshot,
+                              @NotNull SdkSnapshot sdkSnapshot) {
   private static volatile Generators GENERATORS;
-  private final ActualEntitiesSnapshot actualEntities;
-  private final LibrariesSnapshot libraries;
-  private final SdkSnapshot sdks;
 
   static WorkspaceModelSnapshot create(@NotNull Project project) {
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
@@ -74,7 +83,7 @@ class WorkspaceModelSnapshot {
     private Generators() {
       Map<Class<? extends WorkspaceEntity>, IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> map = new HashMap<>();
       for (IndexableEntityProvider<? extends WorkspaceEntity> provider : IndexableEntityProvider.EP_NAME.getExtensionList()) {
-        if (!(provider instanceof IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>)) {
+        if (!(provider instanceof IndexableEntityProvider.ExistingEx<?>)) {
           continue;
         }
         Class<? extends WorkspaceEntity> entityClass = provider.getEntityClass();
@@ -85,10 +94,12 @@ class WorkspaceModelSnapshot {
                                           otherProvider.getClass() + ", " + provider.getClass());
         }
       }
+      map.put(ContentRootEntity.class, createDummyProvider(ContentRootEntity.class));
+      map.put(SourceRootEntity.class, createDummyProvider(SourceRootEntity.class));
       items = Map.copyOf(map);
     }
 
-    private void forEach(@NotNull Consumer<IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> consumer) {
+    private void forEach(@NotNull Consumer<? super IndexableEntityProvider.ExistingEx<? extends WorkspaceEntity>> consumer) {
       items.values().forEach(consumer);
     }
 
@@ -97,14 +108,42 @@ class WorkspaceModelSnapshot {
       //noinspection unchecked
       return (IndexableEntityProvider.ExistingEx<E>)items.get(entityInterface);
     }
-  }
 
-  private WorkspaceModelSnapshot(@NotNull ActualEntitiesSnapshot actualEntities,
-                                 @NotNull LibrariesSnapshot librariesSnapshot,
-                                 @NotNull SdkSnapshot sdkSnapshot) {
-    this.actualEntities = actualEntities;
-    libraries = librariesSnapshot;
-    sdks = sdkSnapshot;
+    private static <E extends WorkspaceEntity> IndexableEntityProvider.ExistingEx<E> createDummyProvider(Class<E> aClass) {
+      return new IndexableEntityProvider.ExistingEx<>() {
+        @Override
+        public @NotNull Collection<IndexableSetIterableOrigin> getExistingEntityIteratorOrigins(@NotNull E entity,
+                                                                                                @NotNull EntityStorage storage,
+                                                                                                @NotNull Project project) {
+          return Collections.emptyList();
+        }
+
+        @Override
+        public @NotNull Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
+                                                                                                            @NotNull EntityStorage entityStorage,
+                                                                                                            @NotNull Project project) {
+          return Collections.emptyList();
+        }
+
+        @Override
+        public @NotNull Class<E> getEntityClass() {
+          return aClass;
+        }
+
+        @Override
+        public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull E entity,
+                                                                                                      @NotNull Project project) {
+          return Collections.emptyList();
+        }
+
+        @Override
+        public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull E oldEntity,
+                                                                                                         @NotNull E newEntity,
+                                                                                                         @NotNull Project project) {
+          return Collections.emptyList();
+        }
+      };
+    }
   }
 
   private record SdkId(String name, String type) {
@@ -121,9 +160,18 @@ class WorkspaceModelSnapshot {
 
   @NotNull
   Collection<? extends IndexableSetIterableOrigin> getOrigins() {
-    List<IndexableSetIterableOrigin> result = new ArrayList<>(libraries.getOrigins());
-    result.addAll(sdks.getOrigins());
+    List<IndexableSetIterableOrigin> result = new ArrayList<>(librariesSnapshot.getOrigins());
+    result.addAll(sdkSnapshot.getOrigins());
     result.addAll(actualEntities.getOrigins());
+    return result;
+  }
+
+  @NotNull
+  Collection<? extends VirtualFile> getExcludedRoots() {
+    Set<VirtualFile> result = new HashSet<>();
+    for (EntityFiles value : actualEntities.entitiesExcludedRoots) {
+      result.addAll(value.files);
+    }
     return result;
   }
 
@@ -132,23 +180,18 @@ class WorkspaceModelSnapshot {
                                                @NotNull Project project) {
     EntityStorage storage = storageChange.getStorageAfter();
     ActualEntitiesSnapshot changedEntities = actualEntities.createChangedIfNeeded(storageChange, storage, project);
-    LibrariesSnapshot changedLibraries = libraries.createChangedIfNeeded(storageChange, storage, project);
-    SdkSnapshot changedSdks = sdks.createChangedIfNeeded(storageChange);
+    LibrariesSnapshot changedLibraries = librariesSnapshot.createChangedIfNeeded(storageChange, storage, project);
+    SdkSnapshot changedSdks = sdkSnapshot.createChangedIfNeeded(storageChange);
     if (changedEntities == null && changedLibraries == null && changedSdks == null) {
       return null;
     }
-    return new WorkspaceModelSnapshot(firstNotNull(changedEntities, actualEntities),
-                                      firstNotNull(changedLibraries, libraries),
-                                      firstNotNull(changedSdks, sdks));
-  }
-
-  @NotNull
-  private static <S> S firstNotNull(@Nullable S changedEntities, @NotNull S actualEntities) {
-    return changedEntities == null ? actualEntities : changedEntities;
+    return new WorkspaceModelSnapshot(Objects.requireNonNullElse(changedEntities, actualEntities),
+                                      Objects.requireNonNullElse(changedLibraries, librariesSnapshot),
+                                      Objects.requireNonNullElse(changedSdks, sdkSnapshot));
   }
 
   @Nullable
-  WorkspaceModelSnapshot createWithRefreshedEntitiesIfNeeded(@NotNull List<EntityReference<WorkspaceEntity>> references,
+  WorkspaceModelSnapshot createWithRefreshedEntitiesIfNeeded(@NotNull List<? extends EntityReference<WorkspaceEntity>> references,
                                                              @NotNull Project project) {
     if (references.isEmpty()) return null;
 
@@ -157,69 +200,54 @@ class WorkspaceModelSnapshot {
     List<WorkspaceEntity> entities = ContainerUtil.mapNotNull(references, (ref) -> ref.resolve(storage));
     ActualEntitiesSnapshot result = actualEntities.createWithRefreshedEntitiesIfNeeded(entities, generators, project, storage);
     if (result == null) return null;
-    return new WorkspaceModelSnapshot(result, libraries, sdks);
+    return new WorkspaceModelSnapshot(result, librariesSnapshot, sdkSnapshot);
   }
 
-  @Nullable
   WorkspaceModelSnapshot referencedLibraryAdded(@NotNull Library library) {
-    ModifiableLibrariesSnapshot snapshot = ModifiableLibrariesSnapshot.create(libraries);
+    ModifiableLibrariesSnapshot snapshot = ModifiableLibrariesSnapshot.create(librariesSnapshot);
     snapshot.addLibrary(library);
-    return new WorkspaceModelSnapshot(actualEntities, snapshot.toImmutableSnapshot(), sdks);
+    return new WorkspaceModelSnapshot(actualEntities, snapshot.toImmutableSnapshot(), sdkSnapshot);
   }
 
-  @Nullable
   WorkspaceModelSnapshot referencedLibraryChanged(@NotNull Library library) {
     return referencedLibraryAdded(library);
   }
 
-  @Nullable
   WorkspaceModelSnapshot referencedLibraryRemoved(@NotNull Library library) {
-    ModifiableLibrariesSnapshot snapshot = ModifiableLibrariesSnapshot.create(libraries);
+    ModifiableLibrariesSnapshot snapshot = ModifiableLibrariesSnapshot.create(librariesSnapshot);
     snapshot.removeLibrary(LibraryEntityUtils.findLibraryId(library));
-    return new WorkspaceModelSnapshot(actualEntities, snapshot.toImmutableSnapshot(), sdks);
+    return new WorkspaceModelSnapshot(actualEntities, snapshot.toImmutableSnapshot(), sdkSnapshot);
   }
 
-  @Nullable
   WorkspaceModelSnapshot referencedSdkAdded(@NotNull Sdk sdk) {
-    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdks);
+    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdkSnapshot);
     snapshot.addSdkOrigin(sdk);
-    return new WorkspaceModelSnapshot(actualEntities, libraries, snapshot.toImmutableSnapshot());
+    return new WorkspaceModelSnapshot(actualEntities, librariesSnapshot, snapshot.toImmutableSnapshot());
   }
 
-  @Nullable
   WorkspaceModelSnapshot referencedSdkChanged(@NotNull Sdk sdk) {
-    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdks);
+    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdkSnapshot);
     snapshot.updateSdk(sdk);
-    return new WorkspaceModelSnapshot(actualEntities, libraries, snapshot.toImmutableSnapshot());
+    return new WorkspaceModelSnapshot(actualEntities, librariesSnapshot, snapshot.toImmutableSnapshot());
   }
 
-  @Nullable
   WorkspaceModelSnapshot referencedSdkRemoved(@NotNull Sdk sdk) {
-    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdks);
+    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdkSnapshot);
     snapshot.removeSdkOrigin(SdkId.create(sdk));
-    return new WorkspaceModelSnapshot(actualEntities, libraries, snapshot.toImmutableSnapshot());
+    return new WorkspaceModelSnapshot(actualEntities, librariesSnapshot, snapshot.toImmutableSnapshot());
   }
 
   @Nullable
   WorkspaceModelSnapshot projectJdkChanged(@Nullable Sdk newProjectSdk) {
     SdkId sdkId = newProjectSdk == null ? null : SdkId.create(newProjectSdk);
-    if (Objects.equals(sdkId, sdks.projectSdkId)) return null;
-    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdks);
+    if (Objects.equals(sdkId, sdkSnapshot.projectSdkId)) return null;
+    ModifiableSdkSnapshot snapshot = ModifiableSdkSnapshot.create(sdkSnapshot);
     snapshot.projectJdkChanged(sdkId, newProjectSdk);
-    return new WorkspaceModelSnapshot(actualEntities, libraries, snapshot.toImmutableSnapshot());
+    return new WorkspaceModelSnapshot(actualEntities, librariesSnapshot, snapshot.toImmutableSnapshot());
   }
 
-  private static class LibrariesSnapshot {//todo[lene] write test for library rename
-    private final ImmutableMap<LibraryId, Collection<EntityReference<ModuleEntity>>> dependencies;
-    private final ImmutableMap<LibraryId, IndexableSetIterableOrigin> origins;
-
-
-    private LibrariesSnapshot(ImmutableMap<LibraryId, Collection<EntityReference<ModuleEntity>>> dependencies,
-                              ImmutableMap<LibraryId, IndexableSetIterableOrigin> origins) {
-      this.dependencies = dependencies;
-      this.origins = origins;
-    }
-
+  private record LibrariesSnapshot(ImmutableMap<LibraryId, Collection<EntityReference<ModuleEntity>>> dependencies,
+                                   ImmutableMap<LibraryId, IndexableSetIterableOrigin> origins) {//todo[lene] write test for library rename
     @NotNull
     private Collection<? extends IndexableSetIterableOrigin> getOrigins() {
       return origins.values();
@@ -271,16 +299,13 @@ class WorkspaceModelSnapshot {
     }
   }
 
-  private static class ModifiableLibrariesSnapshot {
-    private final MultiMap<LibraryId, EntityReference<ModuleEntity>> dependencies;
-    private final Map<LibraryId, IndexableSetIterableOrigin> origins;
+  @NotNull
+  public IndexableSetIterableOrigin getSdkOrigin(@NotNull Sdk sdk) {
+    return sdkSnapshot.getSdkOrigin(sdk);
+  }
 
-    private ModifiableLibrariesSnapshot(MultiMap<LibraryId, EntityReference<ModuleEntity>> dependencies,
-                                        Map<LibraryId, IndexableSetIterableOrigin> origins) {
-      this.dependencies = dependencies;
-      this.origins = origins;
-    }
-
+  private record ModifiableLibrariesSnapshot(MultiMap<LibraryId, EntityReference<ModuleEntity>> dependencies,
+                                             Map<LibraryId, IndexableSetIterableOrigin> origins) {
     @NotNull
     private static ModifiableLibrariesSnapshot create(@NotNull LibrariesSnapshot snapshot) {
       MultiMap<LibraryId, EntityReference<ModuleEntity>> dependencies = new MultiMap<>();
@@ -402,46 +427,26 @@ class WorkspaceModelSnapshot {
     }
 
     @Contract("null->null;!null -> !null")
-    private static LibraryIterableOriginImpl createLibraryOrigin(Library library) {
+    private static IndexableSetIterableOrigin createLibraryOrigin(Library library) {
       if (library == null) {
         return null;
       }
-      List<VirtualFile> classFiles = LibraryIndexableFilesIteratorImpl.Companion.collectFiles(library, OrderRootType.CLASSES, null);
-      List<VirtualFile> sourceFiles = LibraryIndexableFilesIteratorImpl.Companion.collectFiles(library, OrderRootType.SOURCES, null);
-      return new LibraryIterableOriginImpl(classFiles, sourceFiles, Arrays.asList(((LibraryEx)library).getExcludedRoots()),
-                                           library.getName(), library.getPresentableName());
+      return IterableOriginsMethods.INSTANCE.createLibraryOrigin(library);
     }
   }
 
-  private static class SdkSnapshot {
-    private final ImmutableMap<SdkId, IndexableSetIterableOrigin> origins;
-    private final ImmutableMap<SdkId, Collection<EntityReference<ModuleEntity>>> dependencies;
-    @Nullable
-    private final SdkId projectSdkId;
-    private final Collection<EntityReference<ModuleEntity>> projectSdkDependencies;
-
-    private SdkSnapshot(@NotNull ImmutableMap<SdkId, IndexableSetIterableOrigin> origins,
-                        @NotNull ImmutableMap<SdkId, Collection<EntityReference<ModuleEntity>>> dependencies,
-                        @Nullable SdkId projectSdkId,
-                        @NotNull Collection<EntityReference<ModuleEntity>> projectSdkDependencies) {
-      this.origins = origins;
-      this.dependencies = dependencies;
-      this.projectSdkId = projectSdkId;
-      this.projectSdkDependencies = projectSdkDependencies;
-    }
+  private record SdkSnapshot(@NotNull ImmutableMap<SdkId, IndexableSetIterableOrigin> origins,
+                             @NotNull ImmutableMap<SdkId, Collection<EntityReference<ModuleEntity>>> dependencies,
+                             @Nullable SdkId projectSdkId,
+                             @NotNull Collection<EntityReference<ModuleEntity>> projectSdkDependencies) {
 
     private Collection<? extends IndexableSetIterableOrigin> getOrigins() {
       return origins.values();
     }
 
-    @Nullable
-    public IndexableFilesIterator createIterator(@NotNull Sdk sdk, @Nullable Collection<VirtualFile> rootsToFilter) {
-      IndexableSetIterableOrigin origin = Objects.requireNonNull(origins.get(SdkId.create(sdk)), "Unknown SDK " + sdk);
-      if (rootsToFilter == null) {
-        return origin.createIterator();
-      }
-      SdkIterableOriginImpl filteredOrigin = ((SdkIterableOriginImpl)origin).copyWithFilteredRoots(rootsToFilter);
-      return filteredOrigin == null ? null : filteredOrigin.createIterator();
+    @NotNull
+    private IndexableSetIterableOrigin getSdkOrigin(@NotNull Sdk sdk) {
+      return Objects.requireNonNull(origins.get(SdkId.create(sdk)));
     }
 
     private SdkSnapshot createChangedIfNeeded(@NotNull VersionedStorageChange storageChange) {
@@ -602,68 +607,167 @@ class WorkspaceModelSnapshot {
     }
   }
 
-  private static class ActualEntitiesSnapshot {
-    private final ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> entitiesToOrigins;
-    private final ImmutableMap<EntityReference<ContentRootEntity>, ModuleRootIterableOriginImpl> contentRootEntitiesToOrigins;
+  private record EntityOrigins(EntityReference<? extends WorkspaceEntity> reference, Collection<IndexableSetIterableOrigin> origins) {
+  }
 
-    private ActualEntitiesSnapshot(@NotNull ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> origins,
-                                   @NotNull ImmutableMap<EntityReference<ContentRootEntity>, ModuleRootIterableOriginImpl> contentRootOrigins) {
-      entitiesToOrigins = origins;
-      contentRootEntitiesToOrigins = contentRootOrigins;
-    }
+  private record ContentRootOrigin(EntityReference<ContentRootEntity> reference, ModuleRootIterableOriginImpl origin) {
+  }
+
+  private record SourceRootOrigin(EntityReference<SourceRootEntity> reference, ModuleRootIterableOriginImpl origin) {
+  }
+
+  private record EntityFiles(EntityReference<? extends WorkspaceEntity> reference, Collection<VirtualFile> files) {
+  }
+
+  private record RootsOrigins(ImmutableList<ContentRootOrigin> contentRootEntitiesOrigins,
+                              ImmutableList<SourceRootOrigin> sourceRootEntitiesOrigins) {
+
+  }
+
+  private record ActualEntitiesSnapshot(
+    @NotNull ImmutableList<EntityOrigins> entitiesOrigins,
+    @NotNull RootsOrigins rootOrigins,
+    @NotNull ImmutableList<ContentRootDescription> contentRootDescriptions,
+    @NotNull ImmutableList<SourceRootDescription> sourceRootDescriptions,
+    @NotNull ImmutableList<EntityFiles> entitiesExcludedRoots) {
 
     private Collection<? extends IndexableSetIterableOrigin> getOrigins() {
-      ArrayList<IndexableSetIterableOrigin> origins = new ArrayList<>(entitiesToOrigins.values());
-      origins.addAll(contentRootEntitiesToOrigins.values());
+      ArrayList<IndexableSetIterableOrigin> origins = new ArrayList<>();
+      for (EntityOrigins value : entitiesOrigins) {
+        origins.addAll(value.origins);
+      }
+      for (ContentRootOrigin origin : rootOrigins.contentRootEntitiesOrigins) {
+        origins.add(origin.origin);
+      }
+      for (SourceRootOrigin origin : rootOrigins.sourceRootEntitiesOrigins) {
+        origins.add(origin.origin);
+      }
       return origins;
     }
 
     @NotNull
     private static ActualEntitiesSnapshot create(@NotNull Project project,
                                                  @NotNull EntityStorage storage) {
-      ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> builder =
-        new ImmutableMap.Builder<>();
-      Collection<ContentRootDescription> descriptions = new ArrayList<>();
-      GENERATORS.forEach(provider -> handleProvider(provider, storage, project, builder, descriptions));
-      return new ActualEntitiesSnapshot(builder.build(), buildContentRootsMap(descriptions));
+      ImmutableList.Builder<EntityOrigins> builder = new ImmutableList.Builder<>();
+      List<ContentRootDescription> contentRoots = new ArrayList<>();
+      List<SourceRootDescription> sourceRoots = new ArrayList<>();
+      ImmutableList.Builder<EntityFiles> excludedBuilder = new ImmutableList.Builder<>();
+      GENERATORS.forEach(provider -> handleProvider(provider, storage, project, builder, contentRoots, sourceRoots, excludedBuilder));
+      return new ActualEntitiesSnapshot(builder.build(), buildRootsOrigins(project, contentRoots, sourceRoots),
+                                        ImmutableList.copyOf(contentRoots), ImmutableList.copyOf(sourceRoots),
+                                        excludedBuilder.build());
     }
 
     private static <E extends WorkspaceEntity> void handleProvider(@NotNull IndexableEntityProvider.ExistingEx<E> provider,
                                                                    @NotNull EntityStorage storage,
                                                                    @NotNull Project project,
-                                                                   @NotNull ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> entities,
-                                                                   @NotNull Collection<ContentRootDescription> descriptions) {
+                                                                   @NotNull ImmutableList.Builder<EntityOrigins> entities,
+                                                                   @NotNull Collection<? super ContentRootDescription> contentRootDescriptions,
+                                                                   @NotNull Collection<SourceRootDescription> sourceRootDescriptions,
+                                                                   @NotNull ImmutableList.Builder<EntityFiles> excludedBuilder) {
       Class<E> aClass = provider.getEntityClass();
       if (ContentRootEntity.class.equals(aClass)) {
-        for (E entity : SequencesKt.asIterable(storage.entities(aClass))) {
-          IndexableSetIterableOrigin origin = provider.getExistingEntityIteratorOrigins(entity, storage, project);
-          if (origin != null) {
-            descriptions.add(new ContentRootDescription(entity.createReference(), (ModuleRootIterableOriginImpl)origin));
-          }
+        for (ContentRootEntity entity : SequencesKt.asIterable(storage.entities(ContentRootEntity.class))) {
+          ContainerUtil.addIfNotNull(contentRootDescriptions, createContentRootDescription(entity, storage));
+        }
+      }
+      else if (SourceRootEntity.class.equals(aClass)) {
+        for (SourceRootEntity entity : SequencesKt.asIterable(storage.entities(SourceRootEntity.class))) {
+          ContainerUtil.addIfNotNull(sourceRootDescriptions, createSourceRootDescription(entity, storage));
         }
       }
       else {
         for (E entity : SequencesKt.asIterable(storage.entities(aClass))) {
-          IndexableSetIterableOrigin origin = provider.getExistingEntityIteratorOrigins(entity, storage, project);
-          if (origin != null) {
-            entities.put(entity.createReference(), origin);
+          Collection<IndexableSetIterableOrigin> origins = provider.getExistingEntityIteratorOrigins(entity, storage, project);
+          if (!origins.isEmpty()) {
+            entities.add(new EntityOrigins(entity.createReference(), origins));
+          }
+          Collection<VirtualFile> excludedRoots = provider.getExcludedRoots(entity, storage, project);
+          if (!excludedRoots.isEmpty()) {
+            excludedBuilder.add(new EntityFiles(entity.createReference(), excludedRoots));
           }
         }
       }
     }
 
-    private static ImmutableMap<EntityReference<ContentRootEntity>, ModuleRootIterableOriginImpl> buildContentRootsMap(
-      @NotNull Collection<ContentRootDescription> descriptions) {
-      Map<VirtualFile, ContentRootDescription> rootMap = ContainerUtil.map2Map(descriptions, description -> {
-        List<VirtualFile> roots = description.origin.getRoots();
-        assert roots.size() == 1 : "Too many roots for a ContentRoot " + roots;
-        return new Pair<>(roots.get(0), description);
-      });
+    @Nullable
+    private static ContentRootDescription createContentRootDescription(@NotNull ContentRootEntity entity, @NotNull EntityStorage storage) {
+      ModuleBridge module = ModuleEntityUtils.findModule(entity.getModule(), storage);
+      if (module == null) {
+        return null;
+      }
+      VirtualFile root = UtilsKt.getVirtualFile(entity.getUrl());
+      if (root == null) return null;
+      return new ContentRootDescription(entity.createReference(), entity.getModule().createReference(), module, root,
+                                        IndexableEntityProviderMethods.INSTANCE.getExcludedFiles(entity),
+                                        entity.getExcludedPatterns());
+    }
 
-      for (Map.Entry<VirtualFile, ContentRootDescription> entry : rootMap.entrySet()) {
+    @Nullable
+    private static SourceRootDescription createSourceRootDescription(@NotNull SourceRootEntity entity, @NotNull EntityStorage storage) {
+      ContentRootEntity contentRoot = entity.getContentRoot();
+      ModuleBridge module = ModuleEntityUtils.findModule(contentRoot.getModule(), storage);
+      if (module == null) {
+        return null;
+      }
+      VirtualFile root = UtilsKt.getVirtualFile(entity.getUrl());
+      if (root == null) return null;
+      return new SourceRootDescription(entity.createReference(), contentRoot.createReference(), contentRoot.getModule().createReference(),
+                                       module, root, UtilsKt.getVirtualFile(contentRoot.getUrl()),
+                                       IndexableEntityProviderMethods.INSTANCE.getExcludedFiles(contentRoot),
+                                       contentRoot.getExcludedPatterns());
+    }
+
+    private static RootsOrigins buildRootsOrigins(@NotNull Project project,
+                                                  @NotNull List<ContentRootDescription> allDescriptions,
+                                                  @NotNull List<SourceRootDescription> sourceRoots) {
+
+      record PreIterator(@NotNull VirtualFile root,
+                         @NotNull ContentRootDescription description,
+                         @NotNull Collection<VirtualFile> childContentRoots) {
+        PreIterator(@NotNull ContentRootDescription description) {
+          this(description.root, description, new SmartList<>());
+        }
+      }
+
+      MultiMap<EntityReference<ModuleEntity>, PreIterator> splitDescriptions = new MultiMap<>();
+      Map<VirtualFile, PreIterator> contentRootMap = new HashMap<>();
+
+      ModuleManager moduleManager = ModuleManager.getInstance(project);
+      //dirty hack to preserve old behaviour; todo[lene] try to get rid of it
+      for (final Module module : moduleManager.getModules()) {
+        final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+
+        for (ContentEntry contentEntry : moduleRootManager.getContentEntries()) {
+          EntityReference<ContentRootEntity> entityReference = ((ContentEntryBridge)contentEntry).getEntity().createReference();
+          for (ContentRootDescription description : allDescriptions) {
+            if (entityReference.equals(description.reference)) {
+              //content roots with same file should be taken only once, see com.intellij.openapi.roots.impl.RootIndex.RootInfo.contentRootOf
+              if (!contentRootMap.containsKey(description.root)) {
+                PreIterator preIterator = new PreIterator(description);
+                splitDescriptions.putValue(description.moduleReference, preIterator);
+                contentRootMap.put(description.root, preIterator);
+              }
+              break;
+            }
+          }
+        }
+      }
+
+
+      for (ContentRootDescription description : allDescriptions) {
+        //content roots with same file should be taken only once, see com.intellij.openapi.roots.impl.RootIndex.RootInfo.contentRootOf
+        if (!contentRootMap.containsKey(description.root)) {
+          PreIterator preIterator = new PreIterator(description);
+          splitDescriptions.putValue(description.moduleReference, preIterator);
+          contentRootMap.put(description.root, preIterator);
+        }
+      }
+
+      for (Map.Entry<VirtualFile, PreIterator> entry : contentRootMap.entrySet()) {
         VirtualFile parent = entry.getKey().getParent();
         while (parent != null) {
-          ContentRootDescription parentDescription = rootMap.get(parent);
+          PreIterator parentDescription = contentRootMap.get(parent);
           if (parentDescription != null) {
             parentDescription.childContentRoots.add(entry.getKey());
             break;
@@ -672,11 +776,62 @@ class WorkspaceModelSnapshot {
         }
       }
 
-      ImmutableMap.Builder<EntityReference<ContentRootEntity>, ModuleRootIterableOriginImpl> copy = new ImmutableMap.Builder<>();
-      for (ContentRootDescription description : descriptions) {
-        copy.put(description.reference, description.origin.copyWithChildContentRoots(description.childContentRoots));
+      ImmutableList.Builder<ContentRootOrigin> contentRootBuilder = new ImmutableList.Builder<>();
+      for (Map.Entry<EntityReference<ModuleEntity>, Collection<PreIterator>> descriptionsEntry : splitDescriptions.entrySet()) {
+        Collection<VirtualFile> excludedRoots = new ArrayList<>();
+        for (PreIterator preIterator : descriptionsEntry.getValue()) {
+          excludedRoots.addAll(preIterator.description.excludedPaths);
+        }
+
+        for (PreIterator preIterator : descriptionsEntry.getValue()) {
+          Condition<VirtualFile> excludedCondition = null;
+          List<String> patterns = preIterator.description().excludedPatterns;
+          if (!patterns.isEmpty()) {
+            FileTypeAssocTable<Boolean> table = new FileTypeAssocTable<>();
+            for (String pattern : patterns) {
+              table.addAssociation(FileNameMatcherFactory.getInstance().createMatcher(pattern), Boolean.TRUE);
+            }
+            excludedCondition = file -> {
+              return table.findAssociatedFileType(file.getNameSequence()) != null;
+            };
+          }
+          ModuleRootIterableOriginImpl origin = new ModuleRootIterableOriginImpl(preIterator.description.module,
+                                                                                 Collections.singletonList(preIterator.root),
+                                                                                 excludedRoots,
+                                                                                 excludedCondition,
+                                                                                 preIterator.childContentRoots);
+          contentRootBuilder.add(new ContentRootOrigin(preIterator.description.reference, origin));
+        }
       }
-      return copy.build();
+
+      ImmutableList.Builder<SourceRootOrigin> sourceRootBuilder = new ImmutableList.Builder<>();
+      for (SourceRootDescription sourceRoot : sourceRoots) {
+        VirtualFile root = sourceRoot.root;
+        //See logic of com.intellij.openapi.roots.impl.ModuleFileIndexImpl.isInContent(VirtualFile, DirectoryInfo) &
+        //com.intellij.openapi.roots.impl.RootIndex.RootInfo.findNearestContentRoot
+        boolean shouldAdd = true;
+        while (root != null) {
+          PreIterator preIterator = contentRootMap.get(root);
+          if (preIterator != null) {
+            Collection<VirtualFile> excludedRoots = preIterator.description.excludedPaths;
+            shouldAdd = preIterator.description().moduleReference.equals(sourceRoot.moduleReference) &&
+                        !excludedRoots.contains(sourceRoot.root) && VfsUtilCore.isUnderFiles(sourceRoot.root, excludedRoots);
+            break;
+          }
+          root = root.getParent();
+        }
+        if (!shouldAdd) {
+          continue;
+        }
+
+        ModuleRootIterableOriginImpl origin = new ModuleRootIterableOriginImpl(sourceRoot.module,
+                                                                               Collections.singletonList(sourceRoot.root),
+                                                                               Collections.emptyList(),//todo[lene] inherit?
+                                                                               null,//todo[lene] inherit?
+                                                                               Collections.emptyList());
+        sourceRootBuilder.add(new SourceRootOrigin(sourceRoot.reference, origin));
+      }
+      return new RootsOrigins(contentRootBuilder.build(), sourceRootBuilder.build());
     }
 
     @Nullable
@@ -684,41 +839,61 @@ class WorkspaceModelSnapshot {
       @NotNull EntitiesToRegenerate entitiesToRegenerate,
       @NotNull Project project,
       @NotNull EntityStorage storage) {
-      ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> merge =
-        merge(entitiesToRegenerate.items, project, storage);
-      ImmutableMap<EntityReference<ContentRootEntity>, ModuleRootIterableOriginImpl> mergeContentRoots =
-        mergeContentRoots(entitiesToRegenerate.contentRootItems, project, storage);
-      if (merge == null && mergeContentRoots == null) return null;
-      return new ActualEntitiesSnapshot(merge == null ? entitiesToOrigins : merge,
-                                        mergeContentRoots == null ? contentRootEntitiesToOrigins : mergeContentRoots);
+      ImmutableList<EntityOrigins> merge = merge(entitiesToRegenerate.items, project, storage);
+      List<ContentRootDescription> mergedContentRootDescriptions =
+        mergeContentRootDescriptions(entitiesToRegenerate.contentRootItems, storage);
+      List<SourceRootDescription> mergedSourceRootDescriptions =
+        mergeSourceRootDescriptions(entitiesToRegenerate.sourceRootItems, storage);
+      ImmutableList<EntityFiles> mergedExcludedRoots = mergeExcludedRoots(entitiesToRegenerate.items, project, storage);
+      if (merge == null && mergedContentRootDescriptions == null && mergedSourceRootDescriptions == null && mergedExcludedRoots == null) {
+        return null;
+      }
+      ImmutableList<ContentRootDescription> resultingContentRoots = mergedContentRootDescriptions == null
+                                                                    ? contentRootDescriptions
+                                                                    : ImmutableList.copyOf(mergedContentRootDescriptions);
+      ImmutableList<SourceRootDescription> resultingSourceRoots = mergedSourceRootDescriptions == null
+                                                                  ? sourceRootDescriptions
+                                                                  : ImmutableList.copyOf(mergedSourceRootDescriptions);
+
+      RootsOrigins newOrigins;
+      if (mergedContentRootDescriptions == null && mergedSourceRootDescriptions == null) {
+        newOrigins = rootOrigins;
+      }
+      else {
+        newOrigins = buildRootsOrigins(project, resultingContentRoots, resultingSourceRoots);
+      }
+      return new ActualEntitiesSnapshot(merge == null ? entitiesOrigins : merge,
+                                        newOrigins,
+                                        resultingContentRoots,
+                                        resultingSourceRoots,
+                                        mergedExcludedRoots == null ? entitiesExcludedRoots : mergedExcludedRoots);
     }
 
     @Nullable
-    public ImmutableMap<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> merge(
-      @NotNull Map<EntityReference<? extends WorkspaceEntity>, ChangeInformation<? extends WorkspaceEntity>> items,
+    private ImmutableList<EntityOrigins> merge(
+      @NotNull LinkedHashMap<EntityReference<? extends WorkspaceEntity>, ChangeInformation<? extends WorkspaceEntity>> items,
       @NotNull Project project,
       @NotNull EntityStorage storage) {
       if (items.isEmpty()) return null;
-      ImmutableMap.Builder<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> copy =
-        new ImmutableMap.Builder<>();
-      for (Map.Entry<EntityReference<? extends WorkspaceEntity>, IndexableSetIterableOrigin> entry : entitiesToOrigins.entrySet()) {
-        EntityReference<? extends WorkspaceEntity> entityReference = entry.getKey();
+      ImmutableList.Builder<EntityOrigins> copy = new ImmutableList.Builder<>();
+      for (EntityOrigins entityOrigins : entitiesOrigins) {
+        EntityReference<? extends WorkspaceEntity> entityReference = entityOrigins.reference;
         ChangeInformation<?> changeInformation = items.remove(entityReference);
         if (changeInformation == null) {
-          copy.put(entry);
+          copy.add(entityOrigins);
         }
         else if (changeInformation.action() == SetOrigin) {
-          IndexableSetIterableOrigin origin = changeInformation.generateOrigin(project, storage);
-          if (origin != null) {
-            copy.put(changeInformation.reference, origin);
+          Collection<IndexableSetIterableOrigin> origins = changeInformation.generateOrigin(project, storage);
+          if (!origins.isEmpty()) {
+            copy.add(new EntityOrigins(changeInformation.reference, origins));
           }
         }
       }
       for (ChangeInformation<? extends WorkspaceEntity> changeInformation : items.values()) {
         if (changeInformation.action() == SetOrigin) {
-          IndexableSetIterableOrigin origin = changeInformation.generateOrigin(project, storage);
-          if (origin != null) {
-            copy.put(changeInformation.reference, origin);
+          Collection<IndexableSetIterableOrigin> origins = changeInformation.generateOrigin(project, storage);
+          if (!origins.isEmpty()) {
+            copy.add(new EntityOrigins(changeInformation.reference, origins));
           }
         }
       }
@@ -726,34 +901,83 @@ class WorkspaceModelSnapshot {
     }
 
     @Nullable
-    public ImmutableMap<EntityReference<ContentRootEntity>, ModuleRootIterableOriginImpl> mergeContentRoots(
+    private List<ContentRootDescription> mergeContentRootDescriptions(
       @NotNull Map<EntityReference<ContentRootEntity>, ChangeInformation<ContentRootEntity>> items,
-      @NotNull Project project,
       @NotNull EntityStorage storage) {
       if (items.isEmpty()) return null;
-      Collection<ContentRootDescription> descriptions = new ArrayList<>();
-      for (Map.Entry<EntityReference<ContentRootEntity>, ModuleRootIterableOriginImpl> entry : contentRootEntitiesToOrigins.entrySet()) {
-        EntityReference<ContentRootEntity> entityReference = entry.getKey();
+      List<ContentRootDescription> descriptions = new ArrayList<>();
+      for (ContentRootDescription initialDescription : contentRootDescriptions) {
+        EntityReference<ContentRootEntity> entityReference = initialDescription.reference;
         ChangeInformation<ContentRootEntity> changeInformation = items.remove(entityReference);
         if (changeInformation == null) {
-          descriptions.add(new ContentRootDescription(entityReference, entry.getValue()));
+          descriptions.add(initialDescription);
         }
         else if (changeInformation.action() == SetOrigin) {
-          IndexableSetIterableOrigin origin = changeInformation.generateOrigin(project, storage);
-          if (origin != null) {
-            descriptions.add(new ContentRootDescription(changeInformation.reference, (ModuleRootIterableOriginImpl)origin));
-          }
+          ContainerUtil.addIfNotNull(descriptions, createContentRootDescription(changeInformation.entity, storage));
         }
       }
       for (ChangeInformation<ContentRootEntity> changeInformation : items.values()) {
         if (changeInformation.action() == SetOrigin) {
-          IndexableSetIterableOrigin origin = changeInformation.generateOrigin(project, storage);
-          if (origin != null) {
-            descriptions.add(new ContentRootDescription(changeInformation.reference, (ModuleRootIterableOriginImpl)origin));
+          ContainerUtil.addIfNotNull(descriptions, createContentRootDescription(changeInformation.entity, storage));
+        }
+      }
+      return descriptions;
+    }
+
+    @Nullable
+    private List<SourceRootDescription> mergeSourceRootDescriptions(
+      @NotNull Map<EntityReference<SourceRootEntity>, ChangeInformation<SourceRootEntity>> items,
+      @NotNull EntityStorage storage) {
+      if (items.isEmpty()) return null;
+      List<SourceRootDescription> descriptions = new ArrayList<>();
+      for (SourceRootDescription initialDescription : sourceRootDescriptions) {
+        EntityReference<SourceRootEntity> entityReference = initialDescription.reference;
+        ChangeInformation<SourceRootEntity> changeInformation = items.remove(entityReference);
+        if (changeInformation == null) {
+          descriptions.add(initialDescription);
+        }
+        else if (changeInformation.action() == SetOrigin) {
+          ContainerUtil.addIfNotNull(descriptions, createSourceRootDescription(changeInformation.entity, storage));
+        }
+      }
+      for (ChangeInformation<SourceRootEntity> changeInformation : items.values()) {
+        if (changeInformation.action() == SetOrigin) {
+          ContainerUtil.addIfNotNull(descriptions, createSourceRootDescription(changeInformation.entity, storage));
+        }
+      }
+      return descriptions;
+    }
+
+    @Nullable
+    private ImmutableList<EntityFiles> mergeExcludedRoots(
+      @NotNull LinkedHashMap<EntityReference<? extends WorkspaceEntity>, ChangeInformation<? extends WorkspaceEntity>> items,
+      @NotNull Project project,
+      @NotNull EntityStorage storage
+    ) {
+      if (items.isEmpty()) return null;
+      ImmutableList.Builder<EntityFiles> copy = new ImmutableList.Builder<>();
+      for (EntityFiles entityFiles : entitiesExcludedRoots) {
+        EntityReference<? extends WorkspaceEntity> entityReference = entityFiles.reference;
+        ChangeInformation<?> changeInformation = items.remove(entityReference);
+        if (changeInformation == null) {
+          copy.add(entityFiles);
+        }
+        else if (changeInformation.action() == SetOrigin) {
+          Collection<VirtualFile> excludedRoots = changeInformation.generateExcludedRoots(project, storage);
+          if (!excludedRoots.isEmpty()) {
+            copy.add(new EntityFiles(changeInformation.reference, excludedRoots));
           }
         }
       }
-      return buildContentRootsMap(descriptions);
+      for (ChangeInformation<? extends WorkspaceEntity> changeInformation : items.values()) {
+        if (changeInformation.action() == SetOrigin) {
+          Collection<VirtualFile> excludedRoots = changeInformation.generateExcludedRoots(project, storage);
+          if (!excludedRoots.isEmpty()) {
+            copy.add(new EntityFiles(changeInformation.reference, excludedRoots));
+          }
+        }
+      }
+      return copy.build();
     }
 
     @Nullable
@@ -803,27 +1027,44 @@ class WorkspaceModelSnapshot {
     }
 
     private record ContentRootDescription(@NotNull EntityReference<ContentRootEntity> reference,
-                                          @NotNull ModuleRootIterableOriginImpl origin,
-                                          @NotNull List<VirtualFile> childContentRoots) {
-      ContentRootDescription(EntityReference<ContentRootEntity> reference, ModuleRootIterableOriginImpl origin) {
-        this(reference, origin, new SmartList<>());
-      }
+                                          @NotNull EntityReference<ModuleEntity> moduleReference,
+                                          @NotNull Module module,
+                                          @NotNull VirtualFile root,
+                                          @NotNull List<VirtualFile> excludedPaths,
+                                          @NotNull List<String> excludedPatterns) {
+    }
+
+    private record SourceRootDescription(@NotNull EntityReference<SourceRootEntity> reference,
+                                         @NotNull EntityReference<ContentRootEntity> contentRootReference,
+                                         @NotNull EntityReference<ModuleEntity> moduleReference,
+                                         @NotNull Module module,
+                                         @NotNull VirtualFile root,
+                                         @Nullable VirtualFile contentRootRoot,
+                                         @NotNull List<VirtualFile> excludedPaths,
+                                         @NotNull List<String> excludedPatterns) {
     }
 
     private record ChangeInformation<E extends WorkspaceEntity>(@NotNull E entity,
                                                                 @NotNull EntityReference<E> reference,
                                                                 @NotNull IndexableEntityInducedChangesProvider.OriginAction action,
                                                                 @NotNull IndexableEntityProvider.ExistingEx<E> provider) {
-      @Nullable
-      private IndexableSetIterableOrigin generateOrigin(@NotNull Project project, @NotNull EntityStorage storage) {
+      @NotNull
+      private Collection<IndexableSetIterableOrigin> generateOrigin(@NotNull Project project, @NotNull EntityStorage storage) {
         return provider.getExistingEntityIteratorOrigins(entity, storage, project);
+      }
+
+      @NotNull
+      Collection<VirtualFile> generateExcludedRoots(@NotNull Project project, @NotNull EntityStorage storage) {
+        return provider.getExcludedRoots(entity, storage, project);
       }
     }
 
     private static class EntitiesToRegenerate {
-      private final @NotNull Map<EntityReference<? extends WorkspaceEntity>, ChangeInformation<? extends WorkspaceEntity>> items =
-        new HashMap<>();
+      private final @NotNull LinkedHashMap<EntityReference<? extends WorkspaceEntity>, ChangeInformation<? extends WorkspaceEntity>> items =
+        new LinkedHashMap<>();
       private final @NotNull Map<EntityReference<ContentRootEntity>, ChangeInformation<ContentRootEntity>> contentRootItems =
+        new HashMap<>();
+      private final @NotNull Map<EntityReference<SourceRootEntity>, ChangeInformation<SourceRootEntity>> sourceRootItems =
         new HashMap<>();
 
       private <E extends WorkspaceEntity> void putNotNullAndHandleable(@Nullable E entity,
@@ -840,6 +1081,13 @@ class WorkspaceModelSnapshot {
                                new ChangeInformation<>((ContentRootEntity)entity,
                                                        (EntityReference<ContentRootEntity>)reference, action,
                                                        (IndexableEntityProvider.ExistingEx<ContentRootEntity>)provider));
+        }
+        else if (entity.getEntityInterface().equals(SourceRootEntity.class)) {
+          //noinspection unchecked
+          sourceRootItems.put((EntityReference<SourceRootEntity>)reference,
+                              new ChangeInformation<>((SourceRootEntity)entity,
+                                                      (EntityReference<SourceRootEntity>)reference, action,
+                                                      (IndexableEntityProvider.ExistingEx<SourceRootEntity>)provider));
         }
         else {
           items.put(reference, new ChangeInformation<>(entity, reference, action, provider));

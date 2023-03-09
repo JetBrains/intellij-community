@@ -14,6 +14,7 @@ import java.awt.Component
 import javax.swing.*
 import javax.swing.text.JTextComponent
 
+@Deprecated("Mig Layout is going to be removed, IDEA-306719")
 internal fun overrideFlags(cc: CC, flags: Array<out CCFlags>) {
   for (flag in flags) {
     when (flag) {

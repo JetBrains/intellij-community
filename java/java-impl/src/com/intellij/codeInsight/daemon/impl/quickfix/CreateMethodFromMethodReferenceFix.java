@@ -145,7 +145,7 @@ public class CreateMethodFromMethodReferenceFix extends CreateFromUsageBaseFix {
       }
       else {
         if (secondSearchPossible) {
-          arguments.remove(0);
+          arguments = arguments.subList(1, arguments.size());
         }
         if (targetClass.isInterface()) {
           shouldBeAbstract = true;

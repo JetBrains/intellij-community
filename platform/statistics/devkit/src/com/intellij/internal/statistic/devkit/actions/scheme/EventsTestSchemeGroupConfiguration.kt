@@ -29,26 +29,25 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBRadioButton
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.layout.selected
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.PairProcessor
 import com.intellij.util.TextFieldCompletionProviderDumbAware
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.textCompletion.TextFieldWithCompletion
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBDimension
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection
 import java.util.*
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 
 class EventsTestSchemeGroupConfiguration(private val project: Project,
@@ -64,7 +63,6 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
   private lateinit var customRulesRadioButton: JBRadioButton
   private lateinit var generateSchemeButton: JComponent
   private val validationRulesEditorComponent: JComponent
-  private val validationRulesDescription: JLabel
   private val tempFile: PsiFile
   private val validationRulesEditor: EditorEx
   private val eventsScheme: Map<String, String> = createEventsScheme(generatedScheme)
@@ -91,55 +89,60 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
       }
     })
     validationRulesEditorComponent = validationRulesEditor.component
-    validationRulesEditorComponent.minimumSize = JBUI.size(200, 100)
-
-    validationRulesDescription = ComponentPanelBuilder.createCommentComponent(
-      StatisticsBundle.message("stats.validation.rules.format"), true)
 
     panel = panel {
-      row {
-        cell {
-          label(StatisticsBundle.message("stats.group.id"))
-          groupIdTextField(growX)
-        }
+      row(StatisticsBundle.message("stats.group.id")) {
+        cell(groupIdTextField)
+          .applyToComponent { minimumSize = JBDimension(200, 1) }
+          .align(AlignX.FILL)
       }
-      buttonGroup {
+      buttonsGroup {
         row {
-          allowAllEventsRadioButton = radioButton(StatisticsBundle.message("stats.allow.all.events")).component
-          allowAllEventsRadioButton.isSelected = !initialGroup.useCustomRules
-          allowAllEventsRadioButton.addChangeListener { updateRulesOption() }
+          allowAllEventsRadioButton = radioButton(StatisticsBundle.message("stats.allow.all.events"))
+            .applyToComponent {
+              isSelected = !initialGroup.useCustomRules
+              addChangeListener { updateRulesOption() }
+            }.component
         }
         row {
-          cell {
-            customRulesRadioButton = radioButton(StatisticsBundle.message("stats.use.custom.validation.rules")).component
-            customRulesRadioButton.isSelected = initialGroup.useCustomRules
-            customRulesRadioButton.addChangeListener { updateRulesOption() }
-            ContextHelpLabel.create(StatisticsBundle.message("stats.test.scheme.custom.rules.help"))()
-          }
+          customRulesRadioButton = radioButton(StatisticsBundle.message("stats.use.custom.validation.rules"))
+            .gap(RightGap.SMALL)
+            .applyToComponent {
+              isSelected = initialGroup.useCustomRules
+              addChangeListener { updateRulesOption() }
+            }.component
+          contextHelp(StatisticsBundle.message("stats.test.scheme.custom.rules.help"))
         }
       }
       row {
-        validationRulesEditorComponent(growX)
-      }
-      row {
-        generateSchemeButton = button("Generate Scheme") {
-          val scheme = eventsScheme[groupIdTextField.text]
-          if (scheme != null) {
-            WriteAction.run<Throwable> { validationRulesEditor.document.setText(scheme) }
-          }
-        }.component
-      }
-      row {
-        validationRulesDescription()
-      }
+        cell(createCustomRules()).align(Align.FILL)
+      }.resizableRow()
+        .visibleIf(customRulesRadioButton.selected)
     }
-      .withBorder(JBUI.Borders.empty(2))
     updateRulesOption()
+  }
+
+  private fun createCustomRules() = panel {
+    row {
+      cell(validationRulesEditorComponent).align(Align.FILL)
+    }.resizableRow()
+    row {
+      generateSchemeButton = button("Generate Scheme") {
+        val scheme = eventsScheme[groupIdTextField.text]
+        if (scheme != null) {
+          WriteAction.run<Throwable> { validationRulesEditor.document.setText(scheme) }
+        }
+      }.component
+    }
+    row {
+      comment(StatisticsBundle.message("stats.validation.rules.format"))
+    }
+  }.apply {
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, JBGaps(left = 2))
   }
 
   private fun updateGenerateSchemeButton() {
     val useCustomRules = customRulesRadioButton.isSelected
-    generateSchemeButton.isVisible = useCustomRules
     generateSchemeButton.isEnabled = useCustomRules && eventsScheme[groupIdTextField.text] != null
     if (!generateSchemeButton.isEnabled) {
       generateSchemeButton.toolTipText = StatisticsBundle.message("stats.scheme.generation.available.only.for.new.api")
@@ -214,12 +217,9 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
   }
 
   private fun updateRulesOption() {
-    val useCustomRules = customRulesRadioButton.isSelected
-    validationRulesEditorComponent.isVisible = useCustomRules
-    validationRulesDescription.isVisible = useCustomRules
     updateGenerateSchemeButton()
 
-    currentGroup.useCustomRules = useCustomRules
+    currentGroup.useCustomRules = customRulesRadioButton.isSelected
   }
 
   fun getFocusedComponent(): JComponent = groupIdTextField

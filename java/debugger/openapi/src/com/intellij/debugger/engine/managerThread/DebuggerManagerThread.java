@@ -18,7 +18,6 @@ package com.intellij.debugger.engine.managerThread;
 public interface DebuggerManagerThread {
   /**
    * executes command in DebuggerManagerThread
-   *
    */
   void invokeCommand(DebuggerCommand command);
 }

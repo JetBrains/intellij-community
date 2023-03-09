@@ -47,7 +47,7 @@ public class DeleteUnnecessaryStatementFix extends InspectionGadgetsFix {
   }
 
   @Override
-  protected void doFix(Project project, ProblemDescriptor descriptor) {
+  protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement keywordElement = descriptor.getPsiElement();
     final PsiStatement statement = PsiTreeUtil.getParentOfType(keywordElement, PsiStatement.class);
     if (statement == null) {

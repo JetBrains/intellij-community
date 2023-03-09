@@ -42,12 +42,15 @@ object CreateBinaryOperationActionFactory : CreateCallableMemberFromUsageFactory
         }
         val parameters = Collections.singletonList(ParameterInfo(TypeInfo(argumentExpr, Variance.IN_VARIANCE)))
         val isOperator = token != KtTokens.IDENTIFIER
+
+        val psiFactory = KtPsiFactory(element.project)
+
         return FunctionInfo(
             operationName,
             receiverType,
             returnType,
             parameterInfos = parameters,
-            modifierList = KtPsiFactory(element).createModifierList(if (isOperator) KtTokens.OPERATOR_KEYWORD else KtTokens.INFIX_KEYWORD)
+            modifierList = psiFactory.createModifierList(if (isOperator) KtTokens.OPERATOR_KEYWORD else KtTokens.INFIX_KEYWORD)
         )
     }
 }

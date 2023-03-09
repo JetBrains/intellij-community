@@ -19,6 +19,9 @@ import com.intellij.workspaceModel.storage.impl.extractOneToManyChildren
 import com.intellij.workspaceModel.storage.impl.extractOneToManyParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyChildrenOfParent
 import com.intellij.workspaceModel.storage.impl.updateOneToManyParentOfChild
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import org.jetbrains.deft.annotations.Child
@@ -123,16 +126,7 @@ open class TreeMultiparentLeafEntityImpl(val dataSource: TreeMultiparentLeafEnti
       dataSource as TreeMultiparentLeafEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.data != dataSource.data) this.data = dataSource.data
-      if (parents != null) {
-        val mainParentNew = parents.filterIsInstance<TreeMultiparentRootEntity?>().singleOrNull()
-        if ((mainParentNew == null && this.mainParent != null) || (mainParentNew != null && this.mainParent == null) || (mainParentNew != null && this.mainParent != null && (this.mainParent as WorkspaceEntityBase).id != (mainParentNew as WorkspaceEntityBase).id)) {
-          this.mainParent = mainParentNew
-        }
-        val leafParentNew = parents.filterIsInstance<TreeMultiparentLeafEntity?>().singleOrNull()
-        if ((leafParentNew == null && this.leafParent != null) || (leafParentNew != null && this.leafParent == null) || (leafParentNew != null && this.leafParent != null && (this.leafParent as WorkspaceEntityBase).id != (leafParentNew as WorkspaceEntityBase).id)) {
-          this.leafParent = leafParentNew
-        }
-      }
+      updateChildToParentReferences(parents)
     }
 
 

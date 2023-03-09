@@ -97,8 +97,7 @@ open class ChildEntityImpl(val dataSource: ChildEntityData) : ChildEntity, Works
       if (this.data1 != dataSource.data1) this.data1 = dataSource.data1
       if (this.data2 != dataSource.data2) this.data2 = dataSource.data2
       if (this.data3 != dataSource.data3) this.data3 = dataSource.data3
-      if (parents != null) {
-      }
+      updateChildToParentReferences(parents)
     }
 
 

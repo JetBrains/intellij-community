@@ -8,7 +8,9 @@ public class TooBroadThrowsInspectionTest extends IGQuickFixesTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new TooBroadThrowsInspection());
+    TooBroadThrowsInspection inspection = new TooBroadThrowsInspection();
+    inspection.hiddenExceptionsThreshold = 5;
+    myFixture.enableInspections(inspection);
     myRelativePath = "toobroadthrows";
     myDefaultHint = InspectionGadgetsBundle.message("overly.broad.throws.clause.quickfix2");
   }
@@ -17,4 +19,6 @@ public class TooBroadThrowsInspectionTest extends IGQuickFixesTestCase {
   public void testThrowNull() { doTest(); }
   public void testGenericThrow() { doTest(); }
   public void testMultiCatch() { doTest(InspectionGadgetsBundle.message("overly.broad.throws.clause.quickfix1")); }
+
+  public void testMoreExceptionsThanThreshold() { doTest(); }
 }

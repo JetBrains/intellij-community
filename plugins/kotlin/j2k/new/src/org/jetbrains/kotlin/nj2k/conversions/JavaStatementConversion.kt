@@ -17,7 +17,6 @@ class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveApplic
         if (element !is JKStatement) return recurse(element)
         return recurse(
             when (element) {
-                is JKJavaThrowStatement -> convertThrow(element)
                 is JKJavaAssertStatement -> convertAssert(element)
                 is JKJavaSynchronizedStatement -> convertSynchronized(element)
                 is JKJavaTryStatement -> convertTry(element)
@@ -25,9 +24,6 @@ class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveApplic
             }
         )
     }
-
-    private fun convertThrow(element: JKJavaThrowStatement): JKExpressionStatement =
-        JKExpressionStatement(JKKtThrowExpression(element::exception.detached()))
 
     private fun convertAssert(element: JKJavaAssertStatement): JKExpressionStatement {
         val messageExpression =

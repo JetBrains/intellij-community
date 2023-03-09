@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -228,21 +229,30 @@ public class PatternVariableCanBeUsedInspection extends AbstractBaseJavaLocalIns
       PsiInstanceOfExpression instanceOf = myInstanceOfPointer.getElement();
       if (instanceOf == null) return;
       CommentTracker ct = new CommentTracker();
+      StringBuilder text = new StringBuilder(ct.text(instanceOf.getOperand()));
+      text.append(" instanceof ");
       PsiModifierList modifierList = variable.getModifierList();
-      String modifiers = modifierList == null || modifierList.getTextLength() == 0 || !PsiUtil.isLanguageLevel16OrHigher(variable) ? 
-                         "" : modifierList.getText() + " ";
-      String deconstructionList =
-        instanceOf.getPattern() instanceof PsiDeconstructionPattern deconstruction ? deconstruction.getDeconstructionList().getText() : "";
-      ct.replace(instanceOf, ct.text(instanceOf.getOperand()) +
-                             " instanceof " + modifiers + typeElement.getText() + deconstructionList + " " + variable.getName());
+      JavaCodeStyleSettings codeStyleSettings = JavaCodeStyleSettings.getInstance(variable.getContainingFile());
+      if (modifierList != null && modifierList.getTextLength() > 0) {
+        modifierList.setModifierProperty(PsiModifier.FINAL, codeStyleSettings.GENERATE_FINAL_LOCALS);
+        text.append(ct.text(modifierList)).append(' ');
+      }
+      else if (codeStyleSettings.GENERATE_FINAL_LOCALS) {
+        text.append("final ");
+      }
+      text.append(typeElement.getText()).append(' ');
+      if (instanceOf.getPattern() instanceof PsiDeconstructionPattern deconstructionPattern) {
+        text.append(ct.text(deconstructionPattern.getDeconstructionList())).append(' ');
+      }
+      text.append(variable.getName());
+      ct.replace(instanceOf, text.toString());
       ct.deleteAndRestoreComments(variable);
     }
 
     @Override
     public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
       PsiInstanceOfExpression instanceOf = myInstanceOfPointer.getElement();
-      return instanceOf == null ? null : new PatternVariableCanBeUsedFix(myName, PsiTreeUtil
-        .findSameElementInCopy(instanceOf, target));
+      return instanceOf == null ? null : new PatternVariableCanBeUsedFix(myName, PsiTreeUtil.findSameElementInCopy(instanceOf, target));
     }
   }
 }

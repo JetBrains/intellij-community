@@ -43,13 +43,14 @@ open class StatisticsFileEventLogger(private val recorderId: String,
     }
   }
 
-  override fun logAsync(group: EventLogGroup, eventId: String, data: Map<String, Any>, isState: Boolean): CompletableFuture<Void> {
+  override fun logAsync(group: EventLogGroup, eventId: String, dataProvider: () -> Map<String, Any>?, isState: Boolean): CompletableFuture<Void> {
     val eventTime = System.currentTimeMillis()
     group.validateEventId(eventId)
     return try {
       CompletableFuture.runAsync(Runnable {
         val validator = IntellijSensitiveDataValidator.getInstance(recorderId)
         if (!validator.isGroupAllowed(group)) return@Runnable
+        val data = dataProvider() ?: return@Runnable
         val event = LogEvent(sessionId, build, bucket, eventTime,
           LogEventGroup(group.id, group.version.toString()),
           recorderVersion,
@@ -68,10 +69,9 @@ open class StatisticsFileEventLogger(private val recorderId: String,
 
   override fun logAsync(group: EventLogGroup,
                         eventId: String,
-                        dataProvider: () -> Map<String, Any>?,
+                        data: Map<String, Any>,
                         isState: Boolean): CompletableFuture<Void> {
-    val data = dataProvider() ?: return CompletableFuture.completedFuture(null)
-    return logAsync(group, eventId, data, isState)
+    return logAsync(group, eventId, { data }, isState)
   }
 
   private fun log(event: LogEvent, createdTime: Long, rawEventId: String, rawData: Map<String, Any>) {

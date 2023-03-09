@@ -1,4 +1,4 @@
-fun foo(list: List<String>) {
+fun foo() {
     for (i in 0..10) {
 
     }

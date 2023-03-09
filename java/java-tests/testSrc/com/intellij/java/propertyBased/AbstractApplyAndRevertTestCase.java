@@ -78,8 +78,11 @@ public abstract class AbstractApplyAndRevertTestCase extends HeavyPlatformTestCa
 
   protected final void initCompiler() {
     try {
-      Module module = ModuleManager.getInstance(myProject).getModules()[0];
-      myCompilerTester = new CompilerTester(module);
+      Module[] modules = ModuleManager.getInstance(myProject).getModules();
+      if (modules.length != 1) {
+        throw new IllegalArgumentException("Only one module is expected");
+      }
+      myCompilerTester = new CompilerTester(modules[0]);
     }
     catch (Throwable e) {
       ExceptionUtil.rethrowAllAsUnchecked(e);

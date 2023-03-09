@@ -34,8 +34,13 @@ class GitRevisionContentPreLoader(val project: Project) {
     val head = GitChangeUtils.resolveReference(project, root, "HEAD")
     for (change in changes) {
       val beforeRevision = change.beforeRevision
-      if (beforeRevision !is GitContentRevision || beforeRevision.getRevisionNumber() != head) {
-        LOG.info("Skipping change $change because beforeRevision is '${beforeRevision?.revisionNumber?.toString()}'")
+      if (beforeRevision !is GitContentRevision) {
+        LOG.warn("Skipping unsupported change $change: revision: ${beforeRevision?.javaClass?.name}, " +
+                 "revisionNumber: ${beforeRevision?.revisionNumber?.javaClass?.name}")
+        continue
+      }
+      if (beforeRevision.getRevisionNumber() != head) {
+        LOG.warn("Skipping change $change because beforeRevision does not match: '${beforeRevision.revisionNumber}' vs '${head}'")
         continue
       }
 

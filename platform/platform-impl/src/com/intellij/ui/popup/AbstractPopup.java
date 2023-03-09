@@ -1134,8 +1134,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         cornerType = PopupCornerType.RoundedWindow;
       }
       if (cornerType != PopupCornerType.None) {
-        if (SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) {
-          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType, myPopupBorderColor});
+        if ((SystemInfoRt.isMac && myPopupBorderColor != null && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
+          WindowRoundedCornersManager.setRoundedCorners(window, new Object[]{cornerType,
+            SystemInfoRt.isWindows ? JBUI.CurrentTheme.Popup.borderColor(true) : myPopupBorderColor});
           myContent.setBorder(myPopupBorder = PopupBorder.Factory.createEmpty());
         }
         else {
@@ -1325,9 +1326,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
-    if (mySpeedSearchAlwaysShown) {
-      setHeaderComponent(mySpeedSearchPatternField);
-    }
 
     JBTextField textField = mySpeedSearchPatternField.getTextEditor();
     if (ExperimentalUI.isNewUI()) {
@@ -1349,6 +1347,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     }
     if (SystemInfo.isMac) {
       RelativeFont.TINY.install(mySpeedSearchPatternField);
+    }
+
+    if (mySpeedSearchAlwaysShown) {
+      setHeaderComponent(mySpeedSearchPatternField);
     }
   }
 
@@ -1581,7 +1583,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (myFinalRunnable != null) {
       Runnable finalRunnable = myFinalRunnable;
       getFocusManager().doWhenFocusSettlesDown(() -> {
-        try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
           finalRunnable.run();
         }
       });
@@ -2037,12 +2039,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   public void setWarning(@NotNull @NlsContexts.Label String text) {
+    myHeaderPanel.add(createWarning(text), BorderLayout.SOUTH);
+  }
+
+  protected @NotNull JComponent createWarning(@NotNull @NlsContexts.Label String text) {
     JBLabel label = new JBLabel(text, UIUtil.getBalloonWarningIcon(), SwingConstants.CENTER);
     label.setOpaque(true);
     Color color = HintUtil.getInformationColor();
     label.setBackground(color);
     label.setBorder(BorderFactory.createLineBorder(color, 3));
-    myHeaderPanel.add(label, BorderLayout.SOUTH);
+    return label;
   }
 
   @Override

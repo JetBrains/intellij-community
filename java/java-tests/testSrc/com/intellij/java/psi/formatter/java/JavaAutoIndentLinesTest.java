@@ -16,6 +16,7 @@
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
 
@@ -31,5 +32,35 @@ public class JavaAutoIndentLinesTest extends AbstractEditorTest {
                         class C {
                             int <selection>a<caret></selection> = 1;
                         }""");
+  }
+
+  public void testKeepIndentsOnEmptyLinesWithSelection() {
+    getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE).getIndentOptions().KEEP_INDENTS_ON_EMPTY_LINES = true;
+    init(
+      """
+      public class Main {
+          public static void main(String[] args) {
+              <selection>if (args.length > 2) {
+             \s
+             \s
+                  System.out.println("Too many args");
+              }</selection>
+          }
+      }
+      """,
+      JavaFileType.INSTANCE);
+    executeAction(IdeActions.ACTION_EDITOR_AUTO_INDENT_LINES);
+    checkResultByText(
+      """
+      public class Main {
+          public static void main(String[] args) {
+              if (args.length > 2) {
+                 \s
+                 \s
+                  System.out.println("Too many args");
+              }
+          }
+      }
+      """);
   }
 }

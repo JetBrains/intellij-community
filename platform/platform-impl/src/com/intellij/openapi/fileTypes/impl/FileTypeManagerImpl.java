@@ -567,6 +567,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return stdFileType != null ? stdFileType.fileType : PlainTextFileType.INSTANCE;
   }
 
+  @ApiStatus.Internal
+  public @NotNull List<FileNameMatcher> getStandardMatchers(@NotNull FileType type) {
+    StandardFileType stdFileType = myStandardFileTypes.get(type.getName());
+    return (stdFileType != null) ? stdFileType.matchers : Collections.emptyList();
+  }
+
   private void instantiatePendingFileTypeByName(@NotNull String name) {
     FileTypeBean bean = withReadLock(() -> myPendingFileTypes.get(name));
     if (bean != null) {
@@ -697,10 +703,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
     if (fixedType != null && fixedType.getFirst().equals(file)) {
       FileType fileType = fixedType.getSecond();
-      if (toLog()) {
-        log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in " + Thread.currentThread());
+      if (fileType != null) {
+        if (toLog()) {
+          log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName() + " in " + Thread.currentThread());
+        }
+        return fileType.equals(requestedFileType);
       }
-      return fileType.equals(requestedFileType);
     }
 
     if (file instanceof LightVirtualFile) {

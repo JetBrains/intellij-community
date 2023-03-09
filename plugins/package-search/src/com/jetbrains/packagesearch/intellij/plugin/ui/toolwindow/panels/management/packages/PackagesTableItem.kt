@@ -114,12 +114,13 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
         }
 
         override fun additionalCopyText() = buildString {
-            if (packageModel.usageInfo.isEmpty()) return@buildString
+            if (packageModel.usagesByModule.isEmpty()) return@buildString
 
             appendLine()
             append("${PackageSearchBundle.message("packagesearch.package.copyableInfo.installedVersions")} ")
             append(
-                packageModel.usageInfo.map { it.declaredVersion }
+                packageModel.usagesByModule.values.flatten()
+                    .map { it.declaredVersion }
                     .distinct()
                     .joinToString(", ")
                     .removeSuffix(", ")

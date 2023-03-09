@@ -93,7 +93,7 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public boolean isWriteThread() {
+  public boolean isWriteIntentLockAcquired() {
     return true;
   }
 
@@ -123,7 +123,7 @@ public class MockApplication extends MockComponentManager implements Application
   }
 
   @Override
-  public void assertIsWriteThread() {
+  public void assertWriteIntentLockAcquired() {
   }
 
   @Override

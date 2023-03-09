@@ -115,14 +115,16 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
             if (areDuplicates(branch, otherBranch)) {
               isDuplicate[otherIndex] = true;
-              highlightDuplicate(otherBranch, branch);
+              if (canMerge(otherBranch, branch)) {
+                registerProblem(otherBranch, otherBranch.getCaseBranchMessage(), branch.newMergeCasesFix());
+              }
             }
           }
         }
       }
     }
 
-    private static boolean isMergeCasesFixAvailable(@NotNull BranchBase<?> duplicate, @NotNull BranchBase<?> original) {
+    private static boolean canMerge(@NotNull BranchBase<?> duplicate, @NotNull BranchBase<?> original) {
       if (duplicate.myBranchType == BranchType.UNMERGEABLE || original.myBranchType == BranchType.UNMERGEABLE) {
         return false;
       }
@@ -130,13 +132,6 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
         return true;
       }
       return duplicate.myBranchType != BranchType.TYPE_TEST_PATTERN;
-    }
-
-    private void highlightDuplicate(@NotNull BranchBase<?> duplicate, @NotNull BranchBase<?> original) {
-      LocalQuickFix fix = isMergeCasesFixAvailable(duplicate, original) ? original.newMergeCasesFix() : null;
-      if (fix != null || !duplicate.isEmptyRuleBody()) {
-        registerProblem(duplicate, duplicate.getCaseBranchMessage(), fix);
-      }
     }
 
     private void highlightDefaultDuplicate(@NotNull BranchBase branch) {
@@ -162,21 +157,41 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     Int2ObjectMap<List<Rule>> rulesByHash = new Int2ObjectOpenHashMap<>();
     List<String> commentTexts = new ArrayList<>();
     for (PsiElement element = switchBody.getFirstChild(); element != null; element = element.getNextSibling()) {
-      if (!(element instanceof PsiSwitchLabeledRuleStatement)) {
-        TryWithIdenticalCatchesInspection.collectCommentTexts(element, commentTexts);
-        continue;
-      }
-      PsiSwitchLabeledRuleStatement ruleStatement = (PsiSwitchLabeledRuleStatement)element;
-      PsiStatement body = ruleStatement.getBody();
-      if (body != null) {
-        TryWithIdenticalCatchesInspection.collectCommentTexts(ruleStatement, commentTexts);
-        Rule rule = new Rule(ruleStatement, body, ArrayUtilRt.toStringArray(commentTexts));
-        commentTexts.clear();
-        int hash = rule.hash();
-        rulesByHash.computeIfAbsent(hash, __ -> new ArrayList<>()).add(rule);
+      TryWithIdenticalCatchesInspection.collectCommentTexts(element, commentTexts);
+      if (element instanceof PsiSwitchLabeledRuleStatement ruleStatement) {
+        PsiStatement body = ruleStatement.getBody();
+        if (body != null) {
+          //noinspection AssignmentToForLoopParameter
+          element = collectCommentsUntilNewLine(commentTexts, element);
+          Rule rule = new Rule(ruleStatement, body, ArrayUtilRt.toStringArray(commentTexts));
+          commentTexts.clear();
+          rulesByHash.computeIfAbsent(rule.hash(), __ -> new ArrayList<>()).add(rule);
+        }
       }
     }
     return new ArrayList<>(rulesByHash.values());
+  }
+
+  @NotNull
+  private static PsiElement collectCommentsUntilNewLine(List<String> commentTexts, PsiElement element) {
+    List<String> mightBeCommentTexts = new ArrayList<>();
+    for (PsiElement currentSibling = element.getNextSibling(); currentSibling!=null; currentSibling = currentSibling.getNextSibling()) {
+      if (currentSibling instanceof PsiWhiteSpace whiteSpace) {
+        if (whiteSpace.textContains('\n')) {
+          commentTexts.addAll(mightBeCommentTexts);
+          return currentSibling;
+        }
+        else {
+          continue;
+        }
+      }
+      else if (currentSibling instanceof PsiComment) {
+        TryWithIdenticalCatchesInspection.collectCommentTexts(currentSibling, mightBeCommentTexts);
+        continue;
+      }
+      return currentSibling;
+    }
+    return element;
   }
 
   @NotNull
@@ -573,8 +588,6 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
 
     abstract LocalQuickFix newMergeWithDefaultFix();
 
-    abstract boolean isEmptyRuleBody();
-
     @Nullable
     Match match(BranchBase<?> other) {
       return getFinder().isDuplicate(other.myStatements[0], true);
@@ -734,11 +747,6 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    boolean isEmptyRuleBody() {
-      return false;
-    }
-
-    @Override
     LocalQuickFix newDeleteCaseFix() {
       return new DeleteRedundantBranchFix();
     }
@@ -876,11 +884,6 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     }
 
     @Override
-    boolean isEmptyRuleBody() {
-      return myStatements[0] instanceof PsiBlockStatement blockStatement && blockStatement.getCodeBlock().isEmpty();
-    }
-
-    @Override
     LocalQuickFix newDeleteCaseFix() {
       return new DeleteRedundantRuleFix();
     }
@@ -912,6 +915,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       RuleFixContext context = new RuleFixContext();
       if (context.prepare(descriptor.getStartElement(), rule -> mySwitchLabelText.equals(rule.getSwitchLabelText()))) {
         context.copyCaseValues();
+        context.deleteRedundantComments();
         context.deleteRule();
       }
     }
@@ -937,6 +941,7 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       RuleFixContext context = new RuleFixContext();
       if (context.prepare(descriptor.getStartElement(), Rule::isDefault)) {
+        context.deleteRedundantComments();
         context.deleteRule();
       }
     }
@@ -980,15 +985,53 @@ public final class DuplicateBranchesInSwitchInspection extends LocalInspectionTo
       return true;
     }
 
-    private static @Nullable PsiCaseLabelElementList getCaseLabelElementList(@NotNull PsiSwitchLabelStatementBase label) {
-      if (label.isDefaultCase()) {
-        PsiElementFactory factory = PsiElementFactory.getInstance(label.getProject());
-        PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)factory.createStatementFromText("case default", null);
-        PsiSwitchLabelStatement newLabelStatement = (PsiSwitchLabelStatement)label.getFirstChild().replace(labelStatement);
-        return newLabelStatement.getCaseLabelElementList();
+    public void deleteRedundantComments() {
+      List<PsiElement> redundantComments = new ArrayList<>();
+
+      List<PsiElement> mightBeRedundantComments = new ArrayList<>();
+      for (PsiElement element = myRuleToDelete.myLabel.getNextSibling(); element != null; element = element.getNextSibling()) {
+        if (element instanceof PsiWhiteSpace whiteSpace) {
+          if (whiteSpace.textContains('\n')) {
+            redundantComments.addAll(mightBeRedundantComments);
+            break;
+          }
+        }
+        else if (element instanceof PsiComment psiComment) {
+          if (isRedundantComment(myCommentsToMergeWith, psiComment)) {
+            mightBeRedundantComments.add(psiComment);
+          }
+        }
       }
-      return label.getCaseLabelElementList();
+
+      mightBeRedundantComments.clear();
+      for (PsiElement element = myRuleToDelete.myLabel.getPrevSibling(); element != null; element = element.getPrevSibling()) {
+        if (element instanceof PsiWhiteSpace whiteSpace) {
+          if (whiteSpace.textContains('\n')) {
+            redundantComments.addAll(mightBeRedundantComments);
+            mightBeRedundantComments.clear();
+          }
+          continue;
+        }
+        else if (element instanceof PsiComment psiComment) {
+          if (isRedundantComment(myCommentsToMergeWith, psiComment)) {
+            mightBeRedundantComments.add(psiComment);
+            continue;
+          }
+        }
+        break;
+      }
+      redundantComments.forEach(PsiElement::delete);
     }
+
+  private static @Nullable PsiCaseLabelElementList getCaseLabelElementList(@NotNull PsiSwitchLabelStatementBase label) {
+    if (label.isDefaultCase()) {
+      PsiElementFactory factory = PsiElementFactory.getInstance(label.getProject());
+      PsiSwitchLabelStatement labelStatement = (PsiSwitchLabelStatement)factory.createStatementFromText("case default", null);
+      PsiSwitchLabelStatement newLabelStatement = (PsiSwitchLabelStatement)label.getFirstChild().replace(labelStatement);
+      return newLabelStatement.getCaseLabelElementList();
+    }
+    return label.getCaseLabelElementList();
+  }
 
     void copyCaseValues() {
       @Nullable PsiCaseLabelElementList caseValuesToMergeWith = getCaseLabelElementList(myRuleToMergeWith.myLabel);

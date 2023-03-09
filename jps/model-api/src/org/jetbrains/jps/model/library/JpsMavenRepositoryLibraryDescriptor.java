@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.library;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,9 @@ public class JpsMavenRepositoryLibraryDescriptor {
   private final String myPackaging;
   private final boolean myIncludeTransitiveDependencies;
   private final List<String> myExcludedDependencies;
+
   private final String myJarRepositoryId;
+
   private final List<ArtifactVerification> myArtifactsVerification;
 
   public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
@@ -46,7 +49,7 @@ public class JpsMavenRepositoryLibraryDescriptor {
                                              boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
     this(groupId, artifactId, version, DEFAULT_PACKAGING, includeTransitiveDependencies, excludedDependencies);
   }
-  
+
   public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
                                              @NotNull final String packaging, boolean includeTransitiveDependencies,
                                              @NotNull List<String> excludedDependencies) {
@@ -176,6 +179,10 @@ public class JpsMavenRepositoryLibraryDescriptor {
   @Override
   public String toString() {
     return myMavenId != null ? myMavenId : "null";
+  }
+
+  public boolean isVerifySha256Checksum() {
+    return ContainerUtil.exists(myArtifactsVerification, it -> it.getSha256sum() != null);
   }
 
   public List<ArtifactVerification> getArtifactsVerification() {

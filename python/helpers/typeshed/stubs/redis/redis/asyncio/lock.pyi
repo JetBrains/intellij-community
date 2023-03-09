@@ -1,4 +1,5 @@
-from typing import Any, Awaitable
+from collections.abc import Awaitable
+from typing import Any
 
 from redis.asyncio import Redis
 

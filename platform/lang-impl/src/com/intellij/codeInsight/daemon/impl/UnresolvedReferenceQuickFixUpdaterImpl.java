@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Manages execution of {@link UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, HighlightInfo)} in background.
+ * Manages execution of {@link UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, HighlightInfo.Builder)} in background.
  * The list of {@link HighlightInfo}s which require background quick fix computation is stored in document markup.
  * If {@link HighlightInfo#unresolvedReference} is not null, it means that {@link HighlightInfo} will need to compute its quickfixes in background.
  * That computation is started by {@link UnresolvedReferenceQuickFixUpdater#startComputingNextQuickFixes(PsiFile, Editor, ProperTextRange)}, which tries to start not too many jobs to conserve resources
@@ -62,8 +62,8 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
     }
   }
 
-  public void registerQuickFixesLater(@NotNull PsiReference ref, @NotNull HighlightInfo info) {
-    info.setUnresolvedReference(ref);
+  public void registerQuickFixesLater(@NotNull PsiReference ref, @NotNull HighlightInfo.Builder info) {
+    ((HighlightInfoB)info).setUnresolvedReference(ref);
   }
 
   @Override

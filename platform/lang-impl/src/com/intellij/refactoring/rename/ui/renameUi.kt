@@ -2,10 +2,7 @@
 package com.intellij.refactoring.rename.ui
 
 import com.intellij.model.Pointer
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -16,9 +13,6 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.rename.api.RenameTarget
 import kotlinx.coroutines.*
 import java.util.concurrent.locks.LockSupport
-import kotlin.coroutines.ContinuationInterceptor
-
-internal val uiDispatcher: ContinuationInterceptor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL).coroutineDispatchingContext()
 
 /**
  * Shows a background progress indicator in the UI,

@@ -1,4 +1,4 @@
-// "Replace with max()" "false"
+// "Collapse loop with stream 'max()'" "false"
 
 import java.util.*;
 

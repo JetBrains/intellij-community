@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlightingModel;
@@ -16,6 +16,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +78,7 @@ public class DeleteSwitchLabelFix extends LocalQuickFixAndIntentionActionOnPsiEl
     if (label == null) return;
     PsiSwitchBlock block = label.getEnclosingSwitchBlock();
     if (block == null) return;
-    deleteLabelElement(labelElement);
+    deleteLabelElement(project, labelElement);
     if (myAddDefaultIfNecessary) {
       IntentionAction addDefaultFix = SwitchBlockHighlightingModel.createAddDefaultFixIfNecessary(block);
       if (addDefaultFix != null) {
@@ -86,15 +87,27 @@ public class DeleteSwitchLabelFix extends LocalQuickFixAndIntentionActionOnPsiEl
     }
   }
 
-  public static void deleteLabelElement(@NotNull PsiCaseLabelElement labelElement) {
+  public static void deleteLabelElement(@NotNull Project project, @NotNull PsiCaseLabelElement labelElement) {
     PsiSwitchLabelStatementBase label = PsiImplUtil.getSwitchLabel(labelElement);
     if (label == null) return;
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
-    if (labelElementList != null && labelElementList.getElementCount() == 1) {
-      deleteLabel(label);
-    } else {
-      new CommentTracker().deleteAndRestoreComments(labelElement);
+    if (labelElementList != null) {
+      if (labelElementList.getElementCount() == 1) {
+        deleteLabel(label);
+        return;
+      }
+      else if (labelElementList.getElementCount() == 2) {
+        PsiElement defaultElement = SwitchUtils.findDefaultElement(label);
+        if (defaultElement != null && defaultElement != labelElement) {
+          new CommentTracker().deleteAndRestoreComments(labelElementList);
+          PsiElementFactory factory = PsiElementFactory.getInstance(project);
+          PsiKeyword defaultKeyword = factory.createKeyword(PsiKeyword.DEFAULT);
+          label.getFirstChild().replace(defaultKeyword);
+          return;
+        }
+      }
     }
+    new CommentTracker().deleteAndRestoreComments(labelElement);
   }
 
   public static void deleteLabel(PsiSwitchLabelStatementBase label) {

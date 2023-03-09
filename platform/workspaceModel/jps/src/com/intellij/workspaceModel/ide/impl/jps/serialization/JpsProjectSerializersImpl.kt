@@ -478,6 +478,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val actualFileSource = getActualFileSource(source) ?: return null
 
     return when (actualFileSource) {
+      is JpsFileEntitySource.ExactGlobalFile -> actualFileSource.file.url
       is JpsFileEntitySource.ExactFile -> actualFileSource.file.url
       is JpsFileEntitySource.FileInDirectory -> {
         val fileName = fileIdToFileName.get(actualFileSource.fileNameId) ?: run {
@@ -909,6 +910,9 @@ class CachingJpsFileContentReader(private val configLocation: JpsProjectConfigLo
 
 internal fun Element.getAttributeValueStrict(name: String): String =
   getAttributeValue(name) ?: throw JDOMException("Expected attribute $name under ${this.name} element")
+
+internal fun Element.getChildTagStrict(name: String): Element =
+  getChild(name) ?: throw JDOMException("Expected tag $name under ${this.name} element")
 
 fun isExternalModuleFile(filePath: String): Boolean {
   val parentPath = PathUtil.getParentPath(filePath)

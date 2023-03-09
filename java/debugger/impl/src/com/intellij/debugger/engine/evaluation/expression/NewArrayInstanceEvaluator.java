@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.debugger.engine.evaluation.expression;
 
@@ -62,7 +62,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
     ArrayReference arrayReference = DebuggerUtilsEx.mirrorOfArray(arrayType, dimension, context);
     if (initialValues != null && initialValues.length > 0) {
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Setting initial values: dimension = "+dimension + "; array size is "+initialValues.length);
+        LOG.debug("Setting initial values: dimension = " + dimension + "; array size is " + initialValues.length);
       }
       setInitialValues(arrayReference, initialValues, context);
     }
@@ -101,7 +101,7 @@ class NewArrayInstanceEvaluator implements Evaluator {
     catch (ClassNotLoadedException ex) {
       final ReferenceType referenceType;
       try {
-        referenceType = context.isAutoLoadClasses()? debugProcess.loadClass(context, ex.className(), type.classLoader()) : null;
+        referenceType = context.isAutoLoadClasses() ? debugProcess.loadClass(context, ex.className(), type.classLoader()) : null;
       }
       catch (InvocationException | InvalidTypeException | IncompatibleThreadStateException | ClassNotLoadedException e) {
         throw EvaluateExceptionUtil.createEvaluateException(e);

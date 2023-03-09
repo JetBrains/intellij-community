@@ -3,6 +3,7 @@ package com.intellij.ide
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import com.intellij.util.PathUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
@@ -70,6 +71,9 @@ interface RecentProjectsManager {
 
   @ApiStatus.Internal
   suspend fun reopenLastProjectsOnStart(): Boolean
+
+  @ApiStatus.Internal
+  fun setActivationTimestamp(project: Project, timestamp: Long)
 
   fun suggestNewProjectLocation(): String
 

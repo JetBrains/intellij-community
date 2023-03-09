@@ -140,7 +140,7 @@ open class VirtualFileIndex internal constructor(
     }
 
     @Synchronized
-    internal fun index(id: EntityId, propertyName: String, virtualFileUrls: Set<VirtualFileUrl>) {
+    internal fun index(id: EntityId, propertyName: String, virtualFileUrls: Collection<VirtualFileUrl>) {
       startWrite()
       val newVirtualFileUrls = HashSet(virtualFileUrls)
       fun cleanExistingVfu(existingVfu: Any): Boolean {

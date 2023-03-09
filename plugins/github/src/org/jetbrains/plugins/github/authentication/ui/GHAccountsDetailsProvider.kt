@@ -5,19 +5,19 @@ import com.intellij.collaboration.auth.ui.LazyLoadingAccountsDetailsProvider
 import com.intellij.collaboration.auth.ui.cancelOnRemoval
 import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.coroutineToIndicator
+import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.github.GithubIcons
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
+import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import java.awt.Image
@@ -25,7 +25,7 @@ import java.awt.Image
 internal class GHAccountsDetailsProvider(
   scope: CoroutineScope,
   private val executorSupplier: suspend (GithubAccount) -> GithubApiRequestExecutor?
-) : LazyLoadingAccountsDetailsProvider<GithubAccount, GithubUserDetailed>(scope, GithubIcons.DefaultAvatar) {
+) : LazyLoadingAccountsDetailsProvider<GithubAccount, GithubUserDetailed>(scope, CollaborationToolsIcons.Review.DefaultAvatar) {
 
   constructor(scope: CoroutineScope, accountManager: GHAccountManager, accountsModel: GHAccountsListModel)
     : this(scope, { getExecutor(accountManager, accountsModel, it) }) {
@@ -46,7 +46,7 @@ internal class GHAccountsDetailsProvider(
     }
     if (executor == null) return Result.Error(GithubBundle.message("account.token.missing"), true)
     return withContext(Dispatchers.IO) {
-      runUnderIndicator {
+      coroutineToIndicator {
         doLoadDetails(executor, account)
       }
     }
@@ -60,7 +60,8 @@ internal class GHAccountsDetailsProvider(
     }
     catch (e: Throwable) {
       val errorMessage = ExceptionUtil.getPresentableMessage(e)
-      return Result.Error(errorMessage, false)
+      val needReLogin = e is GithubAuthenticationException
+      return Result.Error(errorMessage, needReLogin)
     }
     if (!GHSecurityUtil.isEnoughScopes(scopes.orEmpty())) {
       return Result.Error(GithubBundle.message("account.scopes.insufficient"), true)

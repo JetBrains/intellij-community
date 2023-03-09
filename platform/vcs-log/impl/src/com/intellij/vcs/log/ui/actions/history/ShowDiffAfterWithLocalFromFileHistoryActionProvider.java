@@ -10,7 +10,11 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsLogCommitSelection;
+import com.intellij.vcs.log.VcsLogDataKeys;
+import com.intellij.vcs.log.VcsLogDiffHandler;
+import com.intellij.vcs.log.history.FileHistoryModel;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +39,8 @@ public class ShowDiffAfterWithLocalFromFileHistoryActionProvider implements AnAc
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     VcsLogCommitSelection selection = e.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
-    if (project == null || selection == null) {
+    FileHistoryModel model = e.getData(VcsLogInternalDataKeys.FILE_HISTORY_MODEL);
+    if (project == null || selection == null || model == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
@@ -59,6 +64,7 @@ public class ShowDiffAfterWithLocalFromFileHistoryActionProvider implements AnAc
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsLogCommitSelection selection = e.getRequiredData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION);
+    FileHistoryModel model = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_MODEL);
 
     List<CommitId> commits = selection.getCommits();
     if (commits.size() != 1) return;
@@ -67,7 +73,7 @@ public class ShowDiffAfterWithLocalFromFileHistoryActionProvider implements AnAc
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
 
     FilePath localPath = e.getRequiredData(VcsDataKeys.FILE_PATH);
-    FilePath pathInCommit = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI).getPathInCommit(commit.getHash());
+    FilePath pathInCommit = model.getPathInCommit(commit.getHash());
     VcsLogDiffHandler handler = e.getRequiredData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
 
     handler.showDiffWithLocal(commit.getRoot(), pathInCommit, commit.getHash(), localPath);

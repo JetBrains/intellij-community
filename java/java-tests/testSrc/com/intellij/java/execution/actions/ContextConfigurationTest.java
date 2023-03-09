@@ -21,10 +21,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.java.execution.BaseConfigurationTestCase;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.ExecutionDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
@@ -193,7 +190,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     ExecutionEnvironment e = ExecutionEnvironmentBuilder.createOrNull(DefaultRunExecutor.getRunExecutorInstance(), settings).build();
     MapDataContext dataContext = new MapDataContext();
     dataContext.put(ExecutionDataKeys.EXECUTION_ENVIRONMENT, e);
-    TestActionEvent event = new TestActionEvent(dataContext);
+    AnActionEvent event = TestActionEvent.createTestEvent(dataContext);
     new CreateAction().update(event);
     assertTrue(event.getPresentation().isEnabledAndVisible());
   }

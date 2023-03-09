@@ -17,4 +17,5 @@ interface IntelliJNewProjectWizardData {
   var contentRoot: String
   var moduleFileLocation: String
   var addSampleCode: Boolean
+  val generateOnboardingTips: Boolean
 }

@@ -7,13 +7,14 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.NlsContexts
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 interface NonModalCommitWorkflowUi : CommitWorkflowUi, CommitActionsUi, CommitAuthorTracker {
   val commitProgressUi: CommitProgressUi
 
   var editedCommit: EditedCommitDetails?
 
-  fun showCommitOptions(options: CommitOptions, actionName: String, isFromToolbar: Boolean, dataContext: DataContext)
+  fun showCommitOptions(options: CommitOptions, actionName: @Nls String, isFromToolbar: Boolean, dataContext: DataContext)
 }
 
 interface CommitActionsUi {

@@ -13,6 +13,7 @@ import com.intellij.testFramework.ParsingTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.lang.parser.MarkdownFlavourProvider
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition
 import org.intellij.plugins.markdown.lang.psi.MarkdownAstFactory
 
@@ -26,6 +27,7 @@ abstract class MarkdownParsingTestCase(dataPath: String): ParsingTestCase(
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
+    registerExtensionPoint(MarkdownFlavourProvider.extensionPoint, MarkdownFlavourProvider::class.java)
     registerExtensionPoint(EmbeddedTokenTypesProvider.EXTENSION_POINT_NAME, EmbeddedTokenTypesProvider::class.java)
     registerExtensionPoint(StartTagEndTokenProvider.EP_NAME, StartTagEndTokenProvider::class.java)
     addExplicitExtension(LanguageFileViewProviders.INSTANCE, MarkdownLanguage.INSTANCE, MarkdownFileViewProviderFactory())

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.util.RoundedCellRenderer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -65,11 +66,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     try {
       GotoData gotoData = getSourceAndTargetElements(editor, file);
+      Consumer<JBPopup> showPopupProcedure = popup -> {
+        popup.showInBestPositionFor(editor);
+      };
       if (gotoData != null) {
-        show(project, editor, file, gotoData);
+        show(project, editor, file, gotoData, showPopupProcedure);
       }
       else {
-        chooseFromAmbiguousSources(editor, file, data -> show(project, editor, file, data));
+        chooseFromAmbiguousSources(editor, file, data -> show(project, editor, file, data, showPopupProcedure));
       }
     }
     catch (IndexNotReadyException e) {
@@ -91,10 +95,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   @Nullable
   protected abstract GotoData getSourceAndTargetElements(Editor editor, PsiFile file);
 
-  private void show(@NotNull Project project,
-                    @NotNull Editor editor,
-                    @NotNull PsiFile file,
-                    @NotNull GotoData gotoData) {
+  protected void show(@NotNull Project project,
+                      @NotNull Editor editor,
+                      @NotNull PsiFile file,
+                      @NotNull GotoData gotoData,
+                      @NotNull Consumer<? super JBPopup> showPopup) {
     if (gotoData.isCanceled) return;
 
     PsiElement[] targets = gotoData.targets;
@@ -135,7 +140,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     if (useEditorFont()) {
       builder.setFont(EditorUtil.getEditorFont());
     }
-    builder.setRenderer(new GotoTargetRenderer(gotoData::getPresentation)).
+    builder.setRenderer(new RoundedCellRenderer<>(new GotoTargetRenderer(gotoData::getPresentation))).
       setItemsChosenCallback(selectedElements -> {
         for (Object element : selectedElements) {
           if (element instanceof AdditionalAction) {
@@ -186,14 +191,14 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       Alarm alarm = new Alarm(popup);
       alarm.addRequest(() -> {
         if (!editor.isDisposed()) {
-          popup.showInBestPositionFor(editor);
+          showPopup.consume(popup);
         }
       }, 300);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
     else {
-      popup.showInBestPositionFor(editor);
+      showPopup.consume(popup);
     }
   }
 

@@ -143,14 +143,9 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         dp.managerThread.schedule(stepOutCommand)
     }
 
-    override fun tearDown() {
-        try {
-            classPath.clear()
-        } catch (e: Throwable) {
-            addSuppressedException(e)
-        } finally {
-            super.tearDown()
-        }
+    override fun setUp() {
+        super.setUp()
+        atDebuggerTearDown { classPath.clear() }
     }
 
     private fun SuspendContextImpl.doStepOver(ignoreBreakpoints: Boolean = false) {

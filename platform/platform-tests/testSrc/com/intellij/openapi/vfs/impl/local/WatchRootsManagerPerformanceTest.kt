@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local
 
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.util.io.IoTestUtil.assumeNioSymLinkCreationIsSupported
+import com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.local.FileWatcherTestUtil.NATIVE_PROCESS_DELAY
@@ -22,16 +22,14 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 import java.nio.file.Files
 import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.test.assertFalse
 
 @SkipSlowTestLocally
 class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
-  private val LOG: Logger by lazy { Logger.getInstance(NativeFileWatcherImpl::class.java) }
+  private val LOG = logger<WatchRootsManagerPerformanceTest>()
 
   @Rule @JvmField val tempDir = TempDirectory()
 
@@ -43,7 +41,7 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
 
     fs = LocalFileSystem.getInstance()
-    vfsTempDir = refresh(tempDir.root)
+    vfsTempDir = refresh(tempDir.rootPath)
 
     runInEdtAndWait { fs.refresh(false) }
     runInEdtAndWait { fs.refresh(false) }
@@ -73,13 +71,16 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
   //</editor-fold>
 
   @Test fun testWatchRootsAddOnlyTiming() {
-    val root = tempDir.newDirectory("root")
+    val root = tempDir.newDirectoryPath("root")
     val fileCount = 50_000
+    refresh(root)
+
     try {
+      val roots = (1..fileCount).map { "${root}/f${it}" }
+      val requests = ArrayList<LocalFileSystem.WatchRequest>(fileCount)
       PlatformTestUtil.startPerformanceTest("Adding roots", 9000) {
-        val requests = ArrayList<LocalFileSystem.WatchRequest>(fileCount)
-        for (i in 1..fileCount) {
-          requests.add(fs.addRootToWatch(File(root, "f$i").path, true)!!)
+        roots.forEach {
+          requests.add(fs.addRootToWatch(it, true)!!)
         }
         fs.removeWatchedRoots(requests)
       }.assertTiming()
@@ -90,13 +91,14 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testWatchRootsBulkAddOnlyTiming() {
-    val root = tempDir.newDirectory("root")
+    val root = tempDir.newDirectoryPath("root")
     val fileCount = 100_000
     refresh(root)
 
     try {
+      val roots = (1..fileCount).map { "${root}/f${it}" }
       PlatformTestUtil.startPerformanceTest("Adding roots", 13000) {
-        fs.removeWatchedRoots(fs.addRootsToWatch((1..fileCount).map { File(root, "f$it").path }, true))
+        fs.removeWatchedRoots(fs.addRootsToWatch(roots, true))
       }.assertTiming()
     }
     finally {
@@ -105,17 +107,16 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testAddWatchRootWithManySymbolicLinks() {
-    assumeNioSymLinkCreationIsSupported()
-    val root = tempDir.newDirectory("root")
+    assumeSymLinkCreationIsSupported()
+    val root = tempDir.newDirectoryPath("root")
     val linkCount = 20_000
-    (1..linkCount).forEach {
-      Files.createSymbolicLink(root.toPath().resolve("l$it"), tempDir.newDirectory("targets/d$it").toPath())
-    }
+    (1..linkCount).forEach { Files.createSymbolicLink(root.resolve("l${it}"), tempDir.newDirectoryPath("targets/d${it}")) }
     refresh(root)
 
     try {
+      val rootPath = root.toString()
       PlatformTestUtil.startPerformanceTest("Adding roots", 2000) {
-        fs.removeWatchedRoot(fs.addRootToWatch(root.path, true)!!)
+        fs.removeWatchedRoot(fs.addRootToWatch(rootPath, true)!!)
       }.assertTiming()
     }
     finally {
@@ -124,7 +125,7 @@ class WatchRootsManagerPerformanceTest : BareTestFixtureTestCase() {
   }
 
   @Test fun testCreateCanonicalPathMap() {
-    val root = tempDir.newDirectory("root").path.replace('\\', '/')
+    val root = tempDir.newDirectoryPath("root").toString().replace('\\', '/')
     val flatWatchRoots = TreeSet<String>()
     val optimizedRecursiveWatchRoots = TreeSet<String>()
     val pathMappings = WatchRootsUtil.createMappingsNavigableSet()

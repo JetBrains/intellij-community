@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
@@ -159,7 +159,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     }
     Project project = myEditor.getProject();
     Document document = myEditor.getDocument();
-    if (project != null && PsiDocumentManager.getInstance(project).isDocumentBlockedByPsi(document)) {
+    if (project != null && PostprocessReformattingAspect.getInstance(project).isDocumentLocked(document)) {
       // Disable checking for files in intermediate states - e.g., for files during refactoring.
       return false;
     }

@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Registers "Coverage" tab in Java run configurations
@@ -81,7 +82,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
               }
               catch (Exception ignored) {
                 Notifications.Bus.notify(new Notification("Coverage",
-                                                          CoverageBundle.message("coverage.error.collecting.data"),
+                                                          CoverageBundle.message("coverage.error.collecting.data.text"),
                                                           JavaCoverageBundle.message("download.coverage.report.from.target.failed"),
                                                           NotificationType.ERROR));
                 return;
@@ -127,7 +128,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     }
 
     final JavaCoverageEnabledConfiguration coverageConfig = JavaCoverageEnabledConfiguration.getFrom(configuration);
-    //noinspection ConstantConditions
+    if (coverageConfig == null) return;
     coverageConfig.setCurrentCoverageSuite(null);
     final CoverageRunner coverageRunner = coverageConfig.getCoverageRunner();
     if (runnerSettings instanceof CoverageRunnerData && coverageRunner != null) {
@@ -174,8 +175,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
       return;
     }
 
-    //noinspection ConstantConditions
-    JavaCoverageEnabledConfiguration.getFrom(runConfiguration).readExternal(element);
+    Objects.requireNonNull(JavaCoverageEnabledConfiguration.getFrom(runConfiguration)).readExternal(element);
   }
 
   @Override
@@ -183,8 +183,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     if (!isApplicableFor(runConfiguration)) {
       return;
     }
-    //noinspection ConstantConditions
-    JavaCoverageEnabledConfiguration.getFrom(runConfiguration).writeExternal(element);
+    Objects.requireNonNull(JavaCoverageEnabledConfiguration.getFrom(runConfiguration)).writeExternal(element);
   }
 
   @Override
@@ -229,13 +228,10 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
           else if (qualifiedName != null){
             final String packageName = StringUtil.getPackageName(qualifiedName);
             if (!StringUtil.isEmpty(packageName)) {
-              for (int i = 0; i < filters.length; i++) {
-                String filter = filters[i];
-                if (filter.equals(packageName + ".*")) {
-                  listener = appendListener(listener,
-                                            new RefactoringListeners.RefactorPackageByClass(new MyClassAccessor(project, patterns, i, filters)));
-                  break;
-                }
+              int i = ArrayUtil.indexOf(filters, packageName + ".*");
+              if (i != -1) {
+                listener = appendListener(listener,
+                                          new RefactoringListeners.RefactorPackageByClass(new MyClassAccessor(project, patterns, i, filters)));
               }
             }
           }
@@ -293,7 +289,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
       if (!(runnerSettings instanceof CoverageRunnerData)) return true;
       final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
       return !(coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner) ||
-             !(coverageEnabledConfiguration.isTrackPerTestCoverage() && !coverageEnabledConfiguration.isSampling());
+             !(coverageEnabledConfiguration.isTrackPerTestCoverage() && coverageEnabledConfiguration.isTracingEnabled());
     }
     return false;
   }

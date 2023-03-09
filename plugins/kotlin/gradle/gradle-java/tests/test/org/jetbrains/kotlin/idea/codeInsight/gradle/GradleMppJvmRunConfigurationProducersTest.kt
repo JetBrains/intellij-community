@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer
-import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
+import org.jetbrains.plugins.gradle.testFramework.util.buildSettings
 import org.jetbrains.plugins.gradle.testFramework.util.buildscript
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
@@ -109,8 +109,8 @@ class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationPro
             """.trimIndent()
         )
 
-        createProjectSubFile("settings.gradle", GroovyScriptBuilder.groovy {
-            assign("rootProject.name", "project")
+        createProjectSubFile("settings.gradle", buildSettings {
+            setProjectName("project")
         })
 
         createProjectSubFile("build.gradle", buildscript {

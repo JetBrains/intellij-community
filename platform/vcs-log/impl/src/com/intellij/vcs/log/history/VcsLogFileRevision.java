@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.vcs.FilePath;
@@ -32,13 +18,13 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class VcsLogFileRevision extends VcsFileRevisionEx {
-  @NotNull private final ContentRevision myRevision;
-  @NotNull private final FilePath myPath;
-  @NotNull private final VcsUser myAuthor;
-  @NotNull private final VcsUser myCommitter;
+  private final @NotNull ContentRevision myRevision;
+  private final @NotNull FilePath myPath;
+  private final @NotNull VcsUser myAuthor;
+  private final @NotNull VcsUser myCommitter;
   private final long myAuthorTime;
   private final long myCommitTime;
-  @NotNull private final String myFullMessage;
+  private final @NotNull String myFullMessage;
   private final boolean myIsDeleted;
 
   private byte @Nullable [] myContent = null;
@@ -57,51 +43,43 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
     myIsDeleted = isDeleted;
   }
 
-  @Nullable
   @Override
-  public String getAuthor() {
+  public @Nullable String getAuthor() {
     return myAuthor.getName();
   }
 
-  @Nullable
   @Override
-  public String getAuthorEmail() {
+  public @Nullable String getAuthorEmail() {
     return myAuthor.getEmail();
   }
 
-  @Nullable
   @Override
-  public String getCommitterName() {
+  public @Nullable String getCommitterName() {
     return myCommitter.getName();
   }
 
-  @Nullable
   @Override
-  public String getCommitterEmail() {
+  public @Nullable String getCommitterEmail() {
     return myCommitter.getName();
   }
 
-  @Nullable
   @Override
-  public String getCommitMessage() {
+  public @Nullable String getCommitMessage() {
     return myFullMessage;
   }
 
-  @NotNull
   @Override
-  public FilePath getPath() {
+  public @NotNull FilePath getPath() {
     return myPath;
   }
 
-  @Nullable
   @Override
-  public String getBranchName() {
+  public @Nullable String getBranchName() {
     return null;
   }
 
-  @Nullable
   @Override
-  public RepositoryLocation getChangedRepositoryPath() {
+  public @Nullable RepositoryLocation getChangedRepositoryPath() {
     return null;
   }
 
@@ -127,9 +105,8 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
     return myContent;
   }
 
-  @NotNull
   @Override
-  public VcsRevisionNumber getRevisionNumber() {
+  public @NotNull VcsRevisionNumber getRevisionNumber() {
     return myRevision.getRevisionNumber();
   }
 
@@ -140,9 +117,8 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
     return cal.getTime();
   }
 
-  @Nullable
   @Override
-  public Date getAuthorDate() {
+  public @Nullable Date getAuthorDate() {
     Calendar cal = Calendar.getInstance();
     cal.setTimeInMillis(myAuthorTime);
     return cal.getTime();

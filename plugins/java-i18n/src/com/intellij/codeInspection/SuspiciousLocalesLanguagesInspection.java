@@ -65,8 +65,7 @@ public final class SuspiciousLocalesLanguagesInspection extends LocalInspectionT
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (!myAdditionalLanguages.isEmpty()) {
-      final ArrayList<String> uniqueLanguages = new ArrayList<>(new HashSet<>(myAdditionalLanguages));
-      Collections.sort(uniqueLanguages);
+      List<String> uniqueLanguages = ContainerUtil.sorted(new HashSet<>(myAdditionalLanguages));
       final String locales = StringUtil.join(uniqueLanguages, ",");
       node.setAttribute(ADDITIONAL_LANGUAGES_ATTR_NAME, locales);
     }

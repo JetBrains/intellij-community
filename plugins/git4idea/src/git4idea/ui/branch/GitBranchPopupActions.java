@@ -17,11 +17,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.IssueNavigationConfiguration;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
@@ -134,7 +132,8 @@ public class GitBranchPopupActions {
       .toList();
     int topShownBranches = getNumOfTopShownBranches(localBranchActions);
     if (currentBranch != null) {
-      localBranchActions.add(0, new CurrentBranchActions(myProject, repositoryList, currentBranch.getName(), myRepository));
+      localBranchActions = prepend(localBranchActions,
+                                   new CurrentBranchActions(myProject, repositoryList, currentBranch.getName(), myRepository));
       topShownBranches++;
     }
     // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites;
@@ -224,27 +223,19 @@ public class GitBranchPopupActions {
   @NotNull
   private static String getCurrentBranchTruncatedName(@NlsSafe @NotNull String branchName,
                                                       @NotNull Project project) {
-    return showFullBranchNamesInsteadOfCurrentSelected()
-           ? wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)))
-           : GitBundle.message("branches.current.branch.name");
+    return wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)));
   }
 
   @NlsSafe
   @NotNull
   public static String getSelectedBranchTruncatedPresentation(@NotNull Project project,
                                                               @NlsSafe @NotNull String branchName) {
-    return showFullBranchNamesInsteadOfCurrentSelected()
-           ? wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)))
-           : GitBundle.message("branches.selected.branch.name");
-  }
-
-  private static boolean showFullBranchNamesInsteadOfCurrentSelected() {
-    return Registry.is("git.show.full.branch.name.instead.current.selected");
+    return wrapWithQuotes(StringUtil.escapeMnemonics(truncateBranchName(branchName, project)));
   }
 
   @NlsSafe
   @NotNull
-  static String truncateBranchName(@NotNull @NlsSafe String branchName, @NotNull Project project) {
+  public static String truncateBranchName(@NotNull @NlsSafe String branchName, @NotNull Project project) {
     int branchNameLength = branchName.length();
 
     if (branchNameLength <= MAX_BRANCH_NAME_LENGTH + BRANCH_NAME_LENGHT_DELTA) {

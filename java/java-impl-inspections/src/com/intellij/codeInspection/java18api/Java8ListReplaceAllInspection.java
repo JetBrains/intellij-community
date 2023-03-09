@@ -5,7 +5,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
@@ -27,10 +27,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -38,11 +39,10 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
 
   @SuppressWarnings("PublicField") public boolean dontWarnInCaseOfMultilineLambda = true;
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(JavaBundle.message("checkbox.don.t.warn.in.case.of.multiline.lambda"), this,
-                                          "dontWarnInCaseOfMultilineLambda");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("dontWarnInCaseOfMultilineLambda", JavaBundle.message("checkbox.don.t.warn.in.case.of.multiline.lambda")));
   }
 
   @NotNull

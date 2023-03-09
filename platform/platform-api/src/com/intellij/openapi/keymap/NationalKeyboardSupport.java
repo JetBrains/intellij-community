@@ -6,6 +6,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,12 +43,7 @@ public final class NationalKeyboardSupport implements PersistentStateComponent<N
     }
 
     String keyboardLayoutLanguage = getLanguageForComponent(component);
-    for (String language : supportedNonEnglishLanguages) {
-      if (language.equals(keyboardLayoutLanguage)) {
-        return true;
-      }
-    }
-    return false;
+    return ArrayUtil.contains(keyboardLayoutLanguage, supportedNonEnglishLanguages);
   }
 
   public static @NotNull String getVMOption() {

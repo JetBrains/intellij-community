@@ -19,23 +19,19 @@ import java.util.Collections;
 import java.util.Queue;
 
 public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
-  private final @NotNull ManagingFS myManagingFS;
-
   public PlatformVirtualFileManager() {
     super(Collections.emptyList());
-
-    myManagingFS = ManagingFS.getInstance();
   }
 
   @Override
   protected long doRefresh(boolean asynchronous, @Nullable Runnable postAction) {
     if (!asynchronous) {
-      ApplicationManager.getApplication().assertIsWriteThread();
+      ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     }
 
     // todo: get an idea how to deliver changes from local FS to jar fs before they go refresh
     RefreshSession session = RefreshQueue.getInstance().createSession(asynchronous, true, postAction);
-    session.addAllFiles(myManagingFS.getRoots());
+    session.addAllFiles(ManagingFS.getInstance().getRoots());
     session.launch();
 
     super.doRefresh(asynchronous, postAction);
@@ -45,17 +41,17 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
 
   @Override
   public long getModificationCount() {
-    return myManagingFS.getFilesystemModificationCount();
+    return ManagingFS.getInstance().getFilesystemModificationCount();
   }
 
   @Override
   public long getStructureModificationCount() {
-    return myManagingFS.getStructureModificationCount();
+    return ManagingFS.getInstance().getStructureModificationCount();
   }
 
   @Override
   public VirtualFile findFileById(int id) {
-    return myManagingFS.findFileById(id);
+    return ManagingFS.getInstance().findFileById(id);
   }
 
   @Override

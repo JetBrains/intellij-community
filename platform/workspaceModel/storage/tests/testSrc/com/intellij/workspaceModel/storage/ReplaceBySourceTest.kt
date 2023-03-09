@@ -1580,6 +1580,34 @@ class ReplaceBySourceTest {
     builder.assertConsistency()
   }
 
+  @RepeatedTest(10)
+  fun `move left entity`() {
+    val left0 = builder add LeftEntity(MySource)
+    val left1 = builder add LeftEntity(MySource) {
+      this.parentEntity = left0
+    }
+    builder add LeftEntity(MySource) {
+      this.parentEntity = left1
+    }
+    builder add LeftEntity(MySource)
+
+    val leftR0 = replacement add LeftEntity(MySource)
+    val leftR1 = replacement add LeftEntity(MySource) {
+      this.parentEntity = leftR0
+    }
+    replacement add LeftEntity(MySource) {
+      this.parentEntity = leftR1
+    }
+    val leftR3 = replacement add LeftEntity(MySource)
+    replacement add LeftEntity(MySource) {
+      this.children = listOf(leftR3, leftR0)
+    }
+
+    rbsAllSources()
+
+    builder.assertConsistency()
+  }
+
   private inner class ThisStateChecker {
     infix fun WorkspaceEntity.assert(state: ReplaceState) {
       val thisState = engine.targetState[this.base.id]

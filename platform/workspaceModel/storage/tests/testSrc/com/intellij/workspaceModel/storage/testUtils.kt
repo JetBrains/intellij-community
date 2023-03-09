@@ -154,3 +154,10 @@ object SerializationRoundTripChecker {
     }
   }
 }
+
+/**
+ * Return same entity, but in different entity storage. Fail if no entity
+ */
+internal fun <T : WorkspaceEntity> T.from(storage: EntityStorage): T {
+  return this.createReference<T>().resolve(storage)!!
+}

@@ -17,6 +17,7 @@ import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.asBrowseFolderDescriptor
 import com.intellij.util.FontUtil
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
@@ -238,46 +239,42 @@ private abstract class MyDialogWrapper(project: Project?,
 }
 
 @JvmOverloads
-fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
-                                                          component: ComponentWithBrowseButton<T>,
-                                                          textField: JTextField,
-                                                          @DialogTitle browseDialogTitle: String?,
-                                                          fileChooserDescriptor: FileChooserDescriptor,
-                                                          textComponentAccessor: TextComponentAccessor<T>,
-                                                          fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
-  installFileCompletionAndBrowseDialog(
-    project, component, textField, browseDialogTitle, null, fileChooserDescriptor, textComponentAccessor, fileChosen)
-}
-
-@JvmOverloads
-fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
-                                                          component: ComponentWithBrowseButton<T>,
-                                                          textField: JTextField,
-                                                          @DialogTitle browseDialogTitle: String?,
-                                                          @Label browseDialogDescription: String?,
-                                                          fileChooserDescriptor: FileChooserDescriptor,
-                                                          textComponentAccessor: TextComponentAccessor<T>,
-                                                          fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
+fun <T : JComponent> installFileCompletionAndBrowseDialog(
+  project: Project?,
+  component: ComponentWithBrowseButton<T>,
+  textField: JTextField,
+  @DialogTitle browseDialogTitle: String?,
+  @Label browseDialogDescription: String? = null,
+  fileChooserDescriptor: FileChooserDescriptor,
+  textComponentAccessor: TextComponentAccessor<T>,
+  fileChosen: ((chosenFile: VirtualFile) -> String)? = null
+) {
   if (ApplicationManager.getApplication() == null) {
     // tests
     return
   }
 
+  val browseFolderDescriptor = fileChooserDescriptor.asBrowseFolderDescriptor()
+  if (fileChosen != null) {
+    browseFolderDescriptor.convertFileToText = fileChosen
+  }
+
   component.addActionListener(
-    object : BrowseFolderActionListener<T>(
-      browseDialogTitle, browseDialogDescription, component, project, fileChooserDescriptor, textComponentAccessor
-    ) {
-      override fun onFileChosen(chosenFile: VirtualFile) {
-        if (fileChosen == null) {
-          super.onFileChosen(chosenFile)
-        }
-        else {
-          textComponentAccessor.setText(myTextComponent, fileChosen(chosenFile))
-        }
-      }
-    })
-  FileChooserFactory.getInstance().installFileCompletion(textField, fileChooserDescriptor, true,
-                                                         null /* infer disposable from UI context */)
+    BrowseFolderActionListener(
+      browseDialogTitle,
+      browseDialogDescription,
+      component,
+      project,
+      browseFolderDescriptor,
+      textComponentAccessor
+    )
+  )
+  FileChooserFactory.getInstance().installFileCompletion(
+    textField,
+    fileChooserDescriptor,
+    true,
+    null /* infer disposable from UI context */
+  )
 }
 
 @JvmOverloads

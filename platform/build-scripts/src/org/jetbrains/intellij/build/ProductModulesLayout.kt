@@ -13,7 +13,6 @@ import java.util.function.BiConsumer
 
 /**
  * Default bundled plugins for all products.
- * See also [JB_BUNDLED_PLUGINS].
  */
 val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
   "intellij.platform.images",
@@ -93,12 +92,19 @@ class ProductModulesLayout {
   internal val moduleExcludes: MutableMap<String, MutableList<String>> = LinkedHashMap()
 
   /**
-   * Additional customizations of platform JARs. <strong>This is a temporary property added to keep layout of some products.</strong>
+   * Additional customizations of platform JARs. **This is a temporary property added to keep layout of some products.**
    */
-  internal var platformLayoutCustomizers = persistentListOf<BiConsumer<PlatformLayout, BuildContext>>()
+  internal var platformLayoutSpec = persistentListOf<(PlatformLayout.Spec, BuildContext) -> Unit>()
 
+  @Deprecated("PlatformLayout should be immutable", replaceWith = ReplaceWith("addPlatformSpec"))
   fun addPlatformCustomizer(customizer: BiConsumer<PlatformLayout, BuildContext>) {
-    platformLayoutCustomizers = platformLayoutCustomizers.add(customizer)
+    platformLayoutSpec = platformLayoutSpec.add { spec, context ->
+      customizer.accept(spec.layout, context)
+    }
+  }
+
+  fun addPlatformSpec(customizer: (PlatformLayout.Spec, BuildContext) -> Unit) {
+    platformLayoutSpec = platformLayoutSpec.add(customizer)
   }
 
   fun excludeModuleOutput(module: String, path: String) {

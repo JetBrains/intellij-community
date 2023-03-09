@@ -11,18 +11,20 @@ class BackgroundAsyncSupplier<R>(
   private val shouldKeepTasksAsynchronous: () -> Boolean,
   private val backgroundExecutor: Executor
 ) : AsyncSupplier<R> {
-  override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) {
+
+  override fun supply(parentDisposable: Disposable, consumer: (R) -> Unit) {
     if (shouldKeepTasksAsynchronous()) {
       BackgroundTaskUtil.execute(backgroundExecutor, parentDisposable) {
-        supplier.supply(consumer, parentDisposable)
+        supplier.supply(parentDisposable, consumer)
       }
     }
     else {
-      supplier.supply(consumer, parentDisposable)
+      supplier.supply(parentDisposable, consumer)
     }
   }
 
   class Builder<R>(private val supplier: AsyncSupplier<R>) {
+
     constructor(supplier: () -> R) : this(AsyncSupplier.blocking(supplier))
 
     private var shouldKeepTasksAsynchronous: () -> Boolean =
@@ -32,7 +34,8 @@ class BackgroundAsyncSupplier<R>(
       shouldKeepTasksAsynchronous = provider
     }
 
-    fun build(backgroundExecutor: Executor) =
-      BackgroundAsyncSupplier(supplier, shouldKeepTasksAsynchronous, backgroundExecutor)
+    fun build(backgroundExecutor: Executor): AsyncSupplier<R> {
+      return BackgroundAsyncSupplier(supplier, shouldKeepTasksAsynchronous, backgroundExecutor)
+    }
   }
 }

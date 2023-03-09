@@ -18,9 +18,9 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.jetbrains.packagesearch.intellij.plugin.toNioPathOrNull
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.send
-import com.jetbrains.packagesearch.intellij.plugin.util.toNioPathOrNull
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
@@ -24,7 +24,6 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 
@@ -54,7 +53,7 @@ class BuildContextImpl private constructor(
 
   override var bootClassPathJarNames = persistentListOf("util.jar", "util_rt.jar")
 
-  override val applicationInfo: ApplicationInfoProperties = ApplicationInfoPropertiesImpl(project, productProperties, options)  // Android Studio: don't .patch(this)
+  override val applicationInfo = ApplicationInfoPropertiesImpl(this)
   private var builtinModulesData: BuiltinModulesFileData? = null
 
   init {
@@ -279,16 +278,18 @@ class BuildContextImpl private constructor(
   @Suppress("SpellCheckingInspection")
   override fun getAdditionalJvmArguments(os: OsFamily, arch: JvmArchitecture, isScript: Boolean, isPortableDist: Boolean): List<String> {
     val jvmArgs = ArrayList<String>()
+
     productProperties.classLoader?.let {
-      jvmArgs.add("-Djava.system.class.loader=$it")
+      jvmArgs.add("-Djava.system.class.loader=${it}")
     }
+
     jvmArgs.add("-Didea.vendor.name=${applicationInfo.shortCompanyName}")
-    jvmArgs.add("-Didea.paths.selector=$systemSelector")
+    jvmArgs.add("-Didea.paths.selector=${systemSelector}")
 
     val macroName = when (os) {
+      OsFamily.WINDOWS -> "%IDE_HOME%"
       OsFamily.MACOS -> "\$APP_PACKAGE${if (isPortableDist) "" else "/Contents"}"
       OsFamily.LINUX -> "\$IDE_HOME"
-      else -> "%IDE_HOME%"
     }
     jvmArgs.add("-Djna.boot.library.path=${macroName}/lib/jna/${arch.dirName}".let { if (isScript) '"' + it + '"' else it })
     jvmArgs.add("-Dpty4j.preferred.native.folder=${macroName}/lib/pty4j".let { if (isScript) '"' + it + '"' else it })
@@ -299,13 +300,16 @@ class BuildContextImpl private constructor(
     if (productProperties.platformPrefix != null) {
       jvmArgs.add("-Didea.platform.prefix=${productProperties.platformPrefix}")
     }
+
     jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
+
     if (productProperties.useSplash) {
       @Suppress("SpellCheckingInspection")
       jvmArgs.add("-Dsplash=true")
     }
 
     jvmArgs.addAll(getCommandLineArgumentsForOpenPackages(this, os))
+
     return jvmArgs
   }
 
@@ -350,6 +354,6 @@ private fun getSourceRootsWithPrefixes(module: JpsModule): Sequence<Pair<Path, S
     }
 }
 
-private fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {
+internal fun readSnapshotBuildNumber(communityHome: BuildDependenciesCommunityRoot): String {
   return Files.readString(communityHome.communityRoot.resolve("build.txt")).trim { it <= ' ' }
 }

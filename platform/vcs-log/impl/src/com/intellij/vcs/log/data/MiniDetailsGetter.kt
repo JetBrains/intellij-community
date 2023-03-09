@@ -146,7 +146,9 @@ class MiniDetailsGetter internal constructor(project: Project,
       IndexedDetails(dataGetter, storage, commit, taskNumber)
     }
     else {
-      LoadingDetailsImpl(storage, commit, taskNumber)
+      logProviders.keys.singleOrNull()?.let {
+        LoadingDetailsWithRoot(storage, commit, it, taskNumber)
+      } ?: LoadingDetailsImpl(storage, commit, taskNumber)
     }
   }
 

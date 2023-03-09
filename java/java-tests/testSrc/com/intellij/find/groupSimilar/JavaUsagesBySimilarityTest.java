@@ -3,11 +3,16 @@ package com.intellij.find.groupSimilar;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.find.findUsages.similarity.JavaUsageSimilarityFeaturesProvider;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.usages.similarity.bag.Bag;
 import com.intellij.usages.similarity.clustering.Distance;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.ExecutionException;
 
 public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
   @Override
@@ -15,30 +20,30 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/findSimilar/";
   }
 
-  public void testFeaturesProvider() {
+  public void testFeaturesProvider() throws ExecutionException, InterruptedException {
     myFixture.configureByFile("FeaturesProvider.java");
     PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
-    final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
+    final Bag features = getFeatures(elementAtCaret);
     assertEquals(1, features.get("USAGE: {CALL: foo}"));
     assertEquals(1, features.get("CONTEXT: NEW: A"));
     assertEquals(1, features.get("NEW_KEYWORD"));
   }
 
-  public void testForFeatures() {
+  public void testForFeatures() throws ExecutionException, InterruptedException {
     myFixture.configureByFile("ForFeatures.java");
     PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
-    final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
+    final Bag features = getFeatures(elementAtCaret);
     assertEquals(1, features.get("USAGE: FOR"));
     assertEquals(1, features.get("FOR_KEYWORD"));
     assertEquals(1, features.get("CONTEXT: VAR: int GP: FOR_STATEMENT -1"));
   }
 
-  public void testAnonymous() {
+  public void testAnonymous() throws ExecutionException, InterruptedException {
     try {
       Registry.get("similarity.find.usages.fast.clustering").setValue(false);
       myFixture.configureByFile("Anonymous.java");
       PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
-      final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
+      final Bag features = getFeatures(elementAtCaret);
       assertEquals(1, features.get("CONTEXT: anonymousClazz P: NEW_EXPRESSION -1"));
       assertEquals(1, features.get("USAGE: {CALL: A.foo() ret:int arg0 type: A} NEXT: PsiJavaToken:SEMICOLON"));
     }
@@ -47,12 +52,17 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  public void testIncrement() {
+  @NotNull
+  private static Bag getFeatures(PsiElement elementAtCaret) throws ExecutionException, InterruptedException {
+    return ReadAction.nonBlocking(() -> new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret)).submit(AppExecutorUtil.getAppExecutorService()).get();
+  }
+
+  public void testIncrement() throws ExecutionException, InterruptedException {
     try {
       Registry.get("similarity.find.usages.fast.clustering").setValue(false);
       myFixture.configureByFile("Increment.java");
       PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
-      final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
+      final Bag features = getFeatures(elementAtCaret);
       assertEquals(1, features.get("USAGE: +="));
       assertEquals(1, features.get("USAGE: {CALL: A.af() ret:int }"));
     }
@@ -61,12 +71,12 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  public void testLambda() {
+  public void testLambda() throws ExecutionException, InterruptedException {
     try {
       Registry.get("similarity.find.usages.fast.clustering").setValue(false);
       myFixture.configureByFile("Lambda.java");
       PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
-      final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
+      final Bag features = getFeatures(elementAtCaret);
       assertEquals(1, features.get("USAGE: {CALL: aPackage.A.foo() ret:int arg0 type: <lambda expression>}"));
       assertEquals(1, features.get("CONTEXT: lambda GP: METHOD_CALL_EXPRESSION -1"));
     }
@@ -75,13 +85,13 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  public void testMethodReference() {
+  public void testMethodReference() throws ExecutionException, InterruptedException {
     try {
       Registry.get("similarity.find.usages.fast.clustering").setValue(false);
       myFixture.configureByFile("MethodReference.java");
 
       PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
-      final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
+      final Bag features = getFeatures(elementAtCaret);
       assertEquals(1, features.get("USAGE: {CALL: aPackage.A.foo() ret:int arg0 type: <method reference>}"));
     }
     finally {
@@ -89,10 +99,10 @@ public class JavaUsagesBySimilarityTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
-  public void testDeclarationInForStatement() {
+  public void testDeclarationInForStatement() throws ExecutionException, InterruptedException {
     myFixture.configureByFile("DeclarationInForStatement.java");
     PsiElement elementAtCaret = myFixture.getReferenceAtCaretPosition().getElement();
-    final Bag features = new JavaUsageSimilarityFeaturesProvider().getFeatures(elementAtCaret);
+    final Bag features = getFeatures(elementAtCaret);
     assertEquals(1, features.get("USAGE: FOR"));
   }
 

@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
 import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
@@ -10,10 +12,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.AbstractKotlinApplicatorBasedIntention
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.inputProvider
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntentionWithContext
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.FqName
@@ -22,34 +22,37 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElement
 import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 
 internal class ImportMemberIntention :
-    AbstractKotlinApplicatorBasedIntention<KtNameReferenceExpression, ImportMemberIntention.Input>(KtNameReferenceExpression::class),
+    AbstractKotlinApplicableIntentionWithContext<KtNameReferenceExpression, ImportMemberIntention.Context>(KtNameReferenceExpression::class),
     HighPriorityAction {
-    class Input(val fqName: FqName, val shortenCommand: ShortenCommand) : KotlinApplicatorInput
 
-    override fun getApplicabilityRange() = ApplicabilityRanges.SELF
+    class Context(
+        val fqName: FqName,
+        val shortenCommand: ShortenCommand,
+    )
 
-    override fun getInputProvider() = inputProvider { psi: KtNameReferenceExpression ->
-        val symbol = psi.mainReference.resolveToSymbol() ?: return@inputProvider null
-        computeInput(psi, symbol)
+    override fun getFamilyName(): String = KotlinBundle.message("add.import.for.member")
+
+    override fun getActionName(element: KtNameReferenceExpression, context: Context): String =
+        KotlinBundle.message("add.import.for.0", context.fqName.asString())
+
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtNameReferenceExpression> = ApplicabilityRanges.SELF
+
+    override fun isApplicableByPsi(element: KtNameReferenceExpression): Boolean =
+        // Ignore simple name expressions or already imported names.
+        element.getQualifiedElement() != element && !element.isInImportDirective()
+
+    context(KtAnalysisSession)
+    override fun prepareContext(element: KtNameReferenceExpression): Context? {
+        val symbol = element.mainReference.resolveToSymbol() ?: return null
+        return computeContext(element, symbol)
     }
 
-    override fun getApplicator() = applicator<KtNameReferenceExpression, Input> {
-        familyName(KotlinBundle.lazyMessage("add.import.for.member"))
-        actionName { _, input -> KotlinBundle.message("add.import.for.0", input.fqName.asString()) }
-        isApplicableByPsi {
-            // Ignore simple name expressions or already imported names.
-            if (it.getQualifiedElement() == it || it.isInImportDirective()) return@isApplicableByPsi false
-            true
-        }
-        applyTo { _, input ->
-            input.shortenCommand.invokeShortening()
-        }
+    override fun apply(element: KtNameReferenceExpression, context: Context, project: Project, editor: Editor?) {
+        context.shortenCommand.invokeShortening()
     }
-
-
 }
 
-private fun KtAnalysisSession.computeInput(psi: KtNameReferenceExpression, symbol: KtSymbol): ImportMemberIntention.Input? {
+private fun KtAnalysisSession.computeContext(psi: KtNameReferenceExpression, symbol: KtSymbol): ImportMemberIntention.Context? {
     return when (symbol) {
         is KtConstructorSymbol,
         is KtClassOrObjectSymbol -> {
@@ -72,7 +75,7 @@ private fun KtAnalysisSession.computeInput(psi: KtNameReferenceExpression, symbo
                         ShortenOption.DO_NOT_SHORTEN
                 })
             if (shortenCommand.isEmpty) return null
-            ImportMemberIntention.Input(classId.asSingleFqName(), shortenCommand)
+            ImportMemberIntention.Context(classId.asSingleFqName(), shortenCommand)
         }
 
         is KtCallableSymbol -> {
@@ -90,7 +93,7 @@ private fun KtAnalysisSession.computeInput(psi: KtNameReferenceExpression, symbo
                 }
             )
             if (shortenCommand.isEmpty) return null
-            ImportMemberIntention.Input(callableId.asSingleFqName(), shortenCommand)
+            ImportMemberIntention.Context(callableId.asSingleFqName(), shortenCommand)
         }
 
         else -> return null

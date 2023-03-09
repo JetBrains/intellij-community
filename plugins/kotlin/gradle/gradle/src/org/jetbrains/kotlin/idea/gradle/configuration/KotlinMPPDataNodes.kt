@@ -76,7 +76,7 @@ class KotlinSourceSetInfo @PropertyMapping("kotlinComponent") constructor(val ko
     /**
      * Note: This includes *all* dependsOn source sets (whole transtive closure)!
      */
-    var dependsOn: List<String> = emptyList()
+    var dependsOn: Set<String> = emptySet()
     var additionalVisible: Set<String> = emptySet()
     var externalSystemRunTasks: Collection<ExternalSystemRunTask> = emptyList()
 }

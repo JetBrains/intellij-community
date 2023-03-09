@@ -88,7 +88,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
       public void documentChanged(@NotNull DocumentEvent e) {
         PsiNameHelper nameHelper = PsiNameHelper.getInstance(myProject);
         String packageName = getPackageName();
-        getOKAction().setEnabled(nameHelper.isQualifiedName(packageName) || packageName != null && packageName.isEmpty());
+        getOKAction().setEnabled(nameHelper.isQualifiedName(packageName) || packageName.isEmpty());
       }
     });
 
@@ -121,9 +121,8 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     return myPackageTextField;
   }
 
-  private String getPackageName() {
-    String name = myPackageTextField.getText();
-    return name != null ? name.trim() : "";
+  private @NotNull String getPackageName() {
+    return myPackageTextField.getText().trim();
   }
 
   @Override

@@ -12,10 +12,7 @@ import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
-import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
-import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.analysis.providers.DecompiledPsiDeclarationProvider.findPsi
@@ -27,7 +24,6 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.type.MapPsiToAsmDesc
-import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.psi.UastFakeDeserializedLightMethod
@@ -97,7 +93,7 @@ internal fun KtAnalysisSession.toPsiMethod(
             when {
                 psi.isLocal ->
                     handleLocalOrSynthetic(psi)
-                overriddenUnwrappedSymbolOrigin(functionSymbol) == KtSymbolOrigin.LIBRARY ->
+                functionSymbol.unwrapFakeOverrides.origin == KtSymbolOrigin.LIBRARY ->
                     // PSI to regular libraries should be handled by [DecompiledPsiDeclarationProvider]
                     // That is, this one is a deserialized declaration.
                     toPsiMethodForDeserialized(functionSymbol, context, psi)
@@ -109,17 +105,6 @@ internal fun KtAnalysisSession.toPsiMethod(
         else -> psi.getRepresentativeLightMethod()
     }
 }
-
-private fun KtAnalysisSession.overriddenUnwrappedSymbolOrigin(ktSymbol: KtCallableSymbol): KtSymbolOrigin =
-    when (val origin = ktSymbol.origin) {
-        KtSymbolOrigin.INTERSECTION_OVERRIDE,
-        KtSymbolOrigin.SUBSTITUTION_OVERRIDE -> {
-            ktSymbol.originalOverriddenSymbol?.let {
-                overriddenUnwrappedSymbolOrigin(it)
-            } ?: origin
-        }
-        else -> origin
-    }
 
 private fun KtAnalysisSession.toPsiMethodForDeserialized(
     functionSymbol: KtFunctionLikeSymbol,
@@ -211,7 +196,7 @@ internal fun KtAnalysisSession.toPsiType(
     boxed: Boolean = false,
     ktTypeMappingMode: KtTypeMappingMode = KtTypeMappingMode.DEFAULT_UAST,
 ): PsiType {
-    if (ktType is KtNonErrorClassType && ktType.typeArguments.isEmpty()) {
+    if (ktType is KtNonErrorClassType && ktType.ownTypeArguments.isEmpty()) {
         fun PsiPrimitiveType.orBoxed() = if (boxed) getBoxedType(context) else this
         val psiType = when (ktType.classId) {
             StandardClassIds.Int -> PsiType.INT.orBoxed()
@@ -255,43 +240,48 @@ internal fun KtAnalysisSession.receiverType(
             else
                 ktCall.partiallyAppliedSymbol.dispatchReceiver?.type
     }
-    if (ktType == null || ktType is KtClassErrorType) return null
+    if (ktType == null || ktType is KtErrorType) return null
     return toPsiType(ktType, source, context, context.typeOwnerKind, boxed = true)
 }
 
-internal fun KtAnalysisSession.nullability(ktType: KtType?): TypeNullability? {
+internal fun KtAnalysisSession.nullability(ktType: KtType?): KtTypeNullability? {
     if (ktType == null) return null
-    if (ktType is KtClassErrorType) return null
-    return if (ktType.canBeNull) TypeNullability.NULLABLE else TypeNullability.NOT_NULL
+    if (ktType is KtErrorType) return null
+    return if (ktType.canBeNull)
+        KtTypeNullability.NULLABLE
+    else
+        KtTypeNullability.NON_NULLABLE
 }
 
-internal fun KtAnalysisSession.nullability(ktCallableDeclaration: KtCallableDeclaration): TypeNullability? {
+internal fun KtAnalysisSession.nullability(ktCallableDeclaration: KtCallableDeclaration): KtTypeNullability? {
     val ktType = (ktCallableDeclaration.getSymbol() as? KtCallableSymbol)?.returnType
     return nullability(ktType)
 }
 
-internal fun KtAnalysisSession.nullability(ktDeclaration: KtDeclaration): TypeNullability? {
+internal fun KtAnalysisSession.nullability(ktDeclaration: KtDeclaration): KtTypeNullability? {
     return nullability(ktDeclaration.getReturnKtType())
 }
 
-internal fun KtAnalysisSession.nullability(ktExpression: KtExpression): TypeNullability? {
+internal fun KtAnalysisSession.nullability(ktExpression: KtExpression): KtTypeNullability? {
     return nullability(ktExpression.getKtType())
 }
 
 /**
  * Finds Java stub-based [PsiElement] for symbols that refer to declarations in [KtLibraryModule].
  */
-internal fun KtAnalysisSession.psiForUast(ktSymbol: KtSymbol, project: Project): PsiElement? {
-    return when (ktSymbol.origin) {
-        KtSymbolOrigin.LIBRARY -> {
-            findPsi(ktSymbol, project) ?: ktSymbol.psi
-        }
-        KtSymbolOrigin.INTERSECTION_OVERRIDE,
-        KtSymbolOrigin.SUBSTITUTION_OVERRIDE -> {
-            (ktSymbol as? KtCallableSymbol)?.originalOverriddenSymbol?.let {
-                psiForUast(it, project)
+internal tailrec fun KtAnalysisSession.psiForUast(symbol: KtSymbol, project: Project): PsiElement? {
+    if (symbol.origin == KtSymbolOrigin.LIBRARY) {
+        return findPsi(symbol, project) ?: symbol.psi
+    }
+
+    if (symbol is KtCallableSymbol) {
+        if (symbol.origin == KtSymbolOrigin.INTERSECTION_OVERRIDE || symbol.origin == KtSymbolOrigin.SUBSTITUTION_OVERRIDE) {
+            val originalSymbol = symbol.unwrapFakeOverrides
+            if (originalSymbol !== symbol) {
+                return psiForUast(originalSymbol, project)
             }
         }
-        else -> ktSymbol.psi
     }
+
+    return symbol.psi
 }

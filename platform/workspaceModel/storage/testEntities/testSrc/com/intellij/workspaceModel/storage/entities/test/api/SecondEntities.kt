@@ -6,6 +6,9 @@ import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import kotlin.jvm.JvmName
+import kotlin.jvm.JvmOverloads
+import kotlin.jvm.JvmStatic
 import org.jetbrains.deft.ObjBuilder
 import org.jetbrains.deft.Type
 import com.intellij.workspaceModel.storage.MutableEntityStorage
@@ -27,6 +30,9 @@ interface SampleEntity2 : WorkspaceEntity {
   }
 
   companion object : Type<SampleEntity2, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String, boolData: Boolean, entitySource: EntitySource, init: (Builder.() -> Unit)? = null): SampleEntity2 {
       val builder = builder()
       builder.data = data
@@ -62,6 +68,9 @@ interface VFUEntity2 : WorkspaceEntity {
   }
 
   companion object : Type<VFUEntity2, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(data: String,
                         directoryPath: VirtualFileUrl,
                         notNullRoots: List<VirtualFileUrl>,

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
+import com.intellij.spellchecker.DictionaryLevel;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.dictionary.CustomDictionaryProvider;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
@@ -21,9 +22,11 @@ import com.intellij.spellchecker.util.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,14 +36,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.APP;
-import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.PROJECT;
-import static com.intellij.spellchecker.SpellCheckerManager.getBundledDictionaries;
-import static com.intellij.ui.IdeBorderFactory.createTitledBorder;
-import static com.intellij.util.ui.JBUI.insetsTop;
-import static javax.swing.event.HyperlinkEvent.EventType.ACTIVATED;
-
-public class SpellCheckerSettingsPane implements Disposable {
+public final class SpellCheckerSettingsPane implements Disposable {
   private JPanel root;
   private JPanel linkContainer;
   private JPanel myPanelForAcceptedWords;
@@ -63,7 +59,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     manager = SpellCheckerManager.getInstance(project);
     HyperlinkLabel link = new HyperlinkLabel(SpellCheckerBundle.message("link.to.inspection.settings"));
     link.addHyperlinkListener(e -> {
-      if (e.getEventType() == ACTIVATED) {
+      if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext());
         if (allSettings != null) {
           final ErrorsConfigurable errorsConfigurable = allSettings.find(ErrorsConfigurable.class);
@@ -80,8 +76,8 @@ public class SpellCheckerSettingsPane implements Disposable {
         myDictionariesComboBox.setEnabled(myUseSingleDictionary.isSelected());
       }
     });
-    myDictionariesComboBox.addItem(APP.getName());
-    myDictionariesComboBox.addItem(PROJECT.getName());
+    myDictionariesComboBox.addItem(DictionaryLevel.APP.getName());
+    myDictionariesComboBox.addItem(DictionaryLevel.PROJECT.getName());
     linkContainer.setLayout(new BorderLayout());
     linkContainer.add(link);
 
@@ -91,11 +87,11 @@ public class SpellCheckerSettingsPane implements Disposable {
     myDictionariesPanel = new CustomDictionariesPanel(settings, project, manager);
 
     myPanelForCustomDictionaries.setBorder(
-      createTitledBorder(SpellCheckerBundle.message("add.dictionary.description", getSupportedDictionariesDescription()),
-                                          false, insetsTop(8)).setShowLine(false));
+      IdeBorderFactory.createTitledBorder(SpellCheckerBundle.message("add.dictionary.description", getSupportedDictionariesDescription()),
+                                          false, JBUI.insetsTop(8)).setShowLine(false));
 
     myPanelForAcceptedWords
-      .setBorder(createTitledBorder(SpellCheckerBundle.message("settings.tab.accepted.words"), false, insetsTop(8)).setShowLine(false));
+      .setBorder(IdeBorderFactory.createTitledBorder(SpellCheckerBundle.message("settings.tab.accepted.words"), false, JBUI.insetsTop(8)).setShowLine(false));
     myPanelForCustomDictionaries.setLayout(new BorderLayout());
     myPanelForCustomDictionaries.add(myDictionariesPanel, BorderLayout.CENTER);
 
@@ -166,7 +162,7 @@ public class SpellCheckerSettingsPane implements Disposable {
     if (myUseSingleDictionary.isSelected() && settings.getDictionaryToSave() != myDictionariesComboBox.getSelectedItem()) {
       settings.setDictionaryToSave((String)myDictionariesComboBox.getSelectedItem());
     }
-    SpellCheckerManager.restartInspections();
+    SpellCheckerManager.Companion.restartInspections();
     if (!myProvidedDictionariesChooserComponent.isModified() && !myDictionariesPanel.isModified()) {
       return;
     }
@@ -187,7 +183,7 @@ public class SpellCheckerSettingsPane implements Disposable {
   private void fillProvidedDictionaries() {
     providedDictionaries.clear();
 
-    for (String dictionary : getBundledDictionaries()) {
+    for (String dictionary : SpellCheckerManager.getBundledDictionaries()) {
       providedDictionaries.add(Pair.create(dictionary, true));
     }
 

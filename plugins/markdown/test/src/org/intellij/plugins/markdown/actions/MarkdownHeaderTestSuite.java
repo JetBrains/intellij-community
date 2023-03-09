@@ -14,13 +14,13 @@ import java.io.File;
 
 @SuppressWarnings("unused")
 public class MarkdownHeaderTestSuite extends TestSuite {
-  public static class RunMarkdownHeaderUpTestSuite {
+  public static final class RunMarkdownHeaderUpTestSuite {
     public static TestSuite suite() {
       return new MarkdownHeaderUpTestSuite();
     }
   }
 
-  public static class RunMarkdownHeaderDownTestSuite {
+  public static final class RunMarkdownHeaderDownTestSuite {
     public static TestSuite suite() {
       return new MarkdownHeaderDownTestSuite();
     }

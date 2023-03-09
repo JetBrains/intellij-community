@@ -98,7 +98,7 @@ public abstract class AbstractMockMethod extends MockTypeComponent implements Me
   }
 
   @Override
-  public List<Location> allLineLocations(String string,String string1) {
+  public List<Location> allLineLocations(String string, String string1) {
     return new ArrayList<>();
   }
 
@@ -108,7 +108,7 @@ public abstract class AbstractMockMethod extends MockTypeComponent implements Me
   }
 
   @Override
-  public List<Location> locationsOfLine(String string,String string1,int i) {
+  public List<Location> locationsOfLine(String string, String string1, int i) {
     return new ArrayList<>();
   }
 

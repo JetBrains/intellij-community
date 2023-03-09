@@ -9,6 +9,8 @@ import com.intellij.ui.content.TabbedPaneContentUI;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 public final class ServiceViewUIUtils {
   private ServiceViewUIUtils() {
@@ -20,15 +22,25 @@ public final class ServiceViewUIUtils {
     if (component instanceof TabbedPaneWrapper.TabbedPaneHolder) {
       JComponent tabbedPane = ((TabbedPaneWrapper.TabbedPaneHolder)component).getTabbedPaneWrapper().getTabbedPane().getComponent();
       if (tabbedPane instanceof JTabbedPane) {
-        ((JTabbedPane)tabbedPane).setUI(new DarculaTabbedPaneUI() {
+        ((JTabbedPane)tabbedPane).setUI(new ServiceViewDetailsTabbedPaneUI());
+        tabbedPane.addPropertyChangeListener("UI", new PropertyChangeListener() {
           @Override
-          protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {
-            Insets borderInsets = getContentBorderInsets(tabPlacement);
-            return JBRunnerTabs.getTabLabelPreferredHeight() - borderInsets.top - borderInsets.bottom;
+          public void propertyChange(PropertyChangeEvent evt) {
+            if (!(evt.getNewValue() instanceof ServiceViewDetailsTabbedPaneUI)) {
+              ((JTabbedPane)tabbedPane).setUI(new ServiceViewDetailsTabbedPaneUI());
+            }
           }
         });
       }
     }
     return contentUI;
+  }
+
+  private static class ServiceViewDetailsTabbedPaneUI extends DarculaTabbedPaneUI {
+    @Override
+    protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {
+      Insets borderInsets = getContentBorderInsets(tabPlacement);
+      return JBRunnerTabs.getTabLabelPreferredHeight() - borderInsets.top - borderInsets.bottom;
+    }
   }
 }

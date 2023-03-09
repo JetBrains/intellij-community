@@ -1,5 +1,6 @@
 from collections.abc import Iterable, Iterator
-from typing import NamedTuple, Pattern
+from re import Pattern
+from typing import NamedTuple
 
 from . import exceptions as exceptions
 from .snippets import findall_regex as findall_regex, split_by_regex as split_by_regex

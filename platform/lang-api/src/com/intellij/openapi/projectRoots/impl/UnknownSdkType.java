@@ -44,7 +44,7 @@ public final class UnknownSdkType extends SdkType {
   }
 
   @Override
-  public String getVersionString(String sdkHome) {
+  public String getVersionString(@NotNull String sdkHome) {
     return "";
   }
 

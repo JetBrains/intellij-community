@@ -9,8 +9,8 @@ import org.yaml.snakeyaml.representer.Representer
 import java.io.File
 
 class YamlInspectionProfileRaw(
-  val baseProfile: String = "Default",
-  val name: String = "Yaml profile",
+  val baseProfile: String? = null,
+  val name: String? = null,
   val groups: List<YamlInspectionGroupRaw> = emptyList(),
   val inspections: List<YamlInspectionConfigRaw> = emptyList()
 )
@@ -46,12 +46,12 @@ private fun merge(first: Map<String, *>, second: Map<String, *>): Map<String, *>
   return (first.keys + second.keys).associateWith { key ->
     val firstValue = first[key]
     val secondValue = second[key]
-    val value = if (firstValue is Map<*,*> && secondValue is Map<*,*>) {
+    val value = if (firstValue is Map<*, *> && secondValue is Map<*, *>) {
       @Suppress("UNCHECKED_CAST")
       merge(firstValue as Map<String, *>, secondValue as Map<String, *>)
     }
     else if (firstValue is List<*> && secondValue is List<*>) {
-      firstValue + secondValue
+      secondValue + firstValue
     }
     else {
       secondValue ?: firstValue
@@ -61,7 +61,7 @@ private fun merge(first: Map<String, *>, second: Map<String, *>): Map<String, *>
 }
 
 private fun readRaw(project: Project, filePath: String): Map<String, *> {
-  val configFile = File(filePath)
+  val configFile = File(filePath).absoluteFile
   require(configFile.exists()) { "File does not exist: ${configFile.canonicalPath}" }
   val yamlReader = Yaml()
   val rawConfig: Map<String, *> = yamlReader.load(configFile.reader())

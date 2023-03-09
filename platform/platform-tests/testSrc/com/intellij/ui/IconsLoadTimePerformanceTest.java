@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.idea.HardwareAgentRequired;
@@ -74,7 +74,7 @@ public class IconsLoadTimePerformanceTest {
         if (StartupUiUtil.isUnderDarcula()) {
           flags |= ImageLoader.USE_DARK;
         }
-        ImageLoader.loadFromUrl(url.toString(), null, flags, ScaleContext.create());
+        ImageLoader.INSTANCE.loadFromUrl(url.toString(), null, flags, ScaleContext.create());
       }
     }
     StatData svgData = IconsLoadTime.getStatData(false, true);

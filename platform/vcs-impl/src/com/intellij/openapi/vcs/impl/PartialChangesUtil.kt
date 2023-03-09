@@ -1,14 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl
 
+import com.intellij.diff.util.Side
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker
 import com.intellij.openapi.vcs.ex.ExclusionState
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PairFunction
 import com.intellij.util.containers.MultiMap
@@ -198,6 +201,41 @@ object PartialChangesUtil {
       ExclusionState.ALL_INCLUDED -> ThreeStateCheckBox.State.SELECTED
       ExclusionState.ALL_EXCLUDED -> ThreeStateCheckBox.State.NOT_SELECTED
       else -> ThreeStateCheckBox.State.DONT_CARE
+    }
+  }
+
+  @JvmStatic
+  fun wrapPartialChanges(project: Project, changes: List<Change>): List<Change> {
+    return changes.map { change -> wrapPartialChangeIfNeeded(project, change) ?: change }
+  }
+
+  private fun wrapPartialChangeIfNeeded(project: Project, change: Change): Change? {
+    if (change !is ChangeListChange) return null
+
+    val afterRevision = change.afterRevision
+    if (afterRevision !is CurrentContentRevision) return null
+
+    val tracker = getPartialTracker(project, change)
+    if (tracker == null || !tracker.isOperational() || !tracker.hasPartialChangesToCommit()) return null
+
+    val partialAfterRevision = PartialContentRevision(project, tracker.virtualFile, change.changeListId, afterRevision)
+    return ChangeListChange.replaceChangeContents(change, change.beforeRevision, partialAfterRevision)
+  }
+
+  private class PartialContentRevision(val project: Project,
+                                       val virtualFile: VirtualFile,
+                                       val changeListId: String,
+                                       val delegate: ContentRevision) : ContentRevision {
+    override fun getFile(): FilePath = delegate.file
+    override fun getRevisionNumber(): VcsRevisionNumber = delegate.revisionNumber
+    override fun getContent(): String? {
+      val tracker = getPartialTracker(project, virtualFile)
+      if (tracker != null && tracker.isOperational() && tracker.hasPartialChangesToCommit()) {
+        val partialContent = tracker.getChangesToBeCommitted(Side.LEFT, listOf(changeListId), true)
+        if (partialContent != null) return partialContent
+        LOG.warn("PartialContentRevision - missing partial content for $tracker")
+      }
+      return delegate.content
     }
   }
 }

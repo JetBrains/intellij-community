@@ -84,7 +84,7 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
     }
 
     @Override
-    protected final void doFix(Project project, ProblemDescriptor descriptor) {
+    protected final void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiTypeElement castTypeElement;
       final PsiReferenceExpression reference;

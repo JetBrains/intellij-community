@@ -36,6 +36,7 @@ import com.intellij.util.ui.update.DisposableUpdate;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.vcs.commit.PartialCommitChangeNodeDecorator;
 import com.intellij.vcs.commit.PartialCommitInclusionModel;
+import com.intellij.vcs.commit.SingleChangeListCommitWorkflowUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private final List<Change> myChanges = new ArrayList<>();
   private final List<FilePath> myUnversioned = new ArrayList<>();
 
-  @Nullable private Runnable mySelectedListChangeListener;
+  @Nullable private SingleChangeListCommitWorkflowUi.ChangeListListener mySelectedListChangeListener;
   private final RollbackDialogAction myRollbackDialogAction;
 
   MultipleLocalChangeListsBrowser(@NotNull Project project,
@@ -202,7 +203,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myBottomDiffComponent = value;
   }
 
-  public void setSelectedListChangeListener(@Nullable Runnable runnable) {
+  public void setSelectedListChangeListener(@Nullable SingleChangeListCommitWorkflowUi.ChangeListListener runnable) {
     mySelectedListChangeListener = runnable;
   }
 
@@ -216,17 +217,18 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myChangeListChooser.setSelectedChangeList(list);
   }
 
-  private void updateSelectedChangeList(@NotNull LocalChangeList list) {
-    boolean isListChanged = !myChangeList.getId().equals(list.getId());
+  private void updateSelectedChangeList(@NotNull LocalChangeList newChangeList) {
+    LocalChangeList oldChangeList = myChangeList;
+    boolean isListChanged = !oldChangeList.getId().equals(newChangeList.getId());
     if (isListChanged) {
       LineStatusTrackerManager.getInstanceImpl(myProject).resetExcludedFromCommitMarkers();
     }
-    myChangeList = list;
-    myChangeListChooser.setToolTipText(list.getName());
+    myChangeList = newChangeList;
+    myChangeListChooser.setToolTipText(newChangeList.getName());
     updateDisplayedChanges();
-    if (isListChanged && mySelectedListChangeListener != null) mySelectedListChangeListener.run();
+    if (isListChanged && mySelectedListChangeListener != null) mySelectedListChangeListener.changeListChanged(oldChangeList, newChangeList);
 
-    myInclusionModel.setChangeLists(List.of(myChangeList));
+    myInclusionModel.setChangeLists(List.of(newChangeList));
   }
 
   @Override

@@ -169,11 +169,6 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
     }
 
     @Override
-    public boolean isShowVisibilityIcons() {
-      return ProjectView.getInstance(myProject).isShowVisibilityIcons(ID);
-    }
-
-    @Override
     public boolean isUseFileNestingRules() {
       return ProjectView.getInstance(myProject).isUseFileNestingRules(ID);
     }

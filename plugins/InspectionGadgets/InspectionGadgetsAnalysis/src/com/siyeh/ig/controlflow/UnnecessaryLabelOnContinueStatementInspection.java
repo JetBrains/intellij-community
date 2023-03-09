@@ -55,7 +55,7 @@ public class UnnecessaryLabelOnContinueStatementInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement continueKeywordElement = descriptor.getPsiElement();
       final PsiContinueStatement continueStatement = (PsiContinueStatement)continueKeywordElement.getParent();
       final PsiIdentifier labelIdentifier = continueStatement.getLabelIdentifier();

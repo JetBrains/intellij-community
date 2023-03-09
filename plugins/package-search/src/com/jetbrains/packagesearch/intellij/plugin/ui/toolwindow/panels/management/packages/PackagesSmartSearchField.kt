@@ -31,10 +31,7 @@ import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import java.awt.event.KeyEvent
 
-class PackagesSmartSearchField(
-    searchFieldFocus: Flow<Unit>,
-    project: Project
-) : SearchTextField(false) {
+class PackagesSmartSearchField(project: Project) : SearchTextField(false) {
 
     init {
         @Suppress("MagicNumber") // Swing dimension constants
@@ -44,10 +41,6 @@ class PackagesSmartSearchField(
         textEditor.emptyText.isShowAboveCenter = true
 
         PackageSearchUI.overrideKeyStroke(textEditor, "shift ENTER", this::transferFocusBackward)
-
-        searchFieldFocus
-            .onEach { withContext(Dispatchers.EDT) { requestFocus() } }
-            .launchIn(project.lifecycleScope)
     }
 
     /**

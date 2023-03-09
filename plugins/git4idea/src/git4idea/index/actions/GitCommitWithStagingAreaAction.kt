@@ -23,8 +23,8 @@ class GitCommitWithStagingAreaAction : DumbAwareAction() {
     }
 
     e.presentation.isEnabledAndVisible =
+      isStagingAreaAvailable(project) &&
       ChangesViewContentManager.getToolWindowFor(project, GitStageContentProvider.STAGING_AREA_TAB_NAME) != null
-      && isStagingAreaAvailable(project)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

@@ -120,8 +120,7 @@ public final class XPathExpressionGenerator {
             String uri = attribute.getNamespace();
             String prefix = MyPsiUtil.getAttributePrefix(attribute);
 
-            if ((uri.length() == 0) || (prefix == null)
-                    || (prefix.length() == 0)) {
+            if (uri.length() == 0 || prefix.length() == 0) {
                 result.append(attribute.getLocalName());
             } else {
                 result.append(attribute.getName());
@@ -145,8 +144,7 @@ public final class XPathExpressionGenerator {
             String uri = attribute.getNamespace();
             String prefix = MyPsiUtil.getAttributePrefix(attribute);
 
-            if ((uri.length() == 0) || (prefix == null)
-                    || (prefix.length() == 0)) {
+            if (uri.length() == 0 || prefix.length() == 0) {
                 result.append(attribute.getLocalName());
             } else {
                 result.append(attribute.getName());
@@ -253,7 +251,7 @@ public final class XPathExpressionGenerator {
             XmlTag parent = processingInstruction.getParentTag();
 
             final String target = PsiDocumentNavigator.getProcessingInstructionTarget(processingInstruction);
-            final String s = target != null ? "'" + target + "'" : "";
+            final String s = "'" + target + "'";
             return makeUnique(((parent != null) && (parent != context)) ? (getUniquePath(parent) + "/processing-instruction(" + s + ")")
                     : "processing-instruction(" + s + ")", processingInstruction);
         }

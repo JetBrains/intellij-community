@@ -13,6 +13,12 @@ public final class SAMKt {
     @org.jetbrains.annotations.NotNull private static final var baz: java.lang.Runnable = java.lang.Runnable({
 
     })
+    @org.jetbrains.annotations.NotNull private static final var samImplicitLabel: java.lang.Runnable = Runnable({
+        return
+    })
+    @org.jetbrains.annotations.NotNull private static final var samExplicitLabel: java.lang.Runnable = Runnable(l@ {
+        return
+    })
     public static final fun getNotSam() : kotlin.jvm.functions.Function0<kotlin.Unit> = UastEmptyExpression
     public static final fun getFoo() : java.lang.Runnable = UastEmptyExpression
     public static final fun setFoo(@org.jetbrains.annotations.NotNull <set-?>: java.lang.Runnable) : void = UastEmptyExpression
@@ -31,6 +37,8 @@ public final class SAMKt {
         }
     }
     public static final fun getBaz() : java.lang.Runnable = UastEmptyExpression
+    public static final fun getSamImplicitLabel() : java.lang.Runnable = UastEmptyExpression
+    public static final fun getSamExplicitLabel() : java.lang.Runnable = UastEmptyExpression
     public static final fun runRunnable(@org.jetbrains.annotations.NotNull r: java.lang.Runnable) : error.NonExistentClass {
         return <anonymous class>()
     }

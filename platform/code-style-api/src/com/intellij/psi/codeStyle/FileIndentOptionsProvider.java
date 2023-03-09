@@ -15,8 +15,13 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
 import org.jetbrains.annotations.NotNull;
@@ -33,13 +38,31 @@ public abstract class FileIndentOptionsProvider {
   public final static ExtensionPointName<FileIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileIndentOptionsProvider");
 
   /**
-   * Retrieves indent options for PSI file.
+   * @deprecated Use {@link #getIndentOptions(Project, CodeStyleSettings, VirtualFile)}
+   */
+  @Deprecated
+  @Nullable
+  public IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
+    return null;
+  }
+
+  /**
+   * Retrieves indent options for a virtual file within a given project.
+   * @param project The current project.
    * @param settings Code style settings for which indent options are calculated.
    * @param file The file to retrieve options for.
-   * @return Indent options or {@code null} if the provider can't retrieve them.
+   * @return Indent options or {@code null} if the provider is not applicable.
    */
-  @Nullable
-  public abstract IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file);
+  public @Nullable IndentOptions getIndentOptions(@NotNull Project project, @NotNull CodeStyleSettings settings, @NotNull VirtualFile file) {
+    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+    if (document != null) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (psiFile != null) {
+        return getIndentOptions(settings, psiFile);
+      }
+    }
+    return null;
+  }
 
   /**
    * Tells if the provider can be used when a complete file is reformatted.
@@ -49,12 +72,32 @@ public abstract class FileIndentOptionsProvider {
     return true;
   }
 
+  /**
+   * @deprecated Use {@link #notifyIndentOptionsChanged(Project, VirtualFile)} or {@link #notifyIndentOptionsChanged(Project)}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   protected static void notifyIndentOptionsChanged(@NotNull Project project, @Nullable PsiFile file) {
     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(file);
+  }
+
+  protected static void notifyIndentOptionsChanged(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(virtualFile);
+  }
+
+  protected static void notifyIndentOptionsChanged(@NotNull Project project) {
+    CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged();
   }
 
   @Nullable
   public CodeStyleStatusBarUIContributor getIndentStatusBarUiContributor(@NotNull IndentOptions indentOptions) {
     return null;
+  }
+
+  public final boolean isAllowed(boolean isFullReformat) {
+    return (!isFullReformat || useOnFullReformat()) &&
+           (!(this instanceof PsiBasedFileIndentOptionsProvider) ||
+            !ApplicationManager.getApplication().isDispatchThread() ||
+            ApplicationManager.getApplication().isHeadlessEnvironment());
   }
 }

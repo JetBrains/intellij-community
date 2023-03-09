@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
@@ -6,7 +6,6 @@ import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.bookmark.BookmarksListener;
 import com.intellij.ide.bookmark.FileBookmarksListener;
 import com.intellij.ide.projectView.*;
-import com.intellij.ide.projectView.NodeSortOrder;
 import com.intellij.ide.projectView.impl.CompoundIconProvider;
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
@@ -32,7 +31,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -657,7 +655,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     @Override
     boolean contains(@NotNull VirtualFile file, @NotNull AreaInstance area) {
       // may be called from unexpected thread
-      return roots.values().stream().anyMatch(root -> root.canRepresentOrContain(file, area));
+      return ContainerUtil.exists(roots.values(), root -> root.canRepresentOrContain(file, area));
     }
 
     @Override
@@ -724,7 +722,7 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
     @Override
     boolean canRepresent(@NotNull VirtualFile file) {
       // may be called from unexpected thread
-      return super.canRepresent(file) || compacted != null && compacted.stream().anyMatch(file::equals);
+      return super.canRepresent(file) || compacted != null && ContainerUtil.exists(compacted, file::equals);
     }
 
     @Override
@@ -1128,8 +1126,8 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
 
     boolean contains(@NotNull VirtualFile file, @NotNull AreaInstance area) {
       // may be called from unexpected thread
-      return roots.stream().anyMatch(root -> root.canRepresentOrContain(file, area)) ||
-             groups.values().stream().anyMatch(group -> group.contains(file, area));
+      return ContainerUtil.exists(roots, root -> root.canRepresentOrContain(file, area)) ||
+             ContainerUtil.exists(groups.values(), group -> group.contains(file, area));
     }
   }
 
@@ -1258,12 +1256,18 @@ final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode<?>> implem
         if (is(composite.getIcon(i), expected)) return true;
       }
     }
-    if (icon instanceof DeferredIcon || icon instanceof IconLoader.LazyIcon) {
+    if (icon instanceof DeferredIcon) {
       return false; // do not calculate complex icons at this point
     }
     if (icon instanceof RetrievableIcon) {
       RetrievableIcon retrievable = (RetrievableIcon)icon;
-      if (is(retrievable.retrieveIcon(), expected)) return true;
+      if (retrievable.isComplex()) {
+        return false;
+      }
+
+      if (is(retrievable.retrieveIcon(), expected)) {
+        return true;
+      }
     }
     return false;
   }

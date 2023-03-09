@@ -28,7 +28,7 @@ internal class DiffLineMarkerRenderer(
     val gutter = editor.gutterComponentEx
 
     var x1 = 0
-    val x2 = x1 + gutter.width
+    val x2 = gutter.width
 
     val startLine: Int
     val endLine: Int

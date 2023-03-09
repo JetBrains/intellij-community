@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.caches.resolve.variableCallOrThis
 import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.refactoring.getThisLabelName
@@ -24,7 +25,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -117,11 +117,7 @@ class ForEachParameterNotUsedInspection : AbstractKotlinInspection() {
                         element.acceptChildren(this)
                     } else {
                         val resolvedCall = element.getResolvedCall(context) ?: return
-
-                        used = descriptor == when (resolvedCall) {
-                            is VariableAsFunctionResolvedCall -> resolvedCall.variableCall.candidateDescriptor
-                            else -> resolvedCall.candidateDescriptor
-                        }
+                        used = descriptor == resolvedCall.variableCallOrThis().candidateDescriptor
                     }
                 }
             }

@@ -6,7 +6,6 @@ from urllib3.util import retry
 
 from . import cookies, exceptions, models, structures, utils
 
-PreparedRequest = models.PreparedRequest
 Response = models.Response
 PoolManager = poolmanager.PoolManager
 proxy_from_url = poolmanager.proxy_from_url
@@ -40,7 +39,7 @@ class BaseAdapter:
     def __init__(self) -> None: ...
     def send(
         self,
-        request: PreparedRequest,
+        request: models.PreparedRequest,
         stream: bool = ...,
         timeout: None | float | tuple[float, float] | tuple[float, None] = ...,
         verify: bool | str = ...,
@@ -69,7 +68,7 @@ class HTTPAdapter(BaseAdapter):
     def proxy_headers(self, proxy): ...
     def send(
         self,
-        request: PreparedRequest,
+        request: models.PreparedRequest,
         stream: bool = ...,
         timeout: None | float | tuple[float, float] | tuple[float, None] = ...,
         verify: bool | str = ...,

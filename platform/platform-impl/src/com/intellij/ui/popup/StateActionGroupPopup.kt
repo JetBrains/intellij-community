@@ -15,6 +15,7 @@ import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Font
 import javax.swing.*
@@ -31,7 +32,7 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
                                  preselectActionCondition: Condition<AnAction>?,
                                  actionPlace: String?,
                                  autoSelection: Boolean,
-                                 val getState: (AnAction) -> String?) :
+                                 val getState: (AnAction) -> @Nls String?) :
   PopupFactoryImpl.ActionGroupPopup(title, actionGroup, dataContext, showNumbers,
                                     useAlphaAsNumbers,
                                     showDisabledActions, honorActionMnemonics,
@@ -102,7 +103,7 @@ open class StateActionGroupPopup(@NlsContexts.PopupTitle title: String?,
         }
 
         stateLabel = lb
-        pane.add(lb, "gapbefore ${JBUI.scale(3)}, gapafter ${JBUI.scale(3)}, ay center")
+        pane.add(lb, "gapbefore 3, gapafter 3, ay center")
         pane.border = PillBorder(
           JBUI.CurrentTheme.Advertiser.background(), 1)
 

@@ -22,17 +22,20 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Objects;
 
 /**
  * This class is the hacky way to solve the problem of file structure view.
  * Our file structure view expects nodes to be created for psi elements, and it uses {@link PsiTreeElementBase#getValue()} as equality
  * objects in the internal caching mechanisms. However, symbol declarations structure view may have multiple declarations per psi element,
  * therefore we need to distinct them.
- * This class delegating everything to the declaration element, but uses pointer for hashCode/equality computations.
+ * This class delegating everything to the declaration element, but also includes the symbol for hashCode/equality computations.
  *
  * @see StructureViewComponent.MyNodeWrapper#equals(Object)
  * @see StructureViewComponent#unwrapElement(Object)
  */
+@ApiStatus.Experimental
+@ApiStatus.Internal
 public class DelegatingPsiElementWithSymbolPointer implements PsiElement {
   private final @NotNull PsiElement myDeclarationElement;
   private final @NotNull Pointer<? extends Symbol> mySymbolPointer;
@@ -40,11 +43,6 @@ public class DelegatingPsiElementWithSymbolPointer implements PsiElement {
   DelegatingPsiElementWithSymbolPointer(@NotNull PsiElement declarationElement, @NotNull Pointer<? extends Symbol> symbolPointer) {
     myDeclarationElement = declarationElement;
     mySymbolPointer = symbolPointer;
-  }
-
-  public static @NotNull DelegatingPsiElementWithSymbolPointer createDelegatingElement(
-    @NotNull PsiElement declarationElement, @NotNull Pointer<? extends Symbol> symbolPointer) {
-    return new DelegatingPsiElementWithSymbolPointer(declarationElement, symbolPointer);
   }
 
   @Override
@@ -273,7 +271,7 @@ public class DelegatingPsiElementWithSymbolPointer implements PsiElement {
   @Override
   @Contract(pure = true)
   public boolean isValid() {
-    return myDeclarationElement.isValid();
+    return myDeclarationElement.isValid() && mySymbolPointer.dereference() != null;
   }
 
   @Override
@@ -398,16 +396,15 @@ public class DelegatingPsiElementWithSymbolPointer implements PsiElement {
 
     DelegatingPsiElementWithSymbolPointer pointer = (DelegatingPsiElementWithSymbolPointer)o;
 
-    if (!myDeclarationElement.equals(pointer.myDeclarationElement)) return false;
-    if (!mySymbolPointer.equals(pointer.mySymbolPointer)) return false;
+    if (!myDeclarationElement.equals(pointer.myDeclarationElement)) {
+      return false;
+    }
 
-    return true;
+    return Objects.equals(mySymbolPointer.dereference(), pointer.mySymbolPointer.dereference());
   }
 
   @Override
   public int hashCode() {
-    int result = myDeclarationElement.hashCode();
-    result = 31 * result + mySymbolPointer.hashCode();
-    return result;
+    return Objects.hash(myDeclarationElement, mySymbolPointer.dereference());
   }
 }

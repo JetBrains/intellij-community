@@ -24,7 +24,7 @@ import java.util.List;
 public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
   @Override
   public void createUsageInfoForParameter(@NotNull PsiReference reference,
-                                          @NotNull List<UsageInfo> usages,
+                                          @NotNull List<? super UsageInfo> usages,
                                           @NotNull PsiNamedElement parameter,
                                           int paramIdx, boolean isVararg) {
     final PsiElement element = reference.getElement();
@@ -123,7 +123,7 @@ public class JavaSafeDeleteDelegateImpl implements JavaSafeDeleteDelegate {
   }
 
   @Override
-  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement[] elements2Delete, @NotNull List<UsageInfo> result) {
+  public void createCleanupOverriding(@NotNull PsiElement overriddenFunction, PsiElement @NotNull [] elements2Delete, @NotNull List<? super UsageInfo> result) {
     if (overriddenFunction instanceof PsiMethod &&
       JavaSafeDeleteProcessor.canBePrivate((PsiMethod)overriddenFunction, ReferencesSearch.search(overriddenFunction).findAll(), Collections.emptyList(), elements2Delete)) {
       result.add(new SafeDeletePrivatizeMethod((PsiMethod)overriddenFunction, (PsiMethod)overriddenFunction));

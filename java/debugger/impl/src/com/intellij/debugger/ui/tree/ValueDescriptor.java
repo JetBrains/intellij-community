@@ -2,17 +2,15 @@
 package com.intellij.debugger.ui.tree;
 
 import com.intellij.debugger.DebuggerContext;
-import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.psi.PsiElement;
-import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface ValueDescriptor extends NodeDescriptor{
+public interface ValueDescriptor extends NodeDescriptor {
   PsiElement getDescriptorEvaluation(DebuggerContext context) throws EvaluateException;
 
   Value getValue();
@@ -32,8 +30,12 @@ public interface ValueDescriptor extends NodeDescriptor{
   Icon setValueIcon(Icon icon);
 
   boolean isArray();
+
   boolean isLvalue();
+
   boolean isNull();
+
   boolean isPrimitive();
+
   boolean isString();
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -38,7 +38,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 /**
  * Utility class to help producing values for Java DFA
  */
-public class JavaDfaValueFactory {
+public final class JavaDfaValueFactory {
 
   private JavaDfaValueFactory() {
   }

@@ -2,19 +2,23 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
+import org.jetbrains.kotlin.psi.*
+import com.intellij.openapi.editor.Editor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
-import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
 class ConvertPropertyGetterToInitializerIntention : SelfTargetingIntention<KtPropertyAccessor>(
     KtPropertyAccessor::class.java, KotlinBundle.lazyMessage("convert.property.getter.to.initializer")
 ) {
+    private fun hasExpectModifier(element: KtPropertyAccessor): Boolean {
+        val property = element.parent as? KtProperty ?: return false
+        return (property.descriptor as? PropertyDescriptor)?.isExpect == true
+    }
 
     override fun isApplicableTo(element: KtPropertyAccessor, caretOffset: Int): Boolean {
         if (!element.isGetter || element.singleExpression() == null) return false
@@ -23,7 +27,7 @@ class ConvertPropertyGetterToInitializerIntention : SelfTargetingIntention<KtPro
         if (property.hasInitializer()
             || property.receiverTypeReference != null
             || property.containingClass()?.isInterface() == true
-            || (property.descriptor as? PropertyDescriptor)?.isExpect == true
+            || hasExpectModifier(element)
         ) return false
 
         return true

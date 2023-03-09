@@ -1,26 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.resolve
 
-import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.patterns.PatternCondition
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.ProcessingContext
 import com.intellij.util.asSafely
-import org.jetbrains.plugins.gradle.properties.GRADLE_PROPERTIES_FILE_NAME
-import org.jetbrains.plugins.gradle.properties.GradlePropertiesFile.getGradleHomePropertiesPath
 import org.jetbrains.plugins.gradle.service.resolve.transformation.GradleDecoratedLightPsiClass
-import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.type
-import java.nio.file.Path
 
 val projectTypeKey: Key<GradleProjectAwareType> = Key.create("gradle.current.project")
 val saveProjectType: PatternCondition<GroovyMethodResult> = object : PatternCondition<GroovyMethodResult>("saveProjectContext") {
@@ -68,26 +60,4 @@ internal fun decoratePsiClassType(type: PsiClassType) : PsiClassType {
   val resolvedClass = resolveResult.element ?: return type
   val decorated = GradleDecoratedLightPsiClass(resolvedClass)
   return resolveResult.substitutor.substitute(decorated.type()).asSafely<PsiClassType>() ?: return type
-}
-
-internal fun gradlePropertiesStream(place: PsiElement): Sequence<PropertiesFile> = sequence {
-  val externalRootProjectPath = place.getRootGradleProjectPath() ?: return@sequence
-  val userHomePropertiesFile = getGradleHomePropertiesPath()?.parent?.toString()?.getGradlePropertiesFile(place.project)
-  if (userHomePropertiesFile != null) {
-    yield(userHomePropertiesFile)
-  }
-  val projectRootPropertiesFile = externalRootProjectPath.getGradlePropertiesFile(place.project)
-  if (projectRootPropertiesFile != null) {
-    yield(projectRootPropertiesFile)
-  }
-  val localSettings = GradleLocalSettings.getInstance(place.project)
-  val installationDirectoryPropertiesFile = localSettings.getGradleHome(externalRootProjectPath)?.getGradlePropertiesFile(place.project)
-  if (installationDirectoryPropertiesFile != null) {
-    yield(installationDirectoryPropertiesFile)
-  }
-}
-
-private fun String.getGradlePropertiesFile(project: Project): PropertiesFile? {
-  val file = VfsUtil.findFile(Path.of(this), false)?.findChild(GRADLE_PROPERTIES_FILE_NAME)
-  return file?.let { PsiUtilCore.getPsiFile(project, it) }.asSafely<PropertiesFile>()
 }

@@ -8,11 +8,11 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutorWithRichDescription
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.vcs.commit.CommitWorkflowHandlerState
-import com.intellij.vcs.commit.commitProperty
+import com.intellij.vcs.commit.commitExecutorProperty
 import org.jetbrains.annotations.Nls
 
 private val IS_PUSH_AFTER_COMMIT_KEY = Key.create<Boolean>("Hg.Commit.IsPushAfterCommit")
-internal var CommitContext.isPushAfterCommit: Boolean by commitProperty(IS_PUSH_AFTER_COMMIT_KEY)
+internal var CommitContext.isPushAfterCommit: Boolean by commitExecutorProperty(IS_PUSH_AFTER_COMMIT_KEY)
 
 class HgCommitAndPushExecutor : CommitExecutorWithRichDescription {
   @Nls

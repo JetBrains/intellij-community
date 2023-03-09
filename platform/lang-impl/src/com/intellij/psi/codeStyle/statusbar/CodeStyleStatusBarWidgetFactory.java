@@ -11,7 +11,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory;
 import com.intellij.psi.PsiFile;
@@ -20,7 +19,7 @@ import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CodeStyleStatusBarWidgetFactory extends StatusBarEditorBasedWidgetFactory {
+public final class CodeStyleStatusBarWidgetFactory extends StatusBarEditorBasedWidgetFactory {
   @Override
   public @NotNull String getId() {
     return CodeStyleStatusBarWidget.WIDGET_ID;
@@ -34,11 +33,6 @@ public class CodeStyleStatusBarWidgetFactory extends StatusBarEditorBasedWidgetF
   @Override
   public @NotNull String getDisplayName() {
     return UIBundle.message("status.bar.code.style.widget.name");
-  }
-
-  @Override
-  public void disposeWidget(@NotNull StatusBarWidget widget) {
-    Disposer.dispose(widget);
   }
 
   public static @NotNull DumbAwareAction createDefaultIndentConfigureAction(@NotNull PsiFile psiFile) {

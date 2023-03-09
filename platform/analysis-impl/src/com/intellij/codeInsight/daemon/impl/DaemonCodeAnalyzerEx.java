@@ -23,7 +23,7 @@ import java.util.List;
 public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   private static final Logger LOG = Logger.getInstance(DaemonCodeAnalyzerEx.class);
   public static DaemonCodeAnalyzerEx getInstanceEx(Project project) {
-    return (DaemonCodeAnalyzerEx)project.getComponent(DaemonCodeAnalyzer.class);
+    return (DaemonCodeAnalyzerEx)project.getService(DaemonCodeAnalyzer.class);
   }
 
   public static boolean processHighlights(@NotNull Document document,

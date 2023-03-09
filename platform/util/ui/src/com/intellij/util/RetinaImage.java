@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
@@ -16,15 +16,16 @@ import java.awt.image.ImageObserver;
 public final class RetinaImage { // [tav] todo: create HiDPIImage class
   /**
    * Creates a Retina-aware wrapper over a raw image.
-   * The raw image should be provided in scale of the Retina default scale factor (2x).
+   * The raw image should be provided on the scale of the Retina default scale factor (2x).
    * The wrapper will represent the raw image in the user coordinate space.
    *
    * @param image the raw image
    * @return the Retina-aware wrapper
    */
   public static Image createFrom(@NotNull Image image) {
-    int w = image.getWidth(ImageLoader.ourComponent);
-    int h = image.getHeight(ImageLoader.ourComponent);
+    Component component = ImageLoader.INSTANCE.getOurComponent();
+    int w = image.getWidth(component);
+    int h = image.getHeight(component);
     return new JBHiDPIScaledImage(image, w / (double)2, h / (double)2, BufferedImage.TYPE_INT_ARGB);
   }
 
@@ -38,7 +39,7 @@ public final class RetinaImage { // [tav] todo: create HiDPIImage class
 
   /**
    * Creates a Retina-aware wrapper over a raw image.
-   * The raw image should be provided in the specified scale.
+   * The raw image should be provided on the specified scale.
    * The wrapper will represent the raw image in the user coordinate space.
    *
    * @param image the raw image

@@ -51,7 +51,7 @@ internal sealed interface StoredFileSetCollection {
 /**
  * Size of shift for [WorkspaceFileKindMask] bits in [StoredFileSetCollection.computeMasks] data.
  */
-internal const val ACCEPTED_KINDS_MASK_SHIFT = 3
+internal const val ACCEPTED_KINDS_MASK_SHIFT = 2
 
 /**
  * Represents kinds of elements stored in [StoredFileSetCollection].
@@ -64,16 +64,12 @@ internal object StoredFileSetKindMask {
   const val ACCEPTED_FILE_SET = 1
 
   /**
-   * Indicates an [WorkspaceFileSetImpl] instance, which is either excluded or unloaded and therefore won't be returned from 
+   * Indicates an element, which is either excluded or unloaded and therefore won't be returned from 
    * [WorkspaceFileIndexEx.getFileInfo] call. 
    */
   const val IRRELEVANT_FILE_SET = 2
-
-  /**
-   * Indicates an [ExcludedFileSet] instance.
-   */
-  const val EXCLUDED = 4
-  const val ALL = ACCEPTED_FILE_SET or IRRELEVANT_FILE_SET or EXCLUDED
+  
+  const val ALL = ACCEPTED_FILE_SET or IRRELEVANT_FILE_SET
 }
 
 /**
@@ -244,8 +240,8 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
                    override val entityReference: EntityReference<WorkspaceEntity>,
                    override val entityStorageKind: EntityStorageKind) : ExcludedFileSet {
     override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
-      val withExclusion = if (honorExclusion) currentMasks and (mask shl ACCEPTED_KINDS_MASK_SHIFT).inv() else currentMasks
-      return withExclusion or StoredFileSetKindMask.EXCLUDED
+      val withExclusion = if (honorExclusion) currentMasks.unsetAcceptedKinds(mask) else currentMasks
+      return withExclusion or StoredFileSetKindMask.IRRELEVANT_FILE_SET
     }
   }
 
@@ -272,9 +268,8 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
     }
 
     override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
-      val withExclusion = if (honorExclusion && isExcluded(file)) currentMasks and (WorkspaceFileKindMask.ALL shl ACCEPTED_KINDS_MASK_SHIFT).inv()
-      else currentMasks
-      return withExclusion or StoredFileSetKindMask.EXCLUDED
+      val withExclusion = if (honorExclusion && isExcluded(file)) currentMasks.unsetAcceptedKinds(WorkspaceFileKindMask.ALL) else currentMasks
+      return withExclusion or StoredFileSetKindMask.IRRELEVANT_FILE_SET
     }
   }
 
@@ -294,11 +289,13 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
     }
 
     override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
-      val withExclusion = if (honorExclusion && isExcluded(file)) currentMasks and (WorkspaceFileKindMask.ALL shl ACCEPTED_KINDS_MASK_SHIFT).inv() else currentMasks
-      return withExclusion or StoredFileSetKindMask.EXCLUDED
+      val withExclusion = if (honorExclusion && isExcluded(file)) currentMasks.unsetAcceptedKinds(WorkspaceFileKindMask.ALL) else currentMasks
+      return withExclusion or StoredFileSetKindMask.IRRELEVANT_FILE_SET
     }
   }
 }
+
+private fun Int.unsetAcceptedKinds(excludedKinds: Int) = this and (excludedKinds shl ACCEPTED_KINDS_MASK_SHIFT).inv() 
 
 internal fun <K> MutableMap<K, StoredFileSetCollection>.putValue(key: K, fileSet: StoredFileSet) {
   this[key] = this[key]?.add(fileSet) ?: fileSet

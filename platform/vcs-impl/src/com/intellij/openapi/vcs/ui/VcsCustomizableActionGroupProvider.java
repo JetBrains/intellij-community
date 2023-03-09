@@ -28,6 +28,5 @@ public class VcsCustomizableActionGroupProvider extends CustomizableActionGroupP
   public void registerGroups(CustomizableActionGroupRegistrar registrar) {
     registrar.addCustomizableActionGroup(VcsActions.VCS_OPERATIONS_POPUP, VcsBundle.message("vcs.operations.popup"));
     registrar.addCustomizableActionGroup(ActionPlaces.CHANGES_VIEW_TOOLBAR, VcsBundle.message("vcs.local.changes.toolbar"));
-    registrar.addCustomizableActionGroup(VcsActions.VCS_LOG_CHANGES_BROWSER_TOOLBAR, VcsBundle.message("vcs.log.changes.browser.toolbar"));
   }
 }

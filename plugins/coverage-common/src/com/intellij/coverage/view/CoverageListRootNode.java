@@ -15,7 +15,7 @@ public class CoverageListRootNode extends CoverageListNode {
   public CoverageListRootNode(Project project, @NotNull PsiNamedElement classOrPackage,
                               CoverageSuitesBundle bundle,
                               CoverageViewManager.StateBean stateBean) {
-    super(project, classOrPackage, bundle, stateBean);
+    super(project, classOrPackage, bundle, stateBean, false);
   }
 
   public synchronized void reset() {
@@ -24,7 +24,7 @@ public class CoverageListRootNode extends CoverageListNode {
 
   private synchronized List<AbstractTreeNode<?>> getTopLevelPackages(CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean, Project project) {
     if (myTopLevelPackages == null) {
-      myTopLevelPackages = bundle.getCoverageEngine().createCoverageViewExtension(project, bundle, stateBean).createTopLevelNodes();
+      myTopLevelPackages = filterChildren(bundle.getCoverageEngine().createCoverageViewExtension(project, bundle, stateBean).createTopLevelNodes());
       for (AbstractTreeNode abstractTreeNode : myTopLevelPackages) {
         abstractTreeNode.setParent(this);
       }

@@ -390,7 +390,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
 
       if (adapters.size() > 1) {
         List<ExtensionComponentAdapter> list = new ArrayList<>(adapters);
-        LoadingOrder.sort(list);
+        LoadingOrder.Companion.sort(list);
         adapters = list;
       }
       adaptersAreSorted = true;

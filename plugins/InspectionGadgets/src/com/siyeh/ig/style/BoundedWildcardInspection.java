@@ -5,7 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,9 +35,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * {@code "void process(Processor<T> p)"  -> "void process(Processor<? super T> p)"}
@@ -455,13 +457,11 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     return Pair.createNonNull(field, type);
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(InspectionGadgetsBundle.message("bounded.wildcard.report.invariant.option"), "REPORT_INVARIANT_CLASSES");
-    panel.addCheckbox(InspectionGadgetsBundle.message("bounded.wildcard.report.private.option"), "REPORT_PRIVATE_METHODS");
-    panel.addCheckbox(InspectionGadgetsBundle.message("bounded.wildcard.report.instance.option"), "REPORT_INSTANCE_METHODS");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("REPORT_INVARIANT_CLASSES", InspectionGadgetsBundle.message("bounded.wildcard.report.invariant.option")),
+      checkbox("REPORT_PRIVATE_METHODS", InspectionGadgetsBundle.message("bounded.wildcard.report.private.option")),
+      checkbox("REPORT_INSTANCE_METHODS", InspectionGadgetsBundle.message("bounded.wildcard.report.instance.option")));
   }
 }

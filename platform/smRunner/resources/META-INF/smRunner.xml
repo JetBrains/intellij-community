@@ -14,7 +14,7 @@
   <actions>
     <group id="SmRunTestGroup">
       <separator/>
-      <action id="ImportTests" class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup" icon="AllIcons.Vcs.History"/>
+      <group id="ImportTests" class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsGroup" icon="AllIcons.Vcs.History"/>
       <action id="ImportTestsFromFile" class="com.intellij.execution.testframework.sm.runner.history.actions.ImportTestsFromFileAction" icon="AllIcons.ToolbarDecorator.Import"/>
       <add-to-group group-id="RunTestGroup" anchor="first" />
     </group>

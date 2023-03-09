@@ -132,7 +132,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     perform(context);
   }
 
-  private static ConfigurationFromContext getOrderedConfiguration(DataContext dataContext, List<ConfigurationFromContext> producers) {
+  private static ConfigurationFromContext getOrderedConfiguration(DataContext dataContext, List<? extends ConfigurationFromContext> producers) {
     Integer order = dataContext.getData(ExecutorAction.getOrderKey());
     if (order != null && order < producers.size()) {
       return producers.get(order);

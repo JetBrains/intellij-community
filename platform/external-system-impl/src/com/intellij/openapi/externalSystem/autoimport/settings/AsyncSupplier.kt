@@ -4,15 +4,20 @@ package com.intellij.openapi.externalSystem.autoimport.settings
 import com.intellij.openapi.Disposable
 
 interface AsyncSupplier<R> {
+
   /**
    * Supply a value to the consumer, when the value available
    * Note: Implementation can call [consumer] before returning from the method
    */
-  fun supply(consumer: (R) -> Unit, parentDisposable: Disposable)
+  fun supply(parentDisposable: Disposable, consumer: (R) -> Unit)
 
   companion object {
-    fun <R> blocking(supplier: () -> R) = object : AsyncSupplier<R> {
-      override fun supply(consumer: (R) -> Unit, parentDisposable: Disposable) = consumer(supplier())
-    }
+
+    fun <R> blocking(supplier: () -> R): AsyncSupplier<R> =
+      object : AsyncSupplier<R> {
+        override fun supply(parentDisposable: Disposable, consumer: (R) -> Unit) {
+          consumer(supplier())
+        }
+      }
   }
 }

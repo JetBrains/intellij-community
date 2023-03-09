@@ -21,7 +21,7 @@ import java.util.Set;
 
 public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollector {
 
-  private final static int CURR_VERSION = 4;
+  private final static int CURR_VERSION = 3;
 
   public static final String SCHEME_NAME_OTHER = "Other";
   public final static String[] KNOWN_NAMES = {
@@ -31,7 +31,7 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     "Visual Studio",
     "Solarized",
     "Wombat",
-    "Monokai",
+    "Monkai",
     "XCode",
     "Sublime",
     "Oblivion",
@@ -46,9 +46,6 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     "ReSharper",
     "Rider",
     "IntelliJ Light",
-    "Light",
-    "New Dark",
-    "Dark",
     SCHEME_NAME_OTHER
   };
 

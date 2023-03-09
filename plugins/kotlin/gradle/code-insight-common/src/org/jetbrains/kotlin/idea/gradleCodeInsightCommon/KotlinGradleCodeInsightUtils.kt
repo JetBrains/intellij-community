@@ -16,11 +16,11 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.PathUtil
-import com.intellij.util.io.exists
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
 fun findGradleProjectStructure(file: PsiFile) =

@@ -115,30 +115,37 @@ public class StringUtilTest {
 
   @Test
   public void testSplitWithQuotes() {
+    // Merge separators
     UsefulTestCase.assertSameElements(
       StringUtil.splitHonorQuotes("aaa bbb   ccc ", ' '),
       "aaa", "bbb", "ccc"
     );
+    // Support different quotes
     UsefulTestCase.assertSameElements(
       StringUtil.splitHonorQuotes("'aaa' \"bbb\"", ' '),
       "'aaa'", "\"bbb\""
     );
+    // Ignore separators inside quotes
     UsefulTestCase.assertSameElements(
       StringUtil.splitHonorQuotes("'a aa' \"bb b\"", ' '),
       "'a aa'", "\"bb b\""
     );
+    // Ignore other quotes inside quotes
     UsefulTestCase.assertSameElements(
       StringUtil.splitHonorQuotes("'a\" aa' \"bb 'b\"", ' '),
       "'a\" aa'", "\"bb 'b\""
     );
+    // Escape quotes
     UsefulTestCase.assertSameElements(
       StringUtil.splitHonorQuotes("'a \\'aa' \"bb\\\" b\"", ' '),
       "'a \\'aa'", "\"bb\\\" b\""
     );
+    // Unescape escaped quotes
     UsefulTestCase.assertSameElements(
       StringUtil.splitHonorQuotes("'a aa\\\\' \"bb b\\\\\"", ' '),
       "'a aa\\\\'", "\"bb b\\\\\""
     );
+    // Escape unescaped quotes
     UsefulTestCase.assertSameElements(
       StringUtil.splitHonorQuotes("'a \\\\\\'aa' \"bb \\\\\\\"b\"", ' '),
       "'a \\\\\\'aa'", "\"bb \\\\\\\"b\""

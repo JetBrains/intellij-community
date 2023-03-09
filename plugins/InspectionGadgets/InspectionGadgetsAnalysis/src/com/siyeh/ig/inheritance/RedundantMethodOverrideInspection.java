@@ -2,9 +2,10 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.PackageScope;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -15,13 +16,18 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.migration.TryWithIdenticalCatchesInspection;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.HashSet;
+import java.util.Set;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class RedundantMethodOverrideInspection extends BaseInspection {
 
@@ -37,9 +43,9 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
   }
 
   @Override
-  public @Nullable JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("redundant.method.override.option.check.library.methods"),
-                                          this, "checkLibraryMethods");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("checkLibraryMethods", InspectionGadgetsBundle.message("redundant.method.override.option.check.library.methods")));
   }
 
   @Override
@@ -57,7 +63,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
+    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
       final PsiElement method = methodNameIdentifier.getParent();
       assert method != null;
@@ -102,6 +108,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
           !AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameAnnotationsAndModifiers(method, superMethod) ||
           !AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameReturnTypes(method, superMethod) ||
           !AbstractMethodOverridesAbstractMethodInspection.haveSameExceptionSignatures(method, superMethod) ||
+          (method.getDocComment() != null && !AbstractMethodOverridesAbstractMethodInspection.haveSameJavaDoc(method, superMethod)) ||
           method.isVarArgs() != superMethod.isVarArgs()) {
         return;
       }
@@ -158,9 +165,29 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         checker.markDeclarationsAsEquivalent(parameters[i], superParameters[i]);
       }
       checker.markDeclarationsAsEquivalent(method, superMethod);
-      if (checker.codeBlocksAreEquivalent(body, superBody)) {
+      if (checker.codeBlocksAreEquivalent(body, superBody) && haveTheSameComments(method, superMethod)) {
         registerMethodError(method, Boolean.FALSE);
       }
+    }
+
+    private static boolean haveTheSameComments(PsiMethod method1, PsiMethod method2) {
+      Set<String> text1 = collectCommentText(method1);
+      Set<String> text2 = collectCommentText(method2);
+      return text2.containsAll(text1);
+    }
+
+    private static Set<String> collectCommentText(PsiMethod method) {
+      Set<String> result = new HashSet<>();
+      PsiTreeUtil.processElements(method, child -> {
+        if (child instanceof PsiComment psiComment && !(psiComment instanceof PsiDocComment)) {
+          String text = TryWithIdenticalCatchesInspection.getCommentText(psiComment);
+          if (!text.isEmpty()) {
+            result.add(text);
+          }
+        }
+        return true;
+      });
+      return result;
     }
 
     private boolean isSuperCallWithSameArguments(PsiCodeBlock body, PsiMethod method, PsiMethod superMethod) {
@@ -200,6 +227,10 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         return false;
       }
 
+      if (!collectCommentText(method).isEmpty()) {
+        return false;
+      }
+
       if (superMethod.hasModifierProperty(PsiModifier.PROTECTED)) {
         final PsiJavaFile file = (PsiJavaFile)method.getContainingFile();
         // implementing a protected method in another package makes it available to that package.
@@ -231,7 +262,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       return areSameArguments(methodCallExpression, method);
     }
 
-    private boolean areSameArguments(PsiMethodCallExpression methodCallExpression, PsiMethod method) {
+    private static boolean areSameArguments(PsiMethodCallExpression methodCallExpression, PsiMethod method) {
       // void foo(int param) { super.foo(42); } is not redundant
       PsiExpression[] arguments = methodCallExpression.getArgumentList().getExpressions();
       PsiParameter[] parameters = method.getParameterList().getParameters();

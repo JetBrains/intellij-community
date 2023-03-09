@@ -53,7 +53,7 @@ class RemoveForLoopIndicesIntention : SelfTargetingRangeIntention<KtForExpressio
         val loopRange = element.loopRange as KtDotQualifiedExpression
 
         val elementVar = multiParameter.entries[1]
-        val loop = KtPsiFactory(element).createExpressionByPattern("for ($0 in _) {}", elementVar.text) as KtForExpression
+        val loop = KtPsiFactory(element.project).createExpressionByPattern("for ($0 in _) {}", elementVar.text) as KtForExpression
         runWriteAction {
             element.loopParameter!!.replace(loop.loopParameter!!)
 

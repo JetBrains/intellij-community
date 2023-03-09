@@ -1,18 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
-import java.util.function.Consumer
 
+@ApiStatus.NonExtendable
 interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : GradleBuildScriptBuilderCore<BSB> {
 
   fun addGroup(group: String): BSB
   fun addVersion(version: String): BSB
 
-  fun configureTask(name: String, configure: ScriptTreeBuilder.() -> Unit): BSB
-  fun configureTask(name: String, configure: Consumer<ScriptTreeBuilder>): BSB
+  fun configureTestTask(configure: ScriptTreeBuilder.() -> Unit): BSB
 
   fun addDependency(scope: String, dependency: String) = addDependency(scope, dependency, null)
   fun addDependency(scope: String, dependency: Expression) = addDependency(scope, dependency, null)
@@ -51,6 +51,9 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
 
   fun withMavenCentral(): BSB
   fun withBuildScriptMavenCentral(): BSB
+
+  fun applyPlugin(plugin: String): BSB
+  fun applyPluginFrom(path: String): BSB
 
   fun withPlugin(id: String, version: String? = null): BSB
 

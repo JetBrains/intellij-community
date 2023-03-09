@@ -1,5 +1,6 @@
 from collections.abc import Container, Iterable, MutableMapping
-from typing import Any, Pattern, Protocol
+from re import Pattern
+from typing import Any, Protocol
 from typing_extensions import TypeAlias
 
 from .html5lib_shim import Filter

@@ -5,8 +5,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
-import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemProcessingSink;
+import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -32,7 +32,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
       final PsiClass psiParentClass = parentClass.get();
       final PsiAnnotation psiBuilderAnnotation = builderAnnotation.get();
       // use parent class as source!
-      if (validate(psiBuilderAnnotation, psiParentClass, ProblemEmptyBuilder.getInstance())) {
+      if (validate(psiBuilderAnnotation, psiParentClass, new ProblemProcessingSink())) {
         return processAnnotation(psiParentClass, null, psiBuilderAnnotation, psiClass, nameHint);
       }
     } else if (parentClass.isPresent()) {
@@ -81,7 +81,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
   }
 
   @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     return getBuilderHandler().validate(psiClass, psiAnnotation, builder);
   }
 

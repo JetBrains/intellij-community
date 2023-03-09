@@ -124,7 +124,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return EP_NAME.getExtensionList();
     }
 
-    public AnAction[] getActions(@NotNull List<DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<T> callback) {
+    public AnAction[] getActions(@NotNull List<? extends DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<T> callback) {
       List<AnAction> actions = new ArrayList<>();
       for (DirectoryProjectGenerator<?> projectGenerator : generators) {
         try {
@@ -190,7 +190,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   }
 
   protected static @NotNull OpenProjectTask createOpenProjectOptions(@Nullable Project projectToClose,
-                                                                     @Nullable Consumer<UserDataHolder> extraUserData) {
+                                                                     @Nullable Consumer<? super UserDataHolder> extraUserData) {
     return OpenProjectTaskKt.OpenProjectTask(builder -> {
       builder.setProjectToClose(projectToClose);
       builder.setNewProject(true);
@@ -238,7 +238,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       String noText = ActionsBundle.message("action.NewDirectoryProject.not.empty.dialog.open.existing");
       int result = Messages.showYesNoDialog(options.getProjectToClose(), message, title, yesText, noText, Messages.getQuestionIcon());
       if (result == Messages.NO) {
-        return PlatformProjectOpenProcessor.doOpenProject(location, OpenProjectTask.build());
+        return PlatformProjectOpenProcessor.Companion.doOpenProject(location, OpenProjectTask.build());
       }
     }
 

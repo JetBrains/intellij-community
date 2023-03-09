@@ -1,9 +1,8 @@
 package org.intellij.plugins.markdown.formatter
 
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.RegistryKeyRule
+import org.intellij.plugins.markdown.formatter.MarkdownFormatterTest.Companion.performReformatting
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -57,9 +56,9 @@ class FrontMatterFormatterTest: LightPlatformCodeInsightTestCase() {
 
   private fun doTest(content: String, expected: String) {
     configureFromFileText("some.md", content)
-    WriteCommandAction.runWriteCommandAction(project) {
-      CodeStyleManager.getInstance(project).reformat(file)
-    }
+    performReformatting(project, file)
+    checkResultByText(expected)
+    performReformatting(project, file)
     checkResultByText(expected)
   }
 }

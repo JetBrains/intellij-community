@@ -40,7 +40,8 @@ class DoubleBangToIfThenIntention : SelfTargetingRangeIntention<KtPostfixExpress
         val base = KtPsiUtil.safeDeparenthesize(element.baseExpression!!, true)
         val expressionText = formatForUseInExceptionArgument(base.text!!)
 
-        val defaultException = KtPsiFactory(element).createExpression("throw NullPointerException()")
+        val psiFactory = KtPsiFactory(element.project)
+        val defaultException = psiFactory.createExpression("throw NullPointerException()")
 
         val isStatement = element.isUsedAsStatement(element.analyze())
         val isStable = base.isStableSimpleExpression()
@@ -50,9 +51,7 @@ class DoubleBangToIfThenIntention : SelfTargetingRangeIntention<KtPostfixExpress
         else {
             val qualifiedExpressionForReceiver = element.getQualifiedExpressionForReceiver()
             val selectorExpression = qualifiedExpressionForReceiver?.selectorExpression
-            val thenClause = selectorExpression?.let {
-                KtPsiFactory(element).createExpressionByPattern("$0.$1", base, it)
-            } ?: base
+            val thenClause = selectorExpression?.let { psiFactory.createExpressionByPattern("$0.$1", base, it) } ?: base
             (qualifiedExpressionForReceiver ?: element).convertToIfNotNullExpression(base, thenClause, defaultException)
         }
 

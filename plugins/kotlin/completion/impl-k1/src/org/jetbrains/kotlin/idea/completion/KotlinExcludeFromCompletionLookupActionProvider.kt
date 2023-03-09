@@ -11,7 +11,7 @@ import com.intellij.util.Consumer
 import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 
 class KotlinExcludeFromCompletionLookupActionProvider : LookupActionProvider {
-    override fun fillActions(element: LookupElement, lookup: Lookup, consumer: Consumer<LookupElementAction>) {
+    override fun fillActions(element: LookupElement, lookup: Lookup, consumer: Consumer<in LookupElementAction>) {
         val lookupObject = element.`object` as? DescriptorBasedDeclarationLookupObject ?: return
 
         val project = lookup.psiFile?.project ?: return
@@ -22,7 +22,7 @@ class KotlinExcludeFromCompletionLookupActionProvider : LookupActionProvider {
         }
     }
 
-    private fun addExcludes(consumer: Consumer<LookupElementAction>, project: Project, fqName: String) {
+    private fun addExcludes(consumer: Consumer<in LookupElementAction>, project: Project, fqName: String) {
         for (s in AddImportAction.getAllExcludableStrings(fqName)) {
             consumer.consume(ExcludeFromCompletionAction(project, s))
         }

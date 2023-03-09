@@ -51,7 +51,6 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static git4idea.push.GitPushTarget.findRemote;
 import static java.util.stream.Collectors.toList;
 
@@ -480,7 +479,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      return newArrayList(myTargetEditor.getFocusTarget(), myRemoteRenderer);
+      return ContainerUtil.newArrayList(myTargetEditor.getFocusTarget(), myRemoteRenderer);
     }
 
     @Override

@@ -2,8 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.AnalysisScope;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -19,7 +19,8 @@ import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class EmptyDirectoryInspection extends GlobalInspectionTool {
 
@@ -27,9 +28,9 @@ public class EmptyDirectoryInspection extends GlobalInspectionTool {
   public boolean onlyReportDirectoriesUnderSourceRoots = false;
 
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(LangBundle.message("empty.directories.only.under.source.roots.option"), this,
-                                          "onlyReportDirectoriesUnderSourceRoots");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyReportDirectoriesUnderSourceRoots", LangBundle.message("empty.directories.only.under.source.roots.option")));
   }
 
   @Override

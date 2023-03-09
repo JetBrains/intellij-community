@@ -4,4 +4,4 @@
 
 // INVOCATION_COUNT: 2
 // ABSENT: Deprecated
-// ABSENT: Volatile
+// ABSENT: JvmOverloads

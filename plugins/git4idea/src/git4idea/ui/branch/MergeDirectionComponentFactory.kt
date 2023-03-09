@@ -17,7 +17,6 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
-import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitBranch
 import git4idea.GitLocalBranch
@@ -101,13 +100,13 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
                            .gridGap("0", "0")
                            .insets("0", "0", "0", "0"))
 
-      add(base, CC().minWidth("${UI.scale(30)}"))
+      add(base, CC().minWidth("30"))
       add(JLabel(" ${UIUtil.leftArrow()} ").apply {
         foreground = NamedColorUtil.getInactiveTextColor()
         border = JBUI.Borders.empty(0, 5)
       })
-      add(head, CC().minWidth("${UI.scale(30)}"))
-      add(changesWarningLabel, CC().gapLeft("${UI.scale(10)}"))
+      add(head, CC().minWidth("30"))
+      add(changesWarningLabel, CC().gapLeft("10"))
     }
   }
 

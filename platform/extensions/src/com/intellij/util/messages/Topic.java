@@ -94,12 +94,10 @@ public class Topic<L> {
 
   @Override
   public String toString() {
-    return "Topic(" +
-           "name='" + myDisplayName + '\'' +
-           ", listenerClass=" + myListenerClass +
-           ", broadcastDirection=" + myBroadcastDirection +
-           ", immediateDelivery=" + myImmediateDelivery +
-           ')';
+    return "Topic('" + myDisplayName + "'" +
+           (myBroadcastDirection == BroadcastDirection.NONE ? "" : ", direction=" + myBroadcastDirection) +
+           (myImmediateDelivery ? ", immediateDelivery" : "") +
+           ", listenerClass=" + myListenerClass + ')';
   }
 
   public static @NotNull <L> Topic<L> create(@NonNls @NotNull String displayName, @NotNull Class<L> listenerClass) {

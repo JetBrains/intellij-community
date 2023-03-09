@@ -16,19 +16,22 @@
 package org.jetbrains.idea.maven.utils.library.propertiesEditor;
 
 import com.google.common.base.Strings;
+import com.intellij.jarRepository.RemoteRepositoryDescription;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.aether.ArtifactKind;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
+import javax.swing.*;
+import java.util.*;
 
 public class RepositoryLibraryPropertiesModel {
   private String version;
   private final EnumSet<ArtifactKind> myArtifactKinds = EnumSet.noneOf(ArtifactKind.class);
   private boolean includeTransitiveDependencies;
   private List<String> myExcludedDependencies;
+  private final List<RemoteRepositoryDescription> myAvailableRemoteRepositories;
+  private final CollectionComboBoxModel<RemoteRepositoryDescription> myRemoteRepositoryModel;
+
 
   public RepositoryLibraryPropertiesModel(String version, boolean downloadSources, boolean downloadJavaDocs) {
     this(version, downloadSources, downloadJavaDocs, true, ContainerUtil.emptyList());
@@ -41,16 +44,33 @@ public class RepositoryLibraryPropertiesModel {
 
   public RepositoryLibraryPropertiesModel(String version, EnumSet<ArtifactKind> artifactKinds,
                                           boolean includeTransitiveDependencies, List<String> excludedDependencies) {
+    this(version, artifactKinds, includeTransitiveDependencies, excludedDependencies, Collections.emptyList(), null);
+  }
+
+  public RepositoryLibraryPropertiesModel(String version, EnumSet<ArtifactKind> artifactKinds,
+                                          boolean includeTransitiveDependencies, List<String> excludedDependencies,
+                                          List<RemoteRepositoryDescription> availableRemoteRepositories, String remoteRepositoryId) {
     this.version = version;
     this.myArtifactKinds.addAll(artifactKinds);
     this.includeTransitiveDependencies = includeTransitiveDependencies;
     myExcludedDependencies = new ArrayList<>(excludedDependencies);
+    myAvailableRemoteRepositories = availableRemoteRepositories;
+
+    List<RemoteRepositoryDescription> displayedRepositories = new ArrayList<>();
+    displayedRepositories.add(null);
+    displayedRepositories.addAll(availableRemoteRepositories);
+
+    RemoteRepositoryDescription selectedRepository =
+      remoteRepositoryId == null ? null : ContainerUtil.find(availableRemoteRepositories,
+                                                             it -> Objects.equals(it.getId(), remoteRepositoryId));
+    myRemoteRepositoryModel = new CollectionComboBoxModel<>(displayedRepositories, selectedRepository);
   }
 
   @Override
   public RepositoryLibraryPropertiesModel clone() {
     return new RepositoryLibraryPropertiesModel(version, myArtifactKinds, includeTransitiveDependencies,
-                                                new ArrayList<>(myExcludedDependencies));
+                                                new ArrayList<>(myExcludedDependencies),
+                                                myAvailableRemoteRepositories, getRemoteRepositoryId());
   }
 
   public boolean isValid() {
@@ -121,6 +141,19 @@ public class RepositoryLibraryPropertiesModel {
     this.version = version;
   }
 
+  public RemoteRepositoryDescription getRemoteRepository() {
+    return myRemoteRepositoryModel.getSelected();
+  }
+
+  public String getRemoteRepositoryId() {
+    RemoteRepositoryDescription repo = myRemoteRepositoryModel.getSelected();
+    return repo == null ? null : repo.getId();
+  }
+
+  public ComboBoxModel<RemoteRepositoryDescription> getRemoteRepositoryModel() {
+    return myRemoteRepositoryModel;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -132,6 +165,7 @@ public class RepositoryLibraryPropertiesModel {
     if (includeTransitiveDependencies != model.includeTransitiveDependencies) return false;
     if (version != null ? !version.equals(model.version) : model.version != null) return false;
     if (!myExcludedDependencies.equals(model.myExcludedDependencies)) return false;
+    if (!Objects.equals(getRemoteRepositoryId(), model.getRemoteRepositoryId())) return false;
     return true;
   }
 
@@ -141,6 +175,7 @@ public class RepositoryLibraryPropertiesModel {
     result = 31 * result + (includeTransitiveDependencies ? 1 : 0);
     result = 31 * result + (version != null ? version.hashCode() : 0);
     result = 31 * result + myExcludedDependencies.hashCode();
+    result = 31 * result + (getRemoteRepositoryId() != null ? getRemoteRepositoryId().hashCode() : 0);
     return result;
   }
 }

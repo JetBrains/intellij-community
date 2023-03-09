@@ -75,20 +75,20 @@ class ConvertForEachToForLoopIntention : SelfTargetingOffsetIndependentIntention
     }
 
     private fun generateLoop(functionLiteral: KtLambdaExpression, receiver: KtExpression, context: BindingContext): KtExpression {
-        val factory = KtPsiFactory(functionLiteral)
+        val psiFactory = KtPsiFactory(functionLiteral.project)
 
         val body = functionLiteral.bodyExpression!!
         val function = functionLiteral.functionLiteral
 
         body.forEachDescendantOfType<KtReturnExpression> {
             if (it.getTargetFunction(context) == function) {
-                it.replace(factory.createExpression("continue"))
+                it.replace(psiFactory.createExpression("continue"))
             }
         }
 
         val loopRange = KtPsiUtil.safeDeparenthesize(receiver)
         val parameter = functionLiteral.valueParameters.singleOrNull()
 
-        return factory.createExpressionByPattern("for($0 in $1){ $2 }", parameter ?: "it", loopRange, body.allChildren)
+        return psiFactory.createExpressionByPattern("for($0 in $1){ $2 }", parameter ?: "it", loopRange, body.allChildren)
     }
 }

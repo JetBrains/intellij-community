@@ -36,6 +36,7 @@ import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -70,6 +71,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
    * @see JBPopupFactory#guessBestPopupLocation(Editor)
    */
   public static final Key<Point> ANCHOR_POPUP_POINT = Key.create("popup.anchor.point");
+  public static final Key<Boolean> DISABLE_ICON_IN_LIST = Key.create("popup.disable.icon.in.list");
 
   private static final Logger LOG = Logger.getInstance(PopupFactoryImpl.class);
 
@@ -436,9 +438,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
     Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     JComponent focusOwner = component instanceof JComponent ? (JComponent)component : null;
 
-    if (focusOwner == null) {
+    if (focusOwner == null || !UIUtil.isShowing(focusOwner)) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      JFrame frame = project == null ? null : WindowManager.getInstance().getFrame(project);
+      JFrame frame = project == null ? WindowManager.getInstance().findVisibleFrame() : WindowManager.getInstance().getFrame(project);
       focusOwner = frame == null ? null : frame.getRootPane();
       if (focusOwner == null) {
         throw new IllegalArgumentException("focusOwner cannot be null:\n" +
@@ -685,7 +687,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
 
       if (icon == null) icon = selectedIcon != null ? selectedIcon : EmptyIcon.create(myMaxIconWidth, myMaxIconHeight);
-      myIcon = icon;
+      boolean disableIcon = Boolean.TRUE.equals(presentation.getClientProperty(DISABLE_ICON_IN_LIST));
+
+      myIcon = disableIcon ? null : icon;
       mySelectedIcon = selectedIcon;
       myText = presentation.getText();
     }
@@ -815,7 +819,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
 
       if (icon == null) icon = selectedIcon != null ? selectedIcon : EmptyIcon.create(myMaxIconWidth, myMaxIconHeight);
-      myIcon = icon;
+
+      boolean disableIcon = Boolean.TRUE.equals(presentation.getClientProperty(DISABLE_ICON_IN_LIST));
+
+      myIcon = disableIcon ? null : icon;
       mySelectedIcon = selectedIcon;
 
       myValue = presentation.getClientProperty(Presentation.PROP_VALUE);

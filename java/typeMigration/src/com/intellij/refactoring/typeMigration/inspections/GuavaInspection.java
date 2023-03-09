@@ -3,7 +3,7 @@ package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -27,8 +27,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
+
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 /**
  * @author Dmitry Batkovich
@@ -43,13 +45,12 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean ignoreJavaxNullable = true;
 
   @Override
-  public JComponent createOptionsPanel() {
-    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(TypeMigrationBundle.message("inspection.guava.variables.option"), "checkVariables");
-    panel.addCheckbox(TypeMigrationBundle.message("inspection.guava.method.chains.option"), "checkChains");
-    panel.addCheckbox(TypeMigrationBundle.message("inspection.guava.return.types.option"), "checkReturnTypes");
-    panel.addCheckbox(TypeMigrationBundle.message("inspection.guava.erase.option"), "ignoreJavaxNullable");
-    return panel;
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("checkVariables", TypeMigrationBundle.message("inspection.guava.variables.option")),
+      checkbox("checkChains", TypeMigrationBundle.message("inspection.guava.method.chains.option")),
+      checkbox("checkReturnTypes", TypeMigrationBundle.message("inspection.guava.return.types.option")),
+      checkbox("ignoreJavaxNullable", TypeMigrationBundle.message("inspection.guava.erase.option")));
   }
 
   @NotNull

@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.fir.asJava.classes
 
 import com.intellij.util.ThrowableRunnable
+import org.jetbrains.kotlin.asJava.classes.LightClassTestCommon
+import org.jetbrains.kotlin.asJava.classes.PsiElementChecker
+import org.jetbrains.kotlin.asJava.classes.findLightClass
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
-import org.jetbrains.kotlin.idea.caches.resolve.LightClassTestCommon
-import org.jetbrains.kotlin.idea.caches.resolve.PsiElementChecker
-import org.jetbrains.kotlin.idea.caches.resolve.findClass
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.fir.findUsages.doTestWithFIRFlagsByPath
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
@@ -35,11 +35,11 @@ abstract class AbstractFirLightClassTest : KotlinLightCodeInsightFixtureTestCase
     private fun doTestImpl() {
         val fileName = fileName()
         val extraFilePath = when {
-            fileName.endsWith(fileExtension) -> fileName.replace(fileExtension, ".extra" + fileExtension)
+            fileName.endsWith(fileExtension) -> fileName.replace(fileExtension, ".extra$fileExtension")
             else -> error("Invalid test data extension")
         }
 
-        val testFiles = if (File(testDataPath, extraFilePath).isFile) listOf(fileName, extraFilePath) else listOf(fileName)
+        val testFiles = if (File(testDataDirectory, extraFilePath).isFile) listOf(fileName, extraFilePath) else listOf(fileName)
 
         myFixture.configureByFiles(*testFiles.toTypedArray())
         if ((myFixture.file as? KtFile)?.isScript() == true) {
@@ -54,7 +54,7 @@ abstract class AbstractFirLightClassTest : KotlinLightCodeInsightFixtureTestCase
             LightClassTestCommon.getActualLightClassText(
                 testData,
                 { fqName ->
-                    findClass(fqName, ktFile, project)?.apply {
+                    findLightClass(fqName, ktFile, project)?.apply {
                         PsiElementChecker.checkPsiElementStructure(this)
                     }
                 },

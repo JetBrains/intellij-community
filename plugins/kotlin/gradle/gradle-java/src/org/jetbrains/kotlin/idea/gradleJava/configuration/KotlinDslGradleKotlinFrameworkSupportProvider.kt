@@ -216,7 +216,7 @@ abstract class AbstractKotlinDslGradleKotlinJSFrameworkSupportProvider(
 
     abstract fun additionalSubTargetSettings(): String?
 
-    override fun getOldSyntaxPluginDefinition(): String = "plugin(\"${KotlinJsGradleModuleConfigurator.KOTLIN_JS}\")"
+    override fun getOldSyntaxPluginDefinition(): String = "plugin(\"kotlin2js\")"
     override fun getPluginDefinition(): String = "id(\"org.jetbrains.kotlin.js\")"
 
 }

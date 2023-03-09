@@ -35,10 +35,6 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     this(initialCapacity, 0.8f);
   }
 
-  RefHashMap() {
-    this(4);
-  }
-
   RefHashMap(@NotNull HashingStrategy<? super K> hashingStrategy) {
     this(4, 0.8f, hashingStrategy);
   }
@@ -61,11 +57,13 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       Object[] key = this.key;
       Object[] value = this.value;
       int mask = newN - 1; // Note that this is used by the hashing macro
+      //noinspection unchecked
       Key<K>[] newKey = new Key[newN + 1];
       Object[] newValue = new Object[newN + 1];
       int pos;
       int keysToProcess = size;
       for (int i = n; i >= 0 && keysToProcess > 0; i--) {
+        //noinspection unchecked
         Key<K> k = (Key<K>)key[i];
         if (k == null) {
           continue;
@@ -126,6 +124,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       if (this == o) return true;
       if (!(o instanceof Key)) return false;
       K t = myObject;
+      //noinspection unchecked
       K u = ((Key<K>)o).get();
       return keysEqual(t, u, myStrategy);
     }
@@ -140,6 +139,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   boolean processQueue() {
     boolean processed = false;
     Key<K> wk;
+    //noinspection unchecked
     while ((wk = (Key<K>)myReferenceQueue.poll()) != null) {
       removeKey(wk);
       processed = true;
@@ -174,6 +174,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   @Override
   public boolean containsKey(@NotNull Object key) {
     // optimization:
+    //noinspection unchecked
     myHardKeyInstance.set((K)key);
     try {
       return myMap.containsKey(myHardKeyInstance);

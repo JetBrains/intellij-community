@@ -9,8 +9,10 @@ import org.gradle.tooling.internal.consumer.DefaultGradleConnector
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
+import org.jetbrains.kotlin.tooling.core.Extras
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
@@ -68,6 +70,13 @@ fun <T : Any> buildGradleModel(
                     clazz.java,
                     /* Representative of the `kotlin.project-module` module */
                     KotlinCompilation::class.java,
+
+                    /* Representative of the `kotlin-tooling-core` library */
+                    Extras::class.java,
+
+                    /* Representative of the `kotlin-gradle-plugin-idea` library */
+                    IdeaKotlinDependency::class.java,
+
                     /* Representative of the kotlin stdlib */
                     Unit::class.java
                 ), setOf(IdeaProject::class.java)
@@ -86,7 +95,10 @@ fun <T : Any> buildGradleModel(
                         KotlinCompilation::class.java,
 
                         /* Representative of the `kotlin-tooling-core` library */
-                        KotlinToolingVersion::class.java,
+                        Extras::class.java,
+
+                        /* Representative of the `kotlin-gradle-plugin-idea` library */
+                        IdeaKotlinDependency::class.java,
 
                         /* Representative of the kotlin stdlib */
                         Unit::class.java

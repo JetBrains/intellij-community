@@ -14,8 +14,8 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.content.Content
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.childScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,16 +35,14 @@ internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 
   override fun init(toolWindow: ToolWindow) {
-    val task = toolWindow.project.coroutineScope.launch(start = CoroutineStart.LAZY) {
+    toolWindow.project.coroutineScope.launch {
       val repositoriesManager = toolWindow.project.service<GHHostedRepositoriesManager>()
-      withContext(Dispatchers.EDT) {
+      withContext<Unit>(Dispatchers.EDT) {
         repositoriesManager.knownRepositoriesState.collect {
           toolWindow.isAvailable = it.isNotEmpty()
         }
       }
-    }
-    Disposer.register(toolWindow.disposable, task::cancel)
-    task.start()
+    }.cancelOnDispose(toolWindow.disposable)
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {

@@ -7,12 +7,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 public class ShowFeatureUsageStatisticsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    new ShowFeatureUsageStatisticsDialog(Objects.requireNonNull(getEventProject(e))).show();
+    new ShowFeatureUsageStatisticsDialog(getEventProject(e)).show();
   }
 
   @Override

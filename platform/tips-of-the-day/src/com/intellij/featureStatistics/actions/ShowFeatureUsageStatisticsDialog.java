@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.TableViewSpeedSearch;
@@ -95,11 +94,8 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
 
   private static final ColumnInfo[] COLUMNS = new ColumnInfo[]{DISPLAY_NAME, GROUP_NAME, USED_TOTAL, LAST_USED};
 
-  private final @NotNull Project myProject;
-
-  public ShowFeatureUsageStatisticsDialog(@NotNull Project project) {
+  public ShowFeatureUsageStatisticsDialog(Project project) {
     super(project, true);
-    myProject = project;
     setTitle(FeatureStatisticsBundle.message("feature.statistics.dialog.title"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     setModal(false);
@@ -200,8 +196,7 @@ public final class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
         }
         else {
           TipAndTrickBean tip = TipUtils.getTip(selection.iterator().next());
-          Component contextComponent = table.isShowing() ? table : WindowManager.getInstance().getFrame(myProject);
-          List<TextParagraph> paragraphs = TipUtils.loadAndParseTip(tip, contextComponent);
+          List<TextParagraph> paragraphs = TipUtils.loadAndParseTip(tip);
           textPane.setParagraphs(paragraphs);
         }
       }

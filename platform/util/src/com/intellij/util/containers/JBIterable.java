@@ -7,9 +7,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 import java.util.function.Supplier;
@@ -801,11 +801,12 @@ public abstract class JBIterable<E> implements Iterable<E> {
   /**
    * Collects all items into an immutable {@code List} and returns it.
    */
+  @Unmodifiable
   public final @NotNull List<E> toList() {
     if (this == EMPTY) return Collections.emptyList();
     E single = asElement();
     if (single != null) return Collections.singletonList(single);
-    ArrayList<E> result = ContainerUtil.newArrayList(this);
+    List<E> result = ContainerUtil.newArrayList(this);
     return result.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(result);
   }
 

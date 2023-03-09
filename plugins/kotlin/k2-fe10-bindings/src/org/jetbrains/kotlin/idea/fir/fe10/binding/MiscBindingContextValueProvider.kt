@@ -57,8 +57,7 @@ class MiscBindingContextValueProvider(bindingContext: KtSymbolBasedBindingContex
             isUnsignedLongNumberLiteral = false,
             usesVariableAsConstant = false,
             usesNonConstValAsConstant = false,
-            isConvertableConstVal = false,
-            dontCreateILT = false
+            isConvertableConstVal = false
         )
         return TypedCompileTimeConstant(constantValue, context.moduleDescriptor, parameters)
     }

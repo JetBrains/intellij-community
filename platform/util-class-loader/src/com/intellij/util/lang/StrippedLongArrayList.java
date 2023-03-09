@@ -17,7 +17,6 @@ package com.intellij.util.lang;
 
 final class StrippedLongArrayList {
   private static final long[] DEFAULT_EMPTY_ARRAY = {};
-  private static final long[] EMPTY_ARRAY = {};
   private static final int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
 
   /**
@@ -36,14 +35,7 @@ final class StrippedLongArrayList {
    */
   private int size;
 
-  public StrippedLongArrayList(int capacity) {
-    if (capacity < 0) {
-      throw new IllegalArgumentException("Initial capacity (" + capacity + ") is negative");
-    }
-    a = capacity == 0 ? EMPTY_ARRAY : new long[capacity];
-  }
-
-  public StrippedLongArrayList() {
+  StrippedLongArrayList() {
     a = DEFAULT_EMPTY_ARRAY;
   }
 
@@ -54,24 +46,6 @@ final class StrippedLongArrayList {
    */
   public long[] elements() {
     return a;
-  }
-
-  /**
-   * Ensures that this array list can contain the given number of entries without
-   * resizing.
-   *
-   * @param capacity the new minimum capacity for this array list.
-   */
-  public void ensureCapacity(final int capacity) {
-    if (capacity <= a.length || (a == DEFAULT_EMPTY_ARRAY && capacity <= DEFAULT_INITIAL_CAPACITY)) {
-      return;
-    }
-    a = ensureCapacity(a, capacity, size);
-    assert size <= a.length;
-  }
-
-  private static long[] ensureCapacity(final long[] array, final int length, final int preserve) {
-    return length > array.length ? forceCapacity(array, length, preserve) : array;
   }
 
   private static long[] forceCapacity(final long[] array, final int length, final int preserve) {
@@ -117,18 +91,6 @@ final class StrippedLongArrayList {
     a[size++] = k;
     assert size <= a.length;
     return true;
-  }
-
-  public long getLong(final int index) {
-    if (index >= size) {
-      throw new IndexOutOfBoundsException(
-        "Index (" + index + ") is greater than or equal to list size (" + size + ")");
-    }
-    return a[index];
-  }
-
-  public void clear() {
-    size = 0;
   }
 
   public int size() {

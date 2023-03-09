@@ -26,9 +26,9 @@ import java.util.*;
 public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClassesHelper {
 
   @Override
-  public void findUsages(Collection<PsiFile> filesToMove,
+  public void findUsages(Collection<? extends PsiFile> filesToMove,
                          PsiDirectory[] directoriesToMove,
-                         Collection<UsageInfo> result,
+                         Collection<? super UsageInfo> result,
                          boolean searchInComments,
                          boolean searchInNonJavaFiles,
                          Project project) { }
@@ -36,7 +36,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
   @Override
   public void findUsages(Map<VirtualFile, MoveDirectoryWithClassesProcessor.TargetDirectoryWrapper> filesToMove,
                          PsiDirectory[] directoriesToMove,
-                         Collection<UsageInfo> usages,
+                         Collection<? super UsageInfo> usages,
                          boolean searchInComments,
                          boolean searchInNonJavaFiles,
                          Project project) {
@@ -100,7 +100,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
   public boolean move(PsiFile file,
                       PsiDirectory moveDestination,
                       Map<PsiElement, PsiElement> oldToNewElementsMapping,
-                      List<PsiFile> movedFiles,
+                      List<? super PsiFile> movedFiles,
                       RefactoringElementListener listener) {
     if (!(file instanceof PsiClassOwner)) {
       return false;

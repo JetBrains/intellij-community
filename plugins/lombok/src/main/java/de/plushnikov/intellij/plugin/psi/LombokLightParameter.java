@@ -57,7 +57,7 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
   }
 
   @Override
-  public LombokLightParameter setModifiers(String... modifiers) {
+  public @NotNull LombokLightParameter setModifiers(@NotNull String @NotNull ... modifiers) {
     final LombokLightModifierList lombokLightModifierList = getModifierList();
     lombokLightModifierList.clearModifiers();
     Stream.of(modifiers).forEach(lombokLightModifierList::addModifier);

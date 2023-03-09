@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class EmmetLookupActionProvider implements LookupActionProvider {
   @Override
-  public void fillActions(@NotNull LookupElement element, final @NotNull Lookup lookup, @NotNull Consumer<@NotNull LookupElementAction> consumer) {
+  public void fillActions(@NotNull LookupElement element, final @NotNull Lookup lookup, @NotNull Consumer<? super @NotNull LookupElementAction> consumer) {
     if (element instanceof CustomLiveTemplateLookupElement  && 
         ((CustomLiveTemplateLookupElement)element).getCustomLiveTemplate() instanceof ZenCodingTemplate) {
 

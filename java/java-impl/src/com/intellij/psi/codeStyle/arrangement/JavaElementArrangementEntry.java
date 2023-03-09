@@ -44,9 +44,8 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
     myName = name;
   }
 
-  @NotNull
   @Override
-  public Set<ArrangementSettingsToken> getModifiers() {
+  public @NotNull Set<? extends ArrangementSettingsToken> getModifiers() {
     return myModifiers;
   }
 
@@ -60,9 +59,8 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
     return myName;
   }
 
-  @NotNull
   @Override
-  public Set<ArrangementSettingsToken> getTypes() {
+  public @NotNull Set<? extends ArrangementSettingsToken> getTypes() {
     return myTypes;
   }
 

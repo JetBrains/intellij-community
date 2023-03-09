@@ -23,49 +23,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.VersionNameComparator
 import org.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 import kotlin.math.sign
 
-/**
- * Determines the upgrade candidate version, if any exists in the [availableVersions] list, for [currentVersion]. The main difference from the
- * [highestSensibleVersionByNameOrNull] is that this makes sure whatever candidate it returns, if any, is "higher" than the [currentVersion], not only
- * that it is the one with the highest version name in the list.
- *
- * If the current version is not a [NormalizedPackageVersion.Semantic], then the function returns the highest semantic version in the
- * [availableVersions] list, if any.
- *
- * If the current version is a [NormalizedPackageVersion.Semantic], then the function first tries to find a candidate with the same non-semantic
- * suffix (which may be null/empty). If there is no candidate with the same suffix, it picks one without suffix. If there's no candidate without
- * suffix, then it returns the one with the highest version name (and thus, the highest suffix).
- *
- * If there's no candidate which satisfies the criteria, the function returns `null`.
- *
- * @param currentVersion The version for which to determine the upgrade candidate.
- * @param availableVersions The list of all potential upgrade candidate versions.
- * @return The upgrade candidate version, if any. Null otherwise.
- * @throws IllegalArgumentException If [availableVersions] is empty.
- * @see highestSensibleVersionByNameOrNull
- * @see VersionNameComparator
- */
-internal fun PackageVersionUtils.upgradeCandidateVersionOrNull(
-    currentVersion: NormalizedPackageVersion<*>,
-    availableVersions: List<NormalizedPackageVersion<*>>
-): NormalizedPackageVersion<*>? {
-    require(availableVersions.isNotEmpty()) { "Cannot find upgrades when there are no available versions" }
-
-    val availableSemanticVersions = availableVersions.filterIsInstance<NormalizedPackageVersion.Semantic>()
-        .sortedDescending()
-
-    return when (currentVersion) {
-        is NormalizedPackageVersion.Semantic -> getUpgradeSemanticVersionOrNull(availableSemanticVersions, currentVersion)
-        else -> {
-            // A Semantic version is always better than the current one, so we should prefer that
-            if (availableSemanticVersions.isNotEmpty()) {
-                availableSemanticVersions.filter { it.nonSemanticSuffixOrNull().isNullOrBlank() }.maxOrNull()
-            } else {
-                availableVersions.maxOrNull()?.takeIf { it > currentVersion }
-            }
-        }
-    }
-}
-
 private fun getUpgradeSemanticVersionOrNull(
     availableSemanticVersions: List<NormalizedPackageVersion.Semantic>,
     currentVersion: NormalizedPackageVersion.Semantic

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images.sync
 
 import org.jetbrains.intellij.build.images.IconRobotsData
@@ -10,7 +10,7 @@ import java.nio.file.Path
 internal object IconRobotsDataReader {
   @Volatile
   private var iconRobotsData = emptyMap<Path, IconRobotsData>()
-  private val root = IconRobotsData(null, ignoreSkipTag = false, usedIconsRobots = null)
+  private val root = IconRobotsData(null, ignoreSkipTag = false, usedIconRobots = null)
 
   private fun readIconRobotsData(file: Path, block: ImageSyncFlags.() -> Boolean): Boolean {
     val robotFile = findRobotsFileName(file) ?: return false

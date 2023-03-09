@@ -66,7 +66,7 @@ class NullableBooleanElvisInspection : AbstractKotlinInspection(), CleanupLocalI
                 KtPsiUtil.isFalseConstant(constPart) -> false
                 else -> return
             }
-            val equalityCheckExpression = element.replaced(KtPsiFactory(constPart).buildExpression {
+            val equalityCheckExpression = element.replaced(KtPsiFactory(project).buildExpression {
                 appendExpression(exprPart)
                 appendFixedText(if (constValue) " != false" else " == true")
             })

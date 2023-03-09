@@ -49,7 +49,6 @@ public class NegativelyNamedBooleanVariableInspectionTest extends LightJavaInspe
 
   public void testForeachParameter() {
     doTest("import java.util.List;" +
-           "" +
            "class Test {" +
            "  void foo(List<Boolean> cants) {" +
            "    for (boolean cant : cants) {" +

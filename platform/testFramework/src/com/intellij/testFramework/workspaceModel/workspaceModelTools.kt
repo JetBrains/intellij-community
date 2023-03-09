@@ -4,6 +4,6 @@ package com.intellij.testFramework.workspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.MutableEntityStorage
 
-fun <R> WorkspaceModel.updateProjectModel(updater: (MutableEntityStorage) -> R): R {
-  return updateProjectModel("Test update", updater)
+fun WorkspaceModel.updateProjectModel(updater: (MutableEntityStorage) -> Unit) {
+  updateProjectModel("Test update", updater)
 }

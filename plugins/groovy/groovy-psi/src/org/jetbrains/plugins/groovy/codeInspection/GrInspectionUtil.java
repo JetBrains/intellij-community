@@ -35,14 +35,15 @@ public final class GrInspectionUtil {
     return GroovyTokenTypes.mNOT_EQUAL == tokenType;
   }
 
-  public static HighlightInfo createAnnotationForRef(@NotNull GrReferenceElement ref,
+  @NotNull
+  public static HighlightInfo.Builder createAnnotationForRef(@NotNull GrReferenceElement ref,
                                                      @NotNull HighlightDisplayLevel displayLevel,
                                                      @NotNull @DetailedDescription String message) {
     PsiElement refNameElement = ref.getReferenceNameElement();
     assert refNameElement != null;
 
     if (displayLevel == HighlightDisplayLevel.ERROR) {
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message);
     }
 
     if (displayLevel == HighlightDisplayLevel.WEAK_WARNING) {
@@ -51,11 +52,11 @@ public final class GrInspectionUtil {
 
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(infotype).range(refNameElement);
       builder.descriptionAndTooltip(message);
-      return builder.needsUpdateOnTyping(false).textAttributes(GroovySyntaxHighlighter.UNRESOLVED_ACCESS).create();
+      return builder.needsUpdateOnTyping(false).textAttributes(GroovySyntaxHighlighter.UNRESOLVED_ACCESS);
     }
 
     HighlightInfoType highlightInfoType = HighlightInfo.convertSeverity(displayLevel.getSeverity());
-    return HighlightInfo.newHighlightInfo(highlightInfoType).range(refNameElement).descriptionAndTooltip(message).create();
+    return HighlightInfo.newHighlightInfo(highlightInfoType).range(refNameElement).descriptionAndTooltip(message);
   }
 
   public static void replaceExpression(GrExpression expression, @NlsSafe String newExpression) {

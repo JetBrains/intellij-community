@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory;
@@ -65,6 +65,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticLiteralExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -489,7 +490,7 @@ public final class PsiImplUtil {
     final SoftReference<PsiExpression> ref = expr.getUserData(PSI_EXPRESSION);
     final PsiExpression element = SoftReference.dereference(ref);
     if (element != null) return element;
-    final GrSyntheticExpression newExpr = new GrSyntheticExpression(expr);
+    final PsiExpression newExpr = expr instanceof GrLiteral ? new GrSyntheticLiteralExpression((GrLiteral)expr) : new GrSyntheticExpression(expr);
     expr.putUserData(PSI_EXPRESSION, new SoftReference<>(newExpr));
     return newExpr;
   }

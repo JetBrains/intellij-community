@@ -104,5 +104,9 @@ public class XmlGreaterTest extends DefaultActionTestCase {
     configureByFile(path + "12_3.xml");
     performAction('>');
     checkResultByFile(path + "12_3_after.xml");
+
+    configureByFile(path + "13.xml");
+    performAction('>');
+    checkResultByFile(path + "13_after.xml");
   }
 }

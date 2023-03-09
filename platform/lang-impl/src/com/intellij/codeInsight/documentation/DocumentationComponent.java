@@ -139,8 +139,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   ) {
     if (isDocumentationV2Enabled() && Registry.is("documentation.v2.component")) {
       DocumentationRequest request;
-      try (AccessToken ignored = SlowOperations.allowSlowOperations("old API fallback")) {
-        request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element));
+      try (AccessToken ignored = SlowOperations.allowSlowOperations(SlowOperations.GENERIC)) {
+        request = ImplKt.documentationRequest(new PsiElementDocumentationTarget(project, element)); // old API fallback
       }
       return DocumentationUtil.documentationComponent(project, request, disposable);
     }
@@ -842,28 +842,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myHint = null;
   }
 
-  private static class Context {
-    final SmartPsiElementPointer<PsiElement> element;
-    final @Nls String text;
-    final String externalUrl;
-    final DocumentationProvider provider;
-    final Rectangle viewRect;
-    final int highlightedLink;
-
-    Context(SmartPsiElementPointer<PsiElement> element,
-            @Nls String text,
-            String externalUrl,
-            DocumentationProvider provider,
-            Rectangle viewRect,
-            int highlightedLink) {
-      this.element = element;
-      this.text = text;
-      this.externalUrl = externalUrl;
-      this.provider = provider;
-      this.viewRect = viewRect;
-      this.highlightedLink = highlightedLink;
-    }
-
+  private record Context(SmartPsiElementPointer<PsiElement> element,
+                         @Nls String text,
+                         String externalUrl,
+                         DocumentationProvider provider,
+                         Rectangle viewRect, int highlightedLink) {
     @NotNull
     Context withText(@NotNull @Nls String text) {
       return new Context(element, text, externalUrl, provider, viewRect, highlightedLink);

@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
-@Service
+@Service(Service.Level.APP)
 public final class MouseGestureManager {
   private static final Logger LOG = Logger.getInstance("MouseGestureManager");
 

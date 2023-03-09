@@ -10,6 +10,7 @@ import com.intellij.ide.util.installNameGenerators
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.NewProjectWizardStep.Companion.GIT_PROPERTY_NAME
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.StdModuleTypes
@@ -27,8 +28,9 @@ import com.intellij.openapi.ui.getCanonicalPath
 import com.intellij.openapi.ui.getPresentablePath
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.UIBundle
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withPathToTextConvertor
+import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withTextToPathConvertor
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.annotations.Nls
 import java.io.File
@@ -64,7 +66,7 @@ abstract class CommonStarterInitialStep(
   }
   protected val exampleCodeProperty: GraphProperty<Boolean> = propertyGraph.lazyProperty { starterContext.includeExamples }
   protected val gitProperty: GraphProperty<Boolean> = propertyGraph.property(false)
-    .bindBooleanStorage("NewProjectWizard.gitState")
+    .bindBooleanStorage(GIT_PROPERTY_NAME)
 
   protected var entityName: String by entityNameProperty.trim()
   protected var location: String by locationProperty
@@ -192,11 +194,13 @@ abstract class CommonStarterInitialStep(
 
   private fun Row.projectLocationField(locationProperty: GraphProperty<String>,
                                        wizardContext: WizardContext): Cell<TextFieldWithBrowseButton> {
-    val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter { it.isDirectory }
-    val fileChosen = { file: VirtualFile -> getPresentablePath(file.path) }
+    val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+      .withFileFilter { it.isDirectory }
+      .withPathToTextConvertor(::getPresentablePath)
+      .withTextToPathConvertor(::getCanonicalPath)
     val title = IdeBundle.message("title.select.project.file.directory", wizardContext.presentationName)
     val property = locationProperty.transform(::getPresentablePath, ::getCanonicalPath)
-    return this.textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor, fileChosen)
+    return textFieldWithBrowseButton(title, wizardContext.project, fileChooserDescriptor)
       .bindText(property)
   }
 }

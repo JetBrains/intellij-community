@@ -9,6 +9,7 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.testFramework.TestActionEvent;
@@ -183,9 +184,9 @@ public class NestedClassLineMarkerTest extends LightJavaCodeInsightFixtureTestCa
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
     ActionGroup group = mark.getPopupMenuActions();
     assertNotNull(group);
-    TestActionEvent event = new TestActionEvent();
+    AnActionEvent event = TestActionEvent.createTestEvent();
     List<AnAction> list = ContainerUtil.findAll(group.getChildren(event), action -> {
-      TestActionEvent actionEvent = new TestActionEvent();
+      AnActionEvent actionEvent = TestActionEvent.createTestEvent();
       action.update(actionEvent);
       String text = actionEvent.getPresentation().getText();
       return text != null && text.startsWith("Run '") && text.endsWith("'");

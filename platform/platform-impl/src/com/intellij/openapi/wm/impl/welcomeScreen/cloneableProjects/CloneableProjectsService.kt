@@ -18,7 +18,9 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.CloneableProjectItem
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.Topic
+import com.intellij.util.messages.Topic.AppLevel
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemIndependent
@@ -26,7 +28,7 @@ import java.util.*
 
 @Service(Level.APP)
 class CloneableProjectsService {
-  private val cloneableProjects: MutableSet<CloneableProject> = Collections.synchronizedSet(mutableSetOf())
+  private val cloneableProjects = ContainerUtil.createLockFreeCopyOnWriteList<CloneableProject>()
 
   @CalledInAny
   fun runCloneTask(projectPath: @SystemIndependent String, cloneTask: CloneTask) {
@@ -60,15 +62,16 @@ class CloneableProjectsService {
     }
   }
 
-  internal fun collectCloneableProjects(): List<CloneableProjectItem> {
-    val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
-
-    return cloneableProjects.map { cloneableProject ->
+  internal fun collectCloneableProjects(): Sequence<CloneableProjectItem> {
+    val recentProjectManager by lazy { RecentProjectsManager.getInstance() as RecentProjectsManagerBase }
+    return cloneableProjects.asSequence().map { cloneableProject ->
       val projectPath = cloneableProject.projectPath
       val projectName = recentProjectManager.getProjectName(projectPath)
       val displayName = recentProjectManager.getDisplayName(projectPath) ?: projectName
-
-      CloneableProjectItem(projectPath, projectName, displayName, cloneableProject)
+      CloneableProjectItem(projectPath = projectPath,
+                           projectName = projectName,
+                           displayName = displayName,
+                           cloneableProject = cloneableProject)
     }
   }
 
@@ -226,10 +229,10 @@ class CloneableProjectsService {
   }
 
   companion object {
-    @JvmField
-    val TOPIC = Topic(CloneProjectListener::class.java)
+    @AppLevel
+    val TOPIC: Topic<CloneProjectListener> = Topic(CloneProjectListener::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmStatic
-    fun getInstance() = service<CloneableProjectsService>()
+    fun getInstance(): CloneableProjectsService = service<CloneableProjectsService>()
   }
 }

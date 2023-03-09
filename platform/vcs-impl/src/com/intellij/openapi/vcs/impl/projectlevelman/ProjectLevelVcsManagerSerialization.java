@@ -14,7 +14,7 @@ public final class ProjectLevelVcsManagerSerialization {
   @NonNls private static final String VALUE_ATTTIBUTE = "value";
   @NonNls private static final String ID_ATTRIBUTE = "id";
 
-  public void readExternalUtil(@NotNull Element element, @NotNull OptionsAndConfirmations optionsAndConfirmations)
+  public static void readExternalUtil(@NotNull Element element, @NotNull OptionsAndConfirmations optionsAndConfirmations)
     throws InvalidDataException {
     for (Element subElement : element.getChildren(OPTIONS_SETTING)) {
       final String id = subElement.getAttributeValue(ID_ATTRIBUTE);
@@ -33,7 +33,7 @@ public final class ProjectLevelVcsManagerSerialization {
     }
   }
 
-  public void writeExternalUtil(@NotNull Element element, @NotNull OptionsAndConfirmations optionsAndConfirmations)
+  public static void writeExternalUtil(@NotNull Element element, @NotNull OptionsAndConfirmations optionsAndConfirmations)
     throws WriteExternalException {
     optionsAndConfirmations.getOptionsValues().forEach((id, value) -> {
       if (!value) {

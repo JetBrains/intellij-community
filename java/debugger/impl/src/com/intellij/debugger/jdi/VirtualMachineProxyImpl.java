@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author Eugene Zhuravlev
@@ -60,8 +60,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     canWatchFieldModification(); // fetch capabilities
 
     if (canBeModified()) { // no need to spend time here for read only sessions
-        // this will cache classes inside JDI and enable faster search of classes later
-        DebuggerUtilsAsync.allCLasses(virtualMachine);
+      // this will cache classes inside JDI and enable faster search of classes later
+      DebuggerUtilsAsync.allCLasses(virtualMachine);
     }
 
     virtualMachine.topLevelThreadGroups().forEach(this::threadGroupCreated);
@@ -230,9 +230,9 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return ContainerUtil.map(getVirtualMachine().topLevelThreadGroups(), this::getThreadGroupReferenceProxy);
   }
 
-  public void threadGroupCreated(ThreadGroupReference threadGroupReference){
+  public void threadGroupCreated(ThreadGroupReference threadGroupReference) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(!isJ2ME()) {
+    if (!isJ2ME()) {
       ThreadGroupReferenceProxyImpl proxy = new ThreadGroupReferenceProxyImpl(this, threadGroupReference);
       myThreadGroups.put(threadGroupReference, proxy);
     }
@@ -246,7 +246,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return virtualMachine.version().startsWith("1.0");
   }
 
-  public void threadGroupRemoved(ThreadGroupReference threadGroupReference){
+  public void threadGroupRemoved(ThreadGroupReference threadGroupReference) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myThreadGroups.remove(threadGroupReference);
   }
@@ -352,7 +352,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public boolean canGetMonitorFrameInfo() {
-      return myVirtualMachine.canGetMonitorFrameInfo();
+    return myVirtualMachine.canGetMonitorFrameInfo();
   }
 
   public boolean canGetCurrentContendedMonitor() {
@@ -426,13 +426,13 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public ThreadGroupReferenceProxyImpl getThreadGroupReferenceProxy(ThreadGroupReference group) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if(group == null) {
+    if (group == null) {
       return null;
     }
 
     ThreadGroupReferenceProxyImpl proxy = myThreadGroups.get(group);
-    if(proxy == null) {
-      if(!isJ2ME()) {
+    if (proxy == null) {
+      if (!isJ2ME()) {
         proxy = new ThreadGroupReferenceProxyImpl(this, group);
         myThreadGroups.put(group, proxy);
       }

@@ -94,7 +94,7 @@ private fun MemberDescriptor.isEffectivelyActual(checkConstructor: Boolean = tru
     isActual || isEnumEntryInActual() || isConstructorInActual(checkConstructor)
 
 private fun MemberDescriptor.isConstructorInActual(checkConstructor: Boolean) =
-    checkConstructor && this is ClassConstructorDescriptor && containingDeclaration.isEffectivelyActual(checkConstructor)
+    checkConstructor && this is ClassConstructorDescriptor && containingDeclaration.isEffectivelyActual(checkConstructor = true)
 
 private fun MemberDescriptor.isEnumEntryInActual() =
     (DescriptorUtils.isEnumEntry(this) && (containingDeclaration as? MemberDescriptor)?.isActual == true)

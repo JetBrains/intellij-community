@@ -49,6 +49,10 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
     // should be overridden
   }
 
+  protected void checkText(@NotNull final XmlText text, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    // should be overridden
+  }
+
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
@@ -69,6 +73,11 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
             }
           }
         }
+      }
+
+      @Override
+      public void visitXmlText(@NotNull XmlText text) {
+        checkText(text, holder, isOnTheFly);
       }
 
       @Override

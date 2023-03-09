@@ -28,8 +28,28 @@ public final class Utils {
   public static final Key<Boolean> ERRORS_DETECTED_KEY = Key.create("_errors_detected_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home"), ".idea-build");
   public static final boolean IS_TEST_MODE = Boolean.parseBoolean(System.getProperty("test.mode", "false"));
-  public static final boolean IS_PROFILING_MODE = Boolean.parseBoolean(System.getProperty("profiling.mode", "false"));
+  private static final String PROFILING_MODE_PROPERTY = "profiling.mode";
   private static final int FORKED_JAVAC_HEAP_SIZE_MB;
+
+  public enum ProfilingMode {
+    NONE,
+    YOURKIT_SAMPLING,
+    YOURKIT_TRACING,
+  }
+
+  public static ProfilingMode getProfilingMode() {
+    String profilingModeString = System.getProperty(PROFILING_MODE_PROPERTY, "false");
+    switch (profilingModeString) {
+      case "false":
+        return ProfilingMode.NONE;
+      case "true":
+        return ProfilingMode.YOURKIT_SAMPLING;
+      case "tracing":
+        return ProfilingMode.YOURKIT_TRACING;
+      default:
+        throw new IllegalArgumentException("Invalid value of '" + PROFILING_MODE_PROPERTY + "' system property (accepting only 'false', 'true', 'tracing'): " + profilingModeString);
+    }
+  }
 
   static {
     int size = -1;

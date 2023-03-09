@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.quickfixes;
 
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.Project;
@@ -12,8 +13,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.spellchecker.DictionaryLevel;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.ui.components.JBList;
 import icons.SpellcheckerIcons;
@@ -23,10 +24,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.codeInspection.ProblemDescriptorUtil.extractHighlightedText;
-import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.getLevelByName;
-
-public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
+public final class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
   private static final SaveTo SAVE_TO_APP_FIX = new SaveTo(DictionaryLevel.APP);
   private static final SaveTo SAVE_TO_PROJECT_FIX = new SaveTo(DictionaryLevel.PROJECT);
   private static final String DICTIONARY = " dictionary";
@@ -70,7 +68,7 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     DataManager.getInstance()
       .getDataContextFromFocusAsync()
       .onSuccess(context -> {
-        final String wordToSave = myWord != null ? myWord : extractHighlightedText(descriptor, descriptor.getPsiElement());
+        final String wordToSave = myWord != null ? myWord : ProblemDescriptorUtil.extractHighlightedText(descriptor, descriptor.getPsiElement());
         final VirtualFile file = descriptor.getPsiElement().getContainingFile().getVirtualFile();
         if (myLevel == DictionaryLevel.NOT_SPECIFIED) {
           final List<String> dictionaryList = Arrays.asList(DictionaryLevel.PROJECT.getName(), DictionaryLevel.APP.getName());
@@ -83,7 +81,7 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
               () ->
                 CommandProcessor.getInstance().executeCommand(
                   project,
-                  () -> acceptWord(wordToSave, getLevelByName(dictList.getSelectedValue()), descriptor),
+                  () -> acceptWord(wordToSave, DictionaryLevel.getLevelByName(dictList.getSelectedValue()), descriptor),
                   getName(),
                   null
                 )
@@ -101,7 +99,7 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     PsiElement psi = descriptor.getPsiElement();
     PsiFile file = psi.getContainingFile();
     Project project = file.getProject();
-    SpellCheckerManager.getInstance(project).acceptWordAsCorrect(word, file.getViewProvider().getVirtualFile(), project, level);
+    SpellCheckerManager.getInstance(project).acceptWordAsCorrect$intellij_spellchecker(word, file.getViewProvider().getVirtualFile(), project, level);
 
     TextRange range = descriptor.getTextRangeInElement().shiftRight(psi.getTextRange().getStartOffset());
     UpdateHighlightersUtil.removeHighlightersWithExactRange(file.getViewProvider().getDocument(), project, range);

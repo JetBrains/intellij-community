@@ -90,11 +90,6 @@ public abstract class XDebuggerEvaluator {
     return text;
   }
 
-  @NotNull
-  public <T> Promise<T> getWhenDataIsReady(@NotNull Editor editor, @NotNull T data) {
-    return Promises.resolvedPromise(data);
-  }
-
   /**
    * Returns mode which should be used to evaluate the text
    */

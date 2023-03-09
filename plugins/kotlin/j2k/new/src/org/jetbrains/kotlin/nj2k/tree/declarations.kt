@@ -134,8 +134,8 @@ class JKTypeParameter(
     override fun accept(visitor: JKVisitor) = visitor.visitTypeParameter(this)
 }
 
-abstract class JKMethod : JKDeclaration(), JKVisibilityOwner, JKModalityOwner, JKOtherModifiersOwner, JKTypeParameterListOwner,
-    JKAnnotationListOwner {
+abstract class JKMethod : JKDeclaration(),
+                          JKVisibilityOwner, JKModalityOwner, JKOtherModifiersOwner, JKTypeParameterListOwner, JKAnnotationListOwner {
     abstract var parameters: List<JKParameter>
     abstract var returnType: JKTypeElement
     abstract var block: JKBlock
@@ -245,7 +245,7 @@ class JKField(
     override fun accept(visitor: JKVisitor) = visitor.visitField(this)
 }
 
-sealed class JKInitDeclaration(block: JKBlock)   : JKDeclaration() {
+sealed class JKInitDeclaration(block: JKBlock) : JKDeclaration() {
     var block: JKBlock by child(block)
     abstract val isStatic: Boolean
     override val name: JKNameIdentifier by child(JKNameIdentifier("<init>"))

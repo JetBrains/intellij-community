@@ -42,7 +42,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class BeforeRunComponent extends JPanel implements DnDTarget, Disposable {
-  private final List<TaskButton> myTags = new ArrayList<>();
+  private final @NotNull List<TaskButton> myTags = new ArrayList<>();
   private final InplaceButton myAddButton;
   private final JPanel myAddPanel;
   private final ActionLink myAddLabel;
@@ -206,6 +206,8 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget, Dispo
 
   @Override
   public void cleanUpOnLeave() {
+    //just for the case if it can be executed during superclass initialization
+    //noinspection ConstantValue
     if (myTags != null) {
       myTags.forEach(button -> button.showDropPlace(false));
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.xml.psi.XmlPsiBundle;
@@ -12,7 +12,7 @@ import java.util.Map;
  *             See {@link XmlErrorMessages#keyMappings}
  */
 @Deprecated(forRemoval = true)
-public class XmlErrorMessages {
+public final class XmlErrorMessages {
   private static final Map<String, String> keyMappings = Map.ofEntries(
     Map.entry("tag.start.is.not.closed", "xml.parsing.tag.start.is.not.closed"),
     Map.entry("unescaped.ampersand.or.nonterminated.character.entity.reference", "xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"),

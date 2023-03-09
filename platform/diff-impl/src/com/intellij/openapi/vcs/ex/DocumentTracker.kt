@@ -266,14 +266,11 @@ class DocumentTracker(
     }
   }
 
-  @RequiresEdt
-  fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> Boolean): String {
-    val otherSide = side.other()
-    val affectedBlocks = LOCK.write {
-      updateFrozenContentIfNeeded()
-      tracker.blocks.filter(condition)
-    }
+  fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> Boolean): String? {
+    if (isDisposed) return null
 
+    val otherSide = side.other()
+    val affectedBlocks = tracker.blocks.filter(condition)
     val content = getContent(side)
     val otherContent = getContent(otherSide)
 

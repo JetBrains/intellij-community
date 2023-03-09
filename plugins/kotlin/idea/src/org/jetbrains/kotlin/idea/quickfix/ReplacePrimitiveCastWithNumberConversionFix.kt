@@ -28,8 +28,8 @@ class ReplacePrimitiveCastWithNumberConversionFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val factory = KtPsiFactory(element)
-        val replaced = element.replaced(factory.createExpressionByPattern("$0.to$1()", element.left, targetShortType))
+        val psiFactory = KtPsiFactory(project)
+        val replaced = element.replaced(psiFactory.createExpressionByPattern("$0.to$1()", element.left, targetShortType))
 
         editor?.caretModel?.moveToOffset(replaced.endOffset)
     }

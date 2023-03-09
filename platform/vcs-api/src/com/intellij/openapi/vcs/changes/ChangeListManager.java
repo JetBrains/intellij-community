@@ -23,6 +23,7 @@ import java.util.List;
 public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public static ChangeListManager getInstance(@NotNull Project project) {
+    if (project.isDefault()) throw new IllegalArgumentException("Can't create ChangeListManager for default project");
     return project.getService(ChangeListManager.class);
   }
 
@@ -36,7 +37,7 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   /**
    * Invoke callback when current CLM refresh is completed, without any visible progress.
-   * <p>
+   * <p/>
    * WARNING: This callback WILL NOT wait for async unchanged files update if VCS is using a custom {@link VcsManagedFilesHolder}.
    * These can be listened via {@link ChangeListListener#unchangedFileStatusChanged(boolean)} or on a per-VCS basis.
    */
@@ -88,12 +89,14 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   /**
    * Whether changelists are enabled.
-   * <p>
+   * <p/>
    * Ex: Changelists can be disabled if the only VCS in the project is 'Git' in a "Staging Area" commit mode.
-   * <p>
-   * When disabled,
-   * * All modification requests on changelists will log an error.
-   * * All read requests will return a single 'blank' default changelist.
+   * <p/>
+   * When disabled:
+   * <ul>
+   * <li/> All modification requests on changelists will log an error.
+   * <li/> All read requests will return a single 'blank' default changelist.
+   * </ul>
    */
   public abstract boolean areChangeListsEnabled();
 
@@ -196,6 +199,13 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract Collection<Change> getChangesIn(@NotNull FilePath path);
 
+  /**
+   * Check if a directory has modified children in {@link #getAllChanges().
+   *
+   * @return {@code ThreeState.YES} if directory has an immediate modified child,
+   * {@code ThreeState.UNSURE} if directory has non-immediate modified child (depth > 1),
+   * {@code ThreeState.NO} if directory has no modified children.
+   */
   @NotNull
   public abstract ThreeState haveChangesUnder(@NotNull VirtualFile vf);
 

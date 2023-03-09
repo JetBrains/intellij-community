@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.idea.caches.project.NotUnderContentRootModuleInfo as OldNotUnderContentRootModuleInfo
 
-object NotUnderContentRootModuleInfo : OldNotUnderContentRootModuleInfo(), IdeaModuleInfo, NonSourceModuleInfoBase {
+data class NotUnderContentRootModuleInfo(override val project: Project) : OldNotUnderContentRootModuleInfo(), IdeaModuleInfo, NonSourceModuleInfoBase {
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.OTHER
 
@@ -20,9 +20,6 @@ object NotUnderContentRootModuleInfo : OldNotUnderContentRootModuleInfo(), IdeaM
 
     override val displayedName: String
         get() = KotlinBaseProjectStructureBundle.message("special.module.for.files.not.under.source.root")
-
-    override val project: Project?
-        get() = null
 
     override val contentScope: GlobalSearchScope
         get() = GlobalSearchScope.EMPTY_SCOPE

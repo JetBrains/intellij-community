@@ -96,11 +96,11 @@ abstract class ConfigureImageLineMarkerProviderBase<T : PsiElement> : LineMarker
       return info is ConfigureImageLineMarkerProviderBase<*>.ConfigureImageLineMarkerInfo
     }
 
-    override fun getCommonIcon(infos: MutableList<out MergeableLineMarkerInfo<*>>): Icon {
+    override fun getCommonIcon(infos: List<MergeableLineMarkerInfo<*>>): Icon {
       return infos.first().icon
     }
 
-    override fun getCommonIconAlignment(infos: MutableList<out MergeableLineMarkerInfo<*>>) = ALIGNMENT
+    override fun getCommonIconAlignment(infos: List<MergeableLineMarkerInfo<*>>) = ALIGNMENT
   }
 
   companion object {

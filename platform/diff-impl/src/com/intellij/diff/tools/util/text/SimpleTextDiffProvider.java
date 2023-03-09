@@ -148,7 +148,7 @@ public class SimpleTextDiffProvider extends TwosideTextDiffProviderBase implemen
     @Override
     public List<List<LineFragment>> compare(@NotNull CharSequence text1,
                                             @NotNull CharSequence text2,
-                                            @NotNull List<Range> linesRanges,
+                                            @NotNull List<? extends Range> linesRanges,
                                             @NotNull ProgressIndicator indicator) {
       //noinspection ConstantConditions
       return super.compare(text1, text2, linesRanges, indicator);

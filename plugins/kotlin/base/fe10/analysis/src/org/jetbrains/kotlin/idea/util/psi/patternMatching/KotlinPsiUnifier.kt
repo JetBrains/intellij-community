@@ -786,7 +786,7 @@ class KotlinPsiUnifier(
                 }
                 if (!status) continue
                 targetSubstringInfo = ExtractableSubstringInfo(targetEntry, lastTargetEntry, targetPrefix, targetSuffix, pattern.type)
-                return status
+                return true
             }
 
             return false
@@ -828,7 +828,7 @@ class KotlinPsiUnifier(
             if (targetElementUnwrapped == targetElement && patternElementUnwrapped == patternElement) return false
 
             val status = doUnify(targetElementUnwrapped, patternElementUnwrapped)
-            if (status && allowWeakMatches) {
+            if (status) {
                 weakMatches[patternElement] = targetElement
             }
 

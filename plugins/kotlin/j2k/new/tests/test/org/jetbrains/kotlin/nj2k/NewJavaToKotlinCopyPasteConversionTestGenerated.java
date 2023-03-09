@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.nj2k;
 
@@ -178,6 +178,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("testData/copyPaste/MethodWithOnlyOneAnnotation.java");
     }
 
+    @TestMetadata("NoJvmStaticForTopLevelFunction.java")
+    public void testNoJvmStaticForTopLevelFunction() throws Exception {
+        runTest("testData/copyPaste/NoJvmStaticForTopLevelFunction.java");
+    }
+
     @TestMetadata("OnlyClosingBrace.java")
     public void testOnlyClosingBrace() throws Exception {
         runTest("testData/copyPaste/OnlyClosingBrace.java");
@@ -231,6 +236,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
     @TestMetadata("SingleWordFromIdentifier.java")
     public void testSingleWordFromIdentifier() throws Exception {
         runTest("testData/copyPaste/SingleWordFromIdentifier.java");
+    }
+
+    @TestMetadata("TopLevelMainWithUsedArgs.java")
+    public void testTopLevelMainWithUsedArgs() throws Exception {
+        runTest("testData/copyPaste/TopLevelMainWithUsedArgs.java");
     }
 
     @TestMetadata("UnconvertedMethodReference.java")

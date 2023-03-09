@@ -141,7 +141,7 @@ public class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
 
   void alignToValidBoundaries() {
     Document document = getDocument();
-    long alignedRange = TextRangeScalarUtil.deltaScalarRange(toScalarRange(),
+    long alignedRange = TextRangeScalarUtil.shift(toScalarRange(),
     DocumentUtil.isInsideCharacterPair(document, getStartOffset()) ? -1 : 0,
     DocumentUtil.isInsideCharacterPair(document, getEndOffset()) ? -1 : 0);
     if (alignedRange != toScalarRange()) {

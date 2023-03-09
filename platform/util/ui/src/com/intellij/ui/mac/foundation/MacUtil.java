@@ -5,10 +5,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -105,6 +107,27 @@ public final class MacUtil {
       }
     }
     return null;
+  }
+
+  public static void updateRootPane(@NotNull Window window, @NotNull JRootPane rootPane) {
+    try {
+      Object platformWindow = getPlatformWindow(window);
+      if (platformWindow == null) {
+        return;
+      }
+
+      Field field = platformWindow.getClass().getDeclaredField("CLIENT_PROPERTY_APPLICATOR");
+      field.setAccessible(true);
+      Object clientPropertyApplicator = field.get(platformWindow);
+
+      Method method = ReflectionUtil.getMethod(clientPropertyApplicator.getClass(), "attachAndApplyClientProperties", JComponent.class);
+      if (method != null) {
+        method.invoke(clientPropertyApplicator, rootPane);
+      }
+    }
+    catch (Throwable e) {
+      LOG.debug(e);
+    }
   }
 
   public static ID findWindowFromJavaWindow(final Window w) {

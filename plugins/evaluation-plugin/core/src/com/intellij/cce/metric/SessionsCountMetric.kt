@@ -5,7 +5,8 @@ import com.intellij.cce.metric.util.Sample
 
 class SessionsCountMetric : Metric {
   private val sample = Sample()
-
+  override val name = NAME
+  override val valueType = MetricValueType.INT
   override val value: Double
     get() = sample.sum()
 
@@ -14,7 +15,7 @@ class SessionsCountMetric : Metric {
     return sessions.size.toDouble()
   }
 
-  override val name: String = "Sessions"
-
-  override val valueType = MetricValueType.INT
+  companion object {
+    const val NAME = "Sessions"
+  }
 }

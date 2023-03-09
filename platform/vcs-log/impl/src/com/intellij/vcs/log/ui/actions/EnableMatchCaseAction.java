@@ -12,12 +12,15 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 
 public class EnableMatchCaseAction extends BooleanPropertyToggleAction {
+  public EnableMatchCaseAction() {
+    getTemplatePresentation().setSelectedIcon(AllIcons.Actions.MatchCaseSelected);
+    getTemplatePresentation().setHoveredIcon(AllIcons.Actions.MatchCaseHovered);
+  }
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
     return MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE;
@@ -51,8 +54,6 @@ public class EnableMatchCaseAction extends BooleanPropertyToggleAction {
           presentation.setText(VcsLogBundle.message("action.title.match.case.only.supported", supportedText));
         }
       }
-      Icon icon = isSelected(e) ? AllIcons.Actions.MatchCaseSelected : AllIcons.Actions.MatchCase;
-      e.getPresentation().setIcon(icon);
     }
   }
 }

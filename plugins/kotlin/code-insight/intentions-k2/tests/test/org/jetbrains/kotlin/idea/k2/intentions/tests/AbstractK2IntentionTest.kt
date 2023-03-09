@@ -6,12 +6,12 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiFile
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
-import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTest
+import org.jetbrains.kotlin.idea.intentions.AbstractIntentionTestBase
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 
-abstract class AbstractK2IntentionTest : AbstractIntentionTest() {
+abstract class AbstractK2IntentionTest : AbstractIntentionTestBase() {
     override fun intentionFileName() = ".k2Intention"
 
     override fun afterFileNameSuffix(ktFilePath: File): String {

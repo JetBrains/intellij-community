@@ -37,7 +37,7 @@ class ImportMemberIntention : SelfTargetingOffsetIndependentIntention<KtNameRefe
 
         val file = element.containingKtFile
         val project = file.project
-        val dummyFile = KtPsiFactory(project).createAnalyzableFile("Dummy.kt", file.text, file)
+        val dummyFile = KtPsiFactory.contextual(file).createFile("Dummy.kt", file.text)
         val helper = ImportInsertHelper.getInstance(project)
         if (helper.importDescriptor(dummyFile, target) == ImportDescriptorResult.FAIL) return false
 

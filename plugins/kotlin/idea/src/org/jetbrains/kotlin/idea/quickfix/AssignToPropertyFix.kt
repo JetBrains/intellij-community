@@ -26,7 +26,7 @@ class AssignToPropertyFix(element: KtNameReferenceExpression) : KotlinQuickFixAc
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val psiFactory = KtPsiFactory(element)
+        val psiFactory = KtPsiFactory(project)
         if (element.getResolutionScope().getImplicitReceiversHierarchy().size == 1) {
             element.replace(psiFactory.createExpressionByPattern("this.$0", element))
         } else {

@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.showAndAwaitListSubmission
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -15,7 +16,6 @@ import com.intellij.ui.*
 import com.intellij.ui.components.GradientViewport
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBThinOverlappingScrollBar
-import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
@@ -48,9 +48,8 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
 
     val filters = createFilters(viewScope)
 
-    val filtersPanel = JPanel(HorizontalLayout(4)).apply {
-      isOpaque = false
-      filters.forEach { add(it, HorizontalLayout.LEFT) }
+    val filtersPanel = HorizontalListPanel(4).apply {
+      filters.forEach { add(it) }
     }.let {
       ScrollPaneFactory.createScrollPane(it, true).apply {
         viewport = GradientViewport(it, JBUI.insets(0, 10), false)

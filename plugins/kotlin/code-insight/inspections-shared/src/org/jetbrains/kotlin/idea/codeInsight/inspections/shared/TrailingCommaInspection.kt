@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.*
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -25,7 +27,6 @@ import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
 import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
 import org.jetbrains.kotlin.idea.formatter.trailingComma.addTrailingCommaIsAllowedFor
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.withPsiAttachment
 import org.jetbrains.kotlin.idea.util.isComma
 import org.jetbrains.kotlin.idea.util.isLineBreak
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespaceAndComments
@@ -186,11 +187,8 @@ class TrailingCommaInspection(
             }
     }
 
-    override fun createOptionsPanel(): JComponent = SingleCheckboxOptionsPanel(
-        KotlinBundle.message("inspection.trailing.comma.report.also.a.missing.comma"),
-        this,
-        "addCommaWarning",
-    )
+  override fun getOptionsPane() = pane(
+    checkbox("addCommaWarning", KotlinBundle.message("inspection.trailing.comma.report.also.a.missing.comma")))
 
     class ReformatTrailingCommaFix(commaOwner: KtElement, @IntentionFamilyName private val fixMessage: String) : LocalQuickFix {
         private val commaOwnerPointer = commaOwner.createSmartPointer()

@@ -12,6 +12,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.*;
 
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 /**
  * Manages virtual file systems.
@@ -24,7 +25,9 @@ public abstract class VirtualFileManager implements ModificationTracker {
 
   public static final @NotNull ModificationTracker VFS_STRUCTURE_MODIFICATIONS = () -> getInstance().getStructureModificationCount();
 
-  private static VirtualFileManager ourInstance = CachedSingletonsRegistry.markCachedField(VirtualFileManager.class);
+  private static final Supplier<VirtualFileManager> ourInstance = CachedSingletonsRegistry.lazy(() -> {
+    return ApplicationManager.getApplication().getService(VirtualFileManager.class);
+  });
 
   /**
    * Gets the instance of {@code VirtualFileManager}.
@@ -32,11 +35,7 @@ public abstract class VirtualFileManager implements ModificationTracker {
    * @return {@code VirtualFileManager}
    */
   public static @NotNull VirtualFileManager getInstance() {
-    VirtualFileManager result = ourInstance;
-    if (result == null) {
-      ourInstance = result = ApplicationManager.getApplication().getService(VirtualFileManager.class);
-    }
-    return result;
+    return ourInstance.get();
   }
 
   /**

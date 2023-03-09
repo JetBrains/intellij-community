@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.types.KotlinType;
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker;
 
-class QuickFixBranchUtil {
+final class QuickFixBranchUtil {
     private QuickFixBranchUtil() {
     }
 

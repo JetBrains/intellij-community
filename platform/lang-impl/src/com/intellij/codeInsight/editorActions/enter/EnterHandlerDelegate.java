@@ -79,7 +79,7 @@ public interface EnterHandlerDelegate {
    *         </table>
    */
   Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffset,
-                         @NotNull final Ref<Integer> caretAdvance, @NotNull final DataContext dataContext,
+                         final @NotNull Ref<Integer> caretAdvance, @NotNull final DataContext dataContext,
                          @Nullable final EditorActionHandler originalHandler);
 
   /**

@@ -103,7 +103,7 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
     }
 
     private fun toSimplifiedExpression(expression: KtExpression): KtExpression {
-        val psiFactory = KtPsiFactory(expression)
+        val psiFactory = KtPsiFactory(expression.project)
 
         when {
             expression.canBeReducedToTrue() -> {
@@ -162,17 +162,17 @@ class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentInte
         otherOperand: KtExpression,
         operation: IElementType
     ): KtExpression {
-        val factory = KtPsiFactory(otherOperand)
+        val psiFactory = KtPsiFactory(otherOperand.project)
         when (operation) {
             OROR -> {
-                if (constantOperand) return factory.createExpression("true")
+                if (constantOperand) return psiFactory.createExpression("true")
             }
             ANDAND -> {
-                if (!constantOperand) return factory.createExpression("false")
+                if (!constantOperand) return psiFactory.createExpression("false")
             }
             EQEQ, EXCLEQ -> toSimplifiedExpression(otherOperand).let {
                 return if (constantOperand == (operation == EQEQ)) it
-                else factory.createExpressionByPattern("!$0", it)
+                else psiFactory.createExpressionByPattern("!$0", it)
             }
         }
 

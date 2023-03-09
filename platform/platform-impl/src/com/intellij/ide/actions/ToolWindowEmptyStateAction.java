@@ -4,7 +4,6 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.JBColor;
@@ -33,12 +32,10 @@ public abstract class ToolWindowEmptyStateAction extends ActivateToolWindowActio
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(getToolWindowId());
     if (toolWindow == null) return;
     toolWindow.setAvailable(true);
-    if (toolWindow instanceof ToolWindowImpl) {
-      StatusText emptyText = ((ToolWindowEx)toolWindow).getEmptyText();
-      if (emptyText != null) {
-        setupEmptyText(project, emptyText);
-        setEmptyStateBackground(toolWindow);
-      }
+    if (toolWindow instanceof ToolWindowImpl windowImpl) {
+      StatusText emptyText = windowImpl.getEmptyText();
+      setupEmptyText(project, emptyText);
+      setEmptyStateBackground(toolWindow);
     }
     rebuildContentUi(toolWindow);
     toolWindow.show();

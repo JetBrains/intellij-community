@@ -52,7 +52,8 @@ public class ModuleDependencyEntitiesIndexableEntityProvider implements Indexabl
 
   @Override
   public @NotNull Collection<? extends IndexableIteratorBuilder> getReplacedEntityIteratorBuilders(@NotNull ModuleEntity oldEntity,
-                                                                                                   @NotNull ModuleEntity newEntity) {
+                                                                                                   @NotNull ModuleEntity newEntity,
+                                                                                                   @NotNull Project project) {
     List<IndexableIteratorBuilder> iterators = new SmartList<>();
     List<ModuleDependencyItem> newDependencies = newEntity.getDependencies();
     Collection<ModuleDependencyItem> oldDependencies = new HashSet<>(oldEntity.getDependencies());

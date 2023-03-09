@@ -11,6 +11,7 @@ import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ProgressSlide;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsSafe;
@@ -106,6 +107,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   private String myDefaultLightLaf;
   private String myDefaultDarkLaf;
+
+  private static final Logger LOG = Logger.getInstance(ApplicationInfoImpl.class);
 
   // if application loader was not used
   @SuppressWarnings("unused")
@@ -438,7 +441,13 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public @NotNull BuildNumber getApiVersionAsNumber() {
     BuildNumber build = getBuild();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("getApiVersionAsNumber: build=" + build.asString());
+    }
     if (myApiVersion != null) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("getApiVersionAsNumber: myApiVersion=" + build.asString());
+      }
       BuildNumber api = BuildNumber.fromStringWithProductCode(myApiVersion, build.getProductCode());
       if (api != null) {
         return api;
@@ -775,7 +784,13 @@ Android Studio: removed by Change I2708044e / commit e1454d7 */
 
   public @NotNull BuildNumber getPluginsCompatibleBuildAsNumber() {
     BuildNumber compatibleBuild = BuildNumber.fromPluginsCompatibleBuild();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("getPluginsCompatibleBuildAsNumber: compatibleBuild=" + (compatibleBuild == null ? "null" : compatibleBuild.asString()));
+    }
     BuildNumber version = compatibleBuild != null ? compatibleBuild : getApiVersionAsNumber();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("getPluginsCompatibleBuildAsNumber: version=" + version.asString());
+    }
     BuildNumber buildNumber = BuildNumber.fromStringWithProductCode(version.asString(), getBuild().getProductCode());
     return requireNonNull(buildNumber);
   }

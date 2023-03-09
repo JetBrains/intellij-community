@@ -58,6 +58,7 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
                         symbolProvider
                     )
                 )
+
             !notNeedParentBlock -> blockStatement(convertedFromForLoopSyntheticWhileStatement)
             else -> convertedFromForLoopSyntheticWhileStatement
         }
@@ -175,12 +176,14 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
                 convertBound(bound, if (inclusiveComparison) 0 else +1),
                 context
             )
+
             bound !is JKLiteralExpression && !inclusiveComparison ->
                 untilToExpression(
                     start,
                     convertBound(bound, 0),
                     context
                 )
+
             else -> JKBinaryExpression(
                 start,
                 convertBound(bound, if (inclusiveComparison) 0 else -1),
@@ -321,6 +324,7 @@ class ForConversion(context: NewJ2kConverterContext) : RecursiveApplicableConver
         when (this) {
             is JKDeclarationStatement ->
                 declaredStatements.filterIsInstance<JKVariable>().map { it.name.value }
+
             is JKJavaForLoopStatement -> initializers.flatMap { it.declaredVariableNames() }
             else -> emptyList()
         }

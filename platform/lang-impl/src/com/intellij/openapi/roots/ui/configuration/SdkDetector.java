@@ -56,7 +56,7 @@ public class SdkDetector {
                                         @NotNull Disposable lifetime,
                                         @NotNull ModalityState callbackModality,
                                         @NotNull DetectedSdkListener listener) {
-    ApplicationManager.getApplication().assertIsWriteThread();
+    ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     if (!isDetectorEnabled()) {
       return;
     }

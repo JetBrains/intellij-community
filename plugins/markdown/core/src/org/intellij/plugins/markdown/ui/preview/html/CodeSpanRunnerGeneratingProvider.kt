@@ -3,38 +3,27 @@ package org.intellij.plugins.markdown.ui.preview.html
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
-import org.intellij.markdown.ast.LeafASTNode
-import org.intellij.markdown.html.GeneratingProvider
+import org.intellij.markdown.flavours.gfm.TableAwareCodeSpanGeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
-import org.intellij.markdown.html.TrimmingInlineHolderProvider
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
-import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider.Companion.escape
 
-internal class CodeSpanRunnerGeneratingProvider(private val generatingProvider: GeneratingProvider,
-                                                val project: Project,
-                                                val file: VirtualFile) : TrimmingInlineHolderProvider() {
-
+internal class CodeSpanRunnerGeneratingProvider(
+  val project: Project,
+  val file: VirtualFile
+): TableAwareCodeSpanGeneratingProvider() {
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
     val codeViewExtension = CommandRunnerExtension.getRunnerByFile(file)
     if (codeViewExtension == null ) {
-      generatingProvider.processNode(visitor, text, node)
+      super.processNode(visitor, text, node)
       return
     }
-
-    var codeLine = ""
-    for (child in childrenToRender(node)) {
-      if (child is LeafASTNode) { when (child.type) {
-          MarkdownTokenTypes.BACKTICK -> continue
-          else -> {
-            codeLine += text.substring(child.startOffset, child.endOffset)
-          }
-        }
-      }
-    }
+    val isInsideTable = isInsideTable(node)
+    val nodes = collectContentNodes(node)
+    val content = nodes.joinToString(separator = "") { processChild(it, text, isInsideTable) }.trim()
+    val lineRunner = codeViewExtension.processCodeLine(content, false)
     visitor.consumeTagOpen(node, "code")
-    visitor.consumeHtml(codeViewExtension.processCodeLine(codeLine, false) + escape(codeLine))
+    visitor.consumeHtml("$lineRunner$content")
     visitor.consumeTagClose("code")
   }
 }

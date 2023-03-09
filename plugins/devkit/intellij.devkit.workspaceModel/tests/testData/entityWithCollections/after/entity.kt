@@ -22,6 +22,9 @@ interface CollectionFieldEntity : WorkspaceEntity {
   }
 
   companion object : Type<CollectionFieldEntity, Builder>() {
+    @JvmOverloads
+    @JvmStatic
+    @JvmName("create")
     operator fun invoke(versions: Set<Int>,
                         names: List<String>,
                         entitySource: EntitySource,

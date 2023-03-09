@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.UnnamedConfigurable
-import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.project.DumbService.isDumb
@@ -65,6 +64,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   private val checkinErrorNotifications = SingletonNotificationManager(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId,
                                                                        NotificationType.ERROR)
 
+  private val postCommitChecksHandler: PostCommitChecksHandler get() = PostCommitChecksHandler.getInstance(project)
   private var pendingPostCommitChecks: PendingPostCommitChecks? = null
 
   protected fun setupCommitHandlersTracking() {
@@ -169,7 +169,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
     // reset commit checks on VFS updates
     project.messageBus.connect(this).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: MutableList<out VFileEvent>) {
+      override fun after(events: List<VFileEvent>) {
         if (isCommitChecksResultUpToDate == RecentCommitChecks.UNKNOWN) {
           return
         }
@@ -265,7 +265,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   private fun appendShowDetailsNotificationActions(notification: Notification, failures: List<CommitCheckFailure>) {
     for (failure in failures.filterIsInstance<CommitCheckFailure.WithDetails>()) {
-      notification.addAction(NotificationAction.create(failure.viewDetailsActionText) { _, _ ->
+      notification.addAction(NotificationAction.create(failure.viewDetailsActionText.dropMnemonic()) { _, _ ->
         failure.viewDetails(CommitProblemPlace.NOTIFICATION)
       })
     }
@@ -285,12 +285,12 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
-  override fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
+  override suspend fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     if (!sessionInfo.isVcsCommit) {
       return workflow.executeSession(sessionInfo, commitInfo)
     }
 
-    workflow.asyncSession(coroutineScope, sessionInfo) {
+    workflow.launchAsyncSession(coroutineScope, sessionInfo) {
       pendingPostCommitChecks = null
 
       val isOnlyRunCommitChecks = commitContext.isOnlyRunCommitChecks
@@ -345,10 +345,12 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       if (!skipPostCommitChecks) {
         if (postCommitChecks.isNotEmpty()) {
           if (Registry.`is`("vcs.non.modal.post.commit.checks") &&
-              commitInfo.executor?.requiresSyncCommitChecks() != true) {
+              commitInfo.executor?.requiresSyncCommitChecks() != true &&
+              postCommitChecksHandler.canHandle(commitInfo)) {
             pendingPostCommitChecks = PendingPostCommitChecks(commitInfo.asStaticInfo(), postCommitChecks)
           }
           else {
+            postCommitChecksHandler.resetPendingCommits()
             runSyncPostCommitChecks(commitInfo, postCommitChecks)?.let { return it }
           }
         }
@@ -423,79 +425,17 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     return NonModalCommitChecksFailure.POST_FAILED
   }
 
-  private fun runPostCommitChecksTask(commitInfo: StaticCommitInfo, commitChecks: List<CommitCheck>) {
-    val scope = CoroutineScope(CoroutineName("post commit checks") + Dispatchers.IO)
-    scope.launch {
-      withBackgroundProgressIndicator(project, message("post.commit.checks.progress.text")) {
-        val postCommitInfo = createPostCommitInfo(commitInfo)
-        withContext(Dispatchers.EDT) {
-          val problems = runAsyncPostCommitChecks(commitChecks, postCommitInfo)
-          if (problems.isEmpty()) return@withContext
-
-          reportPostCommitChecksFailure(problems)
-        }
-      }
-    }
-  }
-
-  private suspend fun runAsyncPostCommitChecks(commitChecks: List<CommitCheck>,
-                                               postCommitInfo: StaticCommitInfo): MutableList<CommitProblem> {
-    val problems = mutableListOf<CommitProblem>()
-
-    if (isDumb(project)) {
-      if (commitChecks.any { !DumbService.isDumbAware(it) }) {
-        problems += TextCommitProblem(message("before.checkin.post.commit.error.dumb.mode"))
-      }
-    }
-
-    for (commitCheck in commitChecks) {
-      problems += AbstractCommitWorkflow.runCommitCheck(project, commitCheck, postCommitInfo) ?: continue
-    }
-    return problems
-  }
-
-  private fun createPostCommitInfo(commitInfo: StaticCommitInfo): StaticCommitInfo {
-    val changeConverters = commitInfo.affectedVcses.mapNotNull { it.checkinEnvironment?.postCommitChangeConverter }
-    if (changeConverters.isEmpty()) LOG.warn("Post-commit change converters not found for ${commitInfo.affectedVcses}")
-
-    val commitContext = commitInfo.commitContext
-    commitContext.isPostCommitCheck = true
-
-    var staticChanges = commitInfo.committedChanges
-    for (changeConverter in changeConverters) {
-      staticChanges = changeConverter.convertChangesAfterCommit(staticChanges, commitContext)
-    }
-
-    return StaticCommitInfo(commitContext, commitInfo.executor, commitInfo.commitActionText,
-                            staticChanges, commitInfo.affectedVcses, commitInfo.commitMessage)
-  }
-
   private fun reportCommitCheckFailure(problem: CommitProblem) {
     val checkFailure = when (problem) {
       is UnknownCommitProblem -> CommitCheckFailure.Unknown
-      is CommitProblemWithDetails -> CommitCheckFailure.WithDetails(problem.text, problem.showDetailsAction) { place ->
+      is CommitProblemWithDetails -> CommitCheckFailure.WithDetails(problem.text, problem.showDetailsLink,
+                                                                    problem.showDetailsAction) { place ->
         CommitSessionCollector.getInstance(project).logCommitProblemViewed(problem, place)
         problem.showDetails(project)
       }
       else -> CommitCheckFailure.WithDescription(problem.text)
     }
     ui.commitProgressUi.addCommitCheckFailure(checkFailure)
-  }
-
-  private fun reportPostCommitChecksFailure(problems: List<CommitProblem>) {
-    val notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
-      .createNotification(message("post.commit.checks.failed.notification.title"),
-                          problems.joinToString("<br>") { it.text },
-                          NotificationType.ERROR)
-      .setDisplayId(VcsNotificationIdsHolder.POST_COMMIT_CHECKS_FAILED)
-
-    for (problem in problems.filterIsInstance<CommitProblemWithDetails>()) {
-      notification.addAction(NotificationAction.createSimple(problem.showDetailsAction) {
-        problem.showDetails(project)
-      })
-    }
-
-    notification.notify(project)
   }
 
   private fun handleCommitProblem(failure: NonModalCommitChecksFailure?, isOnlyRunCommitChecks: Boolean): CommitChecksResult {
@@ -541,8 +481,10 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   override fun dispose() {
+    disposeCommitOptions()
     hideCommitChecksFailureNotification()
     coroutineScope.cancel()
+    project.getServiceIfCreated(PostCommitChecksHandler::class.java)?.resetPendingCommits() // null during Project dispose
     super.dispose()
   }
 
@@ -605,7 +547,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
   protected inner class PostCommitChecksRunner : CommitterResultHandler {
     override fun onSuccess() {
-      pendingPostCommitChecks?.let { runPostCommitChecksTask(it.commitInfo, it.commitChecks) }
+      pendingPostCommitChecks?.let { postCommitChecksHandler.startPostCommitChecksTask(it.commitInfo, it.commitChecks) }
       pendingPostCommitChecks = null
     }
 

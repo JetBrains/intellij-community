@@ -47,9 +47,11 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
   public void testBasic() throws Exception {
     createProjectSubFile("src/main/resources/dir/file.properties");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    """);
     compileModules("project");
 
     assertCopied("target/classes/dir/file.properties");
@@ -60,18 +62,19 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     createProjectSubFile("res/dir1/file1.properties");
     createProjectSubFile("testRes/dir2/file2.properties");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource><directory>res</directory></resource>" +
-                  "  </resources>" +
-                  "  <testResources>" +
-                  "    <testResource><directory>testRes</directory></testResource>" +
-                  "  </testResources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource><directory>res</directory></resource>
+                      </resources>
+                      <testResources>
+                        <testResource><directory>testRes</directory></testResource>
+                      </testResources>
+                    </build>
+                    """);
 
     compileModules("project");
 
@@ -84,22 +87,22 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     final VirtualFile f = createProjectSubFile("res/dir1/file.properties", /*"Hello world"*/"Hello ${name}");
     final File srcFile = new File(f.getPath());
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<properties>" +
-                  "  <name>world</name>" +
-                  "</properties>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "       <directory>res</directory>" +
-                  "       <filtering>true</filtering>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <properties>
+                      <name>world</name>
+                    </properties>
+                    <build>
+                      <resources>
+                        <resource>
+                           <directory>res</directory>
+                           <filtering>true</filtering>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     compileModules("project");
     assertCopied("target/classes/dir1/file.properties", "Hello world");
@@ -119,18 +122,19 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
   public void testCustomTargetPath() throws Exception {
     createProjectSubFile("res/dir/file.properties");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <targetPath>foo</targetPath>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <targetPath>foo</targetPath>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     compileModules("project");
     assertCopied("target/classes/foo/dir/file.properties");
@@ -140,27 +144,28 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
   public void testResourcesPluginCustomTargetPath() throws Exception {
     createProjectSubFile("res/dir/file.properties");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <artifactId>maven-resources-plugin</artifactId>" +
-                  "      <version>2.6</version>" +
-                  "      <configuration>" +
-                  "        <outputDirectory>${basedir}/target/resourceOutput</outputDirectory>" +
-                  "      </configuration>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <targetPath>foo</targetPath>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-resources-plugin</artifactId>
+                          <version>2.6</version>
+                          <configuration>
+                            <outputDirectory>${basedir}/target/resourceOutput</outputDirectory>
+                          </configuration>
+                        </plugin>
+                      </plugins>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <targetPath>foo</targetPath>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     compileModules("project");
     assertCopied("target/resourceOutput/foo/dir/file.properties");
@@ -170,30 +175,31 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
   public void testResourcesPluginGoalAbsoluteCustomTargetPath() throws Exception {
     createProjectSubFile("src/test/resources/dir/file.properties");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <artifactId>maven-resources-plugin</artifactId>" +
-                  "      <version>2.6</version>" +
-                  "      <executions>" +
-                  "       <execution>" +
-                  "         <id>default-testResources</id>" +
-                  "         <phase>process-test-resources</phase>" +
-                  "         <goals>" +
-                  "           <goal>testResources</goal>" +
-                  "         </goals>" +
-                  "         <configuration>" +
-                  "           <outputDirectory>${project.build.testOutputDirectory}/custom</outputDirectory>" +
-                  "         </configuration>" +
-                  "       </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-resources-plugin</artifactId>
+                          <version>2.6</version>
+                          <executions>
+                           <execution>
+                             <id>default-testResources</id>
+                             <phase>process-test-resources</phase>
+                             <goals>
+                               <goal>testResources</goal>
+                             </goals>
+                             <configuration>
+                               <outputDirectory>${project.build.testOutputDirectory}/custom</outputDirectory>
+                             </configuration>
+                           </execution>
+                          </executions>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     compileModules("project");
     assertCopied("target/test-classes/custom/dir/file.properties");
@@ -203,30 +209,31 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
   public void testResourcesPluginGoalRelativeCustomTargetPath() throws Exception {
     createProjectSubFile("src/test/resources/dir/file.properties");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <plugins>" +
-                  "    <plugin>" +
-                  "      <artifactId>maven-resources-plugin</artifactId>" +
-                  "      <version>2.6</version>" +
-                  "      <executions>" +
-                  "       <execution>" +
-                  "         <id>default-testResources</id>" +
-                  "         <phase>process-test-resources</phase>" +
-                  "         <goals>" +
-                  "           <goal>testResources</goal>" +
-                  "         </goals>" +
-                  "         <configuration>" +
-                  "           <outputDirectory>target/test-classes/custom</outputDirectory>" +
-                  "         </configuration>" +
-                  "       </execution>" +
-                  "      </executions>" +
-                  "    </plugin>" +
-                  "  </plugins>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <plugins>
+                        <plugin>
+                          <artifactId>maven-resources-plugin</artifactId>
+                          <version>2.6</version>
+                          <executions>
+                           <execution>
+                             <id>default-testResources</id>
+                             <phase>process-test-resources</phase>
+                             <goals>
+                               <goal>testResources</goal>
+                             </goals>
+                             <configuration>
+                               <outputDirectory>target/test-classes/custom</outputDirectory>
+                             </configuration>
+                           </execution>
+                          </executions>
+                        </plugin>
+                      </plugins>
+                    </build>
+                    """);
 
     compileModules("project");
     assertCopied("target/test-classes/custom/dir/file.properties");
@@ -236,18 +243,19 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
   public void testAbsoluteCustomTargetPath() throws Exception {
     createProjectSubFile("res/foo/file.properties");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <targetPath>${build.directory}/anotherDir</targetPath>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <targetPath>${build.directory}/anotherDir</targetPath>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     compileModules("project");
     assertCopied("target/anotherDir/foo/file.properties");
@@ -258,20 +266,21 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     createProjectSubFile("res/subdir/a.txt");
     createProjectSubFile("res/b.txt");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <includes>" +
-                  "        <include>**/**</include>" +
-                  "      </includes>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <includes>
+                            <include>**/**</include>
+                          </includes>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     compileModules("project");
 
@@ -284,20 +293,21 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     createProjectSubFile("res/subdir/a.txt");
     createProjectSubFile("res/b.txt");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <includes>" +
-                  "        <include>**/</include>" +
-                  "      </includes>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <includes>
+                            <include>**/</include>
+                          </includes>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     compileModules("project");
 
@@ -313,25 +323,26 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     createProjectSubFile("res/file.yyy");
     createProjectSubFile("res/file.zzz");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <includes>" +
-                  "        <include>**/*.xxx</include>" +
-                  "        <include>**/*.yyy</include>" +
-                  "      </includes>" +
-                  "      <excludes>" +
-                  "        <exclude>*.xxx</exclude>" +
-                  "        <exclude>dir/*.yyy</exclude>" +
-                  "      </excludes>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <includes>
+                            <include>**/*.xxx</include>
+                            <include>**/*.yyy</include>
+                          </includes>
+                          <excludes>
+                            <exclude>*.xxx</exclude>
+                            <exclude>dir/*.yyy</exclude>
+                          </excludes>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     compileModules("project");
 
@@ -348,20 +359,21 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     createProjectSubFile("res/.svn/file.properties");
     createProjectSubFile("res/zzz/file.properties");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <includes>" +
-                  "        <include>**/*.properties</include>" +
-                  "      </includes>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <includes>
+                            <include>**/*.properties</include>
+                          </includes>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     compileModules("project");
 
@@ -374,17 +386,18 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
   public void testDeletingFilesThatWasCopiedAndThenDeleted() throws Exception {
     final VirtualFile file = createProjectSubFile("res/file.properties");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     compileModules("project");
     assertCopied("target/classes/file.properties");
@@ -399,35 +412,37 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
   public void testDeletingFilesThatWasCopiedAndThenExcluded() throws Exception {
     createProjectSubFile("res/file.properties");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     compileModules("project");
     assertCopied("target/classes/file.properties");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<build>" +
-                     "  <resources>" +
-                     "    <resource>" +
-                     "      <directory>res</directory>" +
-                     "      <excludes>" +
-                     "        <exclude>**/*</exclude>" +
-                     "      </excludes>" +
-                     "    </resource>" +
-                     "  </resources>" +
-                     "</build>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <build>
+                         <resources>
+                           <resource>
+                             <directory>res</directory>
+                             <excludes>
+                               <exclude>**/*</exclude>
+                             </excludes>
+                           </resource>
+                         </resources>
+                       </build>
+                       """);
     importProject();
 
     compileModules("project");
@@ -443,23 +458,24 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     createProjectSubFile("res/file.xxx");
     createProjectSubFile("res/file.zzz");
 
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
-
-                  "<build>" +
-                  "  <resources>" +
-                  "    <resource>" +
-                  "      <directory>res</directory>" +
-                  "      <includes>" +
-                  "        <include>**/*.xxx</include>" +
-                  "      </includes>" +
-                  "      <excludes>" +
-                  "        <exclude>**/*.zzz</exclude>" +
-                  "      </excludes>" +
-                  "    </resource>" +
-                  "  </resources>" +
-                  "</build>");
+    importProject("""
+                    <groupId>test</groupId>
+                    <artifactId>project</artifactId>
+                    <version>1</version>
+                    <build>
+                      <resources>
+                        <resource>
+                          <directory>res</directory>
+                          <includes>
+                            <include>**/*.xxx</include>
+                          </includes>
+                          <excludes>
+                            <exclude>**/*.zzz</exclude>
+                          </excludes>
+                        </resource>
+                      </resources>
+                    </build>
+                    """);
 
     compileModules("project");
     assertCopied("target/classes/file.xxx");
@@ -471,41 +487,44 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     createProjectSubFile("m1/resources/file.xxx");
     createProjectSubFile("m2/resources/file.yyy");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """);
 
     createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<build>" +
-                    "  <resources>" +
-                    "    <resource>" +
-                    "      <directory>resources</directory>" +
-                    "    </resource>" +
-                    "  </resources>" +
-                    "</build>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      <build>
+                        <resources>
+                          <resource>
+                            <directory>resources</directory>
+                          </resource>
+                        </resources>
+                      </build>
+                      """);
 
     createModulePom("m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<build>" +
-                    "  <resources>" +
-                    "    <resource>" +
-                    "      <directory>resources</directory>" +
-                    "    </resource>" +
-                    "  </resources>" +
-                    "</build>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      <build>
+                        <resources>
+                          <resource>
+                            <directory>resources</directory>
+                          </resource>
+                        </resources>
+                      </build>
+                      """);
     importProject();
 
     compileModules("project", "m1", "m2");
@@ -529,41 +548,44 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
   public void testDoNotDeleteFilesFromOtherModulesOutputWhenOutputIsTheSame() throws Exception {
     createProjectSubFile("resources/file.xxx");
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-                     "<packaging>pom</packaging>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
+    createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>project</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <modules>
+                         <module>m1</module>
+                         <module>m2</module>
+                       </modules>
+                       """);
 
     createModulePom("m1",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m1</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<build>" +
-                    "  <resources>" +
-                    "    <resource>" +
-                    "      <directory>../resources</directory>" +
-                    "    </resource>" +
-                    "  </resources>" +
-                    "</build>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m1</artifactId>
+                      <version>1</version>
+                      <build>
+                        <resources>
+                          <resource>
+                            <directory>../resources</directory>
+                          </resource>
+                        </resources>
+                      </build>
+                      """);
 
     createModulePom("m2",
-                    "<groupId>test</groupId>" +
-                    "<artifactId>m2</artifactId>" +
-                    "<version>1</version>" +
-
-                    "<build>" +
-                    "  <resources>" +
-                    "    <resource>" +
-                    "      <directory>../resources</directory>" +
-                    "    </resource>" +
-                    "  </resources>" +
-                    "</build>");
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>m2</artifactId>
+                      <version>1</version>
+                      <build>
+                        <resources>
+                          <resource>
+                            <directory>../resources</directory>
+                          </resource>
+                        </resources>
+                      </build>
+                      """);
     importProject();
 
     WriteCommandAction.writeCommandAction(myProject)

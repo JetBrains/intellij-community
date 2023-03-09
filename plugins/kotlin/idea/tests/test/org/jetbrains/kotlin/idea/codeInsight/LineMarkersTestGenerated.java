@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
@@ -50,6 +50,11 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
     public static class OverrideImplement extends AbstractLineMarkersTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AbstractClass.kt")
+        public void testAbstractClass() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/AbstractClass.kt");
         }
 
         @TestMetadata("BadCodeNoExceptions.kt")
@@ -107,14 +112,24 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/FakeOverrideProperty.kt");
         }
 
-        @TestMetadata("FakeOverrideToStringInTrait.kt")
-        public void testFakeOverrideToStringInTrait() throws Exception {
-            runTest("testData/codeInsight/lineMarker/overrideImplement/FakeOverrideToStringInTrait.kt");
+        @TestMetadata("FakeOverrideToStringInInterface.kt")
+        public void testFakeOverrideToStringInInterface() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/FakeOverrideToStringInInterface.kt");
         }
 
-        @TestMetadata("FakeOverridesForTraitFunWithImpl.kt")
-        public void testFakeOverridesForTraitFunWithImpl() throws Exception {
-            runTest("testData/codeInsight/lineMarker/overrideImplement/FakeOverridesForTraitFunWithImpl.kt");
+        @TestMetadata("FakeOverridesForInterfaceFunWithImpl.kt")
+        public void testFakeOverridesForInterfaceFunWithImpl() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/FakeOverridesForInterfaceFunWithImpl.kt");
+        }
+
+        @TestMetadata("ImplementedAndOverriddenPropertiesInCtr.kt")
+        public void testImplementedAndOverriddenPropertiesInCtr() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/ImplementedAndOverriddenPropertiesInCtr.kt");
+        }
+
+        @TestMetadata("Interface.kt")
+        public void testInterface() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/Interface.kt");
         }
 
         @TestMetadata("NavigateFromPrivateAbstractClass.kt")
@@ -127,9 +142,9 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/NavigateToSeveralSuperElements.kt");
         }
 
-        @TestMetadata("NoOverridingMarkerOnDefaultTraitImpl.kt")
-        public void testNoOverridingMarkerOnDefaultTraitImpl() throws Exception {
-            runTest("testData/codeInsight/lineMarker/overrideImplement/NoOverridingMarkerOnDefaultTraitImpl.kt");
+        @TestMetadata("NoOverridingMarkerOnDefaultInterfaceImpl.kt")
+        public void testNoOverridingMarkerOnDefaultInterfaceImpl() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/NoOverridingMarkerOnDefaultInterfaceImpl.kt");
         }
 
         @TestMetadata("Overloads.kt")
@@ -152,14 +167,14 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/OverrideMemberOfAbstractClass.kt");
         }
 
-        @TestMetadata("OverridenTraitDeclarations.kt")
-        public void testOverridenTraitDeclarations() throws Exception {
-            runTest("testData/codeInsight/lineMarker/overrideImplement/OverridenTraitDeclarations.kt");
+        @TestMetadata("OverridenInterfaceDeclarations.kt")
+        public void testOverridenInterfaceDeclarations() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/OverridenInterfaceDeclarations.kt");
         }
 
-        @TestMetadata("OverridingTooltipOnDefaultTraitImpl.kt")
-        public void testOverridingTooltipOnDefaultTraitImpl() throws Exception {
-            runTest("testData/codeInsight/lineMarker/overrideImplement/OverridingTooltipOnDefaultTraitImpl.kt");
+        @TestMetadata("OverridingTooltipOnDefaultInterfaceImpl.kt")
+        public void testOverridingTooltipOnDefaultInterfaceImpl() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/OverridingTooltipOnDefaultInterfaceImpl.kt");
         }
 
         @TestMetadata("PrimaryConstructorOpen.kt")
@@ -172,6 +187,16 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/PrimaryConstructorOverride.kt");
         }
 
+        @TestMetadata("PropertiesImplementedInCtr.kt")
+        public void testPropertiesImplementedInCtr() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/PropertiesImplementedInCtr.kt");
+        }
+
+        @TestMetadata("PropertiesOverriddenInCtr.kt")
+        public void testPropertiesOverriddenInCtr() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/PropertiesOverriddenInCtr.kt");
+        }
+
         @TestMetadata("PropertyOverride.kt")
         public void testPropertyOverride() throws Exception {
             runTest("testData/codeInsight/lineMarker/overrideImplement/PropertyOverride.kt");
@@ -182,14 +207,14 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
             runTest("testData/codeInsight/lineMarker/overrideImplement/SealedClass.kt");
         }
 
-        @TestMetadata("ToStringInTrait.kt")
-        public void testToStringInTrait() throws Exception {
-            runTest("testData/codeInsight/lineMarker/overrideImplement/ToStringInTrait.kt");
+        @TestMetadata("ToStringInInterface.kt")
+        public void testToStringInInterface() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/ToStringInInterface.kt");
         }
 
-        @TestMetadata("Trait.kt")
-        public void testTrait() throws Exception {
-            runTest("testData/codeInsight/lineMarker/overrideImplement/Trait.kt");
+        @TestMetadata("WithJavaInheritor.kt")
+        public void testWithJavaInheritor() throws Exception {
+            runTest("testData/codeInsight/lineMarker/overrideImplement/WithJavaInheritor.kt");
         }
     }
 

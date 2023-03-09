@@ -345,7 +345,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     return decoratorPanel;
   }
 
-  private void addLocationChangeListener(@NotNull Consumer<DocumentEvent> listener) {
+  private void addLocationChangeListener(@NotNull Consumer<? super DocumentEvent> listener) {
     final TextFieldWithBrowseButton field = myLocationField;
     if (field == null) return;
     field.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {

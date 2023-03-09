@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.cloneable;
 
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -30,9 +30,9 @@ import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CloneInNonCloneableClassInspection extends BaseInspection {
 
@@ -55,11 +55,10 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
     }
   }
 
-  @Nullable
   @Override
-  public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("only.warn.on.public.clone.methods"),
-                                          this, "onlyWarnOnPublicClone");
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      checkbox("onlyWarnOnPublicClone", InspectionGadgetsBundle.message("only.warn.on.public.clone.methods")));
   }
 
   @Override
