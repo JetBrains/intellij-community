@@ -37,6 +37,7 @@ import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SingleAlarm
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
@@ -95,8 +96,6 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
-    PlatformCoreDataKeys.MODULE.`is`(dataId) -> selectedNode?.module
-    Location.DATA_KEY.`is`(dataId) -> selectedNode?.location
     PlatformDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
       val selectedNodes = selectedNodes
       DataProvider { slowDataId -> getSlowData(slowDataId, selectedNodes) }
@@ -104,9 +103,12 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     else -> null
   }
 
-  private fun getSlowData(dataId: String, selection: List<AbstractTreeNode<*>>?) = when {
+  @RequiresBackgroundThread
+  private fun getSlowData(dataId: String, selection: List<AbstractTreeNode<*>>?): Any? = when {
     PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selection?.firstOrNull()?.asVirtualFile
     PlatformDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> selection?.mapNotNull { it.asVirtualFile }?.ifEmpty { null }?.toTypedArray()
+    PlatformCoreDataKeys.MODULE.`is`(dataId) -> selection?.firstOrNull()?.module
+    Location.DATA_KEY.`is`(dataId) -> selection?.firstOrNull()?.location
     else -> null
   }
 
