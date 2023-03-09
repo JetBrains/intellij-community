@@ -57,6 +57,7 @@ import java.util.*;
  * <p>
  * An inspection can have options that fine-tune its behavior, see {@link #getOptionsPane()}.
  *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
  * @see LocalInspectionTool
  * @see GlobalInspectionTool
  */
@@ -364,6 +365,8 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
   /**
    * @return declarative representation of the inspection options. If this method returns a non-empty pane, then
    * {@link #createOptionsPanel()} is not used.
+   *
+   * @see <a href="https://plugins.jetbrains.com/docs/intellij/inspection-options.html">Inspection Options (IntelliJ Platform Docs)</a>
    * @see OptPane#pane(OptRegularComponent...)
    * @see InspectionOptionPaneRenderer#createOptionsPanel(InspectionProfileEntry, Disposable, Project)
    * @see #getOptionController() if you need custom logic to read/write options

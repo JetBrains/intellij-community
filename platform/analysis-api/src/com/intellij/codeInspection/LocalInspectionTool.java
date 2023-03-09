@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 /**
  * Base class for local inspections.
  *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
  * @see GlobalInspectionTool
  */
 public abstract class LocalInspectionTool extends InspectionProfileEntry {
