@@ -55,6 +55,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
   private final IndexVersionRegistrationSink myRegistrationResultSink = new IndexVersionRegistrationSink();
   @NotNull
   private final IndexConfiguration myState = new IndexConfiguration();
+  @NotNull
+  private final PersistentDirtyFilesQueue myPersistentDirtyFilesQueue = new PersistentDirtyFilesQueue();
 
   FileBasedIndexDataInitialization(@NotNull FileBasedIndexImpl index, @NotNull RegisteredIndexes registeredIndexes) {
     myFileBasedIndex = index;
@@ -68,7 +70,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     Iterator<FileBasedIndexExtension<?, ?>> extensions = extPoint.iterator();
     List<ThrowableRunnable<?>> tasks = new ArrayList<>(extPoint.size());
 
-    myDirtyFileIds.addAll(PersistentDirtyFilesQueue.INSTANCE.readIndexingQueue());
+    myDirtyFileIds.addAll(myPersistentDirtyFilesQueue.readIndexingQueue(ManagingFS.getInstance().getCreationTimestamp()));
     // todo: init contentless indices first ?
     while (extensions.hasNext()) {
       FileBasedIndexExtension<?, ?> extension = extensions.next();
@@ -185,7 +187,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
       myRegisteredIndexes.ensureLoadedIndexesUpToDate();
       myRegisteredIndexes.markInitialized();  // this will ensure that all changes to component's state will be visible to other threads
       saveRegisteredIndicesAndDropUnregisteredOnes(myState.getIndexIDs());
-      PersistentDirtyFilesQueue.INSTANCE.removeCurrentFile();
+      myPersistentDirtyFilesQueue.removeCurrentFile();
     }
   }
 
