@@ -1,17 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview
 
-import com.intellij.openapi.editor.colors.FontPreferences.DEFAULT_FONT_NAME
-import com.intellij.openapi.editor.colors.FontPreferences.DEFAULT_FONT_SIZE
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.ui.CellRendererPanel
 import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.util.ui.JBUI.Borders.emptyRight
+import com.intellij.util.ui.JBUI
 import icons.CollaborationToolsIcons
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Font
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JTree
@@ -22,8 +19,7 @@ internal class CodeReviewProgressRenderer(
   private val codeReviewProgressStateProvider: (ChangesBrowserNode<*>) -> NodeCodeReviewProgressState
 ) : CellRendererPanel(), TreeCellRenderer {
 
-  private val iconLabel = JLabel().apply { border = emptyRight(10) }
-  private val discussionsCountFont = Font(DEFAULT_FONT_NAME, Font.PLAIN, DEFAULT_FONT_SIZE)
+  private val iconLabel = JLabel().apply { border = JBUI.Borders.empty(0, TEXT_ICON_GAP, 0, ICON_BORDER) }
 
   init {
     buildLayout()
@@ -75,5 +71,10 @@ internal class CodeReviewProgressRenderer(
   private fun getReadingStateWithDiscussionsIcon(isRead: Boolean, discussionsCount: Int): Icon {
     require(discussionsCount > 0)
     return if (!isRead) CollaborationToolsIcons.Review.CommentUnread else CollaborationToolsIcons.Review.CommentUnresolved
+  }
+
+  companion object {
+    private const val TEXT_ICON_GAP = 4
+    private const val ICON_BORDER = 10
   }
 }
