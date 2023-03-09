@@ -23,6 +23,7 @@ import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import kotlin.coroutines.CoroutineContext
@@ -152,11 +153,13 @@ private suspend fun TargetCommandExecutor.getExpandedPathIfExecutable(file: Full
   }
 }
 
+@ApiStatus.Internal
 interface TargetCommandExecutor {
   val targetPlatform: CompletableFuture<TargetPlatform>
   fun execute(command: List<String>): CompletableFuture<ProcessOutput>
 }
 
+@ApiStatus.Internal
 class TargetEnvironmentRequestCommandExecutor(internal val request: TargetEnvironmentRequest) : TargetCommandExecutor {
   override val targetPlatform: CompletableFuture<TargetPlatform> = CompletableFuture.completedFuture(request.targetPlatform)
 
