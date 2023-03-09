@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.selector
 
 import com.intellij.collaboration.async.disposingScope
+import com.intellij.collaboration.util.serviceGet
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
@@ -20,7 +21,6 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
-import serviceGet
 
 @Service
 internal class GHRepositoryConnectionManager(project: Project) :

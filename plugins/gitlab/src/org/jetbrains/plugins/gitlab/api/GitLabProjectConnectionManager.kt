@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.collaboration.async.disposingScope
+import com.intellij.collaboration.util.serviceGet
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
@@ -14,7 +15,6 @@ import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
-import serviceGet
 
 @Service
 internal class GitLabProjectConnectionManager(project: Project) :
