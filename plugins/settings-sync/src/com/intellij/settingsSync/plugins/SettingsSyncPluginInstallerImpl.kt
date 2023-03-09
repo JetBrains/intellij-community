@@ -37,20 +37,28 @@ internal class SettingsSyncPluginInstallerImpl(private val notifyErrors: Boolean
   }
 
   private fun installCollected(installers: List<PluginDownloader>) {
-    var isRestartNeeded = false
+    val pluginsRequiredRestart = mutableListOf<String>()
     installers.forEach {
       if (!it.installDynamically(null)) {
-        isRestartNeeded = true
+        pluginsRequiredRestart.add("'${it.pluginName}'")
       }
-      LOG.info("Installed plugin ID: " + it.id.idString)
+      LOG.info("Setting sync installed plugin ID: ${it.id.idString}")
     }
-    if (isRestartNeeded) notifyRestartNeeded()
+    notifyRestartNeeded(pluginsRequiredRestart)
   }
 
-  private fun notifyRestartNeeded() {
+  private fun notifyRestartNeeded(pluginsRequiredRestart: List<String>) {
+    if (pluginsRequiredRestart.isEmpty())
+      return
+    val listOfPluginsQuoted = pluginsRequiredRestart.joinToString(
+      limit = 10,
+      truncated = SettingsSyncBundle.message("plugins.sync.restart.notification.more.plugins",
+                                             pluginsRequiredRestart.size - 10)
+    )
     val notification = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
       .createNotification(SettingsSyncBundle.message("plugins.sync.restart.notification.title"),
-                          SettingsSyncBundle.message("plugins.sync.restart.notification.message"),
+                          SettingsSyncBundle.message("plugins.sync.restart.notification.message",
+                                                     pluginsRequiredRestart.size, listOfPluginsQuoted),
                           NotificationType.INFORMATION)
     notification.addAction(NotificationAction.create(
       SettingsSyncBundle.message("plugins.sync.restart.notification.action", ApplicationNamesInfo.getInstance().fullProductName),
