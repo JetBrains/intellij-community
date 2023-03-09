@@ -125,10 +125,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
       theme += "-new-ui";
     }
     parameters.put("theme", theme);
-    var languageTag = getSiteLanguageTag();
-    if (languageTag != null) {
-      parameters.put("lang", languageTag.toLowerCase(Locale.ENGLISH));
-    }
+    parameters.put("lang", Locale.getDefault().toLanguageTag().toLowerCase(Locale.ENGLISH));
     var request = HTMLEditorProvider.Request.url(Urls.newFromEncoded(url).addParameters(parameters).toExternalForm());
 
     try (var stream = WhatsNewAction.class.getResourceAsStream("whatsNewTimeoutText.html")) {
@@ -148,11 +145,5 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
     var title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
     HTMLEditorProvider.openEditor(project, title, request);
-  }
-
-  private static @Nullable String getSiteLanguageTag() {
-    var language = Locale.getDefault().getLanguage();
-    var region = Locale.getDefault().getCountry();
-    return language.isEmpty() || region.isEmpty() ? null : language + '-' + region;
   }
 }

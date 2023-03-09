@@ -148,8 +148,7 @@ object ExecUtil {
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
   fun sudoCommand(commandLine: GeneralCommandLine, prompt: @Nls String): GeneralCommandLine {
-    if ((SystemInfoRt.isUnix && "root" == System.getenv("USER")) //NON-NLS
-        || (SystemInfoRt.isWindows && SuperUserStatus.isSuperUser)) {
+    if (SuperUserStatus.isSuperUser) {
       return commandLine
     }
 
