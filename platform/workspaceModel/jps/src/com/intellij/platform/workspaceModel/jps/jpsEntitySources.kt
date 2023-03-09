@@ -101,6 +101,9 @@ data class JpsImportedEntitySource(val internalFile: JpsFileEntitySource,
     get() = internalFile.virtualFileUrl
 }
 
+val EntitySource.externalSystemId: String?
+  get() = (this as? JpsImportedEntitySource)?.externalSystemId
+
 internal class FileInDirectorySerializer : Serializer<JpsProjectFileEntitySource.FileInDirectory>(false, true) {
   override fun write(kryo: Kryo, output: Output, o: JpsProjectFileEntitySource.FileInDirectory) {
     kryo.writeClassAndObject(output, o.directory)
