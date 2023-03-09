@@ -128,8 +128,9 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
     val ref: Ref<UsageView> = Ref.create()
     if (tabTitle != null) {
       builder.setCouldPin {
+        val currentItems = updater?.items ?: targets
         ref.set(FindUtil.showInUsageView(null, tabTitle!!, project,
-                                         targets.map2Array { item -> item.item as SmartPsiElementPointer<*> }))
+                                         currentItems.map2Array { item -> item.item as SmartPsiElementPointer<*> }))
         !ref.isNull
       }
     }
