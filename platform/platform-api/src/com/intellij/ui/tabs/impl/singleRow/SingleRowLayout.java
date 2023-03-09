@@ -81,10 +81,6 @@ public abstract class SingleRowLayout extends TabLayout {
     return layoutLabels;
   }
 
-  public int getScrollUnitIncrement() {
-    return 0;
-  }
-
   public void scrollSelectionInView() {
   }
 
