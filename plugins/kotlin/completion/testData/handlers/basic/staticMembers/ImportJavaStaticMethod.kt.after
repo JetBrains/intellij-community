@@ -7,4 +7,4 @@ fun foo() {
 }
 
 // INVOCATION_COUNT: 1
-// ELEMENT_TEXT: "File.listRoots"
+// ELEMENT_TEXT: "listRoots"

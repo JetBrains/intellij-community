@@ -6,3 +6,4 @@ fun test() {
     val vvvvv = 12
     foo {vv<caret>}
 }
+// AUTOCOMPLETE_SETTING: true

@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun <T1, reified T2> foo(t: T1): T1 {}
 
 fun f() {

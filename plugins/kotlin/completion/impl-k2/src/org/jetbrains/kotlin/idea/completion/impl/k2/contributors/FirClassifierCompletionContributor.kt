@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierPr
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.getStaticScope
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext.Companion.createWeighingContext
 import org.jetbrains.kotlin.psi.KtExpression
 
 internal open class FirClassifierCompletionContributor(
@@ -26,9 +25,8 @@ internal open class FirClassifierCompletionContributor(
     protected open fun KtAnalysisSession.getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
         importStrategyDetector.detectImportStrategy(classifierSymbol)
 
-    override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext) {
+    override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext, weighingContext: WeighingContext) {
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
-        val weighingContext = createWeighingContext(null, null, emptyList(), basicContext.fakeKtFile)
 
         when (val receiver = positionContext.explicitReceiver) {
             null -> {

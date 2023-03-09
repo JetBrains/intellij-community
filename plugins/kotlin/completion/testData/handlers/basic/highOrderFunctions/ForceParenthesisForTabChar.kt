@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 package testing
 
 fun some(f: () -> Unit) = 12

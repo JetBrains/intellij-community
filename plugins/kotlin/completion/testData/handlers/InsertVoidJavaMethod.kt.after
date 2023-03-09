@@ -7,3 +7,5 @@ fun test() {
   // Should be no ;
   f.deleteOnExit()
 }
+
+// AUTOCOMPLETE_SETTING: true

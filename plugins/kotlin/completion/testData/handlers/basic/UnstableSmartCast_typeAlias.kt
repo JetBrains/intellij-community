@@ -8,5 +8,5 @@ fun test(p: Pair<Any, Any>) {
     }
 }
 
-// ELEMENT: length
+// ELEMENT: size
 

@@ -5,3 +5,4 @@ fun t() {
         break<caret>
     }
 }
+// AUTOCOMPLETE_SETTING: true

@@ -69,14 +69,14 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected val scopeNameFilter: KtScopeNameFilter =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
-    abstract fun KtAnalysisSession.complete(positionContext: C)
+    abstract fun KtAnalysisSession.complete(positionContext: C, weighingContext: WeighingContext)
 
     protected fun KtAnalysisSession.addSymbolToCompletion(expectedType: KtType?, symbol: KtSymbol) {
         if (symbol !is KtNamedSymbol) return
         // Don't offer any hidden deprecated items.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         with(lookupElementFactory) {
-            createLookupElement(symbol, importStrategyDetector)
+            createLookupElement(symbol, importStrategyDetector, expectedType = expectedType)
                 .let(sink::addElement)
         }
     }
@@ -117,7 +117,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         // Don't offer any deprecated items that could leads to compile errors.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         val lookup = with(lookupElementFactory) {
-            createCallableLookupElement(name, symbol, options, substitutor)
+            createCallableLookupElement(name, symbol, options, substitutor, context.expectedType)
         }
         priority?.let { lookup.priority = it }
         lookup.callableWeight = getCallableMetadata(context, symbol, substitutor)
@@ -190,9 +190,10 @@ internal var LookupElement.availableWithoutImport: Boolean by NotNullableUserDat
 internal fun <C : FirRawPositionCompletionContext> KtAnalysisSession.complete(
     contextContributor: FirCompletionContributorBase<C>,
     positionContext: C,
+    weighingContext: WeighingContext
 ) {
     with(contextContributor) {
-        complete(positionContext)
+        complete(positionContext, weighingContext)
     }
 }
 

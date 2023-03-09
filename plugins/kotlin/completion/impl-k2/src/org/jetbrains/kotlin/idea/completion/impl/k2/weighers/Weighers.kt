@@ -47,7 +47,8 @@ internal class WeighingContext private constructor(
     }
 
     companion object {
-        fun KtAnalysisSession.createWeighingContext(
+        context(KtAnalysisSession)
+        fun createWeighingContext(
             receiver: KtExpression?,
             expectedType: KtType?,
             implicitReceivers: List<KtImplicitReceiver>,
@@ -64,7 +65,8 @@ internal class WeighingContext private constructor(
                 ImportableFqNameClassifier(fakeCompletionFile) { defaultImportPaths.hasImport(it) })
         }
 
-        fun KtAnalysisSession.createEmptyWeighingContext(
+        context(KtAnalysisSession)
+        fun createEmptyWeighingContext(
             fakeCompletionFile: KtFile
         ): WeighingContext = createWeighingContext(null, null, emptyList(), fakeCompletionFile)
 
@@ -80,13 +82,17 @@ internal class WeighingContext private constructor(
 }
 
 internal object Weighers {
-    fun KtAnalysisSession.applyWeighsToLookupElement(
+    context(KtAnalysisSession)
+    fun applyWeighsToLookupElement(
         context: WeighingContext,
         lookupElement: LookupElement,
-        symbol: KtSymbol,
+        symbol: KtSymbol?,
         substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
     ) {
         with(ExpectedTypeWeigher) { addWeight(context, lookupElement, symbol) }
+
+        if (symbol == null) return
+
         with(DeprecatedWeigher) { addWeight(lookupElement, symbol) }
         with(PreferGetSetMethodsToPropertyWeigher) { addWeight(lookupElement, symbol) }
         with(NotImportedWeigher) { addWeight(context, lookupElement, symbol) }

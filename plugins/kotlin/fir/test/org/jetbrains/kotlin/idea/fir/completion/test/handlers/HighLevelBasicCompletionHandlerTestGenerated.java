@@ -313,6 +313,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/highOrderFunctions/InsertFunctionWithSingleParameterWithBrace.kt");
             }
 
+            @TestMetadata("InsertFunctionWithSingleParameterWithParenthesis.kt")
+            public void testInsertFunctionWithSingleParameterWithParenthesis() throws Exception {
+                runTest("../completion/testData/handlers/basic/highOrderFunctions/InsertFunctionWithSingleParameterWithParenthesis.kt");
+            }
+
             @TestMetadata("OptionalParameters1.kt")
             public void testOptionalParameters1() throws Exception {
                 runTest("../completion/testData/handlers/basic/highOrderFunctions/OptionalParameters1.kt");
@@ -336,6 +341,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("ReplaceByLambdaTemplateNoClosingParenth.kt")
             public void testReplaceByLambdaTemplateNoClosingParenth() throws Exception {
                 runTest("../completion/testData/handlers/basic/highOrderFunctions/ReplaceByLambdaTemplateNoClosingParenth.kt");
+            }
+
+            @TestMetadata("ReplaceFunctionWithSingleParameter.kt")
+            public void testReplaceFunctionWithSingleParameter() throws Exception {
+                runTest("../completion/testData/handlers/basic/highOrderFunctions/ReplaceFunctionWithSingleParameter.kt");
             }
 
             @TestMetadata("SameTypeParameters.kt")
@@ -822,6 +832,26 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("TypeArgumentsFromParameters.kt")
             public void testTypeArgumentsFromParameters() throws Exception {
                 runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromParameters.kt");
+            }
+
+            @TestMetadata("TypeArgumentsFromReturnType.kt")
+            public void testTypeArgumentsFromReturnType() throws Exception {
+                runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType.kt");
+            }
+
+            @TestMetadata("TypeArgumentsFromReturnType2.kt")
+            public void testTypeArgumentsFromReturnType2() throws Exception {
+                runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType2.kt");
+            }
+
+            @TestMetadata("TypeArgumentsFromReturnType3.kt")
+            public void testTypeArgumentsFromReturnType3() throws Exception {
+                runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType3.kt");
+            }
+
+            @TestMetadata("TypeArgumentsFromReturnType4.kt")
+            public void testTypeArgumentsFromReturnType4() throws Exception {
+                runTest("../completion/testData/handlers/basic/typeArgsForCall/TypeArgumentsFromReturnType4.kt");
             }
         }
 

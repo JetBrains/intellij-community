@@ -5,3 +5,4 @@ fun test() {
     val foo = array(1, 2, 3)
     foo[vv<caret>]
 }
+// AUTOCOMPLETE_SETTING: true

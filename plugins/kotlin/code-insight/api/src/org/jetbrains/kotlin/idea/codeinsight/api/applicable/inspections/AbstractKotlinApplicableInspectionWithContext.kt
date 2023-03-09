@@ -47,7 +47,7 @@ abstract class AbstractKotlinApplicableInspectionWithContext<ELEMENT : KtElement
 
             override fun shouldApplyInWriteAction(): Boolean = this@AbstractKotlinApplicableInspectionWithContext.shouldApplyInWriteAction()
             override fun getFamilyName(): String = this@AbstractKotlinApplicableInspectionWithContext.getActionFamilyName()
-            override fun getName(): String = elementPointer.element?.let { getActionName(element, context) } ?: familyName
+            override fun getName(): String = elementPointer.element?.let { getActionName(it, context) } ?: familyName
         }
 
         val description = getProblemDescription(element, context)

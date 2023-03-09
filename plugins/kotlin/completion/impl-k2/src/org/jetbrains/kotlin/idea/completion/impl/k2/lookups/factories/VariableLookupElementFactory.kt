@@ -55,7 +55,8 @@ internal class VariableLookupElementFactory {
                     symbol.name,
                     options,
                     rendered,
-                    inputValueArguments = functionalType.parameterTypes.isNotEmpty(),
+                    inputValueArgumentsAreRequired = functionalType.parameterTypes.isNotEmpty(),
+                    inputTypeArgumentsAreRequired = false,
                     insertEmptyLambda = insertLambdaBraces(functionalType),
                 )
 
