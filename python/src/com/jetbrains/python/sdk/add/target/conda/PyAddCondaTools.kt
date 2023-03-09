@@ -137,7 +137,7 @@ private fun String.asCommandInShell(targetPlatform: TargetPlatform): List<String
 private suspend fun TargetCommandExecutor.getExpandedPathIfExecutable(file: FullPathOnTarget): FullPathOnTarget? = withContext(
   Dispatchers.IO) {
   val expandedPath = executeShellCommand("echo $file").thenApply(ProcessOutput::getStdout).thenApply(String::trim).await()
-  if (this@getExpandedPathIfExecutable is LocalTargetEnvironmentRequest) {
+  if (isLocalMachineExecutor) {
     return@withContext if (Path.of(expandedPath).isExecutable()) expandedPath else null
   }
   else {
