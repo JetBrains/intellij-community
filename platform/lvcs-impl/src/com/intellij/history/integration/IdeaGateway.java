@@ -51,12 +51,11 @@ public class IdeaGateway {
   }
 
   public boolean isVersioned(@NotNull VirtualFile f, boolean shouldBeInContent) {
-    VirtualFileSystem fileSystem = f.getFileSystem();
-    if (fileSystem instanceof VersionManagingFileSystem && !((VersionManagingFileSystem)fileSystem).isVersionable(f)) {
+    if (VersionManagingFileSystem.isDisabled(f)) {
       return false;
     }
     if (!f.isInLocalFileSystem()) {
-      return isNonLocalVersioned(f);
+      return VersionManagingFileSystem.isFsSupported(f);
     }
 
     if (!f.isDirectory()) {
@@ -94,10 +93,6 @@ public class IdeaGateway {
     if (shouldBeInContent && !isInContent) return false;
 
     return true;
-  }
-
-  public static boolean isNonLocalVersioned(@NotNull VirtualFile f) {
-    return f.getFileSystem() instanceof VersionedFileSystem;
   }
 
   public String getPathOrUrl(@NotNull VirtualFile file) {
@@ -277,7 +272,7 @@ public class IdeaGateway {
     List<VirtualFile> roots = new SmartList<>();
 
     for (VirtualFile root : ManagingFS.getInstance().getRoots()) {
-      if ((root.isInLocalFileSystem() || isNonLocalVersioned(root)) && !(root.getFileSystem() instanceof TempFileSystem)) {
+      if ((root.isInLocalFileSystem() || VersionManagingFileSystem.isFsSupported(root)) && !(root.getFileSystem() instanceof TempFileSystem)) {
         roots.add(root);
       }
     }
