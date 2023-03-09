@@ -28,6 +28,9 @@ interface DescriptorStorage {
    */
   fun readAtFiltered(position: Long, toReadMask: VfsOperationTagsMask): DescriptorReadResult
 
+  /** Reads a descriptor that precedes the one that starts on [position] */
+  fun readPreceding(position: Long): DescriptorReadResult
+
   /**
    * Tries to read the whole storage in a sequential manner.
    * In case [DescriptorReadResult.Invalid] was read, it will be the last item to be passed to [action].
@@ -50,6 +53,16 @@ interface DescriptorStorage {
    */
   fun persistentSize(): Long
 
+  /**
+   * A [VfsLogIterator] that is initially positioned at the beginning of the storage.
+   */
+  fun begin(): VfsLogIterator
+
+  /**
+   * A [VfsLogIterator] that is initially positioned at the end of the storage.
+   */
+  fun end(): VfsLogIterator
+
   fun flush()
   fun dispose()
 
@@ -62,5 +75,17 @@ interface DescriptorStorage {
 
     /** Couldn't retrieve any information at all */
     data class Invalid(val cause: Throwable) : DescriptorReadResult
+  }
+
+  /**
+   * [VfsLogIterator] gets invalidated in case [DescriptorReadResult.Invalid] was read, and its [hasNext] and [hasPrevious]
+   * will return false afterward in such case.
+   */
+  interface VfsLogIterator {
+    fun hasNext(): Boolean
+    fun hasPrevious(): Boolean
+
+    fun next(): DescriptorReadResult
+    fun previous(): DescriptorReadResult
   }
 }

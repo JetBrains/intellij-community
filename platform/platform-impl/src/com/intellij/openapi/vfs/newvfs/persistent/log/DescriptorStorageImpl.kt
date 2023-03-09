@@ -120,6 +120,13 @@ class DescriptorStorageImpl(
     DescriptorReadResult.Invalid(e)
   }
 
+  override fun readPreceding(position: Long): DescriptorReadResult = try {
+    readLastTag(position) { actualPos, _ -> readAt(actualPos) }
+  }
+  catch (e: Throwable) {
+    DescriptorReadResult.Invalid(e)
+  }
+
   override fun readAtFiltered(position: Long, toReadMask: VfsOperationTagsMask): DescriptorReadResult = try {
     readFirstTag(position) { _, tag ->
       if (toReadMask.contains(tag)) return readWholeDescriptor(position, tag)
@@ -137,7 +144,8 @@ class DescriptorStorageImpl(
     DescriptorReadResult.Invalid(e)
   }
 
-  private inline fun readFirstTag(position: Long, cont: (position: Long, tag: VfsOperationTag) -> DescriptorReadResult): DescriptorReadResult {
+  private inline fun readFirstTag(position: Long,
+                                  cont: (position: Long, tag: VfsOperationTag) -> DescriptorReadResult): DescriptorReadResult {
     val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
     storageIO.read(position, buf)
     if (buf[0] < 0.toByte()) {
@@ -148,6 +156,18 @@ class DescriptorStorageImpl(
     }
     val tag = VfsOperationTag.values()[buf[0].toInt()]
     return cont(position, tag)
+  }
+
+  private inline fun readLastTag(position: Long,
+                                 cont: (actualDescriptorPosition: Long, tag: VfsOperationTag) -> DescriptorReadResult): DescriptorReadResult {
+    val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
+    storageIO.read(position - 1, buf)
+    if (buf[0] !in 1 until VfsOperationTag.values().size) {
+      return DescriptorReadResult.Invalid(IllegalStateException("read last tag value is ${buf[0]}"))
+    }
+    val tag = VfsOperationTag.values()[buf[0].toInt()]
+    val descrSize = bytesForDescriptor(tag)
+    return cont(position - descrSize, tag)
   }
 
   private fun readWholeDescriptor(position: Long, tag: VfsOperationTag): DescriptorReadResult {
@@ -177,16 +197,9 @@ class DescriptorStorageImpl(
   }
 
   override fun readAll(action: (DescriptorReadResult) -> Boolean) {
-    var pos = 0L
-    val size = size()
-    while (pos < size) {
-      val descr = readAt(pos)
-      if (!action(descr)) break
-      pos += when (descr) {
-        is DescriptorReadResult.Valid -> bytesForDescriptor(descr.operation.tag)
-        is DescriptorReadResult.Incomplete -> bytesForDescriptor(descr.tag)
-        is DescriptorReadResult.Invalid -> break
-      }
+    val iter = begin()
+    while (iter.hasNext()) {
+      if (!action(iter.next())) break
     }
   }
 
@@ -196,6 +209,9 @@ class DescriptorStorageImpl(
 
   override fun size(): Long = position.getReadyPosition()
   override fun persistentSize() = persistentSize ?: 0L
+
+  override fun begin(): DescriptorStorage.VfsLogIterator = IteratorImpl(0L)
+  override fun end(): DescriptorStorage.VfsLogIterator = IteratorImpl(size())
 
   override fun flush() {
     val safePos = position.getReadyPosition()
@@ -208,5 +224,36 @@ class DescriptorStorageImpl(
   override fun dispose() {
     flush()
     storageIO.close()
+  }
+
+  private inner class IteratorImpl(var iterPos: Long) : DescriptorStorage.VfsLogIterator {
+    // [tag previous descriptor tag]  [tag next descriptor tag]
+    //                      iterPos --^
+
+    var invalidationFlag = false
+
+    override fun hasNext(): Boolean {
+      return iterPos < size() && !invalidationFlag
+    }
+
+    override fun hasPrevious(): Boolean {
+      return iterPos > 0 && !invalidationFlag
+    }
+
+    override fun next(): DescriptorReadResult = readAt(iterPos).also {
+      when (it) {
+        is DescriptorReadResult.Valid -> iterPos += bytesForDescriptor(it.operation.tag)
+        is DescriptorReadResult.Incomplete -> iterPos += bytesForDescriptor(it.tag)
+        is DescriptorReadResult.Invalid -> invalidationFlag = true
+      }
+    }
+
+    override fun previous(): DescriptorReadResult = readPreceding(iterPos).also {
+      when (it) {
+        is DescriptorReadResult.Valid -> iterPos -= bytesForDescriptor(it.operation.tag)
+        is DescriptorReadResult.Incomplete -> iterPos -= bytesForDescriptor(it.tag)
+        is DescriptorReadResult.Invalid -> invalidationFlag = true
+      }
+    }
   }
 }
