@@ -41,6 +41,8 @@ suspend fun renderBlock(
     if (addExplicitDimensions) {
       addExplicitDimensionsAttributes(node.unsafeCast<HTMLElement>())
     }
+    updatePieDiagramViewBox(node)
+
     nodeToLastValidHtml[block.findCodeBlockContainer()] = block.innerHTML
     return node
   } catch (exception: Throwable) {
@@ -61,7 +63,22 @@ private fun HTMLElement.findCodeBlockContainer(): Element {
   return parentElement
 }
 
-private fun addExplicitDimensionsAttributes(element: HTMLElement) {
+private fun updatePieDiagramViewBox(element: Element) {
+  element.apply {
+    if (getAttribute("aria-roledescription") != "pie") return
+
+    childNodes.asList()
+      .filterIsInstance<Element>()
+      .firstOrNull { it.nodeName == "g" && it.hasAttribute("transform") }
+      ?.let {
+        removeAttribute("viewBox")
+        val rect = it.getBoundingClientRect()
+        setAttribute("viewBox", "0 0 ${rect.right} ${rect.bottom}")
+      }
+  }
+}
+
+private fun addExplicitDimensionsAttributes(element: Element) {
   val rect = element.getBoundingClientRect()
   val width = rect.width
   val height = rect.height
