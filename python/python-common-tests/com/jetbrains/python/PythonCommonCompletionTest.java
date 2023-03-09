@@ -331,6 +331,11 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
     runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
   }
 
+  // PY-45588
+  public void testSuperMethodWithAnnotationInsertingImports() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), this::doMultiFileTest);
+  }
+
   public void testSuperMethodWithCommentAnnotation() {
     doTest();
   }

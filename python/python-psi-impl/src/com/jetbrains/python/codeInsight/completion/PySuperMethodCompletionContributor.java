@@ -19,6 +19,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -29,6 +30,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
+import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -93,7 +95,14 @@ public class PySuperMethodCompletionContributor extends CompletionContributor im
                      builder.append(":");
                    }
                  }
-                 LookupElementBuilder element = LookupElementBuilder.create(builder.toString());
+                 LookupElementBuilder element = LookupElementBuilder.create(builder.toString())
+                   .withInsertHandler((insertionContext, item) -> {
+                     PsiElement methodName = insertionContext.getFile().findElementAt(insertionContext.getStartOffset());
+                     if (methodName == null || !(methodName.getParent() instanceof PyFunction insertedMethod)) return;
+                     WriteCommandAction.writeCommandAction(insertionContext.getFile()).run(() -> {
+                       PyClassRefactoringUtil.transplantImportsFromSignature(superMethod, insertedMethod);
+                     });
+                   });
                  result.addElement(TailTypeDecorator.withTail(element, TailType.NONE));
                }
              }
