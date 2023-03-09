@@ -169,14 +169,14 @@ public final class PyOverrideImplementUtil {
     final TypeEvalContext context = TypeEvalContext.userInitiated(cls.getProject(), cls.getContainingFile());
 
     final PyFunction function = buildOverriddenFunction(cls, baseFunction, implement).addFunctionAfter(statementList, anchor);
-    addImports(baseFunction, function, context);
+    addImports(baseFunction, function);
 
     PyiUtil
       .getOverloads(baseFunction, context)
       .forEach(
         baseOverload -> {
           final PyFunction overload = (PyFunction)statementList.addBefore(baseOverload, function);
-          addImports(baseOverload, overload, context);
+          addImports(baseOverload, overload);
         }
       );
 
@@ -336,36 +336,20 @@ public final class PyOverrideImplementUtil {
    * @param baseFunction base function used to resolve types
    * @param function overridden function
    */
-  private static void addImports(@NotNull PyFunction baseFunction, @NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    final UnresolvedExpressionVisitor unresolvedExpressionVisitor = new UnresolvedExpressionVisitor();
-    getAnnotations(function, context).forEach(annotation -> annotation.accept(unresolvedExpressionVisitor));
-    getDecorators(function).forEach(decorator -> decorator.accept(unresolvedExpressionVisitor));
+  private static void addImports(@NotNull PyFunction baseFunction, @NotNull PyFunction function) {
+    UnresolvedExpressionVisitor unresolvedExpressionVisitor = new UnresolvedExpressionVisitor() {
+      @Override
+      public void visitPyStatementList(@NotNull PyStatementList node) {
+      }
+    };
+    function.accept(unresolvedExpressionVisitor);
 
-    final ResolveExpressionVisitor resolveExpressionVisitor = new ResolveExpressionVisitor(unresolvedExpressionVisitor.getUnresolved());
-    getAnnotations(baseFunction, context).forEach(annotation -> annotation.accept(resolveExpressionVisitor));
-    getDecorators(baseFunction).forEach(decorator -> decorator.accept(resolveExpressionVisitor));
-  }
-
-  /**
-   * Collect annotations from function parameters and return.
-   *
-   */
-  @NotNull
-  private static List<PyAnnotation> getAnnotations(@NotNull PyFunction function, @NotNull TypeEvalContext typeEvalContext) {
-    return StreamEx.of(function.getParameters(typeEvalContext))
-        .map(PyCallableParameter::getParameter)
-        .select(PyNamedParameter.class)
-        .remove(PyParameter::isSelf)
-        .map(PyAnnotationOwner::getAnnotation)
-        .append(function.getAnnotation())
-        .nonNull()
-        .toList();
-  }
-
-  @NotNull
-  private static List<PyDecorator> getDecorators(@NotNull PyFunction function) {
-    final PyDecoratorList decoratorList = function.getDecoratorList();
-    return decoratorList == null ? Collections.emptyList() : Arrays.asList(decoratorList.getDecorators());
+    ResolveExpressionVisitor resolveExpressionVisitor = new ResolveExpressionVisitor(unresolvedExpressionVisitor.getUnresolved()) {
+      @Override
+      public void visitPyStatementList(@NotNull PyStatementList node) {
+      }
+    };
+    baseFunction.accept(resolveExpressionVisitor);
   }
 
   /**
