@@ -247,13 +247,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
 
       lock.writeLock().lock();
       try {
-        // check whether record is allocated, may happen on stale indexes checking
-        // no sense to save attributes for unallocated record
-        if (myFileId > connection.getRecords().recordsCount()) {
-          return;
-        }
-
-        BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+        final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
 
         if (inlineAttributes && _out.size() < INLINE_ATTRIBUTE_SMALLER_THAN) {
           //if attribute value could be stored in the directory record inline -> try to (over)write it
