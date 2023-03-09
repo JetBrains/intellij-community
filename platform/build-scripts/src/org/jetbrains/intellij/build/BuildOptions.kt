@@ -45,9 +45,6 @@ class BuildOptions(
      */
     const val OS_NONE = "none"
 
-    /** Pre-builds SVG icons for all SVG resource files to speed up icons loading at runtime  */
-    const val SVGICONS_PREBUILD_STEP = "svg_icons_prebuild"
-
     /** Build actual searchableOptions.xml file. If skipped; the (possibly outdated) source version of the file will be used.  */
     const val SEARCHABLE_OPTIONS_INDEX_STEP = "search_index"
     const val BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
