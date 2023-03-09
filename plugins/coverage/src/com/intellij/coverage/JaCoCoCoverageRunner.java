@@ -174,7 +174,8 @@ public final class JaCoCoCoverageRunner extends JavaCoverageRunner {
               String vmClassName = rootPath.relativize(path).toString().replaceAll(StringUtil.escapeToRegexp(File.separator), ".");
               vmClassName = StringUtil.trimEnd(vmClassName, ".class");
               if (suite.isClassFiltered(vmClassName, suite.getExcludedClassNames()) ||
-                  !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName))) {
+                  (!suite.isClassFiltered(vmClassName) &&
+                   !suite.isPackageFiltered(StringUtil.getPackageName(vmClassName)))) {
                 return FileVisitResult.CONTINUE;
               }
               File file = path.toFile();
