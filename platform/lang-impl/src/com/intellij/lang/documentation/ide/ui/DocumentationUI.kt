@@ -62,6 +62,7 @@ internal class DocumentationUI(
     editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane), {
       imageResolver?.resolveImage(it)
     }, { icons[it] })
+    Disposer.register(this, editorPane)
     scrollPane.setViewportView(editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(fontSize))
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, ::linkActivated)
