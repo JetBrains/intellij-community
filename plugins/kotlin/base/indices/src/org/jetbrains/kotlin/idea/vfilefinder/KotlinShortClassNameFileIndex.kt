@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.indices.names.readBuiltInDefinition
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
@@ -55,8 +56,8 @@ class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection
                 }
             }
             KotlinBuiltInFileType -> {
-                val builtins: KotlinMetadataStubBuilder.FileWithMetadata? = BuiltInDefinitionFile.read(fileContent.content, fileContent.file.parent)
-                if (builtins is KotlinMetadataStubBuilder.FileWithMetadata.Compatible) {
+                val builtins = readBuiltInDefinition(fileContent)
+                if (builtins != null) {
                     for (classProto in builtins.classesToDecompile) {
                         val classId = builtins.nameResolver.getClassId(classProto.fqName)
                         map[classId.shortClassName.asString()] = listOf(classId.asFqNameString())
