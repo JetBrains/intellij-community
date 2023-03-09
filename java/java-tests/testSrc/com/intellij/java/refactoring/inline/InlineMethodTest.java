@@ -349,7 +349,15 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testConcatenationInConcatenation() {
     doTest();
   }
-  
+
+  public void testConcatenationTurnsIntoAddition() {
+    doTest();
+  }
+
+  public void testAdditionTurnsIntoConcatenation() {
+    doTest();
+  }
+
   public void testReturnStatementWithoutBraces() {
     doTestInlineThisOnly();
   }
