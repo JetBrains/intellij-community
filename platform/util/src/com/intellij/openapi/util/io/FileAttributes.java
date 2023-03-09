@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -204,7 +204,9 @@ public final class FileAttributes {
   }
 
   public static @NotNull FileAttributes fromNio(@NotNull Path path, @NotNull BasicFileAttributes attrs) {
-    boolean isSymbolicLink = attrs.isSymbolicLink() || SystemInfo.isWindows && attrs.isOther() && attrs.isDirectory() && path.getParent() != null;
+    boolean isSymbolicLink =
+      attrs.isSymbolicLink() ||
+      SystemInfo.isWindows && attrs.isOther() && attrs.isDirectory() && path.getParent() != null;  // marking reparse points as symlinks (except roots)
 
     if (isSymbolicLink) {
       try {
@@ -228,6 +230,7 @@ public final class FileAttributes {
 
     long lastModified = attrs.lastModifiedTime().toMillis();
 
-    return new FileAttributes(attrs.isDirectory(), attrs.isOther(), isSymbolicLink, isHidden, attrs.size(), lastModified, isWritable);
+    boolean isSpecial = attrs.isOther() && !(SystemInfo.isWindows && attrs.isDirectory());  // reparse points are directories (not special files)
+    return new FileAttributes(attrs.isDirectory(), isSpecial, isSymbolicLink, isHidden, attrs.size(), lastModified, isWritable);
   }
 }

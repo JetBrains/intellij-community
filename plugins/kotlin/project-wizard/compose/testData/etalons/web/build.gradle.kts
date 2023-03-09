@@ -1,13 +1,10 @@
-import org.jetbrains.compose.compose
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
-
 plugins {
     kotlin("multiplatform")
     id("org.jetbrains.compose")
 }
 
-group "com.example"
-version "1.0-SNAPSHOT"
+group = "com.example"
+version = "1.0-SNAPSHOT"
 
 repositories {
     google()

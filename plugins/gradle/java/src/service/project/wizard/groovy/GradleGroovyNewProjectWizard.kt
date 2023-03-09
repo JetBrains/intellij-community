@@ -11,7 +11,6 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
@@ -81,7 +80,6 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         it.withJUnit()
       }
 
-      ExternalProjectsManagerImpl.setupCreatedProject(project)
       builder.commit(project)
       if (addSampleCode) {
         runWriteAction {

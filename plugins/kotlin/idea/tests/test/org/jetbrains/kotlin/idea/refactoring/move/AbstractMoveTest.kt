@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
+import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.move.changePackage.KotlinChangePackageRefactoring
 import org.jetbrains.kotlin.idea.refactoring.move.moveClassesOrPackages.KotlinAwareDelegatingMoveDestination
@@ -244,7 +245,25 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
 
     CHANGE_PACKAGE_DIRECTIVE {
         override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
-            KotlinChangePackageRefactoring(mainFile as KtFile).run(FqName(config.getString("newPackageName")))
+            withCorrectMoveSettings(config) {
+                KotlinChangePackageRefactoring(mainFile as KtFile).run(FqName(config.getString("newPackageName")))
+            }
+        }
+
+        private fun withCorrectMoveSettings(config: JsonObject, action: () -> Unit) {
+            val kotlinSettings = KotlinRefactoringSettings.instance
+            val snapshot = KotlinRefactoringSettings().apply { loadState(kotlinSettings) }
+
+            try {
+                kotlinSettings.apply {
+                    MOVE_SEARCH_IN_COMMENTS = config.get("searchInCommentsAndStrings")?.asBoolean ?: MOVE_SEARCH_IN_COMMENTS
+                    MOVE_SEARCH_FOR_TEXT = config.get("searchInNonCode")?.asBoolean ?: MOVE_SEARCH_FOR_TEXT
+                }
+
+                action()
+            } finally {
+                kotlinSettings.loadState(snapshot)
+            }
         }
     },
 

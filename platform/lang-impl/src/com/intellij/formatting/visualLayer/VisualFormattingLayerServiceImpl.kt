@@ -63,23 +63,28 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
     }
 
     val tabSize = codeStyleSettings.getTabSize(file.fileType)
+    val formattedTextLineSet = LineSet.createLineSet(formattingChanges!!.postFormatText)
     return formattingChanges!!.mismatches
-      .flatMap { mismatch -> formattingElements(editor.document, formattingChanges!!.postFormatText, mismatch, tabSize) }
+      .flatMap { mismatch ->
+        formattingElements(editor.document, formattingChanges!!.postFormatText, formattedTextLineSet, mismatch, tabSize)
+      }
       .filterNotNull()
       .toList()
   }
 
   private fun formattingElements(document: Document,
                                  formattedText: CharSequence,
+                                 formattedTextLineSet: LineSet,
                                  mismatch: FormattingChanges.WhitespaceMismatch,
                                  tabSize: Int): Sequence<VisualFormattingLayerElement?> = sequence {
     val originalText = document.text
-    val replacementLines = LineSet.createLineSet(formattedText)
 
     val originalFirstLine = document.getLineNumber(mismatch.preFormatRange.startOffset)
-    val replacementFirstLine = replacementLines.findLineIndex(mismatch.postFormatRange.startOffset)
+    val replacementFirstLine = formattedTextLineSet.findLineIndex(mismatch.postFormatRange.startOffset)
     val n = document.getLineNumber(mismatch.preFormatRange.endOffset) - originalFirstLine + 1
-    val m = mismatch.postFormatRange.let { replacementLines.findLineIndex(it.endOffset) - replacementLines.findLineIndex(it.startOffset) } + 1
+    val m = mismatch.postFormatRange.let {
+      formattedTextLineSet.findLineIndex(it.endOffset) - formattedTextLineSet.findLineIndex(it.startOffset)
+    } + 1
 
     // This case needs soft wraps to visually split the existing line.
     // Not supported by API yet, so we will just skip it for now.
@@ -93,8 +98,8 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
       val originalEndOffset = min(document.getLineEndOffset(originalFirstLine + n - m), mismatch.preFormatRange.endOffset)
       val originalLineStartOffset = document.getLineStartOffset(originalFirstLine)
       val replacementStartOffset = mismatch.postFormatRange.startOffset
-      val replacementEndOffset = min(replacementLines.getLineEnd(replacementFirstLine), mismatch.postFormatRange.endOffset)
-      val replacementLineStartOffset = replacementLines.getLineStart(replacementFirstLine)
+      val replacementEndOffset = min(formattedTextLineSet.getLineEnd(replacementFirstLine), mismatch.postFormatRange.endOffset)
+      val replacementLineStartOffset = formattedTextLineSet.getLineStart(replacementFirstLine)
 
       yieldAll(inlayOrFold(originalText, originalLineStartOffset, originalStartOffset, originalEndOffset,
                            formattedText, replacementLineStartOffset, replacementStartOffset, replacementEndOffset,
@@ -108,8 +113,8 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
       val originalEndOffset = min(document.getLineEndOffset(originalFirstLine), mismatch.preFormatRange.endOffset)
       val originalLineStartOffset = document.getLineStartOffset(originalFirstLine)
       val replacementStartOffset = mismatch.postFormatRange.startOffset
-      val replacementEndOffset = min(replacementLines.getLineEnd(replacementFirstLine), mismatch.postFormatRange.endOffset)
-      val replacementLineStartOffset = replacementLines.getLineStart(replacementFirstLine)
+      val replacementEndOffset = min(formattedTextLineSet.getLineEnd(replacementFirstLine), mismatch.postFormatRange.endOffset)
+      val replacementLineStartOffset = formattedTextLineSet.getLineStart(replacementFirstLine)
 
       yieldAll(inlayOrFold(originalText, originalLineStartOffset, originalStartOffset, originalEndOffset,
                            formattedText, replacementLineStartOffset, replacementStartOffset, replacementEndOffset,
@@ -152,8 +157,8 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
       val replacementLine = replacementFirstLine + m - linesToProcess + i - 1  // goes up until last replacement line inclusively
       val originalLineStartOffset = document.getLineStartOffset(originalLine)
       val originalEndOffset = min(document.getLineEndOffset(originalLine), mismatch.preFormatRange.endOffset)
-      val replacementLineStartOffset = replacementLines.getLineStart(replacementLine)
-      val replacementEndOffset = min(replacementLines.getLineEnd(replacementLine), mismatch.postFormatRange.endOffset)
+      val replacementLineStartOffset = formattedTextLineSet.getLineStart(replacementLine)
+      val replacementEndOffset = min(formattedTextLineSet.getLineEnd(replacementLine), mismatch.postFormatRange.endOffset)
       yieldAll(inlayOrFold(originalText, originalLineStartOffset, originalLineStartOffset, originalEndOffset,
                            formattedText, replacementLineStartOffset, replacementLineStartOffset, replacementEndOffset,
                            tabSize))

@@ -492,5 +492,8 @@
     <extensionPoint name="internal.ml.featureProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.internal.ml.MLFeatureProvider"/>
     </extensionPoint>
+
+    <extensionPoint name="authorizationProvider" interface="com.intellij.ide.impl.AuthorizationProvider" dynamic="true" />
+
   </extensionPoints>
 </idea-plugin>

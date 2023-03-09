@@ -2,16 +2,12 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.CloudConfigServerCommunicator.Companion.getSnapshotFilePath
-import org.junit.Assert
 import java.io.ByteArrayOutputStream
 import java.util.*
-import java.util.concurrent.CountDownLatch
 
 internal class MockRemoteCommunicator : TestRemoteCommunicator() {
   private val filesAndVersions = mutableMapOf<String, Version>()
   private val snapshotFile get() = filesAndVersions[getSnapshotFilePath()]
-
-  private lateinit var pushedLatch: CountDownLatch
 
   override fun prepareFileOnServer(snapshot: SettingsSnapshot) {
     ByteArrayOutputStream().use { stream ->
@@ -40,18 +36,12 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
     return if (snapshot.isDeleted()) UpdateResult.FileDeletedFromServer else UpdateResult.Success(snapshot, snapshotFile!!.id)
   }
 
-  override fun awaitForPush(): SettingsSnapshot? {
-    pushedLatch = CountDownLatch(1)
-    Assert.assertTrue("Didn't await until changes are pushed", pushedLatch.wait())
-    return getVersionOnServer()
-  }
-
   override fun push(snapshot: SettingsSnapshot, force: Boolean, expectedServerVersionId: String?): SettingsSyncPushResult {
     if (snapshotFile?.id != expectedServerVersionId && !force) {
       return SettingsSyncPushResult.Rejected
     }
     prepareFileOnServer(snapshot)
-    if (::pushedLatch.isInitialized) pushedLatch.countDown()
+    settingsPushed(snapshot)
     return SettingsSyncPushResult.Success(snapshotFile!!.id)
   }
 

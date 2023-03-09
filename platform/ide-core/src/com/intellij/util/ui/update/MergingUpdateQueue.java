@@ -492,12 +492,15 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   @TestOnly
-  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) {
-    try {
-      myWaiterForMerge.waitForAllExecuted(timeout, unit);
-    }
-    catch (InterruptedException | ExecutionException | TimeoutException e) {
-      throw new RuntimeException(e);
+  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+    long deadline = System.nanoTime() + unit.toNanos(timeout);
+    myWaiterForMerge.waitForAllExecuted(timeout, unit);
+    while (!isEmpty()) {
+      long toWait = deadline - System.nanoTime();
+      if (toWait < 0) {
+        throw new TimeoutException();
+      }
+      myWaiterForMerge.waitForAllExecuted(toWait, TimeUnit.NANOSECONDS);
     }
   }
 }

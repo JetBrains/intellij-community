@@ -26,6 +26,7 @@ import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Assertions;
 
 import java.util.List;
 import java.util.Set;
@@ -40,6 +41,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
   public void testMarkdownInlineLink() {
     TextContent extracted = extractText("a.md", "* list [item](http://x) with a local link", 3);
     assertEquals("list item with a local link", unknownOffsets(extracted));
+    Assertions.assertArrayEquals(new int[]{"list ".length(), "list item".length()}, extracted.markupOffsets());
     int prefix = "* ".length();
     assertEquals(prefix + "list [".length(), extracted.textOffsetToFile("list ".length()));
     assertEquals(prefix + "list [item".length(), extracted.textOffsetToFile("list item".length()));
@@ -53,6 +55,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
   public void testMarkdownImage() {
     TextContent extracted = extractText("a.md", "[Before ![AltText](http://www.google.com.au/images/nav_logo7.png) after](http://google.com.au/)", 3);
     assertEquals("Before  after", unknownOffsets(extracted));
+    Assertions.assertArrayEquals(new int[]{0, extracted.length()}, extracted.markupOffsets());
   }
 
   public void testMarkdownIndent() {
@@ -61,7 +64,9 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testMarkdownStyles() {
-    assertEquals("bold italic strikethrough", unknownOffsets(extractText("a.md", "**bold** *italic* ~~strikethrough~~", 3)));
+    TextContent text = extractText("a.md", "**bold** *italic* ~~strikethrough~~", 3);
+    assertEquals("bold italic strikethrough", unknownOffsets(text));
+    Assertions.assertArrayEquals(new int[]{0, 4, 5, 11, 12, 25}, text.markupOffsets());
   }
 
   public void testHtmlNbsp() {
@@ -195,6 +200,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
     checkHtmlXml(false);
 
     Registry.get("grazie.html.concatenate.inline.tag.contents").setValue(true, getTestRootDisposable());
+    myFixture.getPsiManager().dropPsiCaches();
     checkHtmlXml(true);
   }
 
@@ -239,13 +245,17 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   private void checkHtmlXml(boolean inlineTagsSupported) {
-    assertEquals(inlineTagsSupported ? "abc" : "|abc|", unknownOffsets(extractText("a.html", "<b>abc</b>", 4)));
+    {
+      TextContent text = extractText("a.html", "<b>abc</b>", 4);
+      assertEquals(inlineTagsSupported ? "abc" : "|abc|", unknownOffsets(text));
+      Assertions.assertArrayEquals(inlineTagsSupported ? new int[]{0, 3} : new int[0], text.markupOffsets());
+    }
     assertEquals("|abc|", unknownOffsets(extractText("a.xml", "<b>abc</b>", 4)));
 
     assertEquals("|characters with markup\nand without it|",
                  unknownOffsets(extractText("a.xml", "<b><![CDATA[\n   characters with markup\n]]>and without it</b>", 22)));
 
-    assertEquals("abcd", unknownOffsets(extractText("a.xml", "<tag attr=\"abcd\"/>", 14)));
+    assertEquals("abcd efg", unknownOffsets(extractText("a.xml", "<tag attr=\"abcd efg\"/>", 14)));
     assertEquals("comment", extractText("a.xml", "<!-- comment -->", 10).toString());
 
     assertEquals("top-level text", unknownOffsets(extractText("a.html", "top-level text", 2)));
@@ -257,10 +267,17 @@ public class TextExtractionTest extends BasePlatformTestCase {
 
     if (inlineTagsSupported) {
       String longHtml = "<body><a>Hello</a> <b>world</b><code>without code</code>!<div/>Another text.</body>";
-      assertEquals("Hello world|", unknownOffsets(extractText("a.html", longHtml, 9)));
+
+      TextContent text = extractText("a.html", longHtml, 9);
+      assertEquals("Hello world|", unknownOffsets(text));
+      Assertions.assertArrayEquals(new int[]{0, 5, 6}, text.markupOffsets());
+
       assertEquals("|Another text.", unknownOffsets(extractText("a.html", longHtml, 70)));
 
-      assertEquals("|Hello world!|", unknownOffsets(extractText("a.html", "<div>Hello <span>world</span>!</div>", 20)));
+      text = extractText("a.html", "<div>Hello <span>world</span>!</div>", 20);
+      assertEquals("|Hello world!|", unknownOffsets(text));
+      Assertions.assertArrayEquals(new int[]{6, 11}, text.markupOffsets());
+
       assertEquals("|Hello\nworld!|", unknownOffsets(extractText("a.html", "<div>\n  Hello\n  world!\n</div>", 20)));
       assertEquals("|def", unknownOffsets(extractText("a.html", "<div>abc</div>def", 16)));
 

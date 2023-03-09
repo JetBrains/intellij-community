@@ -29,7 +29,7 @@ class Fe10NativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTooling() 
         }
 
         val testContainerElement = testIconProvider.getTestContainerElement(declaration) ?: return null
-        if (testIconProvider.isKotlinTestDeclaration(testContainerElement)) {
+        if (!testIconProvider.isKotlinTestDeclaration(testContainerElement)) {
             return null
         }
 

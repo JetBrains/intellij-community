@@ -28,7 +28,7 @@
   <item name='java.lang.Boolean boolean logicalXor(boolean, boolean)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value"
-           val="&quot;true,true -&gt; false; true,false -&gt; true; false,true -&gt; true; false,false -&gt; true&quot;"/>
+           val="&quot;true,true -&gt; false; true,false -&gt; true; false,true -&gt; true; false,false -&gt; false&quot;"/>
       <val name="pure" val="true"/>
     </annotation>
   </item>

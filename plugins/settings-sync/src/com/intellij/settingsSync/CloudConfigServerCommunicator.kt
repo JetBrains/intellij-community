@@ -19,7 +19,8 @@ import java.util.*
 internal const val SETTINGS_SYNC_SNAPSHOT = "settings.sync.snapshot"
 internal const val SETTINGS_SYNC_SNAPSHOT_ZIP = "$SETTINGS_SYNC_SNAPSHOT.zip"
 
-private const val TIMEOUT = 10000
+private const val CONNECTION_TIMEOUT_MS = 10000
+private const val READ_TIMEOUT_MS = 50000
 
 internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
@@ -252,7 +253,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
       if (userId == null) {
         throw SettingsSyncAuthException("Authentication required")
       }
-      return Configuration().connectTimeout(TIMEOUT).readTimeout(TIMEOUT).auth(JbaTokenAuthProvider(userId))
+      return Configuration().connectTimeout(CONNECTION_TIMEOUT_MS).readTimeout(READ_TIMEOUT_MS).auth(JbaTokenAuthProvider(userId))
     }
 
     private val LOG = logger<CloudConfigServerCommunicator>()

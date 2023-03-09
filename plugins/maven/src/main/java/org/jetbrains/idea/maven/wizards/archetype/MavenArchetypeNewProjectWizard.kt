@@ -18,8 +18,6 @@ import com.intellij.ide.wizard.LanguageNewProjectWizardData.Companion.language
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.ui.completion.DefaultTextCompletionRenderer.Companion.append
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBox
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionComboBoxConverter
@@ -50,7 +48,6 @@ import icons.OpenapiIcons
 import org.jetbrains.idea.maven.indices.archetype.MavenCatalog
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
@@ -325,6 +322,8 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
         name = parentStep.name
         contentEntryPath = "${parentStep.path}/${parentStep.name}"
 
+        isCreatingNewProject = context.isCreatingNewProject
+
         parentProject = parentData
         aggregatorProject = parentData
         projectId = MavenId(groupId, artifactId, version)
@@ -349,10 +348,6 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           putAll(archetypeDescriptor)
         }
       }
-
-      ExternalProjectsManagerImpl.setupCreatedProject(project)
-      MavenProjectsManager.setupCreatedMavenProject(project)
-      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
       builder.commit(project)
     }
   }

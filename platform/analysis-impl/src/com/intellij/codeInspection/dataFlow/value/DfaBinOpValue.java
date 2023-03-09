@@ -232,7 +232,7 @@ public final class DfaBinOpValue extends DfaValue {
                                               @NotNull LongRangeSet divisorRange) {
       if (divisorRange.min() > 0) {
         // a % b where 0 <= a < b
-        if (dividendRange.min() > -divisorRange.max() &&
+        if (dividendRange.min() > -divisorRange.max() && dividendRange.max() >= 0 && 
             (dividendRange.max() < divisorRange.min() || state.getRelation(dividend, divisor) == RelationType.LT)) {
           return true;
         }

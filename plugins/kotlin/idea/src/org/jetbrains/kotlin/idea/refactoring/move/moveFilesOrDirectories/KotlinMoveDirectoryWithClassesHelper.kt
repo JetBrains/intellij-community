@@ -58,7 +58,16 @@ class KotlinMoveDirectoryWithClassesHelper : MoveDirectoryWithClassesHelper() {
     ) {
         filesToMove
             .filterIsInstance<KtFile>()
-            .mapTo(result) { FileUsagesWrapper(it, fileHandler.findUsages(it, null, false), null) }
+            .mapTo(result) { file ->
+                val usages = fileHandler.findUsages(
+                    file,
+                    newParent = null,
+                    withConflicts = false,
+                    searchInCommentsAndStrings = searchInComments,
+                    searchInNonJavaFiles = searchInNonJavaFiles,
+                )
+                FileUsagesWrapper(file, usages, null)
+            }
     }
 
     override fun preprocessUsages(

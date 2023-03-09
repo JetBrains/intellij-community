@@ -28,7 +28,9 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 class WolfListeners implements Disposable {
   private final Project myProject;
@@ -143,6 +145,11 @@ class WolfListeners implements Disposable {
 
   @TestOnly
   void waitForFilesQueuedForInvalidationAreProcessed() {
-    invalidateFileQueue.waitForAllExecuted(1, TimeUnit.MINUTES);
+    try {
+      invalidateFileQueue.waitForAllExecuted(1, TimeUnit.MINUTES);
+    }
+    catch (ExecutionException | InterruptedException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

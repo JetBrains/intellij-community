@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
 import com.intellij.openapi.Disposable;
@@ -28,7 +28,7 @@ public abstract class BaseToolManager<T extends Tool> implements Disposable {
     myFactory = factory;
     //noinspection AbstractMethodCallInConstructor
     mySchemeManager =
-      factory.create(schemePath, createProcessor(), presentableName, RoamingType.DISABLED, name -> FileUtil.sanitizeFileName(name, false),
+      factory.create(schemePath, createProcessor(), presentableName, RoamingType.DEFAULT, name -> FileUtil.sanitizeFileName(name, false),
                      null, null, true, SettingsCategory.OTHER);
     mySchemeManager.loadSchemes();
   }

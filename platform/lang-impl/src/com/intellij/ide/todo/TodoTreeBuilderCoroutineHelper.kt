@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,7 +36,9 @@ private class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBu
     return scope.launch(Dispatchers.EDT) {
       treeBuilder.onUpdateStarted()
       constrainedReadAction(*constraints) {
-        treeBuilder.collectFiles()
+        runUnderIndicator(currentThreadContext()) {
+          treeBuilder.collectFiles()
+        }
       }
       treeBuilder.onUpdateFinished()
     }.asCompletableFuture()

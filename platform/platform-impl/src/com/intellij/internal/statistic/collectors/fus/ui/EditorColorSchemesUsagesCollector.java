@@ -47,8 +47,8 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     "Rider",
     "IntelliJ Light",
     "Light",
-    "Dark",
     "New Dark",
+    "Dark",
     SCHEME_NAME_OTHER
   };
 

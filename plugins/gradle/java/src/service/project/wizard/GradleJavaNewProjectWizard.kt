@@ -12,7 +12,6 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.chain
 import com.intellij.openapi.externalSystem.model.project.ProjectId
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
@@ -61,7 +60,6 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         it.withJUnit()
       }
 
-      ExternalProjectsManagerImpl.setupCreatedProject(project)
       builder.commit(project)
     }
 

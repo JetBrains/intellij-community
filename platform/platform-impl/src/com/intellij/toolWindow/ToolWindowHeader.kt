@@ -132,8 +132,15 @@ abstract class ToolWindowHeader internal constructor(
       override fun getDataContext(): DataContext {
         val content = contentUi.contentManager.selectedContent
         val target = content?.preferredFocusableComponent ?: content?.component ?: this
-        if (targetComponent != target) targetComponent = target
+        if (targetComponent != target) {
+          targetComponent = target
+        }
         return super.getDataContext()
+      }
+
+      override fun removeNotify() {
+        super.removeNotify()
+        targetComponent = this
       }
     }
 

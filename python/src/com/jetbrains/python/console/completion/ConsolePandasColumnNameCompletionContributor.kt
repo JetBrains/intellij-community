@@ -13,13 +13,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
-import com.jetbrains.python.actions.checkIfAvailableAndShowHint
 import com.jetbrains.python.actions.getCustomDescriptor
 import com.jetbrains.python.actions.getSelectedPythonConsole
-import com.jetbrains.python.console.PyConsoleOptions
-import com.jetbrains.python.console.PyExecuteConsoleCustomizer
-import com.jetbrains.python.console.PydevConsoleCommunication
-import com.jetbrains.python.console.PythonConsoleView
+import com.jetbrains.python.console.*
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -39,7 +35,7 @@ class ConsolePandasColumnNameCompletionContributor : CompletionContributor(), Du
         val virtualFile = parameters.originalFile.virtualFile
         if (virtualFile.fileType.defaultExtension != "py") return
 
-        if (!checkIfAvailableAndShowHint(editor)) return
+        if (PyExecuteConsoleCustomizer.instance.getCustomDescriptorType(virtualFile) == DescriptorType.NON_INTERACTIVE) return
         val existingConsole = getDescriptorIfExist(virtualFile, project, editor) ?: return
         val pydevRunner: PythonConsoleView = existingConsole.executionConsole as? PythonConsoleView ?: return
         val consoleCommunication = pydevRunner.executeActionHandler?.consoleCommunication as? PydevConsoleCommunication ?: return

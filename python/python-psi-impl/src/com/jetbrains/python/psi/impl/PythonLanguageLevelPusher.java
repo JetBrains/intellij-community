@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
@@ -355,7 +356,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
         @Override
         public boolean visitFile(@NotNull VirtualFile file) {
           return ReadAction.compute(() -> {
-            if (!file.isValid() || PyModuleService.getInstance().isFileIgnored(file)) {
+            if (!file.isValid() || PyModuleService.getInstance().isFileIgnored(file) || !(file instanceof VirtualFileWithId)) {
               return false;
             }
             if (file.isDirectory()) {

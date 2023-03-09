@@ -33,7 +33,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   private static final KeyboardShortcut CANCEL_SHORTCUT = new KeyboardShortcut(
     KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), null);
   private static final KeyboardShortcut DUMP_SHORTCUT = new KeyboardShortcut(
-    KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, (SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK)), null);
+    KeyStroke.getKeyStroke(KeyEvent.VK_D, (SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK)), null);
 
   private final Component myComponent;
   private final PotemkinProgress.EventStealer myEventStealer;
@@ -68,7 +68,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   @Override
   public void dispose() {
     if (myShowing) {
-      JRootPane rootPane = UIUtil.getParentOfType(JRootPane.class, myComponent);
+      JRootPane rootPane = SwingUtilities.getRootPane(myComponent);
       if (rootPane != null) rootPane.repaint();
     }
   }
@@ -117,7 +117,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   }
 
   private void paintProgress() {
-    JRootPane rootPane = UIUtil.getParentOfType(JRootPane.class, myComponent);
+    JRootPane rootPane = SwingUtilities.getRootPane(myComponent);
     IdeGlassPane glassPane = rootPane == null ? null : ObjectUtils.tryCast(rootPane.getGlassPane(), IdeGlassPane.class);
     if (glassPane == null) return;
     long roundedDuration = (System.currentTimeMillis() - myCreatedAt) / 1000 * 1000;

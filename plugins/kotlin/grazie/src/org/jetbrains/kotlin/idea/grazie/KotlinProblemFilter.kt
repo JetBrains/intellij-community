@@ -6,6 +6,7 @@ import com.intellij.grazie.text.RuleGroup
 import com.intellij.grazie.text.TextContent.TextDomain.DOCUMENTATION
 import com.intellij.grazie.text.TextContent.TextDomain.LITERALS
 import com.intellij.grazie.text.TextProblem
+import com.intellij.grazie.utils.ProblemFilterUtil
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocTag
 
 class KotlinProblemFilter : ProblemFilter() {
@@ -14,8 +15,9 @@ class KotlinProblemFilter : ProblemFilter() {
         if (domain == LITERALS) {
             return problem.fitsGroup(RuleGroup.LITERALS)
         }
-        if (domain == DOCUMENTATION && problem.text.commonParent::class == KDocTag::class) {
-            return problem.fitsGroup(RuleGroup.UNDECORATED_SINGLE_SENTENCE)
+        if (domain == DOCUMENTATION && problem.text.commonParent::class == KDocTag::class &&
+            (ProblemFilterUtil.isUndecoratedSingleSentenceIssue(problem) || ProblemFilterUtil.isInitialCasingIssue(problem))) {
+            return true
         }
         return false
     }

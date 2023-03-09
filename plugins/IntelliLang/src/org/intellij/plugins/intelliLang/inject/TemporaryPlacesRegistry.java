@@ -119,6 +119,16 @@ public final class TemporaryPlacesRegistry {
     return true;
   }
 
+  public boolean removeHost(final PsiLanguageInjectionHost host) {
+    InjectedLanguage prevLanguage = host.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE);
+    if (prevLanguage == null) return false;
+    SmartPointerManager manager = SmartPointerManager.getInstance(myProject);
+    SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = manager.createSmartPsiElementPointer(host);
+    TempPlace nextPlace = new TempPlace(null, pointer);
+    addInjectionPlace(nextPlace);
+    return true;
+  }
+
   public void addHostWithUndo(final PsiLanguageInjectionHost host, final InjectedLanguage language) {
     InjectedLanguage prevLanguage = host.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE);
     SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(host);
@@ -130,6 +140,12 @@ public final class TemporaryPlacesRegistry {
         addInjectionPlace(add);
         return true;
       });
+  }
+
+  public void addHost(final PsiLanguageInjectionHost host, final InjectedLanguage language) {
+    SmartPsiElementPointer<PsiLanguageInjectionHost> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(host);
+    TempPlace place = new TempPlace(language, pointer);
+    addInjectionPlace(place);
   }
 
   public LanguageInjectionSupport getLanguageInjectionSupport() {

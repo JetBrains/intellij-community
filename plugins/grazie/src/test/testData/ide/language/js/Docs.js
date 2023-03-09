@@ -11,7 +11,7 @@
 class ExampleClassWithNoTypos {
     /**
      * Creates an empty group
-     * @param  {String} name the name of the group
+     * @param  {String} name the name of the group. And another sentence.
      */
     constructor(name) {
         /** @private */

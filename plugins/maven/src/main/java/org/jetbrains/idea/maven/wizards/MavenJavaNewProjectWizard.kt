@@ -12,8 +12,6 @@ import com.intellij.ide.wizard.GitNewProjectWizardData.Companion.gitData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.name
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.path
 import com.intellij.ide.wizard.chain
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
@@ -22,7 +20,6 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
@@ -58,17 +55,14 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         name = parentStep.name
         contentEntryPath = "${parentStep.path}/${parentStep.name}"
 
+        isCreatingNewProject = context.isCreatingNewProject
+
         parentProject = parentData
         aggregatorProject = parentData
         projectId = MavenId(groupId, artifactId, version)
         isInheritGroupId = parentData?.mavenId?.groupId == groupId
         isInheritVersion = parentData?.mavenId?.version == version
       }
-
-      ExternalProjectsManagerImpl.setupCreatedProject(project)
-      MavenProjectsManager.setupCreatedMavenProject(project)
-      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true)
-
       builder.commit(project)
     }
   }

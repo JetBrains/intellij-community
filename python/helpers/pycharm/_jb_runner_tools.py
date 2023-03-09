@@ -272,6 +272,15 @@ def jb_start_tests():
     return path, targets, additional_args
 
 
+def jb_finish_tests():
+    # To be called before process exist to close all suites
+    instance = NewTeamcityServiceMessages.INSTANCE
+
+    # instance may not be set if you run like pytest --version
+    if instance:
+        instance.close_suites()
+
+
 def start_protocol():
     properties = {"durationStrategy": "manual"} if is_parallel_mode() else dict()
     NewTeamcityServiceMessages().message('enteredTheMatrix', **properties)

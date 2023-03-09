@@ -887,10 +887,6 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
 
     <postStartupActivity implementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$EditorHistoryManagerStartUpActivity"/>
 
-    <!-- Android Studio: don't register IntelliJ fork
-    <backgroundPostStartupActivity implementation="com.intellij.diagnostic.WindowsDefenderCheckerActivity" os="windows"/>
-    Android Studio: don't register IntelliJ fork -->
-
     <preloadingActivity implementation="com.intellij.codeInsight.editorActions.TypedHandler$TypedHandlerDelegatePreloader"/>
     <actionConfigurationCustomizer implementation="com.intellij.execution.ExecutorRegistryImpl$ExecutorRegistryActionConfigurationTuner"/>
 
@@ -1063,7 +1059,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
                          id="actions.on.save"
                          bundle="messages.IdeBundle"
                          key="actions.on.save.page.title"
-                         nonDefaultProject="true"/>
+                         nonDefaultProject="false"/>
     <search.optionContributor implementation="com.intellij.ide.actionsOnSave.ActionsOnSaveSearchableOptionsContributor"/>
 
     <!--troubleshooting-->
@@ -1316,6 +1312,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <notificationGroup id="Test Results" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false" hideFromSettings="true"/>
     <notificationGroup id="feedback.form" displayType="BALLOON" bundle="messages.ApplicationBundle" key="feedback.form.notification.group"/>
     <notificationGroup id="PerformanceWatcher" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.performance.watcher"/>
+    <notificationGroup id="WindowsDefender" displayType="BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.defender.config"/>
 
     <defaultHighlightingSettingProvider implementation="com.intellij.codeInsight.actions.ReaderModeHighlightingSettingsProvider"/>
     <registryKey key="html.editor.timeout" defaultValue="15000" description="HTML editor content loading timeout, ms"/>
@@ -1359,6 +1356,7 @@ Android Studio: instead AndroidStudioStatisticsEventLoggerProvider is registered
     <advancedSetting id="ide.open.readme.md.on.startup" default="true" groupKey="group.advanced.settings.startup"/>
     <advancedSetting id="editor.skip.copy.and.cut.for.empty.selection" default="false" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.skip.selecting.line.after.copy.empty.selection" default="false" groupKey="group.advanced.settings.editor"/>
+    <advancedSetting id="editor.paste.line.copied.from.empty.selection" enumClass="com.intellij.openapi.editor.impl.CopiedFromEmptySelectionPasteMode" default="ENTIRE_LINE_ABOVE_CARET" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.show.special.chars" default="true" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="editor.show.zoom.indicator" default="true" groupKey="group.advanced.settings.editor"/>
     <advancedSetting id="ide.cycle.scrolling" default="true" groupKey="group.advanced.settings.ui"/>
