@@ -5,8 +5,8 @@ package com.intellij.ui
 
 import com.intellij.ui.scale.paint.ImageComparator
 import com.intellij.ui.scale.paint.ImageComparator.AASmootherComparator
+import com.intellij.ui.svg.SvgCacheClassifier
 import com.intellij.ui.svg.SvgCacheManager
-import com.intellij.ui.svg.SvgCacheMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -19,7 +19,7 @@ class SVGLoaderCacheTest {
   fun testNoEntry(@TempDir dir: Path) {
     val cache = createCache(dir)
     try {
-      assertThat(cache.loadFromCache(0, byteArrayOf(), longArrayOf(), SvgCacheMapper(1f))).isNull()
+      assertThat(cache.loadFromCache(byteArrayOf(), 0, SvgCacheClassifier(1f))).isNull()
     }
     finally {
       cache.close()
@@ -34,18 +34,18 @@ class SVGLoaderCacheTest {
       i.setRGB(0, 0, 0xff00ff)
       i.setRGB(0, 1, 0x00ff00)
       val imageBytes = byteArrayOf(1, 2, 3)
-      val theme = longArrayOf()
-      val svgCacheMapper = SvgCacheMapper(1f)
-      cache.storeLoadedImage(0, theme, imageBytes, svgCacheMapper, i)
+      val theme = 0L
+      val svgCacheClassifier = SvgCacheClassifier(1f)
+      cache.storeLoadedImage(0, theme, imageBytes, svgCacheClassifier, i)
       cache.close()
       cache = createCache(dir)
-      val copy = cache.loadFromCache(0, imageBytes, theme, svgCacheMapper)
+      val copy = cache.loadFromCache(imageBytes, theme, svgCacheClassifier)
       assertThat(copy!!.width).isEqualTo(10)
       assertThat(copy.height).isEqualTo(10)
       ImageComparator.compareAndAssert(AASmootherComparator(0.1, 0.1, Color(0, 0, 0, 0)), i, copy, null)
-      assertThat(cache.loadFromCache(0, imageBytes, longArrayOf(123), SvgCacheMapper(1f, false, false))).isNull()
-      assertThat(cache.loadFromCache(0, byteArrayOf(6, 7), theme, SvgCacheMapper(1f, false, false))).isNull()
-      assertThat(cache.loadFromCache(0, imageBytes, theme, SvgCacheMapper(2f, false, false))).isNull()
+      assertThat(cache.loadFromCache(imageBytes, 123, SvgCacheClassifier(1f, false, false))).isNull()
+      assertThat(cache.loadFromCache(byteArrayOf(6, 7), theme, SvgCacheClassifier(1f, false, false))).isNull()
+      assertThat(cache.loadFromCache(imageBytes, theme, SvgCacheClassifier(2f, false, false))).isNull()
     }
     finally {
       cache.close()

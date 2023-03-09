@@ -20,16 +20,6 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
     get() = closed.get()
 
   private var currentBusyTimeout: Int
-  /**
-   * @return The busy timeout value for the connection.
-   * @see [http://www.sqlite.org/c3ref/busy_timeout.html](http://www.sqlite.org/c3ref/busy_timeout.html)
-   */
-  var busyTimeout: Int
-    get() = currentBusyTimeout
-    set(timeoutMillis) {
-      currentBusyTimeout = timeoutMillis
-      db.busy_timeout(timeoutMillis)
-    }
 
   init {
     file?.parent?.let { Files.createDirectories(it) }
@@ -54,23 +44,6 @@ class SqliteConnection(file: Path?, config: SQLiteConfig = SQLiteConfig()) : Aut
         t.addSuppressed(e)
       }
       throw t
-    }
-  }
-
-  internal inline fun <T> withConnectionTimeout(queryTimeout: kotlin.time.Duration = kotlin.time.Duration.ZERO, callable: () -> T): T {
-    val queryTimeoutInMilliseconds = queryTimeout.inWholeMilliseconds.toInt()
-    if (queryTimeoutInMilliseconds <= 0) {
-      return callable()
-    }
-
-    val origBusyTimeout = busyTimeout
-    busyTimeout = queryTimeoutInMilliseconds
-    try {
-      return callable()
-    }
-    finally {
-      // reset connection timeout to the original value
-      busyTimeout = origBusyTimeout
     }
   }
 

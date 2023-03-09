@@ -7,10 +7,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ui.icons.IconLoadMeasurer
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.sqlite.LongBinder
-import org.jetbrains.sqlite.ObjectBinder
-import org.jetbrains.sqlite.SqlStatementPool
-import org.jetbrains.sqlite.SqliteConnection
+import org.jetbrains.sqlite.*
 import org.jetbrains.xxh3.Xxh3
 import sun.awt.image.SunWritableRaster
 import java.awt.Point
@@ -24,7 +21,7 @@ import java.nio.file.Path
 
 @JvmInline
 @ApiStatus.Internal
-value class SvgCacheMapper(val key: Int) {
+value class SvgCacheClassifier(internal val key: Int) {
   constructor(scale: Float) : this(scale = scale, isDark = false, isStroke = false)
 
   constructor(scale: Float, isDark: Boolean, isStroke: Boolean) :
@@ -36,7 +33,9 @@ value class SvgCacheMapper(val key: Int) {
 class SvgCacheManager(dbFile: Path) {
   private var connection: SqliteConnection
   private val selectStatementPool: SqlStatementPool<LongBinder>
+  private val selectPrecomputedStatementPool: SqlStatementPool<LongBinder>
   private val insertStatementPool: SqlStatementPool<ObjectBinder>
+  private val insertPrecomputedStatementPool: SqlStatementPool<ObjectBinder>
 
   init {
     val isNew = Files.notExists(dbFile)
@@ -47,81 +46,87 @@ class SvgCacheManager(dbFile: Path) {
 
     selectStatementPool = SqlStatementPool(sql = "select data, w, h from image where key1 = ? and key2 = ? and kind = ? and theme = ?",
                                            connection = connection) { LongBinder(4) }
+    selectPrecomputedStatementPool = SqlStatementPool(sql = "select data, w, h from precomputed_image where key = ? and theme = ?",
+                                                      connection = connection) { LongBinder(2) }
 
     insertStatementPool = SqlStatementPool(
       sql = "insert or replace into image (key1, key2, kind, theme, w, h, data) values(?, ?, ?, ?, ?, ?, ?) ",
       connection = connection) { ObjectBinder(7) }
-
+    insertPrecomputedStatementPool = SqlStatementPool(
+      sql = "insert or replace into precomputed_image (key, theme, w, h, data) values(?, ?, ?, ?, ?) ",
+      connection = connection) { ObjectBinder(5) }
   }
 
   fun close() {
     selectStatementPool.close()
+    selectPrecomputedStatementPool.close()
     insertStatementPool.close()
+    insertPrecomputedStatementPool.close()
     connection.close()
   }
 
   fun save() {
   }
 
-  fun loadFromCache(precomputedCacheKey: Int, imageBytes: ByteArray?, themeDigest: LongArray, compoundKey: SvgCacheMapper): BufferedImage? {
+  fun loadPrecomputedFromCache(precomputedCacheKey: Int, themeKey: Long, compoundKey: SvgCacheClassifier): BufferedImage? {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-    return selectStatementPool.use { statement, binder ->
-      val kind = compoundKey.key.toLong()
-      val theme = themeDigestToDbValue(themeDigest)
-      if (imageBytes == null) {
-        binder.bind(v1 = precomputedCacheKey.toLong(), v2 = 0, v3 = kind, v4 = theme)
-      }
-      else {
-        binder.bind(v1 = Xxh3.hash(imageBytes), v2 = Xxh3.seededHash(imageBytes, SEED), v3 = kind, v4 = theme)
-      }
+    val key = precomputeKeyAndKindToCacheKey(precomputedCacheKey = precomputedCacheKey, compoundKey = compoundKey)
+    return selectPrecomputedStatementPool.use { statement, binder ->
+      binder.bind(v1 = key, v2 = themeKey)
 
-      val result = statement.executeQuery()
-      if (!result.next()) {
-        return@use null
-      }
-
-      val data = result.getBytes(0)!!
-      val dataBuffer = DataBufferByte(data, data.size)
-      SunWritableRaster.makeTrackable(dataBuffer)
-      val w = result.getInt(1)
-      val h = result.getInt(2)
-      val raster = Raster.createInterleavedRaster(
-        dataBuffer,
-        w,
-        h,
-        w * 4, 4,
-        bgraBandOffsets,
-        ZERO_POINT
-      )
-
-      val image = BufferedImage(colorModel, raster, false, null)
+      val result = readImage(statement)
       IconLoadMeasurer.svgCacheRead.end(start)
-      image
+      result
     }
   }
 
-  private fun themeDigestToDbValue(themeDigest: LongArray): Long {
-    return when (themeDigest.size) {
-      0 -> 0
-      1 -> themeDigest.first()
-      else -> Xxh3.hashLongs(themeDigest)
+  fun loadFromCache(imageBytes: ByteArray, themeKey: Long, compoundKey: SvgCacheClassifier): BufferedImage? {
+    val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+    return selectStatementPool.use { statement, binder ->
+      val kind = compoundKey.key.toLong()
+      binder.bind(v1 = Xxh3.hash(imageBytes), v2 = Xxh3.seededHash(imageBytes, SEED), v3 = kind, v4 = themeKey)
+
+      val result = readImage(statement)
+      IconLoadMeasurer.svgCacheRead.end(start)
+      result
     }
   }
 
   fun storeLoadedImage(precomputedCacheKey: Int,
-                       themeDigest: LongArray,
+                       themeKey: Long,
                        imageBytes: ByteArray,
-                       mapper: SvgCacheMapper,
+                       compoundKey: SvgCacheClassifier,
                        image: BufferedImage) {
-    insertStatementPool.use { statement, binder ->
-      val kind = mapper.key.toLong()
-      val theme = themeDigestToDbValue(themeDigest)
-      val key1 = if (precomputedCacheKey == 0) Xxh3.hash(imageBytes) else precomputedCacheKey
-      val key2 = if (precomputedCacheKey == 0) Xxh3.seededHash(imageBytes, SEED) else 0
-      val data = writeImage(image)
-      binder.bind(key1, key2, kind, theme, image.width, image.height, data)
-      statement.executeUpdate()
+    val data = writeImage(image)
+    if (precomputedCacheKey == 0) {
+      val key1 = Xxh3.hash(imageBytes)
+      val key2 = Xxh3.seededHash(imageBytes, SEED)
+      insertStatementPool.use { statement, binder ->
+        binder.bind(v1 = key1,
+                    v2 = key2,
+                    v3 = compoundKey.key.toLong(),
+                    v4 = themeKey,
+                    v5 = image.width,
+                    v6 = image.height,
+                    v7 = data)
+        statement.executeUpdate()
+      }
     }
+    else {
+      val key = precomputeKeyAndKindToCacheKey(precomputedCacheKey = precomputedCacheKey, compoundKey = compoundKey)
+      insertPrecomputedStatementPool.use { statement, binder ->
+        binder.bind(v1 = key, v2 = themeKey, v3 = image.width, v4 = image.height, v5 = data)
+        statement.executeUpdate()
+      }
+    }
+  }
+}
+
+internal fun themeDigestToCacheKey(themeDigest: LongArray): Long {
+  return when (themeDigest.size) {
+    0 -> 0
+    1 -> themeDigest.first()
+    else -> Xxh3.hashLongs(themeDigest)
   }
 }
 
@@ -165,6 +170,33 @@ private fun writeImage(image: BufferedImage): ByteArray {
   }
 }
 
+private fun readImage(statement: SqlitePreparedStatement<LongBinder>): BufferedImage? {
+  val result = statement.executeQuery()
+  if (!result.next()) {
+    return null
+  }
+
+  val data = result.getBytes(0)!!
+  val dataBuffer = DataBufferByte(data, data.size)
+  SunWritableRaster.makeTrackable(dataBuffer)
+  val w = result.getInt(1)
+  val h = result.getInt(2)
+  val raster = Raster.createInterleavedRaster(
+    dataBuffer,
+    w,
+    h,
+    w * 4, 4,
+    bgraBandOffsets,
+    ZERO_POINT
+  )
+  @Suppress("UndesirableClassUsage")
+  return BufferedImage(colorModel, raster, false, null)
+}
+
+private fun precomputeKeyAndKindToCacheKey(precomputedCacheKey: Int, compoundKey: SvgCacheClassifier): Long {
+  return (precomputedCacheKey.toLong() shl 32) or (compoundKey.key.toLong() and 0xffffffffL)
+}
+
 @Language("SQLite")
 private const val TABLE_SCHEMA = """
   begin transaction;
@@ -179,6 +211,16 @@ private const val TABLE_SCHEMA = """
     h integer not null,
     data blob not null,
     primary key (key1, key2, theme, kind)
+  ) strict;
+  
+  -- key2 is 0 for precomputed cache key
+  create table precomputed_image (
+    key integer not null,
+    theme integer not null,
+    w integer not null,
+    h integer not null,
+    data blob not null,
+    primary key (key, theme)
   ) strict;
   
   commit transaction;

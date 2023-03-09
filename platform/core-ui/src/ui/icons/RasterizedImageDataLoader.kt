@@ -7,10 +7,9 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.svg.SvgCacheMapper
+import com.intellij.ui.svg.SvgCacheClassifier
 import com.intellij.util.ImageLoader
 import com.intellij.util.SVGLoader
-import com.intellij.util.ui.StartupUiUtil
 import org.intellij.lang.annotations.MagicConstant
 import java.awt.Image
 import java.io.IOException
@@ -174,7 +173,7 @@ private fun loadRasterized(path: String,
       path = effectivePath,
       precomputedCacheKey = rasterizedCacheKey,
       scale = scale,
-      compoundCacheKey = SvgCacheMapper(scale = scale, isDark = isEffectiveDark, isStroke = parameters.isStroke),
+      compoundCacheKey = SvgCacheClassifier(scale = scale, isDark = isEffectiveDark, isStroke = parameters.isStroke),
       colorPatcherProvider = parameters.colorPatcher,
     )
   }
@@ -186,7 +185,6 @@ private fun loadRasterized(path: String,
                                   filters = parameters.filters,
                                   scaleContext = scaleContext,
                                   isUpScaleNeeded = !isSvg,
-                                  isHiDpiNeeded = StartupUiUtil.isJreHiDPI(scaleContext),
                                   imageScale = nonSvgScale,
                                   isSvg = isSvg)
 }
@@ -221,9 +219,9 @@ private fun loadPatched(name: String,
                                       path = descriptor.name,
                                       precomputedCacheKey = 0,
                                       scale = descriptor.scale,
-                                      compoundCacheKey = SvgCacheMapper(scale = descriptor.scale,
-                                                                        isDark = isEffectiveDark,
-                                                                        isStroke = parameters.isStroke),
+                                      compoundCacheKey = SvgCacheClassifier(scale = descriptor.scale,
+                                                                            isDark = isEffectiveDark,
+                                                                            isStroke = parameters.isStroke),
                                       colorPatcherProvider = parameters.colorPatcher)
     }
     else {
@@ -236,7 +234,6 @@ private fun loadPatched(name: String,
                                       filters = parameters.filters,
                                       scaleContext = scaleContext,
                                       isUpScaleNeeded = isUpScaleNeeded,
-                                      isHiDpiNeeded = StartupUiUtil.isJreHiDPI(scaleContext),
                                       imageScale = descriptor.scale,
                                       isSvg = isSvg)
     }

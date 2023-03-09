@@ -3,7 +3,6 @@ package com.intellij.ui.icons
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.Pair
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.loadImage
 import org.jetbrains.annotations.ApiStatus
@@ -53,7 +52,7 @@ class ImageDataByPathLoader private constructor(private val path: String,
 
     private fun createIcon(originalPath: @NonNls String,
                            originalClassLoader: ClassLoader,
-                           patched: kotlin.Pair<String, ClassLoader?>?,
+                           patched: Pair<String, ClassLoader?>?,
                            path: String,
                            classLoader: ClassLoader): CachedImageIcon {
       val loader = ImageDataByPathLoader(originalPath, originalClassLoader, null)
@@ -79,14 +78,17 @@ class ImageDataByPathLoader private constructor(private val path: String,
     }
   }
 
-  override fun getCoords(): kotlin.Pair<String, ClassLoader> = path to classLoader
+  override fun getCoords(): Pair<String, ClassLoader> = path to classLoader
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
     return loadImage(path = path,
                      isDark = parameters.isDark,
+                     filters = parameters.filters,
+                     colorPatcherProvider = parameters.colorPatcher,
                      scaleContext = scaleContext,
-                     parameters = parameters,
-                     classLoader = classLoader)
+                     classLoader = classLoader,
+                     // CachedImageIcon instance cache the resolved image
+                     useCache = false)
   }
 
   override val url: URL?

@@ -12,7 +12,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.*
-import com.intellij.openapi.util.IconLoader.copy
 import com.intellij.openapi.util.IconLoader.filterIcon
 import com.intellij.openapi.util.IconLoader.getIcon
 import com.intellij.openapi.util.IconLoader.patchColorsInCacheImageIcon
@@ -375,14 +374,14 @@ object IconUtil {
    * @see CopyableIcon
    */
   @JvmStatic
-  fun copy(icon: Icon, ancestor: Component?): Icon = copy(icon = icon, ancestor = ancestor, deepCopy = false)
+  fun copy(icon: Icon, ancestor: Component?): Icon = copyIcon(icon = icon, ancestor = ancestor, deepCopy = false)
 
   /**
    * Returns a deep copy of the provided `icon`.
    * @see CopyableIcon
    */
   @JvmStatic
-  fun deepCopy(icon: Icon, ancestor: Component?): Icon = copy(icon = icon, ancestor = ancestor, deepCopy = true)
+  fun deepCopy(icon: Icon, ancestor: Component?): Icon = copyIcon(icon = icon, ancestor = ancestor, deepCopy = true)
 
   /**
    * Returns a scaled icon instance.

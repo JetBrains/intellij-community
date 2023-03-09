@@ -43,13 +43,13 @@ import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.ImageIcon
 import javax.swing.JComponent
+import kotlin.Pair
 
 private val LOG: Logger
   get() = logger<IconLoader>()
 
 private val LOOKUP = MethodHandles.lookup()
 
-// the key: Pair(path, classLoader)
 private val iconCache = ConcurrentHashMap<Pair<String, ClassLoader?>, CachedImageIcon>(100, 0.9f, 2)
 
 // contains mapping between icons and disabled icons
@@ -124,7 +124,7 @@ object IconLoader {
   fun clearCacheInTests() {
     iconCache.clear()
     iconToDisabledIcon.clear()
-    ImageCache.INSTANCE.clearCache()
+    clearImageCache()
     pathTransformGlobalModCount.incrementAndGet()
   }
 
@@ -240,7 +240,7 @@ object IconLoader {
   }
 
   fun isReflectivePath(path: String): Boolean {
-    return !path.isEmpty() && path[0] != '/' && path.contains("Icons.")
+    return !path.startsWith('/') && path.contains("Icons.")
   }
 
   @JvmStatic
@@ -260,7 +260,7 @@ object IconLoader {
   }
 
   @JvmStatic
-  fun patchPath(originalPath: String, classLoader: ClassLoader): kotlin.Pair<String, ClassLoader>? {
+  fun patchPath(originalPath: String, classLoader: ClassLoader): Pair<String, ClassLoader>? {
     return pathTransform.get().patchPath(originalPath, classLoader)
   }
 
@@ -281,7 +281,7 @@ object IconLoader {
     var effectiveIcon = icon
     var effectiveScaleContext = ctx
     if (effectiveIcon is RetrievableIcon) {
-      effectiveIcon = getOrigin(effectiveIcon)
+      effectiveIcon = getOriginIcon(effectiveIcon)
     }
     if (effectiveIcon is com.intellij.ui.icons.CachedImageIcon) {
       effectiveIcon = effectiveIcon.getRealIcon(effectiveScaleContext)
@@ -328,29 +328,6 @@ object IconLoader {
       g.dispose()
     }
     return image
-  }
-
-  fun copy(icon: Icon, ancestor: Component?, deepCopy: Boolean): Icon {
-    if (icon is CopyableIcon) {
-      return if (deepCopy) icon.deepCopy() else icon.copy()
-    }
-
-    val image = ImageUtil.createImage(ancestor?.graphicsConfiguration, icon.iconWidth, icon.iconHeight, BufferedImage.TYPE_INT_ARGB)
-    val g = image.createGraphics()
-    try {
-      icon.paintIcon(ancestor, g, 0, 0)
-    }
-    finally {
-      g.dispose()
-    }
-
-    return object : JBImageIcon(image) {
-      val originalWidth = icon.iconWidth
-      val originalHeight = icon.iconHeight
-      override fun getIconWidth(): Int = originalWidth
-
-      override fun getIconHeight(): Int = originalHeight
-    }
   }
 
   @JvmStatic
@@ -539,18 +516,6 @@ object IconLoader {
   }
 
   /**
-   * For internal usage. Converts the icon to 1x scale when applicable.
-   */
-  @ApiStatus.Internal
-  fun getMenuBarIcon(icon: Icon, dark: Boolean): Icon {
-    var effectiveIcon = icon
-    if (effectiveIcon is RetrievableIcon) {
-      effectiveIcon = getOrigin(effectiveIcon)
-    }
-    return if (effectiveIcon is MenuBarIconProvider) effectiveIcon.getMenuBarIcon(dark) else effectiveIcon
-  }
-
-  /**
    * Returns a copy of the provided `icon` with darkness set to `dark`.
    * The method takes effect on a [CachedImageIcon] (or its wrapper) only.
    */
@@ -599,20 +564,6 @@ object IconLoader {
   )
 }
 
-private fun getOrigin(icon: RetrievableIcon): Icon {
-  val maxDeep = 10
-  var origin = icon.retrieveIcon()
-  var level = 0
-  while (origin is RetrievableIcon && level < maxDeep) {
-    ++level
-    origin = origin.retrieveIcon()
-  }
-  if (origin is RetrievableIcon) {
-    LOG.error("can't calculate origin icon (too deep in hierarchy), src: $icon")
-  }
-  return origin
-}
-
 /**
  * Returns [ScaleContextSupport] which best represents this icon taking into account its compound structure, or null when not applicable.
  */
@@ -645,7 +596,7 @@ private fun updateTransform(updater: Function<in IconTransform, IconTransform>) 
     CachedImageIcon.iconToStrokeIcon.clear()
 
     // clear svg cache
-    ImageCache.INSTANCE.clearCache()
+    clearImageCache()
     // iconCache is not cleared because it contains an original icon (instance that will delegate to)
   }
 }
@@ -680,7 +631,7 @@ private fun findIcon(originalPath: String,
                                       ?: if (STRICT_LOCAL.get()) HandleNotFound.THROW_EXCEPTION else HandleNotFound.IGNORE
         val resolver = ImageDataByPathResourceLoader(path = path,
                                                      ownerClass = aClass,
-                                                     classLoader = k.getSecond(),
+                                                     classLoader = k.second,
                                                      handleNotFound = effectiveHandleNotFound)
         CachedImageIcon(originalPath = originalPath, resolver = resolver)
       }
@@ -751,7 +702,7 @@ private abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, Retrievab
 
   override fun retrieveIcon(): Icon = getOrComputeIcon()
 
-  override fun copy(): Icon = IconLoader.copy(icon = getOrComputeIcon(), ancestor = null, deepCopy = false)
+  override fun copy(): Icon = copyIcon(icon = getOrComputeIcon(), ancestor = null, deepCopy = false)
 }
 
 private class FinalImageDataLoader(private val path: String, classLoader: ClassLoader) : ImageDataLoader {
@@ -767,7 +718,8 @@ private class FinalImageDataLoader(private val path: String, classLoader: ClassL
     return loadImage(path = path,
                      useCache = false,
                      isDark = parameters.isDark,
-                     parameters = parameters,
+                     filters = parameters.filters,
+                     colorPatcherProvider = parameters.colorPatcher,
                      scaleContext = scaleContext,
                      resourceClass = null,
                      classLoader = classLoader)

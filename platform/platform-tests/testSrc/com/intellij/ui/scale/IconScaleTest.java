@@ -11,6 +11,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.CachedImageIcon;
+import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.ui.scale.paint.ImageComparator;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -128,7 +129,7 @@ public class IconScaleTest extends BareTestFixtureTestCase {
     // RetrievableIcon may return a copy of its wrapped icon,
     // and we may fail to override a scale in the origin.
     if (!(icon instanceof RetrievableIcon)) {
-      Icon iconB = IconUtil.overrideScale(IconLoader.INSTANCE.copy(icon, null, true), USR_SCALE.of(ICON_OVER_USR_SCALE));
+      Icon iconB = IconUtil.overrideScale(IconUtilKt.copyIcon(icon, null, true), USR_SCALE.of(ICON_OVER_USR_SCALE));
 
       usrSize2D = ICON_BASE_SIZE * ICON_OVER_USR_SCALE * iconContext.getScale(OBJ_SCALE);
       usrSize = (int)Math.round(usrSize2D);

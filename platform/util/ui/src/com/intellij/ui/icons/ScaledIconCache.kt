@@ -10,17 +10,23 @@ import com.intellij.reference.SoftReference
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
-import com.intellij.util.isIconTooLargeForCache
+import com.intellij.util.CACHED_IMAGE_MAX_SIZE
 import com.intellij.util.ui.JBImageIcon
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Image
 import javax.swing.Icon
 import javax.swing.ImageIcon
 
 private const val SCALED_ICONS_CACHE_LIMIT = 5
 
+@ApiStatus.Internal
+fun isIconTooLargeForCache(icon: Icon): Boolean {
+  return (4L * icon.iconWidth * icon.iconHeight) > CACHED_IMAGE_MAX_SIZE
+}
+
 private fun key(context: ScaleContext): Long {
-  return context.getScale(DerivedScaleType.EFF_USR_SCALE).toFloat().toBits().toLong() shl 32 or
+  return (context.getScale(DerivedScaleType.EFF_USR_SCALE).toFloat().toBits().toLong() shl 32) or
     (context.getScale(ScaleType.SYS_SCALE).toFloat().toBits().toLong() and 0xffffffffL)
 }
 

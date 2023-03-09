@@ -3,21 +3,22 @@
 
 package com.intellij.util
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.benmanes.caffeine.cache.Weigher
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.icons.ImageDescriptor
-import com.intellij.ui.icons.LoadIconParameters
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale.isHiDPI
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.svg.SvgCacheMapper
+import com.intellij.ui.svg.SvgCacheClassifier
 import com.intellij.ui.svg.renderSvg
+import com.intellij.util.ImageCache.ioMissCache
 import com.intellij.util.ImageLoader.convertImage
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.io.URLUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
@@ -45,14 +46,15 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.TimeUnit
 import javax.imageio.ImageIO
 import javax.imageio.stream.MemoryCacheImageInputStream
-import javax.swing.Icon
 import kotlin.math.roundToInt
 
 private val LOG: Logger
   get() = logger<ImageLoader>()
+
+internal val CACHED_IMAGE_MAX_SIZE: Long = (SystemProperties.getFloatProperty("ide.cached.image.max.size", 1.5f) * 1024 * 1024).toLong()
 
 @Internal
 fun loadImageByClassLoader(path: String,
@@ -62,67 +64,89 @@ fun loadImageByClassLoader(path: String,
   return loadImage(path = path, isDark = isDark, scaleContext = scaleContext, classLoader = classLoader)
 }
 
-// Some duplication here: isDark presents in parameters and in flags
 internal fun loadImage(path: String,
-                       parameters: LoadIconParameters? = null,
                        resourceClass: Class<*>? = null,
                        classLoader: ClassLoader?,
                        scaleContext: ScaleContext,
                        isDark: Boolean = StartupUiUtil.isUnderDarcula(),
+                       colorPatcherProvider: SvgElementColorPatcherProvider? = null,
+                       filters: List<ImageFilter> = emptyList(),
                        useCache: Boolean = true): Image? {
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-  val descriptors = createImageDescriptorList(path = path,
-                                              isDark = isDark,
-                                              useSvg = true,
-                                              scaleContext = scaleContext)
-  val imageCache = ImageCache.INSTANCE
-  var ioExceptionThrown = false
+  val descriptors = createImageDescriptorList(path = path, isDark = isDark, scaleContext = scaleContext)
+
+  val lastDotIndex = path.lastIndexOf('.')
+  val rawPathWithoutExt: String
+  val ext: String
+  if (lastDotIndex == -1) {
+    rawPathWithoutExt = path
+    ext = "svg"
+  }
+  else {
+    rawPathWithoutExt = path.substring(0, lastDotIndex)
+    ext = path.substring(lastDotIndex + 1)
+  }
+
   for ((i, descriptor) in descriptors.withIndex()) {
-    ioExceptionThrown = try {
+    try {
       // check only for the first one, as io miss cache doesn't have a scale
-      val image = loadByDescriptor(descriptor = descriptor,
-                                   useCache = useCache,
-                                   resourceClass = resourceClass,
-                                   classLoader = classLoader,
-                                   ioMissCache = if (i == 0) imageCache.ioMissCache else null,
-                                   imageCache = imageCache,
-                                   ioMissCacheKey = path,
-                                   colorPatcherProvider = parameters?.colorPatcher) ?: continue
-      if (start != -1L) {
-        IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = start)
+      var image: Image?
+      if (useCache) {
+        image = loadByDescriptor(rawPathWithoutExt = rawPathWithoutExt,
+                                 ext = ext,
+                                 descriptor = descriptor,
+                                 resourceClass = resourceClass,
+                                 classLoader = classLoader,
+                                 ioMissCache = if (i == 0) ioMissCache else null,
+                                 imageCache = ImageCache,
+                                 ioMissCacheKey = path,
+                                 colorPatcherProvider = colorPatcherProvider)
+      }
+      else {
+        if (i == 0 && ioMissCache.contains(path)) {
+          return null
+        }
+
+        image = loadByDescriptorWithoutCache(rawPathWithoutExt = rawPathWithoutExt,
+                                             ext = ext,
+                                             descriptor = descriptor,
+                                             resourceClass = resourceClass,
+                                             classLoader = classLoader,
+                                             colorPatcherProvider = colorPatcherProvider)
       }
 
-      val isHiDpiNeeded = StartupUiUtil.isJreHiDPI(scaleContext)
-      return convertImage(image = image,
-                          filters = parameters?.filters ?: emptyList(),
-                          scaleContext = scaleContext,
-                          isUpScaleNeeded = !path.endsWith(".svg"),
-                          isHiDpiNeeded = isHiDpiNeeded,
-                          imageScale = descriptor.scale,
-                          isSvg = descriptor.isSvg)
+      if (image != null) {
+        if (start != -1L) {
+          IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = start)
+        }
+
+        return convertImage(image = image,
+                            filters = filters,
+                            scaleContext = scaleContext,
+                            isUpScaleNeeded = !path.endsWith(".svg"),
+                            imageScale = descriptor.scale,
+                            isSvg = descriptor.isSvg)
+      }
     }
     catch (e: IOException) {
-      true
+      LOG.debug(e)
     }
   }
-  if (ioExceptionThrown) {
-    imageCache.ioMissCache.add(path)
-  }
-  return null
-}
 
-@Internal
-fun isIconTooLargeForCache(icon: Icon): Boolean {
-  return (4L * icon.iconWidth * icon.iconHeight) > CACHED_IMAGE_MAX_SIZE
+  ioMissCache.add(path)
+  return null
 }
 
 object ImageLoader {
   @Suppress("unused")
   const val ALLOW_FLOAT_SCALING = 0x01
+
   @Suppress("unused")
   const val USE_CACHE = 0x02
+
   @Suppress("unused")
   const val USE_DARK = 0x04
+
   @Suppress("unused")
   const val USE_SVG = 0x08
 
@@ -135,7 +159,11 @@ object ImageLoader {
     val descriptors = createImageDescriptorList(path = requestedPath, isDark = false, scaleContext = scaleContext)
     for (descriptor in descriptors) {
       try {
-        val data = getResourceData(path = descriptor.path, resourceClass = null, classLoader = classLoader) ?: continue
+        val dotIndex = requestedPath.lastIndexOf('.')
+        val pathWithoutExt = requestedPath.substring(0, dotIndex)
+        val data = getResourceData(path = descriptor.pathTransform(pathWithoutExt, requestedPath.substring(dotIndex + 1)),
+                                   resourceClass = null,
+                                   classLoader = classLoader) ?: continue
         if (descriptor.isSvg) {
           return renderSvg(data = data, scale = descriptor.scale)
         }
@@ -182,7 +210,7 @@ object ImageLoader {
   }
 
   @Internal
-  fun loadPngFromClassResource(path: String, classLoader: ClassLoader?, scale: Float, resourceClass: Class<*>? = null): Image? {
+  fun loadPngFromClassResource(path: String, classLoader: ClassLoader?, scale: Float, resourceClass: Class<*>? = null): BufferedImage? {
     val data = getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader) ?: return null
     return loadPng(stream = ByteArrayInputStream(data), scale = scale, originalUserSize = null)
   }
@@ -196,7 +224,7 @@ object ImageLoader {
                      useSvg: Boolean): Image {
     stream.use {
       if (useSvg) {
-        val compoundCacheKey = SvgCacheMapper(scale = scale, isDark = isDark, isStroke = false)
+        val compoundCacheKey = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = false)
         return SVGLoader.load(path = path, stream = stream, scale = scale, compoundCacheKey = compoundCacheKey, colorPatcherProvider = null)
       }
       else {
@@ -210,7 +238,7 @@ object ImageLoader {
                    filters: List<ImageFilter>,
                    scaleContext: ScaleContext,
                    isUpScaleNeeded: Boolean,
-                   isHiDpiNeeded: Boolean,
+                   isHiDpiNeeded: Boolean = StartupUiUtil.isJreHiDPI(scaleContext),
                    imageScale: Float,
                    isSvg: Boolean): Image {
     var result = image
@@ -256,10 +284,7 @@ object ImageLoader {
   fun loadFromUrlWithoutCache(path: String, scaleContext: ScaleContext): Image? {
     // We can't check all 3rd party plugins and convince the authors to add @2x icons.
     // In IDE-managed HiDPI mode with a scale > 1.0 we scale images manually - pass isUpScaleNeeded = true
-    return loadImage(path = path,
-                     useCache = false,
-                     classLoader = null,
-                     scaleContext = scaleContext)
+    return loadImage(path = path, useCache = false, classLoader = null, scaleContext = scaleContext)
   }
 
   @JvmStatic
@@ -354,28 +379,44 @@ object ImageLoader {
 
   @Throws(IOException::class)
   fun loadCustomIcon(url: URL): Image? {
-    val iconPath = url.toString()
+    val path = url.toString()
     val scaleContext = ScaleContext.create()
     // probably, need it implements naming conventions: filename ends with @2x => HiDPI (scale=2)
     val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-    val imageDescriptor = ImageDescriptor(iconPath, scale, StringUtilRt.endsWithIgnoreCase(iconPath, ".svg"), iconPath.contains("_dark."),
-                                          iconPath.contains("_stroke."))
+    val imageDescriptor = ImageDescriptor(pathTransform = { p, e -> "$p.$e" }, scale = scale,
+                                          isSvg = path.endsWith(".svg", ignoreCase = true),
+                                          isDark = path.contains("_dark."),
+                                          isStroke = path.contains("_stroke."))
+
+    val lastDotIndex = path.lastIndexOf('.')
+    val rawPathWithoutExt: String
+    val ext: String
+    if (lastDotIndex == -1) {
+      rawPathWithoutExt = path
+      ext = "png"
+    }
+    else {
+      rawPathWithoutExt = path.substring(0, lastDotIndex)
+      ext = path.substring(lastDotIndex + 1)
+    }
     val icon = ImageUtil.ensureHiDPI(
-      loadByDescriptor(descriptor = imageDescriptor,
-                       useCache = true,
+      loadByDescriptor(rawPathWithoutExt = rawPathWithoutExt,
+                       ext = ext,
+                       descriptor = imageDescriptor,
                        resourceClass = null,
                        classLoader = null,
                        ioMissCache = null,
-                       imageCache = ImageCache.INSTANCE,
+                       imageCache = ImageCache,
                        ioMissCacheKey = null,
                        colorPatcherProvider = null),
       scaleContext) ?: return null
     val w = icon.getWidth(null)
     val h = icon.getHeight(null)
     if (w <= 0 || h <= 0) {
-      LOG.error("negative image size: w=$w, h=$h, path=$iconPath")
+      LOG.error("negative image size: w=$w, h=$h, path=$path")
       return null
     }
+
     if (w > EmptyIcon.ICON_18.iconWidth || h > EmptyIcon.ICON_18.iconHeight) {
       val s = EmptyIcon.ICON_18.iconWidth / w.coerceAtLeast(h).toDouble()
       return scaleImage(icon, s)
@@ -396,143 +437,136 @@ object ImageLoader {
   }
 }
 
-private fun createImageDescriptorList(path: String,
-                                      isDark: Boolean,
-                                      useSvg: Boolean = true,
-                                      scaleContext: ScaleContext): List<ImageDescriptor> {
+private fun createImageDescriptorList(path: String, isDark: Boolean, scaleContext: ScaleContext): List<ImageDescriptor> {
   // prefer retina images for HiDPI scale, because downscaling retina images provide a better result than up-scaling non-retina images
-  val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-  val i = path.lastIndexOf('.')
-  val name = if (i < 0) path else path.substring(0, i)
-  val ext = if (i < 0 || i == path.length - 1) "" else path.substring(i + 1)
-  val list: List<ImageDescriptor>
   if (!path.startsWith("file:") && path.contains("://")) {
     val qI = path.lastIndexOf('?')
-    val isSvg = StringUtilRt.endsWithIgnoreCase(if (qI == -1) path else path.substring(0, qI), ".svg")
-    list = listOf(ImageDescriptor("$name.$ext", 1f, isSvg, true, false))
+    val isSvg = (if (qI == -1) path else path.substring(0, qI)).endsWith(".svg", ignoreCase = true)
+    return listOf(ImageDescriptor(pathTransform = { p, e -> "$p.$e" }, scale = 1f, isSvg = isSvg, isDark = isDark, isStroke = false))
   }
-  else {
-    val isSvg = "svg".equals(ext, ignoreCase = true)
-    val retina = isHiDPI(pixScale.toDouble())
-    list = ArrayList()
-    if (!isSvg && useSvg) {
-      addFileNameVariant(retina = retina,
-                         isDark = isDark,
-                         isStroke = true,
-                         isSvg = false,
-                         name = name,
-                         ext = ext,
-                         scale = pixScale,
-                         list = list)
-    }
-    addFileNameVariant(retina = retina,
-                       isDark = isDark,
-                       isStroke = false,
-                       isSvg = isSvg,
-                       name = name,
-                       ext = ext,
-                       scale = pixScale,
-                       list = list)
-    if (isDark) {
-      // fallback to non-dark
-      addFileNameVariant(retina = retina,
-                         isDark = false,
-                         isStroke = false,
-                         isSvg = isSvg,
-                         name = name,
-                         ext = ext,
-                         scale = pixScale,
-                         list = list)
-      if (!isSvg && useSvg) {
-        addFileNameVariant(retina = false,
-                           isDark = false,
-                           isStroke = false,
-                           isSvg = true,
-                           name = name,
-                           ext = ext,
-                           scale = pixScale,
-                           list = list)
-      }
+
+  val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+  val isSvg = path.endsWith(".svg")
+  val isRetina = isHiDPI(pixScale.toDouble())
+
+  val list = ArrayList<ImageDescriptor>()
+  if (!isSvg) {
+    list.add(if (isRetina) ImageDescriptor.STROKE_RETINA else ImageDescriptor.STROKE_NON_RETINA)
+    addFileNameVariant(isRetina = isRetina, isDark = isDark, isSvg = false, scale = pixScale, list = list)
+  }
+
+  addFileNameVariant(isRetina = isRetina, isDark = isDark, isSvg = isSvg, scale = pixScale, list = list)
+
+  // fallback to non-dark
+  if (isDark) {
+    addFileNameVariant(isRetina = isRetina, isDark = false, isSvg = isSvg, scale = pixScale, list = list)
+    if (!isSvg) {
+      addFileNameVariant(isRetina = false, isDark = false, isSvg = true, scale = pixScale, list = list)
     }
   }
   return list
 }
 
-@Internal
-internal class ImageCache private constructor() {
-  companion object {
-    @JvmField
-    val INSTANCE: ImageCache = ImageCache()
-  }
+internal fun clearImageCache() {
+  ImageCache.clearCache()
+}
+
+private object ImageCache {
+  @JvmField
+  val ioMissCache: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
 
   @JvmField
-  internal val ioMissCache: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
-
-  @JvmField
-  internal val imageCache: ConcurrentMap<CacheKey, Image> = CollectionFactory.createConcurrentSoftValueMap<CacheKey, Image>()
-
-  // https://github.com/JetBrains/intellij-community/pull/1242
-  @JvmField
-  internal val largeImageCache: ConcurrentMap<CacheKey, Image> = CollectionFactory.createConcurrentWeakValueMap<CacheKey, Image>()
+  val imageCache: Cache<CacheKey, BufferedImage> = Caffeine.newBuilder()
+    .expireAfterAccess(1, TimeUnit.HOURS)
+    // 32 MB
+    .maximumWeight(32 * 1024 * 1024)
+    .weigher(Weigher { _: CacheKey, value: BufferedImage -> 4 * value.width * value.height })
+    .build()
 
   fun clearCache() {
-    imageCache.clear()
-    largeImageCache.clear()
+    imageCache.invalidateAll()
     ioMissCache.clear()
   }
 }
 
-internal val CACHED_IMAGE_MAX_SIZE: Long = (SystemProperties.getFloatProperty("ide.cached.image.max.size", 1.5f) * 1024 * 1024).toLong()
-
 // @2x is used even for SVG icons by intention
-private fun addFileNameVariant(retina: Boolean,
+private fun addFileNameVariant(isRetina: Boolean,
                                isDark: Boolean,
-                               isStroke: Boolean,
                                isSvg: Boolean,
-                               name: String,
-                               ext: String,
                                scale: Float,
                                list: MutableList<ImageDescriptor>) {
-  val effectiveExt = if (isSvg) "svg" else ext
   val retinaScale = if (isSvg) scale else 2f
   val nonRetinaScale = if (isSvg) scale else 1f
-  if (isStroke) {
-    list.add(ImageDescriptor(name + "_stroke." + effectiveExt, if (retina) retinaScale else nonRetinaScale, isSvg, false, true))
-  }
-  val descriptors = if (isDark) {
-    mutableListOf(ImageDescriptor("${name}@2x_dark.$effectiveExt", retinaScale, isSvg, true, false),
-                  ImageDescriptor("${name}_dark@2x.$effectiveExt", retinaScale, isSvg, true, false),
-                  ImageDescriptor("${name}_dark.$effectiveExt", nonRetinaScale, isSvg, true, false))
+  if (isDark) {
+    val d1 = ImageDescriptor(pathTransform = { p, e -> "${p}@2x_dark.$e" }, scale = retinaScale, isSvg = isSvg, isDark = true)
+    val d2 = ImageDescriptor(pathTransform = { p, e -> "${p}_dark@2x.$e" }, scale = retinaScale, isSvg = isSvg, isDark = true)
+    val d3 = ImageDescriptor(pathTransform = { p, e -> "${p}_dark.$e" }, scale = nonRetinaScale, isSvg = isSvg, isDark = true)
+
+    if (isRetina) {
+      list.add(d1)
+      list.add(d2)
+      list.add(d3)
+    }
+    else {
+      list.add(d3)
+      list.add(d2)
+      list.add(d1)
+    }
   }
   else {
-    mutableListOf(ImageDescriptor("${name}@2x.$effectiveExt", retinaScale, isSvg, false, false),
-                  ImageDescriptor("${name}.$effectiveExt", nonRetinaScale, isSvg, false, false))
+    val d1 = ImageDescriptor(pathTransform = { p, e -> "${p}@2x.$e" }, scale = retinaScale, isSvg = isSvg)
+    val d2 = ImageDescriptor(pathTransform = { p, e -> "${p}.$e" }, scale = nonRetinaScale, isSvg = isSvg)
+
+    if (isRetina) {
+      list.add(d1)
+      list.add(d2)
+    }
+    else {
+      list.add(d2)
+      list.add(d1)
+    }
   }
-  if (!retina) {
-    descriptors.reverse()
-  }
-  list.addAll(descriptors)
 }
 
-private fun loadByDescriptor(descriptor: ImageDescriptor,
-                             useCache: Boolean,
+@Suppress("DuplicatedCode")
+private fun loadByDescriptorWithoutCache(rawPathWithoutExt: String,
+                                         ext: String,
+                                         descriptor: ImageDescriptor,
+                                         resourceClass: Class<*>?,
+                                         classLoader: ClassLoader?,
+                                         colorPatcherProvider: SvgElementColorPatcherProvider?): Image? {
+  val path = descriptor.pathTransform(rawPathWithoutExt, ext)
+  @Suppress("DEPRECATION")
+  return doLoadByDescriptor(path = path,
+                            descriptor = descriptor,
+                            resourceClass = resourceClass,
+                            classLoader = classLoader,
+                            colorPatcher = colorPatcherProvider?.attributeForPath(path),
+                            deprecatedColorPatcher = colorPatcherProvider?.forPath(path))
+}
+
+
+private fun loadByDescriptor(rawPathWithoutExt: String,
+                             ext: String,
+                             descriptor: ImageDescriptor,
                              resourceClass: Class<*>?,
                              classLoader: ClassLoader?,
                              ioMissCache: Set<String?>?,
                              imageCache: ImageCache,
                              ioMissCacheKey: String?,
                              colorPatcherProvider: SvgElementColorPatcherProvider?): Image? {
-  var cacheKey: CacheKey? = null
   var tmpPatcher = false
   var digest: LongArray? = null
+
+  val path = descriptor.pathTransform(rawPathWithoutExt, ext)
 
   var colorPatcher: SvgAttributePatcher? = null
   var deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher? = null
   if (colorPatcherProvider != null) {
-    colorPatcher = colorPatcherProvider.attributeForPath(descriptor.path)
+    colorPatcher = colorPatcherProvider.attributeForPath(path)
     if (colorPatcher == null) {
       @Suppress("DEPRECATION")
-      deprecatedColorPatcher = colorPatcherProvider.forPath(descriptor.path)
+      deprecatedColorPatcher = colorPatcherProvider.forPath(path)
       if (deprecatedColorPatcher != null) {
         digest = deprecatedColorPatcher.digest()?.let { longArrayOf(Xxh3.hash(it), Xxh3.seededHash(it, 4849512324275L)) }
         if (digest == null) {
@@ -549,47 +583,47 @@ private fun loadByDescriptor(descriptor: ImageDescriptor,
   }
 
   if (digest == null) {
-    digest = DEFAULT_THEME_DIGEST
+    digest = ArrayUtilRt.EMPTY_LONG_ARRAY!!
   }
-  if (useCache && !tmpPatcher) {
-    cacheKey = CacheKey(path = descriptor.path, scale = (if (descriptor.isSvg) descriptor.scale else 0f), digest = digest)
-    (imageCache.imageCache.get(cacheKey) ?: imageCache.largeImageCache.get(cacheKey))?.let {
+
+  var cacheKey: CacheKey? = null
+  if (!tmpPatcher) {
+    cacheKey = CacheKey(path = path, scale = (if (descriptor.isSvg) descriptor.scale else 0f), digest = digest)
+    imageCache.imageCache.getIfPresent(cacheKey)?.let {
       return it
     }
   }
+
   if (ioMissCache != null && ioMissCache.contains(ioMissCacheKey)) {
     return null
   }
 
-  val image = loadByDescriptorWithoutCache(descriptor = descriptor,
-                                           resourceClass = resourceClass,
-                                           classLoader = classLoader,
-                                           colorPatcher = colorPatcher,
-                                           deprecatedColorPatcher = deprecatedColorPatcher) ?: return null
+  val image = doLoadByDescriptor(path = path,
+                                 descriptor = descriptor,
+                                 resourceClass = resourceClass,
+                                 classLoader = classLoader,
+                                 colorPatcher = colorPatcher,
+                                 deprecatedColorPatcher = deprecatedColorPatcher) ?: return null
   if (cacheKey != null) {
-    if (4L * image.getWidth(null) * image.getHeight(null) <= CACHED_IMAGE_MAX_SIZE) {
-      imageCache.imageCache.put(cacheKey, image)
-    }
-    else {
-      imageCache.largeImageCache.put(cacheKey, image)
-    }
+    imageCache.imageCache.put(cacheKey, image)
   }
   return image
 }
 
-private fun loadByDescriptorWithoutCache(descriptor: ImageDescriptor,
-                                         resourceClass: Class<*>?,
-                                         classLoader: ClassLoader?,
-                                         colorPatcher: SvgAttributePatcher?,
-                                         deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?): Image? {
-  var image: Image?
+private fun doLoadByDescriptor(path: String,
+                               descriptor: ImageDescriptor,
+                               resourceClass: Class<*>?,
+                               classLoader: ClassLoader?,
+                               colorPatcher: SvgAttributePatcher?,
+                               deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?): BufferedImage? {
+  var image: BufferedImage?
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-  if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(descriptor.path)) && !descriptor.path.startsWith("file://")) {
-    val connection = URL(descriptor.path).openConnection()
+  if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(path)) && !path.startsWith("file://")) {
+    val connection = URL(path).openConnection()
     (connection as? HttpURLConnection)?.addRequestProperty("User-Agent", "IntelliJ")
     connection.getInputStream().use { stream ->
       image = if (descriptor.isSvg) {
-        loadSvgAndCacheIfApplicable(path = descriptor.path,
+        loadSvgAndCacheIfApplicable(path = path,
                                     scale = descriptor.scale,
                                     compoundCacheKey = descriptor.toSvgMapper(),
                                     colorPatcher = colorPatcher,
@@ -605,16 +639,16 @@ private fun loadByDescriptorWithoutCache(descriptor: ImageDescriptor,
   }
   else {
     image = if (descriptor.isSvg) {
-      loadSvgAndCacheIfApplicable(path = descriptor.path,
+      loadSvgAndCacheIfApplicable(path = path,
                                   scale = descriptor.scale,
                                   compoundCacheKey = descriptor.toSvgMapper(),
                                   colorPatcher = colorPatcher,
                                   deprecatedColorPatcher = deprecatedColorPatcher) {
-        ImageLoader.getResourceData(path = descriptor.path, resourceClass = resourceClass, classLoader = classLoader)
+        ImageLoader.getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader)
       }
     }
     else {
-      ImageLoader.loadPngFromClassResource(path = descriptor.path,
+      ImageLoader.loadPngFromClassResource(path = path,
                                            resourceClass = resourceClass,
                                            classLoader = classLoader,
                                            scale = descriptor.scale)
@@ -646,7 +680,7 @@ fun loadPng(stream: InputStream, scale: Float, originalUserSize: ImageLoader.Dim
   return image
 }
 
-internal class CacheKey(private val path: String, private val scale: Float, private val digest: LongArray) {
+private class CacheKey(private val path: String, private val scale: Float, private val digest: LongArray) {
   override fun equals(other: Any?): Boolean {
     if (this === other) {
       return true

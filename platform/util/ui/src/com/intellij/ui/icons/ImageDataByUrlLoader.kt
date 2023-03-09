@@ -42,7 +42,8 @@ class ImageDataByUrlLoader private constructor(
       path = url.toString()
     }
     return loadImage(path = path,
-                     parameters = parameters,
+                     filters = parameters.filters,
+                     colorPatcherProvider = parameters.colorPatcher,
                      resourceClass = ownerClass,
                      classLoader = classLoader,
                      isDark = parameters.isDark,
@@ -84,7 +85,8 @@ internal class ImageDataByPathResourceLoader(
 
   override fun loadImage(parameters: LoadIconParameters, scaleContext: ScaleContext): Image? {
     return loadImage(path = path,
-                     parameters = parameters,
+                     filters = parameters.filters,
+                     colorPatcherProvider = parameters.colorPatcher,
                      resourceClass = ownerClass,
                      classLoader = classLoader,
                      isDark = parameters.isDark,
