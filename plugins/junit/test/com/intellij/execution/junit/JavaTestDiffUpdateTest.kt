@@ -4,8 +4,10 @@ package com.intellij.execution.junit
 import com.intellij.openapi.editor.Document
 import org.intellij.lang.annotations.Language
 
-@Suppress("AssertBetweenInconvertibleTypes", "NewClassNamingConvention")
+@Suppress("AssertBetweenInconvertibleTypes", "NewClassNamingConvention", "SameParameterValue")
 class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
+  private val fileExt = "java"
+
   @Suppress("SameParameterValue")
   private fun checkHasNoDiff(
     @Language("Java") before: String,
@@ -14,7 +16,7 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
     expected: String,
     actual: String,
     stackTrace: String
-  ) = checkHasNoDiff(before, testClass, testName, expected, actual, stackTrace, "java")
+  ) = checkHasNoDiff(before, testClass, testName, expected, actual, stackTrace, fileExt)
 
   @Suppress("SameParameterValue")
   private fun checkAcceptFullDiff(
@@ -25,9 +27,8 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
     expected: String,
     actual: String,
     stackTrace: String
-  ) = checkAcceptFullDiff(before, after, testClass, testName, expected, actual, stackTrace, "java")
+  ) = checkAcceptFullDiff(before, after, testClass, testName, expected, actual, stackTrace, fileExt)
 
-  @Suppress("SameParameterValue")
   private fun checkPhysicalDiff(
     @Language("Java") before: String,
     @Language("Java") after: String,
@@ -38,90 +39,90 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
     actual: String,
     stackTrace: String,
     change: (Document) -> Unit
-  ) = checkPhysicalDiff(before, after, diffAfter, testClass, testName, expected, actual, stackTrace, "java", change)
+  ) = checkPhysicalDiff(before, after, diffAfter, testClass, testName, expected, actual, stackTrace, fileExt, change)
 
   fun `test failure when stacktrace is corrupted`() {
     checkAcceptFullDiff("""
-        import org.junit.Assert;
-        import org.junit.Test;
-        
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("expected", "actual");
-            }
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals("expected", "actual");
         }
-      """.trimIndent(), """
-        import org.junit.Assert;
-        import org.junit.Test;
-        
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("expected", "actual");
-            }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals("expected", "actual");
         }
+      }
       """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
-          at org.junit.Assert.assertEquals(Assert.java:117)
-          at org.junit.Assert.assertEquals(Assert.java:146)
-          unexpected input
+        at org.junit.Assert.assertEquals(Assert.java:117)
+        at org.junit.Assert.assertEquals(Assert.java:146)
+        unexpected input
       """.trimIndent())
   }
 
   fun `test accept string literal diff`() {
     checkAcceptFullDiff("""
-        import org.junit.Assert;
-        import org.junit.Test;
+      import org.junit.Assert;
+      import org.junit.Test;
         
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("expected", "actual");
-            }
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals("expected", "actual");
         }
-      """.trimIndent(), """
-        import org.junit.Assert;
-        import org.junit.Test;
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.Test;
         
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("actual", "actual");
-            }
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals("actual", "actual");
         }
-      """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
-          at org.junit.Assert.assertEquals(Assert.java:117)
-          at org.junit.Assert.assertEquals(Assert.java:146)
-          at MyJUnitTest.testFoo(MyJUnitTest.java:7)
-      """.trimIndent())
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent())
   }
 
   fun `test accept string literal diff with carriage return and line feed in expected`() {
     checkAcceptFullDiff("""
-        import org.junit.Assert;
-        import org.junit.Test;
+      import org.junit.Assert;
+      import org.junit.Test;
         
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("expected\r\n", "actual");
-            }
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals("expected\r\n", "actual");
         }
-      """.trimIndent(), """
-        import org.junit.Assert;
-        import org.junit.Test;
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.Test;
         
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("actual", "actual");
-            }
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals("actual", "actual");
         }
-      """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
-          at org.junit.Assert.assertEquals(Assert.java:117)
-          at org.junit.Assert.assertEquals(Assert.java:146)
-          at MyJUnitTest.testFoo(MyJUnitTest.java:7)
-      """.trimIndent())
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent())
   }
 
   fun `test accept diff is not available when expected is not a string literal`() {
@@ -136,11 +137,11 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
           }
       }
     """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
-      	at org.junit.Assert.fail(Assert.java:89)
-      	at org.junit.Assert.failNotEquals(Assert.java:835)
-      	at org.junit.Assert.assertEquals(Assert.java:120)
-      	at org.junit.Assert.assertEquals(Assert.java:146)
-      	at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+      at org.junit.Assert.fail(Assert.java:89)
+      at org.junit.Assert.failNotEquals(Assert.java:835)
+      at org.junit.Assert.assertEquals(Assert.java:120)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
     """.trimIndent())
   }
 
@@ -156,269 +157,269 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
           }
       }
     """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
-      	at org.junit.Assert.fail(Assert.java:89)
-      	at org.junit.Assert.failNotEquals(Assert.java:835)
-      	at org.junit.Assert.assertEquals(Assert.java:120)
-      	at org.junit.Assert.assertEquals(Assert.java:146)
-      	at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+      at org.junit.Assert.fail(Assert.java:89)
+      at org.junit.Assert.failNotEquals(Assert.java:835)
+      at org.junit.Assert.assertEquals(Assert.java:120)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
     """.trimIndent())
   }
 
   fun `test accept text block diff`() {
     checkAcceptFullDiff("""
-        import org.junit.Assert;
-        import org.junit.Test;
+      import org.junit.Assert;
+      import org.junit.Test;
         
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals(""${'"'}
-                        expected""${'"'}, "actual");
-            }
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals(""${'"'}
+                  expected""${'"'}, "actual");
         }
-      """.trimIndent(), """
-        import org.junit.Assert;
-        import org.junit.Test;
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.Test;
         
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals(""${'"'}
-                        actual""${'"'}, "actual");
-            }
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals(""${'"'}
+                  actual""${'"'}, "actual");
         }
-      """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
-        at org.junit.Assert.assertEquals(Assert.java:117)
-        at org.junit.Assert.assertEquals(Assert.java:146)
-        at MyJUnitTest.testFoo(MyJUnitTest.java:7)
-      """.trimIndent())
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent())
   }
 
   fun `test physical string literal change sync`() {
-    checkPhysicalDiff(before = """
-        import org.junit.Assert;
-        import org.junit.Test;
+    checkPhysicalDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
         
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("expected<caret>", "actual");
-            }
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals("expected<caret>", "actual");
         }
-      """.trimIndent(), after = """
-        import org.junit.Assert;
-        import org.junit.Test;
+      }
+    """.trimIndent(), after = """
+      import org.junit.Assert;
+      import org.junit.Test;
         
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("expectedFoo", "actual");
-            }
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals("expectedFoo", "actual");
         }
-      """.trimIndent(), diffAfter = "expectedFoo", "MyJUnitTest", "testFoo", "expected", "actual", """
-          at org.junit.Assert.assertEquals(Assert.java:117)
-          at org.junit.Assert.assertEquals(Assert.java:146)
-          at MyJUnitTest.testFoo(MyJUnitTest.java:7)
-      """.trimIndent()) { document ->
-      document.insertString(myFixture.editor.caretModel.offset, "Foo")
-    }
+      }
+    """.trimIndent(), diffAfter = "expectedFoo", "MyJUnitTest", "testFoo", "expected", "actual", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent()) { document -> document.insertString(myFixture.editor.caretModel.offset, "Foo") }
   }
 
   fun `test physical non-string literal change sync`() {
     checkPhysicalDiff(before = """
-        import org.junit.Assert;
-        import org.junit.Test;
+      import org.junit.Assert;
+      import org.junit.Test;
         
-        public class MyJUnitTest<caret> {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("expected", "actual");
-            }
+      public class MyJUnitTest<caret> {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals("expected", "actual");
         }
-      """.trimIndent(), after = """
-        import org.junit.Assert;
-        import org.junit.Test;
+      }
+    """.trimIndent(), after = """
+      import org.junit.Assert;
+      import org.junit.Test;
         
-        public class MyJUnitTestFoo {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("expected", "actual");
-            }
+      public class MyJUnitTestFoo {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals("expected", "actual");
         }
+      }
       """.trimIndent(), diffAfter = "expected", "MyJUnitTest", "testFoo", "expected", "actual", """
-          at org.junit.Assert.assertEquals(Assert.java:117)
-          at org.junit.Assert.assertEquals(Assert.java:146)
-          at MyJUnitTest.testFoo(MyJUnitTest.java:7)
-      """.trimIndent()) { document ->
-      document.insertString(myFixture.editor.caretModel.offset, "Foo")
-    }
+        at org.junit.Assert.assertEquals(Assert.java:117)
+        at org.junit.Assert.assertEquals(Assert.java:146)
+        at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+      """.trimIndent()) { document -> document.insertString(myFixture.editor.caretModel.offset, "Foo") }
   }
 
   fun `test accept string literal diff with escape`() {
     checkAcceptFullDiff("""
-        import org.junit.Assert;
-        import org.junit.Test;
+      import org.junit.Assert;
+      import org.junit.Test;
         
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("expected", "actual\"");
-            }
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals("expected", "actual\"");
         }
-      """.trimIndent(), """
-        import org.junit.Assert;
-        import org.junit.Test;
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.Test;
         
-        public class MyJUnitTest {
-            @Test
-            public void testFoo() {
-                Assert.assertEquals("actual\"", "actual\"");
-            }
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          Assert.assertEquals("actual\"", "actual\"");
         }
-      """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual\"", """
-          at org.junit.Assert.assertEquals(Assert.java:117)
-          at org.junit.Assert.assertEquals(Assert.java:146)
-          at MyJUnitTest.testFoo(MyJUnitTest.java:7)
-      """.trimIndent())
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual\"", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent())
   }
 
   fun `test accept parameter reference diff`() {
     checkAcceptFullDiff("""
-        import org.junit.Assert;
-        import org.testng.annotations.Test;
+      import org.junit.Assert;
+      import org.testng.annotations.Test;
         
-        public class MyJUnitTest {
-            @Test
-            void testFoo() {
-                doTest("expected");
-            }
-            
-            void doTest(String expected) {
-                Assert.assertEquals(expected, "actual");
-            }
+      public class MyJUnitTest {
+        @Test
+        void testFoo() {
+          doTest("expected");
         }
-      """.trimIndent(), """
-        import org.junit.Assert;
-        import org.testng.annotations.Test;
+            
+        void doTest(String expected) {
+          Assert.assertEquals(expected, "actual");
+        }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.testng.annotations.Test;
         
-        public class MyJUnitTest {
-            @Test
-            void testFoo() {
-                doTest("actual");
-            }
-            
-            void doTest(String expected) {
-                Assert.assertEquals(expected, "actual");
-            }
+      public class MyJUnitTest {
+        @Test
+        void testFoo() {
+          doTest("actual");
         }
-      """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
-        at org.junit.Assert.assertEquals(Assert.java:117)
-        at org.junit.Assert.assertEquals(Assert.java:146)
-        at MyJUnitTest.doTest(MyJUnitTest.java:11)
-        at MyJUnitTest.testFoo(MyJUnitTest.java:7)
-      """.trimIndent())
+            
+        void doTest(String expected) {
+          Assert.assertEquals(expected, "actual");
+        }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.doTest(MyJUnitTest.java:11)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent())
   }
 
   fun `test accept parameter reference diff multiple calls on same line`() {
     checkAcceptFullDiff("""
-        import org.junit.Assert;
-        import org.testng.annotations.Test;
+      import org.junit.Assert;
+      import org.testng.annotations.Test;
         
-        public class MyJUnitTest {
-            @Test
-            void testFoo() {
-                doAnotherTest(); doTest("expected"); 
-            }
-            
-            void doTest(String expected) {
-                Assert.assertEquals(expected, "actual");
-            }
-            
-            void doAnotherTest() { }
+      public class MyJUnitTest {
+        @Test
+        void testFoo() {
+          doAnotherTest(); doTest("expected"); 
         }
-      """.trimIndent(), """
-        import org.junit.Assert;
-        import org.testng.annotations.Test;
+            
+        void doTest(String expected) {
+          Assert.assertEquals(expected, "actual");
+        }
+            
+        void doAnotherTest() { }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.testng.annotations.Test;
         
-        public class MyJUnitTest {
-            @Test
-            void testFoo() {
-                doAnotherTest(); doTest("actual"); 
-            }
-            
-            void doTest(String expected) {
-                Assert.assertEquals(expected, "actual");
-            }
-            
-            void doAnotherTest() { }
+      public class MyJUnitTest {
+        @Test
+        void testFoo() {
+          doAnotherTest(); doTest("actual"); 
         }
-      """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
-        at org.junit.Assert.assertEquals(Assert.java:117)
-        at org.junit.Assert.assertEquals(Assert.java:146)
-        at MyJUnitTest.doTest(MyJUnitTest.java:11)
-        at MyJUnitTest.testFoo(MyJUnitTest.java:7)
-      """.trimIndent())
+            
+        void doTest(String expected) {
+          Assert.assertEquals(expected, "actual");
+        }
+            
+        void doAnotherTest() { }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.doTest(MyJUnitTest.java:11)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent())
   }
 
   fun `test accept local variable reference diff`() {
     checkAcceptFullDiff("""
-        import org.junit.Assert;
-        import org.testng.annotations.Test;
+      import org.junit.Assert;
+      import org.testng.annotations.Test;
         
-        public class MyJUnitTest {
-            @Test
-            void testFoo() {
-                String exp = "expected";
-                Assert.assertEquals(exp, "actual");
-            }
+      public class MyJUnitTest {
+        @Test
+        void testFoo() {
+          String exp = "expected";
+          Assert.assertEquals(exp, "actual");
         }
-      """.trimIndent(), """
-        import org.junit.Assert;
-        import org.testng.annotations.Test;
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.testng.annotations.Test;
         
-        public class MyJUnitTest {
-            @Test
-            void testFoo() {
-                String exp = "actual";
-                Assert.assertEquals(exp, "actual");
-            }
+      public class MyJUnitTest {
+        @Test
+        void testFoo() {
+          String exp = "actual";
+          Assert.assertEquals(exp, "actual");
         }
-      """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
-        at org.junit.Assert.assertEquals(Assert.java:117)
-        at org.junit.Assert.assertEquals(Assert.java:146)
-        at MyJUnitTest.testFoo(MyJUnitTest.java:8)
-      """.trimIndent())
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:8)
+    """.trimIndent())
   }
 
   fun `test accept field reference diff`() {
     checkAcceptFullDiff("""
-        import org.junit.Assert;
-        import org.testng.annotations.Test;
+      import org.junit.Assert;
+      import org.testng.annotations.Test;
         
-        public class MyJUnitTest {
-            private String exp = "expected";
+      public class MyJUnitTest {
+        private String exp = "expected";
             
-            @Test
-            void testFoo() {
-                Assert.assertEquals(exp, "actual");
-            }
+        @Test
+        void testFoo() {
+          Assert.assertEquals(exp, "actual");
         }
-      """.trimIndent(), """
-        import org.junit.Assert;
-        import org.testng.annotations.Test;
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.testng.annotations.Test;
         
-        public class MyJUnitTest {
-            private String exp = "actual";
+      public class MyJUnitTest {
+        private String exp = "actual";
             
-            @Test
-            void testFoo() {
-                Assert.assertEquals(exp, "actual");
-            }
+        @Test
+        void testFoo() {
+          Assert.assertEquals(exp, "actual");
         }
-      """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
-        at org.junit.Assert.assertEquals(Assert.java:117)
-        at org.junit.Assert.assertEquals(Assert.java:146)
-        at MyJUnitTest.testFoo(MyJUnitTest.java:9)
-      """.trimIndent())
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:9)
+    """.trimIndent())
+  }
+
+  companion object {
+    private const val fileExt = "java"
   }
 }
