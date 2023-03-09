@@ -6,18 +6,26 @@ import com.intellij.find.FindUtil
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.openapi.util.NlsContexts.TabTitle
+import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.list.buildTargetPopupWithMultiSelect
+import com.intellij.usageView.UsageInfo
+import com.intellij.usages.Usage
+import com.intellij.usages.UsageInfo2UsageAdapter
+import com.intellij.usages.UsageView
 import com.intellij.util.containers.map2Array
 import java.awt.event.MouseEvent
 import java.util.function.*
@@ -32,12 +40,14 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
   private var elementsConsumer: BiConsumer<Collection<T>, PsiTargetNavigator<T>>? = null
   private var title: @PopupTitle String? = null
   private var tabTitle: @TabTitle String? = null
+  private var updater: BackgroundUpdaterTaskBase<ItemWithPresentation>? = null
 
   fun selection(selection: PsiElement?): PsiTargetNavigator<T> = apply { this.selection = selection }
   fun presentationProvider(provider: Function<T, TargetPresentation>): PsiTargetNavigator<T> = apply { this.presentationProvider = provider }
   fun elementsConsumer(consumer: BiConsumer<Collection<T>, PsiTargetNavigator<T>>): PsiTargetNavigator<T> = apply { elementsConsumer = consumer }
   fun title(title: @PopupTitle String?): PsiTargetNavigator<T> = apply { this.title = title }
   fun tabTitle(title: @TabTitle String?): PsiTargetNavigator<T> = apply { this.tabTitle = title }
+  fun updater(updater: TargetUpdaterTask): PsiTargetNavigator<T> = apply { this.updater = updater }
 
   fun createPopup(project: Project, @PopupTitle title: String?): JBPopup {
     return createPopup(project, title) { element -> EditSourceUtil.navigateToPsiElement(element) }
@@ -48,16 +58,16 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
     return buildPopup(items, title, project, selected, getPredicate(processor))
   }
 
-  private fun getPredicate(processor: PsiElementProcessor<T>) = Predicate<ItemWithPresentation> {
-    @Suppress("UNCHECKED_CAST") ((it.dereference() as T).let { element -> processor.execute(element) })
-  }
-
   fun navigate(editor: Editor, @PopupTitle title: String?, processor: PsiElementProcessor<T>): Boolean {
     return navigate(editor.project!!, title, processor, Consumer { it.showInBestPositionFor(editor) })
   }
 
   fun navigate(e: MouseEvent, @PopupTitle title: String?, project: Project): Boolean {
     return navigate(project, title, { element -> EditSourceUtil.navigateToPsiElement(element) }, Consumer { it.show(RelativePoint(e)) })
+  }
+
+  private fun getPredicate(processor: PsiElementProcessor<T>) = Predicate<ItemWithPresentation> {
+    @Suppress("UNCHECKED_CAST") ((it.dereference() as T).let { element -> processor.execute(element) })
   }
 
   private fun navigate(project: Project,
@@ -76,6 +86,7 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
     else {
       val popup = buildPopup(items, title, project, selected, predicate)
       popupConsumer.accept(popup)
+      updater.let { ProgressManager.getInstance().run(updater!!) }
     }
     return true
   }
@@ -112,14 +123,34 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
                          selected: ItemWithPresentation?,
                          predicate: Predicate<ItemWithPresentation>): JBPopup {
     val builder = buildTargetPopupWithMultiSelect(targets, Function { it.presentation }, predicate)
-    val s = title ?: this.title
-    s?.let {
-      builder.setTitle(s)
-    }
+    val caption = title ?: this.title ?: updater?.getCaption(targets.size)
+    caption.let { builder.setTitle(caption!!) }
+    val ref: Ref<UsageView> = Ref.create()
     if (tabTitle != null) {
-      builder.setCouldPin { FindUtil.showInUsageView(null, tabTitle!!, project, targets.map2Array { item ->  item.item as SmartPsiElementPointer<*>}) != null }
+      builder.setCouldPin {
+        ref.set(FindUtil.showInUsageView(null, tabTitle!!, project,
+                                         targets.map2Array { item -> item.item as SmartPsiElementPointer<*> }))
+        !ref.isNull
+      }
     }
     selected.let { builder.setSelectedValue(selected, true) }
-    return builder.createPopup()
+    updater?.let { builder.setCancelCallback { updater!!.cancelTask() }}
+
+    val popup = builder.createPopup()
+    updater?.init(popup, builder.backgroundUpdater, ref)
+    return popup
+  }
+}
+
+abstract class TargetUpdaterTask(project: Project, @NlsContexts.ProgressTitle title: String):
+  BackgroundUpdaterTaskBase<ItemWithPresentation>(project, title, null) {
+
+  override fun createUsage(element: ItemWithPresentation): Usage? {
+    return UsageInfo2UsageAdapter(UsageInfo(element.item as SmartPsiElementPointer<*>, null, false, false))
+  }
+
+  fun updateComponent(psiElement: PsiElement): Boolean {
+    return updateComponent(
+      ReadAction.compute<ItemWithPresentation, Throwable> { createItem(psiElement, Function { targetPresentation(psiElement) }) })
   }
 }
