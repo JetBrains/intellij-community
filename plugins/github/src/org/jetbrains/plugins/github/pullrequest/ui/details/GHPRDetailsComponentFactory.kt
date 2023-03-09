@@ -62,33 +62,13 @@ internal object GHPRDetailsComponentFactory {
     )).apply {
       isOpaque = false
 
-      add(title, CC().growX().gap(
-        left = ReviewDetailsUIUtil.indentLeft,
-        right = ReviewDetailsUIUtil.indentRight,
-        top = ReviewDetailsUIUtil.indentTop,
-        bottom = ReviewDetailsUIUtil.gapBetweenTitleAndDescription))
-      add(description, CC().growX().gap(
-        left = ReviewDetailsUIUtil.indentLeft,
-        right = ReviewDetailsUIUtil.indentRight,
-        bottom = ReviewDetailsUIUtil.gapBetweenDescriptionAndCommits))
-      add(commitsAndBranches, CC().growX().gap(
-        left = ReviewDetailsUIUtil.indentLeft,
-        right = ReviewDetailsUIUtil.indentRight,
-        bottom = ReviewDetailsUIUtil.gapBetweenCommitsAndCommitInfo))
-      add(commitInfo, CC().growX().maxHeight("${ReviewDetailsUIUtil.commitInfoMaxHeight}").gap(
-        left = ReviewDetailsUIUtil.indentLeft,
-        right = ReviewDetailsUIUtil.indentRight,
-        bottom = ReviewDetailsUIUtil.gapBetweenCommitInfoAndCommitsBrowser))
+      add(title, CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
+      add(description, CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
+      add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
+      add(commitInfo, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS).maxHeight("${ReviewDetailsUIUtil.COMMIT_INFO_MAX_HEIGHT}"))
       add(commitFilesBrowserComponent, CC().grow().push())
-      add(statusChecks, CC().growX().maxHeight("${ReviewDetailsUIUtil.statusChecksMaxHeight}").gap(
-        left = ReviewDetailsUIUtil.indentLeft,
-        right = ReviewDetailsUIUtil.indentRight,
-        top = ReviewDetailsUIUtil.gapBetweenCommitsBrowserAndStatusChecks,
-        bottom = ReviewDetailsUIUtil.gapBetweenCheckAndActions))
-      add(state, CC().growX().pushX().minHeight("pref").gap(
-        left = ReviewDetailsUIUtil.indentLeft - 2,
-        right = ReviewDetailsUIUtil.indentRight,
-        bottom = ReviewDetailsUIUtil.indentBottom))
+      add(statusChecks, CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
+      add(state, CC().growX().pushX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
 
       val group = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
       PopupHandler.installPopupMenu(this, group, "GHPRDetailsPopup")

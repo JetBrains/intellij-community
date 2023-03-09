@@ -93,35 +93,19 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       background = UIUtil.getListBackground()
 
       add(GitLabMergeRequestDetailsTitleComponentFactory.create(cs, detailsInfoVm),
-          CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
-                           right = ReviewDetailsUIUtil.indentRight,
-                           top = ReviewDetailsUIUtil.indentTop,
-                           bottom = ReviewDetailsUIUtil.gapBetweenTitleAndDescription))
+          CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
       add(GitLabMergeRequestDetailsDescriptionComponentFactory.create(cs, detailsInfoVm),
-          CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
-                           right = ReviewDetailsUIUtil.indentRight,
-                           bottom = ReviewDetailsUIUtil.gapBetweenDescriptionAndCommits))
+          CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
       add(commitsAndBranches,
-          CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft,
-                           right = ReviewDetailsUIUtil.indentRight,
-                           bottom = ReviewDetailsUIUtil.gapBetweenCommitsAndCommitInfo))
+          CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(GitLabMergeRequestDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit),
-          CC().growX().maxHeight("${ReviewDetailsUIUtil.commitInfoMaxHeight}")
-            .gap(left = ReviewDetailsUIUtil.indentLeft,
-                 right = ReviewDetailsUIUtil.indentRight,
-                 bottom = ReviewDetailsUIUtil.gapBetweenCommitInfoAndCommitsBrowser))
+          CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS).maxHeight("${ReviewDetailsUIUtil.COMMIT_INFO_MAX_HEIGHT}"))
       add(GitLabMergeRequestDetailsChangesComponentFactory(project).create(cs, changesVm),
           CC().grow().push())
       add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, detailsInfoVm, detailsReviewFlowVm, avatarIconsProvider),
-          CC().growX().maxHeight("${ReviewDetailsUIUtil.statusChecksMaxHeight}")
-            .gap(left = ReviewDetailsUIUtil.indentLeft,
-                 right = ReviewDetailsUIUtil.indentRight,
-                 top = 4,
-                 bottom = ReviewDetailsUIUtil.gapBetweenCheckAndActions))
+          CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
       add(GitLabMergeRequestDetailsActionsComponentFactory.create(cs, detailsReviewFlowVm, avatarIconsProvider),
-          CC().growX().gap(left = ReviewDetailsUIUtil.indentLeft - 2,
-                           right = ReviewDetailsUIUtil.indentRight,
-                           bottom = ReviewDetailsUIUtil.indentBottom))
+          CC().growX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS))
     }
   }
 }

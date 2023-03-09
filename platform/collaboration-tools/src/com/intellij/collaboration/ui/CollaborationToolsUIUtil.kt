@@ -36,6 +36,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Color
+import java.awt.Insets
 import java.awt.Shape
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -283,6 +284,13 @@ object CollaborationToolsUIUtil {
    * Must be used only as a property: `get()`
    */
   fun getSize(oldUI: Int, newUI: Int): Int = if (ExperimentalUI.isNewUI()) newUI else oldUI
+
+  /**
+   * Use method for different sizes depending on the type of UI (old/new).
+   *
+   * Must be used only as a property: `get()`
+   */
+  fun getInsets(oldUI: Insets, newUI: Insets): Insets = if (ExperimentalUI.isNewUI()) newUI else oldUI
 
   fun createTagLabel(text: @Nls String): JComponent =
     JLabel(text).apply {
