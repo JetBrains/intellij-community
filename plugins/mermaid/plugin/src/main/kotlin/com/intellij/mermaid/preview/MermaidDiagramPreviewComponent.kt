@@ -32,7 +32,7 @@ internal class MermaidDiagramPreviewComponent: BorderLayoutPanel(), Disposable {
     val content = PreviewEncodingUtil.encodeContent(text)
     // language=JavaScript
     val code = """window["updateMermaidDiagramContent"]("$content");"""
-    browser.executeJavaScriptAsync(code).await()
+    browser.executeCancellableJavaScript(code)
   }
 
   override fun dispose() = Unit
