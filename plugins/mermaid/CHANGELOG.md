@@ -2,9 +2,15 @@
 
 ## [Unreleased]
 
+## 0.0.10
+- Updated an underlying Mermaid.js version to `10.0.2`
+- [MERMAID-24](https://youtrack.jetbrains.com/issue/MERMAID-24) Added diagram preview for standalone Mermaid files (`.mmd` and `.mermaid`)
+- [MERMAID-28](https://youtrack.jetbrains.com/issue/MERMAID-28) Added support for timeline diagrams
+- [MERMAID-31](https://youtrack.jetbrains.com/issue/MERMAID-31) Fixed cropped pie diagrams
+
 ## 0.0.9
 - [MERMAID-26](https://youtrack.jetbrains.com/issue/MERMAID-26) Added support for Mermaid diagram files with `.mmd` extension
-- [MERMAID-27](https://youtrack.jetbrains.com/issue/MERMAID-27) Updated an underlying Mermaid.js version to 9.4.0
+- [MERMAID-27](https://youtrack.jetbrains.com/issue/MERMAID-27) Updated an underlying Mermaid.js version to `9.4.0`
 - Added partial support for timeline diagrams
 
 ## 0.0.8
