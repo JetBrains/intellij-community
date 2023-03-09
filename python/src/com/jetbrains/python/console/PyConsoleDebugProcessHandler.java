@@ -11,7 +11,6 @@ import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyLocalPositionConverter;
 import com.jetbrains.python.debugger.PyPositionConverter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.OutputStream;
 
@@ -59,7 +58,7 @@ public final class PyConsoleDebugProcessHandler extends ProcessHandler implement
   }
 
   @Override
-  public @Nullable PyPositionConverter createPositionConverter(@NotNull PyDebugProcess debugProcess) {
+  public @NotNull PyPositionConverter createPositionConverter(@NotNull PyDebugProcess debugProcess) {
     if (myConsoleProcessHandler instanceof PositionConverterProvider) {
       return ((PositionConverterProvider)myConsoleProcessHandler).createPositionConverter(debugProcess);
     }
