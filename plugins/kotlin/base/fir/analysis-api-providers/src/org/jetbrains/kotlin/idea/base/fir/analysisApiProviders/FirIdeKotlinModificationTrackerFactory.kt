@@ -53,4 +53,8 @@ private class KotlinFirOutOfBlockModuleModificationTracker(private val module: M
     override fun getModificationCount(): Long {
         return trackerService.getOutOfBlockModificationCountForModules(module)
     }
+
+    override fun toString(): String {
+        return "Out-of-block tracker for IDEA module '" + module.name + "'"
+    }
 }
