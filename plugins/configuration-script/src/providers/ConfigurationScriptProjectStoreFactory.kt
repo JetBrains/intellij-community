@@ -108,8 +108,10 @@ private class ReadOnlyStorage(val configurationSchemaKey: String, val componentC
       }
     }
 
-    val node = configurationFileManager.findValueNode(configurationSchemaKey) ?: return null
-    readIntoObject(state, node)
+    val node = configurationFileManager.findValueNode(configurationSchemaKey)
+    if (node != null) {
+      readIntoObject(state, node)
+    }
     @Suppress("UNCHECKED_CAST")
     return state as T
   }
