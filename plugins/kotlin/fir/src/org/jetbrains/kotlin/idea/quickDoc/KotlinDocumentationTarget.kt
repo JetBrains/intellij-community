@@ -9,8 +9,8 @@ import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.model.Pointer
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.platform.documentation.DocumentationResult
-import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.DocumentationResult
+import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod

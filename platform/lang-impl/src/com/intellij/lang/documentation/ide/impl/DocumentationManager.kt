@@ -23,11 +23,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.documentation.DocumentationTarget
-import com.intellij.platform.documentation.impl.DocumentationRequest
-import com.intellij.platform.documentation.impl.InternalResolveLinkResult
-import com.intellij.platform.documentation.impl.documentationRequest
-import com.intellij.platform.documentation.impl.resolveLink
+import com.intellij.platform.backend.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.documentation.impl.InternalResolveLinkResult
+import com.intellij.platform.backend.documentation.impl.documentationRequest
+import com.intellij.platform.backend.documentation.impl.resolveLink
 import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.childScope

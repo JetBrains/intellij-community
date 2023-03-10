@@ -2,7 +2,7 @@
 package com.intellij.platform.ide.documentation
 
 import com.intellij.model.Pointer
-import com.intellij.platform.documentation.DocumentationTarget
+import com.intellij.platform.backend.documentation.DocumentationTarget
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.NonExtendable
 

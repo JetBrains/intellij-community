@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.documentation
+package com.intellij.platform.backend.documentation
 
-import com.intellij.platform.documentation.DocumentationResult.Documentation
+import com.intellij.platform.backend.documentation.DocumentationResult.Documentation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.ApiStatus.Internal

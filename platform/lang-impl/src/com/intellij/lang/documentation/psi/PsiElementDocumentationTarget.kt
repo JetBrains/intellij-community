@@ -14,7 +14,7 @@ import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.platform.documentation.*
+import com.intellij.platform.backend.documentation.*
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
