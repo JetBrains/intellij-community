@@ -21,7 +21,7 @@ interface BaseBuilder {
   fun withButtonGroup(title: @NlsContexts.BorderTitle String?, buttonGroup: ButtonGroup, body: () -> Unit)
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
     withButtonGroup(null, buttonGroup, body)
   }
@@ -79,7 +79,7 @@ interface RowBuilder : BaseBuilder {
    * Think of [titledRow] without a title and additional indent.
    */
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun blockRow(init: Row.() -> Unit): Row
 
   /**
