@@ -123,13 +123,15 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
       extension.subscribe(project, object : ExternalSystemProjectLinkListener {
 
         override fun onProjectLinked(externalProjectPath: String) {
-          launch(extensionDisposable) {
+          @OptIn(DelicateCoroutinesApi::class)
+          GlobalScope.launch(extensionDisposable) {
             projectRoots.removeProjectRoot(externalProjectPath)
           }
         }
 
         override fun onProjectUnlinked(externalProjectPath: String) {
-          launch(extensionDisposable) {
+          @OptIn(DelicateCoroutinesApi::class)
+          GlobalScope.launch(extensionDisposable) {
             projectRoots.addProjectRoot(externalProjectPath)
           }
         }
