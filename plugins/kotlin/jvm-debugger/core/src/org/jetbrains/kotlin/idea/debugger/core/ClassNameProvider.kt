@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.psi.PsiClass
@@ -168,7 +168,7 @@ class ClassNameProvider(
             ProgressManager.getInstance().runProcessWithProgressSynchronously(task, progressMessage, true, project)
         } else {
             try {
-                ProgressManager.getInstance().runProcess(task, EmptyProgressIndicator())
+                ProgressManager.getInstance().runProcess(task, ProgressIndicatorBase())
                 true
             } catch (e: InterruptedException) {
                 false
