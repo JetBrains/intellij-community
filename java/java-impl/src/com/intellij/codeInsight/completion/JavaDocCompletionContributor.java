@@ -15,6 +15,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
 import com.intellij.codeInspection.javaDoc.MissingJavadocInspection;
+import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -185,17 +186,33 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         if (list == null) return;
         PsiSnippetDocTagValue snippet = ObjectUtils.tryCast(list.getParent(), PsiSnippetDocTagValue.class);
         if (snippet == null) return;
-        if (attribute.getName().equals(PsiSnippetAttribute.REGION_ATTRIBUTE)) {
-          SnippetMarkup markup = SnippetMarkup.fromSnippet(snippet);
-          if (markup != null) {
-            for (String region : markup.getRegions()) {
-              if (!value.getText().startsWith("\"") && !StringUtil.isJavaIdentifier(region)) {
-                result.addElement(LookupElementBuilder.create('"' + region + '"').withLookupStrings(List.of(region)));
-              } else {
-                result.addElement(LookupElementBuilder.create(region));
+        boolean alreadyQuoted = value.getText().startsWith("\"");
+        switch (attribute.getName()) {
+          case PsiSnippetAttribute.REGION_ATTRIBUTE -> {
+            SnippetMarkup markup = SnippetMarkup.fromSnippet(snippet);
+            if (markup != null) {
+              for (String region : markup.getRegions()) {
+                addAttributeValue(result, region, alreadyQuoted);
               }
             }
           }
+          case PsiSnippetAttribute.LANG_ATTRIBUTE -> {
+            result = result.caseInsensitive();
+            for (Language language : Language.getRegisteredLanguages()) {
+              String id = language.getID();
+              if (id.equals("JAVA")) id = "java";
+              addAttributeValue(result, id, alreadyQuoted);
+            }
+          }
+        }
+      }
+
+      private static void addAttributeValue(@NotNull CompletionResultSet result, String id, boolean alreadyQuoted) {
+        if (!alreadyQuoted && !StringUtil.isJavaIdentifier(id)) {
+          result.addElement(LookupElementBuilder.create('"' + id + '"').withLookupStrings(List.of(id)));
+        }
+        else {
+          result.addElement(LookupElementBuilder.create(id));
         }
       }
     });

@@ -923,4 +923,10 @@ interface Bar<T> extends Foo<T> {
     myFixture.complete(CompletionType.BASIC, 0)
     assert myFixture.lookupElementStrings == ['Reg#3', 'Reg1', 'Region two']
   }
+  
+  void testLangCompletion() {
+    myFixture.configureByText "a.java", "/**\n * {@snippet lang=j<caret>}\n */\npublic class X {}\n"
+    myFixture.complete(CompletionType.BASIC, 0)
+    myFixture.lookupElementStrings.containsAll(['java', '"JSON Lines"', 'JSON'])
+  }
 }
