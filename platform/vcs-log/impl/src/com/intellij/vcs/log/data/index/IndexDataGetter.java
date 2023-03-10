@@ -251,7 +251,7 @@ public final class IndexDataGetter {
     VirtualFile root = getRoot(path);
     if (myProviders.containsKey(root) && root != null) {
       executeAndCatch(() -> {
-        myIndexStorage.paths.iterateCommits(root, path, (changes, commit) -> executeAndCatch(() -> {
+        myIndexStorage.paths.iterateChangesInCommits(root, path, (changes, commit) -> executeAndCatch(() -> {
           int[] parents = myIndexStorage.store.getParent(commit);
           if (parents == null) {
             throw new CorruptedDataException("No parents for commit " + commit);

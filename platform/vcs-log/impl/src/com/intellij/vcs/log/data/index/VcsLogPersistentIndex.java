@@ -309,7 +309,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
   static final class IndexStorage implements Disposable {
     public final @NotNull VcsLogStorageBackend store;
     public final @NotNull VcsLogUserBiMap users;
-    public final @NotNull VcsLogPathsIndex paths;
+    public final @NotNull VcsLogIndexedPaths paths;
 
     IndexStorage(@NotNull Project project,
                  @NotNull String logId,
@@ -355,7 +355,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
       var trigramsEmpty = store.getTrigramsEmpty();
       boolean usersEmpty = users.isUsersEmpty();
-      boolean pathsEmpty = paths.isEmpty();
+      boolean pathsEmpty = paths.isPathsEmpty();
       if ((trigramsEmpty != null && trigramsEmpty) || usersEmpty || pathsEmpty) {
         LOG.warn("Some of the index maps empty:\n" +
                  "trigrams empty " + trigramsEmpty + "\n" +

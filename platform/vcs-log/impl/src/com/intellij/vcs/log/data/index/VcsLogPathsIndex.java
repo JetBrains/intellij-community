@@ -37,7 +37,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.ObjIntConsumer;
 
-public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsIndex.ChangeKind>, VcsLogIndexer.CompressedDetails> {
+public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsIndex.ChangeKind>, VcsLogIndexer.CompressedDetails>
+  implements VcsLogIndexedPaths {
+
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
   public static final String PATHS = "paths";
   public static final String INDEX_PATHS_IDS = "paths-ids";
@@ -64,7 +66,13 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     myPathsIndexer.setFatalErrorConsumer(e -> errorHandler.handleError(VcsLogErrorHandler.Source.Index, e));
   }
 
-  void setMutator(@Nullable VcsLogWriter mutator) {
+  @Override
+  public boolean isPathsEmpty() throws IOException {
+    return isEmpty();
+  }
+
+  @Override
+  public void setMutator(@Nullable VcsLogWriter mutator) {
     myPathsIndexer.mutator = mutator;
   }
 
@@ -93,6 +101,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     myPathsIndexer.getPathsEnumerator().force();
   }
 
+  @Override
   public @Nullable EdgeData<FilePath> findRename(int parent, int child, @NotNull VirtualFile root, @NotNull FilePath path, boolean isChildPath)
     throws IOException {
     int[] renames = myPathsIndexer.store.getRename(parent, child);
@@ -113,15 +122,17 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     return null;
   }
 
-  public void iterateCommits(@NotNull VirtualFile root, @NotNull FilePath path,
-                             @NotNull ObjIntConsumer<? super List<ChangeKind>> consumer)
+  @Override
+  public void iterateChangesInCommits(@NotNull VirtualFile root, @NotNull FilePath path,
+                                      @SuppressWarnings("BoundedWildcard") @NotNull ObjIntConsumer<List<ChangeKind>> consumer)
     throws IOException, StorageException {
     int pathId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(root, path));
     iterateCommitIdsAndValues(pathId, consumer);
   }
 
+  @Override
   @NotNull
-  VcsLogIndexer.PathsEncoder getPathsEncoder() {
+  public VcsLogIndexer.PathsEncoder getPathsEncoder() {
     return new VcsLogIndexer.PathsEncoder() {
       @Override
       public int encode(@NotNull VirtualFile root, @NotNull String relativePath, boolean isDirectory) {
