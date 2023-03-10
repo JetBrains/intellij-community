@@ -13,9 +13,7 @@ project.consumer.commonTest
 
 project.consumer.jvmAndAndroidMain
     org.jetbrains.kotlin.mpp.tests:expectedEverywhere-jvm:1.0 (COMPILE)
-    org.jetbrains.kotlin.mpp.tests:expectedEverywhere:commonMain:1.0 (COMPILE)
     org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid-jvm:1.0 (COMPILE)
-    org.jetbrains.kotlin.mpp.tests:expectedInJvmAndAndroid:commonMain:1.0 (COMPILE)
 
 project.consumer.jvmMain
     org.jetbrains.kotlin.mpp.tests:expectedEverywhere-jvm:1.0 (COMPILE)
