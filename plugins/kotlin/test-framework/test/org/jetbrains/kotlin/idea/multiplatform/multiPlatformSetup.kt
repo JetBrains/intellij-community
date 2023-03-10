@@ -278,9 +278,9 @@ private fun parseModuleId(parts: List<String>): ModuleId {
 }
 
 private fun parsePlatform(parts: List<String>) =
-    platformNames.entries.single { (names, _) ->
+    platformNames.entries.singleOrNull { (names, _) ->
         names.any { name -> parts.any { part -> part.equals(name, ignoreCase = true) } }
-    }.value
+    }?.value ?: error("unable to lookup platform among $parts")
 
 private fun parseModuleName(parts: List<String>) = when {
     parts.size > 1 -> parts.first()
