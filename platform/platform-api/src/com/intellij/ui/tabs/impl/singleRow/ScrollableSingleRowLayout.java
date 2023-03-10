@@ -142,7 +142,8 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
         if (getStrategy().drawPartialOverflowTabs()) {
           int clippedLength = ExperimentalUI.isNewUI() && myTabs.getTabsPosition().isSide()
                               ? length : data.toFitLength - data.position - moreRectSize;
-          super.applyTabLayout(data, label, clippedLength);
+          final Rectangle rec = getStrategy().getLayoutRect(data, data.position, clippedLength);
+          myTabs.layout(label, rec);
         }
         label.setAlignmentToCenter(false);
         return false;
