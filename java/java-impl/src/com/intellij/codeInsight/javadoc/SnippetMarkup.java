@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -230,11 +229,14 @@ public class SnippetMarkup {
     return parse(preparse(text));
   }
   
-  public static @NotNull SnippetMarkup forFile(@NotNull PsiFile file) {
-    return CachedValuesManager.getCachedValue(file, () -> new CachedValueProvider.Result<>(parse(file.getText()), file));
+  public static @NotNull SnippetMarkup fromElement(@NotNull PsiElement element) {
+    return CachedValuesManager.getCachedValue(element, () -> {
+      SnippetMarkup markup = element instanceof PsiSnippetDocTagBody body ? parse(body) : parse(element.getText());
+      return new CachedValueProvider.Result<>(markup, element);
+    });
   }
 
-  public static @NotNull SnippetMarkup parse(@NotNull PsiSnippetDocTagBody body) {
+  private static @NotNull SnippetMarkup parse(@NotNull PsiSnippetDocTagBody body) {
     return parse(preparse(body));
   }
 

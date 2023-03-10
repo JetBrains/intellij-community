@@ -1817,24 +1817,17 @@ public class JavaDocInfoGenerator {
       return;
     }
     PsiSnippetDocTagBody body = value.getBody();
+    PsiSnippetAttribute[] attributes = value.getAttributeList().getAttributes();
+    PsiSnippetAttribute regionAttribute = ContainerUtil.find(attributes, attr -> attr.getName().equals(PsiSnippetAttribute.REGION_ATTRIBUTE));
+    String region = regionAttribute == null || regionAttribute.getValue() == null ? null :
+                    regionAttribute.getValue().getValue();
     if (body != null) {
       buffer.append("<pre>");
       List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(snippetTag.getProject()).getInjectedPsiFiles(snippetTag);
       PsiElement element = files != null ? files.get(0).first : null;
-      if (element != null && element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
-        generateJavaSnippetBody(buffer, element, e -> true);
-      }
-      else {
-        for (PsiElement contentElement : body.getContent()) {
-          buffer.append('\n').append(contentElement.getText());
-        }
-      }
+      generateSnippetBody(buffer, element != null ? element : body, region);
       buffer.append("</pre>");
     } else {
-      PsiSnippetAttribute[] attributes = value.getAttributeList().getAttributes();
-      PsiSnippetAttribute regionAttribute = ContainerUtil.find(attributes, attr -> attr.getName().equals(PsiSnippetAttribute.REGION_ATTRIBUTE));
-      String region = regionAttribute == null || regionAttribute.getValue() == null ? null :
-                      regionAttribute.getValue().getValue();
       for (PsiSnippetAttribute attribute : attributes) {
         PsiSnippetAttributeValue attrValue = attribute.getValue();
         if (attrValue != null) {
@@ -1855,16 +1848,16 @@ public class JavaDocInfoGenerator {
     }
   }
 
-  private void generateSnippetBody(@NotNull StringBuilder buffer, @NotNull PsiFile file, @Nullable String region) {
-    SnippetMarkup markup = forFile(file);
+  private void generateSnippetBody(@NotNull StringBuilder buffer, @NotNull PsiElement fileOrBody, @Nullable String region) {
+    SnippetMarkup markup = fromElement(fileOrBody);
     if (!markup.hasMarkup(region)) {
       TextRange range = markup.getRegionRange(region);
       if (range == null) {
         buffer.append(getSpanForUnresolvedItem()).append(JavaBundle.message("javadoc.snippet.region.not.found", region))
           .append("</span>");
-      } else if (file instanceof PsiJavaFile) {
+      } else if (fileOrBody instanceof PsiJavaFile) {
         // Normal Java highlighting is only for regions without markup
-        generateJavaSnippetBody(buffer, file, 
+        generateJavaSnippetBody(buffer, fileOrBody, 
                                 e -> {
                                   TextRange textRange = e.getTextRange();
                                   return range.intersects(textRange) && markup.isTextPart(textRange);
