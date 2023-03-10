@@ -101,7 +101,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
       background = foreground;
     }
     if (background instanceof Invoker.EDT && !ApplicationManager.getApplication().isUnitTestMode()) {
-      LOG.error(new Throwable("Background invoker shall not be EDT"));
+      LOG.error(new Throwable("Background invoker shall not be EDT. Please implement InvokerSupplier in your TreeModel"));
     }
     this.model = model;
     this.model.addTreeModelListener(listener);
