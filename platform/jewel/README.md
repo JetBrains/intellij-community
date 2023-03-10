@@ -1,9 +1,14 @@
-[![CI checks](https://github.com/JetBrains/jewel/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/JetBrains/jewel/actions/workflows/build.yml)
+[![JetBrains incubator](https://camo.githubusercontent.com/be6f8b50b2400e8b0dc74e58dd9a68803fe6698f5f30d843a7504888879f8392/68747470733a2f2f6a622e67672f6261646765732f696e63756261746f722d706c61737469632e737667)](https://github.com/JetBrains#jetbrains-on-github) [![CI checks](https://github.com/JetBrains/jewel/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/JetBrains/jewel/actions/workflows/build.yml)
 # Jewel: a Compose for Desktop theme
 
 <img alt="Jewel logo" src="art/jewel-logo.svg" width="20%"/>
 
 Jewel aims at recreating the _Darcula_ and _New UI_ Swing Look and Feels used on the IntelliJ Platform into Compose for Desktop.
+
+> **Warning**
+>This project is in very early development and is probably not ready to be used in production projects. You _can_, but there
+>are no published snapshots, and you should expect APIs to break fairly often, things to move around, and all that jazz.
+>Use at your risk!
 
 ## Project structure
 
