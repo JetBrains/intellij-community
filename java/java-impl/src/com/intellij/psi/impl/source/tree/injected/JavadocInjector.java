@@ -70,21 +70,6 @@ public class JavadocInjector implements MultiHostInjector {
                               e -> e.getID().equalsIgnoreCase(langValueText));
   }
 
-  private static @NotNull String stripPossibleLeadingAndTrailingQuotes(@NotNull PsiElement langValue) {
-    String langValueText = langValue.getText();
-    if (langValueText.charAt(0) == '"') {
-      langValueText = langValueText.substring(1);
-    }
-    if (langValueText.charAt(langValueText.length() - 1) == '"') {
-      langValueText = langValueText.substring(0, langValueText.length() - 1);
-    }
-    return langValueText;
-  }
-
-  private static @NotNull TextRange innerRangeStrippingQuotes(@NotNull PsiSnippetDocTagImpl context) {
-    return new SnippetDocTagManipulator().getRangeInElement(context);
-  }
-
   @Override
   public @NotNull List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
     return List.of(PsiSnippetDocTag.class);
