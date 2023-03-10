@@ -45,7 +45,7 @@ import java.util.concurrent.locks.LockSupport;
 
 @ApiStatus.Internal
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker, DumbServiceBalloon.Service {
-  private static final ExtensionPointName<StartupActivity.RequiredForSmartMode> REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY
+  static final ExtensionPointName<StartupActivity.RequiredForSmartMode> REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY
     = new ExtensionPointName<>("com.intellij.requiredForSmartModeStartupActivity");
 
   public static final boolean ALWAYS_SMART = SystemProperties.getBooleanProperty("idea.no.dumb.mode", false);
@@ -135,10 +135,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     boolean changed = myState.compareAndSet(State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS, State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS);
     LOG.assertTrue(changed, "actual state: " + myState.get() + ", project " + getProject());
 
-    List<StartupActivity.RequiredForSmartMode> activities = REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY.getExtensionList();
-    for (StartupActivity.RequiredForSmartMode activity : activities) {
-      activity.runActivity(getProject());
-    }
+    queueTask(new InitialDumbTaskRequiredForSmartMode(getProject()));
 
     if (isSynchronousTaskExecution()) {
       // invokeLaterAfterProjectInitialized(this::updateFinished) does not work well in synchronous environments (e.g. in unit tests): code
