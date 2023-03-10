@@ -112,9 +112,9 @@ public class IndexableFilesIndexImpl implements IndexableFilesIndex {
       }
     }
 
-    IndexingRootsCollectionUtil.IndexingRootsDescriptions descriptions =
-      IndexingRootsCollectionUtil.collectRootsFromWorkspaceFileIndexContributors(project, entityStorage, null);
-    IndexingRootsCollectionUtil.addIteratorsFromRootsDescriptions(descriptions, iterators, libraryOrigins, entityStorage);
+    WorkspaceIndexingRootsBuilder builder =
+      WorkspaceIndexingRootsBuilder.Companion.registerEntitiesFromContributors(project, entityStorage, null);
+    builder.addIteratorsFromRoots(iterators, libraryOrigins, entityStorage);
 
     boolean addedFromDependenciesIndexedStatusService = false;
     if (DependenciesIndexedStatusService.shouldBeUsed()) {

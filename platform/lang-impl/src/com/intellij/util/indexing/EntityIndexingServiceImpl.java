@@ -15,7 +15,7 @@ import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusSer
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
 import com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import com.intellij.util.indexing.roots.IndexingRootsDescriptionsBuilder;
+import com.intellij.util.indexing.roots.WorkspaceIndexingRootsBuilder;
 import com.intellij.util.indexing.roots.LibraryIndexableEntityProvider;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.workspaceModel.core.fileIndex.DependencyDescription;
@@ -183,7 +183,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
                                                                              @NotNull Collection<? extends EntityChange<?>> events,
                                                                              @NotNull EntityStorage entityStorage) {
     List<IndexableIteratorBuilder> builders = new SmartList<>();
-    IndexingRootsDescriptionsBuilder descriptionsBuilder = new IndexingRootsDescriptionsBuilder();
+    WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder();
     for (EntityChange<? extends WorkspaceEntity> change : events) {
       collectIteratorBuildersOnChange(Change.fromEntityChange(change), change.getOldEntity(), change.getNewEntity(), project, builders,
                                       descriptionsBuilder, entityStorage);
@@ -197,7 +197,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
                                                                                   @Nullable E newEntity,
                                                                                   @NotNull Project project,
                                                                                   @NotNull Collection<? super IndexableIteratorBuilder> builders,
-                                                                                  @NotNull IndexingRootsDescriptionsBuilder descriptionsBuilder,
+                                                                                  @NotNull WorkspaceIndexingRootsBuilder descriptionsBuilder,
                                                                                   @NotNull EntityStorage entityStorage) {
     LOG.assertTrue(newEntity != null || change == Change.Removed, "New entity " + newEntity + ", change " + change);
     LOG.assertTrue(oldEntity != null || change == Change.Added, "Old entity " + oldEntity + ", change " + change);
@@ -224,7 +224,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
                                                                               @Nullable E newEntity,
                                                                               @NotNull Project project,
                                                                               @NotNull Collection<? super IndexableIteratorBuilder> builders,
-                                                                              @NotNull IndexingRootsDescriptionsBuilder descriptionsBuilder,
+                                                                              @NotNull WorkspaceIndexingRootsBuilder descriptionsBuilder,
                                                                               @NotNull Class<? super E> entityClass,
                                                                               boolean enforcedOnly,
                                                                               @NotNull EntityStorage entityStorage) {
@@ -267,7 +267,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
                                                                                @Nullable E newEntity,
                                                                                @NotNull Project project,
                                                                                @NotNull Collection<? super IndexableIteratorBuilder> builders,
-                                                                               @NotNull IndexingRootsDescriptionsBuilder descriptionsBuilder,
+                                                                               @NotNull WorkspaceIndexingRootsBuilder descriptionsBuilder,
                                                                                @NotNull Class<? super E> entityClass,
                                                                                boolean customOnly,
                                                                                @NotNull EntityStorage entityStorage) {
@@ -321,7 +321,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
 
   private static <E extends WorkspaceEntity, C extends WorkspaceEntity> void handleDependencies(@NotNull E oldEntity,
                                                                                                 @NotNull E newEntity,
-                                                                                                @NotNull IndexingRootsDescriptionsBuilder descriptionsBuilder,
+                                                                                                @NotNull WorkspaceIndexingRootsBuilder descriptionsBuilder,
                                                                                                 @NotNull Class<? super E> entityClass,
                                                                                                 @NotNull WorkspaceFileIndexContributor<C> contributor,
                                                                                                 @NotNull EntityStorage entityStorage) {
@@ -334,7 +334,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   private static <E extends WorkspaceEntity, C extends WorkspaceEntity> void handleChildEntities(@NotNull Class<? super E> entityClass,
                                                                                                  @NotNull E oldEntity,
                                                                                                  @NotNull E newEntity,
-                                                                                                 @NotNull IndexingRootsDescriptionsBuilder descriptionsBuilder,
+                                                                                                 @NotNull WorkspaceIndexingRootsBuilder descriptionsBuilder,
                                                                                                  @NotNull WorkspaceFileIndexContributor<C> contributor,
                                                                                                  @NotNull DependencyDescription<C> dependency,
                                                                                                  @NotNull EntityStorage entityStorage) {
@@ -357,7 +357,7 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
                                                                                                           @NotNull EntityStorage entityStorage) {
     List<IndexableIteratorBuilder> builders = new SmartList<>();
 
-    IndexingRootsDescriptionsBuilder descriptionsBuilder = new IndexingRootsDescriptionsBuilder();
+    WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder();
     for (WorkspaceEntity entity : entities) {
       collectIteratorBuildersOnChange(Change.Added, null, entity, project, builders, descriptionsBuilder, entityStorage);
     }
