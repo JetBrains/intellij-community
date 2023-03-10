@@ -8,11 +8,13 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.tree.DefaultTreeModel
 
 /**
@@ -217,4 +219,45 @@ abstract class AsyncChangesTree : ChangesTree {
 
 interface AsyncChangesTreeModel {
   suspend fun buildTreeModel(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel
+}
+
+/**
+ * [com.intellij.openapi.progress.ProgressIndicator]-friendly wrapper with two-step model updates.
+ */
+abstract class TwoStepAsyncChangesTreeModel<T>(val scope: CoroutineScope) : AsyncChangesTreeModel {
+  private val deferredData: AtomicReference<Deferred<T>?> = AtomicReference()
+
+  @RequiresBackgroundThread
+  abstract fun fetchData(): T
+
+  @RequiresBackgroundThread
+  abstract fun buildTreeModelSync(data: T, grouping: ChangesGroupingPolicyFactory): DefaultTreeModel
+
+  /**
+   * Notify that data should be re-fetched during the next refresh.
+   *
+   * [AsyncChangesTree.requestRefresh] needs to be called explicitly afterwards.
+   */
+  fun invalidateData() {
+    val oldJob = deferredData.getAndSet(null)
+    oldJob?.cancel()
+  }
+
+  final override suspend fun buildTreeModel(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
+    val data = computeData()
+    return coroutineToIndicator {
+      buildTreeModelSync(data, grouping)
+    }
+  }
+
+  private suspend fun computeData(): T {
+    val oldJob = deferredData.get()
+    if (oldJob != null) {
+      return oldJob.await()
+    }
+
+    val newJob = scope.async { coroutineToIndicator { fetchData() } }
+    deferredData.set(newJob)
+    return newJob.await()
+  }
 }
