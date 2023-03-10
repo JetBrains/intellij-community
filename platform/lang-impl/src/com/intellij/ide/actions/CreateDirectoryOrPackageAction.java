@@ -183,6 +183,9 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
         final String text = nameField.getText();
         validator.checkInput(text);
         String errorText = validator.getErrorText(text);
+        if (errorText == null) {
+          errorText = validator.getWarningText(text);
+        }
         if (errorText != null) {
           contentPanel.setError(errorText);
         }
