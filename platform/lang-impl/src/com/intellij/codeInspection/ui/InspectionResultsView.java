@@ -701,20 +701,28 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   @Override
   public Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return HELP_ID;
-    if (DATA_KEY.is(dataId)) return this;
-    if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) return myExclusionHandler;
-    if (!ApplicationManager.getApplication().isDispatchThread()) return null;
-    TreePath[] paths = myTree.getSelectionPaths();
-    if (paths == null || paths.length == 0) return null;
-
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return HELP_ID;
+    }
+    if (DATA_KEY.is(dataId)) {
+      return this;
+    }
+    if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) {
+      return myExclusionHandler;
+    }
     if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+      TreePath[] paths = myTree.getSelectionPaths();
+      if (paths == null || paths.length == 0) return null;
       return paths[0].getLastPathComponent();
     }
     if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
+      TreePath[] paths = myTree.getSelectionPaths();
+      if (paths == null || paths.length == 0) return null;
       return ContainerUtil.map2Array(paths, p -> p.getLastPathComponent());
     }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      TreePath[] paths = myTree.getSelectionPaths();
+      if (paths == null || paths.length == 0) return null;
       return (DataProvider)slowId -> getSlowData(slowId, paths);
     }
     return null;
@@ -723,7 +731,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private @Nullable Object getSlowData(@NotNull String dataId, TreePath @NotNull [] paths) {
     if (paths.length > 1) {
       if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        RefEntity[] refElements = myTree.getSelectedElements();
+        RefEntity[] refElements = myTree.getElementsFromSelection(paths);
         List<PsiElement> psiElements = new ArrayList<>();
         for (RefEntity refElement : refElements) {
           PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
