@@ -21,8 +21,6 @@ import java.util.List;
 
 public class JavadocInjector implements MultiHostInjector {
 
-  private static final String LANG_ATTR_KEY = "lang";
-
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar,
                                    @NotNull PsiElement context) {
@@ -47,7 +45,7 @@ public class JavadocInjector implements MultiHostInjector {
     final PsiSnippetAttributeList attributeList = valueElement.getAttributeList();
 
     for (PsiSnippetAttribute attribute : attributeList.getAttributes()) {
-      if (!LANG_ATTR_KEY.equals(attribute.getName())) continue;
+      if (!PsiSnippetAttribute.LANG_ATTRIBUTE.equals(attribute.getName())) continue;
 
       final PsiElement langValue = attribute.getValue();
       if (langValue == null) break;
