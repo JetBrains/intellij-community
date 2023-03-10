@@ -20,6 +20,7 @@ import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import java.awt.GraphicsEnvironment
+import java.awt.Toolkit
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
