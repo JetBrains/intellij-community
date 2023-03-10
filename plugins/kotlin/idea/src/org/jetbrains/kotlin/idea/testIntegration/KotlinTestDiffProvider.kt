@@ -3,10 +3,17 @@ package org.jetbrains.kotlin.idea.testIntegration
 
 import com.intellij.execution.testframework.JvmTestDiffProvider
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.psi.KtStringTemplateEntry
+import com.intellij.util.asSafely
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.ULiteralExpression
+import org.jetbrains.uast.evaluateString
+import org.jetbrains.uast.isInjectionHost
 
 class KotlinTestDiffProvider : JvmTestDiffProvider() {
-    override fun getStringLiteral(expected: PsiElement): PsiElement? {
-        return if (expected is KtStringTemplateEntry) expected.parent else null
+    override fun getExpectedElement(expression: UExpression, expected: String): PsiElement? {
+        if (expression.isInjectionHost() && expression.asSafely<ULiteralExpression>()?.evaluateString()?.withoutLineEndings() == expected) {
+            return expression.sourcePsi?.parent // dont get template
+        }
+        return null
     }
 }

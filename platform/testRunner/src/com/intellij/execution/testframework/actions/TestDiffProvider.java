@@ -5,6 +5,7 @@ import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface TestDiffProvider {
   LanguageExtension<TestDiffProvider> TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION = new LanguageExtension<>("com.intellij.testDiffProvider");
+
+  @RequiresWriteLock
+  void updateExpected(@NotNull PsiElement element, @NotNull String actual);
 
   /**
    * Finds the expected literal for a failed test if it exists and null otherwise. The returned literal must be an injected element.

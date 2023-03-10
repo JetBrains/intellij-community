@@ -6,6 +6,7 @@ import com.intellij.execution.filters.ExceptionLineParserFactory
 import com.intellij.execution.testframework.actions.TestDiffProvider
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiType
@@ -16,7 +17,11 @@ import com.siyeh.ig.testFrameworks.UAssertHint
 import org.jetbrains.uast.*
 
 abstract class JvmTestDiffProvider : TestDiffProvider {
-  abstract fun getStringLiteral(expected: PsiElement): PsiElement?
+  abstract fun getExpectedElement(expression: UExpression, expected: String): PsiElement?
+
+  override fun updateExpected(element: PsiElement, actual: String) {
+    ElementManipulators.getManipulator(element)?.handleContentChange(element, actual)
+  }
 
   final override fun findExpected(project: Project, stackTrace: String, expected: String): PsiElement? {
     val exceptionCache = ExceptionInfoCache(project, GlobalSearchScope.allScope(project))
@@ -24,34 +29,34 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
     val searchStacktrace = entryPoint.stackTrace
     var expectedParam: UParameter? = entryPoint.param
     val lineParser = ExceptionLineParserFactory.getInstance().create(exceptionCache)
-    val expectedArgCandidates = mutableListOf<UExpression>()
+    val expectedArgCandidates = mutableListOf<PsiElement>()
     searchStacktrace.lines().forEach { line ->
       lineParser.execute(line, line.length) ?: return@findExpected null
       val file = lineParser.file ?: return@findExpected null
+      val diffProvider = TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(file.language).asSafely<JvmTestDiffProvider>()
+                         ?: return@findExpected null
       val failedCall = findFailedCall(file, lineParser.info.lineNumber, expectedParam?.getContainingUMethod()) ?: return@findExpected null
-      expectedArgCandidates.addAll(failedCall.valueArguments.filter {  arg ->
-        arg.isInjectionHost() && arg.asSafely<ULiteralExpression>()?.evaluateString() == expected
-      })
+      expectedArgCandidates.addAll(failedCall.valueArguments.mapNotNull { diffProvider.getExpectedElement(it, expected) })
       if (expectedParam != null) { // precise tracking don't need to look through whole stack trace
         val containingMethod = expectedParam?.getContainingUMethod() ?: return@findExpected null
-        val diffProvider = TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(file.language).asSafely<JvmTestDiffProvider>()
-                           ?: return@findExpected null
+
         val expectedArg = failedCall.getArgumentForParameter(containingMethod.uastParameters.indexOf(expectedParam))
                           ?: return@findExpected null
-        if (expectedArg.isInjectionHost()) return diffProvider.getStringLiteral(expectedArg.sourcePsi ?: return@findExpected null)
+        diffProvider.getExpectedElement(expectedArg, expected)?.let { return it }
         if (expectedArg is UReferenceExpression) {
           val resolved = expectedArg.resolveToUElement()
-          if (resolved is UVariable && resolved.uastInitializer.isInjectionHost()) {
-            return diffProvider.getStringLiteral(resolved.uastInitializer?.sourcePsi ?: return@findExpected null)
+          if (resolved is UVariable) {
+            resolved.uastInitializer?.let { initializer -> diffProvider.getExpectedElement(initializer, expected)?.let { return it } }
           }
           expectedParam = if (resolved is UParameter && resolved.uastParent is UMethod) {
             val method = resolved.uastParent?.asSafely<UMethod>()
             if (method != null && !method.isConstructor) resolved else null
-          } else null
+          }
+          else null
         }
       }
     }
-    if (expectedArgCandidates.size == 1) return getStringLiteral(expectedArgCandidates.first().sourcePsi ?: return null)
+    if (expectedArgCandidates.size == 1) return expectedArgCandidates.first()
     return null
   }
 
@@ -90,7 +95,8 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
       candidateCalls.firstOrNull { call ->
         call.resolveToUElement().asSafely<UMethod>()?.sourcePsi?.isEquivalentTo(resolvedMethod?.sourcePsi) == true
       }
-    } else candidateCalls.first()
+    }
+    else candidateCalls.first()
   }
 
   private fun getCallElementsInRange(file: PsiFile, startOffset: Int, endOffset: Int): List<UCallExpression>? {
@@ -105,4 +111,6 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
     }
     return calls
   }
+
+  protected fun String.withoutLineEndings() = replace("\n", "").replace("\r", "")
 }

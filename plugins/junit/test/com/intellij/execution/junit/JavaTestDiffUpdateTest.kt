@@ -558,6 +558,30 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
     """.trimIndent())
   }
 
+  fun `test no diff parameter reference dif with modified parameter`() {
+    checkHasNoDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
+        
+      public class MyJUnitTest {
+        @Test
+        public void testFoo() {
+          doTest("expected");
+        }
+            
+        void doTest(String expected) {
+          expected += " suffix";
+          Assert.assertEquals(expected, "actual");
+        }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected suffix", "actual", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.doTest(MyJUnitTest.java:12)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:7)
+    """.trimIndent())
+  }
+
   companion object {
     private const val fileExt = "java"
   }
