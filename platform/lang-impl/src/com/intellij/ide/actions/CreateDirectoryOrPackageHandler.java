@@ -123,7 +123,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
         return myIsDirectory ? IdeBundle.message("warning.create.directory.with.ignored.name", token)
                                     : IdeBundle.message("warning.create.package.with.ignored.name", token);
       }
-      if (!myIsDirectory && token.length() > 0 && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(token)) {
+      if (!myIsDirectory && !token.isEmpty() && myProject != null && !PsiDirectoryFactory.getInstance(myProject).isValidPackageName(token)) {
         return IdeBundle.message("error.invalid.java.package.name");
       }
     }
@@ -142,7 +142,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
 
   @Override
   public boolean canClose(final String subDirName) {
-    if (subDirName.length() == 0) {
+    if (subDirName.isEmpty()) {
       return false;
     }
 
