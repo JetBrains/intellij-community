@@ -304,6 +304,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/Generic.kt"));
         }
 
+        @TestMetadata("ImplicitArrayWithFlexibleParameterTypes.kt")
+        public void testImplicitArrayWithFlexibleParameterTypes() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/ImplicitArrayWithFlexibleParameterTypes.kt"));
+        }
+
         @TestMetadata("IntOverridesAny.kt")
         public void testIntOverridesAny() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/IntOverridesAny.kt"));
