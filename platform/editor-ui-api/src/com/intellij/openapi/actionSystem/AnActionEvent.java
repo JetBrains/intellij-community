@@ -20,18 +20,18 @@ import java.awt.event.InputEvent;
  */
 public class AnActionEvent implements PlaceProvider {
 
-  private final InputEvent myInputEvent;
-  private final ActionManager myActionManager;
-  private final DataContext myDataContext;
-  private final String myPlace;
-  private final Presentation myPresentation;
+  private final @Nullable InputEvent myInputEvent;
+  private final @NotNull ActionManager myActionManager;
+  private final @NotNull DataContext myDataContext;
+  private final @NotNull @NonNls String myPlace;
+  private final @NotNull Presentation myPresentation;
   @JdkConstants.InputEventMask
   private final int myModifiers;
   private final boolean myIsContextMenuAction;
   private final boolean myIsActionToolbar;
 
   private boolean myWorksInInjected;
-  private UpdateSession myUpdateSession = UpdateSession.EMPTY;
+  private @NotNull UpdateSession myUpdateSession = UpdateSession.EMPTY;
 
   /**
    * @throws IllegalArgumentException if {@code dataContext} is {@code null} or
@@ -129,9 +129,9 @@ public class AnActionEvent implements PlaceProvider {
 
   /**
    * Returns the {@code InputEvent} which causes invocation of the action. It might be
-   * {@code KeyEvent}, {@code MouseEvent}.
+   * {@code KeyEvent}, {@code MouseEvent} or null.
    *
-   * @return the {@code InputEvent} instance.
+   * @return the {@code InputEvent} instance or null.
    */
   public InputEvent getInputEvent() {
     return myInputEvent;
@@ -202,7 +202,7 @@ public class AnActionEvent implements PlaceProvider {
    * @see com.intellij.openapi.actionSystem.ActionPlaces
    */
   @Override
-  public @NotNull String getPlace() {
+  public @NotNull @NonNls String getPlace() {
     return myPlace;
   }
 
