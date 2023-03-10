@@ -804,18 +804,10 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     private int layoutComponent(int xOffset, Component component, int spaceTop, int spaceHeight) {
       if (component != null) {
         int prefWestWidth = component.getPreferredSize().width;
-        setBoundsWithVAlign(component, xOffset, prefWestWidth, spaceTop, spaceHeight);
+        component.setBounds(xOffset, spaceTop, prefWestWidth, spaceHeight);
         xOffset += prefWestWidth + getHgap();
       }
       return xOffset;
-    }
-
-    private void setBoundsWithVAlign(Component component, int left, int width, int spaceTop, int spaceHeight) {
-      if (component == null) return;
-
-      int height = component.getPreferredSize().height;
-      int top = spaceTop + (spaceHeight - height) / 2 + (spaceHeight - height) % 2;
-      component.setBounds(left, top, width, height);
     }
   }
 }

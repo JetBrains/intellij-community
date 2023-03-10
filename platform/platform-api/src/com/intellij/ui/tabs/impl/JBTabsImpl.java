@@ -3531,6 +3531,7 @@ public class JBTabsImpl extends JComponent
       remove(divider);
     }
 
+    applyDecoration();
     relayout(true, false);
     return this;
   }
