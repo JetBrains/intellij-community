@@ -2,6 +2,8 @@
 package com.intellij.workspaceModel.storage.impl
 
 import com.google.common.collect.HashBiMap
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.workspaceModel.storage.*
@@ -56,7 +58,7 @@ private typealias WorkspaceEntityDataCustomCollection = MutableMap<WorkspaceEnti
  * - Make type graphs. Separate graphs into independent parts (how is it called correctly?)
  * - Work on separate graph parts as on independent items
  */
-internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
+internal class ReplaceBySourceAsTree {
 
   private lateinit var targetStorage: MutableEntityStorageImpl
   private lateinit var replaceWithStorage: AbstractEntityStorage
@@ -78,7 +80,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
    */
   private val replaceWithParentToChildrenCache = HashMap<Pair<EntityId?, Int>, WorkspaceEntityDataCustomCollection>()
 
-  override fun replace(
+  fun replace(
     targetStorage: MutableEntityStorageImpl,
     replaceWithStorage: AbstractEntityStorage,
     entityFilter: (EntitySource) -> Boolean,
@@ -107,8 +109,10 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       ReplaceWithProcessor().processEntity(replaceWithEntityToReplace)
     }
 
-    // This method can be used for debugging
-    // OperationsApplier().dumpOperations()
+    LOG.trace {
+      // This method can be used for debugging
+      OperationsApplier().dumpOperations()
+    }
 
     // Apply collected operations on the target storage
     OperationsApplier().apply()
@@ -299,11 +303,11 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       processEntity(TrackToParents(replaceWithEntity.id, replaceWithStorage))
     }
 
+    @Suppress("MoveVariableDeclarationIntoWhen")
     private fun processEntity(replaceWithTrack: TrackToParents): ParentsRef? {
 
       val replaceWithEntityId = replaceWithTrack.entity
 
-      @Suppress("MoveVariableDeclarationIntoWhen")
       val replaceWithEntityState = replaceWithState[replaceWithEntityId]
       when (replaceWithEntityState) {
         ReplaceWithState.ElementMoved -> return ParentsRef.AddedElement(replaceWithEntityId)
@@ -419,10 +423,10 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
       }
     }
 
+    @Suppress("MoveVariableDeclarationIntoWhen")
     private fun findAndReplaceRootEntityInTargetStore(replaceWithRootEntity: WorkspaceEntityBase): ParentsRef? {
       val replaceRootEntityId = replaceWithRootEntity.id
 
-      @Suppress("MoveVariableDeclarationIntoWhen")
       val replaceWithCurrentState = replaceWithState[replaceRootEntityId]
       when (replaceWithCurrentState) {
         is ReplaceWithState.NoChange -> return ParentsRef.TargetRef(replaceWithCurrentState.targetEntityId)
@@ -440,10 +444,10 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
     /**
      * This is a very similar thing as [TargetProcessor.findSameEntity]. But it finds an entity in the target storage (or the entity that will be added)
      */
+    @Suppress("MoveVariableDeclarationIntoWhen")
     fun findSameEntityInTargetStore(replaceWithTrack: TrackToParents): ParentsRef? {
 
       // Check if this entity was already processed
-      @Suppress("MoveVariableDeclarationIntoWhen")
       val replaceWithCurrentState = replaceWithState[replaceWithTrack.entity]
       when (replaceWithCurrentState) {
         is ReplaceWithState.NoChange -> return ParentsRef.TargetRef(replaceWithCurrentState.targetEntityId)
@@ -801,6 +805,7 @@ internal class ReplaceBySourceAsTree : ReplaceBySourceOperation {
   }
 
   companion object {
+    private val LOG = logger<ReplaceBySourceAsTree>()
     private val hashingStrategy = object : HashingStrategy<WorkspaceEntityData<out WorkspaceEntity>> {
       override fun hashCode(entityData: WorkspaceEntityData<out WorkspaceEntity>?): Int {
         return entityData?.hashCodeByKey() ?: 0

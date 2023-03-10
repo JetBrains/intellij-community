@@ -124,10 +124,10 @@ internal class MutableEntityStorageImpl(
   // --------------- Replace By Source stuff -----------
   @TestOnly
   internal var keepLastRbsEngine = false
-  internal var engine: ReplaceBySourceOperation? = null
+  internal var engine: ReplaceBySourceAsTree? = null
 
   @set:TestOnly
-  internal var upgradeEngine: ((ReplaceBySourceOperation) -> Unit)? = null
+  internal var upgradeEngine: ((ReplaceBySourceAsTree) -> Unit)? = null
 
   @set:TestOnly
   internal var upgradeAddDiffEngine: ((AddDiffOperation) -> Unit)? = null
@@ -349,8 +349,6 @@ internal class MutableEntityStorageImpl(
     }
   }
 
-  private fun getRbsEngine(): ReplaceBySourceOperation = ReplaceBySourceAsTree()
-
   /**
    *  TODO  Spacial cases: when source filter returns true for all entity sources.
    */
@@ -358,7 +356,7 @@ internal class MutableEntityStorageImpl(
     try {
       lockWrite()
       replaceWith as AbstractEntityStorage
-      val rbsEngine = getRbsEngine()
+      val rbsEngine = ReplaceBySourceAsTree()
       if (keepLastRbsEngine) {
         engine = rbsEngine
       }
