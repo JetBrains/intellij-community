@@ -608,12 +608,7 @@ private class EditorTabs(
     override fun getPreferredHeight(): Int {
       val insets = insets
       val layoutInsets = layoutInsets
-      insets.top += layoutInsets.top
-      insets.bottom += layoutInsets.bottom
-      if (ExperimentalUI.isNewUI()) {
-        insets.top -= 7
-      }
-      return super.getPreferredHeight() - insets.top - insets.bottom
+      return super.getPreferredHeight() - layoutInsets.top - layoutInsets.bottom - insets.top - insets.bottom
     }
 
     override fun getActionsInset(): Int {
