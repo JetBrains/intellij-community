@@ -5,6 +5,7 @@ import com.intellij.openapi.observable.operation.core.ObservableOperationTrace
 import com.intellij.openapi.observable.operation.core.getOperationFinishPromise
 import com.intellij.openapi.observable.operation.core.getOperationStartPromise
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.use
 import com.intellij.testFramework.concurrency.waitForPromise
 import com.intellij.testFramework.concurrency.awaitPromise
@@ -14,8 +15,8 @@ import kotlin.time.Duration
 fun <R> ObservableOperationTrace.waitForOperation(
   startTimeout: Duration,
   finishTimeout: Duration,
-  action: () -> R
-): R = waitForOperation(startTimeout, finishTimeout, { waitForPromise(it) }, { action() })
+  action: ThrowableComputable<R, Throwable>
+): R = waitForOperation(startTimeout, finishTimeout, { waitForPromise(it) }, { action.compute() })
 
 suspend fun <R> ObservableOperationTrace.awaitOperation(
   startTimeout: Duration,
@@ -33,8 +34,18 @@ private inline fun <R> ObservableOperationTrace.waitForOperation(
     val startPromise = getOperationStartPromise(parentDisposable)
     val finishPromise = getOperationFinishPromise(parentDisposable)
     val result = action()
-    startPromise.wait(startTimeout)
-    finishPromise.wait(finishTimeout)
+    try {
+      startPromise.wait(startTimeout)
+    }
+    catch (ex: Throwable) {
+      throw IllegalStateException("Operation '$name' didn't started during $startTimeout.\n$this", ex)
+    }
+    try {
+      finishPromise.wait(finishTimeout)
+    }
+    catch (ex: Throwable) {
+      throw IllegalStateException("Operation '$name' didn't finished during $finishTimeout.\n$this", ex)
+    }
     result
   }
 }

@@ -3,55 +3,39 @@
 
 package org.jetbrains.plugins.gradle.util
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.use
-import com.intellij.testFramework.concurrency.awaitPromise
-import com.intellij.testFramework.concurrency.waitForPromise
-import org.jetbrains.concurrency.Promise
-import org.jetbrains.concurrency.all
-import java.nio.file.Path
+import com.intellij.testFramework.observable.operation.core.awaitOperation
+import com.intellij.testFramework.observable.operation.core.waitForOperation
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
-/**
- * @param action or some async calls have to produce project reload
- *  for example invokeLater { refreshProject(project, spec) }
- * @throws java.lang.AssertionError if import is failed or isn't started
- */
-fun <R> waitForMultipleProjectsReload(expectedProjects: List<Path>, action: ThrowableComputable<R, Throwable>): R {
-  return Disposer.newDisposable("waitForMultipleProjectsReload").use { disposable ->
-    getMultipleReloadProjectPromise(expectedProjects, disposable).waitForPromise(2.minutes, action = action)
+
+fun <R> waitForProjectReload(externalProjectPath: String, action: ThrowableComputable<R, Throwable>): R {
+  return Disposer.newDisposable("waitForProjectReload").use { disposable ->
+    getGradleReloadOperation(externalProjectPath, disposable)
+      .waitForOperation(10.seconds, 10.minutes, action = action)
   }
 }
 
 fun <R> waitForProjectReload(action: ThrowableComputable<R, Throwable>): R {
-  return Disposer.newDisposable("waitForProjectReload").use { disposable ->
-    getReloadProjectPromise(disposable).waitForPromise(2.minutes, action = action)
+  return Disposer.newDisposable("waitForAnyProjectReload").use { disposable ->
+    getGradleReloadOperation(disposable)
+      .waitForOperation(10.seconds, 10.minutes, action = action)
   }
 }
 
 fun <R> waitForTaskExecution(action: ThrowableComputable<R, Throwable>): R {
   return Disposer.newDisposable("waitForTaskExecution").use { disposable ->
-    getExecutionTaskPromise(disposable).waitForPromise(2.minutes, action = action)
+    getGradleExecutionOperation(disposable)
+      .waitForOperation(10.seconds, 10.minutes, action = action)
   }
 }
 
 suspend fun <R> awaitProjectReload(action: suspend () -> R): R {
   return Disposer.newDisposable("awaitProjectReload").use { disposable ->
-    getReloadProjectPromise(disposable).awaitPromise(2.minutes, action = action)
+    getGradleReloadOperation(disposable)
+      .awaitOperation(10.seconds, 10.minutes, action = action)
   }
-}
-
-private fun getMultipleReloadProjectPromise(expectedProjects: List<Path>, parentDisposable: Disposable): Promise<Project> {
-  require(expectedProjects.isNotEmpty())
-
-  return getResolveTaskPromise(parentDisposable)
-    .thenAsync { project ->
-      expectedProjects.map { it.toCanonicalPath() }
-        .map { path -> getProjectDataLoadPromise(project, parentDisposable) { it == path } }
-        .all(project, false)
-    }
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.getOperationPromise
+import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
@@ -26,7 +27,7 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixt
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
 import org.jetbrains.plugins.gradle.testFramework.util.refreshAndWait
 import org.jetbrains.plugins.gradle.util.awaitProjectReload
-import org.jetbrains.plugins.gradle.util.whenResolveTaskStarted
+import org.jetbrains.plugins.gradle.util.getGradleReloadOperation
 import kotlin.time.Duration.Companion.minutes
 
 internal class GradleProjectTestFixtureImpl private constructor(
@@ -99,10 +100,9 @@ internal class GradleProjectTestFixtureImpl private constructor(
   }
 
   private fun installProjectReloadWatcher() {
-    whenResolveTaskStarted(testDisposable) { _, workingDir ->
-      if (workingDir == fileFixture.root.path) {
-        fileFixture.addIllegalOperationError("Unexpected project reload: $workingDir")
-      }
+    val operation = getGradleReloadOperation(fileFixture.root.path, testDisposable)
+    operation.whenOperationStarted {
+      fileFixture.addIllegalOperationError("Unexpected project reload: $operation")
     }
   }
 

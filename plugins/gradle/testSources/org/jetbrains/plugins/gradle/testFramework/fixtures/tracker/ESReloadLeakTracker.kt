@@ -2,13 +2,11 @@
 package org.jetbrains.plugins.gradle.testFramework.fixtures.tracker
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
-import com.intellij.openapi.observable.operation.core.MutableOperationTrace
+import com.intellij.openapi.observable.operation.core.ObservableOperationTrace
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.IdeaTestFixture
-import org.jetbrains.plugins.gradle.util.whenResolveTaskFinished
-import org.jetbrains.plugins.gradle.util.whenResolveTaskStarted
+import org.jetbrains.plugins.gradle.util.getGradleReloadOperation
 
 class ESReloadLeakTracker : IdeaTestFixture {
 
@@ -16,18 +14,12 @@ class ESReloadLeakTracker : IdeaTestFixture {
 
   private lateinit var operationTracker: ESOperationLeakTracker
 
-  private lateinit var reloadOperation: MutableOperationTrace
+  private lateinit var reloadOperation: ObservableOperationTrace
 
   override fun setUp() {
     testDisposable = Disposer.newDisposable()
 
-    reloadOperation = AtomicOperationTrace("Reload trace")
-    whenResolveTaskStarted(testDisposable) { _, _ ->
-      reloadOperation.traceStart()
-    }
-    whenResolveTaskFinished(testDisposable) { _, status ->
-      reloadOperation.traceFinish(status = status)
-    }
+    reloadOperation = getGradleReloadOperation(testDisposable)
 
     operationTracker = ESOperationLeakTracker()
     operationTracker.setUp()
