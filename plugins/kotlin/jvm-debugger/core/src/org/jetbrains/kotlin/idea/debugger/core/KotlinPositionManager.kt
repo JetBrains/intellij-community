@@ -15,11 +15,10 @@ import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
@@ -518,7 +517,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
 
         val isInsideProjectWithCompose = position.isInsideProjectWithCompose()
-        return DumbService.getInstance(debugProcess.project).runReadActionInSmartMode(Computable {
+        return ReadAction.nonBlocking<List<ClassPrepareRequest>> {
             val kotlinRequests = createKotlinClassPrepareRequests(requestor, position)
             if (isInsideProjectWithCompose) {
                 val singletonRequest = getClassPrepareRequestForComposableSingletons(debugProcess, requestor, file)
@@ -529,7 +528,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             } else {
                 kotlinRequests
             }
-        })
+        }.inSmartMode(debugProcess.project).executeSynchronously()
     }
 
     @RequiresReadLock
