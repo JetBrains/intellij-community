@@ -127,7 +127,20 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
         return IdeBundle.message("error.invalid.java.package.name");
       }
     }
+    if (myIsDirectory && inputString.contains(".") && hasNoPathDelimiters(inputString)) {
+      return IdeBundle.message("warning.create.directory.with.dot");
+    }
     return null;
+  }
+
+  private boolean hasNoPathDelimiters(String string) {
+    for (int i = 0; i < myDelimiters.length(); i++) {
+      char delimiter = myDelimiters.charAt(i);
+      if (string.contains(String.valueOf(delimiter))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
