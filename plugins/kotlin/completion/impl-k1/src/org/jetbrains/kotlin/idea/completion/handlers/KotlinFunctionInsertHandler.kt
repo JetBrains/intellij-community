@@ -386,10 +386,8 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
                 super.handleInsert(context, item)
             }
 
-            if (!isInjected) {
-                psiDocumentManager.commitDocument(document)
-                psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
-            }
+            psiDocumentManager.commitDocument(document)
+            psiDocumentManager.doPostponedOperationsAndUnblockDocument(document)
 
             val startOffset = context.startOffset
             val element = context.file.findElementAt(startOffset) ?: return
