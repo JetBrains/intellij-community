@@ -18,7 +18,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-private val excludedLibJars = java.util.Set.of("testFramework.jar")
+private val excludedLibJars = java.util.Set.of("testFramework.jar", "junit.jar")
 
 private fun getClassLoadingLog(): InputStream {
   val osName = System.getProperty("os.name")
