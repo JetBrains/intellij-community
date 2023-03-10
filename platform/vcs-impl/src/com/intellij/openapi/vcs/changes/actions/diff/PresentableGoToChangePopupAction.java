@@ -129,6 +129,8 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
 
     MyChangesBrowser(@NotNull Project project, @NotNull Ref<? extends JBPopup> popupRef) {
       super(project, false, false);
+      hideViewerBorder();
+
       myRef = popupRef;
       myChanges = PresentableGoToChangePopupAction.this.getChanges();
       myViewer.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
