@@ -56,7 +56,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
                           @NotNull Disposable disposableParent) throws IOException {
     super(storageId,
           PATHS,
-          new PathIndexer(storage, createPathsEnumerator(roots, storageId, storageLockContext), store),
+          new PathIndexer(storage, new PathsStorage(createPathsEnumerator(roots, storageId, storageLockContext)), store),
           new ChangeKindListKeyDescriptor(),
           storageLockContext,
           errorHandler,
@@ -86,7 +86,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
   private @Nullable FilePath getPath(int pathId, boolean isDirectory) {
     try {
-      return toFilePath(myPathsIndexer.getPathsEnumerator().valueOf(pathId), isDirectory);
+      return toFilePath(myPathsIndexer.myPathsStorage.getPath(pathId), isDirectory);
     }
     catch (IOException e) {
       myPathsIndexer.myFatalErrorConsumer.consume(e);
@@ -98,7 +98,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   public void flush() throws StorageException {
     super.flush();
     myPathsIndexer.store.forceRenameMap();
-    myPathsIndexer.getPathsEnumerator().force();
+    myPathsIndexer.myPathsStorage.flush();
   }
 
   @Override
@@ -109,7 +109,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       return null;
     }
 
-    int pathId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(root, path));
+    int pathId = myPathsIndexer.myPathsStorage.getPathId(new LightFilePath(root, path));
     for (int i = 0; i < renames.length; i += 2) {
       int first = renames[i];
       int second = renames[i + 1];
@@ -126,7 +126,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   public void iterateChangesInCommits(@NotNull VirtualFile root, @NotNull FilePath path,
                                       @SuppressWarnings("BoundedWildcard") @NotNull ObjIntConsumer<List<ChangeKind>> consumer)
     throws IOException, StorageException {
-    int pathId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(root, path));
+    int pathId = myPathsIndexer.myPathsStorage.getPathId(new LightFilePath(root, path));
     iterateCommitIdsAndValues(pathId, consumer);
   }
 
@@ -137,7 +137,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       @Override
       public int encode(@NotNull VirtualFile root, @NotNull String relativePath, boolean isDirectory) {
         try {
-          return myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(root, relativePath));
+          return myPathsIndexer.myPathsStorage.getPathId(new LightFilePath(root, relativePath));
         }
         catch (IOException e) {
           myPathsIndexer.myFatalErrorConsumer.consume(e);
@@ -151,7 +151,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   public void dispose() {
     super.dispose();
     try {
-      myPathsIndexer.getPathsEnumerator().close();
+      myPathsIndexer.myPathsStorage.close();
     }
     catch (IOException e) {
       LOG.warn(e);
@@ -164,18 +164,44 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     return VcsUtil.getFilePath(lightFilePath.getRoot().getPath() + "/" + lightFilePath.getRelativePath(), isDirectory);
   }
 
+  private static final class PathsStorage implements VcsLogPathsStorage {
+    private final @NotNull PersistentEnumerator<LightFilePath> myPathsEnumerator;
+
+    private PathsStorage(@NotNull PersistentEnumerator<LightFilePath> enumerator) { myPathsEnumerator = enumerator; }
+
+    @Override
+    public @Nullable LightFilePath getPath(int pathId) throws IOException {
+      return myPathsEnumerator.valueOf(pathId);
+    }
+
+    @Override
+    public int getPathId(@NotNull VcsLogPathsIndex.LightFilePath filePath) throws IOException {
+      return myPathsEnumerator.enumerate(filePath);
+    }
+
+    @Override
+    public void flush() {
+      myPathsEnumerator.force();
+    }
+
+    @Override
+    public void close() throws IOException {
+      myPathsEnumerator.close();
+    }
+  }
+
   private static final class PathIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     private final @NotNull VcsLogStorage myStorage;
-    private final @NotNull PersistentEnumerator<LightFilePath> myPathsEnumerator;
+    private final @NotNull VcsLogPathsStorage myPathsStorage;
     private final VcsLogStorageBackend store;
     @Nullable VcsLogWriter mutator;
     private @NotNull Consumer<? super Exception> myFatalErrorConsumer = LOG::error;
 
     private PathIndexer(@NotNull VcsLogStorage storage,
-                        @NotNull PersistentEnumerator<LightFilePath> enumerator,
+                        @NotNull VcsLogPathsStorage pathsStorage,
                         @NotNull VcsLogStorageBackend store) {
       myStorage = storage;
-      myPathsEnumerator = enumerator;
+      myPathsStorage = pathsStorage;
       this.store = store;
     }
 
@@ -224,9 +250,9 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       return result;
     }
 
-    private static @NotNull List<ChangeKind> getOrCreateChangeKindList(@NotNull Int2ObjectMap<List<ChangeKind>> pathIdToChangeDataListsMap,
-                                                                       int pathId,
-                                                                       int parentsCount) {
+    static @NotNull List<ChangeKind> getOrCreateChangeKindList(@NotNull Int2ObjectMap<List<ChangeKind>> pathIdToChangeDataListsMap,
+                                                               int pathId,
+                                                               int parentsCount) {
       List<ChangeKind> changeDataList = pathIdToChangeDataListsMap.get(pathId);
       if (changeDataList == null) {
         if (parentsCount == 1) {
@@ -243,16 +269,12 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
       return changeDataList;
     }
 
-    private static @NotNull ChangeKind createChangeData(@NotNull Change.Type type) {
+    static @NotNull ChangeKind createChangeData(@NotNull Change.Type type) {
       return switch (type) {
         case NEW -> ChangeKind.ADDED;
         case DELETED -> ChangeKind.REMOVED;
         case MOVED, MODIFICATION -> ChangeKind.MODIFIED;
       };
-    }
-
-    public @NotNull PersistentEnumerator<LightFilePath> getPathsEnumerator() {
-      return myPathsEnumerator;
     }
   }
 
@@ -306,16 +328,16 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     }
   }
 
-  private static final class LightFilePath {
+  static final class LightFilePath {
     private final @NotNull VirtualFile myRoot;
     private final @NotNull String myRelativePath;
 
-    private LightFilePath(@NotNull VirtualFile root, @NotNull String relativePath) {
+    LightFilePath(@NotNull VirtualFile root, @NotNull String relativePath) {
       myRoot = root;
       myRelativePath = relativePath;
     }
 
-    private LightFilePath(@NotNull VirtualFile root, @NotNull FilePath filePath) {
+    LightFilePath(@NotNull VirtualFile root, @NotNull FilePath filePath) {
       this(root, VcsFileUtil.relativePath(root, filePath));
     }
 
