@@ -2595,7 +2595,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           }
           else {
             if (caretShift != 0) {
-              if (myMousePressedEvent != null) {
+              if (myMousePressedEvent != null && myGutterComponent.getGutterRenderer(e.getPoint()) == null) {
                 if (mySettings.isDndEnabled()) {
                   if (!myDragStarted) {
                     if (ApplicationManager.getApplication().isUnitTestMode()) {
