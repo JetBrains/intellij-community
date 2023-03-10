@@ -643,6 +643,11 @@ private class EditorTabs(
     }
   }
 
+  override fun getTabActionIcon(info: TabInfo, isHovered: Boolean): Icon? {
+    val closeTabAction = info.tabLabelActions?.getChildren(null)?.lastOrNull() as? CloseTab
+    return closeTabAction?.getIcon(isHovered)
+  }
+
   override fun createTabPainterAdapter(): TabPainterAdapter = EditorTabPainterAdapter()
 
   override fun createTabBorder(): JBTabsBorder = JBEditorTabsBorder(this)
