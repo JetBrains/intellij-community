@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -13,6 +15,9 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ucache.KOTLIN_SCRIPTS_AS_ENTITIES
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.plugins.gradle.extensions.cloneWithCorruptedRoots
+import org.jetbrains.plugins.gradle.extensions.rootsFiles
+import org.jetbrains.plugins.gradle.extensions.rootsUrls
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Ignore
@@ -98,6 +103,31 @@ abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase()
 
     }
 
+    class MultiplesJdkTableEntriesWithSamePathButFirstHasCorruptedRoots : GradleBuildFileHighlightingTest() {
+        @Test
+        @TargetVersions("6.0.1+")
+        fun testSimple() {
+            val jdkTableEntries = ProjectJdkTable.getInstance().allJdks
+            assertEquals(2, jdkTableEntries.size)
+            assertEquals(1, jdkTableEntries.map { it.homePath }.toSet().size)
+
+            val (corruptedJdk, validJdk) = jdkTableEntries
+            assertTrue(corruptedJdk.rootsUrls.isNotEmpty())
+            assertTrue(validJdk.rootsUrls.isNotEmpty())
+            assertFalse(corruptedJdk.rootsFiles.isNotEmpty())
+            assertTrue(validJdk.rootsFiles.isNotEmpty())
+
+            val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
+            importProject()
+            checkHighlighting(buildGradleKts)
+        }
+
+        override fun populateJdkTable(jdks: MutableList<Sdk>) {
+            val corruptedJdk = jdks.first().cloneWithCorruptedRoots(myTestDir)
+            jdks.add(0, corruptedJdk)
+            super.populateJdkTable(jdks)
+        }
+    }
 
     protected fun List<VirtualFile>.findBuildGradleKtsFile(): VirtualFile {
         return singleOrNull { it.name == GradleConstants.KOTLIN_DSL_SCRIPT_NAME }
