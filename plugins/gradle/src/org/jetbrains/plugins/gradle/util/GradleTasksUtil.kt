@@ -56,7 +56,7 @@ private fun getGradleTaskNodesMap(project: Project): Map<String, MultiMap<String
 
     for ((gradlePath, externalModulePath) in modulePaths) {
       val moduleTasks = tasks.computeIfAbsent(externalModulePath) { MultiMap.createOrderedSet() }
-      for (childModulePath in modulePaths.getDescendantKeySequence(gradlePath)) {
+      for (childModulePath in modulePaths.getDescendantKeys(gradlePath)) {
         moduleTasks.putValues(childModulePath, projectTasks.get(childModulePath))
       }
     }
