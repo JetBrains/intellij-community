@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("TestOnlyProblems") // KTIJ-19938
 
-package com.intellij.platform.documentation.impl
+package com.intellij.platform.backend.documentation.impl
 
 import com.intellij.model.Pointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.platform.documentation.*
+import com.intellij.platform.backend.documentation.*
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly

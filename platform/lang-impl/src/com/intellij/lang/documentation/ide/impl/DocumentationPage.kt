@@ -6,11 +6,11 @@ package com.intellij.lang.documentation.ide.impl
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.lang.documentation.ide.ui.UIState
 import com.intellij.openapi.project.IndexNotReadyException
-import com.intellij.platform.documentation.ContentUpdater
-import com.intellij.platform.documentation.DocumentationContentData
-import com.intellij.platform.documentation.LinkData
-import com.intellij.platform.documentation.impl.DocumentationRequest
-import com.intellij.platform.documentation.impl.computeDocumentation
+import com.intellij.platform.backend.documentation.ContentUpdater
+import com.intellij.platform.backend.documentation.DocumentationContentData
+import com.intellij.platform.backend.documentation.LinkData
+import com.intellij.platform.backend.documentation.impl.DocumentationRequest
+import com.intellij.platform.backend.documentation.impl.computeDocumentation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 
