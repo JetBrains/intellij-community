@@ -600,7 +600,7 @@ public final class JBUI {
       }
 
       public static Insets tabInsets() {
-        return insets("EditorTabs.tabInsets", isNewUI() ? insets(-3, 12, -4, 8) : insets(0, 8));
+        return insets("EditorTabs.tabInsets", isNewUI() ? insets(-7, 12, -7, 8) : insets(0, 8));
       }
 
       public static int tabActionsInset() {
