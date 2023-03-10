@@ -523,6 +523,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   public void addTextToRecent(@NotNull JTextComponent textField) {
+    if (myProject.isDisposed()) return;
     final String text = textField.getText();
     FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
     if (textField == mySearchTextComponent) {
