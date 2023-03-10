@@ -526,36 +526,41 @@ private suspend fun buildJars(descriptors: Collection<JarDescriptor>,
   val list = withContext(Dispatchers.IO) {
     descriptors.map { item ->
       async {
-        val nativeFileHandler = if (isCodesignEnabled) object : NativeFileHandler {
-          override val sourceToNativeFiles = HashMap<ZipSource, List<String>>()
+        val nativeFileHandler = if (isCodesignEnabled) {
+          object : NativeFileHandler {
+            override val sourceToNativeFiles = HashMap<ZipSource, List<String>>()
 
-          @Suppress("SpellCheckingInspection")
-          override suspend fun sign(name: String, data: ByteBuffer): Path? {
-            if (!context.isMacCodeSignEnabled) {
-              return null
+            @Suppress("SpellCheckingInspection")
+            override suspend fun sign(name: String, data: ByteBuffer): Path? {
+              if (!context.isMacCodeSignEnabled || context.proprietaryBuildTools.signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
+                return null
+              }
+
+              // we allow to use .so for macOS binraries (binaries/macos/libasyncProfiler.so), but removing obvious linux binaries
+              // (binaries/linux-aarch64/libasyncProfiler.so) to avoid detecting by binary content
+              if (name.endsWith(".dll") || name.endsWith(".exe") || name.contains("/linux/") || name.contains("/linux-")) {
+                return null
+              }
+
+              data.mark()
+              val byteBufferChannel = ByteBufferChannel(data)
+              if (byteBufferChannel.DetectFileType().first != FileType.MachO) {
+                return null
+              }
+
+              data.reset()
+              if (isSigned(byteBufferChannel, name)) {
+                return null
+              }
+
+              data.reset()
+              return signData(data, context)
             }
-
-            // we allow to use .so for macOS binraries (binaries/macos/libasyncProfiler.so), but removing obvious linux binaries
-            // (binaries/linux-aarch64/libasyncProfiler.so) to avoid detecting by binary content
-            if (name.endsWith(".dll") || name.endsWith(".exe") || name.contains("/linux/") || name.contains("/linux-")) {
-              return null
-            }
-
-            data.mark()
-            val byteBufferChannel = ByteBufferChannel(data)
-            if (byteBufferChannel.DetectFileType().first != FileType.MachO) {
-              return null
-            }
-
-            data.reset()
-            if (isSigned(byteBufferChannel, name)) {
-              return null
-            }
-
-            data.reset()
-            return signData(data, context)
           }
-        } else null
+        }
+        else {
+          null
+        }
 
         val file = item.file
         spanBuilder("build jar")

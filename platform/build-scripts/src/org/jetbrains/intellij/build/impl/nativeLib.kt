@@ -43,7 +43,7 @@ private suspend fun unpackNativeLibraries(sourceFile: Path, paths: List<String>,
 
   val libName = sourceFile.fileName.toString().substringBefore('-')
   HashMapZipFile.load(sourceFile).use { zipFile ->
-    val outDir = if (dryRun) context.paths.tempDir.resolve(libName) else Files.createTempDirectory(context.paths.tempDir, libName)
+    val outDir = context.paths.tempDir.resolve(libName)
     Files.createDirectories(outDir)
     for (pathWithPackage in paths) {
       val path = pathWithPackage.substring(packagePrefix.length)
