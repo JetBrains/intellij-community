@@ -211,6 +211,9 @@ public class SnippetMarkup {
    */
   public record Replace(@NotNull TextRange range, @Nullable String substring, @Nullable String regex, @Nullable String region,
                  @NotNull String replacement) implements LocationMarkupNode {
+    public Replace withReplacement(@NotNull String replacement) {
+      return replacement.equals(this.replacement) ? this : new Replace(range, substring, regex, region, replacement);
+    }
   }
 
   /**
@@ -423,6 +426,8 @@ public class SnippetMarkup {
         if (region == null || regions.contains(region)) {
           visitor.visitPlainText(plainText, StreamEx.ofValues(active).toFlatList(Function.identity()));
         }
+        active.values().forEach(
+          list -> list.replaceAll(n -> n instanceof Replace repl && repl.substring() == null && repl.regex() == null ? repl.withReplacement("") : n));
         active.remove(null);
       }
       else if (node instanceof ErrorMarkup errorMarkup) {
