@@ -69,6 +69,8 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   private final @NotNull VcsLogUiProperties.PropertiesChangeListener myListener;
 
   @NotNull private CommitModel myCommitModel = CommitModel.createEmpty();
+  private boolean myShowChangesFromParents = false;
+  private boolean myShowOnlyAffectedSelected = false;
 
   private @Nullable Collection<? extends FilePath> myAffectedPaths;
   private final @NotNull Wrapper myToolbarWrapper;
@@ -87,12 +89,14 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     myListener = new VcsLogUiProperties.PropertiesChangeListener() {
       @Override
       public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
+        updateUiSettings();
         if (SHOW_CHANGES_FROM_PARENTS.equals(property) || SHOW_ONLY_AFFECTED_CHANGES.equals(property)) {
           myViewer.rebuildTree();
         }
       }
     };
     myUiProperties.addChangeListener(myListener);
+    updateUiSettings();
 
     Disposer.register(parent, this);
 
@@ -238,7 +242,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
                             SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                             e -> myUiProperties.set(SHOW_CHANGES_FROM_PARENTS, true));
     }
-    else if (isShowOnlyAffectedSelected() && myAffectedPaths != null) {
+    else if (myShowOnlyAffectedSelected && myAffectedPaths != null) {
       emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.paths.status"))
         .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.paths.status.action"),
                              SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
@@ -270,7 +274,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     TreeModelBuilder builder = new TreeModelBuilder(myProject, getGrouping());
     setFilteredChanges(builder, filteredState, null);
 
-    if (isShowChangesFromParents() && !changesToParents.isEmpty()) {
+    if (myShowChangesFromParents && !changesToParents.isEmpty()) {
       if (changes.isEmpty()) {
         builder.createTagNode(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.node"));
       }
@@ -292,7 +296,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
   private @NotNull List<Change> collectAffectedChanges(@NotNull Collection<? extends Change> changes) {
     Collection<? extends FilePath> affectedPaths = myAffectedPaths;
-    if (!isShowOnlyAffectedSelected() || affectedPaths == null) return new ArrayList<>(changes);
+    if (!myShowOnlyAffectedSelected || affectedPaths == null) return new ArrayList<>(changes);
     return ContainerUtil.filter(changes, change -> ContainerUtil.or(affectedPaths, filePath -> {
       if (filePath.isDirectory()) {
         return FileHistoryUtil.affectsDirectory(change, filePath);
@@ -304,14 +308,11 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
     }));
   }
 
-  private boolean isShowChangesFromParents() {
-    return myUiProperties.exists(SHOW_CHANGES_FROM_PARENTS) &&
-           myUiProperties.get(SHOW_CHANGES_FROM_PARENTS);
-  }
-
-  private boolean isShowOnlyAffectedSelected() {
-    return myUiProperties.exists(SHOW_ONLY_AFFECTED_CHANGES) &&
-           myUiProperties.get(SHOW_ONLY_AFFECTED_CHANGES);
+  private void updateUiSettings() {
+    myShowChangesFromParents = myUiProperties.exists(SHOW_CHANGES_FROM_PARENTS) &&
+                               myUiProperties.get(SHOW_CHANGES_FROM_PARENTS);
+    myShowOnlyAffectedSelected = myUiProperties.exists(SHOW_ONLY_AFFECTED_CHANGES) &&
+                                 myUiProperties.get(SHOW_ONLY_AFFECTED_CHANGES);
   }
 
   public @NotNull List<Change> getDirectChanges() {
