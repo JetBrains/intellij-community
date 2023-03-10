@@ -424,12 +424,16 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     jvmArgs += options.jvmMemoryOptions?.split(Regex("\\s+")) ?: listOf("-Xms750m", "-Xmx750m")
 
     val tempDir = System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir"))
+    val ideaSystemPath = Path.of("${tempDir}/system")
+    context.messages.block("idea.system.path cleanup") {
+      NioFiles.deleteRecursively(ideaSystemPath)
+    }
     @Suppress("SpellCheckingInspection")
     mapOf(
       "idea.platform.prefix" to options.platformPrefix,
       "idea.home.path" to context.paths.projectHome.toString(),
       "idea.config.path" to "${tempDir}/config",
-      "idea.system.path" to "${tempDir}/system",
+      "idea.system.path" to "$ideaSystemPath",
       "intellij.build.compiled.classes.archives.metadata" to System.getProperty("intellij.build.compiled.classes.archives.metadata"),
       "intellij.build.compiled.classes.archive" to System.getProperty("intellij.build.compiled.classes.archive"),
       BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY to "${context.classesOutputDirectory}",
