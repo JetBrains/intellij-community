@@ -1080,19 +1080,8 @@ public class JBTabsImpl extends JComponent
         @Override
         protected void customizeComponent(JList<? extends TabInfo> list, TabInfo info, boolean isSelected) {
           if (actionLabel != null) {
-            Icon icon;
-            boolean hasActions = info.getTabLabelActions() != null && info.getTabLabelActions().getChildren(null).length > 0;
-            if (hasActions) {
-              icon = Objects.equals(ClientProperty.get(list, HOVER_INDEX_KEY), myCurrentIndex)
-                     ? AllIcons.Actions.CloseHovered
-                     : AllIcons.Actions.Close;
-            }
-            else {
-              icon = EmptyIcon.ICON_16;
-            }
-            if (info.isPinned()) {
-              icon = AllIcons.Actions.PinTab;
-            }
+            boolean isHovered = Objects.equals(ClientProperty.get(list, HOVER_INDEX_KEY), myCurrentIndex);
+            Icon icon = JBTabsImpl.this.getTabActionIcon(info, isHovered);
             actionLabel.setIcon(icon);
             ClientProperty.put(actionLabel, TAB_INFO_KEY, info);
 
@@ -1227,6 +1216,22 @@ public class JBTabsImpl extends JComponent
       }
     });
     popup.show(new RelativePoint(this, new Point(rect.x, rect.y + rect.height)));
+  }
+
+  // returns the icon that will be used in the hidden tabs list
+  protected @Nullable Icon getTabActionIcon(@NotNull TabInfo info, boolean isHovered) {
+    boolean hasActions = info.getTabLabelActions() != null && info.getTabLabelActions().getChildren(null).length > 0;
+    Icon icon;
+    if (hasActions) {
+      icon = isHovered ? AllIcons.Actions.CloseHovered : AllIcons.Actions.Close;
+    }
+    else {
+      icon = EmptyIcon.ICON_16;
+    }
+    if (info.isPinned()) {
+      icon = AllIcons.Actions.PinTab;
+    }
+    return icon;
   }
 
   private class HiddenInfosListPopupStep extends BaseListPopupStep<TabInfo> {
