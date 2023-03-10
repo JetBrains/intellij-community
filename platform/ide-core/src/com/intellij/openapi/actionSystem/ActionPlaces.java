@@ -145,6 +145,7 @@ public abstract class ActionPlaces {
   public static final String COMPOSER_EDITOR_NOTIFICATION_PANEL = "ComposerEditorNotificationPanel";
   public static final String COMPOSER_EDITOR_NOTIFICATION_PANEL_EXTRA = "ComposerEditorNotificationPanel.ExtraActions";
   public static final String COMPOSER_LOG_RERUN = "ComposerLogRerun";
+  public static final String PHP_TEST_RUN_CONFIGURATION = "PhpTestRunConfiguration";
 
   public static final String DIFF_TOOLBAR = "DiffToolbar";
   public static final String DIFF_RIGHT_TOOLBAR = "DiffRightToolbar";
