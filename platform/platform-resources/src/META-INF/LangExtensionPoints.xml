@@ -639,13 +639,13 @@
     <extensionPoint name="lang.symbolTypeProvider" dynamic="true" interface="com.intellij.codeInsight.navigation.SymbolTypeProvider"/>
     <extensionPoint name="readerModeProvider" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeProvider"/>
     <extensionPoint name="readerModeMatcher" dynamic="true" interface="com.intellij.codeInsight.actions.ReaderModeMatcher"/>
-    <extensionPoint qualifiedName="com.intellij.platform.documentation.targetProvider" dynamic="true"
+    <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.targetProvider" dynamic="true"
                     interface="com.intellij.platform.backend.documentation.DocumentationTargetProvider"/>
-    <extensionPoint qualifiedName="com.intellij.platform.documentation.symbolTargetProvider" dynamic="true"
+    <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.symbolTargetProvider" dynamic="true"
                     interface="com.intellij.platform.backend.documentation.SymbolDocumentationTargetProvider"/>
-    <extensionPoint qualifiedName="com.intellij.platform.documentation.psiTargetProvider" dynamic="true"
+    <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.psiTargetProvider" dynamic="true"
                     interface="com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider"/>
-    <extensionPoint qualifiedName="com.intellij.platform.documentation.linkHandler" dynamic="true"
+    <extensionPoint qualifiedName="com.intellij.platform.backend.documentation.linkHandler" dynamic="true"
                     interface="com.intellij.platform.backend.documentation.DocumentationLinkHandler"/>
     <extensionPoint qualifiedName="com.intellij.properties.files.provider"
                     interface="com.intellij.properties.provider.PropertiesProvider" dynamic="true"/>
