@@ -264,11 +264,6 @@ class IdeEventQueue private constructor() : EventQueue() {
   public override fun dispatchEvent(e: AWTEvent) {
     var event = e
 
-    if (isDispatchingOnMainThread && !isDispatchThread()) {
-      super.dispatchEvent(event)
-      return
-    }
-
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     val startedAt = System.currentTimeMillis()
     val performanceWatcher = PerformanceWatcher.getInstanceOrNull()
@@ -462,9 +457,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     else {
       super.getNextEvent()
     }
-    if (!(isDispatchingOnMainThread && isDispatchThread()) &&
-        isKeyboardEvent(event) &&
-        keyboardEventDispatched.incrementAndGet() > keyboardEventPosted.get()) {
+    if (isKeyboardEvent(event) && keyboardEventDispatched.incrementAndGet() > keyboardEventPosted.get()) {
       throw RuntimeException("$event; posted: $keyboardEventPosted; dispatched: $keyboardEventDispatched")
     }
     return event
