@@ -125,7 +125,7 @@ interface Row {
                  maxLineLength: Int = DEFAULT_COMMENT_WIDTH,
                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Row
 
-  @Deprecated("Use cell(component: T) and scrollCell(component: T) instead")
+  @Deprecated("Use cell(component: T) and scrollCell(component: T) instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun <T : JComponent> cell(component: T, viewComponent: JComponent = component): Cell<T>
 
@@ -228,7 +228,7 @@ interface Row {
                     @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
                     icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton>
 
-  @Deprecated("Use overloaded method")
+  @Deprecated("Use overloaded method", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar>
 
@@ -384,7 +384,7 @@ interface Row {
    */
   fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
-  @Deprecated("Use overloaded comboBox(...) with Collection")
+  @Deprecated("Use overloaded comboBox(...) with Collection", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
 
