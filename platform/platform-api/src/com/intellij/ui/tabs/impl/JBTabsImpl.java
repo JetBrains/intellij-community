@@ -1008,11 +1008,14 @@ public class JBTabsImpl extends JComponent
         private static final Key<Boolean> SELECTED_KEY = Key.create("SELECTED");
         JPanel component;
         JLabel iconLabel;
+        SimpleColoredComponent textLabel;
         JLabel actionLabel;
         MouseAdapter listMouseListener;
 
         @Override
         protected JComponent createItemComponent() {
+          // there is the separate label 'textLabel', but the original one still should be created,
+          // as it is used from the GroupedElementsRenderer.configureComponent
           createLabel();
 
           component = new JPanel();
@@ -1055,7 +1058,9 @@ public class JBTabsImpl extends JComponent
           int gap = JBUI.CurrentTheme.ActionsList.elementIconGap() - 2;
           component.add(Box.createRigidArea(new Dimension(gap, 0)));
 
-          component.add(myTextLabel);
+          textLabel = new SimpleColoredComponent();
+          textLabel.setOpaque(true);
+          component.add(textLabel);
 
           if (settings.getCloseTabButtonOnTheRight()) {
             component.add(Box.createRigidArea(new JBDimension(30, 0)));
@@ -1094,6 +1099,9 @@ public class JBTabsImpl extends JComponent
             icon = IconLoader.getTransparentIcon(icon, JBUI.CurrentTheme.EditorTabs.unselectedAlpha());
           }
           iconLabel.setIcon(icon);
+
+          textLabel.clear();
+          info.getColoredText().appendToComponent(textLabel);
 
           ClientProperty.put(component, SELECTED_KEY, info == selectedInfo ? true : null);
 
