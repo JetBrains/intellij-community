@@ -873,4 +873,54 @@ interface Bar<T> extends Foo<T> {
     myFixture.complete(CompletionType.BASIC, 0)
     myFixture.checkResult("/**\n * {@snippet class=X cl<caret>}\n */\npublic class Demo {}")
   }
+  
+  void testRegionCompletion() {
+    myFixture.configureByText "a.java", """
+    /**
+     * {@snippet region=Re<caret>:
+     *   // @start region="Reg1"
+     *   // @end
+     *   // @replace region="Region two"
+     *   // @end
+     *   // @highlight region="Reg#3"
+     *   // @end
+     * }
+     */
+    public class X {}
+"""
+    myFixture.complete(CompletionType.BASIC, 0)
+    assert myFixture.lookupElementStrings == ['"Reg#3"', '"Region two"', 'Reg1']
+    myFixture.type('\n')
+    myFixture.checkResult("""
+    /**
+     * {@snippet region="Reg#3":
+     *   // @start region="Reg1"
+     *   // @end
+     *   // @replace region="Region two"
+     *   // @end
+     *   // @highlight region="Reg#3"
+     *   // @end
+     * }
+     */
+    public class X {}
+""")
+  }
+  
+  void testRegionCompletionInQuotes() {
+    myFixture.configureByText "a.java", """
+    /**
+     * {@snippet region="Re<caret>":
+     *   // @start region="Reg1"
+     *   // @end
+     *   // @replace region="Region two"
+     *   // @end
+     *   // @highlight region="Reg#3"
+     *   // @end
+     * }
+     */
+    public class X {}
+"""
+    myFixture.complete(CompletionType.BASIC, 0)
+    assert myFixture.lookupElementStrings == ['Reg#3', 'Reg1', 'Region two']
+  }
 }

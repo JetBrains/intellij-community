@@ -6,6 +6,7 @@ import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.editorActions.wordSelection.DocTagSelectioner;
 import com.intellij.codeInsight.javadoc.JavaDocUtil;
+import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
@@ -77,9 +78,10 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
     psiElement(PsiDocTag.class).withName(
       string().oneOf(PsiKeyword.THROWS, "exception")));
 
-  private static final PsiElementPattern<PsiDocToken, PsiElementPattern.Capture<PsiDocToken>>
-    SNIPPET_ATTRIBUTE_NAME = psiElement(PsiDocToken.class)
+  private static final PsiElementPattern<?, ?> SNIPPET_ATTRIBUTE_NAME = psiElement(PsiDocToken.class)
     .withElementType(JavaDocTokenType.DOC_TAG_ATTRIBUTE_NAME).inside(psiElement(PsiSnippetAttribute.class));
+
+  private static final PsiElementPattern<?, ?> SNIPPET_ATTRIBUTE_VALUE = psiElement(PsiSnippetAttributeValue.class);
 
   public JavaDocCompletionContributor() {
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME), new TagChooser());
@@ -166,6 +168,33 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         for (String attribute : ATTRIBUTES) {
           if (list.getAttribute(attribute) == null) {
             result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(attribute).withTailText("=", true), TailType.EQUALS));
+          }
+        }
+      }
+    });
+    
+    extend(CompletionType.BASIC, SNIPPET_ATTRIBUTE_VALUE, new CompletionProvider<>() {
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    @NotNull ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        PsiSnippetAttributeValue value = (PsiSnippetAttributeValue)parameters.getPosition();
+        PsiSnippetAttribute attribute = ObjectUtils.tryCast(value.getParent(), PsiSnippetAttribute.class);
+        if (attribute == null) return;
+        PsiSnippetAttributeList list = ObjectUtils.tryCast(attribute.getParent(), PsiSnippetAttributeList.class);
+        if (list == null) return;
+        PsiSnippetDocTagValue snippet = ObjectUtils.tryCast(list.getParent(), PsiSnippetDocTagValue.class);
+        if (snippet == null) return;
+        if (attribute.getName().equals(PsiSnippetAttribute.REGION_ATTRIBUTE)) {
+          SnippetMarkup markup = SnippetMarkup.fromSnippet(snippet);
+          if (markup != null) {
+            for (String region : markup.getRegions()) {
+              if (!value.getText().startsWith("\"") && !StringUtil.isJavaIdentifier(region)) {
+                result.addElement(LookupElementBuilder.create('"' + region + '"').withLookupStrings(List.of(region)));
+              } else {
+                result.addElement(LookupElementBuilder.create(region));
+              }
+            }
           }
         }
       }

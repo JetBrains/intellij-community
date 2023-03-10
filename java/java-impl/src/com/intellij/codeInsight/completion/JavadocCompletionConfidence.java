@@ -7,8 +7,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocToken;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +30,8 @@ public class JavadocCompletionConfidence extends CompletionConfidence {
       if (contextElement.textMatches("#")) {
         return ThreeState.NO;
       }
-      if (contextElement instanceof PsiDocToken token && token.getTokenType().equals(JavaDocTokenType.DOC_TAG_ATTRIBUTE_NAME)) {
+      if (contextElement instanceof PsiDocToken token && token.getTokenType().equals(JavaDocTokenType.DOC_TAG_ATTRIBUTE_NAME) ||
+          contextElement instanceof PsiSnippetAttributeValue) {
         return ThreeState.NO;
       }
     }

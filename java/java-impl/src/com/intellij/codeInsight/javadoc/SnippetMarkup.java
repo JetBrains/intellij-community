@@ -6,7 +6,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,7 +51,7 @@ public class SnippetMarkup {
         null, Function.identity())
       .removeKeys(k -> k == null || k.isEmpty())
       .distinctKeys()
-      .toMap();
+      .toImmutableMap();
     StreamEx.of(nodes)
       .select(PlainText.class)
       .forEach(text -> myTextOffsets.set(text.range().getStartOffset(), text.range().getEndOffset()));
@@ -107,6 +109,10 @@ public class SnippetMarkup {
       }
     });
     return result.toString();
+  }
+
+  public Set<String> getRegions() {
+    return myRegionStarts.keySet();
   }
 
   /**
@@ -228,12 +234,37 @@ public class SnippetMarkup {
   public static @NotNull SnippetMarkup parse(@NotNull String text) {
     return parse(preparse(text));
   }
-  
+
+  /**
+   * @param element {@link com.intellij.psi.PsiFile} or {@link PsiSnippetDocTagBody}
+   * @return markup for a given element
+   */
   public static @NotNull SnippetMarkup fromElement(@NotNull PsiElement element) {
+    if (!(element instanceof PsiFile) && !(element instanceof PsiSnippetDocTagBody)) {
+      throw new IllegalArgumentException();
+    }
     return CachedValuesManager.getCachedValue(element, () -> {
       SnippetMarkup markup = element instanceof PsiSnippetDocTagBody body ? parse(body) : parse(element.getText());
       return new CachedValueProvider.Result<>(markup, element);
     });
+  }
+  
+  public static @Nullable SnippetMarkup fromSnippet(@NotNull PsiSnippetDocTagValue snippet) {
+    PsiSnippetDocTagBody body = snippet.getBody();
+    if (body != null) {
+      return fromElement(body);
+    }
+    PsiSnippetAttributeList list = snippet.getAttributeList();
+    PsiSnippetAttribute refAttribute = list.getAttribute(PsiSnippetAttribute.CLASS_ATTRIBUTE);
+    if (refAttribute == null) {
+      refAttribute = list.getAttribute(PsiSnippetAttribute.FILE_ATTRIBUTE);
+    }
+    if (refAttribute == null) return null;
+    PsiSnippetAttributeValue attrValue = refAttribute.getValue();
+    if (attrValue == null) return null;
+    PsiReference ref = attrValue.getReference();
+    if (ref == null || !(ref.resolve() instanceof PsiFile file)) return null;
+    return fromElement(file);
   }
 
   private static @NotNull SnippetMarkup parse(@NotNull PsiSnippetDocTagBody body) {
