@@ -701,7 +701,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       // separate navbar
       defaults.put(JBUI.CurrentTheme.NavBar.itemInsetsKey(), cmInsets(2))
       // editor tabs
-      defaults.put("EditorTabs.tabInsets", cmInsets(-2, 4, -2, 4))
+      defaults.put(JBUI.CurrentTheme.EditorTabs.tabInsetsKey(), cmInsets(-2, 4, -2, 4))
+      defaults.put(JBUI.CurrentTheme.EditorTabs.verticalTabInsetsKey(), cmInsets(2, 8, 1, 8))
       defaults.put(JBUI.CurrentTheme.EditorTabs.tabActionsInsetKey(), 0)
       defaults.put(JBUI.CurrentTheme.EditorTabs.fontKey(), Supplier { JBFont.medium() })
       // toolwindows

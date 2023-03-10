@@ -600,7 +600,19 @@ public final class JBUI {
       }
 
       public static Insets tabInsets() {
-        return insets("EditorTabs.tabInsets", isNewUI() ? insets(-7, 12, -7, 8) : insets(0, 8));
+        return insets(tabInsetsKey(), isNewUI() ? insets(-7, 12, -7, 8) : insets(0, 8));
+      }
+
+      public static String tabInsetsKey() {
+        return "EditorTabs.tabInsets";
+      }
+
+      public static Insets verticalTabInsets() {
+        return insets(verticalTabInsetsKey(), JBInsets.create(tabInsets()));
+      }
+
+      public static String verticalTabInsetsKey() {
+        return "EditorTabs.verticalTabInsets";
       }
 
       public static int tabActionsInset() {

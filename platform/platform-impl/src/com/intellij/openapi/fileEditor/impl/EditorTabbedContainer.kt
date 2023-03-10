@@ -551,7 +551,10 @@ private class EditorTabs(
       Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
     }
 
-    setUiDecorator { UiDecoration(null, JBUI.CurrentTheme.EditorTabs.tabInsets()) }
+    setUiDecorator {
+      val insets = if (isHorizontalTabs) JBUI.CurrentTheme.EditorTabs.tabInsets() else JBUI.CurrentTheme.EditorTabs.verticalTabInsets()
+      UiDecoration(null, insets)
+    }
     val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
     source.templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
     entryPointActionGroup = DefaultActionGroup(source)

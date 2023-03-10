@@ -394,6 +394,11 @@
       "description": "Inner insets around each editor tab"
     },
     {
+      "key": "EditorTabs.verticalTabInsets",
+      "description": "Inner insets around each editor tab when tabs placed left or right",
+      "since": "2023.1"
+    },
+    {
       "key": "EditorTabs.unselectedAlpha",
       "description": "The alpha coefficient (0..1) that is used to paint file icon if the tab is not selected and not hovered",
       "since": "2023.1"
