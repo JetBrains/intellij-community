@@ -108,7 +108,7 @@ public class XmlTextExtractor extends TextExtractor {
             markupIndices.add(group.size());
           }
         }
-        if (each instanceof OuterLanguageElement) {
+        if (each instanceof OuterLanguageElement || each instanceof XmlEntityRef) {
           flushGroup(true);
           unknownBefore = true;
         }
