@@ -6,6 +6,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Iconable;
@@ -80,6 +81,10 @@ public class GotoFileCellRenderer extends PsiElementListCellRenderer<PsiFileSyst
     VirtualFile root = index.getContentRootForFile(virtualFile);
     if (root == null) root = index.getClassRootForFile(virtualFile);
     if (root == null) root = index.getSourceRootForFile(virtualFile);
+    if (root == null || !root.isDirectory()) {
+      root = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(virtualFile);
+    }
+
     return root;
   }
 
