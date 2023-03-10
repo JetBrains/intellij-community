@@ -1,25 +1,20 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-stdlib" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.0-dev-3244">
-      <exclude>
-        <dependency maven-id="org.jetbrains:annotations" />
-      </exclude>
-    </properties>
+  <library name="kotlinc.kotlin-stdlib">
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/kotlin" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.0-dev-3244/kotlin-stdlib-jdk8-1.9.0-dev-3244.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.9.0-dev-3244/kotlin-stdlib-1.9.0-dev-3244.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.9.0-dev-3244/kotlin-stdlib-common-1.9.0-dev-3244.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.9.0-dev-3244/kotlin-stdlib-jdk7-1.9.0-dev-3244.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.255/kotlin-stdlib-jdk8-1.9.255.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.9.255/kotlin-stdlib-1.9.255.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.9.255/kotlin-stdlib-common-1.9.255.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.9.255/kotlin-stdlib-jdk7-1.9.255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.0-dev-3244/kotlin-stdlib-jdk8-1.9.0-dev-3244-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/1.9.0-dev-3244/kotlin-stdlib-1.9.0-dev-3244-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-common/1.9.0-dev-3244/kotlin-stdlib-common-1.9.0-dev-3244-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.9.0-dev-3244/kotlin-stdlib-jdk7-1.9.0-dev-3244-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk8/1.9.255/kotlin-stdlib-jdk8-1.9.255-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib/1.9.255/kotlin-stdlib-1.9.255-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-common/1.9.255/kotlin-stdlib-common-1.9.255-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/kotlin-stdlib-jdk7/1.9.255/kotlin-stdlib-jdk7-1.9.255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
