@@ -316,11 +316,11 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
   fun `test accept parameter reference diff`() {
     checkAcceptFullDiff("""
       import org.junit.Assert;
-      import org.testng.annotations.Test;
+      import org.junit.Test;
         
       public class MyJUnitTest {
         @Test
-        void testFoo() {
+        public void testFoo() {
           doTest("expected");
         }
             
@@ -330,11 +330,11 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
       }
     """.trimIndent(), """
       import org.junit.Assert;
-      import org.testng.annotations.Test;
+      import org.junit.Test;
         
       public class MyJUnitTest {
         @Test
-        void testFoo() {
+        public void testFoo() {
           doTest("actual");
         }
             
@@ -353,11 +353,11 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
   fun `test accept parameter reference diff multiple calls on same line`() {
     checkAcceptFullDiff("""
       import org.junit.Assert;
-      import org.testng.annotations.Test;
+      import org.junit.Test;
         
       public class MyJUnitTest {
         @Test
-        void testFoo() {
+        public void testFoo() {
           doAnotherTest(); doTest("expected"); 
         }
             
@@ -369,11 +369,11 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
       }
     """.trimIndent(), """
       import org.junit.Assert;
-      import org.testng.annotations.Test;
+      import org.junit.Test;
         
       public class MyJUnitTest {
         @Test
-        void testFoo() {
+        public void testFoo() {
           doAnotherTest(); doTest("actual"); 
         }
             
@@ -394,22 +394,22 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
   fun `test accept local variable reference diff`() {
     checkAcceptFullDiff("""
       import org.junit.Assert;
-      import org.testng.annotations.Test;
+      import org.junit.Test;
         
       public class MyJUnitTest {
         @Test
-        void testFoo() {
+        public void testFoo() {
           String exp = "expected";
           Assert.assertEquals(exp, "actual");
         }
       }
     """.trimIndent(), """
       import org.junit.Assert;
-      import org.testng.annotations.Test;
+      import org.junit.Test;
         
       public class MyJUnitTest {
         @Test
-        void testFoo() {
+        public void testFoo() {
           String exp = "actual";
           Assert.assertEquals(exp, "actual");
         }
@@ -424,25 +424,25 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
   fun `test accept field reference diff`() {
     checkAcceptFullDiff("""
       import org.junit.Assert;
-      import org.testng.annotations.Test;
+      import org.junit.Test;
         
       public class MyJUnitTest {
         private String exp = "expected";
             
         @Test
-        void testFoo() {
+        public void testFoo() {
           Assert.assertEquals(exp, "actual");
         }
       }
     """.trimIndent(), """
       import org.junit.Assert;
-      import org.testng.annotations.Test;
+      import org.junit.Test;
         
       public class MyJUnitTest {
         private String exp = "actual";
             
         @Test
-        void testFoo() {
+        public void testFoo() {
           Assert.assertEquals(exp, "actual");
         }
       }
@@ -450,6 +450,111 @@ class JavaTestDiffUpdateTest : JvmTestDiffUpdateTest() {
       at org.junit.Assert.assertEquals(Assert.java:117)
       at org.junit.Assert.assertEquals(Assert.java:146)
       at MyJUnitTest.testFoo(MyJUnitTest.java:9)
+    """.trimIndent())
+  }
+
+  fun `test accept parameter reference diff found using value search`() {
+    checkAcceptFullDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+        static class TestData {
+          private final String myExpected;
+          
+          TestData(String expected) {
+            myExpected = expected;
+          }
+          
+          public String getExpected() {
+            return myExpected;
+          }
+        }
+        
+        @Test
+        public void testFoo() {
+          doTest("expected");
+        }
+      
+        private static void doTest(String expected) {
+          TestData testData = new TestData(expected);
+          Assert.assertEquals(testData.expected, "actual");
+        }
+      }
+    """.trimIndent(), """
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+        static class TestData {
+          private final String myExpected;
+          
+          TestData(String expected) {
+            myExpected = expected;
+          }
+          
+          public String getExpected() {
+            return myExpected;
+          }
+        }
+        
+        @Test
+        public void testFoo() {
+          doTest("expected");
+        }
+      
+        private static void doTest(String expected) {
+          TestData testData = new TestData(expected);
+          Assert.assertEquals(testData.expected, "actual");
+        }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.doTest(MyJUnitTest.java:24)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:19)
+    """.trimIndent())
+  }
+
+  fun `test no diff parameter reference search found on duplicate expected literal`() {
+    checkHasNoDiff("""
+      import org.junit.Assert;
+      import org.junit.Test;
+      
+      public class MyJUnitTest {
+        static class TestData {
+          private final String myExpected;
+          
+          TestData(String expected) {
+            myExpected = expected;
+          }
+           
+          public String getExpected() {
+            return myExpected;
+          }
+        }
+        
+        @Test
+        public void testFoo() {
+          testBar("expected");
+        }
+        
+        private static void testBar(String expected) {
+          doTest(expected, "expected");
+        }
+        
+        private static void doTest(String expected, String out) {
+          System.out.println(out);
+          TestData testData = new TestData(expected);
+          Assert.assertEquals(testData.getExpected(), "actual");
+        }
+      }
+    """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+      at org.junit.Assert.assertEquals(Assert.java:117)
+      at org.junit.Assert.assertEquals(Assert.java:146)
+      at MyJUnitTest.doTest(MyJUnitTest.java:29)
+      at MyJUnitTest.testBar(MyJUnitTest.java:23)
+      at MyJUnitTest.testFoo(MyJUnitTest.java:19)
     """.trimIndent())
   }
 

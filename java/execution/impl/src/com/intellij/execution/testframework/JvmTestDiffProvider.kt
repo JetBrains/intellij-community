@@ -16,40 +16,49 @@ import com.siyeh.ig.testFrameworks.UAssertHint
 import org.jetbrains.uast.*
 
 abstract class JvmTestDiffProvider : TestDiffProvider {
-  final override fun findExpected(project: Project, stackTrace: String): PsiElement? {
-    var (searchStacktrace, expectedParam) = findExpectedEntryPoint(project, stackTrace) ?: return null
-    val lineParser = ExceptionLineParserFactory.getInstance().create(ExceptionInfoCache(project, GlobalSearchScope.allScope(project)))
-    searchStacktrace.lineSequence().forEach { line ->
+  abstract fun getStringLiteral(expected: PsiElement): PsiElement?
+
+  final override fun findExpected(project: Project, stackTrace: String, expected: String): PsiElement? {
+    val exceptionCache = ExceptionInfoCache(project, GlobalSearchScope.allScope(project))
+    val entryPoint = findExpectedEntryPoint(stackTrace, exceptionCache) ?: return null
+    val searchStacktrace = entryPoint.stackTrace
+    var expectedParam: UParameter? = entryPoint.param
+    val lineParser = ExceptionLineParserFactory.getInstance().create(exceptionCache)
+    val expectedArgCandidates = mutableListOf<UExpression>()
+    searchStacktrace.lines().forEach { line ->
       lineParser.execute(line, line.length) ?: return@findExpected null
       val file = lineParser.file ?: return@findExpected null
-      val diffProvider = TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION
-        .forLanguage(file.language).asSafely<JvmTestDiffProvider>() ?: return@findExpected null
-      val containingMethod = expectedParam.getContainingUMethod() ?: return@findExpected null
-      val failedCall = findFailedCall(file, lineParser.info.lineNumber, expectedParam.getContainingUMethod()) ?: return@findExpected null
-      val expectedArg = failedCall.getArgumentForParameter(containingMethod.uastParameters.indexOf(expectedParam)) ?: return@findExpected null
-      if (expectedArg.isInjectionHost()) {
-        return diffProvider.getStringLiteral(expectedArg.sourcePsi ?: return@forEach)
-      }
-      if (expectedArg is UReferenceExpression) {
-        val resolved = expectedArg.resolveToUElement()
-        if (resolved is UVariable && resolved.uastInitializer.isInjectionHost()) {
-          return diffProvider.getStringLiteral(resolved.uastInitializer?.sourcePsi ?: return@forEach)
-        }
-        if (resolved is UParameter) {
-          expectedParam = resolved
-          return@forEach
+      val failedCall = findFailedCall(file, lineParser.info.lineNumber, expectedParam?.getContainingUMethod()) ?: return@findExpected null
+      expectedArgCandidates.addAll(failedCall.valueArguments.filter {  arg ->
+        arg.isInjectionHost() && arg.asSafely<ULiteralExpression>()?.evaluateString() == expected
+      })
+      if (expectedParam != null) { // precise tracking don't need to look through whole stack trace
+        val containingMethod = expectedParam?.getContainingUMethod() ?: return@findExpected null
+        val diffProvider = TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(file.language).asSafely<JvmTestDiffProvider>()
+                           ?: return@findExpected null
+        val expectedArg = failedCall.getArgumentForParameter(containingMethod.uastParameters.indexOf(expectedParam))
+                          ?: return@findExpected null
+        if (expectedArg.isInjectionHost()) return diffProvider.getStringLiteral(expectedArg.sourcePsi ?: return@findExpected null)
+        if (expectedArg is UReferenceExpression) {
+          val resolved = expectedArg.resolveToUElement()
+          if (resolved is UVariable && resolved.uastInitializer.isInjectionHost()) {
+            return diffProvider.getStringLiteral(resolved.uastInitializer?.sourcePsi ?: return@findExpected null)
+          }
+          expectedParam = if (resolved is UParameter && resolved.uastParent is UMethod) {
+            val method = resolved.uastParent?.asSafely<UMethod>()
+            if (method != null && !method.isConstructor) resolved else null
+          } else null
         }
       }
     }
+    if (expectedArgCandidates.size == 1) return getStringLiteral(expectedArgCandidates.first().sourcePsi ?: return null)
     return null
   }
 
-  abstract fun getStringLiteral(expected: PsiElement): PsiElement?
-
   private data class ExpectedEntryPoint(val stackTrace: String, val param: UParameter)
 
-  private fun findExpectedEntryPoint(project: Project, stackTrace: String): ExpectedEntryPoint? {
-    val lineParser = ExceptionLineParserFactory.getInstance().create(ExceptionInfoCache(project, GlobalSearchScope.allScope(project)))
+  private fun findExpectedEntryPoint(stackTrace: String, exceptionCache: ExceptionInfoCache): ExpectedEntryPoint? {
+    val lineParser = ExceptionLineParserFactory.getInstance().create(exceptionCache)
     stackTrace.lineSequence().forEach { line ->
       lineParser.execute(line, line.length) ?: return@forEach
       val file = lineParser.file ?: return@findExpectedEntryPoint null

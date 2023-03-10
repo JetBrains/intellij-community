@@ -21,5 +21,5 @@ public interface TestDiffProvider {
    */
   @Nullable
   @RequiresReadLock
-  PsiElement findExpected(@NotNull Project project, @NotNull String stackTrace);
+  PsiElement findExpected(@NotNull Project project, @NotNull String stackTrace, @NotNull String expected);
 }

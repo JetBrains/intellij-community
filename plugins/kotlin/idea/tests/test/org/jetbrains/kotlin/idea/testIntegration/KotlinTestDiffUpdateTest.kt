@@ -427,6 +427,83 @@ class KotlinTestDiffUpdateTest : JvmTestDiffUpdateTest() {
         )
     }
 
+    fun `test accept parameter reference diff found using value search`() {
+        checkAcceptFullDiff(
+            """
+            import org.junit.Assert
+            import org.junit.Test
+            
+            class MyJUnitTest {
+                data class TestData(val expected: String)
+            
+                @Test
+                fun testFoo() {
+                    doTest("expected")
+                }
+            
+                private fun doTest(expected: String) {
+                    val testData = TestData(expected)
+                    Assert.assertEquals(testData.expected, "actual")
+                }
+            }
+        """.trimIndent(), """
+            import org.junit.Assert
+            import org.junit.Test
+            
+            class MyJUnitTest {
+                data class TestData(val expected: String)
+            
+                @Test
+                fun testFoo() {
+                    doTest("actual")
+                }
+            
+                private fun doTest(expected: String) {
+                    val testData = TestData(expected)
+                    Assert.assertEquals(testData.expected, "actual")
+                }
+            }
+        """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+            at org.junit.Assert.assertEquals(Assert.java:117)
+            at org.junit.Assert.assertEquals(Assert.java:146)
+            at MyJUnitTest.doTest(MyJUnitTest.kt:14)
+            at MyJUnitTest.testFoo(MyJUnitTest.kt:9)
+        """.trimIndent()
+        )
+    }
+
+    fun `test no diff parameter reference search found on duplicate expected literal`() {
+        checkHasNoDiff("""
+            import org.junit.Assert
+            import org.junit.Test
+            
+            class MyJUnitTest {
+                data class TestData(val expected: String)
+            
+                @Test
+                fun testFoo() {
+                    testBar("expected")
+                }
+            
+                private fun testBar(expected: String) {
+                    doTest(expected, "expected")
+                }
+            
+                private fun doTest(expected: String, out: String) {
+                    System.out.println(out)
+                    val testData = TestData(expected)
+                    Assert.assertEquals(testData.expected, "actual")
+                }
+            }
+        """.trimIndent(), "MyJUnitTest", "testFoo", "expected", "actual", """
+            at org.junit.Assert.assertEquals(Assert.java:117)
+            at org.junit.Assert.assertEquals(Assert.java:146)
+            at MyJUnitTest.doTest(MyJUnitTest.kt:19)
+            at MyJUnitTest.testBar(MyJUnitTest.kt:13)
+            at MyJUnitTest.testFoo(MyJUnitTest.kt:9)
+        """.trimIndent())
+    }
+
     fun `_test accept polyadic string literal diff`() {
         checkAcceptFullDiff(
             """
