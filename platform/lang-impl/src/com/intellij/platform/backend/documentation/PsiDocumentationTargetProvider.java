@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Implement this interface and register as {@code com.intellij.platform.documentation.psiTargetProvider} extension
+ * Implement this interface and register as {@code com.intellij.platform.backend.documentation.psiTargetProvider} extension
  * to provide a {@link DocumentationTarget} implementation by a {@link PsiElement}.
  *
  * @see DocumentationTargetProvider
@@ -19,7 +19,9 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiDocumentationTargetProvider {
 
   @Internal
-  ExtensionPointName<PsiDocumentationTargetProvider> EP_NAME = ExtensionPointName.create("com.intellij.platform.documentation.psiTargetProvider");
+  ExtensionPointName<PsiDocumentationTargetProvider> EP_NAME = ExtensionPointName.create(
+    "com.intellij.platform.backend.documentation.psiTargetProvider"
+  );
 
   /**
    * @return target to handle documentation actions which are invoked on the given {@code element},

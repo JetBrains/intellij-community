@@ -20,7 +20,9 @@ import java.util.List;
 public interface DocumentationTargetProvider {
 
   @Internal
-  ExtensionPointName<DocumentationTargetProvider> EP_NAME = ExtensionPointName.create("com.intellij.platform.documentation.targetProvider");
+  ExtensionPointName<DocumentationTargetProvider> EP_NAME = ExtensionPointName.create(
+    "com.intellij.platform.backend.documentation.targetProvider"
+  );
 
   @RequiresReadLock
   @RequiresBackgroundThread
