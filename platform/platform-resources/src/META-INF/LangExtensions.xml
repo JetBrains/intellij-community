@@ -1699,7 +1699,7 @@
     <inspectionResultsExportActionProvider implementation="com.intellij.codeInspection.ui.actions.ExportToHTMLAction"/>
     <inspectionResultsExportActionProvider implementation="com.intellij.codeInspection.ui.actions.ExportToXMLAction"/>
   </extensions>
-  <extensions defaultExtensionNs="com.intellij.platform">
+  <extensions defaultExtensionNs="com.intellij.platform.backend">
     <documentation.targetProvider
       implementation="com.intellij.lang.documentation.symbol.impl.DefaultTargetSymbolDocumentationTargetProvider"/>
     <documentation.linkHandler implementation="com.intellij.lang.documentation.psi.PsiDocumentationLinkHandler"/>

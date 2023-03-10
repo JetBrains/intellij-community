@@ -11,7 +11,9 @@ import org.jetbrains.annotations.Nullable;
 public interface DocumentationLinkHandler {
 
   @Internal
-  ExtensionPointName<DocumentationLinkHandler> EP_NAME = ExtensionPointName.create("com.intellij.platform.documentation.linkHandler");
+  ExtensionPointName<DocumentationLinkHandler> EP_NAME = ExtensionPointName.create(
+    "com.intellij.platform.backend.documentation.linkHandler"
+  );
 
   /**
    * @return result of resolving the given {@code url} to another {@link DocumentationTarget},
