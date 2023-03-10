@@ -69,6 +69,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull public static final TreeStateStrategy<?> ALWAYS_RESET = new AlwaysResetTreeStateStrategy();
   @NotNull public static final TreeStateStrategy<?> ALWAYS_KEEP = new AlwaysKeepTreeStateStrategy();
   @NotNull public static final TreeStateStrategy<?> KEEP_NON_EMPTY = new KeepNonEmptyTreeStateStrategy();
+  @NotNull public static final TreeStateStrategy<?> KEEP_SELECTED_OBJECTS = new KeepSelectedObjectsStrategy();
 
   @NotNull protected final Project myProject;
   private boolean myShowCheckboxes;
@@ -394,26 +395,40 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public void onGroupingChanged() {
-    List<Object> oldSelection = selected(this).userObjects();
-    rebuildTree();
-    setSelectedChanges(oldSelection);
+    rebuildTree(KEEP_SELECTED_OBJECTS);
   }
 
   public abstract void rebuildTree();
 
+  public void rebuildTree(@NotNull TreeStateStrategy<?> treeStateStrategy) {
+    TreeStateStrategy<?> oldTreeStateStrategy = myTreeStateStrategy;
+    myTreeStateStrategy = treeStateStrategy;
+    try {
+      rebuildTree();
+    }
+    finally {
+      myTreeStateStrategy = oldTreeStateStrategy;
+    }
+  }
+
   protected void updateTreeModel(@NotNull DefaultTreeModel model) {
+    updateTreeModel(model, myTreeStateStrategy);
+  }
+
+  protected void updateTreeModel(@NotNull DefaultTreeModel model,
+                                 @SuppressWarnings("rawtypes") @NotNull TreeStateStrategy treeStateStrategy) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     myModelUpdateInProgress = true;
     try {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-
-      Object state = myTreeStateStrategy.saveState(this);
+      Object state = treeStateStrategy.saveState(this);
 
       setModel(model);
       myIsModelFlat = isCurrentModelFlat();
       setShowsRootHandles(!myGroupingSupport.isNone() || !myIsModelFlat);
 
-      //noinspection rawtypes,unchecked
-      ((TreeStateStrategy)myTreeStateStrategy).restoreState(this, state, myScrollToSelection);
+      //noinspection unchecked
+      treeStateStrategy.restoreState(this, state, myScrollToSelection);
     }
     finally {
       myModelUpdateInProgress = false;
@@ -903,6 +918,20 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       }
       else {
         tree.resetTreeState();
+      }
+    }
+  }
+
+  private static class KeepSelectedObjectsStrategy implements TreeStateStrategy<List<Object>> {
+    @Override
+    public List<Object> saveState(@NotNull ChangesTree tree) {
+      return selected(tree).userObjects();
+    }
+
+    @Override
+    public void restoreState(@NotNull ChangesTree tree, List<Object> state, boolean scrollToSelection) {
+      if (state != null) {
+        tree.setSelectedChanges(state);
       }
     }
   }
