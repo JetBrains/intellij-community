@@ -342,7 +342,7 @@ public class ShelvedChangesViewManager implements Disposable {
       updateTreeIfShown(tree -> {
         ChangesGroupingSupport treeGroupingSupport = tree.getGroupingSupport();
         if (treeGroupingSupport.isAvailable(REPOSITORY_GROUPING) && treeGroupingSupport.get(REPOSITORY_GROUPING)) {
-          tree.rebuildTree();
+          tree.onGroupingChanged();
         }
       });
     }, myProject.getDisposed());
