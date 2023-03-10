@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.UtilBundle;
@@ -72,6 +72,7 @@ public final class DateFormatUtil {
     return TIME_FORMAT;
   }
 
+  @SuppressWarnings("IdentifierGrammar")
   public static @NotNull SyncDateFormat getTimeWithSecondsFormat() {
     return TIME_WITH_SECONDS_FORMAT;
   }
@@ -217,6 +218,7 @@ public final class DateFormatUtil {
   }
 
   /** @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatDateLong} */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NlsSafe @NotNull String formatAboutDialogDate(@NotNull Date date) {
     return formatAboutDialogDate(date.getTime());
