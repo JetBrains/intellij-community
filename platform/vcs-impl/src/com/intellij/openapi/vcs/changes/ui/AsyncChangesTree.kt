@@ -15,6 +15,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Function
 import javax.swing.tree.DefaultTreeModel
 
 /**
@@ -219,6 +220,31 @@ abstract class AsyncChangesTree : ChangesTree {
 
 interface AsyncChangesTreeModel {
   suspend fun buildTreeModel(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel
+}
+
+/**
+ * [com.intellij.openapi.progress.ProgressIndicator]-friendly wrapper.
+ */
+abstract class SimpleAsyncChangesTreeModel : AsyncChangesTreeModel {
+  @RequiresBackgroundThread
+  abstract fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel
+
+  final override suspend fun buildTreeModel(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
+    return coroutineToIndicator {
+      buildTreeModelSync(grouping)
+    }
+  }
+
+  companion object {
+    @JvmStatic
+    fun create(task: Function<ChangesGroupingPolicyFactory, DefaultTreeModel>): AsyncChangesTreeModel {
+      return object : SimpleAsyncChangesTreeModel() {
+        override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
+          return task.apply(grouping)
+        }
+      }
+    }
+  }
 }
 
 /**
