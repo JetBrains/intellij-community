@@ -339,7 +339,10 @@ public final class ClassPath {
         return null;
       }
 
-      Path path = files[searchOffset++];
+      // https://youtrack.jetbrains.com/issue/IDEA-314175
+      // some environments (e.g. Bazel tests) put relative jar paths on the Java classpath,
+      // because relative paths are useful for hermeticity.
+      Path path = files[searchOffset++].toAbsolutePath();
       try {
         Loader loader = createLoader(path);
         if (loader != null) {
