@@ -5,14 +5,12 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lang.java.JShellLanguage;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.javadoc.PsiSnippetDocTagImpl;
 import com.intellij.psi.impl.source.javadoc.SnippetDocTagManipulator;
-import com.intellij.psi.javadoc.PsiSnippetAttribute;
-import com.intellij.psi.javadoc.PsiSnippetAttributeList;
-import com.intellij.psi.javadoc.PsiSnippetDocTag;
-import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
+import com.intellij.psi.javadoc.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,24 +42,24 @@ public class JavadocInjector implements MultiHostInjector {
     if (valueElement == null) return JShellLanguage.INSTANCE;
     final PsiSnippetAttributeList attributeList = valueElement.getAttributeList();
 
-    for (PsiSnippetAttribute attribute : attributeList.getAttributes()) {
-      if (!PsiSnippetAttribute.LANG_ATTRIBUTE.equals(attribute.getName())) continue;
+    PsiSnippetAttribute attribute = attributeList.getAttribute(PsiSnippetAttribute.LANG_ATTRIBUTE);
+    if (attribute == null) {
+      return JShellLanguage.INSTANCE;
+    }
+    final PsiSnippetAttributeValue langValue = attribute.getValue();
 
-      final PsiElement langValue = attribute.getValue();
-      if (langValue == null) break;
-
-      final String langValueText = stripPossibleLeadingAndTrailingQuotes(langValue);
-
+    if (langValue != null) {
+      String langValueText = langValue.getValue();
       if ("java".equalsIgnoreCase(langValueText)) {
         return JShellLanguage.INSTANCE;
       }
 
       final Language language = findRegisteredLanguage(langValueText);
-      if (language == null) break;
-
-      return language;
+      if (language != null) {
+        return language;
+      }
     }
-    return JShellLanguage.INSTANCE;
+    return PlainTextLanguage.INSTANCE;
   }
 
   private static @Nullable Language findRegisteredLanguage(@NotNull String langValueText) {

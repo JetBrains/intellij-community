@@ -1817,31 +1817,35 @@ public class JavaDocInfoGenerator {
       return;
     }
     PsiSnippetDocTagBody body = value.getBody();
-    PsiSnippetAttribute[] attributes = value.getAttributeList().getAttributes();
-    PsiSnippetAttribute regionAttribute = ContainerUtil.find(attributes, attr -> attr.getName().equals(PsiSnippetAttribute.REGION_ATTRIBUTE));
+    PsiSnippetAttributeList list = value.getAttributeList();
+    PsiSnippetAttribute regionAttribute = list.getAttribute(PsiSnippetAttribute.REGION_ATTRIBUTE);
     String region = regionAttribute == null || regionAttribute.getValue() == null ? null :
                     regionAttribute.getValue().getValue();
     if (body != null) {
-      buffer.append("<pre>");
       List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(snippetTag.getProject()).getInjectedPsiFiles(snippetTag);
       PsiElement element = files != null ? files.get(0).first : null;
+      buffer.append("<pre>");
       generateSnippetBody(buffer, element != null ? element : body, region);
       buffer.append("</pre>");
     } else {
-      for (PsiSnippetAttribute attribute : attributes) {
-        PsiSnippetAttributeValue attrValue = attribute.getValue();
+      PsiSnippetAttribute refAttribute = list.getAttribute(PsiSnippetAttribute.CLASS_ATTRIBUTE);
+      if (refAttribute == null) {
+        refAttribute = list.getAttribute(PsiSnippetAttribute.FILE_ATTRIBUTE);
+      }
+      if (refAttribute != null) {
+        PsiSnippetAttributeValue attrValue = refAttribute.getValue();
         if (attrValue != null) {
           PsiReference ref = attrValue.getReference();
-          if (ref != null) {
-            PsiElement resolved = ref.resolve();
-            if (resolved instanceof PsiFile file) {
-              buffer.append("<pre>");
-              generateSnippetBody(buffer, file, region);
-              buffer.append("</pre>");
-            } else {
-              buffer.append(getSpanForUnresolvedItem()).append(JavaBundle.message("javadoc.snippet.not.found", attrValue.getValue()))
-                .append("</span>");
-            }
+          PsiElement resolved = ref == null ? null : ref.resolve();
+          if (resolved instanceof PsiFile file) {
+            buffer.append("<pre>");
+            generateSnippetBody(buffer, file, region);
+            buffer.append("</pre>");
+          }
+          else {
+            buffer.append(getSpanForUnresolvedItem()).append(JavaBundle.message("javadoc.snippet.not.found",
+                                                                                attrValue.getValue()))
+              .append("</span>");
           }
         }
       }
