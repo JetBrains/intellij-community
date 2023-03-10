@@ -332,7 +332,13 @@ public final class RenameUtil {
       final UsageOffset substitution = new UsageOffset(fileOffset, fileOffset + rangeInElement.getLength(), usage.newText);
       final UsageOffset duplicate = offsetMap.get(fileOffset);
       if (duplicate != null) {
-        LOG.assertTrue(duplicate.equals(substitution), "unequal renaming in the same place of document");
+        if (!duplicate.equals(substitution)) {
+          LOG.warn("ATTENTION! Unequal renaming in the same place in the document, possibly due to injection (read more in CPP-17316):\n"
+                    + "      document: " + document + "\n"
+                    + "       element: " + element + "\n"
+                    + "  first rename: " + substitution.newText + "(" + substitution.startOffset + ", " + substitution.endOffset + ")\n"
+                    + " second rename: " + duplicate.newText + "(" + duplicate.startOffset + ", " + duplicate.endOffset + ")");
+        }
       }
       else {
         offsetMap.put(fileOffset, substitution);
