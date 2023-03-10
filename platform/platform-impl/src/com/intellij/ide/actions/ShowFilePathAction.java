@@ -48,7 +48,7 @@ public class ShowFilePathAction extends DumbAwareAction {
     if (visible) {
       var file = getFile(e);
       e.getPresentation().setEnabled(file != null);
-      var isPopup = ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace()) || ActionPlaces.EDITOR_TAB_POPUP.equals(e.getPlace());
+      var isPopup = List.of(ActionPlaces.PROJECT_VIEW_POPUP, ActionPlaces.EDITOR_TAB_POPUP, ActionPlaces.BOOKMARKS_VIEW_POPUP).contains(e.getPlace());
       e.getPresentation().setText(ActionsBundle.message(isPopup ? "action.ShowFilePath.popup" : "action.ShowFilePath.text"));
     }
   }
