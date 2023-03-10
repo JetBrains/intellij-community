@@ -77,6 +77,10 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
     psiElement(PsiDocTag.class).withName(
       string().oneOf(PsiKeyword.THROWS, "exception")));
 
+  private static final PsiElementPattern<PsiDocToken, PsiElementPattern.Capture<PsiDocToken>>
+    SNIPPET_ATTRIBUTE_NAME = psiElement(PsiDocToken.class)
+    .withElementType(JavaDocTokenType.DOC_TAG_ATTRIBUTE_NAME).inside(psiElement(PsiSnippetAttribute.class));
+
   public JavaDocCompletionContributor() {
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME), new TagChooser());
 
@@ -142,6 +146,26 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
             if (exception != null && throwsSet.add(exception)) {
               result.addElement(TailTypeDecorator.withTail(new JavaPsiClassReferenceElement(exception), TailType.HUMBLE_SPACE_BEFORE_WORD));
             }
+          }
+        }
+      }
+    });
+    
+    extend(CompletionType.BASIC, SNIPPET_ATTRIBUTE_NAME, new CompletionProvider<>() {
+      static final String[] ATTRIBUTES = {
+        PsiSnippetAttribute.CLASS_ATTRIBUTE, PsiSnippetAttribute.FILE_ATTRIBUTE, PsiSnippetAttribute.LANG_ATTRIBUTE,
+        PsiSnippetAttribute.REGION_ATTRIBUTE, PsiSnippetAttribute.ID_ATTRIBUTE
+      };
+      
+      @Override
+      protected void addCompletions(@NotNull CompletionParameters parameters,
+                                    @NotNull ProcessingContext context,
+                                    @NotNull CompletionResultSet result) {
+        PsiSnippetAttributeList list = ObjectUtils.tryCast(parameters.getPosition().getParent().getParent(), PsiSnippetAttributeList.class);
+        if (list == null) return;
+        for (String attribute : ATTRIBUTES) {
+          if (list.getAttribute(attribute) == null) {
+            result.addElement(TailTypeDecorator.withTail(LookupElementBuilder.create(attribute).withTailText("=", true), TailType.EQUALS));
           }
         }
       }
@@ -286,7 +310,7 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         result.addElement(LookupElementDecorator.withInsertHandler(element, wrapIntoLinkTag((context, item) -> element.handleInsert(context))));
       }
     }
-    else if (matcher.getPrefix().length() > 0) {
+    else if (!matcher.getPrefix().isEmpty()) {
       InsertHandler<JavaPsiClassReferenceElement> handler = wrapIntoLinkTag(JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER);
       AllClassesGetter.processJavaClasses(parameters, matcher, parameters.getInvocationCount() == 1, psiClass ->
         result.addElement(AllClassesGetter.createLookupItem(psiClass, handler)));

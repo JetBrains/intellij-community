@@ -181,6 +181,7 @@ public final class JavadocParser {
         parseSnippetTagBody(builder);
       }
     } else {
+      JavaParserUtil.emptyElement(builder, JavaDocElementType.DOC_SNIPPET_ATTRIBUTE_LIST);
       IElementType current = getTokenType(builder);
       while (current != null && current != JavaDocTokenType.DOC_INLINE_TAG_END) {
         builder.advanceLexer();

@@ -13,6 +13,11 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Experimental
 public interface PsiSnippetAttribute extends PsiElement {
   /**
+   * Snippet ID (adds an anchor to generated javadoc)
+   */
+  String ID_ATTRIBUTE = "id";
+
+  /**
    * External class location (relative to {@link #SNIPPETS_FOLDER})
    */
   String CLASS_ATTRIBUTE = "class";

@@ -855,4 +855,22 @@ interface Bar<T> extends Foo<T> {
     myFixture.type('\n')
     myFixture.checkResult("/**\n * {@snippet class=\"sub.Test\"}\n */\npublic class Demo {}")
   }
+  
+  void testInSnippetAttribute() {
+    myFixture.configureByText "a.java", "/**\n * {@snippet cl<caret>}\n */\npublic class Demo {}"
+    myFixture.complete(CompletionType.BASIC, 0)
+    myFixture.checkResult("/**\n * {@snippet class=<caret>}\n */\npublic class Demo {}")
+  }
+  
+  void testInSnippetAttribute2() {
+    myFixture.configureByText "a.java", "/**\n * {@snippet cl<caret>=x}\n */\npublic class Demo {}"
+    myFixture.complete(CompletionType.BASIC, 0)
+    myFixture.checkResult("/**\n * {@snippet class=<caret>x}\n */\npublic class Demo {}")
+  }
+  
+  void testInSnippetAttribute3() {
+    myFixture.configureByText "a.java", "/**\n * {@snippet class=X cl<caret>}\n */\npublic class Demo {}"
+    myFixture.complete(CompletionType.BASIC, 0)
+    myFixture.checkResult("/**\n * {@snippet class=X cl<caret>}\n */\npublic class Demo {}")
+  }
 }
