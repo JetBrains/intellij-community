@@ -23,6 +23,7 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntityReference;
 import com.intellij.workspaceModel.storage.EntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -30,13 +31,14 @@ import java.util.function.Predicate;
 
 import static com.intellij.util.indexing.roots.IndexableEntityProvider.IndexableIteratorBuilder;
 
-public class ReincludedRootsUtil {
+public final class ReincludedRootsUtil {
   private static final Logger LOG = Logger.getInstance(ReincludedRootsUtil.class);
 
   private ReincludedRootsUtil() {
   }
 
-  public record Data(@NotNull List<IndexableIteratorBuilder> builders, @NotNull List<VirtualFile> rootsFromAdditionalLibraryRootsProviders) {
+  public record Data(@NotNull List<IndexableIteratorBuilder> builders,
+                     @NotNull List<VirtualFile> rootsFromAdditionalLibraryRootsProviders) {
   }
 
 
@@ -44,7 +46,7 @@ public class ReincludedRootsUtil {
   public static List<IndexableIteratorBuilder> createBuildersForReincludedFiles(@NotNull Project project,
                                                                                 @NotNull Collection<VirtualFile> reincludedRoots) {
     Data data = createBuildersDataForReincludedFiles(project, reincludedRoots);
-    if(data.rootsFromAdditionalLibraryRootsProviders().isEmpty()) return data.builders;
+    if (data.rootsFromAdditionalLibraryRootsProviders().isEmpty()) return data.builders;
 
     List<IndexableIteratorBuilder> result = new ArrayList<>(data.builders);
     List<VirtualFile> rootsFromLibs = data.rootsFromAdditionalLibraryRootsProviders;
@@ -77,6 +79,26 @@ public class ReincludedRootsUtil {
 
     List<VirtualFile> filesFromIndexableSetContributors = new ArrayList<>();
     List<VirtualFile> filesFromAdditionalLibraryRootsProviders = new ArrayList<>();
+    Set<EntityReference<?>> references = new HashSet<>();
+    record ModuleRootData(@NotNull EntityReference<?> entityReference, @NotNull ModuleId moduleId, @NotNull VirtualFile file) {
+      Collection<IndexableIteratorBuilder> createNonCustomBuilders() {
+        return IndexableIteratorBuilders.INSTANCE.forModuleRootsFileBased(moduleId, Collections.singletonList(file));
+      }
+    }
+    List<ModuleRootData> filesFromModulesContent = new ArrayList<>();
+    record ContentRootData(@NotNull EntityReference<?> entityReference, @NotNull VirtualFile file) {
+      Collection<IndexableIteratorBuilder> createNonCustomBuilders() {
+        return IndexableIteratorBuilders.INSTANCE.forModuleUnawareContentEntity(entityReference, Collections.singletonList(file));
+      }
+    }
+    List<ContentRootData> filesFromContent = new ArrayList<>();
+    record ExternalRootData(@NotNull EntityReference<?> entityReference, @NotNull Collection<VirtualFile> roots,
+                            @NotNull Collection<VirtualFile> sourceRoots) {
+      Collection<IndexableIteratorBuilder> createNonCustomBuilders() {
+        return IndexableIteratorBuilders.INSTANCE.forExternalEntity(entityReference, roots, sourceRoots);
+      }
+    }
+    List<ExternalRootData> filesFromExternal = new ArrayList<>();
 
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
     WorkspaceFileIndex workspaceFileIndex = WorkspaceFileIndex.getInstance(project);
@@ -91,18 +113,18 @@ public class ReincludedRootsUtil {
         continue;
       }
 
+      EntityReference<?> entityReference = WorkspaceFileSetRecognizer.INSTANCE.getEntityReference(fileSet);
+
       if (fileSet.getKind() == WorkspaceFileKind.CONTENT || fileSet.getKind() == WorkspaceFileKind.TEST_CONTENT) {
+        LOG.assertTrue(entityReference != null, "Content element's fileSet without entity reference, " + fileSet);
         Module module = WorkspaceFileSetRecognizer.INSTANCE.getModuleForContent(fileSet);
         if (module != null) {
-          result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleRootsFileBased(((ModuleBridge)module).getModuleEntityId(),
-                                                                                   Collections.singletonList(file)));
-          iterator.remove();
-          continue;
+          filesFromModulesContent.add(new ModuleRootData(entityReference, ((ModuleBridge)module).getModuleEntityId(), file));
         }
-
-        EntityReference<?> entityReference = WorkspaceFileSetRecognizer.INSTANCE.getEntityReference(fileSet);
-        LOG.assertTrue(entityReference != null, "Content element's fileSet without entity reference, " + fileSet);
-        result.addAll(IndexableIteratorBuilders.INSTANCE.forModuleUnawareContentEntity(entityReference, Collections.singletonList(file)));
+        else {
+          filesFromContent.add(new ContentRootData(entityReference, file));
+        }
+        references.add(entityReference);
         iterator.remove();
         continue;
       }
@@ -133,10 +155,22 @@ public class ReincludedRootsUtil {
         continue;
       }
 
-      EntityReference<?> entityReference = WorkspaceFileSetRecognizer.INSTANCE.getEntityReference(fileSet);
       LOG.assertTrue(entityReference != null, "External element's fileSet without entity reference, " + fileSet);
-      result.addAll(IndexableIteratorBuilders.INSTANCE.forExternalEntity(entityReference, roots, sourceRoots));
+      filesFromExternal.add(new ExternalRootData(entityReference, roots, sourceRoots));
+      references.add(entityReference);
       iterator.remove();
+    }
+
+    if (!references.isEmpty()) {
+      for (ModuleRootData data : filesFromModulesContent) {
+        result.addAll(data.createNonCustomBuilders());
+      }
+      for (ContentRootData data : filesFromContent) {
+        result.addAll(data.createNonCustomBuilders());
+      }
+      for (ExternalRootData data : filesFromExternal) {
+        result.addAll(data.createNonCustomBuilders());
+      }
     }
 
     if (!filesFromIndexableSetContributors.isEmpty()) {
