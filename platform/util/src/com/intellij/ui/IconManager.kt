@@ -171,7 +171,7 @@ private class DummyRowIcon : DummyIconImpl, RowIcon {
 
   override fun hashCode(): Int = if (icons!!.isNotEmpty()) icons!![0].hashCode() else 0
 
-  override fun toString(): String = "Row icon. myIcons=$icons"
+  override fun toString(): String = "RowIcon(icons=${icons?.asList()})"
 
   override fun replaceBy(replacer: IconReplacer): Icon = this
 }

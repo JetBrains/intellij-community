@@ -186,7 +186,7 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
 
   @Override
   public String toString() {
-    return "Row icon. myIcons=" + Arrays.asList(myIcons);
+    return "RowIcon(icons=" + Arrays.asList(myIcons) + ")";
   }
 
   @Override
