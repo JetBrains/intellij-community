@@ -39,13 +39,6 @@ public interface MavenServerEmbedder extends Remote {
     throws RemoteException;
 
   @NotNull
-  List<String> retrieveAvailableVersions(@NotNull String groupId,
-                                         @NotNull String artifactId,
-                                         @NotNull List<MavenRemoteRepository> remoteRepositories, MavenToken token)
-    throws RemoteException;
-
-
-  @NotNull
   Collection<MavenServerExecutionResult> resolveProject(@NotNull Collection<File> files,
                                                         @NotNull Collection<String> activeProfiles,
                                                         @NotNull Collection<String> inactiveProfiles,

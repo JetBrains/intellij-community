@@ -33,13 +33,6 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     }
   }
 
-  override fun retrieveAvailableVersions(groupId: String,
-                                         artifactId: String,
-                                         remoteRepositories: List<MavenRemoteRepository>,
-                                         token: MavenToken?): List<String> {
-    return emptyList()
-  }
-
   abstract override fun resolveProject(files: Collection<File>,
                                        activeProfiles: Collection<String>,
                                        inactiveProfiles: Collection<String>,
