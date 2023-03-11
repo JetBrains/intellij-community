@@ -102,17 +102,6 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     });
   }
 
-  public void customizeForGetVersions() {
-    perform(() -> {
-      doCustomizeComponents();
-      return null;
-    });
-  }
-
-  private synchronized void doCustomizeComponents() throws RemoteException {
-    getOrCreateWrappee().customizeComponents(ourToken);
-  }
-
   private synchronized void doCustomize() throws RemoteException {
     MavenServerPullProgressIndicator pullProgressIndicator =
       getOrCreateWrappee().customizeAndGetProgressIndicator(myCustomization.workspaceMap,
@@ -353,27 +342,12 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     }
   }
 
-
-  public void clearCaches() {
-    MavenServerEmbedder w = getWrappee();
-    if (w == null) return;
-    try {
-      w.clearCaches(ourToken);
-    }
-    catch (RemoteException e) {
-      handleRemoteError(e);
-    }
-  }
-
+  /**
+   * @deprecated This method does nothing (kept for a while for compatibility reasons).
+   */
+  // used in https://plugins.jetbrains.com/plugin/8053-azure-toolkit-for-intellij
+  @Deprecated(forRemoval = true)
   public void clearCachesFor(MavenId projectId) {
-    MavenServerEmbedder w = getWrappee();
-    if (w == null) return;
-    try {
-      w.clearCachesFor(projectId, ourToken);
-    }
-    catch (RemoteException e) {
-      handleRemoteError(e);
-    }
   }
 
   private synchronized void setCustomization(MavenConsole console,

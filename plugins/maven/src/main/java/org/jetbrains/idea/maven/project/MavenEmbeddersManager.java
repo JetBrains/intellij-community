@@ -32,7 +32,6 @@ public class MavenEmbeddersManager {
 
   private final Map<Trinity<Key, String, String>, MavenEmbedderWrapper> myPool = ContainerUtil.createSoftValueMap();
   private final Set<MavenEmbedderWrapper> myEmbeddersInUse = new HashSet<>();
-  private final Set<MavenEmbedderWrapper> myEmbeddersToClear = new HashSet<>();
 
   public MavenEmbeddersManager(Project project) {
     myProject = project;
@@ -40,14 +39,6 @@ public class MavenEmbeddersManager {
 
   public synchronized void reset() {
     releasePooledEmbedders(false);
-  }
-
-  public synchronized void clearCaches() {
-    forEachPooled(false, each -> {
-      each.clearCaches();
-      return null;
-    });
-    myEmbeddersToClear.addAll(myEmbeddersInUse);
   }
 
   @NotNull
@@ -78,17 +69,11 @@ public class MavenEmbeddersManager {
   public synchronized void release(@NotNull MavenEmbedderWrapper embedder) {
     if (!myEmbeddersInUse.contains(embedder)) {
       embedder.release();
-      myEmbeddersToClear.remove(embedder);
       return;
     }
 
     embedder.reset();
     myEmbeddersInUse.remove(embedder);
-
-    if (myEmbeddersToClear.contains(embedder)) {
-      embedder.clearCaches();
-      myEmbeddersToClear.remove(embedder);
-    }
   }
 
   @TestOnly
@@ -110,7 +95,6 @@ public class MavenEmbeddersManager {
     });
     myPool.clear();
     myEmbeddersInUse.clear();
-    myEmbeddersToClear.clear();
   }
 
   private void forEachPooled(boolean includeInUse, Function<MavenEmbedderWrapper, ?> func) {

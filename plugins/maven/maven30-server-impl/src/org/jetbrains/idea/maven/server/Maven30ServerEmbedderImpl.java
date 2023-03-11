@@ -532,8 +532,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
   }
 
-  @Override
-  public void customizeComponents(MavenToken token) throws RemoteException {
+  private void customizeComponents(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     // replace some plexus components
     myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
@@ -1206,18 +1205,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   public void release(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     myContainer.dispose();
-  }
-
-  @Override
-  public void clearCaches(MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-    // do nothing
-  }
-
-  @Override
-  public void clearCachesFor(final MavenId projectId, MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
-    // do nothing
   }
 
   @Override

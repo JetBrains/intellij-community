@@ -490,8 +490,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
       @Override
       public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-        myEmbeddersManager.clearCaches();
-
         unscheduleAllTasks(deleted);
 
         List<MavenProject> updatedProjects = MavenUtil.collectFirsts(updated);

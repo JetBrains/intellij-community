@@ -704,8 +704,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
-  @Override
-  public void customizeComponents(MavenToken token) throws RemoteException {
+  protected void customizeComponents(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
 
@@ -1832,18 +1831,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
     }
-  }
-
-  @Override
-  public void clearCaches(MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    // do nothing
-  }
-
-  @Override
-  public void clearCachesFor(final MavenId projectId, MavenToken token) {
-    MavenServerUtil.checkToken(token);
-    // do nothing
   }
 
   @Override
