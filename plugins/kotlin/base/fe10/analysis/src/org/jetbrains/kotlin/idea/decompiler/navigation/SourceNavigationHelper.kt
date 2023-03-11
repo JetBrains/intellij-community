@@ -56,7 +56,7 @@ object SourceNavigationHelper {
     fun targetClassFilesToSourcesScopes(virtualFile: VirtualFile, project: Project): List<GlobalSearchScope> {
         val binaryModuleInfos = ModuleInfoProvider.getInstance(project)
             .collectLibraryBinariesModuleInfos(virtualFile)
-            .toList()
+            .toSet()
 
         val primaryScope = binaryModuleInfos.mapNotNull { it.sourcesModuleInfo?.sourceScope() }.union()
         val additionalScope = binaryModuleInfos.flatMap {
@@ -88,7 +88,7 @@ object SourceNavigationHelper {
                         return ModuleInfoProvider.getInstance(project)
                             .collectLibraryBinariesModuleInfos(psiClass.containingFile.virtualFile)
                             .map { it.binariesScope }
-                            .toList()
+                            .toSet()
                             .union()
                     }
                 }
