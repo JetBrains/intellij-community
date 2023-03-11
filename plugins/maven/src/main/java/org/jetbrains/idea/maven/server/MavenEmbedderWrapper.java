@@ -162,13 +162,6 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     super.cleanup();
   }
 
-  public MavenServerExecutionResult resolveProject(@NotNull final VirtualFile file,
-                                                   @NotNull final Collection<String> activeProfiles,
-                                                   @NotNull final Collection<String> inactiveProfiles)
-    throws MavenProcessCanceledException {
-    return resolveProject(Collections.singleton(file), activeProfiles, inactiveProfiles).iterator().next();
-  }
-
   @NotNull
   public Collection<MavenServerExecutionResult> resolveProject(@NotNull final Collection<VirtualFile> files,
                                                                @NotNull final Collection<String> activeProfiles,
@@ -231,14 +224,6 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     @NotNull final List<MavenArtifactInfo> artifacts,
     @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
     return performCancelable(() -> getOrCreateWrappee().resolveArtifactTransitively(artifacts, remoteRepositories, ourToken));
-  }
-
-  @NotNull
-  public List<String> retrieveVersions(@NotNull final String groupId,
-                                       @NotNull final String artifactId,
-                                       @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
-
-    return performCancelable(() -> getOrCreateWrappee().retrieveAvailableVersions(groupId, artifactId, remoteRepositories, ourToken));
   }
 
   public Collection<MavenArtifact> resolvePlugin(@NotNull final MavenPlugin plugin,
