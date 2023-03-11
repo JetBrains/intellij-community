@@ -59,14 +59,21 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
     if (newValue != isNewUI() && suggestRestart) {
       val action = if (ApplicationManager.getApplication().isRestartCapable) IdeBundle.message("ide.restart.action")
       else IdeBundle.message("ide.shutdown.action")
-      val result = Messages.showYesNoDialog(IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
-                                                              ApplicationNamesInfo.getInstance().fullProductName),
-                                            IdeBundle.message("dialog.title.restart.required"),
-                                            action,
-                                            IdeBundle.message("ide.notnow.action"),
-                                            Messages.getQuestionIcon())
-      if (result == Messages.YES) {
-        ApplicationManagerEx.getApplicationEx().restart(true);
+      if (PlatformUtils.isJetBrainsClient()) {
+        Registry.get("ide.experimental.ui").setValue(newValue)
+      }
+      else {
+        val result = Messages.showYesNoDialog(IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
+                                                                ApplicationNamesInfo.getInstance().fullProductName),
+                                              IdeBundle.message("dialog.title.restart.required"),
+                                              action,
+                                              IdeBundle.message("ide.notnow.action"),
+                                              Messages.getQuestionIcon())
+
+
+        if (result == Messages.YES) {
+          ApplicationManagerEx.getApplicationEx().restart(true);
+        }
       }
     }
   }
@@ -130,8 +137,7 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
       if (lafManager.autodetect) {
         if (JBColor.isBright()) {
           lafManager.setPreferredLightLaf(laf)
-        }
-        else {
+        } else {
           lafManager.setPreferredDarkLaf(laf)
         }
       }
