@@ -143,9 +143,4 @@ public final class AppMode {
   public static boolean isDevServer() {
     return Boolean.getBoolean("idea.use.dev.build.server");
   }
-
-  public static String getDevBuildRunDirName(@NotNull String platformPrefix) {
-    String result = System.getProperty("dev.build.dir");
-    return result != null ? result : platformPrefix.equals("Idea") ? "idea-community" : platformPrefix;
-  }
 }

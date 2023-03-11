@@ -7,7 +7,6 @@ import com.intellij.openapi.application.PathManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.ConsoleSpanExporter
-import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.TracerProviderManager
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
@@ -31,16 +30,11 @@ private class DevMainImpl {
             keepHttpClient = false,
             platformClassPathConsumer = { classPath, runDir ->
               newClassPath = classPath
-
               homePath = runDir.invariantSeparatorsPathString
 
-              // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
-              val libDir = runDir.resolve("lib")
-              System.setProperty("jna.boot.library.path", "$libDir/jna/${JvmArchitecture.currentJvmArch.dirName}")
-              System.setProperty("pty4j.preferred.native.folder", "$libDir/pty4j")
-              // require bundled JNA dispatcher lib
-              System.setProperty("jna.nosys", "true")
-              System.setProperty("jna.noclasspath", "true")
+              for ((name, value) in getIdeSystemProperties(runDir)) {
+                System.setProperty(name, value)
+              }
             },
           ))
 

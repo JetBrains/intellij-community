@@ -23,7 +23,6 @@ import java.awt.GraphicsEnvironment
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
-import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -142,14 +141,7 @@ fun initClassLoader(addCwmLibs: Boolean) {
   val distDir = Path.of(PathManager.getHomePath())
   val classLoader = AppMode::class.java.classLoader as? PathClassLoader
                     ?: throw RuntimeException("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
-  if (AppMode.isDevServer()) {
-    loadClassPathFromDevBuild(distDir)?.let {
-      classLoader.classPath.addFiles(it)
-    }
-    return
-  }
-
-  val classpath: MutableCollection<Path> = LinkedHashSet()
+  val classpath = LinkedHashSet<Path>()
   val preinstalledPluginDir = distDir.resolve("plugins")
   var pluginDir = preinstalledPluginDir
   var marketPlaceBootDir = BootstrapClassLoaderUtil.findMarketplaceBootDir(pluginDir)
@@ -193,9 +185,11 @@ fun initClassLoader(addCwmLibs: Boolean) {
     // so set the system loader to something that can find projector libs
     updateSystemClassLoader = true
   }
+
   if (!classpath.isEmpty()) {
-    classLoader.classPath.addFiles(java.util.List.copyOf(classpath))
+    classLoader.classPath.addFiles(classpath)
   }
+
   if (installMarketplace) {
     try {
       val spiLoader = PathClassLoader(UrlClassLoader.build().files(listOf(mpBoot)).parent(classLoader))
@@ -216,25 +210,6 @@ fun initClassLoader(addCwmLibs: Boolean) {
     val aClass = ClassLoader::class.java
     MethodHandles.privateLookupIn(aClass, MethodHandles.lookup()).findStaticSetter(aClass, "scl", aClass).invoke(classLoader)
   }
-}
-
-private fun loadClassPathFromDevBuild(distDir: Path): List<Path>? {
-  val platformPrefix = System.getProperty("idea.platform.prefix", "idea")
-  val devRunDir = distDir.resolve("out/dev-run")
-  val productDevRunDir = devRunDir.resolve(AppMode.getDevBuildRunDirName(platformPrefix))
-  val coreClassPathFile = productDevRunDir.resolve("core-classpath.txt")
-  if (Files.notExists(coreClassPathFile)) {
-    return null
-  }
-
-  val fs = FileSystems.getDefault()
-  val result = ArrayList<Path>()
-  for (s in Files.readAllLines(coreClassPathFile)) {
-    if (!s.isEmpty()) {
-      result.add(fs.getPath(s))
-    }
-  }
-  return result
 }
 
 private fun addBootstrapTiming(name: String, startupTimings: MutableList<Any>) {

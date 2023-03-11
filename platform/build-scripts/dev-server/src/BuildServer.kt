@@ -10,6 +10,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.closeKtorClient
 import java.nio.file.Files
@@ -23,6 +24,19 @@ internal data class Configuration(@JvmField val products: Map<String, ProductCon
 internal data class ProductConfiguration(@JvmField val modules: List<String>, @JvmField @SerialName("class") val className: String)
 
 private const val PRODUCTS_PROPERTIES_PATH = "build/dev-build.json"
+
+@Suppress("SpellCheckingInspection")
+fun getIdeSystemProperties(runDir: Path): Map<String, String> {
+  // see BuildContextImpl.getAdditionalJvmArguments - we should somehow deduplicate code
+  val libDir = runDir.resolve("lib")
+  return mapOf(
+    "jna.boot.library.path" to "$libDir/jna/${JvmArchitecture.currentJvmArch.dirName}",
+    "pty4j.preferred.native.folder" to "$libDir/pty4j",
+    // require bundled JNA dispatcher lib
+    "jna.nosys" to "true",
+    "jna.noclasspath" to "true",
+  )
+}
 
 suspend fun buildProductInProcess(request: BuildRequest) {
   TraceManager.spanBuilder("build ide").setAttribute("request", request.toString()).useWithScope2 {
