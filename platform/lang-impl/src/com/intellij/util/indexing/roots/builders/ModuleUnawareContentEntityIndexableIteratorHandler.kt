@@ -6,20 +6,29 @@ import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.ModuleUnawareContentEntityIteratorImpl
 import com.intellij.workspaceModel.storage.EntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 class ModuleUnawareContentEntityIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun accepts(builder: IndexableEntityProvider.IndexableIteratorBuilder): Boolean {
-    return builder is ModuleUnawareContentEntityBuilder
+    return builder is ModuleUnawareContentEntityBuilder<*>
   }
 
   override fun instantiate(builders: Collection<IndexableEntityProvider.IndexableIteratorBuilder>,
                            project: Project,
                            entityStorage: EntityStorage): List<IndexableFilesIterator> {
     @Suppress("UNCHECKED_CAST")
-    builders as Collection<ModuleUnawareContentEntityBuilder>
+    builders as Collection<ModuleUnawareContentEntityBuilder<WorkspaceEntity>>
 
-    return builders.groupBy { it.entityReference }.map {
+    val (custom, usual) = builders.partition { it.customization != null }
+
+    val customIterators = custom.flatMap {
+      it.customization!!.createModuleUnawareContentIterators(it.entityReference, it.roots)
+    }
+
+    val usualIterators = usual.groupBy { it.entityReference }.map {
       ModuleUnawareContentEntityIteratorImpl(it.key, it.value.flatMap { builder -> builder.roots })
     }
+
+    return usualIterators + customIterators
   }
 }

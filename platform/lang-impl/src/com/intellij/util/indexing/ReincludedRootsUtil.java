@@ -8,23 +8,29 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.SyntheticLibrary;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.roots.IndexingContributorCustomization;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
 import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetRecognizer;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntityReference;
 import com.intellij.workspaceModel.storage.EntityStorage;
+import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -79,26 +85,7 @@ public final class ReincludedRootsUtil {
 
     List<VirtualFile> filesFromIndexableSetContributors = new ArrayList<>();
     List<VirtualFile> filesFromAdditionalLibraryRootsProviders = new ArrayList<>();
-    Set<EntityReference<?>> references = new HashSet<>();
-    record ModuleRootData(@NotNull EntityReference<?> entityReference, @NotNull ModuleId moduleId, @NotNull VirtualFile file) {
-      Collection<IndexableIteratorBuilder> createNonCustomBuilders() {
-        return IndexableIteratorBuilders.INSTANCE.forModuleRootsFileBased(moduleId, Collections.singletonList(file));
-      }
-    }
-    List<ModuleRootData> filesFromModulesContent = new ArrayList<>();
-    record ContentRootData(@NotNull EntityReference<?> entityReference, @NotNull VirtualFile file) {
-      Collection<IndexableIteratorBuilder> createNonCustomBuilders() {
-        return IndexableIteratorBuilders.INSTANCE.forModuleUnawareContentEntity(entityReference, Collections.singletonList(file));
-      }
-    }
-    List<ContentRootData> filesFromContent = new ArrayList<>();
-    record ExternalRootData(@NotNull EntityReference<?> entityReference, @NotNull Collection<VirtualFile> roots,
-                            @NotNull Collection<VirtualFile> sourceRoots) {
-      Collection<IndexableIteratorBuilder> createNonCustomBuilders() {
-        return IndexableIteratorBuilders.INSTANCE.forExternalEntity(entityReference, roots, sourceRoots);
-      }
-    }
-    List<ExternalRootData> filesFromExternal = new ArrayList<>();
+    CustomizableRootsBuilder customizableRootsBuilder = new CustomizableRootsBuilder();
 
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
     WorkspaceFileIndex workspaceFileIndex = WorkspaceFileIndex.getInstance(project);
@@ -119,12 +106,11 @@ public final class ReincludedRootsUtil {
         LOG.assertTrue(entityReference != null, "Content element's fileSet without entity reference, " + fileSet);
         Module module = WorkspaceFileSetRecognizer.INSTANCE.getModuleForContent(fileSet);
         if (module != null) {
-          filesFromModulesContent.add(new ModuleRootData(entityReference, ((ModuleBridge)module).getModuleEntityId(), file));
+          customizableRootsBuilder.addModuleRoot(module, entityReference, file);
         }
         else {
-          filesFromContent.add(new ContentRootData(entityReference, file));
+          customizableRootsBuilder.addContentRoot(entityReference, file);
         }
-        references.add(entityReference);
         iterator.remove();
         continue;
       }
@@ -156,22 +142,11 @@ public final class ReincludedRootsUtil {
       }
 
       LOG.assertTrue(entityReference != null, "External element's fileSet without entity reference, " + fileSet);
-      filesFromExternal.add(new ExternalRootData(entityReference, roots, sourceRoots));
-      references.add(entityReference);
+      customizableRootsBuilder.addExternalRoots(entityReference, roots, sourceRoots);
       iterator.remove();
     }
 
-    if (!references.isEmpty()) {
-      for (ModuleRootData data : filesFromModulesContent) {
-        result.addAll(data.createNonCustomBuilders());
-      }
-      for (ContentRootData data : filesFromContent) {
-        result.addAll(data.createNonCustomBuilders());
-      }
-      for (ExternalRootData data : filesFromExternal) {
-        result.addAll(data.createNonCustomBuilders());
-      }
-    }
+    result.addAll(customizableRootsBuilder.createBuilders(entityStorage));
 
     if (!filesFromIndexableSetContributors.isEmpty()) {
       for (IndexableSetContributor contributor : IndexableSetContributor.EP_NAME.getExtensionList()) {
@@ -197,6 +172,103 @@ public final class ReincludedRootsUtil {
       throw new IllegalStateException("Roots were not found: " + StringUtil.join(reincludedRoots, "\n"));
     }
     return new Data(result, filesFromAdditionalLibraryRootsProviders);
+  }
+
+  private static class CustomizableRootsBuilder {
+    private final Set<EntityReference<?>> references = new HashSet<>();
+    private final List<ModuleRootData<?>> filesFromModulesContent = new ArrayList<>();
+    private final List<ContentRootData<?>> filesFromContent = new ArrayList<>();
+    private final List<ExternalRootData<?>> filesFromExternal = new ArrayList<>();
+
+    public void addModuleRoot(Module module, EntityReference<?> entityReference, VirtualFile file) {
+      filesFromModulesContent.add(new ModuleRootData<>(entityReference, ((ModuleBridge)module).getModuleEntityId(), file));
+      references.add(entityReference);
+    }
+
+    public void addContentRoot(EntityReference<?> entityReference, VirtualFile file) {
+      filesFromContent.add(new ContentRootData<>(entityReference, file));
+      references.add(entityReference);
+    }
+
+    public void addExternalRoots(EntityReference<?> entityReference, Collection<VirtualFile> roots, Collection<VirtualFile> sourceRoots) {
+      filesFromExternal.add(new ExternalRootData<>(entityReference, roots, sourceRoots));
+      references.add(entityReference);
+    }
+
+    record ModuleRootData<E extends WorkspaceEntity>(@NotNull EntityReference<E> entityReference,
+                                                     @NotNull ModuleId moduleId,
+                                                     @NotNull VirtualFile file) {
+      public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityReference<?>, WorkspaceEntity> referenceMap,
+                                                                          Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> contributorMap) {
+        IndexingContributorCustomization<E, ?> customization = findCustomization(entityReference, referenceMap, contributorMap);
+        if (customization == null) {
+          return IndexableIteratorBuilders.INSTANCE.forModuleRootsFileBased(moduleId, Collections.singletonList(file));
+        }
+        return IndexableIteratorBuilders.INSTANCE.forModuleAwareCustomizedContentEntity(moduleId, entityReference,
+                                                                                        Collections.singletonList(file), customization);
+      }
+    }
+
+    record ContentRootData<E extends WorkspaceEntity>(@NotNull EntityReference<E> entityReference, @NotNull VirtualFile file) {
+      public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityReference<?>, WorkspaceEntity> referenceMap,
+                                                                          Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> contributorMap) {
+        IndexingContributorCustomization<E, ?> customization = findCustomization(entityReference, referenceMap, contributorMap);
+        return IndexableIteratorBuilders.INSTANCE.forModuleUnawareContentEntity(entityReference, Collections.singletonList(file),
+                                                                                customization);
+      }
+    }
+
+    record ExternalRootData<E extends WorkspaceEntity>(@NotNull EntityReference<E> entityReference, @NotNull Collection<VirtualFile> roots,
+                                                       @NotNull Collection<VirtualFile> sourceRoots) {
+      public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityReference<?>, WorkspaceEntity> referenceMap,
+                                                                          Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> contributorMap) {
+        IndexingContributorCustomization<E, ?> customization = findCustomization(entityReference, referenceMap, contributorMap);
+        return IndexableIteratorBuilders.INSTANCE.forExternalEntity(entityReference, roots, sourceRoots, customization);
+      }
+    }
+
+    @NotNull
+    Collection<IndexableIteratorBuilder> createBuilders(@NotNull EntityStorage entityStorage) {
+      if (references.isEmpty()) return Collections.emptyList();
+
+      Map<EntityReference<?>, WorkspaceEntity> referenceMap =
+        ContainerUtil.map2MapNotNull(references, ref -> Pair.create(ref, ref.resolve(entityStorage)));
+
+      Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> customizingContributorsMap =
+        ContainerUtil.map2MapNotNull(WorkspaceFileIndexImpl.Companion.getEP_NAME().getExtensionList(),
+                                     contributor -> {
+                                       if (contributor instanceof CustomizingIndexingContributor) {
+                                         return Pair.create((Class<WorkspaceEntity>)contributor.getEntityClass(),
+                                                            (CustomizingIndexingContributor<?, ?>)contributor);
+                                       }
+                                       return null;
+                                     });
+
+      List<IndexableIteratorBuilder> result = new ArrayList<>();
+      for (ModuleRootData<?> data : filesFromModulesContent) {
+        result.addAll(data.createBuilders(referenceMap, customizingContributorsMap));
+      }
+      for (ContentRootData<?> data : filesFromContent) {
+        result.addAll(data.createBuilders(referenceMap, customizingContributorsMap));
+      }
+      for (ExternalRootData<?> data : filesFromExternal) {
+        result.addAll(data.createBuilders(referenceMap, customizingContributorsMap));
+      }
+      return result;
+    }
+  }
+
+  @Nullable
+  private static <E extends WorkspaceEntity> IndexingContributorCustomization<E, ?> findCustomization(@NotNull EntityReference<E> reference,
+                                                                                                      @NotNull Map<EntityReference<?>, WorkspaceEntity> referenceMap,
+                                                                                                      @NotNull Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> contributorMap) {
+    E entity = (E)referenceMap.get(reference);
+    if (entity == null) {
+      return null;
+    }
+    CustomizingIndexingContributor<E, ?> contributor =
+      (CustomizingIndexingContributor<E, ?>)contributorMap.get(entity.getEntityInterface());
+    return contributor == null ? null : IndexingContributorCustomization.Companion.create(contributor, entity);
   }
 
   @NotNull

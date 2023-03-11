@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,7 +60,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     VirtualFileUrlManager fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, myProject);
     VirtualFileUrl url = fileUrlManager.fromUrl(virtualRoot.getUrl());
 
-    doTest(() -> createAndRegisterEntity(Collections.singletonList(url), Collections.emptyList()),
+    doTest(() -> createAndRegisterEntity(Collections.singletonList(url), Collections.emptyList(), myProject),
            (entity) -> {
              return IndexableEntityProviderMethods.INSTANCE.createModuleUnawareContentEntityIterators(entity.createReference(),
                                                                                                       Collections.singletonList(
@@ -78,7 +79,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     VirtualFileUrlManager fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, myProject);
     VirtualFileUrl url = fileUrlManager.fromUrl(virtualRoot.getUrl());
 
-    doTest(() -> createAndRegisterEntity(Collections.singletonList(url), Collections.emptyList()),
+    doTest(() -> createAndRegisterEntity(Collections.singletonList(url), Collections.emptyList(), myProject),
            (entity) -> {
              return IndexableEntityProviderMethods.INSTANCE.createExternalEntityIterators(entity.createReference(),
                                                                                           Collections.singletonList(virtualRoot),
@@ -119,7 +120,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     VirtualFileUrlManager fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, myProject);
     VirtualFileUrl url = fileUrlManager.fromUrl(virtualRoot.getUrl());
 
-    doTest(() -> createAndRegisterEntity(Collections.singletonList(url), Collections.emptyList()),
+    doTest(() -> createAndRegisterEntity(Collections.singletonList(url), Collections.emptyList(), myProject),
            (entity) -> {
              return IndexableEntityProviderMethods.INSTANCE.createExternalEntityIterators(entity.createReference(), Collections.emptyList(),
                                                                                           Collections.singletonList(virtualRoot));
@@ -137,22 +138,22 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
    });
    File root = createTempDir("customRoot");
    VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
-    VirtualFile excluded = WriteAction.compute(() -> virtualRoot.createChildDirectory(this, "excluded"));
-    VirtualFileUrlManager fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, myProject);
-    VirtualFileUrl url = fileUrlManager.fromUrl(virtualRoot.getUrl());
-    IndexingTestEntity createdEntity =
-      WriteAction.compute(() -> createAndRegisterEntity(Collections.singletonList(url),
-                                                        Collections.singletonList(fileUrlManager.fromUrl(excluded.getUrl()))));
+   VirtualFile excluded = WriteAction.compute(() -> virtualRoot.createChildDirectory(this, "excluded"));
+   VirtualFileUrlManager fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, myProject);
+   VirtualFileUrl url = fileUrlManager.fromUrl(virtualRoot.getUrl());
+   IndexingTestEntity createdEntity =
+     WriteAction.compute(() -> createAndRegisterEntity(Collections.singletonList(url),
+                                                       Collections.singletonList(fileUrlManager.fromUrl(excluded.getUrl())), myProject));
 
-    doTest(() -> {
-      editWorkspaceModel(builder -> {
-        IndexingTestEntity existingEntity = SequencesKt.first(builder.entities(IndexingTestEntity.class));
-        builder.modifyEntity(IndexingTestEntity.Builder.class, existingEntity, entityBuilder -> {
-          entityBuilder.getExcludedRoots().clear();
-          return Unit.INSTANCE;
-        });
-      });
-      return createdEntity;
+   doTest(() -> {
+     editWorkspaceModel(myProject, builder -> {
+       IndexingTestEntity existingEntity = SequencesKt.first(builder.entities(IndexingTestEntity.class));
+       builder.modifyEntity(IndexingTestEntity.Builder.class, existingEntity, entityBuilder -> {
+         entityBuilder.getExcludedRoots().clear();
+         return Unit.INSTANCE;
+       });
+     });
+     return createdEntity;
     }, (entity) -> {
       return IndexableEntityProviderMethods.INSTANCE.createExternalEntityIterators(entity.createReference(),
                                                                                    Collections.singletonList(excluded),
@@ -176,13 +177,13 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     VirtualFileUrlManager fileUrlManager = VirtualFileUrlManagerUtil.getInstance(VirtualFileUrlManager.Companion, myProject);
 
     WriteAction.compute(() -> createAndRegisterEntity(Collections.singletonList(fileUrlManager.fromUrl(virtualRoot.getUrl())),
-                                                      Collections.singletonList(fileUrlManager.fromUrl(excluded.getUrl()))));
+                                                      Collections.singletonList(fileUrlManager.fromUrl(excluded.getUrl())), myProject));
     IndexingTestEntity otherEntity =
       WriteAction.compute(() -> createAndRegisterEntity(Collections.singletonList(fileUrlManager.fromUrl(child.getUrl())),
-                                                        Collections.emptyList()));
+                                                        Collections.emptyList(), myProject));
 
     doTestRunnables(() -> {
-      editWorkspaceModel(builder -> {
+      editWorkspaceModel(myProject, builder -> {
         IndexingTestEntity entityWithExcludedRoot = SequencesKt.first(builder.entities(IndexingTestEntity.class),
                                                                       entity -> !entity.getExcludedRoots().isEmpty());
         builder.removeEntity(entityWithExcludedRoot);
@@ -194,8 +195,8 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     });
   }
 
-  private void removeAllIndexingTestEntities() {
-    editWorkspaceModel(builder -> {
+  static void removeAllIndexingTestEntities(Project project) {
+    editWorkspaceModel(project, builder -> {
       List<IndexingTestEntity> entities = SequencesKt.toList(builder.entities(IndexingTestEntity.class));
       for (IndexingTestEntity testEntity : entities) {
         builder.removeEntity(testEntity);
@@ -204,14 +205,14 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
   }
 
   @NotNull
-  private IndexingTestEntity createAndRegisterEntity(List<VirtualFileUrl> roots, List<VirtualFileUrl> excludedRoots) {
+  static IndexingTestEntity createAndRegisterEntity(List<VirtualFileUrl> roots, List<VirtualFileUrl> excludedRoots, Project project) {
     IndexingTestEntity entity = IndexingTestEntity.create(roots, excludedRoots, ENTITY_SOURCE);
-    editWorkspaceModel(builder -> builder.addEntity(entity));
+    editWorkspaceModel(project, builder -> builder.addEntity(entity));
     return entity;
   }
 
-  private void editWorkspaceModel(@NotNull Consumer<MutableEntityStorage> consumer) {
-    WorkspaceModel workspaceModel = WorkspaceModel.getInstance(myProject);
+  static void editWorkspaceModel(@NotNull Project project, @NotNull Consumer<MutableEntityStorage> consumer) {
+    WorkspaceModel workspaceModel = WorkspaceModel.getInstance(project);
     EntityStorage entityStorage = workspaceModel.getEntityStorage().getCurrent();
     MutableEntityStorage preliminaryBuilder = EntityStorageKt.toBuilder(entityStorage);
     consumer.accept(preliminaryBuilder);
@@ -223,7 +224,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
 
   protected <T> void doTest(ThrowableComputable<? extends T, ? extends Exception> generator,
                             Function<T, ? extends Collection<IndexableFilesIterator>> expectedIteratorsProducer) throws Exception {
-    super.doTest(generator, (t) -> removeAllIndexingTestEntities(), expectedIteratorsProducer);
+    super.doTest(generator, (t) -> removeAllIndexingTestEntities(myProject), expectedIteratorsProducer);
   }
 
   private void doTestRunnables(ThrowableRunnable<Exception> generator,
