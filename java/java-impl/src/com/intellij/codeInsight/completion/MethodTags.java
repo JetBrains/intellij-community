@@ -15,7 +15,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.completion.MethodTags.Tag.*;
 
-public class MethodTags {
+public final class MethodTags {
 
   @ApiStatus.Experimental
   @NotNull
@@ -48,7 +48,7 @@ public class MethodTags {
         of("plus", childOf("java.math.BigDecimal", "java.math.BigInteger"))};
       case "append" -> anyFrom("add");
       case "apply" -> anyFrom("invoke", "do", "call");
-      case "assert" -> anyFrom("expect", "verify", "test");
+      case "assert" -> anyFrom("expect", "verify", "test", "ensure");
       case "build" -> anyFrom("create", "make", "generate");
       case "call" -> anyFrom("execute", "run");
       case "check" -> anyFrom("test", "match");
