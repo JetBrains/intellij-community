@@ -51,7 +51,7 @@ val svgCache: SvgCacheManager? by lazy {
 @Suppress("SqlResolve")
 @ApiStatus.Internal
 class SvgCacheManager(dbFile: Path) {
-  private var connection: SqliteConnection
+  private val connection: SqliteConnection
   private val selectStatementPool: SqlStatementPool<LongBinder>
   private val selectPrecomputedStatementPool: SqlStatementPool<LongBinder>
   private val insertStatementPool: SqlStatementPool<ObjectBinder>
@@ -85,11 +85,15 @@ class SvgCacheManager(dbFile: Path) {
       connection = connection) { ObjectBinder(5) }
   }
 
+  internal fun isActive(): Boolean = !connection.isClosed
+
   fun close() {
     selectStatementPool.close()
     selectPrecomputedStatementPool.close()
     insertStatementPool.close()
     insertPrecomputedStatementPool.close()
+
+    logger<SvgCacheManager>().info("SVG icon cache is closed")
     connection.close()
   }
 

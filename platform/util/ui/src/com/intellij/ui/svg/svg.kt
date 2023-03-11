@@ -41,11 +41,7 @@ interface SvgAttributePatcher {
 
 @ApiStatus.Internal
 fun loadSvg(data: ByteArray, scale: Float): Image {
-  return loadAndCacheIfApplicable(path = null,
-                                  precomputedCacheKey = 0,
-                                  scale = scale,
-                                  colorPatcherProvider = null,
-                                  cache = svgCache) {
+  return loadAndCacheIfApplicable(path = null, precomputedCacheKey = 0, scale = scale, colorPatcherProvider = null) {
     data
   }!!
 }
@@ -62,8 +58,7 @@ fun loadSvgFromClassResource(classLoader: ClassLoader?,
                                   precomputedCacheKey = precomputedCacheKey,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey,
-                                  colorPatcherProvider = colorPatcherProvider,
-                                  cache = svgCache) {
+                                  colorPatcherProvider = colorPatcherProvider) {
     ImageLoader.getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader)
   }
 }
@@ -77,8 +72,7 @@ internal fun loadSvg(path: String?,
                                   precomputedCacheKey = 0,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey ?: SvgCacheClassifier(scale),
-                                  colorPatcherProvider = colorPatcherProvider,
-                                  cache = svgCache) {
+                                  colorPatcherProvider = colorPatcherProvider) {
     stream.readAllBytes()
   }!!
 }
@@ -171,7 +165,6 @@ internal fun loadSvgAndCacheIfApplicable(path: String?,
                                   compoundCacheKey = compoundCacheKey,
                                   colorPatcher = colorPatcher,
                                   deprecatedColorPatcher = deprecatedColorPatcher,
-                                  cache = svgCache,
                                   dataProvider = dataProvider)
 }
 
@@ -180,7 +173,6 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                                             scale: Float,
                                             compoundCacheKey: SvgCacheClassifier = SvgCacheClassifier(scale = scale),
                                             colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider?,
-                                            @Suppress("SameParameterValue") cache: SvgCacheManager?,
                                             dataProvider: () -> ByteArray?): BufferedImage? {
   @Suppress("DEPRECATION")
   return loadAndCacheIfApplicable(path = path,
@@ -189,7 +181,6 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                                   compoundCacheKey = compoundCacheKey,
                                   colorPatcher = colorPatcherProvider?.attributeForPath(path),
                                   deprecatedColorPatcher = colorPatcherProvider?.forPath(path),
-                                  cache = cache,
                                   dataProvider = dataProvider)
 }
 
@@ -199,10 +190,10 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                                             compoundCacheKey: SvgCacheClassifier = SvgCacheClassifier(scale = scale),
                                             colorPatcher: SvgAttributePatcher?,
                                             deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
-                                            @Suppress("SameParameterValue") cache: SvgCacheManager?,
                                             dataProvider: () -> ByteArray?): BufferedImage? {
   val colorPatcherDigest = colorPatcher?.digest() ?: deprecatedColorPatcher?.digest()?.let { longArrayOf(Xxh3.hash(it)) }
-  if (cache == null ||
+  val svgCache = svgCache
+  if (svgCache == null || !svgCache.isActive() ||
       (colorPatcherDigest == null && (colorPatcher != null || deprecatedColorPatcher != null)) ||
       scale > MAX_SCALE_TO_CACHE) {
     return renderImage(colorPatcher = colorPatcher,
@@ -217,10 +208,10 @@ private inline fun loadAndCacheIfApplicable(path: String?,
   try {
     val start = StartUpMeasurer.getCurrentTimeIfEnabled()
     val result = if (data == null) {
-      cache.loadPrecomputedFromCache(precomputedCacheKey = precomputedCacheKey, themeKey = themeKey, compoundKey = compoundCacheKey)
+      svgCache.loadPrecomputedFromCache(precomputedCacheKey = precomputedCacheKey, themeKey = themeKey, compoundKey = compoundCacheKey)
     }
     else {
-      cache.loadFromCache(imageBytes = data, themeKey = themeKey, compoundKey = compoundCacheKey)
+      svgCache.loadFromCache(imageBytes = data, themeKey = themeKey, compoundKey = compoundCacheKey)
     }
     if (start != -1L) {
       IconLoadMeasurer.svgCacheRead.end(start)
@@ -242,7 +233,7 @@ private inline fun loadAndCacheIfApplicable(path: String?,
                         path = path,
                         precomputedCacheKey = precomputedCacheKey,
                         themeKey = themeKey,
-                        cache = cache)
+                        cache = svgCache)
 }
 
 private fun renderAndCache(deprecatedColorPatcher: SVGLoader.SvgElementColorPatcher?,
