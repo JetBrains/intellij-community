@@ -124,6 +124,10 @@ internal suspend fun buildProduct(productConfiguration: ProductConfiguration, re
       }
 
       val platformClassPathConsumer = request.platformClassPathConsumer
+
+      // PathManager.getBinPath() is used as a working dir for maven
+      Files.createDirectories(runDir.resolve("bin"))
+
       if (platformClassPathConsumer == null) {
         withContext(Dispatchers.IO) {
           val classPathFile = runDir.resolve("core-classpath.txt")
