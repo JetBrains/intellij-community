@@ -55,15 +55,22 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
 
     if (newValue != isNewUI() && suggestRestart) {
       val action = if (ApplicationManager.getApplication().isRestartCapable) IdeBundle.message("ide.restart.action")
-                   else IdeBundle.message("ide.shutdown.action")
-      val result = Messages.showYesNoDialog(IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
-                                                              ApplicationNamesInfo.getInstance().fullProductName),
-                                            IdeBundle.message("dialog.title.restart.required"),
-                                            action,
-                                            IdeBundle.message("ide.notnow.action"),
-                                            Messages.getQuestionIcon())
-      if (result == Messages.YES) {
-        ApplicationManagerEx.getApplicationEx().restart(true);
+      else IdeBundle.message("ide.shutdown.action")
+      if (PlatformUtils.isJetBrainsClient()) {
+        Registry.get("ide.experimental.ui").setValue(newValue)
+      }
+      else {
+        val result = Messages.showYesNoDialog(IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
+                                                                ApplicationNamesInfo.getInstance().fullProductName),
+                                              IdeBundle.message("dialog.title.restart.required"),
+                                              action,
+                                              IdeBundle.message("ide.notnow.action"),
+                                              Messages.getQuestionIcon())
+
+
+        if (result == Messages.YES) {
+          ApplicationManagerEx.getApplicationEx().restart(true);
+        }
       }
     }
   }
@@ -80,7 +87,8 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
       Registry.get("ide.experimental.ui").setValue(newValue)
       if (newValue) {
         onExpUIEnabled(false)
-      } else {
+      }
+      else {
         onExpUIDisabled(false)
       }
     }
@@ -92,7 +100,7 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
     }
 
     NewUIInfoService.getInstance().updateEnableNewUIDate()
-    
+
     setRegistryKeyIfNecessary("ide.experimental.ui", true)
     setRegistryKeyIfNecessary("debugger.new.tool.window.layout", true)
     UISettings.getInstance().hideToolStripes = false
@@ -116,7 +124,7 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
     NewUIInfoService.getInstance().updateDisableNewUIDate()
-    
+
     setRegistryKeyIfNecessary("ide.experimental.ui", false)
     setRegistryKeyIfNecessary("debugger.new.tool.window.layout", false)
     val lafManager = LafManager.getInstance() as LafManagerImpl
