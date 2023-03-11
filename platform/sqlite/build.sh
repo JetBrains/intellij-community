@@ -29,7 +29,7 @@ createSysRoot() {
 }
 
 createSysRoot x86_64
-createSysRoot aarch64
+#createSysRoot aarch64
 
 OS=mac ARCH=aarch64 ./make.sh
 OS=mac ARCH=x86_64 ./make.sh
@@ -41,3 +41,6 @@ nerdctl run --rm --platform linux/amd64 -v "$SCRIPT_DIR":/work --workdir=/work \
 
 nerdctl run --rm --platform linux/amd64 -v "$SCRIPT_DIR":/work --workdir=/work \
   dockcross/windows-arm64@sha256:345e3c190fbdf44384ce256dd09f5ca9ace831a5344308c8dccb36b78c382d95 bash -c 'OS=win ARCH=aarch64 CC=clang CROSS_PREFIX=aarch64-w64-mingw32- ./make.sh'
+
+nerdctl run --rm --platform linux/amd64 -v "$SCRIPT_DIR":/work --workdir=/work \
+  dockcross/linux-arm64-lts@sha256:3bbb880b002f6cc1b5332719bbb0c2ba5c646260140c2ff15bff8d63a16187ba bash -c 'OS=linux ARCH=aarch64 CC=gcc CROSS_PREFIX=aarch64-unknown-linux-gnu- ./make.sh'
