@@ -652,7 +652,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenServerUtil.checkToken(token);
 
     try {
-      customizeComponents(token);
+      customizeComponents();
 
       ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
       if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
@@ -687,10 +687,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
-  protected void customizeComponents(MavenToken token) throws RemoteException {
-    MavenServerUtil.checkToken(token);
+  private void customizeComponents() throws RemoteException {
     try {
-
       // replace some plexus components
       if (VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
         myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
