@@ -1182,7 +1182,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       if (repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
         ((CustomMaven3RepositoryMetadataManager)repositoryMetadataManager).reset();
       }
-      //((CustomWagonManager)getComponent(WagonManager.class)).reset();
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
