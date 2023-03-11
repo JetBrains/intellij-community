@@ -831,7 +831,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
         myTreeStructure.rebuildTree();
         myStructureTreeModel.invalidateAsync().thenRun(() -> rebuildAndSelect(true, selection).processed(result));
       }
-    });
+    }).onError(throwable -> result.setError(throwable));
     return result;
   }
 
