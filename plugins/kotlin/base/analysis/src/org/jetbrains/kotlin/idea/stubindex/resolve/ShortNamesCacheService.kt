@@ -3,27 +3,23 @@ package org.jetbrains.kotlin.idea.stubindex.resolve
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.indexing.FileBasedIndex
-import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
-import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
+import com.intellij.util.indexing.ID
 import org.jetbrains.kotlin.idea.vfilefinder.KotlinShortClassNameFileIndex
 import java.util.concurrent.ConcurrentHashMap
 
 class ShortNamesCacheService(private val project: Project) {
 
+    private val tracker = FileBaseIndexModificationTracker(KotlinShortClassNameFileIndex.NAME, project)
+
     private val shortNamesCache =
         CachedValuesManager.getManager(project).createCachedValue(
             {
-                CachedValueProvider.Result.create(
-                    ConcurrentHashMap<String, Set<String>>(),
-                    LibraryModificationTracker.getInstance(project),
-                    ProjectRootModificationTracker.getInstance(project),
-                    KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
-                )
+                CachedValueProvider.Result.create(ConcurrentHashMap<String, Set<String>>(), tracker)
             },
             /* trackValue = */ false
         )
@@ -45,4 +41,10 @@ class ShortNamesCacheService(private val project: Project) {
     companion object {
         fun getInstance(project: Project): ShortNamesCacheService = project.service()
     }
+}
+
+internal class FileBaseIndexModificationTracker<K, V>(private val id: ID<K, V>, private val project: Project): ModificationTracker {
+    override fun getModificationCount(): Long =
+      FileBasedIndex.getInstance().getIndexModificationStamp(id, project)
+
 }
