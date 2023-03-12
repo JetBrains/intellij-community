@@ -1,82 +1,51 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.icons;
+package com.intellij.ui.icons
 
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.ui.RetrievableIcon;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.RetrievableIcon
+import org.jetbrains.annotations.Contract
+import java.awt.Component
+import java.awt.Graphics
+import java.util.function.Supplier
+import javax.swing.Icon
 
-import javax.swing.*;
-import java.awt.*;
-import java.util.Objects;
-import java.util.function.Supplier;
+open class IconWrapperWithToolTip : IconWithToolTip, CopyableIcon, RetrievableIcon {
+  private val icon: Icon
+  private val toolTip: Supplier<String>
 
-public class IconWrapperWithToolTip implements IconWithToolTip, CopyableIcon, RetrievableIcon {
-  private final Icon myIcon;
-  private final Supplier<@NlsContexts.Tooltip String> myToolTip;
-
-  public IconWrapperWithToolTip(Icon icon, Supplier<@NlsContexts.Tooltip String> toolTip) {
-    myIcon = icon;
-    myToolTip = toolTip;
+  constructor(icon: Icon, toolTip: Supplier<String>) {
+    this.icon = icon
+    this.toolTip = toolTip
   }
 
   @Contract(pure = true)
-  protected IconWrapperWithToolTip(@NotNull IconWrapperWithToolTip another) {
-    myIcon = another.myIcon;
-    myToolTip = another.myToolTip;
+  protected constructor(another: IconWrapperWithToolTip) {
+    icon = another.icon
+    toolTip = another.toolTip
   }
 
-  @NotNull
-  @Override
-  public IconWrapperWithToolTip replaceBy(@NotNull IconReplacer replacer) {
-    return new IconWrapperWithToolTip(replacer.replaceIcon(myIcon), myToolTip);
+  override fun replaceBy(replacer: IconReplacer): IconWrapperWithToolTip {
+    return IconWrapperWithToolTip(icon = replacer.replaceIcon(icon), toolTip = toolTip)
   }
 
-  @Override
-  public void paintIcon(Component c, Graphics g, int x, int y) {
-    myIcon.paintIcon(c, g, x, y);
+  override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+    icon.paintIcon(c, g, x, y)
   }
 
-  @Override
-  public int getIconWidth() {
-    return myIcon.getIconWidth();
+  override fun getIconWidth(): Int = icon.iconWidth
+
+  override fun getIconHeight(): Int = icon.iconHeight
+
+  override fun getToolTip(composite: Boolean): String? = toolTip.get()
+
+  override fun hashCode(): Int = icon.hashCode()
+
+  override fun equals(`object`: Any?): Boolean {
+    return `object` === this || `object` is IconWrapperWithToolTip && `object`.icon == icon
   }
 
-  @Override
-  public int getIconHeight() {
-    return myIcon.getIconHeight();
-  }
+  override fun toString(): String = "IconWrapperWithTooltip:$icon"
 
-  @Override
-  public String getToolTip(boolean composite) {
-    return myToolTip.get();
-  }
+  override fun copy(): Icon = IconWrapperWithToolTip(icon, toolTip)
 
-  @Override
-  public int hashCode() {
-    return myIcon.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object object) {
-    return object == this ||
-           object instanceof IconWrapperWithToolTip &&
-           Objects.equals(((IconWrapperWithToolTip)object).myIcon, this.myIcon);
-  }
-
-  @Override
-  public String toString() {
-    return "IconWrapperWithTooltip:" + myIcon;
-  }
-
-  @Override
-  public @NotNull Icon copy() {
-    return new IconWrapperWithToolTip(myIcon, myToolTip);
-  }
-
-  @Override
-  public @NotNull Icon retrieveIcon() {
-    return myIcon;
-  }
+  override fun retrieveIcon(): Icon = icon
 }
-
