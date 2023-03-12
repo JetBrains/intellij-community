@@ -26,6 +26,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
@@ -79,6 +80,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @Override
   public @NotNull <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<? extends T> list) {
+    LOG.assertTrue(list.isEmpty() || !(list.get(0) instanceof PsiElement) || ApplicationManager.getApplication().isUnitTestMode(),
+                   "Do not use PsiElement for popup model. See PsiTargetNavigator");
     JBList<T> jbList = new JBList<>(new CollectionListModel<>(list));
     PopupUtil.applyNewUIBackground(jbList);
     return new PopupChooserBuilder<>(jbList);
