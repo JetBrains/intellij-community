@@ -11,18 +11,6 @@ import java.net.URL
 
 private val UNRESOLVED_URL = URL("file:///unresolved")
 
-internal enum class HandleNotFound {
-  THROW_EXCEPTION {
-    override fun handle(message: String) {
-      throw RuntimeException(message)
-    }
-  },
-  IGNORE;
-
-  open fun handle(message: String) {
-  }
-}
-
 @ApiStatus.Internal
 class ImageDataByUrlLoader private constructor(
   private val ownerClass: Class<*>? = null,
@@ -65,7 +53,7 @@ class ImageDataByUrlLoader private constructor(
 internal class ImageDataByPathResourceLoader(
   private val ownerClass: Class<*>? = null,
   private val classLoader: ClassLoader? = null,
-  private val handleNotFound: HandleNotFound,
+  private val strict: Boolean,
   private val path: String,
 ) : ImageDataLoader {
   @Volatile
@@ -74,7 +62,7 @@ internal class ImageDataByPathResourceLoader(
       var result = field
       if (result === UNRESOLVED_URL) {
         result = try {
-          resolveUrl(path = path, classLoader = classLoader, ownerClass = ownerClass, handleNotFound = handleNotFound)
+          resolveUrl(path = path, classLoader = classLoader, ownerClass = ownerClass, strict = strict)
         }
         finally {
           field = result
@@ -106,7 +94,7 @@ internal class ImageDataByPathResourceLoader(
 private fun resolveUrl(path: String?,
                        classLoader: ClassLoader?,
                        ownerClass: Class<*>?,
-                       handleNotFound: HandleNotFound): URL? {
+                       strict: Boolean): URL? {
   var effectivePath = path
   var url: URL? = null
   if (effectivePath != null) {
@@ -120,8 +108,8 @@ private fun resolveUrl(path: String?,
       url = findUrl(path = effectivePath, urlProvider = ownerClass::getResource)
     }
   }
-  if (url == null) {
-    handleNotFound.handle("Can't find icon in '$effectivePath' near $classLoader")
+  if (url == null && strict) {
+    throw RuntimeException("Can't find icon in '$effectivePath' near $classLoader")
   }
   return url
 }

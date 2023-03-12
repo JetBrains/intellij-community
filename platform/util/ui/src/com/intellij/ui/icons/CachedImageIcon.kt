@@ -25,6 +25,7 @@ import java.net.URL
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.ImageIcon
 
@@ -37,13 +38,19 @@ open class CachedImageIcon protected constructor(
   private val localFilterSupplier: (() -> RGBImageFilter)? = null,
   private val colorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null,
   private val useStroke: Boolean = false,
-) : AbstractScaleContextAware<ScaleContext>(ScaleContext.create()), CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
+  private val toolTip: Supplier<String?>? = null,
+) : AbstractScaleContextAware<ScaleContext>(ScaleContext.create()), CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider,
+    IconWithToolTip {
   companion object {
     @JvmField
     internal var isActivated: Boolean = !GraphicsEnvironment.isHeadless()
 
     @JvmField
     internal val pathTransformGlobalModCount: AtomicInteger = AtomicInteger()
+
+    fun patchPath(originalPath: String, classLoader: ClassLoader): Pair<String, ClassLoader>? {
+      return pathTransform.get().patchPath(originalPath, classLoader)
+    }
 
     @JvmField
     internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
@@ -84,10 +91,8 @@ open class CachedImageIcon protected constructor(
     pathTransformModCount = pathTransformGlobalModCount.get()
   }
 
-  constructor(originalPath: String?, resolver: ImageDataLoader?) : this(originalPath = originalPath,
-                                                                        resolver = resolver,
-                                                                        isDarkOverridden = null,
-                                                                        colorPatcher = null)
+  constructor(originalPath: String?, resolver: ImageDataLoader?, toolTip: Supplier<String?>?) :
+    this(originalPath = originalPath, resolver = resolver, isDarkOverridden = null, colorPatcher = null, toolTip = toolTip)
 
   init {
     // for instance, ShadowPainter updates the context from and outside
@@ -95,6 +100,8 @@ open class CachedImageIcon protected constructor(
       realIcon = null
     }
   }
+
+  override fun getToolTip(composite: Boolean): String? = toolTip?.get()
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     getRealIcon(ScaleContext.create(if (g is Graphics2D) g else null)).paintIcon(c, g, x, y)

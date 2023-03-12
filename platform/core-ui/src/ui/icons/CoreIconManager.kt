@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package com.intellij.ui.icons
 
 import com.intellij.AbstractBundle
@@ -8,7 +10,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IconLayerProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.findIconUsingDeprecatedImplementation
+import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
@@ -27,6 +31,7 @@ import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Icon
 
+@Suppress("DeprecatedCallableAddReplaceWith")
 @ApiStatus.Internal
 class CoreIconManager : IconManager, CoreAwareIconManager {
   override fun getPlatformIcon(id: PlatformIcons): Icon {
@@ -88,19 +93,25 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
     }
   }
 
+  @Deprecated("Use getIcon(path, classLoader)")
   override fun getIcon(path: String, aClass: Class<*>): Icon {
-    val icon = IconLoader.getIcon(path, aClass)
-    val tooltip = IconDescriptionLoader(path)
-    return if (icon is ScalableIcon) ScalableIconWrapperWithToolTip(icon, tooltip) else IconWrapperWithToolTip(
-      icon, tooltip)
+    return findIconUsingDeprecatedImplementation(originalPath = path,
+                                                 classLoader = aClass.classLoader,
+                                                 aClass = aClass,
+                                                 toolTip = IconDescriptionLoader(path))!!
+  }
+
+  override fun getIcon(path: String, classLoader: ClassLoader): Icon {
+    return findIconUsingNewImplementation(path = path, classLoader = classLoader, toolTip = IconDescriptionLoader(path))!!
   }
 
   override fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon {
-    assert(!path.isEmpty() && path[0] != '/')
-    return IconWithToolTipImpl(originalPath = path, resolver = createRasterizedImageDataLoader(path = path,
-                                                                                               classLoader = classLoader,
-                                                                                               cacheKey = cacheKey,
-                                                                                               imageFlags = flags))
+    assert(!path.startsWith('/'))
+    return CachedImageIcon(
+      originalPath = path,
+      resolver = createRasterizedImageDataLoader(path = path, classLoader = classLoader, cacheKey = cacheKey, imageFlags = flags),
+      toolTip = IconDescriptionLoader(path),
+    )
   }
 
   override fun createEmptyIcon(icon: Icon): Icon = EmptyIcon.create(icon)
@@ -170,22 +181,6 @@ class CoreIconManager : IconManager, CoreAwareIconManager {
   override fun withIconBadge(icon: Icon, color: Paint): Icon = BadgeIcon(icon, color)
 }
 
-private class IconWithToolTipImpl(originalPath: String,
-                                  resolver: ImageDataLoader) : CachedImageIcon(originalPath = originalPath,
-                                                                               resolver = resolver), IconWithToolTip {
-  @NlsSafe
-  private var result: String? = null
-  private var isTooltipCalculated = false
-
-  override fun getToolTip(composite: Boolean): @NlsContexts.Tooltip String? {
-    if (!isTooltipCalculated) {
-      result = findIconDescription(originalPath!!)
-      isTooltipCalculated = true
-    }
-    return result
-  }
-}
-
 private class IconLayer(@JvmField val flagMask: Int, @JvmField val icon: Icon) {
   init {
     BitUtil.assertOneBitMask(flagMask)
@@ -211,7 +206,7 @@ private const val FLAGS_LOCKED = 0x800
 // a reflective path is not supported, a result is not cached
 private fun createRasterizedImageDataLoader(path: String, classLoader: ClassLoader, cacheKey: Int, imageFlags: Int): ImageDataLoader {
   val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
-  val patchedPath = IconLoader.patchPath(path, classLoader)
+  val patchedPath = CachedImageIcon.patchPath(originalPath = path, classLoader = classLoader)
   val classLoaderWeakRef = WeakReference(classLoader)
   val resolver = if (patchedPath == null) {
     RasterizedImageDataLoader(path = path,

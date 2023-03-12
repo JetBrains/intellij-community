@@ -1,20 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "DeprecatedCallableAddReplaceWith")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "DeprecatedCallableAddReplaceWith", "LiftReturnOrAssignment")
 
 package com.intellij.openapi.util
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.IconLoader.getReflectiveIcon
 import com.intellij.openapi.util.IconLoader.isReflectivePath
-import com.intellij.openapi.util.IconLoader.patchPath
 import com.intellij.ui.*
 import com.intellij.ui.icons.*
-import com.intellij.ui.icons.CachedImageIcon.Companion.pathTransform
-import com.intellij.ui.icons.CachedImageIcon.Companion.pathTransformGlobalModCount
-import com.intellij.ui.icons.ImageDataByPathLoader.Companion.findIcon
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.JBUIScale.sysScale
@@ -25,7 +22,7 @@ import com.intellij.util.*
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.*
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.xxh3.Xxh3
@@ -38,6 +35,7 @@ import java.lang.ref.WeakReference
 import java.net.MalformedURLException
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Icon
@@ -50,7 +48,10 @@ private val LOG: Logger
 
 private val LOOKUP = MethodHandles.lookup()
 
-private val iconCache = ConcurrentHashMap<Pair<String, ClassLoader?>, CachedImageIcon>(100, 0.9f, 2)
+private val iconCache = Caffeine.newBuilder()
+  .expireAfterAccess(1, TimeUnit.HOURS)
+  .maximumSize(256)
+  .build<Pair<String, ClassLoader?>, CachedImageIcon>()
 
 // contains mapping between icons and disabled icons
 private val iconToDisabledIcon = ConcurrentHashMap<() -> RGBImageFilter, MutableMap<Icon, Icon>>()
@@ -122,10 +123,10 @@ object IconLoader {
   @TestOnly
   @JvmStatic
   fun clearCacheInTests() {
-    iconCache.clear()
+    iconCache.invalidateAll()
     iconToDisabledIcon.clear()
     clearImageCache()
-    pathTransformGlobalModCount.incrementAndGet()
+    com.intellij.ui.icons.CachedImageIcon.pathTransformGlobalModCount.incrementAndGet()
   }
 
   @Deprecated("Use {@link #getIcon(String, ClassLoader)}", level = DeprecationLevel.ERROR)
@@ -136,7 +137,7 @@ object IconLoader {
 
   @JvmStatic
   fun getReflectiveIcon(path: String, classLoader: ClassLoader): Icon? {
-    return try {
+    try {
       var dotIndex = path.lastIndexOf('.')
       val fieldName = path.substring(dotIndex + 1)
       val builder = StringBuilder(path.length + 20)
@@ -161,11 +162,11 @@ object IconLoader {
         builder.insert(0, if (path.startsWith("AllIcons.")) "com.intellij.icons." else "icons.")
       }
       val aClass = classLoader.loadClass(builder.toString())
-      LOOKUP.findStaticGetter(aClass, fieldName, Icon::class.java).invoke() as Icon
+      return LOOKUP.findStaticGetter(aClass, fieldName, Icon::class.java).invoke() as Icon
     }
     catch (e: Throwable) {
       LOG.warn("Cannot get reflective icon (path=$path)", e)
-      null
+      return null
     }
   }
 
@@ -178,7 +179,7 @@ object IconLoader {
 
   @JvmStatic
   fun getIcon(path: String, aClass: Class<*>): Icon {
-    return findIcon(originalPath = path, aClass = aClass, classLoader = aClass.classLoader, handleNotFound = null, deferUrlResolve = true)
+    return findIcon(originalPath = path, aClass = aClass, classLoader = aClass.classLoader, deferUrlResolve = true)
            ?: throw IllegalStateException("Icon cannot be found in '$path', class='${aClass.name}'")
   }
 
@@ -227,16 +228,12 @@ object IconLoader {
    */
   @JvmStatic
   fun findIcon(path: String, aClass: Class<*>): Icon? {
-    return findIcon(originalPath = path, originalClassLoader = aClass.classLoader, cache = iconCache)
+    return findIconUsingNewImplementation(path, aClass.classLoader)
   }
 
   @JvmStatic
   fun findIcon(path: String, aClass: Class<*>, deferUrlResolve: Boolean, strict: Boolean): Icon? {
-    return findIcon(originalPath = path,
-                    aClass = aClass,
-                    classLoader = aClass.classLoader,
-                    handleNotFound = if (strict) HandleNotFound.THROW_EXCEPTION else HandleNotFound.IGNORE,
-                    deferUrlResolve = deferUrlResolve)
+    return findIcon(originalPath = path, aClass = aClass, classLoader = aClass.classLoader, strict, deferUrlResolve = deferUrlResolve)
   }
 
   fun isReflectivePath(path: String): Boolean {
@@ -251,27 +248,22 @@ object IconLoader {
     }
 
     val key = Pair<String, ClassLoader?>(url.toString(), null)
-    return if (storeToCache) {
-      iconCache.computeIfAbsent(key) { CachedImageIcon(url = url, useCacheOnLoad = true) }
+    if (storeToCache) {
+      return iconCache.get(key) { CachedImageIcon(url = url, useCacheOnLoad = true) }
     }
     else {
-      iconCache.get(key) ?: CachedImageIcon(url = url, useCacheOnLoad = false)
+      return iconCache.getIfPresent(key) ?: CachedImageIcon(url = url, useCacheOnLoad = false)
     }
-  }
-
-  @JvmStatic
-  fun patchPath(originalPath: String, classLoader: ClassLoader): Pair<String, ClassLoader>? {
-    return pathTransform.get().patchPath(originalPath, classLoader)
   }
 
   @JvmStatic
   fun findIcon(path: String, classLoader: ClassLoader): Icon? {
-    return findIcon(originalPath = path, originalClassLoader = classLoader, cache = iconCache)
+    return findIconUsingNewImplementation(path, classLoader)
   }
 
   @JvmStatic
   fun findResolvedIcon(path: String, classLoader: ClassLoader): Icon? {
-    val icon = findIcon(originalPath = path, originalClassLoader = classLoader, cache = iconCache)
+    val icon = findIconUsingNewImplementation(path, classLoader)
     return if (icon is com.intellij.ui.icons.CachedImageIcon && icon.getRealIcon() === com.intellij.ui.icons.CachedImageIcon.EMPTY_ICON) null else icon
   }
 
@@ -345,7 +337,7 @@ object IconLoader {
     return getDisabledIcon(icon = icon, disableFilter = null)
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun getDisabledIcon(icon: Icon, disableFilter: (() -> RGBImageFilter)?): Icon {
     if (!com.intellij.ui.icons.CachedImageIcon.isActivated) {
       return icon
@@ -365,7 +357,7 @@ object IconLoader {
     return replaceCachedImageIcons(icon) { patchColorsInCacheImageIcon(imageIcon = it, colorPatcher = colorPatcher, isDark = null) }!!
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun patchColorsInCacheImageIcon(imageIcon: com.intellij.ui.icons.CachedImageIcon, colorPatcher: SvgElementColorPatcherProvider, isDark: Boolean?): Icon {
     var result = imageIcon
     if (isDark != null) {
@@ -402,7 +394,7 @@ object IconLoader {
   /**
    * Creates a new icon with the low-level CachedImageIcon changing
    */
-  @ApiStatus.Internal
+  @Internal
   fun replaceCachedImageIcons(icon: Icon, cachedImageIconReplacer: (com.intellij.ui.icons.CachedImageIcon) -> Icon): Icon? {
     val replacer: IconReplacer = object : IconReplacer {
       override fun replaceIcon(icon: Icon?): Icon? {
@@ -530,7 +522,7 @@ object IconLoader {
   }
 
   fun detachClassLoader(classLoader: ClassLoader) {
-    iconCache.entries.removeIf { (key, icon): Map.Entry<Pair<String, ClassLoader?>, com.intellij.ui.icons.CachedImageIcon> ->
+    iconCache.asMap().entries.removeIf { (key, icon) ->
       icon.detachClassLoader(classLoader) || key.second === classLoader
     }
   }
@@ -585,11 +577,11 @@ private fun updateTransform(updater: Function<in IconTransform, IconTransform>) 
   var prev: IconTransform
   var next: IconTransform
   do {
-    prev = pathTransform.get()
+    prev = CachedImageIcon.pathTransform.get()
     next = updater.apply(prev)
   }
-  while (!pathTransform.compareAndSet(prev, next))
-  pathTransformGlobalModCount.incrementAndGet()
+  while (!CachedImageIcon.pathTransform.compareAndSet(prev, next))
+  CachedImageIcon.pathTransformGlobalModCount.incrementAndGet()
   if (prev != next) {
     iconToDisabledIcon.clear()
     colorPatchCache.clear()
@@ -604,15 +596,33 @@ private fun updateTransform(updater: Function<in IconTransform, IconTransform>) 
 private fun findIcon(originalPath: String,
                      aClass: Class<*>?,
                      classLoader: ClassLoader,
-                     handleNotFound: HandleNotFound?,
+                     strict: Boolean = STRICT_LOCAL.get(),
                      deferUrlResolve: Boolean): Icon? {
-  var effectiveClassLoader = classLoader
-  if (!deferUrlResolve) {
-    return findIcon(originalPath = originalPath, originalClassLoader = effectiveClassLoader, cache = iconCache)
+  if (deferUrlResolve) {
+    return findIconUsingDeprecatedImplementation(originalPath = originalPath,
+                                                 classLoader = classLoader,
+                                                 aClass = aClass,
+                                                 strict = strict)
   }
+  else {
+    return findIconUsingNewImplementation(originalPath, classLoader)
+  }
+}
 
+@Internal
+fun findIconUsingNewImplementation(path: String, classLoader: ClassLoader, toolTip: Supplier<String?>? = null): Icon? {
+  return ImageDataByPathLoader.findIconByPath(path = path, classLoader = classLoader, cache = iconCache.asMap(), toolTip = toolTip)
+}
+
+@Internal
+fun findIconUsingDeprecatedImplementation(originalPath: String,
+                                          classLoader: ClassLoader,
+                                          aClass: Class<*>?,
+                                          toolTip: Supplier<String?>? = null,
+                                          strict: Boolean = STRICT_LOCAL.get()): Icon? {
+  var effectiveClassLoader = classLoader
   val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
-  val patchedPath = patchPath(originalPath = originalPath, classLoader = effectiveClassLoader)
+  val patchedPath = CachedImageIcon.patchPath(originalPath = originalPath, classLoader = effectiveClassLoader)
   val path = patchedPath?.first ?: originalPath
   if (patchedPath?.second != null) {
     effectiveClassLoader = patchedPath.second
@@ -624,16 +634,11 @@ private fun findIcon(originalPath: String,
   }
   else {
     val key = Pair(originalPath, effectiveClassLoader)
-    var cachedIcon = iconCache.get(key)
+    var cachedIcon = iconCache.getIfPresent(key)
     if (cachedIcon == null) {
-      cachedIcon = iconCache.computeIfAbsent(key) { k ->
-        val effectiveHandleNotFound = handleNotFound
-                                      ?: if (STRICT_LOCAL.get()) HandleNotFound.THROW_EXCEPTION else HandleNotFound.IGNORE
-        val resolver = ImageDataByPathResourceLoader(path = path,
-                                                     ownerClass = aClass,
-                                                     classLoader = k.second,
-                                                     handleNotFound = effectiveHandleNotFound)
-        CachedImageIcon(originalPath = originalPath, resolver = resolver)
+      cachedIcon = iconCache.get(key) { k ->
+        val resolver = ImageDataByPathResourceLoader(path = path, ownerClass = aClass, classLoader = k.second, strict = strict)
+        CachedImageIcon(originalPath = originalPath, resolver = resolver, toolTip = toolTip)
       }
     }
     else {
@@ -658,7 +663,7 @@ private abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, Retrievab
   @Volatile
   private var icon: Icon? = null
 
-  private var transformModCount = pathTransformGlobalModCount.get()
+  private var transformModCount = CachedImageIcon.pathTransformGlobalModCount.get()
 
   override fun isComplex(): Boolean = true
 
@@ -677,7 +682,7 @@ private abstract class LazyIcon : ScaleContextSupport(), CopyableIcon, Retrievab
   @Synchronized
   fun getOrComputeIcon(): Icon {
     var icon = icon
-    val newTransformModCount = pathTransformGlobalModCount.get()
+    val newTransformModCount = CachedImageIcon.pathTransformGlobalModCount.get()
     if (icon != null && wasComputed && transformModCount == newTransformModCount) {
       return icon
     }

@@ -600,7 +600,7 @@ public final class UITheme {
       }
 
       if (value.endsWith(".png") || value.endsWith(".svg")) {
-        Icon icon = ImageDataByPathLoader.Companion.findIcon(value, classLoader, null);
+        Icon icon = ImageDataByPathLoader.Companion.findIconByPath(value, classLoader, null, null);
         if (icon != null) {
           return icon;
         }

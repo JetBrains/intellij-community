@@ -9,6 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Image
 import java.net.URL
+import java.util.function.Supplier
 import javax.swing.Icon
 
 @ApiStatus.Internal
@@ -16,31 +17,32 @@ class ImageDataByPathLoader private constructor(private val path: String,
                                                 private val classLoader: ClassLoader,
                                                 private val original: ImageDataByPathLoader?) : ImageDataLoader {
   companion object {
-    // cache is not used - image data resolved using cache in any case
-    fun findIcon(@NonNls originalPath: String,
-                 originalClassLoader: ClassLoader,
-                 cache: MutableMap<Pair<String, ClassLoader?>, CachedImageIcon>?): Icon? {
+    fun findIconByPath(@NonNls path: String,
+                       classLoader: ClassLoader,
+                       cache: MutableMap<Pair<String, ClassLoader?>, CachedImageIcon>?,
+                       toolTip: Supplier<String?>? = null): Icon? {
       val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
 
-      @Suppress("NAME_SHADOWING")
-      val originalPath = normalizePath(originalPath)
-      val patched = IconLoader.patchPath(originalPath, originalClassLoader)
-      val path = patched?.first ?: originalPath
-      val classLoader = patched?.second ?: originalClassLoader
+      val originalPath = normalizePath(path)
+      val patched = CachedImageIcon.patchPath(originalPath, classLoader)
+      val effectivePath = patched?.first ?: originalPath
+      val effectiveClassLoader = patched?.second ?: classLoader
       val icon: Icon? = when {
-        IconLoader.isReflectivePath(path) -> IconLoader.getReflectiveIcon(path, classLoader)
+        IconLoader.isReflectivePath(effectivePath) -> IconLoader.getReflectiveIcon(effectivePath, effectiveClassLoader)
         cache == null -> createIcon(originalPath = originalPath,
-                                    originalClassLoader = originalClassLoader,
+                                    originalClassLoader = effectiveClassLoader,
                                     patched = patched,
-                                    path = path,
-                                    classLoader = classLoader)
+                                    path = effectivePath,
+                                    classLoader = effectiveClassLoader,
+                                    toolTip = toolTip)
         else -> {
-           cache.computeIfAbsent(Pair(originalPath, originalClassLoader)) {
+           cache.computeIfAbsent(Pair(originalPath, effectiveClassLoader)) {
             createIcon(originalPath = it.first,
                        originalClassLoader = it.second!!,
                        patched = patched,
-                       path = path,
-                       classLoader = classLoader)
+                       path = effectivePath,
+                       classLoader = effectiveClassLoader,
+                       toolTip = toolTip)
           }
         }
       }
@@ -54,10 +56,11 @@ class ImageDataByPathLoader private constructor(private val path: String,
                            originalClassLoader: ClassLoader,
                            patched: Pair<String, ClassLoader?>?,
                            path: String,
-                           classLoader: ClassLoader): CachedImageIcon {
-      val loader = ImageDataByPathLoader(originalPath, originalClassLoader, null)
-      val resolver = if (patched == null) loader else ImageDataByPathLoader(path, classLoader, loader)
-      return CachedImageIcon(originalPath = null, resolver = resolver)
+                           classLoader: ClassLoader,
+                           toolTip: Supplier<String?>? = null): CachedImageIcon {
+      val loader = ImageDataByPathLoader(path = originalPath, classLoader = originalClassLoader, original = null)
+      val resolver = if (patched == null) loader else ImageDataByPathLoader(path = path, classLoader = classLoader, original = loader)
+      return CachedImageIcon(originalPath = null, resolver = resolver, toolTip = toolTip)
     }
 
     private fun normalizePath(patchedPath: String): String {

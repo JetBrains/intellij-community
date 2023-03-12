@@ -52,7 +52,10 @@ interface IconManager {
 
   fun getPlatformIcon(id: PlatformIcons): Icon
 
+  @Deprecated("Use getIcon(path, classLoader)")
   fun getIcon(path: String, aClass: Class<*>): Icon
+
+  fun getIcon(path: String, classLoader: ClassLoader): Icon
 
   /**
    * Path must be specified without a leading slash, in a format for [ClassLoader.getResourceAsStream]
@@ -97,6 +100,8 @@ private object DummyIconManager : IconManager {
   override fun getPlatformIcon(id: PlatformIcons): Icon = DummyIconImpl(id.testId ?: id.name)
 
   override fun getIcon(path: String, aClass: Class<*>): Icon = DummyIconImpl(path)
+
+  override fun getIcon(path: String, classLoader: ClassLoader): Icon = DummyIconImpl(path)
 
   override fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon = DummyIconImpl(path)
 
