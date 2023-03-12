@@ -86,7 +86,7 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
     else {
       val popup = buildPopup(items, title, project, selected, predicate)
       popupConsumer.accept(popup)
-      updater.let { ProgressManager.getInstance().run(updater!!) }
+      updater?.let { ProgressManager.getInstance().run(updater!!) }
     }
     return true
   }
@@ -124,7 +124,7 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
                          predicate: Predicate<ItemWithPresentation>): JBPopup {
     val builder = buildTargetPopupWithMultiSelect(targets, Function { it.presentation }, predicate)
     val caption = title ?: this.title ?: updater?.getCaption(targets.size)
-    caption.let { builder.setTitle(caption!!) }
+    caption?.let { builder.setTitle(caption) }
     val ref: Ref<UsageView> = Ref.create()
     if (tabTitle != null) {
       builder.setCouldPin {
@@ -134,7 +134,7 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
         !ref.isNull
       }
     }
-    selected.let { builder.setSelectedValue(selected, true) }
+    selected?.let { builder.setSelectedValue(selected, true) }
     updater?.let { builder.setCancelCallback { updater!!.cancelTask() }}
 
     val popup = builder.createPopup()
