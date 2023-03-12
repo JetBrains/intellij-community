@@ -407,6 +407,10 @@
                      bundle="messages.InspectionGadgetsBundle" key="inspection.unsupported.chrono.field.unit.call.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
                      implementationClass="com.siyeh.ig.bugs.UnsupportedChronoFieldUnitCallInspection"/>
+    <localInspection groupPath="Java" language="JAVA" enabledByDefault="true" level="WARNING"
+                     bundle="messages.InspectionGadgetsBundle" key="inspection.incorrect.message.format.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     implementationClass="com.siyeh.ig.bugs.IncorrectMessageFormatInspection"/>
 
     <!--group.names.class.structure-->
     <localInspection groupPath="Java" language="JAVA" shortName="AnonymousInnerClass" bundle="messages.InspectionGadgetsBundle" key="anonymous.inner.class.display.name"
