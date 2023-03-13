@@ -87,7 +87,10 @@ class SmartModeScheduler(private val project: Project) : Disposable {
       //   write action and tried to publish another event while in write action via synchronous publisher, we'll have unexpected
       //   write lock acquired in our callback (because message bus first delivers us an event in the same thread with write lock acquired,
       //   and then delivers other events published by previous publishers).
-      ApplicationManager.getApplication().invokeLater(this::runAllWhileSmart, ModalityState.NON_MODAL, project.disposed)
+      //
+      // Note2: DumbService tracks modality by itself: exit event occurs in the same modality as the enter event.
+      //        Use default modality here to avoid deadlocks like in WEB-59844 (dumb mode may start and end in non NON_MODAL contexts)
+      ApplicationManager.getApplication().invokeLater(this::runAllWhileSmart, ModalityState.defaultModalityState(), project.disposed)
     }
   }
 
