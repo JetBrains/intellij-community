@@ -4604,12 +4604,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void setEditorFontSize(float fontSize) {
-      if (fontSize < MIN_FONT_SIZE) {
-        fontSize = MIN_FONT_SIZE;
+      float originalSize = UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D());
+
+      float minSize = Math.min(MIN_FONT_SIZE, originalSize);
+      if (fontSize < minSize) {
+        fontSize = minSize;
       }
-      if (fontSize > myMaxFontSize) {
-        fontSize = myMaxFontSize;
+
+      float maxSize = Math.max(myMaxFontSize, originalSize);
+      if (fontSize > maxSize) {
+        fontSize = maxSize;
       }
+
       if (fontSize == myFontSize) {
         return;
       }
@@ -4618,7 +4624,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       myFontPreferencesAreSetExplicitly = false;
 
-      if (fontSize == UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D())) {
+      if (fontSize == originalSize) {
         myFontSize = FONT_SIZE_TO_IGNORE;
       }
       else {
