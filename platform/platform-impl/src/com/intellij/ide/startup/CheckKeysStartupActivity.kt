@@ -9,9 +9,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectPostStartupActivity
+import com.intellij.openapi.startup.ProjectActivity
 
-class CheckKeysStartupActivity : ProjectPostStartupActivity {
+class CheckKeysStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
       return
@@ -30,7 +30,7 @@ class CheckKeysStartupActivity : ProjectPostStartupActivity {
       }
     }
     if (exceptionOccurred) {
-      thisLogger().error(messageBuilder)
+      thisLogger().error(messageBuilder.toString())
     }
   }
 }

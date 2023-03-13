@@ -42,8 +42,8 @@ interface EnvironmentParametersService {
   /**
    * The same as [requestEnvironmentValue], but always returns `null` when a value for [key] is absent.
    *
-   * Please avoid using this method if you are not sure. The environment has more capabilities to obtain a value than
-   * the client code.
+   * Please avoid using this method if you are not sure that you need it.
+   * The environment has more capabilities to obtain a value than the client code.
    *
    * For specifying default values, consider using [EnvironmentKey.defaultValue].
    */

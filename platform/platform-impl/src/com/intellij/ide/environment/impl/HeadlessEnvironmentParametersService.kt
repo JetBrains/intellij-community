@@ -5,10 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.type.CollectionType
 import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import kotlinx.coroutines.*
 import java.io.IOException
-import java.nio.file.Path
 
 class HeadlessEnvironmentParametersService(scope: CoroutineScope) : BaseEnvironmentParametersService() {
 
@@ -70,7 +68,7 @@ class HeadlessEnvironmentParametersService(scope: CoroutineScope) : BaseEnvironm
     val list : List<EnvironmentKeyEntry> = try {
       objectMapper.readValue(pathToFile.toFile(), deserializedType)
     } catch (e : IOException) {
-      thisLogger().warn(e)
+      LOG.warn(e)
       return emptyMap()
     }
 
@@ -79,7 +77,7 @@ class HeadlessEnvironmentParametersService(scope: CoroutineScope) : BaseEnvironm
       val key = jsonEntry.key
       val value = jsonEntry.value
       if (key == null || value == null) {
-        thisLogger().warn("Malformed JSON entry in $pathToFile: $key, $value")
+        LOG.warn("Malformed JSON entry in $pathToFile: $key, $value")
         continue
       }
       if (value.isEmpty()) {
