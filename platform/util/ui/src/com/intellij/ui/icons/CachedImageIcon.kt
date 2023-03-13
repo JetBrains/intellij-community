@@ -8,9 +8,7 @@ import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.reference.SoftReference
-import com.intellij.ui.scale.AbstractScaleContextAware
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.scale.*
 import com.intellij.util.SVGLoader
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.MultiResolutionImageProvider
@@ -39,8 +37,8 @@ open class CachedImageIcon protected constructor(
   private val colorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null,
   private val useStroke: Boolean = false,
   private val toolTip: Supplier<String?>? = null,
-) : AbstractScaleContextAware<ScaleContext>(ScaleContext.create()), CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider,
-    IconWithToolTip {
+  private val scaleContext: ScaleContext = ScaleContext.create(),
+) : CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider, IconWithToolTip, ScaleContextAware {
   companion object {
     @JvmField
     internal var isActivated: Boolean = !GraphicsEnvironment.isHeadless()
@@ -101,22 +99,32 @@ open class CachedImageIcon protected constructor(
     }
   }
 
+  final override fun getScaleContext(): ScaleContext = scaleContext
+
+  final override fun updateScaleContext(ctx: UserScaleContext?): Boolean = scaleContext.update(ctx)
+
+  final override fun getScale(type: ScaleType): Double = scaleContext.getScale(type)
+
+  final override fun getScale(type: DerivedScaleType): Double = scaleContext.getScale(type)
+
+  final override fun setScale(scale: Scale): Boolean = scaleContext.setScale(scale)
+
   override fun getToolTip(composite: Boolean): String? = toolTip?.get()
 
-  override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
-    getRealIcon(ScaleContext.create(if (g is Graphics2D) g else null)).paintIcon(c, g, x, y)
+  final override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
+    getRealIcon(scaleContext = null, sysScale = JBUIScale.sysScale(g as? Graphics2D?).toDouble()).paintIcon(c, g, x, y)
   }
 
-  override fun getIconWidth(): Int = getRealIcon(scaleContext = null).iconWidth
+  final override fun getIconWidth(): Int = getRealIcon(scaleContext = null).iconWidth
 
-  override fun getIconHeight(): Int = getRealIcon(scaleContext = null).iconHeight
+  final override fun getIconHeight(): Int = getRealIcon(scaleContext = null).iconHeight
 
-  override fun getScale(): Float = 1.0f
+  final override fun getScale(): Float = 1.0f
 
   @ApiStatus.Internal
   fun getRealIcon(): ImageIcon = getRealIcon(scaleContext = null)
 
-  internal fun getRealIcon(scaleContext: ScaleContext?): ImageIcon {
+  internal fun getRealIcon(scaleContext: ScaleContext?, sysScale: Double = -1.0): ImageIcon {
     if (resolver == null || !isActivated) {
       return EMPTY_ICON
     }
@@ -147,14 +155,22 @@ open class CachedImageIcon protected constructor(
     }
 
     synchronized(lock) {
+      val updated = if (sysScale == -1.0) {
+        this.scaleContext.update(scaleContext)
+      }
+      else {
+        assert(scaleContext == null)
+        this.scaleContext.setScale(ScaleType.SYS_SCALE.of(sysScale))
+      }
       // try returning the current icon as the context is up-to-date
-      if (!updateScaleContext(scaleContext) && realIcon != null) {
+      if (!updated && realIcon != null) {
         unwrapIcon(realIcon)?.let {
           return it
         }
       }
 
-      scaledIconCache.getOrScaleIcon(scale = 1.0f, host = this, scaleContext = this.scaleContext)?.let { icon ->
+      val icon = scaledIconCache.getOrScaleIcon(scale = 1.0f, host = this, scaleContext = this.scaleContext)
+      if (icon != null) {
         this.realIcon = if (icon.iconWidth < 50 && icon.iconHeight < 50) icon else SoftReference(icon)
         return icon
       }

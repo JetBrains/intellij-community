@@ -623,33 +623,24 @@ fun findIconUsingDeprecatedImplementation(originalPath: String,
   var effectiveClassLoader = classLoader
   val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
   val patchedPath = CachedImageIcon.patchPath(originalPath = originalPath, classLoader = effectiveClassLoader)
-  val path = patchedPath?.first ?: originalPath
+  val effectivePath = patchedPath?.first ?: originalPath
   if (patchedPath?.second != null) {
     effectiveClassLoader = patchedPath.second
   }
 
-  val icon: Icon?
-  if (isReflectivePath(path)) {
-    icon = getReflectiveIcon(path = path, classLoader = effectiveClassLoader)
+  var icon: Icon?
+  if (isReflectivePath(effectivePath)) {
+    icon = getReflectiveIcon(path = effectivePath, classLoader = effectiveClassLoader)
   }
   else {
     val key = Pair(originalPath, effectiveClassLoader)
-    var cachedIcon = iconCache.getIfPresent(key)
-    if (cachedIcon == null) {
-      cachedIcon = iconCache.get(key) { k ->
-        val resolver = ImageDataByPathResourceLoader(path = path, ownerClass = aClass, classLoader = k.second, strict = strict)
-        CachedImageIcon(originalPath = originalPath, resolver = resolver, toolTip = toolTip)
+    icon = iconCache.getIfPresent(key)
+    if (icon == null) {
+      icon = iconCache.get(key) { k ->
+        val resolver = ImageDataByPathResourceLoader(path = effectivePath, ownerClass = aClass, classLoader = k.second, strict = strict)
+        CachedImageIcon(originalPath = k.first, resolver = resolver, toolTip = toolTip)
       }
     }
-    else {
-      val scaleContext = ScaleContext.create()
-      if (cachedIcon.scaleContext != scaleContext) {
-        // honor scale context as 'iconCache' doesn't do that
-        cachedIcon = cachedIcon.copy()
-        cachedIcon.updateScaleContext(scaleContext)
-      }
-    }
-    icon = cachedIcon
   }
   if (startTime != -1L) {
     IconLoadMeasurer.findIcon.end(startTime)
