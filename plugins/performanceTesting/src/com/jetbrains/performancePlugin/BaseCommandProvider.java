@@ -75,7 +75,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(CloseAllTabsCommand.PREFIX, CloseAllTabsCommand::new),
       Map.entry(CollectAllFilesCommand.PREFIX, CollectAllFilesCommand::new),
       Map.entry(ExecuteEditorActionCommand.PREFIX, ExecuteEditorActionCommand::new),
-      Map.entry(AssertCompletionCommand.PREFIX, AssertCompletionCommand::new)
+      Map.entry(AssertCompletionCommand.PREFIX, AssertCompletionCommand::new),
+      Map.entry(AssertFindUsagesCommand.PREFIX, AssertFindUsagesCommand::new)
     );
   }
 }
