@@ -173,10 +173,15 @@ public final class IntroduceVariableUtil {
         }
       }
 
+      if (startLiteralExpression == null && endLiteralExpression == null && StringUtil.endsWithChar(text, ';')) {
+        text = text.substring(0, text.length() - 1);
+      }
+
       if (literalExpression != null && text.equals(literalExpression.getText())) return literalExpression;
 
       final PsiElement parent = literalExpression != null ? literalExpression : elementAt;
-      tempExpr = elementFactory.createExpressionFromText(text, parent);
+      PsiElement commonParent = PsiTreeUtil.findCommonParent(elementAtStart, elementAtEnd);
+      tempExpr = elementFactory.createExpressionFromText(text, Objects.requireNonNullElse(parent, commonParent));
 
       if (ErrorUtil.containsDeepError(tempExpr)) return null;
 
@@ -191,13 +196,19 @@ public final class IntroduceVariableUtil {
         tempExpr.putUserData(ElementToWorkOn.PARENT, parent);
       }
       else {
-        PsiErrorElement errorElement = elementAtStart instanceof PsiErrorElement
+        PsiElement errorElement = elementAtStart instanceof PsiErrorElement
                                        ? (PsiErrorElement)elementAtStart
                                        : PsiTreeUtil.getNextSiblingOfType(elementAtStart, PsiErrorElement.class);
         if (errorElement == null) {
           errorElement = PsiTreeUtil.getParentOfType(elementAtStart, PsiErrorElement.class);
         }
+        if (commonParent instanceof PsiMethod method && isIncompleteMethod(method)) {
+          errorElement = method;
+        }
         if (errorElement == null) return null;
+        if (errorElement.getParent() instanceof PsiMethod method && isIncompleteMethod(method)) {
+          errorElement = method;
+        }
         if (!(errorElement.getParent() instanceof PsiClass)) return null;
         tempExpr.putUserData(ElementToWorkOn.PARENT, errorElement);
         tempExpr.putUserData(ElementToWorkOn.OUT_OF_CODE_BLOCK, Boolean.TRUE);
@@ -241,6 +252,10 @@ public final class IntroduceVariableUtil {
     }
 
     return tempExpr;
+  }
+
+  private static boolean isIncompleteMethod(@Nullable PsiMethod incompleteMethod) {
+    return incompleteMethod != null && incompleteMethod.getReturnTypeElement() == null && incompleteMethod.getBody() == null;
   }
 
   private static PsiExpression getSelectionFromInjectedHost(Project project,
