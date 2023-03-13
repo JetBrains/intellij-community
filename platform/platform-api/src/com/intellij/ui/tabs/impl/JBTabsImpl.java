@@ -1110,6 +1110,9 @@ public class JBTabsImpl extends JComponent
           textLabel.clear();
           info.getColoredText().appendToComponent(textLabel);
 
+          Color customBackground = info.getTabColor();
+          myRendererComponent.setBackground(customBackground != null ? customBackground : JBUI.CurrentTheme.Popup.BACKGROUND);
+
           ClientProperty.put(component, SELECTED_KEY, info == selectedInfo ? true : null);
 
           component.invalidate();
