@@ -579,10 +579,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (ToolWindowId.PROJECT_VIEW.equals(toolWindow.getId())) {
           AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
           if (currentProjectViewPane != null && isAutoscrollFromSource(currentProjectViewPane.getId())) {
-            SimpleSelectInContext context = myAutoScrollFromSourceHandler.findSelectInContext();
-            if (context != null) {
-              context.selectInCurrentTarget(false);
-            }
+            myAutoScrollFromSourceHandler.scrollFromSource(false);
           }
         }
       }
@@ -1719,18 +1716,21 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     protected void selectElementFromEditor(@NotNull FileEditor fileEditor) {
       if (myProject.isDisposed() || !myViewContentPanel.isShowing()) return;
       if (isAutoscrollFromSource(getCurrentViewId()) && !isCurrentProjectViewPaneFocused()) {
-        SimpleSelectInContext context = getSelectInContext(fileEditor);
-        if (context != null) context.selectInCurrentTarget(false);
+        scrollFromSource(fileEditor, false);
       }
     }
 
     void scrollFromSource(boolean requestFocus) {
-      SimpleSelectInContext context = findSelectInContext();
+      scrollFromSource(null, requestFocus);
+    }
+
+    void scrollFromSource(@Nullable FileEditor fileEditor, boolean requestFocus) {
+      SimpleSelectInContext context = fileEditor == null ? findSelectInContext() : getSelectInContext(fileEditor);
       if (context != null) context.selectInCurrentTarget(requestFocus);
     }
 
     @Nullable
-    SimpleSelectInContext findSelectInContext() {
+    private SimpleSelectInContext findSelectInContext() {
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
       SimpleSelectInContext context = getSelectInContext(fileEditorManager.getSelectedEditor());
       if (context != null) return context;
@@ -1877,9 +1877,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return !isAutoscrollFromSourceEnabled(myCurrentViewId);
   }
 
-  @Nullable Runnable getSelectOpenedFile() {
-    SimpleSelectInContext context = myAutoScrollFromSourceHandler.findSelectInContext();
-    return context == null ? null : () -> context.selectInCurrentTarget(true);
+  void selectOpenedFile() {
+    myAutoScrollFromSourceHandler.scrollFromSource(true);
   }
 
   @NotNull

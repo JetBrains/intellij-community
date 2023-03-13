@@ -29,7 +29,7 @@ internal class SelectFileAction : DumbAwareAction() {
         if (Registry.`is`("ide.selectIn.works.as.revealIn.when.project.view.focused")) {
           ActionManager.getInstance().getAction("RevealIn")?.actionPerformed(event)
         } else {
-          getView(event)?.selectOpenedFile?.run()
+          getView(event)?.selectOpenedFile()
         }
     }
   }
