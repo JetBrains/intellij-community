@@ -454,7 +454,9 @@ public final class PluginManagerCore {
                         ).collect(Collectors.joining("\n  "));
 
     if (isUnitTestMode || !GraphicsEnvironment.isHeadless()) {
-      getLogger().warn(logMessage);
+      if (!isUnitTestMode) {
+        getLogger().warn(logMessage);
+      }
       return Stream.concat(
           globalErrors.stream(),
           loadingErrors.stream()
@@ -585,7 +587,7 @@ public final class PluginManagerCore {
 
   private static void disableIncompatiblePlugins(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
-                                                 @NotNull Map<PluginId, PluginLoadingError> errors) {
+                                                 @NotNull Map<? super PluginId, ? super PluginLoadingError> errors) {
     String selectedIds = System.getProperty("idea.load.plugins.id");
     String selectedCategory = System.getProperty("idea.load.plugins.category");
 
