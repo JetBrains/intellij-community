@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -74,6 +75,9 @@ public class FieldMayBeStaticInspection extends BaseInspection {
           && !HighlightingFeature.INNER_STATICS.isAvailable(containingClass)
           && !PsiUtil.isCompileTimeConstant(field)) {
         // inner class cannot have static declarations in earlier Java versions
+        return;
+      }
+      if (UnusedSymbolUtil.isImplicitWrite(field)) {
         return;
       }
       if (containingClass instanceof PsiAnonymousClass && 
