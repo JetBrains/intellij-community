@@ -5,11 +5,11 @@ import com.intellij.util.io.DataEnumerator
 import kotlinx.coroutines.CoroutineScope
 
 interface VfsLogContext {
-  val descriptorStorage: DescriptorStorage
+  val operationLogStorage: OperationLogStorage
   val payloadStorage: PayloadStorage
   val stringEnumerator: DataEnumerator<String>
   val coroutineScope: CoroutineScope
 
-  fun enqueueDescriptorWrite(tag: VfsOperationTag, compute: VfsLogContext.() -> VfsOperation<*>): Unit =
-    descriptorStorage.enqueueDescriptorWrite(coroutineScope, tag) { compute() }
+  fun enqueueOperationWrite(tag: VfsOperationTag, compute: VfsLogContext.() -> VfsOperation<*>): Unit =
+    operationLogStorage.enqueueOperationWrite(coroutineScope, tag) { compute() }
 }

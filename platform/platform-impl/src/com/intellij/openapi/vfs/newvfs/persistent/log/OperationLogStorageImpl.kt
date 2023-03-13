@@ -2,7 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.newvfs.persistent.log.DescriptorStorage.DescriptorReadResult
+import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
@@ -17,10 +17,10 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
 import kotlin.io.path.div
 
-class DescriptorStorageImpl(
+class OperationLogStorageImpl(
   storagePath: Path,
   private val stringEnumerator: DataEnumerator<String>,
-) : DescriptorStorage {
+) : OperationLogStorage {
   private val storageIO: StorageIO
   private var persistentSize by PersistentVar.long(storagePath / "size")
   private val position: AdvancingPositionTracker
@@ -34,9 +34,9 @@ class DescriptorStorageImpl(
     position = SkipListAdvancingPositionTracker(persistentSize ?: 0L)
   }
 
-  override fun bytesForDescriptor(tag: VfsOperationTag): Int =
+  override fun bytesForOperationDescriptor(tag: VfsOperationTag): Int =
     when (tag) {
-      VfsOperationTag.NULL -> throw IllegalArgumentException("NULL descriptors are not expected in storage")
+      VfsOperationTag.NULL -> throw IllegalArgumentException("NULL operations are not expected in storage")
 
       VfsOperationTag.REC_ALLOC -> VfsOperation.RecordsOperation.AllocateRecord.VALUE_SIZE_BYTES
       VfsOperationTag.REC_SET_ATTR_REC_ID -> VfsOperation.RecordsOperation.SetAttributeRecordId.VALUE_SIZE_BYTES
@@ -76,32 +76,31 @@ class DescriptorStorageImpl(
 
   private fun sizeOfValueInDescriptor(size: Int) = size - VfsOperationTag.SIZE_BYTES * 2
 
-  override fun enqueueDescriptorWrite(scope: CoroutineScope, tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
-    val descrSize = bytesForDescriptor(tag)
+  override fun enqueueOperationWrite(scope: CoroutineScope, tag: VfsOperationTag, compute: () -> VfsOperation<*>) {
+    val descrSize = bytesForOperationDescriptor(tag)
     val descrPos = position.beginAdvance(descrSize.toLong())
     scope.launch {
-      val op = compute()
-      if (tag != op.tag) {
-        throw IllegalStateException("expected $tag, got ${op.tag}")
+      val operation = compute()
+      if (tag != operation.tag) {
+        throw IllegalStateException("expected $tag, got ${operation.tag}")
       }
-      writeDescriptor(descrPos, op)
+      writeOperation(descrPos, operation)
     }.invokeOnCompletion {
       if (it != null) { // TODO: probably need to check specific classes (also, what to do on coroutine cancellation?)
         try { // try to write error bounding tags
-          val descriptorSize = bytesForDescriptor(tag)
           storageIO.write(descrPos, byteArrayOf((-tag.ordinal).toByte()))
-          storageIO.write(descrPos + descriptorSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
+          storageIO.write(descrPos + descrSize - VfsOperationTag.SIZE_BYTES, byteArrayOf(tag.ordinal.toByte()))
         }
         catch (e: Throwable) {
-          it.addSuppressed(IOException("failed to set error descriptor bounds", e))
+          it.addSuppressed(IOException("failed to set error operation bounds", e))
         }
       }
       position.finishAdvance(descrPos)
     }
   }
 
-  override fun writeDescriptor(position: Long, op: VfsOperation<*>) {
-    val descriptorSize = bytesForDescriptor(op.tag)
+  override fun writeOperation(position: Long, op: VfsOperation<*>) {
+    val descriptorSize = bytesForOperationDescriptor(op.tag)
     val data = serialize(op)
     if (data.size != sizeOfValueInDescriptor(descriptorSize)) {
       throw IllegalStateException("for ${op.tag} expected value of size ${sizeOfValueInDescriptor(descriptorSize)}, got ${data.size}")
@@ -113,90 +112,90 @@ class DescriptorStorageImpl(
     }
   }
 
-  override fun readAt(position: Long): DescriptorReadResult = try {
+  override fun readAt(position: Long): OperationReadResult = try {
     readFirstTag(position, ::readWholeDescriptor)
   }
   catch (e: Throwable) {
-    DescriptorReadResult.Invalid(e)
+    OperationReadResult.Invalid(e)
   }
 
-  override fun readPreceding(position: Long): DescriptorReadResult = try {
+  override fun readPreceding(position: Long): OperationReadResult = try {
     readLastTag(position) { actualPos, _ -> readAt(actualPos) }
   }
   catch (e: Throwable) {
-    DescriptorReadResult.Invalid(e)
+    OperationReadResult.Invalid(e)
   }
 
-  override fun readAtFiltered(position: Long, toReadMask: VfsOperationTagsMask): DescriptorReadResult = try {
+  override fun readAtFiltered(position: Long, toReadMask: VfsOperationTagsMask): OperationReadResult = try {
     readFirstTag(position) { _, tag ->
       if (toReadMask.contains(tag)) return readWholeDescriptor(position, tag)
       // validate right tag
-      val descrSize = bytesForDescriptor(tag)
+      val descrSize = bytesForOperationDescriptor(tag)
       val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
       storageIO.read(position + descrSize - VfsOperationTag.SIZE_BYTES, buf)
       if (tag.ordinal.toByte() != buf[0]) {
-        return DescriptorReadResult.Invalid(IllegalStateException("bounding tags do not match: ${tag.ordinal} ${buf[0]}"))
+        return OperationReadResult.Invalid(IllegalStateException("bounding tags do not match: ${tag.ordinal} ${buf[0]}"))
       }
-      return DescriptorReadResult.Incomplete(tag)
+      return OperationReadResult.Incomplete(tag)
     }
   }
   catch (e: Throwable) {
-    DescriptorReadResult.Invalid(e)
+    OperationReadResult.Invalid(e)
   }
 
   private inline fun readFirstTag(position: Long,
-                                  cont: (position: Long, tag: VfsOperationTag) -> DescriptorReadResult): DescriptorReadResult {
+                                  cont: (position: Long, tag: VfsOperationTag) -> OperationReadResult): OperationReadResult {
     val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
     storageIO.read(position, buf)
     if (buf[0] < 0.toByte()) {
-      return recoverDescriptorTag(position, buf)
+      return recoverOperationTag(position, buf)
     }
     if (buf[0] == 0.toByte() || buf[0] >= VfsOperationTag.values().size) {
-      return DescriptorReadResult.Invalid(IllegalStateException("read tag value is ${buf[0]}"))
+      return OperationReadResult.Invalid(IllegalStateException("read tag value is ${buf[0]}"))
     }
     val tag = VfsOperationTag.values()[buf[0].toInt()]
     return cont(position, tag)
   }
 
   private inline fun readLastTag(position: Long,
-                                 cont: (actualDescriptorPosition: Long, tag: VfsOperationTag) -> DescriptorReadResult): DescriptorReadResult {
+                                 cont: (actualDescriptorPosition: Long, tag: VfsOperationTag) -> OperationReadResult): OperationReadResult {
     val buf = ByteArray(VfsOperationTag.SIZE_BYTES)
     storageIO.read(position - 1, buf)
     if (buf[0] !in 1 until VfsOperationTag.values().size) {
-      return DescriptorReadResult.Invalid(IllegalStateException("read last tag value is ${buf[0]}"))
+      return OperationReadResult.Invalid(IllegalStateException("read last tag value is ${buf[0]}"))
     }
     val tag = VfsOperationTag.values()[buf[0].toInt()]
-    val descrSize = bytesForDescriptor(tag)
+    val descrSize = bytesForOperationDescriptor(tag)
     return cont(position - descrSize, tag)
   }
 
-  private fun readWholeDescriptor(position: Long, tag: VfsOperationTag): DescriptorReadResult {
-    val descrSize = bytesForDescriptor(tag)
+  private fun readWholeDescriptor(position: Long, tag: VfsOperationTag): OperationReadResult {
+    val descrSize = bytesForOperationDescriptor(tag)
     val descrData = ByteArray(descrSize)
     storageIO.read(position, descrData)
     if (descrData.last() != descrData.first()) {
-      return DescriptorReadResult.Invalid(IllegalStateException("bounding tags do not match: ${descrData.first()} ${descrData.last()}"))
+      return OperationReadResult.Invalid(IllegalStateException("bounding tags do not match: ${descrData.first()} ${descrData.last()}"))
     }
     val op = deserialize<VfsOperation<*>>(tag, descrData.copyOfRange(1, descrData.size - 1))
-    return DescriptorReadResult.Valid(op)
+    return OperationReadResult.Valid(op)
   }
 
-  private fun recoverDescriptorTag(position: Long, buf: ByteArray): DescriptorReadResult {
+  private fun recoverOperationTag(position: Long, buf: ByteArray): OperationReadResult {
     val probableTagByte = -buf[0]
     if (probableTagByte >= VfsOperationTag.values().size) {
-      return DescriptorReadResult.Invalid(IllegalStateException("read tag value is ${buf}"))
+      return OperationReadResult.Invalid(IllegalStateException("read tag value is ${buf}"))
     }
     val probableTag = VfsOperationTag.values()[probableTagByte]
-    val descriptorSize = bytesForDescriptor(probableTag)
+    val descriptorSize = bytesForOperationDescriptor(probableTag)
     storageIO.read(position + descriptorSize - VfsOperationTag.SIZE_BYTES, buf)
     if (probableTagByte != buf[0].toInt()) {
-      return DescriptorReadResult.Invalid(
-        IllegalStateException("failed to recover incomplete descriptor, bounding bytes: ${-probableTagByte} ${buf[0]}"))
+      return OperationReadResult.Invalid(
+        IllegalStateException("failed to recover incomplete operation, bounding bytes: ${-probableTagByte} ${buf[0]}"))
     }
-    return DescriptorReadResult.Incomplete(probableTag)
+    return OperationReadResult.Incomplete(probableTag)
   }
 
-  override fun readAll(action: (DescriptorReadResult) -> Boolean) {
+  override fun readAll(action: (OperationReadResult) -> Boolean) {
     val iter = begin()
     while (iter.hasNext()) {
       if (!action(iter.next())) break
@@ -211,8 +210,8 @@ class DescriptorStorageImpl(
   override fun emergingSize(): Long = position.getCurrentAdvancePosition()
   override fun persistentSize() = persistentSize ?: 0L
 
-  override fun begin(): DescriptorStorage.VfsLogIterator = IteratorImpl(0L)
-  override fun end(): DescriptorStorage.VfsLogIterator = IteratorImpl(size())
+  override fun begin(): OperationLogStorage.Iterator = IteratorImpl(0L)
+  override fun end(): OperationLogStorage.Iterator = IteratorImpl(size())
 
   override fun flush() {
     val safePos = position.getReadyPosition()
@@ -227,8 +226,8 @@ class DescriptorStorageImpl(
     storageIO.close()
   }
 
-  private inner class IteratorImpl(var iterPos: Long) : DescriptorStorage.VfsLogIterator {
-    // [tag previous descriptor tag]  [tag next descriptor tag]
+  private inner class IteratorImpl(var iterPos: Long) : OperationLogStorage.Iterator {
+    // [tag, previous operation, tag]  [tag, next operation, tag]
     //                      iterPos --^
 
     var invalidationFlag = false
@@ -241,19 +240,19 @@ class DescriptorStorageImpl(
       return iterPos > 0 && !invalidationFlag
     }
 
-    override fun next(): DescriptorReadResult = readAt(iterPos).also {
+    override fun next(): OperationReadResult = readAt(iterPos).also {
       when (it) {
-        is DescriptorReadResult.Valid -> iterPos += bytesForDescriptor(it.operation.tag)
-        is DescriptorReadResult.Incomplete -> iterPos += bytesForDescriptor(it.tag)
-        is DescriptorReadResult.Invalid -> invalidationFlag = true
+        is OperationReadResult.Valid -> iterPos += bytesForOperationDescriptor(it.operation.tag)
+        is OperationReadResult.Incomplete -> iterPos += bytesForOperationDescriptor(it.tag)
+        is OperationReadResult.Invalid -> invalidationFlag = true
       }
     }
 
-    override fun previous(): DescriptorReadResult = readPreceding(iterPos).also {
+    override fun previous(): OperationReadResult = readPreceding(iterPos).also {
       when (it) {
-        is DescriptorReadResult.Valid -> iterPos -= bytesForDescriptor(it.operation.tag)
-        is DescriptorReadResult.Incomplete -> iterPos -= bytesForDescriptor(it.tag)
-        is DescriptorReadResult.Invalid -> invalidationFlag = true
+        is OperationReadResult.Valid -> iterPos -= bytesForOperationDescriptor(it.operation.tag)
+        is OperationReadResult.Incomplete -> iterPos -= bytesForOperationDescriptor(it.tag)
+        is OperationReadResult.Invalid -> invalidationFlag = true
       }
     }
   }

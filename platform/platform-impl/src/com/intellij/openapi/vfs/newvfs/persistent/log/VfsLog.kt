@@ -47,18 +47,18 @@ class VfsLog(
 
     // todo: probably need to propagate readOnly to storages to ensure safety
     override val stringEnumerator = SimpleStringPersistentEnumerator(storagePath / "stringsEnum")
-    override val descriptorStorage = DescriptorStorageImpl(storagePath / "events", stringEnumerator)
+    override val operationLogStorage = OperationLogStorageImpl(storagePath / "operations", stringEnumerator)
     override val payloadStorage = PayloadStorageImpl(storagePath / "data")
 
     fun flush() {
       payloadStorage.flush()
-      descriptorStorage.flush()
+      operationLogStorage.flush()
     }
 
     fun dispose() {
       coroutineScope.cancel("dispose")
       flush()
-      descriptorStorage.dispose()
+      operationLogStorage.dispose()
       payloadStorage.dispose()
     }
 
