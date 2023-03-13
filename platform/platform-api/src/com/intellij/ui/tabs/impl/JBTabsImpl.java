@@ -1057,7 +1057,14 @@ public class JBTabsImpl extends JComponent
           int gap = JBUI.CurrentTheme.ActionsList.elementIconGap() - 2;
           component.add(Box.createRigidArea(new Dimension(gap, 0)));
 
-          textLabel = new SimpleColoredComponent();
+          textLabel = new SimpleColoredComponent() {
+            @Override
+            public Dimension getMaximumSize() {
+              return getPreferredSize();
+            }
+          };
+          textLabel.setMyBorder(null);
+          textLabel.setIpad(JBInsets.emptyInsets());
           textLabel.setOpaque(true);
           component.add(textLabel);
 
