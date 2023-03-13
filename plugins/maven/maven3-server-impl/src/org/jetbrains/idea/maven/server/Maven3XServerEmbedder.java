@@ -652,26 +652,15 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     MavenServerUtil.checkToken(token);
 
     try {
-      customizeComponents();
-
-      ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
-      if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
-        ((CustomMaven3ArtifactFactory)artifactFactory).customize();
-      }
-
-      ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
-      ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
+      customizeComponents(workspaceMap, failOnUnresolvedDependency);
 
       myWorkspaceMap = workspaceMap;
-
-      myBuildStartTime = new Date();
-
+      myUserProperties = userProperties;
       myAlwaysUpdateSnapshots = myAlwaysUpdateSnapshots || alwaysUpdateSnapshots;
-
-
+      myBuildStartTime = new Date();
       myCurrentIndicator = new MavenServerProgressIndicatorWrapper();
-      myConsoleWrapper.setWrappee(myCurrentIndicator);
 
+      myConsoleWrapper.setWrappee(myCurrentIndicator);
       try {
         UnicastRemoteObject.exportObject(myCurrentIndicator, 0);
       }
@@ -679,7 +668,6 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         throw new RuntimeException(e);
       }
 
-      myUserProperties = userProperties;
       return myCurrentIndicator;
     }
     catch (Exception e) {
@@ -687,34 +675,37 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
-  private void customizeComponents() throws RemoteException {
-    try {
-      // replace some plexus components
-      if (VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
-        myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
-      }
-      myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
-      myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
-      myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
-      ModelInterpolator modelInterpolator = createAndPutInterpolator(myContainer);
-
-      ModelValidator modelValidator;
-      if (VersionComparatorUtil.compare(getMavenVersion(), "3.8.5") >= 0) {
-        modelValidator = new CustomModelValidator385((CustomMaven3ModelInterpolator2)modelInterpolator,
-                                                     (DefaultModelValidator)getComponent(ModelValidator.class));
-      }
-      else {
-        modelValidator = getComponent(ModelValidator.class, "ide");
-        myContainer.addComponent(modelValidator, ModelValidator.class.getName());
-      }
-
-      DefaultModelBuilder defaultModelBuilder = (DefaultModelBuilder)getComponent(ModelBuilder.class);
-      defaultModelBuilder.setModelValidator(modelValidator);
-      defaultModelBuilder.setModelInterpolator(modelInterpolator);
+  protected void customizeComponents(@Nullable MavenWorkspaceMap workspaceMap, boolean failOnUnresolvedDependency) throws RemoteException {
+    // replace some plexus components
+    if (VersionComparatorUtil.compare("3.7.0-SNAPSHOT", getMavenVersion()) < 0) {
+      myContainer.addComponent(getComponent(ArtifactFactory.class, "ide"), ArtifactFactory.ROLE);
     }
-    catch (Exception e) {
-      throw wrapToSerializableRuntimeException(e);
+    myContainer.addComponent(getComponent(ArtifactResolver.class, "ide"), ArtifactResolver.ROLE);
+    myContainer.addComponent(getComponent(RepositoryMetadataManager.class, "ide"), RepositoryMetadataManager.class.getName());
+    myContainer.addComponent(getComponent(PluginDescriptorCache.class, "ide"), PluginDescriptorCache.class.getName());
+    ModelInterpolator modelInterpolator = createAndPutInterpolator(myContainer);
+
+    ModelValidator modelValidator;
+    if (VersionComparatorUtil.compare(getMavenVersion(), "3.8.5") >= 0) {
+      modelValidator = new CustomModelValidator385((CustomMaven3ModelInterpolator2)modelInterpolator,
+                                                   (DefaultModelValidator)getComponent(ModelValidator.class));
     }
+    else {
+      modelValidator = getComponent(ModelValidator.class, "ide");
+      myContainer.addComponent(modelValidator, ModelValidator.class.getName());
+    }
+
+    DefaultModelBuilder defaultModelBuilder = (DefaultModelBuilder)getComponent(ModelBuilder.class);
+    defaultModelBuilder.setModelValidator(modelValidator);
+    defaultModelBuilder.setModelInterpolator(modelInterpolator);
+
+    ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
+    if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
+      ((CustomMaven3ArtifactFactory)artifactFactory).customize();
+    }
+
+    ((CustomMaven3ArtifactResolver)getComponent(ArtifactResolver.class)).customize(workspaceMap, failOnUnresolvedDependency);
+    ((CustomMaven3RepositoryMetadataManager)getComponent(RepositoryMetadataManager.class)).customize(workspaceMap);
   }
 
   private ModelInterpolator createAndPutInterpolator(DefaultPlexusContainer container) {
@@ -1784,21 +1775,25 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       myCurrentIndicator = null;
       myConsoleWrapper.setWrappee(null);
 
-      final ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
-      if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
-        ((CustomMaven3ArtifactFactory)artifactFactory).reset();
-      }
-      final ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
-      if (artifactResolver instanceof CustomMaven3ArtifactResolver) {
-        ((CustomMaven3ArtifactResolver)artifactResolver).reset();
-      }
-      final RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
-      if (repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
-        ((CustomMaven3RepositoryMetadataManager)repositoryMetadataManager).reset();
-      }
+      resetCustomizedComponents();
     }
     catch (Exception e) {
       throw wrapToSerializableRuntimeException(e);
+    }
+  }
+
+  protected void resetCustomizedComponents() {
+    final ArtifactFactory artifactFactory = getComponent(ArtifactFactory.class);
+    if (artifactFactory instanceof CustomMaven3ArtifactFactory) {
+      ((CustomMaven3ArtifactFactory)artifactFactory).reset();
+    }
+    final ArtifactResolver artifactResolver = getComponent(ArtifactResolver.class);
+    if (artifactResolver instanceof CustomMaven3ArtifactResolver) {
+      ((CustomMaven3ArtifactResolver)artifactResolver).reset();
+    }
+    final RepositoryMetadataManager repositoryMetadataManager = getComponent(RepositoryMetadataManager.class);
+    if (repositoryMetadataManager instanceof CustomMaven3RepositoryMetadataManager) {
+      ((CustomMaven3RepositoryMetadataManager)repositoryMetadataManager).reset();
     }
   }
 
