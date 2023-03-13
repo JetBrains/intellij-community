@@ -11,8 +11,6 @@
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <irGenerationExtension implementation="org.jetbrains.kotlin.parcelize.ParcelizeIrGeneratorExtension"/>
     <syntheticResolveExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.IdeParcelizeResolveExtension"/>
-    <classBuilderFactoryInterceptorExtension
-            implementation="org.jetbrains.kotlin.parcelize.ParcelizeClinitClassBuilderInterceptorExtension"/>
     <storageComponentContainerContributor
             implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.IdeParcelizeDeclarationCheckerComponentContainerContributor"/>
 
