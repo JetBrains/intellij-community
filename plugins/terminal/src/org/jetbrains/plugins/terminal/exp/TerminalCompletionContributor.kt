@@ -102,7 +102,7 @@ class TerminalCompletionContributor : CompletionContributor() {
     finally {
       Disposer.dispose(listenerDisposable)
       val newPromptShown = if (future.isDone) future.get().newPromptShown else false
-      completionManager.resetPrompt(command.length, context.promptAndCommandLines, newPromptShown)
+      completionManager.resetPrompt(context.promptAndCommandLines, newPromptShown)
     }
 
     return if (future.isDone) {
