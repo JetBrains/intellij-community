@@ -40,7 +40,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
-public abstract class ChangesListView extends HoverChangesTree implements DataProvider, DnDAware {
+public abstract class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
   private static final Logger LOG = Logger.getInstance(ChangesListView.class);
 
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
@@ -77,12 +77,6 @@ public abstract class ChangesListView extends HoverChangesTree implements DataPr
     if (subtreeRootObject instanceof LocalChangeList) return !((LocalChangeList)subtreeRootObject).getChanges().isEmpty();
     if (subtreeRootObject == UNVERSIONED_FILES_TAG) return true;
     return false;
-  }
-
-  @Nullable
-  @Override
-  public HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
-    return null;
   }
 
   @Override

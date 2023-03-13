@@ -971,17 +971,19 @@ public class ChangesViewManager implements ChangesViewEx,
         OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
         return true;
       });
+
+      new HoverChangesTree(this) {
+        @Override
+        public @Nullable HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
+          return ChangesViewNodeAction.EP_NAME.computeSafeIfAny(myProject, (it) -> it.createNodeHoverIcon(node));
+        }
+      }.install();
     }
 
     @Override
     protected @NotNull ChangesGroupingSupport installGroupingSupport() {
       // can't install support here - 'rebuildTree' is not defined
       return new ChangesGroupingSupport(myProject, this, true);
-    }
-
-    @Override
-    public @Nullable HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
-      return ChangesViewNodeAction.EP_NAME.computeSafeIfAny(myProject, (it) -> it.createNodeHoverIcon(node));
     }
 
     private static class MyTreeExpander extends DefaultTreeExpander {

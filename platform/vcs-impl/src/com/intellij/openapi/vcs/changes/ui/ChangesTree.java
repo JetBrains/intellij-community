@@ -73,6 +73,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @NotNull protected final Project myProject;
   private boolean myShowCheckboxes;
+  private final boolean myHighlightProblems;
   private final int myCheckboxWidth;
   @NotNull private final ChangesGroupingSupport myGroupingSupport;
   private boolean myIsModelFlat;
@@ -109,6 +110,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     super(ChangesBrowserNode.createRoot());
     myProject = project;
     myShowCheckboxes = showCheckboxes;
+    myHighlightProblems = highlightProblems;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
     myInclusionModel.addInclusionListener(myInclusionModelListener);
     myHandlers = new ChangesTreeHandlers(this);
@@ -381,6 +383,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       updateFixedRowHeight();
       repaint();
     }
+  }
+
+  public boolean isHighlightProblems() {
+    return myHighlightProblems;
   }
 
   private boolean isCurrentModelFlat() {

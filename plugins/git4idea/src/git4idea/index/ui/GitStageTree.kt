@@ -45,7 +45,7 @@ import javax.swing.tree.DefaultTreeModel
 abstract class GitStageTree(project: Project,
                             private val settings: GitStageUiSettings,
                             parentDisposable: Disposable) :
-  HoverChangesTree(project, false, true) {
+  ChangesTree(project, false, true) {
 
   protected abstract val state: GitStageTracker.State
   protected abstract val ignoredFilePaths: Map<VirtualFile, List<FilePath>>
@@ -61,6 +61,21 @@ abstract class GitStageTree(project: Project,
         rebuildTree()
       }
     }, parentDisposable)
+
+    object : HoverChangesTree(this@GitStageTree) {
+      override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
+        if (node == root) return null
+        if (node is ChangesBrowserGitFileStatusNode) {
+          val hoverIcon = createHoverIcon(node)
+          if (hoverIcon != null) return hoverIcon
+        }
+        val statusNode = allUnder(node).iterateUserObjects(GitFileStatusNode::class.java).first()
+                         ?: return null
+        val operation = operations.find { it.matches(statusNode) } ?: return null
+        if (operation.icon == null) return null
+        return GitStageHoverIcon(operation)
+      }
+    }.install()
   }
 
   override fun getToggleClickCount(): Int = 2
@@ -72,19 +87,6 @@ abstract class GitStageTree(project: Project,
   protected abstract fun showMergeDialog(conflictedFiles: List<VirtualFile>)
 
   protected abstract fun createHoverIcon(node: ChangesBrowserGitFileStatusNode): HoverIcon?
-
-  override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
-    if (node == root) return null
-    if (node is ChangesBrowserGitFileStatusNode) {
-      val hoverIcon = createHoverIcon(node)
-      if (hoverIcon != null) return hoverIcon
-    }
-    val statusNode = allUnder(node).iterateUserObjects(GitFileStatusNode::class.java).first()
-                     ?: return null
-    val operation = operations.find { it.matches(statusNode) } ?: return null
-    if (operation.icon == null) return null
-    return GitStageHoverIcon(operation)
-  }
 
   override fun rebuildTree() {
     val builder = MyTreeModelBuilder(myProject, groupingSupport.grouping)
