@@ -17,7 +17,7 @@ internal class LightServiceMustBeFinalInspection : DevKitJvmInspection() {
       override fun visitClass(clazz: JvmClass): Boolean {
         if (clazz.classKind != JvmClassKind.CLASS || clazz.hasModifier(JvmModifier.FINAL)) return true
         val file = clazz.sourceElement?.containingFile ?: return true
-        val hasServiceAnnotation = clazz.annotations.any { it.qualifiedName == Service::class.java.canonicalName }
+        val hasServiceAnnotation = clazz.hasAnnotation(Service::class.java.canonicalName)
         if (hasServiceAnnotation) {
           val actions = createModifierActions(clazz, modifierRequest(JvmModifier.FINAL, true))
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)

@@ -28,7 +28,7 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
         if (!method.isConstructor) return true
         val file: PsiFile = method.sourceElement?.containingFile ?: return true
         val containingClass = method.containingClass ?: return true
-        val annotation = containingClass.annotations.find { it.qualifiedName == Service::class.java.canonicalName } ?: return true
+        val annotation = containingClass.getAnnotation(Service::class.java.canonicalName) ?: return true
         val annotationName = (annotation as? PsiAnnotation)?.nameReferenceElement
         val level = getLevel(annotation)
         if (annotationName != null && level !in listOf(Level.PROJECT, Level.APP_AND_PROJECT)) {
