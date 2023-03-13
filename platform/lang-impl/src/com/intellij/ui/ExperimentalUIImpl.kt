@@ -30,7 +30,10 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
     val app = ApplicationManager.getApplication()
     app.messageBus.connect().subscribe(AppLifecycleListener.TOPIC, this)
     if (ConfigImportHelper.isNewUser() && isNewUIEnabledByDefault() && !isNewUI()) {
-      app.invokeLater { onExpUIEnabled(false) }
+      app.invokeLater {
+        newValue = true
+        onExpUIEnabled(false)
+      }
     }
   }
 
