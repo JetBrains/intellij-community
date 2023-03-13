@@ -9,12 +9,14 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
+import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProvider
 import org.jetbrains.kotlin.analysis.providers.KotlinDeclarationProviderFactory
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelCallableByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex
 import org.jetbrains.kotlin.idea.base.indices.names.getNamesInPackage
 import org.jetbrains.kotlin.idea.stubindex.*
+import org.jetbrains.kotlin.idea.vfilefinder.KotlinModuleMappingIndex
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -79,6 +81,13 @@ private class IdeKotlinDeclarationProvider(
 
     override fun findFilesForFacadeByPackage(packageFqName: FqName): Collection<KtFile> {
         return KotlinFileFacadeClassByPackageIndex[packageFqName.asString(), project, scope]
+    }
+
+    /**
+     * [org.jetbrains.kotlin.idea.caches.resolve.IDEPackagePartProvider.computePackageSetWithNonClassDeclarations]
+     */
+    override fun computePackageSetWithTopLevelCallableDeclarations(): Set<String> = buildSet {
+        FileBasedIndex.getInstance().processAllKeys(KotlinModuleMappingIndex.NAME, { name -> add(name); true }, scope, null)
     }
 
     override fun findFilesForFacade(facadeFqName: FqName): Collection<KtFile> {
