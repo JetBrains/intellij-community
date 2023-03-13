@@ -75,6 +75,9 @@ class MermaidLineIndentProvider : LineIndentProvider {
         moveAtStartOfPreviousLine(position)
         if (position.isAtAnyOf(*EXPAND_INDENT_AFTER.types)) {
           return getIndentString(editor, position.getStartOffset(), true)
+        } else if (position.isAt(MermaidTokens.Pie.SHOW_DATA)) {
+          position.moveBeforeOptionalMix(MermaidTokens.Pie.SHOW_DATA, MermaidTokens.WHITE_SPACE)
+          return getIndentString(editor, position.getStartOffset(), position.isAt(MermaidTokens.Pie.PIE))
         } else if (position.isAt(MermaidTokens.TASK_NAME)) {
           return getIndentString(editor, position.getStartOffset(), true, continuation = true)
         } else if (position.isAt(MermaidTokens.TITLE_VALUE)) {

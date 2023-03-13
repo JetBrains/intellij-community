@@ -65,7 +65,6 @@ object MermaidTokenTypeSets {
   val EXPAND_INDENT_AFTER = TokenSet.create(
     MermaidTokens.OPEN_CURLY,
     MermaidTokens.Pie.PIE,
-    MermaidTokens.Pie.SHOW_DATA,
     MermaidTokens.Journey.JOURNEY,
     MermaidTokens.SECTION_TITLE,
     MermaidTokens.Flowchart.FLOWCHART,
