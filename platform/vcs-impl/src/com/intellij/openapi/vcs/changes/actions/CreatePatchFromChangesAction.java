@@ -64,6 +64,17 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
   }
 
   @Override
+  public void defaultUpdate(@NotNull AnActionEvent e) {
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+    List<ShelvedChangeList> shelveChangelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
+    int changelistNum = changeLists == null ? 0 : changeLists.length;
+    changelistNum += shelveChangelists.size();
+
+    e.getPresentation().setEnabled(changelistNum <= 1 && !ArrayUtil.isEmpty(changes));
+  }
+
+  @Override
   public void defaultActionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
@@ -169,16 +180,5 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
                                                          exception.getMessage());
       }
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
-  }
-
-  @Override
-  public void defaultUpdate(@NotNull AnActionEvent e) {
-    Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
-    List<ShelvedChangeList> shelveChangelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
-    int changelistNum = changeLists == null ? 0 : changeLists.length;
-    changelistNum += shelveChangelists.size();
-
-    e.getPresentation().setEnabled(changelistNum <= 1 && !ArrayUtil.isEmpty(changes));
   }
 }
