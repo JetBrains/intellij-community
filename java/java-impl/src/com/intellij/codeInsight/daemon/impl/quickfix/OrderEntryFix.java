@@ -88,6 +88,7 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     invoke(project, null, descriptor.getPsiElement().getContainingFile());
   }
 
+  @NotNull
   public static List<@NotNull LocalQuickFix> registerFixes(@NotNull PsiReference reference, @NotNull List<? super IntentionAction> registrar) {
     return registerFixes(reference, registrar, shortReferenceName -> {
       Project project = reference.getElement().getProject();

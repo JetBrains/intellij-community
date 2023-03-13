@@ -11,7 +11,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.asJava.elements.KtLightMember
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -35,7 +35,7 @@ object KotlinAddOrderEntryActionFactory : KotlinIntentionActionsFactory() {
         if (!RootKindFilter.projectSources.matches(simpleExpression)) return emptyList()
         val project = simpleExpression.project
 
-        val importDirective = PsiTreeUtil.getParentOfType(simpleExpression, KtImportDirective::class.java)
+        val importDirective = simpleExpression.parentOfType<KtImportDirective>()
         val refElement: KtElement = simpleExpression.getQualifiedElement()
 
         val reference = object : PsiReferenceBase<KtElement>(refElement) {
@@ -64,29 +64,26 @@ object KotlinAddOrderEntryActionFactory : KotlinIntentionActionsFactory() {
             val scope = GlobalSearchScope.allScope(project)
             val classesByName = PsiShortNamesCache.getInstance(project).getClassesByName(shortName, scope)
             if (classesByName.isNotEmpty()) return@registerFixes classesByName
-            val importedFqName = importDirective?.importedFqName
+            val importedFqName = importDirective?.takeUnless { it.isAllUnder }?.importedFqName
             if (importedFqName != null) {
                 PsiShortNamesCache.getInstance(project).getClassesByName(importedFqName.shortName().asString(), scope)
                   .takeUnless { it.isEmpty() }
                   ?.let { return@registerFixes it }
             }
 
+            val importedFqNameAsString = importedFqName?.asString()
             val declarations =
-              run {
-                  if (importedFqName != null && !importDirective.isAllUnder) {
-                      KotlinTopLevelPropertyFqnNameIndex[importedFqName.asString(), project, scope]
-                  }
-                  else {
-                      KotlinPropertyShortNameIndex[shortName, project, scope].filter { (it as? KtProperty)?.isTopLevel == true }
-                  }
-              }.takeUnless { it.isEmpty() } ?: run {
-                  if (importedFqName != null && !importDirective.isAllUnder) {
-                      KotlinTopLevelFunctionFqnNameIndex[importedFqName.asString(), project, scope]
-                  }
-                  else {
-                      KotlinFunctionShortNameIndex[shortName, project, scope].filter { (it as? KtNamedFunction)?.isTopLevel == true }
-                  }
-              }
+                if (importedFqNameAsString != null) {
+                    KotlinTopLevelPropertyFqnNameIndex[importedFqNameAsString, project, scope]
+                } else {
+                    KotlinPropertyShortNameIndex[shortName, project, scope].filter { (it as? KtProperty)?.isTopLevel == true }
+                }.takeUnless { it.isEmpty() } ?:
+                    if (importedFqNameAsString != null) {
+                        KotlinTopLevelFunctionFqnNameIndex[importedFqNameAsString, project, scope]
+                    } else {
+                        KotlinFunctionShortNameIndex[shortName, project, scope].filter { (it as? KtNamedFunction)?.isTopLevel == true }
+                    }
+
             if (declarations.isNotEmpty()) {
                 val lightClasses = declarations
                   .flatMap { it.toLightElements() }
@@ -96,9 +93,10 @@ object KotlinAddOrderEntryActionFactory : KotlinIntentionActionsFactory() {
                     return@registerFixes lightClasses.toTypedArray()
                 }
             }
+
             PsiClass.EMPTY_ARRAY
         }
         @Suppress("UNCHECKED_CAST")
-        return registerFixes as List<IntentionAction>? ?: emptyList()
+        return registerFixes as? List<IntentionAction> ?: emptyList()
     }
 }
