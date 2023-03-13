@@ -1387,8 +1387,12 @@ public final class JBUI {
       }
 
       public static @NotNull Border advertiserBorder()  {
-        return new JBEmptyBorder(insets("SearchEverywhere.Advertiser.borderInsets",
+        return new JBEmptyBorder(insets(advertiserBorderInsetsKey(),
                                         isNewUI() ? insets(6, 20) : insets(5, 10, 5, 15)));
+      }
+
+      public static @NotNull String advertiserBorderInsetsKey() {
+        return "SearchEverywhere.Advertiser.borderInsets";
       }
 
       public static @NotNull Color advertiserBackground()  {
