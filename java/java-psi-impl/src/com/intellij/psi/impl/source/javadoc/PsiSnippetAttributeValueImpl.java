@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaPsiImplementationHelper;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -15,6 +16,8 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.javadoc.PsiSnippetAttribute;
 import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
+import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,14 +47,15 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
     PsiElement parent = getParent();
     if (parent instanceof PsiSnippetAttribute) {
       PsiSnippetAttribute attribute = (PsiSnippetAttribute)parent;
-      if (attribute.getValue() == this) {
-        String name = attribute.getName();
-        if (name.equals(PsiSnippetAttribute.CLASS_ATTRIBUTE)) {
-          return new SnippetFileReference(false);
-        }
-        else if (name.equals(PsiSnippetAttribute.FILE_ATTRIBUTE)) {
-          return new SnippetFileReference(true);
-        }
+      String name = attribute.getName();
+      if (name.equals(PsiSnippetAttribute.CLASS_ATTRIBUTE)) {
+        return new SnippetFileReference(false);
+      }
+      else if (name.equals(PsiSnippetAttribute.FILE_ATTRIBUTE)) {
+        return new SnippetFileReference(true);
+      }
+      else if (name.equals(PsiSnippetAttribute.REGION_ATTRIBUTE)) {
+        return new SnippetRegionReference();
       }
     }
     return null;
@@ -238,6 +242,56 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
     @Override
     public String toString() {
       return getClass().getName() + "(" + getCanonicalText() + ")";
+    }
+  }
+
+  private class SnippetRegionReference implements PsiReference {
+    private PsiElement myTarget;
+    
+    @Override
+    public @NotNull PsiElement getElement() {
+      return PsiSnippetAttributeValueImpl.this;
+    }
+
+    @Override
+    public @NotNull TextRange getRangeInElement() {
+      return getValueRange();
+    }
+
+    @Override
+    public @Nullable PsiElement resolve() {
+      if (myTarget == null) {
+        PsiSnippetDocTagValue snippet = PsiTreeUtil.getParentOfType(PsiSnippetAttributeValueImpl.this, PsiSnippetDocTagValue.class);
+        if (snippet == null) return null;
+        myTarget = JavaPsiImplementationHelper.getInstance(getProject())
+          .resolveSnippetRegion(PsiSnippetAttributeValueImpl.this, snippet, getValue());
+      }
+      return myTarget;
+    }
+
+    @Override
+    public @NotNull String getCanonicalText() {
+      return getValue();
+    }
+
+    @Override
+    public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public boolean isReferenceTo(@NotNull PsiElement element) {
+      return element.equals(myTarget);
+    }
+
+    @Override
+    public boolean isSoft() {
+      return false;
     }
   }
 }

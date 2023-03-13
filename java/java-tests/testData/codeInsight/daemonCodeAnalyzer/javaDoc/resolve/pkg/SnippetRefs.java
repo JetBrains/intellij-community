@@ -6,7 +6,7 @@ package pkg;
  * {@snippet class=<error descr="Snippet file is not found">Test1</error>}
  * {@snippet class="Test"}
  * {@snippet class='Test''}
- * {@snippet class='sub.Test'}
+ * {@snippet class='sub.Test' region="reg"}
  * {@snippet class=<error descr="Snippet file is not found">'sub.Test2'</error>}
  * {@snippet file="sub/test.txt"}
  */

@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -17,6 +18,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.function.Function;
@@ -27,6 +29,7 @@ import java.util.stream.Stream;
 public class SnippetMarkup {
   private final @NotNull List<@NotNull MarkupNode> myNodes;
   private final @NotNull Map<@NotNull String, @NotNull MarkupNode> myRegionStarts;
+  private final @NotNull PsiElement myContext;
   private final @NotNull BitSet myTextOffsets = new BitSet();
   
   // \\S+ = language-dependent comment start token, like "//" or "#"
@@ -43,18 +46,28 @@ public class SnippetMarkup {
       "link", Set.of("substring", "regex", "region", "target", "type")
     );
 
-  private SnippetMarkup(@NotNull List<@NotNull MarkupNode> nodes) { 
+  private SnippetMarkup(@NotNull List<@NotNull MarkupNode> nodes, @NotNull PsiElement context) {
     myNodes = nodes;
     myRegionStarts = StreamEx.of(nodes)
       .mapToEntry(n -> n instanceof StartRegion start ? start.region() :
-        n instanceof LocationMarkupNode node ? node.region() :
-        null, Function.identity())
+                       n instanceof LocationMarkupNode node ? node.region() :
+                       null, Function.identity())
       .removeKeys(k -> k == null || k.isEmpty())
       .distinctKeys()
       .toImmutableMap();
+    myContext = context;
     StreamEx.of(nodes)
       .select(PlainText.class)
       .forEach(text -> myTextOffsets.set(text.range().getStartOffset(), text.range().getEndOffset()));
+  }
+
+  public @NotNull PsiElement getContext() {
+    return myContext;
+  }
+
+  public int getRegionOffset(@NotNull String region) {
+    MarkupNode node = myRegionStarts.get(region);
+    return node == null ? -1 : node.range().getStartOffset();
   }
 
   /**
@@ -64,7 +77,7 @@ public class SnippetMarkup {
   public boolean hasMarkup(@Nullable String region) {
     var visitor = new SnippetVisitor() {
       boolean hasMarkup = false;
-      
+
       @Override
       public void visitPlainText(@NotNull PlainText plainText, @NotNull List<@NotNull LocationMarkupNode> activeNodes) {
         hasMarkup |= !activeNodes.isEmpty();
@@ -231,8 +244,14 @@ public class SnippetMarkup {
               @NotNull LinkType linkType) implements LocationMarkupNode {
   }
 
+  @TestOnly
   public static @NotNull SnippetMarkup parse(@NotNull String text) {
-    return parse(preparse(text));
+    return parse(preparse(text), new FakePsiElement() {
+      @Override
+      public PsiElement getParent() {
+        return null;
+      }
+    });
   }
 
   /**
@@ -244,7 +263,8 @@ public class SnippetMarkup {
       throw new IllegalArgumentException();
     }
     return CachedValuesManager.getCachedValue(element, () -> {
-      SnippetMarkup markup = element instanceof PsiSnippetDocTagBody body ? parse(body) : parse(element.getText());
+      SnippetMarkup markup = element instanceof PsiSnippetDocTagBody body ? parse(preparse(body), body) :
+                             parse(preparse(element.getText()), element);
       return new CachedValueProvider.Result<>(markup, element);
     });
   }
@@ -265,10 +285,6 @@ public class SnippetMarkup {
     PsiReference ref = attrValue.getReference();
     if (ref == null || !(ref.resolve() instanceof PsiFile file)) return null;
     return fromElement(file);
-  }
-
-  private static @NotNull SnippetMarkup parse(@NotNull PsiSnippetDocTagBody body) {
-    return parse(preparse(body));
   }
 
   private static @NotNull List<@NotNull PlainText> preparse(@NotNull String text) {
@@ -296,8 +312,8 @@ public class SnippetMarkup {
     return output;
   }
 
-  private static @NotNull SnippetMarkup parse(@NotNull List<@NotNull PlainText> preparsed) {
-    return new SnippetMarkup(preparsed.stream().flatMap(SnippetMarkup::parseLine).toList());
+  private static @NotNull SnippetMarkup parse(@NotNull List<@NotNull PlainText> preparsed, @NotNull PsiElement context) {
+    return new SnippetMarkup(preparsed.stream().flatMap(SnippetMarkup::parseLine).toList(), context);
   }
 
   private static Stream<MarkupNode> parseLine(@NotNull PlainText text) {

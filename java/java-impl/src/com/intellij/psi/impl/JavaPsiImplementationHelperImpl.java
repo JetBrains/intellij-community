@@ -1,14 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.navigation.NavigationRequest;
+import com.intellij.navigation.NavigationService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.LanguageLevelUtil;
@@ -32,6 +36,7 @@ import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -334,6 +339,73 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     }
     catch (Exception e) {
       throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
+    }
+  }
+
+  @Override
+  public @Nullable PsiElement resolveSnippetRegion(@NotNull PsiElement context,
+                                                   @NotNull PsiSnippetDocTagValue snippet,
+                                                   @NotNull String region) {
+    SnippetMarkup markup = SnippetMarkup.fromSnippet(snippet);
+    if (markup == null) return null;
+    int offset = markup.getRegionOffset(region);
+    if (offset == -1) return null;
+    PsiElement markupContext = markup.getContext();
+    PsiFile file = markupContext.getContainingFile();
+    if (file == null) return null;
+    int fileOffset = markupContext.getTextRange().getStartOffset() + offset - 1;
+    return new FakeElement(file, fileOffset);
+  }
+
+  private static final class FakeElement extends FakePsiElement implements SyntheticElement {
+    private final PsiFile myFile;
+    private final int myOffset;
+    private final Project myProject;
+    private final VirtualFile myVirtualFile;
+
+    private FakeElement(PsiFile file, int fileOffset) {
+      myFile = file;
+      myOffset = fileOffset;
+      myProject = file.getProject();
+      myVirtualFile = file.getVirtualFile();
+    }
+      
+    @Override
+    public PsiElement getParent() {
+      return myFile;
+    }
+
+    @Override
+    public void navigate(boolean requestFocus) {
+      new OpenFileDescriptor(myProject, myVirtualFile, myOffset).navigate(requestFocus);
+    }
+
+    @Override
+    public @Nullable NavigationRequest navigationRequest() {
+      return NavigationService.getInstance().sourceNavigationRequest(myVirtualFile, myOffset);
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return true;
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return true;
+    }
+
+    @Override
+    public boolean equals(Object object) {
+      if (this == object) return true;
+      if (object == null || getClass() != object.getClass()) return false;
+      FakeElement element = (FakeElement)object;
+      return myOffset == element.myOffset && Objects.equals(myVirtualFile, element.myVirtualFile);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myVirtualFile, myOffset);
     }
   }
 }
