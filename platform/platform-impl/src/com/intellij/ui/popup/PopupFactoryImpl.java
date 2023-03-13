@@ -303,6 +303,14 @@ public class PopupFactoryImpl extends JBPopupFactory {
       }
     }
 
+    /**
+     * @deprecated Do not use or override this method. Use {@link ActionGroupPopup#handleToggleAction(InputEvent)} instead.
+     */
+    @Deprecated
+    protected void handleToggleAction() {
+      handleToggleAction(null);
+    }
+
     protected void handleToggleAction(@Nullable InputEvent inputEvent) {
       List<Object> selectedValues = getList().getSelectedValuesList();
       ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
