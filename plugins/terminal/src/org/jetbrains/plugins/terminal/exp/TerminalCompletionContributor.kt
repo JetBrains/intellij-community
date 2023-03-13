@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
@@ -29,9 +30,8 @@ class TerminalCompletionContributor : CompletionContributor() {
     val command = rawCommand.replace("\\\n", "")
 
     val resultSet = result.caseInsensitive()
-    val promptText = session.model.withContentLock { session.model.getAllText() }.replace("\n", "")
     val baseTimeoutMillis = 1000
-    var completionResult = invokeCompletion(session, command, promptText, baseTimeoutMillis)
+    var completionResult = invokeCompletion(session, command, baseTimeoutMillis)
     if (completionResult.isSingleItem) {
       val addedPart = completionResult.items.single()
       // Consider item, that ends with '/' as fully completed item
@@ -41,7 +41,7 @@ class TerminalCompletionContributor : CompletionContributor() {
         // We get 'foo' as the only one completion item for command 'f'
         // But there can be more specific items: 'foobar' and 'fooboo'
         // And in this case we need to show these two items instead of incomplete 'foo'
-        val secondResult = invokeCompletion(session, command + addedPart, promptText, baseTimeoutMillis / 2)
+        val secondResult = invokeCompletion(session, command + addedPart, baseTimeoutMillis / 2)
         if (secondResult.isSingleItem) {
           completionResult = CompletionResult(addedPart + secondResult.items.single())
         }
@@ -65,13 +65,15 @@ class TerminalCompletionContributor : CompletionContributor() {
 
   private fun invokeCompletion(session: TerminalSession,
                                command: String,
-                               promptText: String,
                                timeoutMillis: Int): CompletionResult {
     val completionManager = session.completionManager
     val model: TerminalModel = session.model
 
+    completionManager.waitForTerminalLock()
+
     val listenerDisposable = Disposer.newDisposable()
     val future = CompletableFuture<CompletionResult>()
+    val promptText = model.withContentLock { session.model.getAllText() }.replace("\n", "")
     val context = ParsingContext(command, promptText, model.width)
     try {
       model.addContentListener(object : TerminalModel.ContentListener {
@@ -101,8 +103,12 @@ class TerminalCompletionContributor : CompletionContributor() {
     }
     finally {
       Disposer.dispose(listenerDisposable)
-      val newPromptShown = if (future.isDone) future.get().newPromptShown else false
-      completionManager.resetPrompt(context.promptAndCommandLines, newPromptShown)
+      if (!future.isDone) {
+        future.complete(CompletionResult(emptyList(), false))
+      }
+      ApplicationManager.getApplication().executeOnPooledThread {
+        completionManager.resetPrompt(promptText)
+      }
     }
 
     return if (future.isDone) {

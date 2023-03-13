@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
@@ -36,8 +38,21 @@ class TerminalBlocksController(
   }
 
   override fun startCommandExecution(command: String) {
-    blocksComponent.installRunningPanel()
-    session.executeCommand(command)
+    ApplicationManager.getApplication().executeOnPooledThread {
+      val model = session.model
+      if (model.commandExecutionSemaphore.waitFor(3000)) {
+        model.commandExecutionSemaphore.down()
+      }
+      else {
+        thisLogger().error("Failed to acquire the command execution lock to execute command: '$command'\n" +
+                           "Text buffer:\n" + model.withContentLock { model.getAllText() })
+      }
+
+      invokeLater {
+        blocksComponent.installRunningPanel()
+        session.executeCommand(command)
+      }
+    }
   }
 
   override fun commandStarted(command: String) {
@@ -54,6 +69,8 @@ class TerminalBlocksController(
     model.withContentLock {
       model.clearAllExceptPrompt()
     }
+
+    model.commandExecutionSemaphore.up()
 
     invokeLater {
       blocksComponent.resetPromptPanel()

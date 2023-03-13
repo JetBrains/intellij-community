@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.concurrency.Semaphore
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.RequestOrigin
@@ -15,6 +16,8 @@ import java.awt.Dimension
 import kotlin.math.min
 
 class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: StyleState) {
+  val commandExecutionSemaphore: Semaphore = Semaphore()
+
   val width: Int
     get() = textBuffer.width
   val height: Int
