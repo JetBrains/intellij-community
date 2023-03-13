@@ -20,8 +20,7 @@ public class PyMissingOrEmptyDocstringInspection extends PyBaseDocstringInspecti
   @NotNull
   @Override
   public Visitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
-    TypeEvalContext context = PyInspectionVisitor.getContext(session);
-    return new Visitor(holder, context) {
+    return new Visitor(holder, PyInspectionVisitor.getContext(session)) {
       @Override
       protected void checkDocString(@NotNull PyDocStringOwner node) {
         final PyStringLiteralExpression docStringExpression = node.getDocStringExpression();
@@ -49,11 +48,11 @@ public class PyMissingOrEmptyDocstringInspection extends PyBaseDocstringInspecti
             return;
           }
           if (marker == null) marker = node;
-          if (node instanceof PyFunction pyFunction && !superFunctionHasDoc(pyFunction, context)) {
+          if (node instanceof PyFunction pyFunction && !superFunctionHasDoc(pyFunction, myTypeEvalContext)) {
             registerProblem(marker, PyPsiBundle.message("INSP.no.docstring"), new DocstringQuickFix(null, null));
           }
-          else if (node instanceof PyClass pyClass && !superClassHasDoc(pyClass, context)) {
-            if (pyClass.findInitOrNew(false, null) != null) {
+          else if (node instanceof PyClass pyClass && !superClassHasDoc(pyClass, myTypeEvalContext)) {
+            if (pyClass.findInitOrNew(false, myTypeEvalContext) != null) {
               registerProblem(marker, PyPsiBundle.message("INSP.no.docstring"), new DocstringQuickFix(null, null));
             }
             else {
@@ -70,7 +69,7 @@ public class PyMissingOrEmptyDocstringInspection extends PyBaseDocstringInspecti
 
   private static boolean superClassHasDoc(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
     for (PyClass ancestor : pyClass.getAncestorClasses(context)) {
-      if (!StringUtil.isEmpty(ancestor.getDocStringValue())) {
+      if (StringUtil.isNotEmpty(ancestor.getDocStringValue())) {
         return true;
       }
     }
@@ -83,7 +82,7 @@ public class PyMissingOrEmptyDocstringInspection extends PyBaseDocstringInspecti
 
     for (PyClass ancestor : containingClass.getAncestorClasses(context)) {
       PyFunction superFunction = ancestor.findMethodByName(pyFunction.getName(), false, context);
-      if (superFunction != null && !StringUtil.isEmpty(superFunction.getDocStringValue())) {
+      if (superFunction != null && StringUtil.isNotEmpty(superFunction.getDocStringValue())) {
         return true;
       }
     }
