@@ -41,7 +41,7 @@ class CompletionInvokerImpl(private val project: Project,
                             completionType: com.intellij.cce.actions.CompletionType,
                             userEmulationSettings: UserEmulator.Settings?,
                             private val completionGolfSettings: CompletionGolfEmulation.Settings?) : CompletionInvoker {
-  private val benchmarkRandom = Random(completionGolfSettings?.randomSeed ?: 0)
+  private var benchmarkRandom = resetRandom()
 
   private companion object {
     val LOG = Logger.getInstance(CompletionInvokerImpl::class.java)
@@ -130,6 +130,7 @@ class CompletionInvokerImpl(private val project: Project,
 
   override fun openFile(file: String): String {
     LOG.info("Open file: $file")
+    benchmarkRandom = resetRandom()
     val virtualFile = LocalFileSystem.getInstance().findFileByIoFile(File(file))
     val descriptor = OpenFileDescriptor(project, virtualFile!!)
     spaceStrippingEnabled = TrailingSpacesStripper.isEnabled(virtualFile)
@@ -194,6 +195,7 @@ class CompletionInvokerImpl(private val project: Project,
     val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
     val isBenchmark = completionGolfSettings?.isBenchmark ?: false
     val session = Session(offset, expectedLine, completableRanges.sumOf { it.end - it.start }, null, TokenProperties.UNKNOWN)
+    moveCaret(offset)
     if (isBenchmark) {
       session.benchmark(expectedLine, completableRanges, offset, emulator)
     }
@@ -204,22 +206,14 @@ class CompletionInvokerImpl(private val project: Project,
   }
 
   private fun Session.benchmark(expectedLine: String, completableRanges: List<TextRange>, offset: Int, emulator: CompletionGolfEmulation) {
-    var currentString = ""
     for (range in completableRanges) {
       val prefixLength = benchmarkRandom.nextInt(range.end - range.start)
-      if (prefixLength > 0 || currentString.length < range.start - offset) {
-        val toAdd = expectedLine.substring(currentString.length, range.start - offset + prefixLength)
-        printText(toAdd)
-        currentString += toAdd
-      }
+      moveCaret(range.start + prefixLength)
       val lookup = getSuggestions(expectedLine, completionGolfSettings?.suggestionsProvider)
-      emulator.pickBestSuggestion(currentString, lookup, this).also {
+      emulator.pickBestSuggestion(expectedLine.substring(0, range.start - offset + prefixLength), lookup, this).also {
         LookupManager.hideActiveLookup(project)
         addLookup(it)
       }
-    }
-    if (currentString != expectedLine) {
-      printText(expectedLine.substring(currentString.length))
     }
   }
 
@@ -229,26 +223,18 @@ class CompletionInvokerImpl(private val project: Project,
     while (currentString != expectedLine) {
       val nextChar = expectedLine[currentString.length].toString()
       if (!completableRanges.any { offset + currentString.length >= it.start && offset + currentString.length < it.end }) {
-        printText(nextChar)
         currentString += nextChar
         continue
       }
 
+      moveCaret(offset + currentString.length)
       val lookup = getSuggestions(expectedLine, completionGolfSettings?.suggestionsProvider)
 
       emulator.pickBestSuggestion(currentString, lookup, this).also {
         if (invokeOnEachChar) {
           LookupManager.hideActiveLookup(project)
         }
-        val selected = it.selectedWithoutPrefix()
-        if (selected != null) {
-          printText(selected)
-          currentString += selected
-        }
-        else {
-          printText(nextChar)
-          currentString += nextChar
-        }
+        currentString += it.selectedWithoutPrefix() ?: nextChar
         if (currentString.isNotEmpty() && !invokeOnEachChar) {
           if (it.suggestions.isEmpty() || currentString.last().let { ch -> !(ch == '_' || ch.isLetter() || ch.isDigit()) }) {
             LookupManager.hideActiveLookup(project)
@@ -350,4 +336,6 @@ class CompletionInvokerImpl(private val project: Project,
     val features = MLCompletionFeaturesUtil.getElementFeatures(lookup, element).features
     return features["ml_full_line_score"]?.toDoubleOrNull()
   }
+
+  private fun resetRandom(): Random = Random(completionGolfSettings?.randomSeed ?: 0)
 }
