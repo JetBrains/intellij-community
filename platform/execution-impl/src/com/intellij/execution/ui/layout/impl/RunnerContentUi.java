@@ -54,7 +54,7 @@ import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
@@ -345,22 +345,25 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
 
         @Override
         public void mousePressed(MouseEvent e) {
-          ObjectUtils.consumeIfNotNull(InternalDecoratorImpl.Companion.findTopLevelDecorator(myComponent),
-                                       decorator -> decorator.activate(ToolWindowEventSource.ToolWindowHeader));
+          InternalDecoratorImpl topLevelDecorator = InternalDecoratorImpl.Companion.findTopLevelDecorator(myComponent);
+          if (topLevelDecorator != null) {
+            topLevelDecorator.activate(ToolWindowEventSource.ToolWindowHeader);
+          }
           myPressPoint = e.getPoint();
         }
 
         @Override
         public void mouseClicked(MouseEvent e) {
           if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-            ObjectUtils.consumeIfNotNull(InternalDecoratorImpl.Companion.findTopLevelDecorator(myComponent),
-                                         decorator -> {
-                                           if (decorator.isHeaderVisible()) return;
-                                           String id = decorator.getToolWindowId();
-                                           ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
-                                           ToolWindow window = manager.getToolWindow(id);
-                                           ObjectUtils.consumeIfNotNull(window, w -> manager.setMaximized(w, !manager.isMaximized(w)));
-                                         });
+            InternalDecoratorImpl topLevelDecorator = InternalDecoratorImpl.Companion.findTopLevelDecorator(myComponent);
+            if (topLevelDecorator != null && !topLevelDecorator.isHeaderVisible()) {
+              String id = topLevelDecorator.getToolWindowId();
+              ToolWindowManagerEx manager = ToolWindowManagerEx.getInstanceEx(myProject);
+              ToolWindow window = manager.getToolWindow(id);
+              if (window != null) {
+                manager.setMaximized(window, !manager.isMaximized(window));
+              }
+            }
           }
         }
 

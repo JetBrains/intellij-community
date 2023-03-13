@@ -31,7 +31,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -385,10 +384,13 @@ public class DebugProcessEvents extends DebugProcessImpl {
         @Override
         public void extensionAdded(@NotNull PositionManagerFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
           getManagerThread().invoke(PrioritizedTask.Priority.NORMAL, () ->
-            ObjectUtils.consumeIfNotNull(extension.createPositionManager(DebugProcessEvents.this), m -> {
-              mapping.put(extension, m);
-              appendPositionManager(m);
-            }));
+          {
+            PositionManager manager = extension.createPositionManager(DebugProcessEvents.this);
+            if (manager != null) {
+              mapping.put(extension, manager);
+              appendPositionManager(manager);
+            }
+          });
         }
 
         @Override

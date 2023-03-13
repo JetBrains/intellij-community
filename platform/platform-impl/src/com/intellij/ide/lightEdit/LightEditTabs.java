@@ -34,7 +34,6 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.util.BitUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -67,7 +66,9 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
     addListener(new TabsListener() {
       @Override
       public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
-        ObjectUtils.consumeIfNotNull(oldSelection, tabInfo -> tabInfo.setTabColor(null));
+        if (oldSelection != null) {
+          oldSelection.setTabColor(null);
+        }
         asyncUpdateTab(newSelection);
         onSelectionChange(newSelection);
       }
@@ -106,7 +107,10 @@ final class LightEditTabs extends JBEditorTabs implements LightEditorListener, C
 
   @Override
   public void close() {
-    ObjectUtils.consumeIfNotNull(getSelectedInfo(), tabInfo -> closeTab(tabInfo));
+    TabInfo info = getSelectedInfo();
+    if (info != null) {
+      this.closeTab(info);
+    }
   }
 
   private static Icon getFileTypeIcon(@NotNull LightEditorInfo editorInfo) {

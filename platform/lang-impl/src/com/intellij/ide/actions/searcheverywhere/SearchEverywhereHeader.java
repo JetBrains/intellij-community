@@ -266,7 +266,9 @@ public class SearchEverywhereHeader {
   }
 
   public void resetScope() {
-    ObjectUtils.consumeIfNotNull(mySelectedTab.everywhereAction, action -> action.setEverywhere(true));
+    if (mySelectedTab.everywhereAction != null) {
+      mySelectedTab.everywhereAction.setEverywhere(true);
+    }
   }
 
   public boolean isEverywhere() {

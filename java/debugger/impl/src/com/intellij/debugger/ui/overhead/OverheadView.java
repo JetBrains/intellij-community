@@ -36,7 +36,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 
-import static com.intellij.util.ObjectUtils.consumeIfNotNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
@@ -120,7 +119,11 @@ public class OverheadView extends BorderLayoutPanel implements Disposable, DataP
         ReadAction.nonBlocking(
             () -> getFirstItem(mapNotNull(getSelectedBreakpoints(), XBreakpoint::getNavigatable)))
           .expireWith(OverheadView.this)
-          .finishOnUiThread(ModalityState.NON_MODAL, navigatable -> consumeIfNotNull(navigatable, n -> n.navigate(true)))
+          .finishOnUiThread(ModalityState.NON_MODAL, navigatable -> {
+            if (navigatable != null) {
+              navigatable.navigate(true);
+            }
+          })
           .submit(AppExecutorUtil.getAppExecutorService());
         return true;
       }

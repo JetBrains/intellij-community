@@ -2,7 +2,7 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.DifferenceFilter;
-import com.intellij.util.ObjectUtils;
+import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,8 +20,12 @@ class StoredOptionsContainer {
   void processOptions(@NotNull Element element) {
     element.getChildren().forEach(
       child ->
-        ObjectUtils.consumeIfNotNull(
-          child.getAttribute("name"), attribute -> myOptionSet.add(attribute.getValue()))
+      {
+        Attribute childAttribute = child.getAttribute("name");
+        if (childAttribute != null) {
+          myOptionSet.add(childAttribute.getValue());
+        }
+      }
     );
   }
 

@@ -142,7 +142,7 @@ public final class ObjectUtils {
   }
 
   /**
-   * Use {@code if (obj != null) ...} instead
+   * @deprecated Use {@code if (obj != null) ...} instead
    */
   @Deprecated
   public static <T> void consumeIfNotNull(@Nullable T obj, @NotNull Consumer<? super T> consumer) {

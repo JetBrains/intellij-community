@@ -60,11 +60,11 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
     }
     FileEditor fileEditor = pair.second;
     LightEditorInfo editorInfo = new LightEditorInfoImpl(pair.first, fileEditor, file);
-    ObjectUtils.consumeIfNotNull(EditorHistoryManager.getInstance(project).getState(file, pair.first),
-                                 state -> {
-                                   fileEditor.getComponent();
-                                   fileEditor.setState(state);
-                                 });
+    FileEditorState state = EditorHistoryManager.getInstance(project).getState(file, pair.first);
+    if (state != null) {
+      fileEditor.getComponent();
+      fileEditor.setState(state);
+    }
     if (LightEditorInfoImpl.getEditor(editorInfo) instanceof EditorImpl editor) {
       editor.setDropHandler(new LightEditDropHandler());
     }

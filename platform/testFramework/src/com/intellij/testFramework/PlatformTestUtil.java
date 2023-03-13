@@ -114,7 +114,6 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.splitByLines;
 import static com.intellij.testFramework.UsefulTestCase.assertSameLines;
-import static com.intellij.util.ObjectUtils.consumeIfNotNull;
 import static com.intellij.util.containers.ContainerUtil.sorted;
 import static org.junit.Assert.*;
 
@@ -1158,11 +1157,15 @@ public final class PlatformTestUtil {
     while (true) {
       try {
         if (System.currentTimeMillis() - start > timeoutInSeconds * 1000L) {
-          consumeIfNotNull(callback, Runnable::run);
+          if (callback != null) {
+            callback.run();
+          }
           fail(errorMessageSupplier.get());
         }
         if (condition.getAsBoolean()) {
-          consumeIfNotNull(callback, Runnable::run);
+          if (callback != null) {
+            callback.run();
+          }
           break;
         }
         dispatchAllEventsInIdeEventQueue();

@@ -17,7 +17,6 @@ import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.TerminalTitle;
 import com.intellij.terminal.TerminalTitleListener;
 import com.intellij.terminal.ui.TerminalWidgetKt;
-import com.intellij.util.ObjectUtils;
 import com.jediterm.terminal.ui.TerminalWidgetListener;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,9 +42,10 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
         FileEditorManagerEx.getInstanceEx(myProject).closeFile(myFile);
       }, myProject.getDisposed());
     };
-    ObjectUtils.consumeIfNotNull(JBTerminalWidget.asJediTermWidget(myFile.getTerminalWidget()), widget -> {
-      widget.addListener(myListener);
-    });
+    JBTerminalWidget termWidget = JBTerminalWidget.asJediTermWidget(myFile.getTerminalWidget());
+    if (termWidget != null) {
+      termWidget.addListener(myListener);
+    }
 
     terminalFile.getTerminalWidget().getTerminalTitle().addTitleListener(new TerminalTitleListener() {
       @Override
@@ -102,9 +102,10 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
 
   @Override
   public void dispose() {
-    ObjectUtils.consumeIfNotNull(JBTerminalWidget.asJediTermWidget(myFile.getTerminalWidget()), widget -> {
-      widget.removeListener(myListener);
-    });
+    JBTerminalWidget termWidget = JBTerminalWidget.asJediTermWidget(myFile.getTerminalWidget());
+    if (termWidget != null) {
+      termWidget.removeListener(myListener);
+    }
     if (Boolean.TRUE.equals(myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
       ApplicationManager.getApplication().invokeLater(() -> {
         boolean disposedBefore = Disposer.isDisposed(myFile.getTerminalWidget());

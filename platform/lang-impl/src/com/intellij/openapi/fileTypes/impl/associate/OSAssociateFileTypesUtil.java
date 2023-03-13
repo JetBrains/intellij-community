@@ -13,7 +13,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nls;
@@ -78,7 +77,10 @@ public final class OSAssociateFileTypesUtil {
           }
         }
         else {
-          ObjectUtils.consumeIfNotNull(getFileTypeByName(name), fileType -> fileTypes.add(fileType));
+          FileType type = getFileTypeByName(name);
+          if (type != null) {
+            fileTypes.add(type);
+          }
         }
       }
     );

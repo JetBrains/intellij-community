@@ -3,11 +3,11 @@ package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.EventResult;
-import com.intellij.build.events.impl.*;
 import com.intellij.build.events.impl.FailureImpl;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
+import com.intellij.build.events.impl.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.event.*;
 import com.intellij.util.ObjectUtils;
@@ -24,7 +24,9 @@ public class ExternalSystemProgressEventConverter {
   public static @Nullable BuildEvent convertBuildEvent(@NotNull ExternalSystemTaskExecutionEvent event) {
     var hint = event.getProgressEvent().getDescriptor().getHint();
     var buildEvent = convertAbstractBuildEvent(event);
-    ObjectUtils.consumeIfNotNull(buildEvent, it -> it.setHint(hint));
+    if (buildEvent != null) {
+      buildEvent.setHint(hint);
+    }
     return buildEvent;
   }
 

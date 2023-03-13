@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.AppFontOptions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,7 +122,9 @@ public final class AppConsoleFontConfigurable extends AppFontConfigurable {
   }
 
   void updateOnEditorFontChange(@NotNull FontPreferences fontPreferences) {
-    ObjectUtils.consumeIfNotNull(myFontOptionsPanel, panel->panel.updateOnEditorFontChange(fontPreferences));
+    if (myFontOptionsPanel != null) {
+      myFontOptionsPanel.updateOnEditorFontChange(fontPreferences);
+    }
   }
 
   public static class Provider extends ConfigurableProvider {

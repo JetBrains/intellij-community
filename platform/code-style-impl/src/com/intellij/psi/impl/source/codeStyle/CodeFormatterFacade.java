@@ -181,9 +181,11 @@ public class CodeFormatterFacade {
 
           FormatterEx formatter = FormatterEx.getInstanceEx();
           if (CodeStyleManager.getInstance(project).isSequentialProcessingAllowed()) {
-            ObjectUtils.consumeIfNotNull(
-              FormattingProgressCallbackFactory.getInstance().createProgressCallback(project, file, document),
-              callback -> formatter.setProgressTask(callback));
+            FormattingProgressCallback progressCallback =
+              FormattingProgressCallbackFactory.getInstance().createProgressCallback(project, file, document);
+            if (progressCallback != null) {
+              formatter.setProgressTask(progressCallback);
+            }
           }
 
           CommonCodeStyleSettings.IndentOptions indentOptions =

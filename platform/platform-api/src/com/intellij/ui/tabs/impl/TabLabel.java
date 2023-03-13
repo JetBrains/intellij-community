@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,7 +20,6 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.UiDecorator;
 import com.intellij.ui.tabs.impl.themes.TabTheme;
 import com.intellij.util.MathUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -86,11 +86,10 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
           Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
           if (c instanceof InplaceButton) return;
           myTabs.select(info, true);
-          ObjectUtils.consumeIfNotNull(PopupUtil.getPopupContainerFor(TabLabel.this), popup -> {
-            if (ClientProperty.isTrue(popup.getContent(), MorePopupAware.class)) {
-              popup.cancel();
-            }
-          });
+          JBPopup container = PopupUtil.getPopupContainerFor(TabLabel.this);
+          if (container != null && ClientProperty.isTrue(container.getContent(), MorePopupAware.class)) {
+            container.cancel();
+          }
         }
         else {
           handlePopup(e);

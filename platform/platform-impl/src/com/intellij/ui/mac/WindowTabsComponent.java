@@ -10,6 +10,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
@@ -39,7 +40,6 @@ import com.intellij.ui.tabs.impl.*;
 import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import com.intellij.ui.tabs.impl.singleRow.WindowTabsLayout;
 import com.intellij.ui.tabs.impl.themes.DefaultTabTheme;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
@@ -145,11 +145,10 @@ public final class WindowTabsComponent extends JBTabsImpl {
               Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
               if (c instanceof InplaceButton) return;
               myTabs.select(info, true);
-              ObjectUtils.consumeIfNotNull(PopupUtil.getPopupContainerFor(label), popup -> {
-                if (ClientProperty.isTrue(popup.getContent(), MorePopupAware.class)) {
-                  popup.cancel();
-                }
-              });
+              JBPopup container = PopupUtil.getPopupContainerFor(label);
+              if (container != null && ClientProperty.isTrue(container.getContent(), MorePopupAware.class)) {
+                container.cancel();
+              }
             }
             else {
               handlePopup(e);
