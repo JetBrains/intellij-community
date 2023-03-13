@@ -8,7 +8,7 @@ import com.intellij.diagnostic.ThreadNameManager
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 
 private const val pooledPrefix = "ApplicationImpl pooled thread "
-private val regex = Regex(" *@[a-z ]+#\\d+$")
+private val regex = Regex(" *@[A-Za-z0-9@ ]+#\\d+$")
 
 internal class IdeThreadNameManager : ThreadNameManager {
   // ConcurrencyUtil.runUnderThreadName is used in our code (to make thread dumps more clear) and changes thread name,
