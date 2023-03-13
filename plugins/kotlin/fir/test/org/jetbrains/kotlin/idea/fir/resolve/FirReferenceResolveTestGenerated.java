@@ -686,6 +686,16 @@ public abstract class FirReferenceResolveTestGenerated extends AbstractFirRefere
             runTest("../idea/tests/testData/resolve/references/InVaragReferenceInNamedParameter.kt");
         }
 
+        @TestMetadata("incOperatorOnObject.kt")
+        public void testIncOperatorOnObject() throws Exception {
+            runTest("../idea/tests/testData/resolve/references/incOperatorOnObject.kt");
+        }
+
+        @TestMetadata("incOperatorOnObject_unresolved.kt")
+        public void testIncOperatorOnObject_unresolved() throws Exception {
+            runTest("../idea/tests/testData/resolve/references/incOperatorOnObject_unresolved.kt");
+        }
+
         @TestMetadata("JavaAnnotationParameter.kt")
         public void testJavaAnnotationParameter() throws Exception {
             runTest("../idea/tests/testData/resolve/references/JavaAnnotationParameter.kt");

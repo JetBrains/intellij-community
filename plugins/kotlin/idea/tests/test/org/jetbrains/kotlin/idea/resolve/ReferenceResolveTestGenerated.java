@@ -686,6 +686,16 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
             runTest("testData/resolve/references/InVaragReferenceInNamedParameter.kt");
         }
 
+        @TestMetadata("incOperatorOnObject.kt")
+        public void testIncOperatorOnObject() throws Exception {
+            runTest("testData/resolve/references/incOperatorOnObject.kt");
+        }
+
+        @TestMetadata("incOperatorOnObject_unresolved.kt")
+        public void testIncOperatorOnObject_unresolved() throws Exception {
+            runTest("testData/resolve/references/incOperatorOnObject_unresolved.kt");
+        }
+
         @TestMetadata("JavaAnnotationParameter.kt")
         public void testJavaAnnotationParameter() throws Exception {
             runTest("testData/resolve/references/JavaAnnotationParameter.kt");
