@@ -124,7 +124,7 @@ abstract class AsyncChangesTree : ChangesTree {
 
   private fun start() {
     scope.launch {
-      _requests.collectLatest { request ->
+      _requests.asyncCollectLatest(scope) { request ->
         handleRequest(request)
       }
     }
@@ -285,5 +285,21 @@ abstract class TwoStepAsyncChangesTreeModel<T>(val scope: CoroutineScope) : Asyn
     val newJob = scope.async { coroutineToIndicator { fetchData() } }
     deferredData.set(newJob)
     return newJob.await()
+  }
+}
+
+/**
+ * [coroutineToIndicator]-friendly [collectLatest] implementation. Otherwise, indicator will never be cancelled.
+ */
+private suspend fun <T> Flow<T>.asyncCollectLatest(scope: CoroutineScope, action: suspend (value: T) -> Unit) {
+  var lastJob: Job? = null
+  collect { request ->
+    lastJob?.let {
+      it.cancel()
+      it.join()
+    }
+    lastJob = scope.launch {
+      action(request)
+    }
   }
 }
