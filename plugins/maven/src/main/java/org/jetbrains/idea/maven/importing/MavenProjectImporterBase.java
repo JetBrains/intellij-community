@@ -78,12 +78,15 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
     else {
       provider = ProjectDataManager.getInstance().createModifiableModelsProvider(project);
     }
-    long afterBridgesCreation = System.nanoTime();
+    long bridgesCreationNano = System.nanoTime() - beforeBridgesCreation;
 
     try {
+      long beforeInitInit = System.nanoTime();
+      extensionImporters.forEach(importer -> importer.init(provider));
+      bridgesCreationNano += System.nanoTime() - beforeInitInit;
+
       Map<Class<? extends MavenImporter>, MavenLegacyModuleImporter.ExtensionImporter.CountAndTime> counters = new HashMap<>();
 
-      extensionImporters.forEach(importer -> importer.init(provider));
       extensionImporters.forEach(importer -> importer.preConfig(counters));
       extensionImporters.forEach(importer -> importer.config(postTasks, counters));
       extensionImporters.forEach(importer -> importer.postConfig(counters));
@@ -109,7 +112,7 @@ public abstract class MavenProjectImporterBase implements MavenProjectImporter {
       MavenImportCollector.LEGACY_IMPORTERS_STATS.log(project,
                                                       MavenImportCollector.ACTIVITY_ID.with(activity),
                                                       MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_CREATION_MS.with(
-                                                TimeUnit.NANOSECONDS.toMillis(afterBridgesCreation - beforeBridgesCreation)),
+                                                TimeUnit.NANOSECONDS.toMillis(bridgesCreationNano)),
                                                       MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_COMMIT_MS.with(
                                                 TimeUnit.NANOSECONDS.toMillis(afterCommit - beforeCommit)));
     }
