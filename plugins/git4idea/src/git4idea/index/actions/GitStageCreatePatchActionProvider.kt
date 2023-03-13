@@ -37,8 +37,10 @@ open class GitStageCreatePatchActionProvider private constructor(private val sil
     val project = e.project!!
     val nodes = e.getRequiredData(GitStageDataKeys.GIT_FILE_STATUS_NODES).asJBIterable()
 
-    val stagedNodesMap = nodes.filter { it.kind == NodeKind.STAGED }.mapTo(mutableSetOf()) { Pair(it.root, it.status) }
-    val unstagedNodesMap = nodes.filter { it.kind == NodeKind.UNSTAGED }.mapTo(mutableSetOf()) { Pair(it.root, it.status) }
+    val stagedNodesMap = nodes.filter { it.kind == NodeKind.STAGED }
+      .mapTo(mutableSetOf()) { Pair(it.root, it.status) }
+    val unstagedNodesMap = nodes.filter { it.kind == NodeKind.UNSTAGED || it.kind == NodeKind.UNTRACKED }
+      .mapTo(mutableSetOf()) { Pair(it.root, it.status) }
 
     val changes = mutableListOf<Change>()
     for (pair in (stagedNodesMap + unstagedNodesMap)) {
