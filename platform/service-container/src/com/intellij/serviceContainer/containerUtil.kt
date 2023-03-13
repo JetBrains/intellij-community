@@ -51,5 +51,6 @@ internal fun isLightService(serviceClass: Class<*>): Boolean {
 }
 
 internal fun doNotUseConstructorInjectionsMessage(where: String): String {
-  return "Please, do not use constructor injection: it slows down initialization and may lead to performance problems ($where)"
+  return "Please, do not use constructor injection: it slows down initialization and may lead to performance problems ($where). " +
+         "See https://plugins.jetbrains.com/docs/intellij/plugin-services.html for details."
 }

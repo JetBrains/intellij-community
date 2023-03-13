@@ -76,7 +76,7 @@ internal fun <T> instantiateUsingPicoContainer(aClass: Class<*>,
                 LOG.warn(message)
               }
               else {
-                LOG.error(message)
+                PluginException.logPluginError(LOG, message, null, aClass)
               }
             }
             parameterResolver.resolveInstance(componentManager = componentManager,
