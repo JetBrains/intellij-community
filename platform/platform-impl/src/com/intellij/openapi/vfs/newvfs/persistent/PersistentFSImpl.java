@@ -1566,7 +1566,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     catch (Exception e) {
       exception = e;
       LOG.error(e);
-    } finally {
+    }
+    finally {
       myVfsLog.getVFileEventApplicationListener().afterApply(event, exception);
     }
   }

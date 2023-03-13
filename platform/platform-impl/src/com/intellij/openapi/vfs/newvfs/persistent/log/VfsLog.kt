@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.vfs.newvfs.persistent.VFileEventApplicationListener
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.SimpleStringPersistentEnumerator
@@ -105,7 +104,7 @@ class VfsLog(
   }
 
   val vFileEventApplicationListener = if (readOnly) {
-    object : VFileEventApplicationListener {} // noop
+    object : VFileEventApplicationListener {} // no op
   } else {
     VFileEventApplicationLogListener(context)
   }

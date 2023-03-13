@@ -3,7 +3,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.events.*
-import com.intellij.openapi.vfs.newvfs.persistent.VFileEventApplicationListener
 
 class VFileEventApplicationLogListener(
   private val context: VfsLogContext
