@@ -1810,7 +1810,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @TestOnly
-  @NotNull Collection<? extends VirtualFileSystemEntry> getDirCache() {
+  @NotNull Iterable<? extends VirtualFileSystemEntry> getDirCache() {
     return myIdToDirCache.getCachedDirs();
   }
 
