@@ -4,23 +4,35 @@ package com.intellij.openapi.vcs.changes.ui
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.tree.DefaultTreeModel
 
 /**
  * Call [shutdown] when the tree is no longer needed.
  */
 abstract class AsyncChangesTree : ChangesTree {
+  companion object {
+    private val LOG = logger<AsyncChangesTree>()
+  }
+
   protected abstract val changesTreeModel: AsyncChangesTreeModel
 
   val scope = CoroutineScope(SupervisorJob())
 
   private val _requests = MutableSharedFlow<Request>()
-  private val _model = MutableStateFlow(Model(TreeModelBuilder.buildEmpty(), null))
+  private val _model = MutableStateFlow(Model(-1, TreeModelBuilder.buildEmpty(), null))
+  private val _callbacks = Channel<PendingCallback>(capacity = Int.MAX_VALUE)
+
+  private val lastFulfilledRequestId = MutableStateFlow(-1)
+  private val lastRequestId = AtomicInteger()
 
   private val _busy = MutableStateFlow(false)
   val busy: Flow<Boolean> = _busy.asStateFlow()
@@ -55,19 +67,55 @@ abstract class AsyncChangesTree : ChangesTree {
   }
 
 
-  fun requestRefresh() {
-    requestRefreshImpl(treeStateStrategy = null)
+  fun requestRefresh(): RequestId {
+    return requestRefreshImpl(treeStateStrategy = null,
+                              onRefreshed = null)
   }
 
-  fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>) {
-    requestRefreshImpl(treeStateStrategy = treeStateStrategy)
+  fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>): RequestId {
+    return requestRefreshImpl(treeStateStrategy = treeStateStrategy,
+                              onRefreshed = null)
   }
 
-  private fun requestRefreshImpl(treeStateStrategy: TreeStateStrategy<*>?) {
+  fun requestRefresh(onRefreshed: Runnable): RequestId {
+    return requestRefreshImpl(treeStateStrategy = null,
+                              onRefreshed = onRefreshed)
+  }
+
+  fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>, onRefreshed: Runnable): RequestId {
+    return requestRefreshImpl(treeStateStrategy = treeStateStrategy,
+                              onRefreshed = onRefreshed)
+  }
+
+  private fun requestRefreshImpl(treeStateStrategy: TreeStateStrategy<*>?,
+                                 onRefreshed: Runnable?): RequestId {
     val refreshGrouping = grouping
+    val requestId = lastRequestId.incrementAndGet()
     scope.launch {
-      _requests.emit(Request(refreshGrouping, treeStateStrategy))
+      _requests.emit(Request(requestId, refreshGrouping, treeStateStrategy))
     }
+
+    val id = RequestIdImpl(requestId)
+    if (onRefreshed != null) {
+      invokeAfterRefresh(id, onRefreshed)
+    }
+    return id
+  }
+
+  fun invokeAfterRefresh(callback: Runnable) {
+    invokeAfterRefresh(lastRequestId.get(), callback)
+  }
+
+  fun invokeAfterRefresh(requestId: RequestId, callback: Runnable) {
+    invokeAfterRefresh((requestId as RequestIdImpl).requestId, callback)
+  }
+
+  /**
+   * Invoke callback on EDT when the refresh request was fulfilled. This might never happen if the tree was shut down.
+   */
+  private fun invokeAfterRefresh(requestId: Int, callback: Runnable) {
+    val result = _callbacks.trySend(PendingCallback(requestId, callback))
+    result.exceptionOrNull()?.let { LOG.error(it) }
   }
 
 
@@ -89,14 +137,26 @@ abstract class AsyncChangesTree : ChangesTree {
         updateTreeModel(model)
       }
     }
+    scope.launch(edtContext) {
+      while (true) {
+        // We respect the order of callbacks scheduling,
+        // thus the callback with smaller requestId can be delayed by earlier callback with bigger requestId.
+        val callback = _callbacks.receive()
+        if (callback.requestId > lastFulfilledRequestId.value) { // save on a context switch if it's already done
+          lastFulfilledRequestId.first { fulfilledId -> // suspend while request is not yet completed
+            callback.requestId <= fulfilledId
+          }
+        }
+        handleCallback(callback)
+      }
+    }
   }
 
   private suspend fun handleRequest(request: Request) {
     _busy.value = true
     try {
       val treeModel = changesTreeModel.buildTreeModel(request.grouping)
-      val model = Model(treeModel, request.treeStateStrategy)
-      _model.value = model
+      _model.value = Model(request.requestId, treeModel, request.treeStateStrategy)
     }
     finally {
       _busy.value = false
@@ -105,26 +165,54 @@ abstract class AsyncChangesTree : ChangesTree {
 
   @RequiresEdt
   private suspend fun updateTreeModel(model: Model) {
-    coroutineToIndicator {
-      val strategy = model.treeStateStrategy
-      if (strategy != null) {
-        updateTreeModel(model.treeModel, strategy)
+    try {
+      coroutineToIndicator {
+        val strategy = model.treeStateStrategy
+        if (strategy != null) {
+          updateTreeModel(model.treeModel, strategy)
+        }
+        else {
+          updateTreeModel(model.treeModel)
+        }
       }
-      else {
-        updateTreeModel(model.treeModel)
+    }
+    finally {
+      lastFulfilledRequestId.value = model.requestId
+    }
+  }
+
+  private suspend fun handleCallback(callback: PendingCallback) {
+    try {
+      coroutineToIndicator {
+        callback.task.run()
       }
+    }
+    catch (ignore: ProcessCanceledException) {
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
     }
   }
 
   private class Request(
+    val requestId: Int,
     val grouping: ChangesGroupingPolicyFactory,
     val treeStateStrategy: TreeStateStrategy<*>?
   )
 
   private class Model(
+    val requestId: Int,
     val treeModel: DefaultTreeModel,
     val treeStateStrategy: TreeStateStrategy<*>?
   )
+
+  private class PendingCallback(
+    val requestId: Int,
+    val task: java.lang.Runnable
+  )
+
+  interface RequestId
+  private class RequestIdImpl(val requestId: Int) : RequestId
 }
 
 interface AsyncChangesTreeModel {
