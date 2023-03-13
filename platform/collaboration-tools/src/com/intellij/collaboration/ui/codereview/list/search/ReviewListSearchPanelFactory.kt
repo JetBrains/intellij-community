@@ -141,7 +141,7 @@ abstract class ReviewListSearchPanelFactory<S : ReviewListSearchValue, Q : Revie
       override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
       override fun actionPerformed(e: AnActionEvent) {
-        showQuickFiltersPopup(e.inputEvent.component as JComponent, quickFilters)
+        showQuickFiltersPopup(e.inputEvent!!.component as JComponent, quickFilters)
       }
     }
 

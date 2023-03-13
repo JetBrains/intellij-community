@@ -415,7 +415,7 @@ abstract class ToolWindowHeader internal constructor(
       }
       myPopupState.prepareToShow(popupMenu.component)
       popupMenu.component.addPopupMenuListener(popupMenuListener)
-      popupMenu.component.show(inputEvent.component, x, y)
+      popupMenu.component.show(inputEvent!!.component, x, y)
     }
 
     init {

@@ -313,7 +313,7 @@ private abstract class TogglePopupAction : ToggleAction {
     val actionGroup = getActionGroup(e) ?: return
     val disposeCallback = { Toggleable.setSelected(presentation, false) }
     val popup = createPopup(actionGroup, e, disposeCallback)
-    PopupImplUtil.setPopupToggleButton(popup, e.inputEvent.component)
+    PopupImplUtil.setPopupToggleButton(popup, e.inputEvent!!.component)
     popup.setMinimumSize(JBDimension(MINIMAL_POPUP_WIDTH, 0))
     popup.showUnderneathOf(component)
   }
@@ -381,7 +381,7 @@ internal fun addAdditionalActionsToRunConfigurationOptions(project: Project,
 
 private class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomComponentAction, DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    if (e.inputEvent.modifiersEx and InputEvent.SHIFT_DOWN_MASK != 0) {
+    if (e.inputEvent!!.modifiersEx and InputEvent.SHIFT_DOWN_MASK != 0) {
       ActionManager.getInstance().getAction("editRunConfigurations").actionPerformed(e)
       return
     }

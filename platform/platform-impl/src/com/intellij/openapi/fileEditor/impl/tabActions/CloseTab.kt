@@ -91,7 +91,7 @@ internal class CloseTab(component: JComponent,
     val fileEditorManager = editorWindow.manager
     val window = if (ActionPlaces.EDITOR_TAB == e.place) editorWindow else fileEditorManager.currentWindow
     if (window != null) {
-      if (e.inputEvent is MouseEvent && BitUtil.isSet(e.inputEvent.modifiersEx, InputEvent.ALT_DOWN_MASK)) {
+      if (e.inputEvent is MouseEvent && BitUtil.isSet(e.inputEvent!!.modifiersEx, InputEvent.ALT_DOWN_MASK)) {
         window.closeAllExcept(file)
       }
       else {

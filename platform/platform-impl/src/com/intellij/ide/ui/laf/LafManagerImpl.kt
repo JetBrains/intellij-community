@@ -1025,8 +1025,8 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     override fun actionPerformed(e: AnActionEvent) {
       val popup = JBPopupFactory.getInstance().createActionGroupPopup(IdeBundle.message("preferred.theme.text"), lafGroups, e.dataContext,
                                                                       true, null, Int.MAX_VALUE)
-      HelpTooltip.setMasterPopup(e.inputEvent.component, popup)
-      val component = e.inputEvent.component
+      val component = e.inputEvent!!.component
+      HelpTooltip.setMasterPopup(component, popup)
       if (component is ActionButtonComponent) {
         popup.showUnderneathOf(component)
       }

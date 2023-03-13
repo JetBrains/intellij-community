@@ -129,11 +129,9 @@ public class AnActionEvent implements PlaceProvider {
 
   /**
    * Returns the {@code InputEvent} which causes invocation of the action. It might be
-   * {@code KeyEvent}, {@code MouseEvent} or null.
-   *
-   * @return the {@code InputEvent} instance or null.
+   * {@code KeyEvent}, {@code MouseEvent} or null if the action event is not initiated by user interaction.
    */
-  public InputEvent getInputEvent() {
+  public @Nullable InputEvent getInputEvent() {
     return myInputEvent;
   }
 

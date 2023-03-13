@@ -155,7 +155,7 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
       }
       PopupImplUtil.setPopupToggleButton(popup, this)
       popup.setShowSubmenuOnHover(true)
-      popup.showUnderneathOf(event.inputEvent.component)
+      popup.showUnderneathOf(event.inputEvent!!.component)
       return popup
     }
   }
