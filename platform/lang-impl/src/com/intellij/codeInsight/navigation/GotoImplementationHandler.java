@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
@@ -267,7 +268,11 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     FileIndexFacade index = FileIndexFacade.getInstance(project);
     return Comparator.comparing((PsiElement element) -> {
       PsiFile containingFile = element.getContainingFile();
-      return containingFile != null && index.isInContent(containingFile.getVirtualFile());
+      if (containingFile != null) {
+        VirtualFile virtualFile = containingFile.getVirtualFile();
+        if (virtualFile != null && index.isInContent(virtualFile)) return true;
+      }
+      return false;
     }).reversed();
   }
 
