@@ -20,7 +20,6 @@ import com.intellij.util.lang.UrlClassLoader
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
 import java.awt.GraphicsEnvironment
-import java.awt.Toolkit
 import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -110,16 +109,6 @@ private fun initLuxIfNeeded(args: List<String>) {
   if (!JBR.isGraphicsUtilsSupported()) {
     error("JBR version 17.0.6b796 or later is required to run a remote-dev server with lux")
   }
-
-  val luxToolkitClass = AppStarter::class.java.classLoader.loadClass("com.jetbrains.rdserver.lux.toolkit.LuxToolkit")
-  val toolkit = luxToolkitClass.constructors[0].newInstance()
-
-  Toolkit::class.java.getDeclaredField("toolkit").apply {
-    this.isAccessible = true
-
-    set(null, toolkit)
-  }
-  System.setProperty("awt.toolkit", toolkit::class.java.canonicalName)
 
   System.setProperty("awt.nativeDoubleBuffering", false.toString())
   System.setProperty("swing.bufferPerWindow", true.toString())
