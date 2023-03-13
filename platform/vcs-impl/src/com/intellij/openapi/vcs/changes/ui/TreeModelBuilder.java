@@ -464,7 +464,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   @RequiresReadLock
   private static void precalculateFileColors(@NotNull Project project, @NotNull ChangesBrowserNode<?> root) {
     root.traverse().forEach(node -> {
-      node.getBackgroundColorCached(project);
+      node.preparePresentationDataCaches(project);
       // Allow to interrupt read lock
       ProgressManager.checkCanceled();
     });

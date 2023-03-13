@@ -42,6 +42,12 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
   }
 
   @Override
+  protected void preparePresentationDataCaches(@NotNull Project project) {
+    getUserObject().getOriginText(project);
+    super.preparePresentationDataCaches(project);
+  }
+
+  @Override
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
     ReadAction.run(() -> {
       Change change = getUserObject();

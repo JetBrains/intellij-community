@@ -18,6 +18,7 @@ import com.intellij.ui.DirtyUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -71,6 +72,11 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
 
   protected ChangesBrowserNode(T userObject) {
     super(userObject);
+  }
+
+  @RequiresBackgroundThread
+  protected void preparePresentationDataCaches(@NotNull Project project) {
+    getBackgroundColorCached(project);
   }
 
   /**
