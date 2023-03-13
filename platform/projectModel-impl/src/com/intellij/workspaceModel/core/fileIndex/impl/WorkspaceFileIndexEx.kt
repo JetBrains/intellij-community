@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.roots.ContentIteratorEx
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -83,8 +82,12 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   fun reset()
 
   companion object {
+    /**
+     * WorkspaceFileIndex is now always enabled. Usages of this constant will be inlined later.
+     */
+    @Suppress("MayBeConstant")
     @JvmField
-    val IS_ENABLED: Boolean = Registry.`is`("platform.projectModel.workspace.model.file.index", true)
+    val IS_ENABLED: Boolean = true
   }
 }
 
