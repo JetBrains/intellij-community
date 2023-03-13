@@ -38,7 +38,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("usage.view", 20)
+    val GROUP = EventLogGroup("usage.view", 21)
     val USAGE_VIEW = object : PrimitiveEventField<UsageView?>() {
       override val name: String = "usage_view"
 
@@ -108,20 +108,12 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val FIRST_RESULT_TS = EventFields.Long("duration_first_results_ms")
     private val TOO_MANY_RESULTS = EventFields.Boolean("too_many_result_warning")
     private val IS_SIMILAR_USAGE = EventFields.Boolean("is_similar_usage")
+    private val IS_SEARCH_CANCELLED = EventFields.Boolean("search_cancelled")
 
     private val searchStarted = GROUP.registerVarargEvent("started", USAGE_VIEW, UI_LOCATION, TARGET_ELEMENT_DATA, NUMBER_OF_TARGETS)
 
-    private val searchCancelled = GROUP.registerVarargEvent("cancelled",
-                                                            SYMBOL_CLASS,
-                                                            SEARCH_SCOPE,
-                                                            EventFields.Language,
-                                                            RESULTS_TOTAL,
-                                                            FIRST_RESULT_TS,
-                                                            EventFields.DurationMs,
-                                                            TOO_MANY_RESULTS,
-                                                            UI_LOCATION,
-                                                            USAGE_VIEW)
     private val searchFinished = GROUP.registerVarargEvent("finished",
+                                                           USAGE_VIEW,
                                                            SYMBOL_CLASS,
                                                            SEARCH_SCOPE,
                                                            EventFields.Language,
@@ -129,7 +121,8 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                                                            FIRST_RESULT_TS,
                                                            EventFields.DurationMs,
                                                            TOO_MANY_RESULTS,
-                                                           UI_LOCATION, USAGE_VIEW)
+                                                           IS_SEARCH_CANCELLED,
+                                                           UI_LOCATION)
     private val itemChosen = GROUP.registerVarargEvent("item.chosen",
                                                        USAGE_VIEW,
                                                        UI_LOCATION,
@@ -155,6 +148,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     private val ITEM_CHOSEN = EventFields.Boolean("item_chosen")
     private val popupClosed = GROUP.registerVarargEvent("popup.closed", USAGE_VIEW, PRESELECTED_ROW, SELECTED_ROW, ITEM_CHOSEN,
                                                         TARGET_ELEMENT_DATA,
+                                                        RESULTS_TOTAL,
                                                         NUMBER_OF_TARGETS, SELECTED_ELEMENT_DATA, IS_THE_SAME_FILE,
                                                         IS_SELECTED_ELEMENT_AMONG_RECENT_FILES,
                                                         EventFields.DurationMs)
@@ -257,32 +251,11 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
       itemChosenInPopupFeatures.log(project, showUsagesHandlerData)
     }
 
-    @JvmStatic
-    fun logSearchCancelled(project: Project?,
-                           targetClass: Class<*>?,
-                           scope: SearchScope?,
-                           language: Language?,
-                           results: Int,
-                           durationFirstResults: Long,
-                           duration: Long,
-                           tooManyResult: Boolean,
-                           source: CodeNavigateSource,
-                           usageView: UsageView?) {
-      searchCancelled.log(project,
-                          SYMBOL_CLASS.with(targetClass),
-                          SEARCH_SCOPE.with(scope?.let { ScopeIdMapper.instance.getScopeSerializationId(it.displayName) }),
-                          EventFields.Language.with(language),
-                          RESULTS_TOTAL.with(results),
-                          FIRST_RESULT_TS.with(durationFirstResults),
-                          EventFields.DurationMs.with(duration),
-                          TOO_MANY_RESULTS.with(tooManyResult),
-                          UI_LOCATION.with(source),
-                          USAGE_VIEW.with(usageView))
-    }
 
     @JvmStatic
     fun logSearchFinished(
       project: Project?,
+      usageView : UsageView?,
       targetClass: Class<*>?,
       scope: SearchScope?,
       language: Language?,
@@ -290,8 +263,8 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
       durationFirstResults: Long,
       duration: Long,
       tooManyResult: Boolean,
-      source: CodeNavigateSource,
-      usageView : UsageView?
+      isCancelled: Boolean,
+      source: CodeNavigateSource
     ) {
       searchFinished.log(project,
                          USAGE_VIEW.with(usageView),
@@ -302,6 +275,7 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                          FIRST_RESULT_TS.with(durationFirstResults),
                          EventFields.DurationMs.with(duration),
                          TOO_MANY_RESULTS.with(tooManyResult),
+                         IS_SEARCH_CANCELLED.with(isCancelled),
                          UI_LOCATION.with(source))
     }
 
@@ -350,11 +324,13 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
                        itemChosen: Boolean,
                        preselectRow: Int,
                        selectedRow: Int?,
+                       results: Int,
                        startTime: Long?,
                        showUsagesHandlerEventData: MutableList<EventPair<*>>) {
       showUsagesHandlerEventData.add(USAGE_VIEW.with(usageView))
       showUsagesHandlerEventData.add(ITEM_CHOSEN.with(itemChosen))
       showUsagesHandlerEventData.add(PRESELECTED_ROW.with(preselectRow))
+      showUsagesHandlerEventData.add(RESULTS_TOTAL.with(results))
       selectedRow?.let { showUsagesHandlerEventData.add(SELECTED_ROW.with(it)) }
       showUsagesHandlerEventData.addAll(showUsagesHandlerEventData)
       if (startTime != null) {
