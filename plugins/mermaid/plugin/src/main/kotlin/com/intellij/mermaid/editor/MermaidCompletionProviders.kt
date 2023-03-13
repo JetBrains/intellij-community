@@ -93,8 +93,11 @@ class FlowchartCompletionProvider : MermaidLiveTemplateCompletionProvider() {
   }
 }
 
-class DirectionCompletionProvider :
+class ExtendedDirectionCompletionProvider :
   MermaidSimpleCompletionProvider(listOf("LR", "RL", "TB", "BT", "TD", "BR", "<", ">", "^", "v"))
+
+class DirectionCompletionProvider :
+  MermaidSimpleCompletionProvider(listOf("LR", "RL", "TB", "BT"))
 
 class PieShowDataCompletionProvider : MermaidSimpleCompletionProvider(listOf("showData"))
 

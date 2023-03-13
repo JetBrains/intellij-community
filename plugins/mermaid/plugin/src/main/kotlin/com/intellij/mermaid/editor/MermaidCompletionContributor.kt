@@ -31,12 +31,7 @@ class MermaidCompletionContributor : CompletionContributor() {
 
     extend(
       CompletionType.BASIC,
-      psiElement().afterLeaf(
-        or(
-          psiElement(MermaidTokens.Flowchart.FLOWCHART),
-          psiElement(MermaidTokens.DIRECTION)
-        )
-      ),
+      psiElement().afterLeaf(psiElement(MermaidTokens.DIRECTION)),
       DirectionCompletionProvider()
     )
 
@@ -45,6 +40,11 @@ class MermaidCompletionContributor : CompletionContributor() {
       CompletionType.BASIC,
       psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.FLOWCHART_HEADER)),
       FlowchartCompletionProvider()
+    )
+    extend(
+      CompletionType.BASIC,
+      psiElement().afterLeaf(psiElement(MermaidTokens.Flowchart.FLOWCHART)),
+      ExtendedDirectionCompletionProvider()
     )
     //endregion
 
@@ -82,7 +82,7 @@ class MermaidCompletionContributor : CompletionContributor() {
     extend(
       CompletionType.BASIC,
       psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.SEQUENCE_HEADER))
-      .andNot(psiElement().insideBlock(psiElement(MermaidTokens.Sequence.BOX))),
+        .andNot(psiElement().insideBlock(psiElement(MermaidTokens.Sequence.BOX))),
       SequenceSimpleCompletionProvider("autonumber")
     )
     extend(
@@ -395,7 +395,8 @@ class MermaidCompletionContributor : CompletionContributor() {
   private fun PsiElementPattern.Capture<PsiElement>.notInsideDiagram(): PsiElementPattern.Capture<PsiElement> {
     return with(object : PatternCondition<PsiElement>("notInsideDiagram") {
       override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
-        return psiElement.containingFile.children().map { whitespaceCommentEmptyErrorEolDirectiveOrFrontmatter().accepts(it) }.all { it }
+        return psiElement.containingFile.children()
+          .map { whitespaceCommentEmptyErrorEolDirectiveOrFrontmatter().accepts(it) }.all { it }
       }
     })
   }
@@ -430,7 +431,8 @@ class MermaidCompletionContributor : CompletionContributor() {
   private fun PsiElementPattern.Capture<PsiElement>.atTopLevelOfDiagram(
     diagramPattern: ElementPattern<in PsiElement>
   ): PsiElementPattern.Capture<PsiElement> {
-    return insideDiagramAndNotAtStatement(diagramPattern).with(object : PatternCondition<PsiElement>("inTopLevelOfDiagram") {
+    return insideDiagramAndNotAtStatement(diagramPattern).with(object :
+      PatternCondition<PsiElement>("inTopLevelOfDiagram") {
       override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
         var element = psiElement
         if (element !is PsiErrorElement && element.parent is PsiErrorElement) {
