@@ -9,25 +9,34 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.childScope
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserRegistry
+import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.VcsLogStorageImpl
+import com.intellij.vcs.log.data.index.VcsLogPathsIndex.*
+import com.intellij.vcs.log.history.EdgeData
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import com.intellij.vcs.log.util.PersistentUtil
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.intellij.lang.annotations.Language
 import org.jetbrains.sqlite.*
+import java.io.IOException
 import java.nio.file.Files
 import java.util.function.IntConsumer
 import java.util.function.IntFunction
+import java.util.function.ObjIntConsumer
 import java.util.function.ToIntFunction
 
 private const val DB_VERSION = 2
@@ -65,6 +74,11 @@ private const val TABLE_SCHEMA = """
   
   create table user (commitId integer not null, committerId integer null, name text not null, email text not null) strict;
   create index user_index on user (name, email);
+  
+  create table path (relativePath text not null, position integer not null) strict;
+  create index path_index on path (position, relativePath);
+  create table path_change (commitId integer not null, pathId integer not null, kind integer not null) strict;
+  create index path_change_index on path_change(pathId);
   
   commit transaction;
 """
@@ -117,10 +131,22 @@ private class ProjectLevelConnectionManager(project: Project, logId: String) : D
 private const val RENAME_SQL = "insert into rename(parent, child, rename) values(?, ?, ?)"
 private const val RENAME_DELETE_SQL = "delete from rename where parent = ? and child = ?"
 
-internal class SqliteVcsLogStorageBackend(project: Project, logId: String, disposable: Disposable) : VcsLogStorageBackend, VcsLogUserBiMap {
+internal class SqliteVcsLogStorageBackend(project: Project,
+                                          logId: String,
+                                          roots: Set<VirtualFile>,
+                                          disposable: Disposable) :
+  VcsLogStorageBackend, VcsLogUserBiMap, VcsLogIndexedPaths, VcsLogPathsStorage {
+
   private val connectionManager = ProjectLevelConnectionManager(project, logId).also { Disposer.register(disposable, it) }
 
   private val userRegistry = project.service<VcsUserRegistry>()
+
+  private val sortedRoots = roots.sortedWith(Comparator.comparing(VirtualFile::getPath))
+
+  private val rootsToPosition = Object2IntOpenHashMap<VirtualFile>()
+    .apply {
+      sortedRoots.forEachIndexed { index, root -> put(root, index) }
+    }
 
   override var isFresh: Boolean
     get() = connectionManager.isFresh
@@ -365,6 +391,109 @@ internal class SqliteVcsLogStorageBackend(project: Project, logId: String, dispo
   override fun update(commitId: Int, details: VcsLogIndexer.CompressedDetails) {}
 
   override fun flush() {}
+
+  override fun isPathsEmpty(): Boolean {
+    return connection.selectBoolean("select not exists (select 1 from path)")
+  }
+
+  override fun iterateChangesInCommits(root: VirtualFile, path: FilePath, consumer: ObjIntConsumer<List<ChangeKind>>) {
+    val position = rootsToPosition.getInt(root)
+    val relativePath = LightFilePath(root, path).relativePath
+    val changesInCommit = Int2ObjectOpenHashMap<MutableList<ChangeKind>>()
+    val paramBinder = ObjectBinder(paramCount = 2)
+    connection.prepareStatement(
+      "select commitId, kind from path as p join path_change as c on p.rowid = c.pathId where p.position = ? and p.relativePath = ?",
+      paramBinder).use { statement ->
+
+      paramBinder.bindMultiple(position, relativePath)
+
+      val rs = statement.executeQuery()
+      while (rs.next()) {
+        val changes = changesInCommit.getOrPut(rs.getInt(0)) { arrayListOf() }
+        changes.add(ChangeKind.getChangeKindById(rs.getInt(1).toByte()))
+      }
+    }
+
+    for ((commitId, changes) in changesInCommit) {
+      consumer.accept(changes, commitId)
+    }
+  }
+
+  override fun findRename(parent: Int, child: Int, root: VirtualFile, path: FilePath, isChildPath: Boolean): EdgeData<FilePath?>? {
+    val renames = getRename(parent, child)
+    if (renames.isEmpty()) {
+      return null
+    }
+
+    val pathId = getPathId(LightFilePath(root, path))
+
+    for (i in renames.indices step 2) {
+      val first = renames[i]
+      val second = renames[i + 1]
+      if ((isChildPath && second == pathId) || (!isChildPath && first == pathId)) {
+        val path1 = getPath(first)?.let { toFilePath(it, path.isDirectory) }
+        val path2 = getPath(second)?.let { toFilePath(it, path.isDirectory) }
+        return EdgeData(path1, path2)
+      }
+    }
+
+    return null
+  }
+
+  override fun getPathsEncoder(): VcsLogIndexer.PathsEncoder =
+    VcsLogIndexer.PathsEncoder { root, relativePath, _ ->
+      val position = rootsToPosition.getInt(root)
+      val pathId = getPathId(root, relativePath)
+      if (pathId != null) {
+        pathId
+      }
+      else {
+        connection.execute("insert into path(position, relativePath) values (?, ?)", arrayOf(position, relativePath))
+        getPathIdOrFail(root, relativePath)
+      }
+    }
+
+  override fun getPath(pathId: Int): LightFilePath? {
+    val paramBinder = IntBinder(paramCount = 1)
+    connection.prepareStatement("select position, relativePath from path where rowid = ?", paramBinder).use { statement ->
+      paramBinder.bind(pathId)
+
+      val rs = statement.executeQuery()
+      if (rs.next()) {
+        return LightFilePath(sortedRoots.get(rs.getInt(0)), rs.getString(1)!!)
+      }
+    }
+
+    return null
+  }
+
+  override fun getPathId(filePath: LightFilePath): Int {
+    return getPathIdOrFail(filePath.root, filePath.relativePath)
+  }
+
+  private fun getPathIdOrFail(root: VirtualFile, relativePath: String): Int {
+    val pathId = getPathId(root, relativePath)
+    if (pathId == null) {
+      throw IOException("Path ${root} with relativePath = ${relativePath} not stored")
+    }
+
+    return pathId
+  }
+
+  private fun getPathId(root: VirtualFile, relativePath: String): Int? {
+    val position = rootsToPosition.getInt(root)
+    val paramBinder = ObjectBinder(paramCount = 2)
+    connection.prepareStatement("select rowid from path where position = ? and relativePath = ?", paramBinder).use { statement ->
+      paramBinder.bindMultiple(position, relativePath)
+
+      val rs = statement.executeQuery()
+      if (rs.next()) {
+        return rs.getInt(0)
+      }
+    }
+
+    return null
+  }
 }
 
 @Suppress("SqlResolve")
@@ -395,6 +524,8 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
 
   private val renameDeleteStatement = statementCollection.prepareIntStatement(RENAME_DELETE_SQL)
   private val renameStatement = statementCollection.prepareIntStatement(RENAME_SQL)
+
+  private val changeStatement = statementCollection.prepareIntStatement("insert into path_change(commitId, pathId, kind) values(?, ?, ?)")
 
   override fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails, userToId: ToIntFunction<VcsUser>) {
     val committerId = if (details.author == details.committer) null else 0
@@ -431,6 +562,56 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
       renameStatement.setInt(3, rename)
       renameStatement.addBatch()
     }
+  }
+
+  override fun putPathChanges(commitId: Int, details: VcsLogIndexer.CompressedDetails, logStore: VcsLogStorage) {
+
+    val changesToStore = collectChangesAndPutRenames(details, logStore)
+
+    for (entry in changesToStore) {
+      val pathId = entry.key
+      val changes = entry.value
+
+      for (change in changes) {
+        changeStatement.setInt(1, commitId)
+        changeStatement.setInt(2, pathId)
+        changeStatement.setInt(3, change.id.toInt())
+        changeStatement.addBatch()
+      }
+    }
+  }
+
+  private fun collectChangesAndPutRenames(details: VcsLogIndexer.CompressedDetails,
+                                          logStore: VcsLogStorage): Int2ObjectOpenHashMap<List<ChangeKind>> {
+    val result = Int2ObjectOpenHashMap<List<ChangeKind>>()
+
+    // it's not exactly parents count since it is very convenient to assume that initial commit has one parent
+    val parentsCount = if (details.parents.isEmpty()) 1 else details.parents.size
+    for (parentIndex in 0 until parentsCount) {
+      val entries = details.getRenamedPaths(parentIndex).int2IntEntrySet()
+
+      if (entries.isNotEmpty()) {
+        val renames = IntArray(entries.size * 2)
+        var index = 0
+        for (entry in entries) {
+          renames[index++] = entry.intKey
+          renames[index++] = entry.intValue
+          PathIndexer.getOrCreateChangeKindList(result, entry.intKey, parentsCount)[parentIndex] = ChangeKind.REMOVED
+          PathIndexer.getOrCreateChangeKindList(result, entry.intValue, parentsCount)[parentIndex] = ChangeKind.ADDED
+        }
+        val commit = logStore.getCommitIndex(details.id, details.root)
+        val parent = logStore.getCommitIndex(details.parents[parentIndex], details.root)
+
+        putRename(parent, commit, renames)
+      }
+
+      for (entry in details.getModifiedPaths(parentIndex).int2ObjectEntrySet()) {
+        PathIndexer
+          .getOrCreateChangeKindList(result, entry.intKey, parentsCount)[parentIndex] = PathIndexer.createChangeData(entry.value)
+      }
+    }
+
+    return result
   }
 
   override fun flush() {

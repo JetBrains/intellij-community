@@ -159,7 +159,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   }
 
   @Contract("null,_ -> null; !null,_ -> !null")
-  private static @Nullable FilePath toFilePath(@Nullable LightFilePath lightFilePath, boolean isDirectory) {
+  static @Nullable FilePath toFilePath(@Nullable LightFilePath lightFilePath, boolean isDirectory) {
     if (lightFilePath == null) return null;
     return VcsUtil.getFilePath(lightFilePath.getRoot().getPath() + "/" + lightFilePath.getRelativePath(), isDirectory);
   }
@@ -190,7 +190,7 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
     }
   }
 
-  private static final class PathIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
+  static final class PathIndexer implements DataIndexer<Integer, List<ChangeKind>, VcsLogIndexer.CompressedDetails> {
     private final @NotNull VcsLogStorage myStorage;
     private final @NotNull VcsLogPathsStorage myPathsStorage;
     private final VcsLogStorageBackend store;

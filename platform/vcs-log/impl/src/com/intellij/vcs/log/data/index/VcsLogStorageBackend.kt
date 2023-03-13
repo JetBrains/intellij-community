@@ -4,6 +4,7 @@ package com.intellij.vcs.log.data.index
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.VcsUser
+import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.VcsLogIndexer
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.IOException
@@ -69,4 +70,6 @@ interface VcsLogWriter {
   fun close(performCommit: Boolean)
 
   fun putRename(parent: Int, child: Int, renames: IntArray)
+
+  fun putPathChanges(commitId: Int, details: VcsLogIndexer.CompressedDetails, logStore: VcsLogStorage) {}
 }

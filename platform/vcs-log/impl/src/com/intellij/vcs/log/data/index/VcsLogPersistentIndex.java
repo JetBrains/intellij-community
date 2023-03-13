@@ -221,6 +221,9 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     try {
       int commitId = myStorage.getCommitIndex(detail.getId(), detail.getRoot());
       myIndexStorage.add(commitId, detail);
+      if (useSqlite) {
+        mutator.putPathChanges(commitId, detail, myStorage);
+      }
       mutator.putParents(commitId, detail.getParents(), hash -> myStorage.getCommitIndex(hash, detail.getRoot()));
       mutator.putCommit(commitId, detail, user -> myIndexStorage.users.getUserId(commitId, user));
     }
@@ -325,7 +328,7 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
       try {
         StorageLockContext storageLockContext = new StorageLockContext();
         if (useSqlite) {
-          store = new SqliteVcsLogStorageBackend(project, logId, this);
+          store = new SqliteVcsLogStorageBackend(project, logId, roots, this);
         }
         else {
           store = new PhmVcsLogStorageBackend(indexStorageId, storageLockContext, errorHandler, this);
@@ -333,7 +336,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
         users = useSqlite ? (SqliteVcsLogStorageBackend)store :
                 new VcsLogUserIndex(indexStorageId, storageLockContext, userRegistry, errorHandler, this);
-        paths = new VcsLogPathsIndex(indexStorageId, storage, roots, storageLockContext, errorHandler, store, this);
+        paths = useSqlite ? (SqliteVcsLogStorageBackend)store :
+                new VcsLogPathsIndex(indexStorageId, storage, roots, storageLockContext, errorHandler, store, this);
 
         reportEmpty();
       }
