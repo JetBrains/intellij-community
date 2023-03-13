@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.documentation;
 
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -485,10 +485,6 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   // provides ctrl+Q doc
   @Override
   public @Nls String generateDoc(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
-    final PythonRuntimeService runtimeService = PythonRuntimeService.getInstance();
-    if (runtimeService.isInPydevConsole(element) || originalElement != null && runtimeService.isInPydevConsole(originalElement)) {
-      return runtimeService.createPydevDoc(element, originalElement);
-    }
     return new PyDocumentationBuilder(element, originalElement).build();
   }
 
