@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import org.apache.velocity.VelocityContext;
@@ -40,6 +39,7 @@ import javax.swing.*;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 public final class FileTemplateUtil {
@@ -223,7 +223,7 @@ public final class FileTemplateUtil {
                                                       IdeBundle.message("title.velocity.error")));
       }
       else {
-        exceptionHandler.consume(e);
+        exceptionHandler.accept(e);
       }
     }
     final String result = stringWriter.toString();

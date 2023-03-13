@@ -42,7 +42,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.templates.github.ZipUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -65,6 +64,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
@@ -236,7 +236,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         private final SmartList<Trinity<String, String, VelocityException>> myFailures = new SmartList<>();
 
         @Override
-        public void consume(VelocityException e) {
+        public void accept(VelocityException e) {
           myFailures.add(Trinity.create(myPath, myText, e));
         }
 
