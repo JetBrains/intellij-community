@@ -863,6 +863,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       }
       try {
         long start = System.currentTimeMillis();
+        TaskManagementUsageCollector.logCollectRemoteTasks(myProject, repository);
         Task[] tasks = repository.getIssues(request, offset, limit, withClosed, cancelled);
         long timeSpent = System.currentTimeMillis() - start;
         LOG.debug(String.format("Total %s ms to download %d issues from '%s' (pattern '%s')",

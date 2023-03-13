@@ -11,6 +11,8 @@
     <tasks.contextProvider implementation="com.intellij.tasks.context.BookmarkContextProvider"/>
     <notificationGroup id="Tasks" displayType="BALLOON" bundle="messages.TaskBundle" key="notification.group.context.corrupted"/>
     <notificationGroup id="Branch Context group" displayType="BALLOON" bundle="messages.TaskBundle" key="notification.group.branch.context"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.tasks.impl.TaskManagementUsageCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.tasks.impl.TaskManagementConfigurationCollector"/>
   </extensions>
   <projectListeners>
     <listener class="com.intellij.tasks.context.BranchContextTracker" topic="com.intellij.openapi.vcs.BranchChangeListener"/>
