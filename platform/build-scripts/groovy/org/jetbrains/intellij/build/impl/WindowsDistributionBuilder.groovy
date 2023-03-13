@@ -158,6 +158,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       BuildHelper.runProcess(buildContext, List.of("unzip", "-q", zipPath.toString()), tempZip)
       //noinspection SpellCheckingInspection
       NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
+      // TODO: Remove this workaround once IDEA-297735 fixed
+      NioFiles.deleteRecursively(tempExe.resolve("bin/Uninstall.exe.nsis"))
 
       BuildHelper.runProcess(buildContext, List.of("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
       RepairUtilityBuilder.generateManifest(buildContext, tempExe, Path.of(exePath).fileName.toString())
