@@ -115,7 +115,7 @@ class DumbServiceImplTest {
       }
     }
 
-    // TODO: queued tasks never executed, because new DumbServiceImpl creates a service in DUMB mode
+    runInEdtAndWait { dumbService.isDumb = false }
     dumbService.queueTask(task1)
     dumbService.queueTask(task2)
     Disposer.dispose(dumbService)
