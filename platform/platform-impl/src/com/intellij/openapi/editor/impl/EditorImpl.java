@@ -25,7 +25,10 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.*;
+import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
+import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -3320,13 +3323,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private static void logSchemeChangeIfNeeded(EditorColorsScheme scheme) {
-    if (!LOG.isDebugEnabled() || !(scheme instanceof EditorColorsSchemeImpl)) return;
+    if (!LOG.isDebugEnabled()) return;
     EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
-    boolean isGlobal = colorsManager != null && colorsManager.getGlobalScheme() == scheme;
+    if (colorsManager == null) return;
 
-    LOG.debug("Will set mutable scheme to editor (isGlobal=%b, presentationMode=%b)"
-                .formatted(isGlobal, UISettings.getInstance().getPresentationMode()));
-    LOG.debug(ExceptionUtil.currentStackTrace());
+    EditorColorsScheme globalScheme = colorsManager.getGlobalScheme();
+    boolean isGlobal = (scheme == globalScheme);
+    boolean isBounded = (scheme instanceof MyColorSchemeDelegate);
+
+    while (!isGlobal && !isBounded && scheme instanceof DelegateColorScheme) {
+      scheme = ((DelegateColorScheme)scheme).getDelegate();
+      if (scheme == globalScheme) isGlobal = true;
+      if (scheme instanceof MyColorSchemeDelegate) isBounded = true;
+    }
+
+    if (isGlobal && !isBounded) {
+      LOG.debug("Will set the unbounded global scheme to editor (presentationMode=%b)"
+                  .formatted(UISettings.getInstance().getPresentationMode()));
+      LOG.debug(ExceptionUtil.currentStackTrace());
+    }
   }
 
   @Override
