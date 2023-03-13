@@ -64,9 +64,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
     }
     else {
       PsiFile containingFile = addedElement.getContainingFile();
-      throw new IncorrectOperationException("Selected class file name '" +
-                                            containingFile.getName() +  "' mapped to not java file type '"+
-                                            containingFile.getFileType().getDescription() + "'");
+      throw new IncorrectOperationException("The file '" + containingFile +  "' was expected to be of JAVA file type, but got: '"+ containingFile.getFileType() + "'");
     }
   }
 
