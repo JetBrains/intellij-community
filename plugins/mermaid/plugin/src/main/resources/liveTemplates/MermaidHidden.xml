@@ -282,7 +282,7 @@
             value="note $ARG$ $ID$ &#10;$INDENT$$END$$SELECTION$&#10;end note"
             description="c4 boundary"
             toReformat="false" toShortenFQNames="false">
-    <variable name="ARG" expression="" defaultValue="" alwaysStopAt="true"/>
+    <variable name="ARG" expression="" defaultValue="left of" alwaysStopAt="true"/>
     <variable name="ID" expression="" defaultValue="" alwaysStopAt="true"/>
     <context>
       <option name="MERMAID" value="true"/>

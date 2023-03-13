@@ -51,17 +51,15 @@ class MermaidCompletionContributor : CompletionContributor() {
     //region Pie
     extend(
       CompletionType.BASIC,
-      psiElement().afterLeaf(
-        or(
-          psiElement(MermaidTokens.Pie.PIE),
-          psiElement(MermaidTokens.EOL).afterLeaf(psiElement(MermaidTokens.Pie.PIE))
-        )
-      ),
+      psiElement().afterPieToken(),
       PieShowDataCompletionProvider()
     )
     extend(
       CompletionType.BASIC,
-      psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.PIE_HEADER)),
+      or(
+        psiElement().insideDiagramAndNotAtStatement(psiElement(MermaidElements.PIE_HEADER)),
+        psiElement().afterLeaf(psiElement(MermaidTokens.Pie.PIE))
+      ),
       TitleCompletionProvider()
     )
     //endregion
@@ -237,7 +235,7 @@ class MermaidCompletionContributor : CompletionContributor() {
       psiElement().afterLeafSkipping(
         or(
           psiElement(MermaidTokens.COLON),
-          psiElement().whitespace()
+          psiElement().whitespaceCommentEmptyOrError()
         ),
         psiElement(MermaidTokens.Requirement.RISK)
       ),
@@ -248,7 +246,7 @@ class MermaidCompletionContributor : CompletionContributor() {
       psiElement().afterLeafSkipping(
         or(
           psiElement(MermaidTokens.COLON),
-          psiElement().whitespace()
+          psiElement().whitespaceCommentEmptyOrError()
         ),
         psiElement(MermaidTokens.Requirement.VERIFY_METHOD)
       ),
@@ -257,7 +255,7 @@ class MermaidCompletionContributor : CompletionContributor() {
     extend(
       CompletionType.BASIC,
       psiElement().afterLeafSkipping(
-        psiElement().whitespace(),
+        psiElement().whitespaceCommentEmptyOrError(),
         psiElement(MermaidTokens.Requirement.REQ_LINE)
       ),
       RequirementRelationshipCompletionProvider()
@@ -485,5 +483,23 @@ class MermaidCompletionContributor : CompletionContributor() {
       psiElement(MermaidElements.CLASS_DIAGRAM_HEADER),
       psiElement(MermaidTokens.ClassDiagram.CLASS_DIAGRAM),
     )
+  }
+
+  private fun PsiElementPattern.Capture<PsiElement>.afterPieToken(): PsiElementPattern.Capture<PsiElement> {
+    return with(object : PatternCondition<PsiElement>("afterPieToken") {
+      override fun accepts(psiElement: PsiElement, context: ProcessingContext): Boolean {
+        var element = psiElement
+        if (element !is PsiErrorElement && element.parent is PsiErrorElement) {
+          element = element.parent
+        }
+        return psiElement().afterLeafSkipping(
+          or(
+            psiElement().whitespaceCommentEmptyOrError(),
+            psiElement(MermaidTokens.EOL)
+          ),
+          psiElement(MermaidTokens.Pie.PIE)
+        ).accepts(element)
+      }
+    })
   }
 }

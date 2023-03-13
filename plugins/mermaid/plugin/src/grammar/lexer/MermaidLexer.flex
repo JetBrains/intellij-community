@@ -154,19 +154,13 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   "showData" { return Pie.SHOW_DATA; }
   ":" { yybegin(value); return COLON; }
+  [^\s:\"]+ { return BAD_CHARACTER; }
 }
 <journey> {
   "title" { yypushstate(title); return TITLE; }
   "section" { yypushstate(section); return SECTION; }
   ":" { yypushstate(section_task); return COLON; }
   [^\s#:;]+ { return TASK_NAME; }
-}
-<flowchart, direction_value, simple_direction_value> {
-  "LR" |
-  "RL" |
-  "TB" |
-  "BT" { return DIR; }
-  [^\S\r\n]+ { return WHITE_SPACE; }
 }
 <direction_value, simple_direction_value> {
   [\n\r] { yypopstate(); return EOL; }
@@ -181,6 +175,14 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   ">" |
   "^" |
   "v" { return DIR; }
+}
+<flowchart, direction_value, simple_direction_value> {
+  "LR" |
+  "RL" |
+  "TB" |
+  "BT" { return DIR; }
+  [^\S\r\n]+ { return WHITE_SPACE; }
+  \S+ { return BAD_CHARACTER; }
 }
 <flowchart> {
   ";" { yybegin(flowchart_body); return SEMICOLON; }
@@ -400,6 +402,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
   [^\S\n\r]+ { return WHITE_SPACE; }
   [\n\r] { yypopstate(); return EOL; }
+  \S+ { return BAD_CHARACTER; }
 }
 <sequence_id, sequence_alias, sequence_message, sequence> {
   \s?(#[^\n\r]*)/[\n\r]? { yybegin(sequence); return IGNORED; }
@@ -725,6 +728,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "inspection" { yybegin(requirement); return Requirement.INSPECTION; }
   "test" { yybegin(requirement); return Requirement.TEST; }
   "demonstration" { yybegin(requirement); return Requirement.DEMONSTRATION; }
+
+  [^\s:]+ { return BAD_CHARACTER; }
 }
 
 //---gitgraph---------------------------------------------------------------------

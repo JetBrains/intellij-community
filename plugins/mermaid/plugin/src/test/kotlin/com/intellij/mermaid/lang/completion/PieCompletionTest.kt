@@ -4,7 +4,7 @@ import com.intellij.mermaid.lang.MermaidBaseTestCase
 
 class PieCompletionTest : MermaidBaseTestCase("completion/diagrams/pie") {
 
-  fun `test right after header`() = doTest("showData")
+  fun `test right after header`() = doTest("showData", "title")
 
   fun `test at first line`() = doTest("showData", "title")
 
