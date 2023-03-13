@@ -259,6 +259,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
       val commitChecks = handlers
         .map { it.asCommitCheck(commitInfo) }
         .filter { it.isEnabled() }
+        .filter { it !is CheckinHandler || it.acceptExecutor(commitInfo.executor) }
         .groupBy { it.getExecutionOrder() }
 
       if (!checkDumbMode(commitInfo, commitChecks.values.flatten())) {
@@ -463,7 +464,7 @@ private class ProxyCommitCheck(val checkinHandler: CheckinHandler,
     return DumbService.isDumbAware(checkinHandler)
   }
 
-  override fun isEnabled(): Boolean = checkinHandler.acceptExecutor(executor)
+  override fun isEnabled(): Boolean = true
 
   override suspend fun runCheck(commitInfo: CommitInfo): CommitProblem? {
     val result = blockingContext {

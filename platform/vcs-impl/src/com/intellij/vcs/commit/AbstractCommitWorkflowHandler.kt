@@ -84,7 +84,16 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     }
   }
 
-  protected fun initCommitHandlers() = workflow.initCommitHandlers(getCommitHandlers(workflow.vcses, commitPanel, commitContext))
+  protected fun initCommitHandlers() {
+    var checkinHandlers = getCommitHandlers(workflow.vcses, commitPanel, commitContext)
+
+    val executors = workflow.commitExecutors + if (workflow.isDefaultCommitEnabled) listOf(null) else emptyList()
+    if (executors.isNotEmpty()) {
+      checkinHandlers = checkinHandlers.filter { handler -> executors.any { executor -> handler.acceptExecutor(executor) } }
+    }
+
+    workflow.initCommitHandlers(checkinHandlers)
+  }
 
   protected fun createCommitOptions(): CommitOptions = CommitOptionsImpl(
     if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, commitContext) else emptyMap(),

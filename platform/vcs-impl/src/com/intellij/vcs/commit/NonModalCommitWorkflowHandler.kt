@@ -82,8 +82,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 
   override fun vcsesChanged() {
-    initCommitHandlers()
     workflow.initCommitExecutors(getCommitExecutors(project, workflow.vcses) + RunCommitChecksExecutor)
+    initCommitHandlers()
 
     updateDefaultCommitActionEnabled()
     updateDefaultCommitActionName()
@@ -322,6 +322,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
       val commitChecks = handlers
         .map { it.asCommitCheck(commitInfo) }
         .filter { it.isEnabled() }
+        .filter { it !is CheckinHandler || it.acceptExecutor(commitInfo.executor) }
         .groupBy { it.getExecutionOrder() }
 
       val earlyChecks = commitChecks[CommitCheck.ExecutionOrder.EARLY].orEmpty()
