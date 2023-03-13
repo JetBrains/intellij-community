@@ -14,22 +14,22 @@ import com.intellij.util.text.StringOperation
 class IdentifierRenameUsageSearcher : RenameUsageSearcher {
   override fun collectSearchRequests(parameters: RenameUsageSearchParameters): Collection<Query<out RenameUsage>> {
     val target = parameters.target
-    if (target !is UnresolvedIdentifierSymbol) {
+    if (target !is IdentifierRenameTarget) {
       return emptyList()
     }
-    val searchText = target.searchText.takeIf { it.isNotEmpty() } ?: return emptyList()
-    val usages =
-      IdentifierSymbolUsageSearcher.buildSearchRequest(parameters.project, target, searchText, parameters.searchScope)
+    val symbol = target.symbol
+    val searchText = symbol.searchText.takeIf { it.isNotEmpty() } ?: return emptyList()
+    val usages = IdentifierSymbolUsageSearcher.buildSearchRequest(parameters.project, symbol, searchText, parameters.searchScope)
     val otherDeclarations = IdentifierSymbolUsageSearcher.buildDeclarationsSearchRequest(
       parameters.project,
-      target,
+      symbol,
       searchText,
       parameters.searchScope
     )
     val selfUsage = IdentifierSymbolUsageSearcher.buildDirectTargetQuery(
       MermaidPsiUsage.create(
-        target.file,
-        target.range,
+        symbol.file,
+        symbol.range,
         declaration = true
       )
     )
@@ -46,7 +46,7 @@ class IdentifierRenameUsageSearcher : RenameUsageSearcher {
 
     override val fileUpdater = updater
 
-    private class Updater : ModifiableRenameUsage.FileUpdater by idFileRangeUpdater()
+    private class Updater: ModifiableRenameUsage.FileUpdater by idFileRangeUpdater()
 
     companion object {
       private val updater = Updater()
@@ -58,7 +58,8 @@ class IdentifierRenameUsageSearcher : RenameUsageSearcher {
     override val range: TextRange
   ) : PsiModifiableRenameUsage {
     override fun createPointer(): Pointer<out PsiModifiableRenameUsage> {
-      return IdentifierPsiModifiableRenameUsagePointer(file, range)
+      return Pointer.hardPointer(this)
+      // return IdentifierPsiModifiableRenameUsagePointer(file, range)
     }
 
     override val declaration: Boolean = false

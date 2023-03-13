@@ -17,7 +17,7 @@ class IdentifierSymbol(
   file: PsiFile,
   range: TextRange,
   text: String
-) : UnresolvedIdentifierSymbol(file, range, text), NavigationTarget {
+): UnresolvedIdentifierSymbol(file, range, text), NavigationTarget {
   override fun createPointer(): Pointer<out IdentifierSymbol> {
     val project = file.project
     val base = SmartPointerManager.getInstance(project).createSmartPsiFileRangePointer(file, range)
@@ -33,10 +33,6 @@ class IdentifierSymbol(
       val range = base.range ?: return null
       return IdentifierSymbol(file, TextRange.create(range), text)
     }
-  }
-
-  override fun presentation(): TargetPresentation {
-    return TargetPresentation.builder(text).presentation()
   }
 
   override fun navigationRequest(): NavigationRequest? {

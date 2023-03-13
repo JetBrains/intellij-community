@@ -1,9 +1,7 @@
 package com.intellij.mermaid.lang.psi.symbol.identifier
 
-import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.api.UsageHandler
 import com.intellij.mermaid.lang.psi.*
-import com.intellij.mermaid.lang.psi.symbol.MermaidSymbol
 import com.intellij.model.Pointer
 import com.intellij.navigation.*
 import com.intellij.openapi.util.TextRange
@@ -20,10 +18,11 @@ import com.intellij.refactoring.suggested.startOffset
 open class UnresolvedIdentifierSymbol(
   override val file: PsiFile,
   override val range: TextRange,
-  val text: String
-) : MermaidSymbol, SearchTarget, RenameTarget {
+  override val text: String
+): MermaidIdentifierSymbol, RenameTarget {
   override val maximalSearchScope: SearchScope
     get() = LocalSearchScope(file, file.name)
+
   override val targetName: String
     get() = text
 

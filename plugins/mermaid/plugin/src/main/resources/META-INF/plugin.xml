@@ -57,6 +57,7 @@
                                  hostLanguage="Mermaid"
                                  implementationClass="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolReferenceProvider"
                                  targetClass="com.intellij.mermaid.lang.psi.symbol.identifier.UnresolvedIdentifierSymbol"/>
+    <rename.symbolRenameTargetFactory implementation="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolRenameTargetFactory"/>
     <searcher forClass="com.intellij.find.usages.api.UsageSearchParameters"
               implementationClass="com.intellij.mermaid.lang.psi.symbol.identifier.IdentifierSymbolUsageSearcher"/>
     <searcher forClass="com.intellij.refactoring.rename.api.RenameUsageSearchParameters"

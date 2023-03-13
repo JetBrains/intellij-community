@@ -9,6 +9,7 @@ import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.psi.util.elementsAtOffsetUp
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.RenameableSymbol
+import com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory
 
 @Suppress("UnstableApiUsage")
 class IdentifierRenameTest : MermaidBaseTestCase("symbol/rename") {
@@ -34,13 +35,20 @@ class IdentifierRenameTest : MermaidBaseTestCase("symbol/rename") {
     myFixture.checkResultByFile(after)
   }
 
-  private fun doRename(newName: String) {
-    val symbol = findSymbolAtCaret() ?: return
-    val target = when (symbol) {
-      is RenameTarget -> symbol
+  private fun findRenameTarget(symbol: Symbol): RenameTarget? {
+    for (factory in SymbolRenameTargetFactory.EP_NAME.extensionList) {
+      return factory.renameTarget(project, symbol) ?: continue
+    }
+    return when (symbol) {
       is RenameableSymbol -> symbol.renameTarget
+      is RenameTarget -> symbol
       else -> null
     }
+  }
+
+  private fun doRename(newName: String) {
+    val symbol = findSymbolAtCaret() ?: return
+    val target = findRenameTarget(symbol)
     checkNotNull(target) { "Failed to find rename target at caret" }
     myFixture.renameTarget(target, newName)
   }
