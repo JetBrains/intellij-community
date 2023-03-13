@@ -11,7 +11,7 @@ class TerminalCompletionManager(private val model: TerminalModel,
 
   fun resetPrompt(promptLines: Int, newPromptShown: Boolean) {
     if (newPromptShown) {
-      model.withLock {
+      model.withContentLock {
         model.clearAllExceptPrompt(promptLines)
       }
     }

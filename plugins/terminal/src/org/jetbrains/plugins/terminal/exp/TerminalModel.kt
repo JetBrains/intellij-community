@@ -229,17 +229,17 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
     cursorY = promptLines
   }
 
-  fun lock() = textBuffer.lock()
+  fun lockContent() = textBuffer.lock()
 
-  fun unlock() = textBuffer.unlock()
+  fun unlockContent() = textBuffer.unlock()
 
-  inline fun <T> withLock(callable: () -> T): T {
-    lock()
+  inline fun <T> withContentLock(callable: () -> T): T {
+    lockContent()
     return try {
       callable()
     }
     finally {
-      unlock()
+      unlockContent()
     }
   }
 

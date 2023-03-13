@@ -29,7 +29,7 @@ class TerminalCompletionContributor : CompletionContributor() {
     val command = rawCommand.replace("\\\n", "")
 
     val resultSet = result.caseInsensitive()
-    val promptText = session.model.withLock { session.model.getAllText() }.replace("\n", "")
+    val promptText = session.model.withContentLock { session.model.getAllText() }.replace("\n", "")
     val baseTimeoutMillis = 1000
     var completionResult = invokeCompletion(session, command, promptText, baseTimeoutMillis)
     if (completionResult.isSingleItem) {

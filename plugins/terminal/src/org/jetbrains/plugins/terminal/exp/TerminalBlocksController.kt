@@ -51,7 +51,7 @@ class TerminalBlocksController(
     model.isCommandRunning = false
 
     // prepare terminal for the next command
-    model.withLock {
+    model.withContentLock {
       model.clearAllExceptPrompt()
     }
 
