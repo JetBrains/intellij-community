@@ -7,7 +7,7 @@ import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
-import com.intellij.util.io.DataExternalizer
+import com.intellij.util.indexing.impl.CollectionDataExternalizer
 import com.intellij.util.io.EnumeratorStringDescriptor
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
@@ -19,8 +19,6 @@ import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.serialization.deserialization.getClassId
-import java.io.DataInput
-import java.io.DataOutput
 
 class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection<String>>() {
     companion object {
@@ -33,7 +31,7 @@ class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection
 
     override fun getKeyDescriptor(): EnumeratorStringDescriptor = EnumeratorStringDescriptor.INSTANCE
 
-    override fun getValueExternalizer() = StringListExternalizer
+    override fun getValueExternalizer() = CollectionDataExternalizer(EnumeratorStringDescriptor.INSTANCE)
 
     override fun getInputFilter(): DefaultFileTypeSpecificInputFilter =
         DefaultFileTypeSpecificInputFilter(
@@ -93,20 +91,3 @@ class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection
     }
 }
 
-object StringListExternalizer : DataExternalizer<Collection<String>> {
-    private val ELEMENTS_SERIALIZER = EnumeratorStringDescriptor()
-
-    override fun read(input: DataInput): List<String> {
-        val size = input.readInt()
-        return arrayListOf<String>().apply {
-            repeat(size) {
-                add(ELEMENTS_SERIALIZER.read(input))
-            }
-        }
-    }
-
-    override fun save(output: DataOutput, value: Collection<String>) {
-        output.writeInt(value.size)
-        value.toList().forEach { ELEMENTS_SERIALIZER.save(output, it) }
-    }
-}
