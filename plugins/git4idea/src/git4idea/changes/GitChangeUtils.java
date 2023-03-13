@@ -118,9 +118,7 @@ public final class GitChangeUtils {
         case 'U':
           status = FileStatus.MERGED_WITH_CONFLICTS;
         case 'M':
-          if (status == null) {
-            status = FileStatus.MODIFIED;
-          }
+          status = FileStatus.MODIFIED;
           before = filePath;
           after = filePath;
           break;
