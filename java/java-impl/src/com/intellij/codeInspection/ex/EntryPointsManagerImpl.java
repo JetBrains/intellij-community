@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -34,11 +34,22 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
   @Override
   public void configureAnnotations() {
+    configureAnnotations(false);
+  }
+  
+  @Override
+  public void configureAnnotations(boolean implicitWritesOnly) {
     final List<String> list = new ArrayList<>(ADDITIONAL_ANNOTATIONS);
     final List<String> writeList = new ArrayList<>(myWriteAnnotations);
 
-    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
-      list, JavaBundle.message("separator.mark.as.entry.point.if.annotated.by"), true);
+    final JPanel listPanel;
+    if (implicitWritesOnly) {
+      listPanel = null;
+    }
+    else {
+      listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+        list, JavaBundle.message("separator.mark.as.entry.point.if.annotated.by"), true);
+    }
     Predicate<PsiClass> applicableToField = psiClass -> {
       Set<PsiAnnotation.TargetType> annotationTargets = AnnotationTargetUtil.getAnnotationTargets(psiClass);
       return annotationTargets != null && annotationTargets.contains(PsiAnnotation.TargetType.FIELD);
@@ -57,8 +68,10 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
         final var constraints = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1,
                                                        GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
                                                        JBInsets.emptyInsets(), 0, 0);
-        panel.add(listPanel, constraints);
-        constraints.insets.top = 13;
+        if (listPanel != null) {
+          panel.add(listPanel, constraints);
+          constraints.insets.top = 13;
+        }
         panel.add(writtenAnnotationsPanel, constraints);
         return panel;
       }
@@ -78,11 +91,15 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
   }
 
   public static JButton createConfigureAnnotationsButton() {
+    return createConfigureAnnotationsButton(false);
+  }
+
+  public static JButton createConfigureAnnotationsButton(boolean implicitWritesOnly) {
     final JButton configureAnnotations = new JButton(JavaBundle.message("button.annotations"));
     configureAnnotations.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        getInstance(ProjectUtil.guessCurrentProject(configureAnnotations)).configureAnnotations();
+        getInstance(ProjectUtil.guessCurrentProject(configureAnnotations)).configureAnnotations(implicitWritesOnly);
       }
     });
     return configureAnnotations;
