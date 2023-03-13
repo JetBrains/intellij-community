@@ -195,7 +195,6 @@ class CompletionInvokerImpl(private val project: Project,
     val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
     val isBenchmark = completionGolfSettings?.isBenchmark ?: false
     val session = Session(offset, expectedLine, completableRanges.sumOf { it.end - it.start }, null, TokenProperties.UNKNOWN)
-    moveCaret(offset)
     if (isBenchmark) {
       session.benchmark(expectedLine, completableRanges, offset, emulator)
     }
@@ -316,7 +315,7 @@ class CompletionInvokerImpl(private val project: Project,
     return Suggestion(insertedText,
                       presentationText,
                       sourceFromPresentation(presentation),
-                      scoreFromFeatures(lookup, this)
+                      detailsFromFeatures(lookup, this)
     )
   }
 
@@ -332,9 +331,12 @@ class CompletionInvokerImpl(private val project: Project,
     }
   }
 
-  private fun scoreFromFeatures(lookup: LookupImpl, element: LookupElement): Double? {
+  private fun detailsFromFeatures(lookup: LookupImpl, element: LookupElement): Map<String, Any?> {
     val features = MLCompletionFeaturesUtil.getElementFeatures(lookup, element).features
-    return features["ml_full_line_score"]?.toDoubleOrNull()
+    return mapOf(
+      Suggestion.SCORE_KEY to features["ml_full_line_score"]?.toDoubleOrNull(),
+      Suggestion.TOKENS_COUNT_KEY to features["ml_full_line_tokens_count"]?.toDoubleOrNull()
+    )
   }
 
   private fun resetRandom(): Random = Random(completionGolfSettings?.randomSeed ?: 0)

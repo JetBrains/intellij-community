@@ -15,6 +15,7 @@ class CompletionGolfProcessor : GenerateActionsProcessor() {
 
   private fun addActions(line: CodeLine) {
     if (line.text.isNotEmpty()) {
+      addAction(MoveCaret(line.offset))
       addAction(CompletionGolfSession(line.text, line.getChildren().map { TextRange(it.offset, it.offset + it.text.length) }))
     }
   }
