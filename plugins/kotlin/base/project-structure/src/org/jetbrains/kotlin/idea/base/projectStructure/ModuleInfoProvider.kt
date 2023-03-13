@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
@@ -180,8 +181,11 @@ class ModuleInfoProvider(private val project: Project) {
         collectByUserData(UserDataModuleContainer.ForVirtualFile(virtualFile, project))
         collectSourceRelatedByFile(virtualFile)
 
-        for (orderEntry in runReadAction { fileIndex.getOrderEntriesForFile(virtualFile) }) {
-            collectByOrderEntry(virtualFile, orderEntry, isLibrarySource)
+        val orderEntries = runReadAction { fileIndex.getOrderEntriesForFile(virtualFile) }
+        val visited = hashSetOf<IdeaModuleInfo>()
+        for (orderEntry in orderEntries) {
+            ProgressManager.checkCanceled()
+            collectByOrderEntry(virtualFile, orderEntry, isLibrarySource, visited)
         }
 
         callExtensions { collectByFile(project, virtualFile, isLibrarySource) }
@@ -225,9 +229,10 @@ class ModuleInfoProvider(private val project: Project) {
     }
 
     private suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByOrderEntry(
-        virtualFile: VirtualFile,
-        orderEntry: OrderEntry,
-        isLibrarySource: Boolean
+      virtualFile: VirtualFile,
+      orderEntry: OrderEntry,
+      isLibrarySource: Boolean,
+      visited: HashSet<IdeaModuleInfo>
     ) {
         if (!orderEntry.isValid || orderEntry is ModuleOrderEntry) {
             // Module-related entries are covered in 'collectModuleRelatedModuleInfosByFile()'
@@ -239,11 +244,16 @@ class ModuleInfoProvider(private val project: Project) {
             if (library != null) {
                 if (!isLibrarySource && RootKindFilter.libraryClasses.matches(project, virtualFile)) {
                     for (libraryInfo in libraryInfoCache[library]) {
-                        register(libraryInfo)
+                        if (visited.add(libraryInfo)) {
+                            register(libraryInfo)
+                        }
                     }
                 } else if (isLibrarySource || RootKindFilter.libraryFiles.matches(project, virtualFile)) {
                     for (libraryInfo in libraryInfoCache[library]) {
-                        register(libraryInfo.sourcesModuleInfo)
+                        val moduleInfo = libraryInfo.sourcesModuleInfo
+                        if (visited.add(moduleInfo)) {
+                            register(moduleInfo)
+                        }
                     }
                 }
             }
@@ -252,7 +262,10 @@ class ModuleInfoProvider(private val project: Project) {
         if (orderEntry is JdkOrderEntry) {
             val sdk = orderEntry.jdk
             if (sdk != null) {
-                register(SdkInfo(project, sdk))
+                val moduleInfo = SdkInfo(project, sdk)
+                if (visited.add(moduleInfo)) {
+                    register(moduleInfo)
+                }
             }
         }
     }
