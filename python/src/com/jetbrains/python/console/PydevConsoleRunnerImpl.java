@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
-import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.configurations.PtyCommandLine;
@@ -503,9 +502,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       int port = findAvailablePort(myProject, myConsoleType);
 
       GeneralCommandLine generalCommandLine = createCommandLine(sdk, myEnvironmentVariables, myWorkingDir, port);
-
-      Map<String, String> envs = generalCommandLine.getEnvironment();
-      EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, generalCommandLine.getCharset());
 
       PydevConsoleCommunicationServer communicationServer = new PydevConsoleCommunicationServer(myProject, LOCALHOST, port);
       myPydevConsoleCommunication = communicationServer;
