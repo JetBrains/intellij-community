@@ -330,7 +330,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       myPathToSelect = filePath;
     }
     else {
-      myChangesBrowser.getViewer().selectFile(filePath);
+      myChangesBrowser.selectFile(filePath);
       myPathToSelect = null;
     }
 
@@ -397,7 +397,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       myChangesLoadingPane.stopLoading();
       myIsLoading = false;
       if (myPathToSelect != null) {
-        myChangesBrowser.getViewer().selectFile(myPathToSelect);
+        myChangesBrowser.selectFile(myPathToSelect);
         myPathToSelect = null;
       }
     }

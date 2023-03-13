@@ -18,8 +18,6 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview;
 import com.intellij.openapi.vcs.changes.ui.*;
-import com.intellij.openapi.vcs.changes.ui.browser.ChangesFilterer;
-import com.intellij.openapi.vcs.changes.ui.browser.FilterableChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -61,7 +59,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_ONLY_AFFECTE
 /**
  * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
-public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
+public final class VcsLogChangesBrowser extends AsyncChangesBrowserBase implements Disposable {
   public static final @NotNull DataKey<Boolean> HAS_AFFECTED_FILES = DataKey.create("VcsLogChangesBrowser.HasAffectedFiles");
   private final @NotNull MainVcsLogUiProperties myUiProperties;
   private final @NotNull Function<? super CommitId, ? extends VcsShortCommitDetails> myDataGetter;
@@ -144,7 +142,7 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
 
   @Override
   public void dispose() {
-    super.dispose();
+    shutdown();
     myUiProperties.removeChangeListener(myListener);
   }
 
@@ -177,12 +175,6 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   public void showText(@NotNull Consumer<? super StatusText> statusTextConsumer) {
     myCommitModel = CommitModel.createText(statusTextConsumer);
     updateModel();
-  }
-
-  @Override
-  protected void onActiveChangesFilterChanges() {
-    super.onActiveChangesFilterChanges();
-    updateStatusText();
   }
 
   public void setAffectedPaths(@Nullable Collection<? extends FilePath> paths) {
@@ -248,55 +240,61 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
                              SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                              e -> myUiProperties.set(SHOW_ONLY_AFFECTED_CHANGES, false));
     }
-    else if (!commitModel.myHasMergeCommits && hasActiveChangesFilter()) {
-      emptyText.setText(VcsLogBundle.message("vcs.log.changes.no.changes.that.affect.selected.filters.status"))
-        .appendSecondaryText(VcsLogBundle.message("vcs.log.changes.show.all.changes.status.action"),
-                             SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-                             e -> clearActiveChangesFilter());
-    }
     else {
       emptyText.setText("");
     }
   }
 
+  @NotNull
   @Override
-  protected @NotNull DefaultTreeModel buildTreeModel() {
-    CommitModel commitModel = myCommitModel;
-
-    List<Change> changes = collectAffectedChanges(commitModel.myChanges);
-    ChangesFilterer.FilteredState filteredState = filterChanges(changes, !commitModel.myHasMergeCommits);
-
-    Map<CommitId, Collection<Change>> changesToParents = new LinkedHashMap<>();
-    for (Map.Entry<CommitId, Set<Change>> entry : commitModel.myChangesToParents.entrySet()) {
-      changesToParents.put(entry.getKey(), collectAffectedChanges(entry.getValue()));
-    }
-
-    TreeModelBuilder builder = new TreeModelBuilder(myProject, getGrouping());
-    setFilteredChanges(builder, filteredState, null);
-
-    if (myShowChangesFromParents && !changesToParents.isEmpty()) {
-      if (changes.isEmpty()) {
-        builder.createTagNode(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.node"));
-      }
-      for (CommitId commitId : changesToParents.keySet()) {
-        Collection<Change> changesFromParent = changesToParents.get(commitId);
-        if (!changesFromParent.isEmpty()) {
-          ChangesBrowserNode<?> parentNode = new TagChangesBrowserNode(new ParentTag(commitId.getHash(), getText(commitId)),
-                                                                       SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
-          parentNode.markAsHelperNode();
-
-          builder.insertSubtreeRoot(parentNode);
-          builder.insertChanges(changesFromParent, parentNode);
-        }
-      }
-    }
-
-    return builder.build();
+  protected AsyncChangesTreeModel getChangesTreeModel() {
+    return new MyVcsLogAsyncChangesTreeModel();
   }
 
-  private @NotNull List<Change> collectAffectedChanges(@NotNull Collection<? extends Change> changes) {
-    Collection<? extends FilePath> affectedPaths = myAffectedPaths;
-    if (!myShowOnlyAffectedSelected || affectedPaths == null) return new ArrayList<>(changes);
+  private class MyVcsLogAsyncChangesTreeModel extends SimpleAsyncChangesTreeModel {
+    @NotNull
+    @Override
+    public DefaultTreeModel buildTreeModelSync(@NotNull ChangesGroupingPolicyFactory grouping) {
+      CommitModel commitModel = myCommitModel;
+      Collection<? extends FilePath> affectedPaths = myAffectedPaths;
+      boolean showOnlyAffectedSelected = myShowOnlyAffectedSelected;
+      boolean showChangesFromParents = myShowChangesFromParents;
+
+      List<Change> changes = collectAffectedChanges(commitModel.myChanges, affectedPaths, showOnlyAffectedSelected);
+
+      Map<CommitId, Collection<Change>> changesToParents = new LinkedHashMap<>();
+      for (Map.Entry<CommitId, Set<Change>> entry : commitModel.myChangesToParents.entrySet()) {
+        changesToParents.put(entry.getKey(), collectAffectedChanges(entry.getValue(), affectedPaths, showOnlyAffectedSelected));
+      }
+
+      TreeModelBuilder builder = new TreeModelBuilder(myProject, grouping);
+      builder.setChanges(changes, null);
+
+      if (showChangesFromParents && !changesToParents.isEmpty()) {
+        if (changes.isEmpty()) {
+          builder.createTagNode(VcsLogBundle.message("vcs.log.changes.no.merge.conflicts.node"));
+        }
+        for (CommitId commitId : changesToParents.keySet()) {
+          Collection<Change> changesFromParent = changesToParents.get(commitId);
+          if (!changesFromParent.isEmpty()) {
+            ChangesBrowserNode<?> parentNode = new TagChangesBrowserNode(new ParentTag(commitId.getHash(), getText(commitId)),
+                                                                         SimpleTextAttributes.REGULAR_ATTRIBUTES, false);
+            parentNode.markAsHelperNode();
+
+            builder.insertSubtreeRoot(parentNode);
+            builder.insertChanges(changesFromParent, parentNode);
+          }
+        }
+      }
+
+      return builder.build();
+    }
+  }
+
+  private static @NotNull List<Change> collectAffectedChanges(@NotNull Collection<? extends Change> changes,
+                                                              Collection<? extends FilePath> affectedPaths,
+                                                              boolean showOnlyAffectedSelected) {
+    if (!showOnlyAffectedSelected || affectedPaths == null) return new ArrayList<>(changes);
     return ContainerUtil.filter(changes, change -> ContainerUtil.or(affectedPaths, filePath -> {
       if (filePath.isDirectory()) {
         return FileHistoryUtil.affectsDirectory(change, filePath);
@@ -440,7 +438,15 @@ public final class VcsLogChangesBrowser extends FilterableChangesBrowser {
   }
 
   public void selectChange(@NotNull Object userObject, @Nullable ChangesBrowserNode.Tag tag) {
-    selectObjectWithTag(myViewer, userObject, tag);
+    getViewer().invokeAfterRefresh(() -> {
+      selectObjectWithTag(myViewer, userObject, tag);
+    });
+  }
+
+  public void selectFile(@Nullable FilePath toSelect) {
+    getViewer().invokeAfterRefresh(() -> {
+      getViewer().selectFile(toSelect);
+    });
   }
 
   public @Nullable ChangesBrowserNode.Tag getTag(@NotNull Change change) {
