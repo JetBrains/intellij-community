@@ -644,6 +644,9 @@ private class EditorTabs(
   }
 
   override fun getTabActionIcon(info: TabInfo, isHovered: Boolean): Icon? {
+    if (!tabs.contains(info)) {
+      return null  // can be requested right after tab is removed, return null in this case
+    }
     val closeTabAction = info.tabLabelActions?.getChildren(null)?.lastOrNull() as? CloseTab
     return closeTabAction?.getIcon(isHovered)
   }
