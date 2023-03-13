@@ -135,8 +135,7 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
       if (lafManager.autodetect) {
         if (JBColor.isBright()) {
           lafManager.setPreferredLightLaf(laf)
-        }
-        else {
+        } else {
           lafManager.setPreferredDarkLaf(laf)
         }
       }
