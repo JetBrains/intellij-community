@@ -4,11 +4,16 @@ package com.intellij.openapi.project
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.MergingQueueGuiExecutor.ExecutorStateListener
 import com.intellij.openapi.project.MergingTaskQueueTest.LoggingTask
-import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SystemProperties
 import junit.framework.TestCase
+import org.junit.After
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Test
+import org.junit.jupiter.api.fail
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Phaser
@@ -77,25 +82,40 @@ private class PhasedListener(private val exceptionRef: AtomicReference<Throwable
   }
 }
 
-class MergingQueueGuiExecutorTest : BasePlatformTestCase() {
-  override fun setUp() {
-    super.setUp()
-    val key = "intellij.progress.task.ignoreHeadless"
-    val prev = System.setProperty(key, "true")
-    Disposer.register(testRootDisposable) {
-      SystemProperties.setProperty(key, prev)
-    }
+
+@RunWith(JUnit4::class)
+class MergingQueueGuiExecutorTest {
+  private val ignoreHeadlessKey: String = "intellij.progress.task.ignoreHeadless"
+  private var prevIgnoreHeadlessVal: String? = null
+  private lateinit var project: Project
+
+  companion object{
+    @ClassRule
+    @JvmField
+    val p: ProjectRule = ProjectRule(true, false, null)
   }
 
+  @Before
+  fun setUp() {
+    prevIgnoreHeadlessVal = SystemProperties.setProperty(ignoreHeadlessKey, "true")
+    project = p.project
+  }
+
+  @After
+  fun tearDown() {
+    SystemProperties.setProperty(ignoreHeadlessKey, prevIgnoreHeadlessVal)
+  }
+
+  @Test
   fun `test no redundant tasks submitted (IDEA-311620)`() {
     class WaitingTask : MergeableQueueTask<WaitingTask> {
-      @Volatile
-      var taskStarted: Boolean = false
+      val taskStarted: CountDownLatch = CountDownLatch(1)
+      val taskFinished: CountDownLatch = CountDownLatch(1)
       val taskLatch: CountDownLatch = CountDownLatch(1)
       override fun tryMergeWith(taskFromQueue: WaitingTask): WaitingTask? = null
-      override fun dispose() = Unit
+      override fun dispose() = taskFinished.countDown()
       override fun perform(indicator: ProgressIndicator) {
-        taskStarted = true
+        taskStarted.countDown()
         taskLatch.await()
       }
     }
@@ -110,20 +130,20 @@ class MergingQueueGuiExecutorTest : BasePlatformTestCase() {
     val task = WaitingTask()
     queue.addTask(task)
     executor.startBackgroundProcess()
-    PlatformTestUtil.waitWithEventsDispatching("Wait for background task to start", task::taskStarted, 20)
+    task.taskStarted.awaitOrThrow(5, "Wait for background task to start")
 
     repeat(10) {
       executor.startBackgroundProcess()
     }
 
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-
     task.taskLatch.countDown()
+    task.taskFinished.awaitOrThrow(5, "Wait for background task to finish")
     TestCase.assertEquals(1, executor.backgroundTasksSubmittedCount)
 
     stopExecutor(executor)
   }
 
+  @Test
   fun `test concurrent stress mode`() {
     val repeatCount = 500
     val writeThreadsCount = 5
@@ -138,6 +158,7 @@ class MergingQueueGuiExecutorTest : BasePlatformTestCase() {
 
     val performLog = ConcurrentLinkedDeque<Int>()
     val disposeLog = ConcurrentLinkedDeque<Int>()
+    val threadsRunning = CountDownLatch(writeThreadsCount)
     val id = AtomicInteger()
 
     repeat(writeThreadsCount) {
@@ -158,14 +179,14 @@ class MergingQueueGuiExecutorTest : BasePlatformTestCase() {
         }
         finally {
           phaser.arriveAndDeregister()
+          threadsRunning.countDown()
         }
       }.start()
     }
 
     phaser.arriveAndDeregister()
-    PlatformTestUtil.waitWithEventsDispatching("Wait for ${repeatCount * writeThreadsCount} tasks",
-                                               { disposeLog.size == repeatCount * writeThreadsCount },
-                                               20)
+    threadsRunning.awaitOrThrow(20, "Wait for write all threads to finish")
+    waitForExecutorToCompleteSubmittedTasks(executor, 5)
 
     TestCase.assertEquals(repeatCount * writeThreadsCount, performLog.size)
     TestCase.assertEquals(repeatCount * writeThreadsCount, disposeLog.size)
@@ -176,6 +197,19 @@ class MergingQueueGuiExecutorTest : BasePlatformTestCase() {
 
   private fun stopExecutor(executor: MergingQueueGuiExecutor<*>) {
     executor.suspendQueue()
-    PlatformTestUtil.waitWithEventsDispatching("Wait for queue to stop", { !executor.isRunning }, 20)
+    if (waitForExecutorToCompleteSubmittedTasks(executor, 10)) return
+    fail("Executor didn't finish in 10 seconds")
+  }
+
+  private fun waitForExecutorToCompleteSubmittedTasks(executor: MergingQueueGuiExecutor<*>, seconds: Int): Boolean {
+    for (i in 1..seconds * 1000 / 500) { // 10 seconds in sum
+      if (!executor.isRunning) return true
+      Thread.sleep(500)
+    }
+    return false
+  }
+
+  private fun CountDownLatch.awaitOrThrow(seconds: Long, message: String) {
+    if (!await(seconds, TimeUnit.SECONDS)) throw AssertionError(message)
   }
 }
