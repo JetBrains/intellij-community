@@ -10357,6 +10357,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/modifiers/openMemberInFinalClass4.kt");
             }
 
+            @TestMetadata("openMemberInObject.kt")
+            public void testOpenMemberInObject() throws Exception {
+                runTest("testData/quickfix/modifiers/openMemberInObject.kt");
+            }
+
             @TestMetadata("openModifierInEnum.kt")
             public void testOpenModifierInEnum() throws Exception {
                 runTest("testData/quickfix/modifiers/openModifierInEnum.kt");

@@ -1039,6 +1039,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/modifiers/openMemberInFinalClass4.kt");
         }
 
+        @TestMetadata("openMemberInObject.kt")
+        public void testOpenMemberInObject() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/openMemberInObject.kt");
+        }
+
         @TestMetadata("openModifierInEnum.kt")
         public void testOpenModifierInEnum() throws Exception {
             runTest("../idea/tests/testData/quickfix/modifiers/openModifierInEnum.kt");
