@@ -150,10 +150,11 @@ class DistributedTestHost {
               return@set result
             }
             catch (ex: Throwable) {
-              logger.warn("Test action ${actionTitle?.let { "'$it' " }.orEmpty()}hasn't finished successfully", ex)
+              val msg = "${session.agentId}: ${actionTitle?.let { "'$it' " }.orEmpty()}hasn't finished successfully"
+              logger.warn(msg, ex)
               if (!application.isHeadlessEnvironment)
                 actionTitle?.let { makeScreenshot("${it}_$screenshotOnFailureFileName") }
-              return@set RdTask.faulted(ex)
+              return@set RdTask.faulted(AssertionError(msg, ex))
             }
           }
         }
@@ -161,7 +162,7 @@ class DistributedTestHost {
         session.closeProject.set { _, _ ->
           when (projectOrNull) {
             null ->
-              return@set RdTask.faulted(IllegalStateException("Nothing to close"))
+              return@set RdTask.faulted(IllegalStateException("${session.agentId}: Nothing to close"))
             else -> {
               logger.info("Close project...")
               try {
@@ -169,7 +170,7 @@ class DistributedTestHost {
                 return@set RdTask.fromResult(true)
               }
               catch (e: Exception) {
-                logger.error("Error on project closing", e)
+                logger.warn("Error on project closing", e)
                 return@set RdTask.fromResult(false)
               }
             }
@@ -184,7 +185,7 @@ class DistributedTestHost {
               return@set RdTask.fromResult(true)
             }
             catch (e: Exception) {
-              logger.error("Error on project closing", e)
+              logger.warn("Error on project closing", e)
               return@set RdTask.fromResult(false)
             }
           } ?: return@set RdTask.fromResult(true)
@@ -217,7 +218,7 @@ class DistributedTestHost {
         session.ready.value = true
       }
       catch (ex: Throwable) {
-        logger.error("Test session initialization hasn't finished successfully", ex)
+        logger.warn("Test session initialization hasn't finished successfully", ex)
         session.ready.value = false
       }
     }
