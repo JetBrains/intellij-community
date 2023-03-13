@@ -34,6 +34,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
             RemoveModifierFixBase.removeOpenModifier
         )
         registerPsiQuickFixes(
+            KtFirDiagnostic.NonFinalMemberInObject::class,
+            RemoveModifierFixBase.removeOpenModifier
+        )
+        registerPsiQuickFixes(
             KtFirDiagnostic.PrivateSetterForOpenProperty::class,
             AddModifierFix.addFinalToProperty,
             RemoveModifierFixBase.removePrivateModifier
