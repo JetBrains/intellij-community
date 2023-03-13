@@ -359,7 +359,7 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     fun getCommitExecutors(project: Project, vcses: Collection<AbstractVcs>): List<CommitExecutor> {
       return vcses.flatMap { it.commitExecutors } +
              ChangeListManager.getInstance(project).registeredExecutors +
-             LocalCommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
+             CommitExecutor.LOCAL_COMMIT_EXECUTOR.getExtensions(project)
     }
 
     suspend fun runMetaHandlers(@Suppress("DEPRECATION") metaHandlers: List<CheckinMetaHandler>) {

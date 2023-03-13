@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.vcs.commit.CommitWorkflowHandler;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -9,10 +10,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Use {@link LocalCommitExecutor} extension point to register executor for local changes.
+ * Use {@link #LOCAL_COMMIT_EXECUTOR} extension point to register executor for local changes.
  * Use {@link com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog#commitChanges} to show modal commit dialog for a given executor.
+ * Implement {@link LocalCommitExecutor} for executors that should be ignored by pre-commit checks (ex: "Create Patch" executor).
  */
 public interface CommitExecutor {
+  /**
+   * Allows registering additional commit actions for local changes.
+   *
+   * @see ChangeListManager#registerCommitExecutor(CommitExecutor)
+   * @see com.intellij.openapi.vcs.changes.actions.CommitExecutorAction
+   */
+  ProjectExtensionPointName<CommitExecutor> LOCAL_COMMIT_EXECUTOR =
+    new ProjectExtensionPointName<>("com.intellij.vcs.changes.localCommitExecutor");
+
   @Nls
   @NotNull
   String getActionText();
