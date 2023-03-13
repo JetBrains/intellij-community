@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -70,11 +71,14 @@ public class FieldMayBeStaticInspection extends BaseInspection {
       if (containingClass != null
           && !containingClass.hasModifierProperty(PsiModifier.STATIC)
           && containingClass.getContainingClass() != null
+          && !HighlightingFeature.INNER_STATICS.isAvailable(containingClass)
           && !PsiUtil.isCompileTimeConstant(field)) {
-        // inner class cannot have static declarations
+        // inner class cannot have static declarations in earlier Java versions
         return;
       }
-      if (containingClass instanceof PsiAnonymousClass && !PsiUtil.isCompileTimeConstant(field)) {
+      if (containingClass instanceof PsiAnonymousClass && 
+          !HighlightingFeature.INNER_STATICS.isAvailable(containingClass) &&
+          !PsiUtil.isCompileTimeConstant(field)) {
         return;
       }
       if (!canBeStatic(initializer)) {

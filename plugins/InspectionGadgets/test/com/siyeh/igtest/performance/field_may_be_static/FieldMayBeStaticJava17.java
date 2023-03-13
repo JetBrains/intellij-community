@@ -15,7 +15,7 @@
  */
 package com.siyeh.igtest.performance.field_may_be_static;
 
-public class FieldMayBeStatic
+public class FieldMayBeStaticJava17 
 {
     private final int <warning descr="Field 'm_fooBar' may be 'static'">m_fooBar</warning> = 3;
     private final int m_fooBaz = m_fooBar;
@@ -53,13 +53,13 @@ class Outer {
   }
 
   class Inner {
-    private final boolean value = boolean.class != null;
+    private final boolean <warning descr="Field 'value' may be 'static'">value</warning> = boolean.class != null;
   }
 
   void f(final boolean param) {
     new Runnable() {
       private final boolean value = param;
-      private final boolean value2 = Boolean.getBoolean("foo");
+      private final boolean <warning descr="Field 'value2' may be 'static'">value2</warning> = Boolean.getBoolean("foo");
       public void run() {
 
       }
