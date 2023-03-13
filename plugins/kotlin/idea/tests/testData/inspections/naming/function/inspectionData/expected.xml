@@ -7,7 +7,7 @@
     <problem>
         <file>test.kt</file>
         <line>3</line>
-        <description>Function name &lt;code&gt;FOO_BAR&lt;/code&gt; should not contain underscores #loc</description>
+        <description>Function name &lt;code&gt;FOO_BAR&lt;/code&gt; should start with a lowercase letter #loc</description>
     </problem>
     <problem>
         <file>test.kt</file>
