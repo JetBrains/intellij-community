@@ -58,19 +58,10 @@ import java.util.*;
 /**
  * @author Alexander Lobas
  */
-public class WindowTabsComponent extends JBTabsImpl {
+public final class WindowTabsComponent extends JBTabsImpl {
   private static final String TITLE_LISTENER_KEY = "TitleListener";
 
   private static final int TAB_HEIGHT = 30;
-
-  private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
-                                         IconManager.getInstance().getIcon("expui/general/closeSmall_dark.svg", AllIcons.class) :
-                                         AllIcons.Actions.Close;
-
-  private static final Icon CLOSE_HOVERED_ICON = ExperimentalUI.isNewUI() ?
-                                                 IconManager.getInstance()
-                                                   .getIcon("expui/general/closeSmallHovered_dark.svg", AllIcons.class) :
-                                                 AllIcons.Actions.CloseHovered;
 
   private static DockManagerImpl myDockManager;
 
@@ -393,8 +384,14 @@ public class WindowTabsComponent extends JBTabsImpl {
     };
 
     Presentation presentation = closeAction.getTemplatePresentation();
-    presentation.setIcon(CLOSE_ICON);
-    presentation.setHoveredIcon(CLOSE_HOVERED_ICON);
+    boolean isNewUi = ExperimentalUI.isNewUI();
+    presentation.setIcon(isNewUi ?
+                         IconManager.getInstance().getIcon("expui/general/closeSmall_dark.svg", AllIcons.class.getClassLoader()) :
+                         AllIcons.Actions.Close);
+    presentation.setHoveredIcon(isNewUi
+                                ? IconManager.getInstance()
+                                  .getIcon("expui/general/closeSmallHovered_dark.svg", AllIcons.class.getClassLoader())
+                                : AllIcons.Actions.CloseHovered);
 
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(closeAction);

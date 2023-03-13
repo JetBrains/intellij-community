@@ -3,6 +3,7 @@ package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
@@ -627,15 +628,11 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     return true;
   }
 
-  private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
-                                         IconManager.getInstance().getIcon("expui/general/close.svg", AllIcons.class) :
-                                         AllIcons.Actions.Close;
-
   private class CloseAction extends DumbAwareAction implements LightEditCompatible, RightAlignedToolbarAction {
     private final ShortcutSet shortcut = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE);
     private CloseAction() {
       getTemplatePresentation().setText(FindBundle.message("find.close.button.name"));
-      getTemplatePresentation().setIcon(CLOSE_ICON);
+      getTemplatePresentation().setIcon(ExperimentalUI.isNewUI() ? ExpUiIcons.General.Close : AllIcons.Actions.Close);
     }
 
     @Override

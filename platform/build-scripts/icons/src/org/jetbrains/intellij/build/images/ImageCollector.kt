@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build.images
 
@@ -8,7 +8,6 @@ import com.intellij.ui.icons.ImageDescriptor
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
-import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -26,14 +25,21 @@ internal const val ROBOTS_FILE_NAME = "icon-robots.txt"
 
 private val EMPTY_IMAGE_FLAGS = ImageFlags(used = false, deprecation = null)
 
-internal class ImageInfo(val id: String,
-                         val sourceRoot: JpsModuleSourceRoot,
-                         val phantom: Boolean) {
+internal class ImageInfo(@JvmField val id: String,
+                         @JvmField val sourceRoot: JpsModuleSourceRoot,
+                         @JvmField val phantom: Boolean) {
   private var flags = EMPTY_IMAGE_FLAGS
   private val images = ArrayList<Path>()
 
   val files: List<Path>
     get() = images
+
+  fun trimPrefix(prefix: String): ImageInfo {
+    val copy = ImageInfo(id = id.removePrefix(prefix), sourceRoot = sourceRoot, phantom = phantom)
+    copy.images.addAll(images)
+    copy.flags = flags
+    return copy
+  }
 
   @Synchronized
   fun addImage(file: Path, fileFlags: ImageFlags) {
@@ -108,14 +114,15 @@ internal class ImageCollector(private val projectHome: Path,
       if (sourceRoot.rootType != JavaResourceRootType.RESOURCE) {
         continue
       }
-      val rootDir = Path.of(JpsPathUtil.urlToPath(sourceRoot.url))
+
+      val rootDir = sourceRoot.path
 
       val iconDirectory = moduleConfig?.iconDirectory
       if (iconDirectory != null) {
         val rootRobotData = upToProjectHome(rootDir)
         val iconRoot = rootDir.resolve(iconDirectory).normalize()
-        processDirectory(iconRoot, rootDir, sourceRoot, rootRobotData, "", 0)
-        processPhantomIcons(iconRoot, sourceRoot, rootRobotData, "")
+        processDirectory(dir = iconRoot, rootDir = rootDir, sourceRoot = sourceRoot, robotData = rootRobotData, prefix = "", level = 0)
+        processPhantomIcons(root = iconRoot, sourceRoot = sourceRoot, robotData = rootRobotData, prefix = "")
         break
       }
 
@@ -141,8 +148,8 @@ internal class ImageCollector(private val projectHome: Path,
   }
 
   fun collectSubDir(sourceRoot: JpsModuleSourceRoot, name: String, includePhantom: Boolean = false): List<ImageInfo> {
-    processRoot(sourceRoot, Path.of(JpsPathUtil.urlToPath(sourceRoot.url)).resolve(name))
-    val result = ArrayList(icons.values)
+    processRoot(sourceRoot, sourceRoot.path.resolve(name))
+    val result = icons.values.toMutableList()
     if (includePhantom) {
       result.addAll(phantomIcons.values)
     }

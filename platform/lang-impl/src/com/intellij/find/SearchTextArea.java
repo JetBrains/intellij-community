@@ -3,6 +3,7 @@ package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
@@ -22,7 +23,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.IconManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
@@ -62,14 +62,6 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
-
-  private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
-                                         IconManager.getInstance().getIcon("expui/general/closeSmall.svg", AllIcons.class) :
-                                         AllIcons.Actions.Close;
-
-  private static final Icon CLOSE_HOVERED_ICON = ExperimentalUI.isNewUI() ?
-                                         IconManager.getInstance().getIcon("expui/general/closeSmallHovered.svg", AllIcons.class) :
-                                         AllIcons.Actions.CloseHovered;
 
   private static final ActionButtonLook FIELD_INPLACE_LOOK = new FieldInplaceActionButtonLook();
 
@@ -360,8 +352,9 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
 
   private class ClearAction extends DumbAwareAction implements LightEditCompatible {
     ClearAction() {
-      super(CLOSE_ICON);
-      getTemplatePresentation().setHoveredIcon(CLOSE_HOVERED_ICON);
+      super(ExperimentalUI.isNewUI() ? ExpUiIcons.General.CloseSmall : AllIcons.Actions.Close);
+      getTemplatePresentation().setHoveredIcon(
+        ExperimentalUI.isNewUI() ? ExpUiIcons.General.CloseSmallHovered : AllIcons.Actions.CloseHovered);
     }
 
     @Override

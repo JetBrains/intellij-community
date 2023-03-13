@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
-import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings.Companion.getInstance
@@ -18,7 +18,6 @@ import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.IconManager
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.util.PopupImplUtil
@@ -131,7 +130,7 @@ internal class MainMenuButton {
 
   private inner class ShowMenuAction : DumbAwareAction(
     IdeBundle.messagePointer("main.toolbar.menu.button"),
-    IconManager.getInstance().getIcon("expui/general/windowsMenu@20x20.svg", AllIcons::class.java)) {
+    ExpUiIcons.General.WindowsMenu_20x20) {
 
     override fun actionPerformed(e: AnActionEvent) = showPopup(e.dataContext)
 
@@ -140,7 +139,7 @@ internal class MainMenuButton {
       val popup = JBPopupFactory.getInstance()
         .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
                                 ActionPlaces.MAIN_MENU)
-        .apply { setShowSubmenuOnHover(true) }
+        .apply { isShowSubmenuOnHover = true }
         .apply { setMinimumSize(Dimension(JBUI.CurrentTheme.CustomFrameDecorations.menuPopupMinWidth(), 0)) }
         as ListPopupImpl
       PopupImplUtil.setPopupToggleButton(popup, button)

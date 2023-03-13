@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.experimental.meetNewUi
 
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.LafManager
@@ -47,14 +48,6 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
     private const val CUSTOM_THEME_INDEX = 0
 
     private val BANNER = IconLoader.getIcon("expui/meetNewUi/banner.png", MeetNewUiToolWindow::class.java.classLoader)
-    private val LIGHT = IconLoader.getIcon("expui/meetNewUi/lightTheme.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val LIGHT_SELECTED = IconLoader.getIcon("expui/meetNewUi/lightThemeSelected.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val DARK = IconLoader.getIcon("expui/meetNewUi/darkTheme.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val DARK_SELECTED = IconLoader.getIcon("expui/meetNewUi/darkThemeSelected.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val SYSTEM = IconLoader.getIcon("expui/meetNewUi/systemTheme.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val SYSTEM_SELECTED = IconLoader.getIcon("expui/meetNewUi/systemThemeSelected.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val CLEAN = IconLoader.getIcon("expui/meetNewUi/densityDefault.svg", MeetNewUiToolWindow::class.java.classLoader)
-    private val COMPACT = IconLoader.getIcon("expui/meetNewUi/densityCompact.svg", MeetNewUiToolWindow::class.java.classLoader)
 
     private val BANNER_BACKGROUND = Gray.x01
     private const val BANNER_HEIGHT = 231
@@ -81,7 +74,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
       }
       panel {
         row {
-          label(IdeBundle.message("meetnewui.toolwindow.title", ApplicationNamesInfo.getInstance().getFullProductName()))
+          label(IdeBundle.message("meetnewui.toolwindow.title", ApplicationNamesInfo.getInstance().fullProductName))
             .applyToComponent {
               font = JBFont.regular().biggerOn(7f).deriveFont(Font.PLAIN)
             }
@@ -92,12 +85,12 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
         row {
           themes += Theme(null, false, null, null)
           findLafReference("Light")?.let { lafReference ->
-            themes += Theme(lafReference, false, LIGHT, LIGHT_SELECTED)
+            themes += Theme(lafReference, false, ExpUiIcons.MeetNewUi.LightTheme, ExpUiIcons.MeetNewUi.LightThemeSelected)
           }
           findLafReference("Dark")?.let { lafReference ->
-            themes += Theme(lafReference, false, DARK, DARK_SELECTED)
+            themes += Theme(lafReference, false, ExpUiIcons.MeetNewUi.DarkTheme, ExpUiIcons.MeetNewUi.DarkThemeSelected)
           }
-          themes += Theme(null, true, SYSTEM, SYSTEM_SELECTED)
+          themes += Theme(null, true, ExpUiIcons.MeetNewUi.SystemTheme, ExpUiIcons.MeetNewUi.SystemThemeSelected)
 
           val gap = JBUI.scale(8)
           val themesPanel = JPanel(WrapLayout(FlowLayout.LEADING, gap, gap))
@@ -114,9 +107,10 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           label(IdeBundle.message("meetnewui.toolwindow.density"))
         }.customize(JBVerticalGaps(bottom = 8))
         row {
-          cleanDensity = density(CLEAN, IdeBundle.message("meetnewui.toolwindow.clean"), JBGaps(right = 8), false)
+          cleanDensity = density(ExpUiIcons.MeetNewUi.DensityDefault, IdeBundle.message("meetnewui.toolwindow.clean"), JBGaps(right = 8),
+                                 false)
 
-          compactDensity = density(COMPACT, IdeBundle.message("meetnewui.toolwindow.compact"), Gaps.EMPTY, true)
+          compactDensity = density(ExpUiIcons.MeetNewUi.DensityCompact, IdeBundle.message("meetnewui.toolwindow.compact"), Gaps.EMPTY, true)
 
           cell() // Deny right component to shrink
         }.customize(JBVerticalGaps(bottom = 20))

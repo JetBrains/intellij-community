@@ -4,13 +4,13 @@ package git4idea.ui.toolbar
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts.Tooltip
 import com.intellij.openapi.util.NlsSafe
@@ -38,7 +38,7 @@ private val repositoryKey = Key.create<GitRepository>("git-widget-repository")
 private val changesKey = Key.create<MyRepoChanges>("git-widget-changes")
 
 internal class GitToolbarWidgetAction : ExpandableComboAction() {
-  private val widgetIcon = IconLoader.getIcon("expui/general/vcs.svg", AllIcons::class.java)
+  private val widgetIcon = ExpUiIcons.General.Vcs
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

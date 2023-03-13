@@ -7,14 +7,15 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.SearchEverywhereItem;
 import com.intellij.find.impl.TextSearchRightActionAction;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.SETab;
-import com.intellij.ide.actions.searcheverywhere.statistics.SearchPerformanceTracker;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchPerformanceTracker;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
@@ -109,9 +110,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   public static final int SINGLE_CONTRIBUTOR_ELEMENTS_LIMIT = 30;
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
 
-  private static final Icon SHOW_IN_FIND_TOOL_WINDOW_ICON =
-    ExperimentalUI.isNewUI() ? IconManager.getInstance().getIcon("expui/general/openInToolWindow.svg", AllIcons.class)
-                             : AllIcons.General.Pin_tab;
+  private static final Icon getShowInFindToolWindowIcon() {
+    return ExperimentalUI.isNewUI() ? ExpUiIcons.General.OpenInToolWindow : AllIcons.General.Pin_tab;
+  }
 
   private final SEResultsListFactory myListFactory;
   private SearchListModel myListModel;
@@ -136,8 +137,6 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     myListFactory = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
                     ? new MixedListFactory()
                     : new GroupedListFactory();
-
-
 
 
     Runnable scopeChangedCallback = () -> {
@@ -302,7 +301,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   @NotNull
   private List<AnAction> getRightActions(@NotNull List<? extends SearchEverywhereContributor<?>> contributors) {
     for (SearchEverywhereContributor<?> contributor : contributors) {
-      if (!Objects.equals(getSelectedTabID(), contributor.getSearchProviderId()) || !(contributor instanceof SearchFieldActionsContributor)) continue;
+      if (!Objects.equals(getSelectedTabID(), contributor.getSearchProviderId()) ||
+          !(contributor instanceof SearchFieldActionsContributor)) {
+        continue;
+      }
 
       return ((SearchFieldActionsContributor)contributor).createRightActions(() -> {
         scheduleRebuildList(SearchRestartReason.TEXT_SEARCH_OPTION_CHANGED);
@@ -388,11 +390,13 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull List<? extends SearchEverywhereFoundElementInfo> selection) {
     if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      List<PsiElement> list = ContainerUtil.mapNotNull(selection, o -> (PsiElement)getDataFromElementInfo(CommonDataKeys.PSI_ELEMENT.getName(), o));
+      List<PsiElement> list =
+        ContainerUtil.mapNotNull(selection, o -> (PsiElement)getDataFromElementInfo(CommonDataKeys.PSI_ELEMENT.getName(), o));
       return list.isEmpty() ? null : list.toArray(PsiElement.EMPTY_ARRAY);
     }
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      List<VirtualFile> list = ContainerUtil.mapNotNull(selection, o -> (VirtualFile)getDataFromElementInfo(CommonDataKeys.VIRTUAL_FILE.getName(), o));
+      List<VirtualFile> list =
+        ContainerUtil.mapNotNull(selection, o -> (VirtualFile)getDataFromElementInfo(CommonDataKeys.VIRTUAL_FILE.getName(), o));
       return list.isEmpty() ? null : list.toArray(VirtualFile.EMPTY_ARRAY);
     }
     else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
@@ -890,7 +894,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   }
 
   @ApiStatus.Experimental
-  public void selectFirst(){
+  public void selectFirst() {
     elementsSelected(new int[]{0}, 0);
   }
 
@@ -1043,7 +1047,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     ShowInFindToolWindowAction() {
       super(IdeBundle.messagePointer("show.in.find.window.button.name"),
-            IdeBundle.messagePointer("show.in.find.window.button.description"), SHOW_IN_FIND_TOOL_WINDOW_ICON);
+            IdeBundle.messagePointer("show.in.find.window.button.description"), getShowInFindToolWindowIcon());
     }
 
     @Override
@@ -1120,7 +1124,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
               if (foundElements.size() + alreadyFoundCount >= UsageLimitUtil.USAGES_LIMIT &&
                   tooManyUsagesStatus.switchTooManyUsagesStatus()) {
                 UsageViewManagerImpl.showTooManyUsagesWarningLater(getProject(), tooManyUsagesStatus, progressIndicator, null,
-                                                                   () -> UsageViewBundle.message("find.excessive.usage.count.prompt"), null);
+                                                                   () -> UsageViewBundle.message("find.excessive.usage.count.prompt"),
+                                                                   null);
                 return !progressIndicator.isCanceled();
               }
               return true;
@@ -1150,7 +1155,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       sendStatisticsAndClose();
     }
 
-    private void fillUsages(Collection<Object> foundElements, Collection<? super Usage> usages, Collection<? super PsiElement> targets) {
+    private static void fillUsages(Collection<Object> foundElements,
+                                   Collection<? super Usage> usages,
+                                   Collection<? super PsiElement> targets) {
       for (Object element : foundElements) {
         // TODO this should be managed by the contributor !!!
         if (element instanceof UsageInfo2UsageAdapter) {
@@ -1193,7 +1200,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       boolean enabled = selectedTab == null || selectedTab.getContributors().stream().anyMatch(c -> c.showInFindResults());
       e.getPresentation().setEnabled(enabled);
       if (!ExperimentalUI.isNewUI()) {
-        e.getPresentation().setIcon(ToolWindowManager.getInstance(myProject).getLocationIcon(ToolWindowId.FIND, SHOW_IN_FIND_TOOL_WINDOW_ICON));
+        e.getPresentation()
+          .setIcon(ToolWindowManager.getInstance(myProject).getLocationIcon(ToolWindowId.FIND, getShowInFindToolWindowIcon()));
       }
     }
 

@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "LiftReturnOrAssignment")
+
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.StringUtil
@@ -75,8 +76,26 @@ internal open class IconsClassGenerator(private val projectHome: Path,
         packageName = "com.intellij.icons"
         className = "AllIcons"
 
-        val dir = utilUi.getSourceRoots(JavaSourceRootType.SOURCE).first().file.absolutePath + "/com/intellij/icons"
-        outFile = Path.of(dir, "$className.java")
+        val dir = utilUi.getSourceRoots(JavaSourceRootType.SOURCE).first().path.toAbsolutePath().resolve("com/intellij/icons")
+        outFile = dir.resolve("$className.java")
+
+        val imageCollector = ImageCollector(projectHome = projectHome, moduleConfig = moduleConfig)
+        val images = imageCollector.collect(module = module, includePhantom = true)
+        imageCollector.printUsedIconRobots()
+
+        val (expUi, others) = images.partition { it.id.startsWith("/expui/") }
+        return listOf(
+          IconClassInfo(customLoad = true,
+                        packageName = packageName,
+                        className = className.toString(),
+                        outFile = outFile,
+                        images = others),
+          IconClassInfo(customLoad = true,
+                        packageName = packageName,
+                        className = "ExpUiIcons",
+                        outFile = dir.resolve("ExpUiIcons.java"),
+                        images = expUi.map { it.trimPrefix("/expui") }),
+        )
       }
       "intellij.android.artwork" -> {
         packageName = "icons"
@@ -170,7 +189,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
       }
 
       classCode.setLength(0)
-      val newText = writeClass(getCopyrightComment(oldText), iconClassInfo, classCode)
+      val newText = writeClass(copyrightComment = getCopyrightComment(oldText), info = iconClassInfo, result = classCode)
       if (newText.isNullOrEmpty()) {
         if (Files.exists(outFile)) {
           obsoleteClasses.add(outFile)
@@ -512,7 +531,7 @@ private fun generateIconFieldName(file: Path): CharSequence {
 }
 
 private fun getImageId(image: ImageInfo, depth: Int): String {
-  val path = image.id.removePrefix("/").split("/")
+  val path = image.id.removePrefix("/").split('/')
   if (path.size < depth) {
     throw IllegalArgumentException("Can't get image id - ${image.id}, $depth")
   }
@@ -608,7 +627,7 @@ private fun toCamelCaseJavaIdentifier(id: String, endIndex: Int): CharSequence {
   var upperCase = true
   while (index < endIndex) {
     val c = id[index]
-    if (c == '_' || c == '-')  {
+    if (c == '_' || c == '-') {
       upperCase = true
     }
     else if (if (index == 0) Character.isJavaIdentifierStart(c) else Character.isJavaIdentifierPart(c)) {
@@ -630,7 +649,8 @@ private fun toCamelCaseJavaIdentifier(id: String, endIndex: Int): CharSequence {
 }
 
 private fun capitalize(name: String): String {
-  return if (name.length == 2) name.uppercase(Locale.ENGLISH) else name.replaceFirstChar {
+  return if (name.length == 2) name.uppercase(Locale.ENGLISH)
+  else name.replaceFirstChar {
     if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
   }
 }
@@ -682,7 +702,8 @@ private fun getPluginPackageIfPossible(module: JpsModule): String? {
       // ok, any xml file
       try {
         pluginXml = Files.newDirectoryStream(root).use { files -> files.find { it.toString().endsWith(".xml") } } ?: break
-      } catch(e: NoSuchFileException) {
+      }
+      catch (e: NoSuchFileException) {
         println("Directory attempted to be used but did not exist ${e.message}")
       }
     }
