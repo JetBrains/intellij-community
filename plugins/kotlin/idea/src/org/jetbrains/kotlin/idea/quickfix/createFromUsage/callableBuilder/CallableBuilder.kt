@@ -286,7 +286,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
             dialogWithEditor = if (containingElement is KtElement) {
                 ktFileToEdit = containingElement.containingKtFile
                 containingFileEditor = if (ktFileToEdit != config.currentFile) {
-                    FileEditorManager.getInstance(project).selectedTextEditor!!
+                    FileEditorManager.getInstance(project).selectedTextEditor ?: config.currentEditor!!
                 } else {
                     config.currentEditor!!
                 }
