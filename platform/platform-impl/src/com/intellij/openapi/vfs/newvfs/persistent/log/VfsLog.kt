@@ -10,7 +10,6 @@ import com.intellij.util.io.delete
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.div
 import kotlin.io.path.forEachDirectoryEntry
 
@@ -45,7 +44,7 @@ class VfsLog(
 
   private val context = object : VfsLogContext {
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val coroutineContext: CoroutineContext = SupervisorJob() + Dispatchers.IO.limitedParallelism(WORKER_THREADS_COUNT)
+    override val coroutineScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(WORKER_THREADS_COUNT))
 
     // todo: probably need to propagate readOnly to storages to ensure safety
     override val stringEnumerator = SimpleStringPersistentEnumerator(storagePath / "stringsEnum")
@@ -58,7 +57,7 @@ class VfsLog(
     }
 
     fun dispose() {
-      cancel("dispose")
+      coroutineScope.cancel("dispose")
       flush()
       descriptorStorage.dispose()
       payloadStorage.dispose()
@@ -74,7 +73,7 @@ class VfsLog(
 
   init {
     if (!readOnly) {
-      context.launch {
+      context.coroutineScope.launch {
         context.flusher()
       }
     }

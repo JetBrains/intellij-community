@@ -4,11 +4,12 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 import com.intellij.util.io.DataEnumerator
 import kotlinx.coroutines.CoroutineScope
 
-interface VfsLogContext : CoroutineScope {
+interface VfsLogContext {
   val descriptorStorage: DescriptorStorage
   val payloadStorage: PayloadStorage
   val stringEnumerator: DataEnumerator<String>
+  val coroutineScope: CoroutineScope
 
   fun enqueueDescriptorWrite(tag: VfsOperationTag, compute: VfsLogContext.() -> VfsOperation<*>): Unit =
-    descriptorStorage.enqueueDescriptorWrite(this, tag) { compute() }
+    descriptorStorage.enqueueDescriptorWrite(coroutineScope, tag) { compute() }
 }
