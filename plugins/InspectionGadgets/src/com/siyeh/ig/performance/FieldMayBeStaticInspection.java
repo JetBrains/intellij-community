@@ -17,6 +17,9 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
+import com.intellij.codeInsight.options.JavaInspectionButtons;
+import com.intellij.codeInsight.options.JavaInspectionControls;
+import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,6 +30,8 @@ import com.siyeh.ig.fixes.ChangeModifierFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class FieldMayBeStaticInspection extends BaseInspection {
 
@@ -40,6 +45,11 @@ public class FieldMayBeStaticInspection extends BaseInspection {
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "field.may.be.static.problem.descriptor");
+  }
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(JavaInspectionControls.button(JavaInspectionButtons.ButtonKind.IMPLICIT_WRITE_ANNOTATIONS));
   }
 
   @Override
