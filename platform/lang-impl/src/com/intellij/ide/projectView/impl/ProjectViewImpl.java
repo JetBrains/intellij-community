@@ -76,7 +76,6 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -500,7 +499,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private final MyAutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
-  private volatile ThreeState myCurrentSelectionObsolete = ThreeState.NO;
   private final AtomicBoolean myAutoScrollOnFocusEditor = new AtomicBoolean(true);
 
   private final IdeView myIdeView = new IdeViewForProjectViewPane(this::getCurrentProjectViewPane);
@@ -579,12 +577,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       @Override
       public void toolWindowShown(@NotNull ToolWindow toolWindow) {
         if (ToolWindowId.PROJECT_VIEW.equals(toolWindow.getId())) {
-          myCurrentSelectionObsolete = ThreeState.NO;
           AbstractProjectViewPane currentProjectViewPane = getCurrentProjectViewPane();
           if (currentProjectViewPane != null && isAutoscrollFromSource(currentProjectViewPane.getId())) {
             SimpleSelectInContext context = myAutoScrollFromSourceHandler.findSelectInContext();
             if (context != null) {
-              myCurrentSelectionObsolete = ThreeState.UNSURE;
               context.selectInCurrentTarget(false);
             }
           }
@@ -1152,20 +1148,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private boolean isCurrentSelectionObsolete(boolean requestFocus) {
-    if (myCurrentSelectionObsolete == ThreeState.YES) {
-      myCurrentSelectionObsolete = ThreeState.NO;
-      return true;
-    }
-    if (myCurrentSelectionObsolete == ThreeState.UNSURE) {
-      myCurrentSelectionObsolete = requestFocus ? ThreeState.YES : ThreeState.NO;
-    }
-    return false;
-  }
-
   @Override
   public void select(final Object element, VirtualFile file, boolean requestFocus) {
-    if (isCurrentSelectionObsolete(requestFocus)) return;
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
     if (viewPane != null) {
       myAutoScrollOnFocusEditor.set(!requestFocus);
@@ -1176,7 +1160,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NotNull
   @Override
   public ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus) {
-    if (isCurrentSelectionObsolete(requestFocus)) return ActionCallback.REJECTED;
     final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
     if (viewPane instanceof AbstractProjectViewPaneWithAsyncSupport) {
       myAutoScrollOnFocusEditor.set(!requestFocus);
