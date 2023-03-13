@@ -14,6 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil.instanceOf
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.suggested.startOffset
 
+// TODO: Split UnresolvedIdentifierSymbol and IdentifierSymbol
 @Suppress("UnstableApiUsage")
 open class UnresolvedIdentifierSymbol(
   override val file: PsiFile,
