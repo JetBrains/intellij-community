@@ -9,11 +9,16 @@ import java.nio.file.Path
 import java.util.concurrent.CompletableFuture.runAsync
 import java.util.concurrent.CompletableFuture.supplyAsync
 import java.util.concurrent.Future
+import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 
 /**
  * When copying files in parallel we must split them to the several chunks (each chunk is separate .tar file).
  * No reason to have less than [MIN_CHUNK_SIZE] files in one chunk: two files shouldn't be split to two chunks
+ *
+ * If source is windows and top level ``exec.txt`` file exists, it should contain list of top level files to mark +x on Linux side
+ * (in case your helper needs to be executable)
  */
 private const val MIN_CHUNK_SIZE = 1000
 
@@ -45,6 +50,13 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
       }
       else {
         WslSync(win, lin)
+        val execFile = windowsDir.resolve("exec.txt")
+        if (execFile.exists()) {
+          // TODO: Support non top level files
+          for(fileToMarkExec in execFile.readText().split(Regex("\\s+")).map { it.trim() }) {
+              lin.markExec(fileToMarkExec)
+          }
+        }
       }
     }
   }

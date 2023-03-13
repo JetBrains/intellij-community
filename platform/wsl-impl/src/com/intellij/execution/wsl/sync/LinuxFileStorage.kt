@@ -172,5 +172,9 @@ class LinuxFileStorage(dir: LinuxFilePath, distro: AbstractWslDistribution, filt
       script.first.delete()
     }
   }
+
+  fun markExec(fileToMarkExec: String) {
+    distro.runCommand("chmod", "+x", "$dir/$fileToMarkExec").getOrThrow()
+  }
 }
 
