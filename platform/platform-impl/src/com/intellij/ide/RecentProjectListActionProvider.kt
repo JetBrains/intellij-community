@@ -33,10 +33,11 @@ open class RecentProjectListActionProvider {
     val duplicates = getDuplicateProjectNames(openedPaths, allRecentProjectPaths, recentProjectManager)
     val groups = recentProjectManager.groups.sortedWith(ProjectGroupComparator(allRecentProjectPaths))
     val projectGroups = groups.asSequence().map { projectGroup ->
-      val children = projectGroup.projects.map { recentProject ->
+      val projects = projectGroup.projects.toSet()
+      val children = projects.map { recentProject ->
         createRecentProject(recentProject, duplicates, projectGroup)
       }
-      for (project in projectGroup.projects) {
+      for (project in projects) {
         allRecentProjectPaths.remove(project)
       }
       return@map ProjectsGroupItem(projectGroup, children)
