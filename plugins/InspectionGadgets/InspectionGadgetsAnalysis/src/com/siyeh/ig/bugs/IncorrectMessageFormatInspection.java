@@ -240,7 +240,7 @@ public class IncorrectMessageFormatInspection extends AbstractBaseJavaLocalInspe
       case QUOTED_PLACEHOLDER ->
         InspectionGadgetsBundle.message("inspection.incorrect.message.format.quotes.around.parameter", relatedText);
       case UNPARSED_INDEX, INDEX_NEGATIVE ->
-        InspectionGadgetsBundle.message("inspection.incorrect.message.format.incorrect.argument.number", relatedText);
+        InspectionGadgetsBundle.message("inspection.incorrect.message.format.incorrect.index", relatedText);
       case UNKNOWN_FORMAT_TYPE -> InspectionGadgetsBundle.message("inspection.incorrect.message.format.unknown.format.type", relatedText);
       case UNCLOSED_BRACE_PLACEHOLDER -> InspectionGadgetsBundle.message("inspection.incorrect.message.format.unclosed.brace");
       case UNPAIRED_QUOTE -> InspectionGadgetsBundle.message("inspection.incorrect.message.format.unpaired.quote");

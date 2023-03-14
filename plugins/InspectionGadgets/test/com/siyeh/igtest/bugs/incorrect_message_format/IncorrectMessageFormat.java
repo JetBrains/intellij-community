@@ -18,16 +18,16 @@ class MessagePatternsExample {
 
     MessageFormat messageFormat = new MessageFormat("<weak_warning descr="Unpaired quote in the message pattern">'</weak_warning>{0}"); //warning
 
-    format = MessageFormat.format("'{0}' it<weak_warning descr="Probably, incorrect number of quotes, more than 1 quote will be printed">''''</weak_warning>s", <warning descr="The argument with index '0' is not used in the pattern">1</warning>); //warning
+    format = MessageFormat.format("'{0}' it<weak_warning descr="Probably incorrect number of quotes, more than 1 quote will be printed">''''</weak_warning>s", <warning descr="The argument with index '0' is not used in the pattern">1</warning>); //warning
     System.out.println(format);
 
     format = MessageFormat.format("{0} <warning descr="Unmatched brace in the message pattern">{</warning>", 1);  //runtime exception
     System.out.println(format);
 
-    format = MessageFormat.format("{0} {<warning descr="Incorrect argument number: '1a'">1a</warning>}", 1);  //runtime exception
+    format = MessageFormat.format("{0} {<warning descr="Incorrect index: '1a'">1a</warning>}", 1);  //runtime exception
     System.out.println(format);
 
-    format = MessageFormat.format("{<warning descr="Incorrect argument number: '-1'">-1</warning>}", 1);  //runtime exception
+    format = MessageFormat.format("{<warning descr="Incorrect index: '-1'">-1</warning>}", 1);  //runtime exception
     System.out.println(format);
 
 
@@ -40,7 +40,7 @@ class MessagePatternsExample {
     format = MessageFormat.format("<weak_warning descr="Unpaired quote in the message pattern">'</weak_warning>{0}", <warning descr="The argument with index '0' is not used in the pattern">1</warning>); //warning
     System.out.println(format);
 
-    format = MessageFormat.format("it<weak_warning descr="Probably, incorrect number of quotes, more than 1 quote will be printed">''''</weak_warning>s {0}", 1); //warning
+    format = MessageFormat.format("it<weak_warning descr="Probably incorrect number of quotes, more than 1 quote will be printed">''''</weak_warning>s {0}", 1); //warning
     System.out.println(format);
 
     format = MessageFormat.format("{0, choice, 0#0|1#1}", 1);
