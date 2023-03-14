@@ -29,13 +29,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
@@ -538,10 +539,31 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     throw new IllegalArgumentException("unknown property: " + property);
   }
 
+  private static Map<String, Boolean> isSymlinkForPath = new HashMap<>();
+
   /**
    * @return true, if this file is symlink
    */
   private boolean isSymlink() {
+    String path = this.getPath();
+    if (path.startsWith("//wsl$/") && !path.matches("^//wsl\\$/[^/]+/$")) {
+      if (!isSymlinkForPath.containsKey(this.getPath())) {
+        try {
+          String parentPath = this.getParent().getPath().replaceAll("^//wsl\\$/[^/]+", "");
+          Process process = Runtime.getRuntime().exec(
+            "wsl --cd \"%s\" test -L %s && echo \"true\" || echo \"false\"".formatted(parentPath, this.getName()));
+          BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+          String isSymLink = reader.lines().collect(Collectors.joining("\n"));
+          isSymlinkForPath.put(path, isSymLink.equals("true"));
+        }
+        catch (IOException e) {
+          DebugInvalidation.LOG.error(e);
+          return getFlagInt(VfsDataFlags.IS_SYMLINK_FLAG);
+        }
+
+        return isSymlinkForPath.get(path);
+      }
+    }
     return getFlagInt(VfsDataFlags.IS_SYMLINK_FLAG);
   }
 

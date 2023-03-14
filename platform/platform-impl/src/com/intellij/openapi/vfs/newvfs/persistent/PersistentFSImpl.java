@@ -467,6 +467,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public String resolveSymLink(@NotNull VirtualFile file) {
+    if (file.isFromWSL()) {
+      return file.getWSLCanonicalPath();
+    }
+
     return vfsPeer.readSymlinkTarget(getFileId(file));
   }
 
