@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.environment
 
+import com.intellij.ide.environment.EnvironmentKey.Companion.createKey
+import com.intellij.openapi.util.NlsContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.function.Supplier
@@ -23,7 +25,7 @@ sealed interface EnvironmentKey {
   /**
    * The purpose of this key and the format of its values.
    */
-  val description: Supplier<@Nls String>
+  val description: Supplier<@EnvironmentKeyDescription String>
 
   /**
    * The default value for a key.
@@ -36,7 +38,7 @@ sealed interface EnvironmentKey {
 
     @JvmStatic
     @JvmOverloads
-    fun createKey(id: @NonNls String, description: Supplier<@Nls String>, defaultValue: @NonNls String = ""): EnvironmentKey {
+    fun createKey(id: @NonNls String, description: Supplier<@EnvironmentKeyDescription String>, defaultValue: @NonNls String = ""): EnvironmentKey {
       return EnvironmentKeyImpl(id, description, defaultValue)
     }
 
@@ -47,6 +49,12 @@ sealed interface EnvironmentKey {
 
       override fun hashCode(): Int = id.hashCode()
     }
+
+    @NlsContext(prefix = "environment.key.description")
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @Target(AnnotationTarget.CLASS, AnnotationTarget.TYPE, AnnotationTarget.TYPE_PARAMETER, AnnotationTarget.FUNCTION,
+            AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER, AnnotationTarget.VALUE_PARAMETER)
+    private annotation class EnvironmentKeyDescription
   }
 }
 
