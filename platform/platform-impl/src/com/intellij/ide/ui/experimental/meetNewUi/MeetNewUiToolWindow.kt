@@ -22,11 +22,13 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.Gray
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.JBGaps
 import com.intellij.ui.dsl.gridLayout.JBVerticalGaps
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.WrapLayout
@@ -76,6 +78,8 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
         })
           .align(AlignX.FILL)
           .applyToComponent {
+            minimumSize = JBDimension(1, BANNER_HEIGHT)
+            preferredSize = JBDimension(1, BANNER_HEIGHT)
             isOpaque = true
           }
       }
@@ -121,7 +125,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           cell() // Deny right component to shrink
         }.customize(JBVerticalGaps(bottom = 20))
         row {
-          comment(IdeBundle.message("meetnewui.toolwindow.description")) {
+          comment(IdeBundle.message("meetnewui.toolwindow.description"), maxLineLength = MAX_LINE_LENGTH_NO_WRAP) {
             ExperimentalUiCollector.logMeetNewUiAction(ExperimentalUiCollector.MeetNewUiAction.NEW_UI_LINK)
             ShowSettingsUtil.getInstance().showSettingsDialog(project, IdeBundle.message("configurable.new.ui.name"))
           }
@@ -147,7 +151,9 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
   }
 
   init {
-    setContent(panel)
+    val content = JBScrollPane(panel)
+    content.isOverlappingScrollBar = true
+    setContent(content)
     updateThemeSelection()
     updateDensitySelection()
 
