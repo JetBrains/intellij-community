@@ -1,0 +1,13 @@
+<html>
+<body>
+Reports companion objects' usage in extensions.
+<p>
+  Extensions must not have a companion object, this usually results in excessive classloading
+  or early initialization of heavy resources (TokenSets, Regexes, etc.) when the extension class is loaded.
+
+  Top-level declarations or objects should be used instead of companion objects in extensions.
+</p>
+<!-- tooltip end -->
+<p><small>New in 2023.1.1</small>
+</body>
+</html>
