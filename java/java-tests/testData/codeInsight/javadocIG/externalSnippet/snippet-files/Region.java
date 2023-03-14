@@ -27,4 +27,12 @@ public class Region {
     System.out.println("abc"); // @replace substring=a replacement=x @replace regex="b(.?)" replacement="$1z" @highlight substring=out
   }
   // @end
+  
+  // @start region=malformed
+  public void malformed() { 
+    // @replace @highlight hello=world @unknown
+    // @replace @highlight @link type=none
+    System.out.println("hello"); // @replace regex="???" replacement="xyz"
+  }
+  // @end
 }

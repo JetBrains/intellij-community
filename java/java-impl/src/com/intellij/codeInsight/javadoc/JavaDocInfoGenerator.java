@@ -16,7 +16,6 @@ import com.intellij.lang.documentation.DocumentationSettings;
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaDocumentationProvider;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
@@ -1912,7 +1911,12 @@ public class JavaDocInfoGenerator {
             throw new AssertionError(node.toString());
           }
           if (node.regex() != null) {
-            content = content.replaceAll(node.regex(), replacement.apply("$0"));
+            try {
+              content = content.replaceAll(node.regex(), replacement.apply("$0"));
+            }
+            catch (IllegalArgumentException | IndexOutOfBoundsException e) {
+              buffer.append(getSpanForUnresolvedItem()).append("[").append(e.getMessage()).append("]</span>\n");
+            }
           }
           else if (node.substring() != null) {
             content = content.replace(node.substring(), replacement.apply(node.substring()));
@@ -1926,7 +1930,7 @@ public class JavaDocInfoGenerator {
 
       @Override
       public void visitError(@NotNull ErrorMarkup errorMarkup) {
-        buffer.append(getSpanForUnresolvedItem()).append("[").append(errorMarkup.message()).append("]</span>");
+        buffer.append(getSpanForUnresolvedItem()).append("[").append(errorMarkup.message()).append("]</span>\n");
       }
     });
   }

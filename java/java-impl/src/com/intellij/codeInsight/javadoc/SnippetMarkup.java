@@ -516,7 +516,9 @@ public class SnippetMarkup {
         regions.push(start.region());
       } else if (node instanceof EndRegion end) {
         if (end.region() == null) {
-          active.remove(regions.pop());
+          if (!regions.isEmpty()) {
+            active.remove(regions.pop());
+          }
         } else {
           regions.remove(end.region());
           active.remove(end.region());

@@ -150,10 +150,14 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testExternalSnippetTextFile() {
       createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
       verifyJavadocFor("TextFile");
-    }
+  }
   public void testExternalSnippetUnresolved() {
     createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
     verifyJavadocFor("Unresolved");
+  }
+  public void testExternalSnippetMalformed() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+    verifyJavadocFor("Malformed");
   }
   public void testUnknownInlineTag() { doTestClass(); }
   public void testUnknownInlineMultilineTag() { doTestClass(); }
