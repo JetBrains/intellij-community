@@ -457,7 +457,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
         newIcon !is LayeredIcon &&
         !toolWindowManager.isNewUi &&
         (abs(newIcon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(newIcon.iconWidth - JBUIScale.scale(13f)) >= 1)) {
-      logger<ToolWindowImpl>().warn("ToolWindow icons should be 13x13. Please fix ToolWindow (ID:  $id) or icon $newIcon")
+      logger<ToolWindowImpl>().warn("ToolWindow icons should be 13x13, but got: ${newIcon.iconWidth}x${newIcon.iconHeight}. Please fix ToolWindow (ID:  $id) or icon $newIcon")
     }
     icon = ToolWindowIcon(newIcon, id)
   }
