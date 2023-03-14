@@ -65,9 +65,8 @@ public class SnippetMarkup {
     return myContext;
   }
 
-  public int getRegionOffset(@NotNull String region) {
-    MarkupNode node = myRegionStarts.get(region);
-    return node == null ? -1 : node.range().getStartOffset();
+  public @Nullable MarkupNode getRegionStart(@NotNull String region) {
+    return myRegionStarts.get(region);
   }
 
   /**

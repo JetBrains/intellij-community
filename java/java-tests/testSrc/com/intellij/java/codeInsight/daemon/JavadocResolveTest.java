@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
 import com.intellij.codeInspection.javaDoc.JavadocDeclarationInspection;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.navigation.NavigationRequest;
 import com.intellij.navigation.impl.SourceNavigationRequest;
 import com.intellij.openapi.application.ReadAction;
@@ -43,6 +44,8 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
     assertNotNull(ref);
     PsiElement resolved = ref.resolve();
     assertTrue(resolved instanceof Navigatable);
+    assertEquals("@start region=reg", resolved.getText());
+    assertEquals("region", LanguageFindUsages.getType(resolved));
     NavigationRequest request = ReadAction
       .nonBlocking(() -> ((Navigatable)resolved).navigationRequest()).submit(AppExecutorUtil.getAppExecutorService())
       .get();

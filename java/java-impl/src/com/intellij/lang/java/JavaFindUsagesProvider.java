@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.JavaPsiImplementationHelperImpl;
 import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.JavaElementKind;
@@ -35,6 +36,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
            element instanceof PsiPackage ||
            element instanceof PsiJavaModule ||
            element instanceof PsiLabeledStatement ||
+           element instanceof JavaPsiImplementationHelperImpl.SnippetRegionTarget ||
            ThrowSearchUtil.isSearchable(element) ||
            element instanceof PsiMetaOwner && ((PsiMetaOwner)element).getMetaData() != null;
   }
@@ -67,6 +69,9 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
     }
     if (ThrowSearchUtil.isSearchable(element)) {
       return JavaBundle.message("java.terms.exception");
+    }
+    if (element instanceof JavaPsiImplementationHelperImpl.SnippetRegionTarget) {
+      return JavaBundle.message("java.terms.region");
     }
     JavaElementKind kind = JavaElementKind.fromElement(element);
     if (kind != JavaElementKind.UNKNOWN) {

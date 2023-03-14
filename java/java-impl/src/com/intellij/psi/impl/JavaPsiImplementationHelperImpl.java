@@ -7,6 +7,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.NavigationRequest;
 import com.intellij.navigation.NavigationService;
@@ -23,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -348,41 +350,63 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
                                                    @NotNull String region) {
     SnippetMarkup markup = SnippetMarkup.fromSnippet(snippet);
     if (markup == null) return null;
-    int offset = markup.getRegionOffset(region);
-    if (offset == -1) return null;
+    SnippetMarkup.MarkupNode start = markup.getRegionStart(region);
+    if (start == null) return null;
     PsiElement markupContext = markup.getContext();
     PsiFile file = markupContext.getContainingFile();
     if (file == null) return null;
-    int fileOffset = markupContext.getTextRange().getStartOffset() + offset - 1;
-    return new FakeElement(file, fileOffset);
+    return new SnippetRegionTarget(file, start.range().shiftRight(markupContext.getTextRange().getStartOffset() - 1));
   }
 
-  private static final class FakeElement extends FakePsiElement implements SyntheticElement {
-    private final PsiFile myFile;
-    private final int myOffset;
-    private final Project myProject;
+  public static final class SnippetRegionTarget extends FakePsiElement implements SyntheticElement {
+    private final @NotNull PsiFile myFile;
+    private final @NotNull TextRange myRangeInFile;
     private final VirtualFile myVirtualFile;
 
-    private FakeElement(PsiFile file, int fileOffset) {
+    private SnippetRegionTarget(@NotNull PsiFile file, @NotNull TextRange rangeInFile) {
       myFile = file;
-      myOffset = fileOffset;
-      myProject = file.getProject();
+      myRangeInFile = rangeInFile;
       myVirtualFile = file.getVirtualFile();
     }
-      
+
+    @Override
+    public @NotNull Language getLanguage() {
+      return JavaLanguage.INSTANCE;
+    }
+
     @Override
     public PsiElement getParent() {
       return myFile;
     }
 
     @Override
+    public @NotNull TextRange getTextRange() {
+      return myRangeInFile;
+    }
+
+    @Override
+    public @NotNull TextRange getTextRangeInParent() {
+      return myRangeInFile;
+    }
+
+    @Override
+    public @NotNull String getText() {
+      return myRangeInFile.substring(myFile.getText());
+    }
+
+    @Override
     public void navigate(boolean requestFocus) {
-      new OpenFileDescriptor(myProject, myVirtualFile, myOffset).navigate(requestFocus);
+      new OpenFileDescriptor(myFile.getProject(), myVirtualFile, myRangeInFile.getStartOffset()).navigate(requestFocus);
     }
 
     @Override
     public @Nullable NavigationRequest navigationRequest() {
-      return NavigationService.getInstance().sourceNavigationRequest(myVirtualFile, myOffset);
+      return NavigationService.getInstance().sourceNavigationRequest(myVirtualFile, myRangeInFile.getStartOffset());
+    }
+
+    @Override
+    public String getPresentableText() {
+      return getText();
     }
 
     @Override
@@ -399,13 +423,18 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     public boolean equals(Object object) {
       if (this == object) return true;
       if (object == null || getClass() != object.getClass()) return false;
-      FakeElement element = (FakeElement)object;
-      return myOffset == element.myOffset && Objects.equals(myVirtualFile, element.myVirtualFile);
+      SnippetRegionTarget element = (SnippetRegionTarget)object;
+      return myRangeInFile == element.myRangeInFile && Objects.equals(myVirtualFile, element.myVirtualFile);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(myVirtualFile, myOffset);
+      return Objects.hash(myVirtualFile, myRangeInFile);
+    }
+
+    @Override
+    public String toString() {
+      return getText();
     }
   }
 }
