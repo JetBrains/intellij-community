@@ -118,8 +118,14 @@ internal object GHPRDetailsCommitsComponentFactory {
         }
       )
 
-      commitsVm.selectCommit(selectedCommit)
-      diffBridge.activeTree = GHPRDiffController.ActiveTree.COMMITS
+      if (selectedCommit == null) {
+        diffBridge.activeTree = GHPRDiffController.ActiveTree.FILES
+        commitsVm.selectAllCommits()
+      }
+      else {
+        diffBridge.activeTree = GHPRDiffController.ActiveTree.COMMITS
+        commitsVm.selectCommit(selectedCommit)
+      }
     }
   }
 

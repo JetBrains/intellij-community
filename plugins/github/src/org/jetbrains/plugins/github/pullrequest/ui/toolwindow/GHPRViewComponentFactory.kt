@@ -149,14 +149,14 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
   ) : GHPRCommitBrowserComponentController {
     override fun selectCommit(oid: String) {
       val selectedCommit = commitsVm.reviewCommits.value.find { it.abbreviatedOid == oid }
-      commitsVm.selectCommit(selectedCommit)
       diffBridge.activeTree = GHPRDiffController.ActiveTree.COMMITS
+      commitsVm.selectCommit(selectedCommit)
       CollaborationToolsUIUtil.focusPanel(tree)
     }
 
     override fun selectChange(oid: String?, filePath: String) {
-      commitsVm.selectAllCommits()
       diffBridge.activeTree = GHPRDiffController.ActiveTree.FILES
+      commitsVm.selectAllCommits()
 
       if (oid == null) {
         tree.selectFile(VcsUtil.getFilePath(filePath, false))
