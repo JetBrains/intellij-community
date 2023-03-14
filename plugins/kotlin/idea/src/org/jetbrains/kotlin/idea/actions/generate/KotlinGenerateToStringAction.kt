@@ -14,15 +14,14 @@ import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.insertMembersAfterAndReformat
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -42,7 +41,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
     companion object {
         private val LOG = Logger.getInstance(KotlinGenerateToStringAction::class.java)
 
-        var KtClass.adjuster: ((Info) -> Info)? by UserDataProperty(Key.create("ADJUSTER"))
+        var KtClassOrObject.adjuster: ((Info) -> Info)? by UserDataProperty(Key.create("ADJUSTER"))
     }
 
     data class Info(
@@ -120,15 +119,13 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
     }
 
     override fun isValidForClass(targetClass: KtClassOrObject): Boolean =
-        targetClass is KtClass && !targetClass.isAnnotation() && !targetClass.isInterface()
+        targetClass is KtClass && !targetClass.isAnnotation() && !targetClass.isInterface() || targetClass is KtObjectDeclaration
 
     public override fun prepareMembersInfo(klass: KtClassOrObject, project: Project, editor: Editor?): Info? {
         return prepareMembersInfo(klass, project, true)
     }
 
     fun prepareMembersInfo(klass: KtClassOrObject, project: Project, askDetails: Boolean): Info? {
-        if (klass !is KtClass) throw AssertionError("Not a class: ${klass.getElementTextWithContext()}")
-
         val context = klass.analyzeWithContent()
         val classDescriptor = context.get(BindingContext.CLASS, klass) ?: return null
 
@@ -191,7 +188,7 @@ class KotlinGenerateToStringAction : KotlinGenerateMemberActionBase<KotlinGenera
     }
 
     override fun generateMembers(project: Project, editor: Editor?, info: Info): List<KtDeclaration> {
-        val targetClass = info.classDescriptor.source.getPsi() as KtClass
+        val targetClass = info.classDescriptor.source.getPsi() as KtClassOrObject
         val prototype = generateToString(targetClass, info)
         val anchor = with(targetClass.declarations) { lastIsInstanceOrNull<KtNamedFunction>() ?: lastOrNull() }
         return insertMembersAfterAndReformat(editor, targetClass, listOf(prototype), anchor)
