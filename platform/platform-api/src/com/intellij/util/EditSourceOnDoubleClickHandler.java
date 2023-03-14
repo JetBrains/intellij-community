@@ -151,17 +151,25 @@ public final class EditSourceOnDoubleClickHandler {
       TreePath clickPath = WideSelectionTreeUI.isWideSelection(myTree)
                            ? myTree.getClosestPathForLocation(e.getX(), e.getY())
                            : myTree.getPathForLocation(e.getX(), e.getY());
-      if (clickPath == null) return false;
+      if (clickPath == null) {
+        return false;
+      }
 
-      final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      if (project == null) return false;
+      DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      if (project == null) {
+        return false;
+      }
 
       TreePath selectionPath = myTree.getSelectionPath();
-      if (!clickPath.equals(selectionPath)) return false;
+      if (!clickPath.equals(selectionPath)) {
+        return false;
+      }
 
       //Node expansion for non-leafs has a higher priority
-      if (isToggleEvent(myTree, e)) return false;
+      if (isToggleEvent(myTree, e)) {
+        return false;
+      }
 
       processDoubleClick(e, dataContext, selectionPath);
       return true;
@@ -170,7 +178,9 @@ public final class EditSourceOnDoubleClickHandler {
     @SuppressWarnings("UnusedParameters")
     protected void processDoubleClick(@NotNull MouseEvent e, @NotNull DataContext dataContext, @NotNull TreePath treePath) {
       OpenSourceUtil.openSourcesFrom(dataContext, true);
-      if (myWhenPerformed != null) myWhenPerformed.run();
+      if (myWhenPerformed != null) {
+        myWhenPerformed.run();
+      }
     }
   }
 }
