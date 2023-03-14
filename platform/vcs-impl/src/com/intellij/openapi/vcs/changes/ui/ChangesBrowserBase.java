@@ -283,7 +283,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     return myDiffPreview;
   }
 
-  protected void setShowDiffActionPreview(@Nullable DiffPreview diffPreview) {
+  public void setShowDiffActionPreview(@Nullable DiffPreview diffPreview) {
     myDiffPreview = diffPreview;
   }
 

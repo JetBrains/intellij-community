@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.ui.ReplaceFileConfirmationDialog;
@@ -96,7 +97,7 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
   }
 
   @NotNull
-  public SimpleChangesBrowser getChangesBrowser() {
+  public ChangesBrowserBase getChangesBrowser() {
     return myChangesBrowser;
   }
 

@@ -64,7 +64,7 @@ class GitUnresolvedMergeCheckProvider : UnresolvedMergeCheckProvider() {
   }
 
   private class MyExcludedChangesDialog(project: Project, changes: List<Change>) : DialogWrapper(project) {
-    val browser = SimpleChangesBrowser(project, changes)
+    private val browser = SimpleChangesBrowser(project, changes)
 
     init {
       title = GitBundle.message("title.changes.excluded.from.commit")

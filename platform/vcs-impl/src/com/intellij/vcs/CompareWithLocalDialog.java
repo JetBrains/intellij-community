@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.DiffPreview;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
@@ -78,7 +79,7 @@ public final class CompareWithLocalDialog {
                                 @NotNull ThrowableComputable<? extends Collection<Change>, ? extends VcsException> changesLoader) {
     MyLoadingChangesPanel changesPanel = createPanel(project, localContent, changesLoader);
 
-    SimpleChangesBrowser changesBrowser = changesPanel.getChangesBrowser();
+    ChangesBrowserBase changesBrowser = changesPanel.getChangesBrowser();
     DiffPreview diffPreview = ChangesBrowserToolWindow.createDiffPreview(project, changesBrowser, changesPanel);
     changesBrowser.setShowDiffActionPreview(diffPreview);
 
@@ -130,7 +131,7 @@ public final class CompareWithLocalDialog {
     }
 
     @NotNull
-    public SimpleChangesBrowser getChangesBrowser() {
+    public ChangesBrowserBase getChangesBrowser() {
       return myChangesBrowser;
     }
 
@@ -224,7 +225,7 @@ public final class CompareWithLocalDialog {
       MyLoadingChangesPanel changesPanel = e.getRequiredData(MyLoadingChangesPanel.DATA_KEY);
       MyChangesBrowser browser = (MyChangesBrowser)changesPanel.getChangesBrowser();
 
-      List<FileRevisionProvider> fileContentProviders = ContainerUtil.map(changesPanel.getChangesBrowser().getSelectedChanges(), change -> {
+      List<FileRevisionProvider> fileContentProviders = ContainerUtil.map(browser.getSelectedChanges(), change -> {
         return new MyFileContentProvider(change, browser.myLocalContent);
       });
       GetVersionAction.doGet(project, VcsBundle.message("compare.with.dialog.get.from.vcs.action.title"), fileContentProviders,

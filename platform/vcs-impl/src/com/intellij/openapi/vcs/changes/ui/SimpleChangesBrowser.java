@@ -3,14 +3,12 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.DiffPreview;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class SimpleChangesBrowser extends ChangesBrowserBase {
@@ -71,10 +69,5 @@ public class SimpleChangesBrowser extends ChangesBrowserBase {
   @NotNull
   public List<Change> getIncludedChanges() {
     return VcsTreeModelData.included(myViewer).userObjects(Change.class);
-  }
-
-  @Override
-  public void setShowDiffActionPreview(@Nullable DiffPreview diffPreview) {
-    super.setShowDiffActionPreview(diffPreview);
   }
 }

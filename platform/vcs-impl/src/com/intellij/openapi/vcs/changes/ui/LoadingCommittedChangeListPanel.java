@@ -46,7 +46,7 @@ public class LoadingCommittedChangeListPanel implements Disposable {
   }
 
   @NotNull
-  public SimpleChangesBrowser getChangesBrowser() {
+  public ChangesBrowserBase getChangesBrowser() {
     return myChangesPanel.getChangesBrowser();
   }
 
