@@ -12,6 +12,7 @@ import com.intellij.psi.search.SearchScopeProvider
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
 import java.util.function.Predicate
@@ -141,7 +142,7 @@ class ScopeModel(options: Set<Option>) {
     }
   }
 
-  class ScopeSeparator internal constructor(@Nls val text: String) : ScopeDescriptor(null) {
+  class ScopeSeparator @Internal constructor(@Nls val text: String) : ScopeDescriptor(null) {
 
     override fun getDisplayName(): String {
       return text
