@@ -9,8 +9,12 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 /**
  * Provides access to the information collected from [WorkspaceFileIndexContributor]s.
- * If `platform.projectModel.workspace.model.file.index` registry option is enabled, this index is used instead of [com.intellij.openapi.roots.impl.DirectoryIndex]
- * in [com.intellij.openapi.roots.ProjectFileIndex] and [com.intellij.openapi.roots.ModuleFileIndex].
+ * This interfaces supersedes [ProjectFileIndex][com.intellij.openapi.roots.ProjectFileIndex] and [ModuleFileIndex][com.intellij.openapi.roots.ModuleFileIndex], 
+ * and provides more generic API which isn't bound to concepts like 'module' and 'source root', which are actually specific for Java projects.
+ * Implementations of [ProjectFileIndex][com.intellij.openapi.roots.ProjectFileIndex] and 
+ * [ModuleFileIndex][com.intellij.openapi.roots.ModuleFileIndex] delegate to this interface.
+ * 
+ * See [the package documentation](psi_element://com.intellij.workspaceModel.core.fileIndex) for more details.
  */
 interface WorkspaceFileIndex {
   companion object {

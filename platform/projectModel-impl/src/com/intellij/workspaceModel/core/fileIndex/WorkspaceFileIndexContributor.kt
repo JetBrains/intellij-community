@@ -9,9 +9,10 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Implement this interface and register the implementation as `com.intellij.workspaceModel.fileIndexContributor` extension in plugin.xml 
- * file to specify which files mentioned in WorkSpace Model entities should be considered as part of the workspace.
+ * file to specify which files and directories mentioned in WorkSpace Model entities should be considered as part of the workspace.
  *
- * [WorkspaceFileIndex] can be used to access data collected from the contributors. 
+ * [WorkspaceFileIndex] can be used to access data collected from the contributors.
+ * See [the package documentation](psi_element://com.intellij.workspaceModel.core.fileIndex) for more details.
  */
 @ApiStatus.OverrideOnly
 interface WorkspaceFileIndexContributor<E : WorkspaceEntity> {
