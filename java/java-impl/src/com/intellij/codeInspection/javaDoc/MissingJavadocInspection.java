@@ -3,10 +3,7 @@ package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.intention.impl.AddJavadocIntention;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.options.OptCheckbox;
-import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.options.OptRegularComponent;
-import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.*;
 import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
@@ -82,18 +79,7 @@ public class MissingJavadocInspection extends LocalInspectionTool {
     );
   }
 
-  @Override
-  public @NotNull OptionController getOptionController() {
-    return super.getOptionController()
-      .onPrefix("PACKAGE_SETTINGS", PACKAGE_SETTINGS.getOptionController())
-      .onPrefix("MODULE_SETTINGS", MODULE_SETTINGS.getOptionController())
-      .onPrefix("TOP_LEVEL_CLASS_SETTINGS", TOP_LEVEL_CLASS_SETTINGS.getOptionController())
-      .onPrefix("INNER_CLASS_SETTINGS", INNER_CLASS_SETTINGS.getOptionController())
-      .onPrefix("METHOD_SETTINGS", METHOD_SETTINGS.getOptionController())
-      .onPrefix("FIELD_SETTINGS", FIELD_SETTINGS.getOptionController());
-  }
-
-  public static class Options {
+  public static class Options implements OptionContainer {
     public String MINIMAL_VISIBILITY = "public";
     public String REQUIRED_TAGS = "";
     public boolean ENABLED = true;
@@ -116,7 +102,9 @@ public class MissingJavadocInspection extends LocalInspectionTool {
       }
     }
 
-    @NotNull OptionController getOptionController() {
+    @Override
+    @NotNull
+    public OptionController getOptionController() {
       return OptionController.fieldsOf(this)
         .onPrefix("REQUIRED_TAGS", OptionController.of(tag -> isTagRequired(tag), (tag, value) -> setTagRequired(tag, (boolean)value)));
     }

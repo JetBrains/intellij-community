@@ -169,12 +169,6 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
   }
 
   @Override
-  public @NotNull OptionController getOptionController() {
-    return super.getOptionController()
-      .onPrefix("myMethodMatcher", myMethodMatcher.getOptionController());
-  }
-
-  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new HardcodedFileSeparatorsVisitor();
   }

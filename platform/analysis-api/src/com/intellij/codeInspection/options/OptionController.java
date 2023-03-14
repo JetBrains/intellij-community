@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -244,28 +244,69 @@ public interface OptionController {
   static @NotNull OptionController fieldsOf(@NotNull Object obj) {
     return of(
       bindId -> {
-        Field field;
-        try {
-          field = ReflectionUtil.findAssignableField(obj.getClass(), null, bindId);
-        }
-        catch (NoSuchFieldException e) {
-          throw new IllegalArgumentException("Inspection " + obj.getClass().getName() + ": Unable to find bindId = " + bindId, e);
-        }
-        return ReflectionUtil.getFieldValue(field, obj);
-      },
-      (bindId, value) -> {
-        try {
-          final Field field = ReflectionUtil.findAssignableField(obj.getClass(), null, bindId);
-          if (ReflectionUtil.getFieldValue(field, obj) != value) {
-            // Avoid updating field if new value is not the same
-            // this way we can support final mutable fields, used by e.g. OptSet 
-            field.set(obj, value);
+        int dot = bindId.indexOf('.');
+        Field field = getField(obj, bindId, dot);
+        Object value = ReflectionUtil.getFieldValue(field, obj);
+        if (dot >= 0) {
+          if (!(value instanceof OptionContainer container)) {
+            throw new IllegalArgumentException(obj.getClass().getName() + ": Field " + field.getName() +
+                                               " (" + (value == null ? null : value.getClass()) + ")" +
+                                               " does not implement OptionContainer (bindId = " + bindId + ")");
+          }
+          try {
+            return container.getOptionController().getOption(bindId.substring(dot + 1));
+          }
+          catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(obj.getClass().getName() + ": Field " + field.getName() + ": unable to query nested option",
+                                               e);
           }
         }
-        catch (NoSuchFieldException | IllegalAccessException e) {
-          throw new IllegalArgumentException("Inspection " + obj.getClass().getName() + ": Unable to find bindId = " + bindId, e);
+        return value;
+      },
+      (bindId, value) -> {
+        int dot = bindId.indexOf('.');
+        Field field = getField(obj, bindId, dot);
+        Object curValue = ReflectionUtil.getFieldValue(field, obj);
+        if (dot >= 0) {
+          if (!(curValue instanceof OptionContainer container)) {
+            throw new IllegalArgumentException(obj.getClass().getName() + ": Field " + field.getName() +
+                                               " (" + (curValue == null ? null : curValue.getClass()) + ")" +
+                                               " does not implement OptionContainer (bindId = " + bindId + ")");
+          }
+          try {
+            container.getOptionController().setOption(bindId.substring(dot + 1), value);
+          }
+          catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(obj.getClass().getName() + ": Field " + field.getName() + ": unable to update nested option",
+                                               e);
+          }
+        }
+        // Avoid updating field if new value is not the same
+        // this way we can support final mutable fields, used by e.g. OptSet 
+        else if (curValue != value) {
+          try {
+            field.set(obj, value);
+          }
+          catch (IllegalAccessException e) {
+            throw new IllegalArgumentException(
+              "Inspection " + obj.getClass().getName() + ": Unable to assign field " + field.getName() + " (bindId = " + bindId + ")", e);
+          }
         }
       }
     );
+  }
+
+  @NotNull
+  private static Field getField(@NotNull Object obj, String bindId, int dot) {
+    String fieldName = dot >= 0 ? bindId.substring(0, dot) : bindId;
+    Field field;
+    try {
+      field = ReflectionUtil.findAssignableField(obj.getClass(), null, fieldName);
+    }
+    catch (NoSuchFieldException e) {
+      throw new IllegalArgumentException(
+        "Inspection " + obj.getClass().getName() + ": Unable to find field " + fieldName + " (bindId = " + bindId + ")", e);
+    }
+    return field;
   }
 }

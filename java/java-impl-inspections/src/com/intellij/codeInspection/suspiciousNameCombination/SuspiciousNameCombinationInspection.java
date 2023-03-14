@@ -70,12 +70,6 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
   }
 
   @Override
-  public @NotNull OptionController getOptionController() {
-    return super.getOptionController()
-      .onPrefix("myIgnoredMethods", myIgnoredMethods.getOptionController());
-  }
-
-  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
