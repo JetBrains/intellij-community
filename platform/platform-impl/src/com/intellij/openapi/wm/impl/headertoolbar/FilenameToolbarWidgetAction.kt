@@ -82,9 +82,10 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
       val recentFiles = getInstance(project).fileList.asReversed()
       if (recentFiles.size > 1) {
         val files = recentFiles.subList(1, recentFiles.lastIndex + 1)
-        JBPopupFactory.getInstance()
-          .createListPopup(RecentFilesListPopupStep(project, files))
-          .showUnderneathOf(component)
+        JBPopupFactory.getInstance().createListPopup(RecentFilesListPopupStep(project, files)).apply {
+          clickSource = component
+          showUnderneathOf(component)
+        }
       }
     }
   }
