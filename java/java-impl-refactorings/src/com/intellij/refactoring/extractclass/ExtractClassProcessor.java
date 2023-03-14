@@ -182,7 +182,9 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
 
   @NotNull
   private String getQualifiedName() {
-    return extractInnerClass ? newClassName : StringUtil.getQualifiedName(newPackageName, newClassName);
+    return extractInnerClass
+           ? sourceClass.getQualifiedName() + '.' + newClassName
+           : StringUtil.getQualifiedName(newPackageName, newClassName);
   }
 
 
@@ -201,6 +203,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   }
 
   private boolean initializerDependsOnMoved(PsiElement initializer) {
+    if (initializer == null) return false;
     final boolean [] dependsOnMoved = new boolean[]{false};
     initializer.accept(new JavaRecursiveElementWalkingVisitor(){
       @Override
