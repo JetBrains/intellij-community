@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
@@ -42,6 +43,7 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
   private final IntConsumer myModificationStampConsumer;
   private final Predicate<? super VirtualFile> myChangedFileFilter;
   private final MyDocumentAdapter myListener;
+  private final AbstractAutoTestManager myAutoTestManager;
 
   private Disposable myDisposable;
   private SingleAlarm myAlarm;
@@ -52,25 +54,33 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
   private int myModificationStamp = 0;
 
   /**
-   * @deprecated Use {@link #DelayedDocumentWatcher(Project, int, IntConsumer, Predicate)}
+   * @deprecated Use {@link #DelayedDocumentWatcher(Project, int, AbstractAutoTestManager, Predicate)}
    */
-  @SuppressWarnings({"DataFlowIssue", "LambdaUnfriendlyMethodOverload", "UsagesOfObsoleteApi"})
+  @SuppressWarnings({"DataFlowIssue", "UsagesOfObsoleteApi"})
   @Deprecated(forRemoval = true)
   public DelayedDocumentWatcher(@NotNull Project project,
                                 int delayMillis,
                                 @NotNull com.intellij.util.Consumer<? super Integer> modificationStampConsumer,
                                 @Nullable Condition<? super VirtualFile> changedFileFilter) {
-    this(project, delayMillis, (IntConsumer)it -> modificationStampConsumer.consume(it), it -> changedFileFilter.value(it));
+    this(project, delayMillis, it -> modificationStampConsumer.consume(it), null, it -> changedFileFilter.value(it));
   }
 
-  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  public DelayedDocumentWatcher(@NotNull Project project,
-                                int delayMillis,
-                                @NotNull IntConsumer modificationStampConsumer,
-                                @Nullable Predicate<? super VirtualFile> changedFileFilter) {
+  DelayedDocumentWatcher(@NotNull Project project,
+                         int delayMillis,
+                         @NotNull AbstractAutoTestManager autoTestManager,
+                         @Nullable Predicate<? super VirtualFile> changedFileFilter) {
+    this(project, delayMillis, null, autoTestManager, changedFileFilter);
+  }
+
+  private DelayedDocumentWatcher(@NotNull Project project,
+                                 int delayMillis,
+                                 @Nullable IntConsumer modificationStampConsumer,
+                                 @Nullable AbstractAutoTestManager autoTestManager,
+                                 @Nullable Predicate<? super VirtualFile> changedFileFilter) {
     myProject = project;
     myDelayMillis = delayMillis;
     myModificationStampConsumer = modificationStampConsumer;
+    myAutoTestManager = autoTestManager;
     myChangedFileFilter = changedFileFilter;
     myListener = new MyDocumentAdapter();
   }
@@ -119,11 +129,6 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
       myConnection.disconnect();
       myConnection = null;
     }
-  }
-
-  @Override
-  public boolean isUpToDate(int modificationStamp) {
-    return myModificationStamp == modificationStamp;
   }
 
   private class MyDocumentAdapter implements DocumentListener {
@@ -180,7 +185,15 @@ public final class DelayedDocumentWatcher implements AutoTestWatcher {
           return;
         }
         myChangedFiles.clear();
-        myModificationStampConsumer.accept(myModificationStamp);
+        if (myModificationStampConsumer != null) {
+          myModificationStampConsumer.accept(myModificationStamp);
+        }
+        else {
+          int initialModificationStamp = myModificationStamp;
+          Objects.requireNonNull(myAutoTestManager).restartAllAutoTests(() -> {
+            return myModificationStamp == initialModificationStamp;
+          });
+        }
       });
     }
   }
