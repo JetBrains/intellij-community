@@ -3,7 +3,7 @@
 
 package com.intellij.openapi.vfs.newvfs.persistent.log.diagnostic
 
-import com.intellij.openapi.vfs.newvfs.persistent.log.DescriptorStorage
+import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag
@@ -18,9 +18,9 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 private data class Stats(
-  var descriptorStorageSize: Long = 0,
+  var operationsStorageSize: Long = 0,
   var payloadStorageSize: Long = 0,
-  val descriptorCount: AtomicInteger = AtomicInteger(0),
+  val operationsCount: AtomicInteger = AtomicInteger(0),
   val nullPayloads: AtomicInteger = AtomicInteger(0),
   val nullEnumeratedString: AtomicInteger = AtomicInteger(0),
   val exceptionResultCount: AtomicInteger = AtomicInteger(0),
@@ -29,9 +29,9 @@ private data class Stats(
   val incompleteTagsCount: ConcurrentHashMap<VfsOperationTag, Int> = ConcurrentHashMap(VfsOperationTag.values().size),
   var elapsedTime: Duration = 0.seconds
 ) {
-  val totalSize get() = descriptorStorageSize + payloadStorageSize
+  val totalSize get() = operationsStorageSize + payloadStorageSize
   val avgReadSpeedBPS get() = totalSize.toDouble() / elapsedTime.toDouble(DurationUnit.SECONDS)
-  val avgDescPS get() = descriptorCount.toDouble() / elapsedTime.toDouble(DurationUnit.SECONDS)
+  val avgDescPS get() = operationsCount.toDouble() / elapsedTime.toDouble(DurationUnit.SECONDS)
 }
 
 @OptIn(ExperimentalTime::class)
@@ -41,17 +41,17 @@ private fun calcStats(log: VfsLog): Stats {
   stats.elapsedTime = measureTime {
     runBlocking {
       log.query {
-        stats.descriptorStorageSize = descriptorStorage.size()
+        stats.operationsStorageSize = operationLogStorage.size()
         stats.payloadStorageSize = payloadStorage.size()
 
-        descriptorStorage.readAll {
+        operationLogStorage.readAll {
           when (it) {
-            is DescriptorStorage.DescriptorReadResult.Incomplete -> {
-              stats.descriptorCount.incrementAndGet()
+            is OperationReadResult.Incomplete -> {
+              stats.operationsCount.incrementAndGet()
               stats.incompleteTagsCount.compute(it.tag, ::incStat)
             }
-            is DescriptorStorage.DescriptorReadResult.Valid -> {
-              stats.descriptorCount.incrementAndGet()
+            is OperationReadResult.Valid -> {
+              stats.operationsCount.incrementAndGet()
               if (!it.operation.result.hasValue) stats.exceptionResultCount.incrementAndGet()
               stats.tagsCount.compute(it.operation.tag, ::incStat)
               when (it.operation) {
@@ -80,7 +80,7 @@ private fun calcStats(log: VfsLog): Stats {
                 }
               }
             }
-            is DescriptorStorage.DescriptorReadResult.Invalid -> {
+            is OperationReadResult.Invalid -> {
               throw it.cause
             }
           }
@@ -127,6 +127,6 @@ fun main(args: Array<String>) {
   assert(args.size == 1) { "Usage: <LogStats> <path to vfslog folder>" }
 
   val log = VfsLog(Path.of(args[0]), true)
-  single(log)
-  //benchmark(log)
+  //single(log)
+  benchmark(log, 25)
 }
