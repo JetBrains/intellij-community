@@ -1,12 +1,12 @@
 public class Test {
 
     public static String numString(EEnum num) {
-        switch (num) {
-        case ONE:   return "one";
-        case TWO:   return "two";
-        case THREE: return "three";
-        default:    throw new AssertionError("unknown constant");
-        }
+        return switch (num) {
+            case ONE -> "one";
+            case TWO -> "two";
+            case THREE -> "three";
+            default -> throw new AssertionError("unknown constant");
+        };
     }
 
     public static void main(String[] args) {
