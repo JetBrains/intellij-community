@@ -21,8 +21,8 @@ class TodoViewChangesSupportImpl : TodoViewChangesSupport() {
     return ChangeListTodosPanel.getTabName(project)
   }
 
-  override fun createPanel(project: Project, settings: TodoPanelSettings, content: Content, factory: TodoTreeBuilderFactory): TodoPanel {
-    return object : ChangeListTodosPanel(project, settings, content) {
+  override fun createPanel(todoView: TodoView, settings: TodoPanelSettings, content: Content, factory: TodoTreeBuilderFactory): TodoPanel {
+    return object : ChangeListTodosPanel(todoView, settings, content) {
       override fun createTreeBuilder(tree: JTree, project: Project): TodoTreeBuilder {
         val builder = factory.createTreeBuilder(tree, project)
         builder.init()
@@ -31,8 +31,8 @@ class TodoViewChangesSupportImpl : TodoViewChangesSupport() {
     }
   }
 
-  override fun createPanel(project: Project, settings: TodoPanelSettings, content: Content): TodoPanel {
-    return createPanel(project, settings, content, TodoTreeBuilderFactory { tree, p -> ChangeListTodosTreeBuilder(tree, p) })
+  override fun createPanel(todoView: TodoView, settings: TodoPanelSettings, content: Content): TodoPanel {
+    return createPanel(todoView, settings, content, TodoTreeBuilderFactory { tree, p -> ChangeListTodosTreeBuilder(tree, p) })
   }
 
   override fun installListener(project: Project,

@@ -90,6 +90,12 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
     @OptionTag(value = "default-changelist", nameAttribute = "id", tag = "todo-panel", valueAttribute = "")
     public TodoPanelSettings changeList = new TodoPanelSettings();
+
+    public String selectedScope;
+  }
+
+  @NotNull Project getProject() {
+    return myProject;
   }
 
   @Override
@@ -98,7 +104,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
   }
 
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     if (myContentManager != null) {
       // all panel were constructed
       Content content = myContentManager.getSelectedContent();
@@ -125,7 +131,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     Content allTodosContent =
       contentFactory.createContent(null, IdeUICustomization.getInstance().projectMessage("tab.title.project"), false);
     toolWindow.setHelpId("find.todoList");
-    myAllTodos = new TodoPanel(myProject, state.all, false, allTodosContent) {
+    myAllTodos = new TodoPanel(this, state.all, false, allTodosContent) {
       @Override
       protected TodoTreeBuilder createTreeBuilder(@NotNull JTree tree,
                                                   @NotNull Project project) {
@@ -151,7 +157,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
 
     Content currentFileTodosContent = contentFactory.createContent(null, IdeBundle.message("title.todo.current.file"), false);
-    myCurrentFileTodosPanel = new CurrentFileTodosPanel(myProject, state.current, currentFileTodosContent) {
+    myCurrentFileTodosPanel = new CurrentFileTodosPanel(this, state.current, currentFileTodosContent) {
       @Override
       protected TodoTreeBuilder createTreeBuilder(@NotNull JTree tree,
                                                   @NotNull Project project) {
@@ -166,7 +172,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
 
     String tabName = myChangesSupport.getTabName(myProject);
     myChangeListTodosContent = contentFactory.createContent(null, tabName, false);
-    myChangeListTodosPanel = myChangesSupport.createPanel(myProject, state.current, myChangeListTodosContent);
+    myChangeListTodosPanel = myChangesSupport.createPanel(this, state.current, myChangeListTodosContent);
     if (myChangeListTodosPanel != null) {
       Disposer.register(this, myChangeListTodosPanel);
       myChangeListTodosContent.setComponent(myChangeListTodosPanel);
@@ -174,7 +180,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     }
 
     Content scopeBasedTodoContent = contentFactory.createContent(null, LangBundle.message("tab.title.scope.based"), false);
-    myScopeBasedTodosPanel = new ScopeBasedTodosPanel(myProject, state.current, scopeBasedTodoContent);
+    myScopeBasedTodosPanel = new ScopeBasedTodosPanel(this, state.current, scopeBasedTodoContent);
     Disposer.register(this, myScopeBasedTodosPanel);
     scopeBasedTodoContent.setComponent(myScopeBasedTodosPanel);
 
@@ -283,7 +289,7 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
                                    @NlsContexts.TabTitle String title,
                                    @NotNull TodoPanelSettings settings) {
     Content content = ContentFactory.getInstance().createContent(null, title, true);
-    final TodoPanel panel = myChangesSupport.createPanel(myProject, settings, content, factory);
+    final TodoPanel panel = myChangesSupport.createPanel(this, settings, content, factory);
     if (panel == null) return null;
 
     content.setComponent(panel);

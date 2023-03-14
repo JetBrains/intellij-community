@@ -54,6 +54,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
 
   protected static final Logger LOG = Logger.getInstance(TodoPanel.class);
 
+  protected final @NotNull TodoView myTodoView;
   protected final @NotNull Project myProject;
   private final @NotNull TodoPanelSettings mySettings;
   private final boolean myCurrentFileMode;
@@ -75,13 +76,14 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
    * @param currentFileMode if {@code true} then view doesn't have "Group By Packages" and "Flatten Packages"
    *                        actions.
    */
-  TodoPanel(@NotNull Project project,
+  TodoPanel(@NotNull TodoView todoView,
             @NotNull TodoPanelSettings settings,
             boolean currentFileMode,
             @NotNull Content content) {
     super(false, true);
 
-    myProject = project;
+    myTodoView = todoView;
+    myProject = todoView.getProject();
     mySettings = settings;
     myCurrentFileMode = currentFileMode;
     myContent = content;
