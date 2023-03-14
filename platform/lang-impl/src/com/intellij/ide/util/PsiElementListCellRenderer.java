@@ -273,7 +273,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       myRightComponentWidth += spacer.getPreferredSize().width;
     }
 
-    ListCellRenderer<Object> leftRenderer = new LeftRenderer(value == null ? new ItemMatchers(null, null) : getItemMatchers(list, value));
+    ListCellRenderer<Object> leftRenderer = createLeftRenderer(list, value);
     Component result;
     try (AccessToken ignore = SlowOperations.startSection(SlowOperations.RENDERING)) {
       result = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -287,6 +287,11 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       spacer.setBackground(bg);
     }
     return this;
+  }
+
+  @NotNull
+  protected ColoredListCellRenderer<Object> createLeftRenderer(JList<?> list, Object value) {
+    return new LeftRenderer(value == null ? new ItemMatchers(null, null) : getItemMatchers(list, value));
   }
 
   @NotNull
