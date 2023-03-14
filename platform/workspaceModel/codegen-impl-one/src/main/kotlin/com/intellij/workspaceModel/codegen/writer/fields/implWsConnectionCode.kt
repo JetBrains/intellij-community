@@ -2,9 +2,9 @@ package com.intellij.workspaceModel.codegen.writer.fields
 
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.codegen.getRefType
-import com.intellij.workspaceModel.codegen.refsFields
-import com.intellij.workspaceModel.codegen.utils.*
+import com.intellij.workspaceModel.codegen.writer.getRefType
+import com.intellij.workspaceModel.codegen.writer.refsFields
+import com.intellij.workspaceModel.codegen.writer.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
 

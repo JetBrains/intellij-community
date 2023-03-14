@@ -2,10 +2,10 @@ package com.intellij.workspaceModel.codegen.writer.fields
 
 import com.intellij.workspaceModel.storage.EntityStorage
 import com.intellij.workspaceModel.storage.impl.*
-import com.intellij.workspaceModel.codegen.isRefType
+import com.intellij.workspaceModel.codegen.writer.isRefType
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.utils.*
+import com.intellij.workspaceModel.codegen.writer.*
 
 data class RefMethods(val getter: QualifiedName, val setter: QualifiedName)
 

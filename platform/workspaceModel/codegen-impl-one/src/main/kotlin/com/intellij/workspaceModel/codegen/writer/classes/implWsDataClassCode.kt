@@ -5,10 +5,10 @@ import com.intellij.workspaceModel.codegen.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.fields.implWsDataFieldCode
-import com.intellij.workspaceModel.codegen.fields.implWsDataFieldInitializedCode
-import com.intellij.workspaceModel.codegen.fields.javaType
-import com.intellij.workspaceModel.codegen.utils.*
+import com.intellij.workspaceModel.codegen.writer.fields.implWsDataFieldCode
+import com.intellij.workspaceModel.codegen.writer.fields.implWsDataFieldInitializedCode
+import com.intellij.workspaceModel.codegen.writer.fields.javaType
+import com.intellij.workspaceModel.codegen.writer.*
 import com.intellij.workspaceModel.codegen.writer.allFields
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.SoftLinkable

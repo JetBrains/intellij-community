@@ -1,2 +1,2 @@
-rootProject.name = "codegen-api-one"
+rootProject.name = "workspace-model-codegen"
 

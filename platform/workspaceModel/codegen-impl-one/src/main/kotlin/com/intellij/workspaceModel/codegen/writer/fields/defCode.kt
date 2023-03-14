@@ -1,9 +1,9 @@
 package com.intellij.workspaceModel.codegen.writer.fields
 
-import com.intellij.workspaceModel.codegen.javaFullName
+import com.intellij.workspaceModel.codegen.writer.javaFullName
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.utils.QualifiedName
-import com.intellij.workspaceModel.codegen.utils.toQualifiedName
+import com.intellij.workspaceModel.codegen.writer.QualifiedName
+import com.intellij.workspaceModel.codegen.writer.toQualifiedName
 
 val ValueType<*>.javaType: QualifiedName
   get() = when (this) {

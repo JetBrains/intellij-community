@@ -2,12 +2,12 @@ package com.intellij.workspaceModel.codegen.writer.fields
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.getRefType
-import com.intellij.workspaceModel.codegen.isRefType
-import com.intellij.workspaceModel.codegen.refsFields
-import com.intellij.workspaceModel.codegen.utils.fqn1
-import com.intellij.workspaceModel.codegen.utils.fqn2
-import com.intellij.workspaceModel.codegen.utils.toQualifiedName
+import com.intellij.workspaceModel.codegen.writer.getRefType
+import com.intellij.workspaceModel.codegen.writer.isRefType
+import com.intellij.workspaceModel.codegen.writer.refsFields
+import com.intellij.workspaceModel.codegen.writer.fqn1
+import com.intellij.workspaceModel.codegen.writer.fqn2
+import com.intellij.workspaceModel.codegen.writer.toQualifiedName
 import com.intellij.workspaceModel.codegen.writer.hasSetter
 import com.intellij.workspaceModel.codegen.writer.isOverride
 import com.intellij.workspaceModel.codegen.writer.javaName

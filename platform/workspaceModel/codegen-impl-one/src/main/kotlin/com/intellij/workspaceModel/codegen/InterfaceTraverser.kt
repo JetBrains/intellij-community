@@ -4,8 +4,9 @@ package com.intellij.workspaceModel.codegen
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
 import com.intellij.workspaceModel.codegen.deft.meta.OwnProperty
 import com.intellij.workspaceModel.codegen.deft.meta.ValueType
-import com.intellij.workspaceModel.codegen.fields.javaType
-import com.intellij.workspaceModel.codegen.utils.LinesBuilder
+import com.intellij.workspaceModel.codegen.writer.fields.javaType
+import com.intellij.workspaceModel.codegen.writer.LinesBuilder
+import com.intellij.workspaceModel.codegen.writer.isRefType
 
 class InterfaceTraverser {
   fun traverse(myInterface: ObjClass<*>, visitor: InterfaceVisitor): Boolean {

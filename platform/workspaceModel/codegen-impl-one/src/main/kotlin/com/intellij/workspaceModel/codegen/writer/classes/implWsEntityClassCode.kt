@@ -1,13 +1,10 @@
 package com.intellij.workspaceModel.codegen.writer.classes
 
-import com.intellij.workspaceModel.codegen.*
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
-import com.intellij.workspaceModel.codegen.fields.implWsEntityFieldCode
-import com.intellij.workspaceModel.codegen.fields.refsConnectionId
-import com.intellij.workspaceModel.codegen.fields.refsConnectionIdCode
-import com.intellij.workspaceModel.codegen.utils.fqn
-import com.intellij.workspaceModel.codegen.utils.lines
-import com.intellij.workspaceModel.codegen.writer.allFields
+import com.intellij.workspaceModel.codegen.writer.*
+import com.intellij.workspaceModel.codegen.writer.fields.implWsEntityFieldCode
+import com.intellij.workspaceModel.codegen.writer.fields.refsConnectionId
+import com.intellij.workspaceModel.codegen.writer.fields.refsConnectionIdCode
 import com.intellij.workspaceModel.storage.CodeGeneratorVersions
 import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
 import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion

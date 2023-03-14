@@ -1,12 +1,13 @@
 plugins {
+  id("maven-publish")
   // Java support
   id("java")
   // Kotlin support
   id("org.jetbrains.kotlin.jvm") version "1.8.0"
 }
 
-group = "org.example"
-version = "1.0-SNAPSHOT"
+group = "com.jetbrains.intellij.platform"
+version = "0.0.1"
 
 repositories {
   mavenCentral()
@@ -15,6 +16,23 @@ repositories {
   }
   maven {
     url = uri("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+  }
+}
+
+publishing {
+  repositories {
+    maven {
+      url = uri("https://packages.jetbrains.team/maven/p/ide-accessibility-assistant/codegen-test")
+      credentials {
+        username = System.getProperty("spaceUsername")
+        password = System.getProperty("spacePassword")
+      }
+    }
+  }
+  publications {
+    register("mavenJava", MavenPublication::class) {
+      from(components["java"])
+    }
   }
 }
 

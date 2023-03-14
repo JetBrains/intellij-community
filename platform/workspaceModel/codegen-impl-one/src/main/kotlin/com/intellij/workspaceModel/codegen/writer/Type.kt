@@ -1,8 +1,6 @@
 package com.intellij.workspaceModel.codegen.writer
 
 import com.intellij.workspaceModel.codegen.deft.meta.ObjClass
-import com.intellij.workspaceModel.codegen.utils.QualifiedName
-import com.intellij.workspaceModel.codegen.utils.fqn
 
 val ObjClass<*>.javaFullName: QualifiedName
   get() = fqn(module.name, name)
