@@ -33,6 +33,7 @@ public class Region {
     // @replace @highlight hello=world @unknown
     // @replace @highlight @link type=none
     System.out.println("hello"); // @replace regex="???" replacement="xyz"
+    System.out.println("hello"); // @replace regex="hello" replacement="$1"
   }
   // @end
 }

@@ -24,6 +24,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 
 public class SnippetMarkup {
@@ -198,7 +199,7 @@ public class SnippetMarkup {
      * @return regular expression, so this node is applicable to the matching substrings
      */
     @Contract(pure = true)
-    @Nullable String regex();
+    @Nullable Pattern regex();
 
     /**
      * @return if present, defines a region name to which this tag is applicable. If null, then the tag is applicable to the next 
@@ -247,7 +248,7 @@ public class SnippetMarkup {
    * 
    * @param type highlighting type
    */
-  public record Highlight(@NotNull TextRange range, @Nullable String substring, @Nullable String regex, @Nullable String region,
+  public record Highlight(@NotNull TextRange range, @Nullable String substring, @Nullable Pattern regex, @Nullable String region,
                    @NotNull HighlightType type) implements LocationMarkupNode {
   }
 
@@ -256,7 +257,7 @@ public class SnippetMarkup {
    *
    * @param replacement replacement text
    */
-  public record Replace(@NotNull TextRange range, @Nullable String substring, @Nullable String regex, @Nullable String region,
+  public record Replace(@NotNull TextRange range, @Nullable String substring, @Nullable Pattern regex, @Nullable String region,
                  @NotNull String replacement) implements LocationMarkupNode {
     public Replace withReplacement(@NotNull String replacement) {
       return replacement.equals(this.replacement) ? this : new Replace(range, substring, regex, region, replacement);
@@ -269,7 +270,7 @@ public class SnippetMarkup {
    * @param target link target
    * @param linkType link type
    */
-  public record Link(@NotNull TextRange range, @Nullable String substring, @Nullable String regex, @Nullable String region, @NotNull String target,
+  public record Link(@NotNull TextRange range, @Nullable String substring, @Nullable Pattern regex, @Nullable String region, @NotNull String target,
               @NotNull LinkType linkType) implements LocationMarkupNode {
   }
 
@@ -284,7 +285,7 @@ public class SnippetMarkup {
   }
 
   /**
-   * @param element {@link com.intellij.psi.PsiFile} or {@link PsiSnippetDocTagBody}
+   * @param element {@link PsiFile} or {@link PsiSnippetDocTagBody}
    * @return markup for a given element
    */
   public static @NotNull SnippetMarkup fromElement(@NotNull PsiElement element) {
@@ -449,7 +450,7 @@ public class SnippetMarkup {
               new ErrorMarkup(typeAttr.range(), JavaBundle.message("javadoc.snippet.error.unknown.highlight.type", typeAttr.value())));
           }
         }
-        markupNodes.add(new Highlight(range, attrValues.get("substring"), attrValues.get("regex"), attrValues.get("region"),
+        markupNodes.add(new Highlight(range, attrValues.get("substring"), getPattern(markupNodes, attrs), attrValues.get("region"),
                                       Objects.requireNonNullElse(type, HighlightType.HIGHLIGHTED)));
       }
       case "replace" -> {
@@ -459,7 +460,7 @@ public class SnippetMarkup {
             new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.missing.required.attribute", "@replace", "replacement")));
           replacement = "";
         }
-        markupNodes.add(new Replace(range, attrValues.get("substring"), attrValues.get("regex"), attrValues.get("region"), replacement));
+        markupNodes.add(new Replace(range, attrValues.get("substring"), getPattern(markupNodes, attrs), attrValues.get("region"), replacement));
       }
       case "link" -> {
         String target = attrValues.get("target");
@@ -479,11 +480,31 @@ public class SnippetMarkup {
               new ErrorMarkup(typeAttr.range(), JavaBundle.message("javadoc.snippet.error.unknown.link.type", typeAttr.value())));
           }
         }
-        markupNodes.add(new Link(range, attrValues.get("substring"), attrValues.get("regex"), attrValues.get("region"),
+        markupNodes.add(new Link(range, attrValues.get("substring"), getPattern(markupNodes, attrs), attrValues.get("region"),
                                  target, Objects.requireNonNullElse(type, LinkType.LINK)));
       }
       default -> throw new AssertionError("Unexpected tag: " + tagName);
     }
+  }
+
+  @Nullable
+  private static Pattern getPattern(@NotNull List<MarkupNode> markupNodes, @NotNull List<MarkupNode> attrs) {
+    Attribute attr =
+      (Attribute)ContainerUtil.find(attrs, n -> n instanceof Attribute a && a.key().equals("regex"));
+    if (attr == null) return null;
+    String regex = attr.value();
+    if (regex == null) {
+      markupNodes.add(new ErrorMarkup(attr.range(), JavaBundle.message("javadoc.snippet.error.no.regular.expression")));
+      return null;
+    }
+    try {
+      return Pattern.compile(regex);
+    }
+    catch (PatternSyntaxException e) {
+      markupNodes.add(new ErrorMarkup(attr.range(),
+                                      JavaBundle.message("javadoc.snippet.error.malformed.regular.expression", e.getMessage())));
+    }
+    return null;
   }
 
   public interface SnippetVisitor {

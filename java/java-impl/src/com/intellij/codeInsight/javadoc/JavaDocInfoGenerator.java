@@ -1912,7 +1912,7 @@ public class JavaDocInfoGenerator {
           }
           if (node.regex() != null) {
             try {
-              content = content.replaceAll(node.regex(), replacement.apply("$0"));
+              content = node.regex().matcher(content).replaceAll(replacement.apply("$0"));
             }
             catch (IllegalArgumentException | IndexOutOfBoundsException e) {
               buffer.append(getSpanForUnresolvedItem()).append("[").append(e.getMessage()).append("]</span>\n");
