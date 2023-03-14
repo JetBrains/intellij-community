@@ -26,6 +26,7 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
   public static final String SCHEME_NAME_OTHER = "Other";
   public final static String[] KNOWN_NAMES = {
     "Default",
+    "Darcula Contrast",
     "Darcula",
     "Obsidian",
     "Visual Studio",
@@ -48,7 +49,6 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     "IntelliJ Light",
     "Light",
     "Dark",
-    "Darcula Contrast",
     SCHEME_NAME_OTHER
   };
 
