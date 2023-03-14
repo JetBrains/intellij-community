@@ -11,7 +11,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,25 +71,23 @@ public class LoadingCommittedChangeListPanel implements Disposable {
     myChangesPanel.setDescription(description);
   }
 
-  public void setChanges(@NotNull CommittedChangeList changeList, @Nullable VirtualFile toSelect) {
+  public void setChangeList(@NotNull CommittedChangeList changeList, @Nullable FilePath toSelect) {
     myChangesPanel.setChangeList(changeList);
     myChangesPanel.getChangesBrowser().getViewer().selectFile(toSelect);
   }
 
-  public void setChanges(@NotNull Collection<Change> changes, @Nullable VirtualFile toSelect) {
+  public void setChanges(@NotNull Collection<Change> changes, @Nullable FilePath toSelect) {
     hideCommitMessage();
-    myChangesPanel.setChangeList(CommittedChangeListPanel.createChangeList(changes));
-    myChangesPanel.getChangesBrowser().getViewer().selectFile(toSelect);
+    setChangeList(CommittedChangeListPanel.createChangeList(changes), toSelect);
   }
 
   public void loadChangesInBackground(@NotNull ThrowableComputable<? extends ChangelistData, ? extends VcsException> computable) {
     myLoadingPanel.loadChangesInBackground(computable, (result) -> {
       if (result != null) {
-        myChangesPanel.setChangeList(result.changeList);
-        myChangesPanel.getChangesBrowser().getViewer().selectFile(result.toSelect);
+        setChangeList(result.changeList, result.toSelect);
       }
       else {
-        myChangesPanel.setChangeList(CommittedChangeListPanel.createChangeList(Collections.emptySet()));
+        setChangeList(CommittedChangeListPanel.createChangeList(Collections.emptySet()), null);
       }
     });
   }
