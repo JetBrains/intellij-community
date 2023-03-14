@@ -25,6 +25,13 @@ public class PackageViewModuleNode extends AbstractModuleNode{
     Module module = getValue();
     if (module == null || module.isDisposed()) return Collections.emptyList();
     var result = new ArrayList<AbstractTreeNode<?>>();
+    addChildModules(module, result);
+    addSourceRoots(module, result);
+    addLibraries(module, result);
+    return result;
+  }
+
+  private void addChildModules(Module module, ArrayList<AbstractTreeNode<?>> result) {
     var grouper = ModuleGrouper.instanceFor(getProject());
     var moduleGroupPath = grouper.getModuleAsGroupPath(module);
     if (moduleGroupPath != null) {
@@ -34,12 +41,17 @@ public class PackageViewModuleNode extends AbstractModuleNode{
         result.add(new PackageViewModuleNode(getProject(), childModule, getSettings()));
       }
     }
+  }
+
+  private void addSourceRoots(Module module, ArrayList<AbstractTreeNode<?>> result) {
     List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots());
     result.addAll(PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), module, false));
+  }
+
+  private void addLibraries(Module module, ArrayList<AbstractTreeNode<?>> result) {
     if (getSettings().isShowLibraryContents()) {
       result.add(new PackageViewLibrariesNode(getProject(), module, getSettings()));
     }
-    return result;
   }
 
   @Override
