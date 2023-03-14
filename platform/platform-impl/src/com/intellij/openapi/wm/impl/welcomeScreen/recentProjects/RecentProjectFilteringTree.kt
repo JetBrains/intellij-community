@@ -216,7 +216,8 @@ internal class RecentProjectFilteringTree(
       val point = mouseEvent.point
       val row = TreeUtil.getRowForLocation(tree, point.x, point.y)
       if (row != -1) {
-        tree.repaint(getActionsButtonRect(row))
+        // Repaint whole row to avoid flickering of row buttons
+        tree.repaint(tree.getRowBounds(row))
       }
 
       projectActionButtonViewModel.isButtonHovered = intersectWithActionIcon(point)
