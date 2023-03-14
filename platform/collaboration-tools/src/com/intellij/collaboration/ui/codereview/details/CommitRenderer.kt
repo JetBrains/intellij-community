@@ -2,7 +2,9 @@
 package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
@@ -75,8 +77,10 @@ class CommitRenderer<T> private constructor(private val presenter: (T?) -> Selec
 
     @JvmStatic
     fun <T> createCommitRenderer(presenter: (T?) -> SelectableWrapper<CommitPresenter>): ListCellRenderer<T> {
-      val commitRenderer = CommitRenderer<T>(presenter)
-
+      var commitRenderer: ListCellRenderer<T> = CommitRenderer(presenter)
+      if (ExperimentalUI.isNewUI()) {
+        commitRenderer = RoundedCellRenderer(commitRenderer, false)
+      }
       return GroupedRenderer(commitRenderer, hasSeparatorBelow = { value, _ ->
         presenter(value).value is CommitPresenter.AllCommits
       })
