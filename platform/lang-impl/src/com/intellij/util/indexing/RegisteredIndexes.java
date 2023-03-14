@@ -68,7 +68,7 @@ public final class RegisteredIndexes {
     IndexConfiguration state = myState; // memory barrier
     if (state == null) {
       try {
-        myState = state = myStateFuture.get();
+        myState = state = ProgressIndicatorUtils.awaitWithCheckCanceled(myStateFuture);
       }
       catch (Throwable t) {
         throw new RuntimeException(t);
