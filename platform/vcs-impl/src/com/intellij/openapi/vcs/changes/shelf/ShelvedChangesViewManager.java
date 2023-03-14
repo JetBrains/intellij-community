@@ -456,10 +456,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
     public void invalidateDataAndRefresh(@Nullable Runnable onRefreshed) {
       myAsyncTreeModel.invalidateData();
-      RequestId requestId = requestRefresh();
-      if (onRefreshed != null) {
-        invokeAfterRefresh(requestId, onRefreshed);
-      }
+      requestRefresh(onRefreshed);
     }
   }
 

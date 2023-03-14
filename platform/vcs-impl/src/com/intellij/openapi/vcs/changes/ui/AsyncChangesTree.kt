@@ -80,12 +80,12 @@ abstract class AsyncChangesTree : ChangesTree {
                               onRefreshed = null)
   }
 
-  fun requestRefresh(onRefreshed: Runnable): RequestId {
+  fun requestRefresh(onRefreshed: Runnable?): RequestId {
     return requestRefreshImpl(treeStateStrategy = null,
                               onRefreshed = onRefreshed)
   }
 
-  fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>, onRefreshed: Runnable): RequestId {
+  fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>, onRefreshed: Runnable?): RequestId {
     return requestRefreshImpl(treeStateStrategy = treeStateStrategy,
                               onRefreshed = onRefreshed)
   }
