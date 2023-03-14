@@ -17,7 +17,10 @@ abstract class AbstractIdeCompiledLightClassesByFqNameTest : KotlinMultiFileLigh
     override fun setUp() {
         super.setUp()
         val parsedDirectives = KotlinTestUtils.parseDirectives(dataFile().readText())
-        Assume.assumeFalse("The test is not supported", LightClassTestCommon.SKIP_IDE_TEST_DIRECTIVE in parsedDirectives)
+        Assume.assumeFalse(
+            "The test is not supported",
+            LightClassTestCommon.SKIP_IDE_TEST_DIRECTIVE in parsedDirectives || LightClassTestCommon.SKIP_LIBRARY_EXCEPTIONS in parsedDirectives,
+        )
     }
 
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
