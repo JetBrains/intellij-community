@@ -15,6 +15,8 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
+
 public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingElement<DirectoryCopyPackagingElement> {
   public DirectoryCopyPackagingElement() {
     super(PackagingElementFactoryImpl.DIRECTORY_COPY_ELEMENT_TYPE);
@@ -39,6 +41,7 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
     if (existingEntity != null) return existingEntity;
 
     VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
+    Objects.requireNonNull(myFilePath, "filePath is not specified");
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(myFilePath);
     DirectoryCopyPackagingElementEntity addedEntity =
       ExtensionsKt.addDirectoryCopyPackagingElementEntity(diff, fileUrl, source);

@@ -144,6 +144,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
 
     String renamedOutputFileName = this.myRenamedOutputFileName;
     String filePath = this.myFilePath;
+    Objects.requireNonNull(filePath, "filePath is not specified");
     FileCopyPackagingElementEntity addedEntity;
     VirtualFileUrlManager fileUrlManager = VirtualFileUrls.getVirtualFileUrlManager(project);
     VirtualFileUrl fileUrl = fileUrlManager.fromPath(filePath);
