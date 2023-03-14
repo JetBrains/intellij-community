@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.Disposable;
@@ -219,4 +219,16 @@ public interface JBPopup extends Disposable, LightweightWindow {
    * Whether it's OK to invoke one of the 'show' methods. Some implementation might prohibit it e.g. if the popup is shown already.
    */
   default boolean canShow() { return !isDisposed(); }
+
+
+  /**
+   * Pass a component which shows the popup on click. The second click on the component will hide the popup without re-appearing
+   *
+   * @param clickSource a component showing the popup on click
+   */
+  default void setClickSource(@Nullable JComponent clickSource) { }
+
+  default @Nullable JComponent getClickSource() {
+    return null;
+  }
 }

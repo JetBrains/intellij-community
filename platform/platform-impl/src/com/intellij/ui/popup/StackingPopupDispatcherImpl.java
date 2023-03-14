@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui.popup;
 
@@ -131,6 +131,11 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
           needStopFurtherEventProcessing = true;
         }
         popup.cancel(mouseEvent);
+        JComponent clickSource = popup.getClickSource();
+        Component target = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+        if (clickSource != null && SwingUtilities.isDescendingFrom(target, clickSource)) {
+          needStopFurtherEventProcessing = true;
+        }
       }
 
       if (myStack.isEmpty()) {
