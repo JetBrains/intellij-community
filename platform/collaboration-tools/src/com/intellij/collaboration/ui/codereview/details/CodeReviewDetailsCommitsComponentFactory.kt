@@ -114,7 +114,7 @@ object CodeReviewDetailsCommitsComponentFactory {
               is CommitPresenter.AllCommits -> CollaborationToolsBundle.message("review.details.commits.popup.all", commits.size)
             }
           },
-          renderer = CommitRenderer { commit: T? ->
+          renderer = CommitRenderer.createCommitRenderer { commit: T? ->
             SelectableWrapper(commitPresenter(commit), commit == selectedCommit)
           }
         )

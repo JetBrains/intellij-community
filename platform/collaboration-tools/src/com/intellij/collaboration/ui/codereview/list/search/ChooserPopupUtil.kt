@@ -10,6 +10,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.PopupState
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
@@ -110,6 +111,7 @@ object ChooserPopupUtil {
       visibleRowCount = 7
       selectionMode = ListSelectionModel.SINGLE_SELECTION
       cellRenderer = renderer
+      background = JBUI.CurrentTheme.Popup.BACKGROUND
     }
 
   private class ListLoadingListener<T>(private val listModel: CollectionListModel<T>,

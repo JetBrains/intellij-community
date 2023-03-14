@@ -3,8 +3,6 @@ package com.intellij.collaboration.ui.codereview.details
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
@@ -16,7 +14,7 @@ import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.SwingConstants
 
-class CommitRenderer<T>(private val presenter: (T?) -> SelectableWrapper<CommitPresenter>) : ListCellRenderer<T> {
+class CommitRenderer<T> private constructor(private val presenter: (T?) -> SelectableWrapper<CommitPresenter>) : ListCellRenderer<T> {
   private val iconLabel = JLabel().apply {
     horizontalAlignment = SwingConstants.CENTER
     verticalAlignment = SwingConstants.TOP
@@ -59,7 +57,6 @@ class CommitRenderer<T>(private val presenter: (T?) -> SelectableWrapper<CommitP
     }
 
     return commitPanel.addToLeft(iconLabel).addToCenter(textPanel).apply {
-      border = if (commit is CommitPresenter.AllCommits) IdeBorderFactory.createBorder(SideBorder.BOTTOM) else null
       UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, cellSelected, list.hasFocus()))
     }
   }
@@ -75,6 +72,15 @@ class CommitRenderer<T>(private val presenter: (T?) -> SelectableWrapper<CommitP
     private const val EMPTY_ICON_SIZE = 12
 
     private val emptyIcon: EmptyIcon = JBUIScale.scaleIcon(EmptyIcon.create(EMPTY_ICON_SIZE))
+
+    @JvmStatic
+    fun <T> createCommitRenderer(presenter: (T?) -> SelectableWrapper<CommitPresenter>): ListCellRenderer<T> {
+      val commitRenderer = CommitRenderer<T>(presenter)
+
+      return GroupedRenderer(commitRenderer, hasSeparatorBelow = { value, _ ->
+        presenter(value).value is CommitPresenter.AllCommits
+      })
+    }
   }
 }
 
