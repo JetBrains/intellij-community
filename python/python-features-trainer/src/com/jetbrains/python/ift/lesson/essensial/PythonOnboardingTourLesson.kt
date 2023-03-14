@@ -568,7 +568,7 @@ class PythonOnboardingTourLesson :
         }
       }
       text(PythonLessonsBundle.message("python.onboarding.search.everywhere.description",
-                                       strong("AVERAGE"), strong(PythonLessonsBundle.message("toggle.case.part"))))
+                                       code("AVERAGE"), code(PythonLessonsBundle.message("toggle.case.part"))))
       triggerAndBorderHighlight().listItem { item ->
         val value = (item as? GotoActionModel.MatchedValue)?.value
         (value as? GotoActionModel.ActionWrapper)?.action is ToggleCaseAction
