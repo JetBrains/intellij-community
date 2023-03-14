@@ -8,7 +8,8 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.PropertyBinding
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -182,5 +183,11 @@ interface Panel : CellBase<Panel> {
   /**
    * Overrides default spacing configuration. Should be used for very specific cases
    */
+  @Deprecated("Use overloaded function with UnscaledSpacingConfiguration as a parameter")
   fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit)
+
+  /**
+   * Overrides default spacing configuration. Should be used for very specific cases
+   */
+  fun customizeSpacingConfiguration(spacingConfiguration: UnscaledSpacingConfiguration, init: Panel.() -> Unit)
 }
