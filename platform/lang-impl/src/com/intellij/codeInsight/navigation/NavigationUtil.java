@@ -21,7 +21,9 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -193,10 +195,10 @@ public final class NavigationUtil {
       return false;
     }
 
-    FileEditorManager fileEditorManager = FileEditorManager.getInstance(element.getProject());
+    FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(element.getProject());
     boolean wasAlreadyOpen = fileEditorManager.isFileOpen(vFile);
     if (!wasAlreadyOpen) {
-      fileEditorManager.openFile(vFile, requestFocus, searchForOpen);
+      fileEditorManager.openFile(vFile, null, new FileEditorOpenOptions().withRequestFocus().withReuseOpen(searchForOpen));
     }
 
     TextRange range = element.getTextRange();
