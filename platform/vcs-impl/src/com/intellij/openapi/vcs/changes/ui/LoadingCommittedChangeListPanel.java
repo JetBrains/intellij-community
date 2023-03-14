@@ -32,6 +32,7 @@ public class LoadingCommittedChangeListPanel implements Disposable {
 
   @Override
   public void dispose() {
+    myChangesPanel.getChangesBrowser().shutdown();
   }
 
   @NotNull
@@ -73,7 +74,9 @@ public class LoadingCommittedChangeListPanel implements Disposable {
 
   public void setChangeList(@NotNull CommittedChangeList changeList, @Nullable FilePath toSelect) {
     myChangesPanel.setChangeList(changeList);
-    myChangesPanel.getChangesBrowser().getViewer().selectFile(toSelect);
+    myChangesPanel.getChangesBrowser().getViewer().invokeAfterRefresh(() -> {
+      myChangesPanel.getChangesBrowser().getViewer().selectFile(toSelect);
+    });
   }
 
   public void setChanges(@NotNull Collection<Change> changes, @Nullable FilePath toSelect) {

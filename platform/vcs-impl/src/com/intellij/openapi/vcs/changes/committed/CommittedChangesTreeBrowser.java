@@ -219,6 +219,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
   @Override
   public void dispose() {
+    myDetailsView.shutdown();
     myConnection.disconnect();
     mySplitterProportionsData.saveSplitterProportions(this);
     mySplitterProportionsData.externalizeToDimensionService("CommittedChanges.SplitterProportions");

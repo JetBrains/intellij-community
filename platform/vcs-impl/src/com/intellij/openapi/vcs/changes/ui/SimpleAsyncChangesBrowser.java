@@ -6,46 +6,32 @@ import com.intellij.openapi.vcs.changes.Change;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultTreeModel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @see SimpleAsyncChangesBrowser
- */
-public class SimpleChangesBrowser extends ChangesBrowserBase {
-  private final List<Change> myChanges = new ArrayList<>();
+public class SimpleAsyncChangesBrowser extends AsyncChangesBrowserBase {
+  private @NotNull List<Change> myChanges = new ArrayList<>();
   @Nullable private ChangeNodeDecorator myChangeNodeDecorator;
 
-  public SimpleChangesBrowser(@NotNull Project project,
-                              @NotNull Collection<? extends Change> changes) {
-    this(project, false, false);
-    setChangesToDisplay(changes);
-  }
-
-  public SimpleChangesBrowser(@NotNull Project project,
-                              boolean showCheckboxes,
-                              boolean highlightProblems) {
+  public SimpleAsyncChangesBrowser(@NotNull Project project,
+                                   boolean showCheckboxes,
+                                   boolean highlightProblems) {
     super(project, showCheckboxes, highlightProblems);
     init();
   }
 
 
-  /**
-   * @deprecated Consider overriding {@link ChangesBrowserBase} instead.
-   */
   @NotNull
   @Override
-  @Deprecated
-  protected DefaultTreeModel buildTreeModel() {
-    return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), myChanges, myChangeNodeDecorator);
+  protected final AsyncChangesTreeModel getChangesTreeModel() {
+    return SimpleAsyncChangesTreeModel.create(grouping -> {
+      return TreeModelBuilder.buildFromChanges(myProject, grouping, myChanges, myChangeNodeDecorator);
+    });
   }
 
-
   public void setChangesToDisplay(@NotNull Collection<? extends Change> changes) {
-    myChanges.clear();
-    myChanges.addAll(changes);
+    myChanges = new ArrayList<>(changes);
     myViewer.rebuildTree();
   }
 
