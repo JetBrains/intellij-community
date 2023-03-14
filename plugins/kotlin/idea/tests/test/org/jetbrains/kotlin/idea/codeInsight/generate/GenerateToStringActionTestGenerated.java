@@ -35,11 +35,6 @@ public abstract class GenerateToStringActionTestGenerated extends AbstractGenera
         public void testInterface() throws Exception {
             runTest("testData/codeInsight/generate/toString/common/interface.kt");
         }
-
-        @TestMetadata("object.kt")
-        public void testObject() throws Exception {
-            runTest("testData/codeInsight/generate/toString/common/object.kt");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -87,6 +82,11 @@ public abstract class GenerateToStringActionTestGenerated extends AbstractGenera
         @TestMetadata("noVars.kt")
         public void testNoVars() throws Exception {
             runTest("testData/codeInsight/generate/toString/multipeTemplates/noVars.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("testData/codeInsight/generate/toString/multipeTemplates/object.kt");
         }
 
         @TestMetadata("singleVar.kt")
@@ -155,6 +155,11 @@ public abstract class GenerateToStringActionTestGenerated extends AbstractGenera
         @TestMetadata("nullableArrays.kt")
         public void testNullableArrays() throws Exception {
             runTest("testData/codeInsight/generate/toString/singleTemplate/nullableArrays.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("testData/codeInsight/generate/toString/singleTemplate/object.kt");
         }
 
         @TestMetadata("singleVar.kt")
