@@ -88,6 +88,10 @@ private val NO_BAD_CHARACTERS_OR_UNDERSCORE = NamingRule(KotlinBundle.message("m
     it.any { c -> c !in 'a'..'z' && c !in 'A'..'Z' && c !in '0'..'9' && c != '_' }
 }
 
+private val NO_LOWER = NamingRule(KotlinBundle.message("should.not.contain.lowercase.letter")) {
+    it.any { c ->  c.isLowerCase() }
+}
+
 class NamingConventionInspectionSettings(
     private val entityName: String,
     @Language("RegExp") val defaultNamePattern: String,
@@ -295,11 +299,11 @@ abstract class PropertyNameInspectionBase protected constructor(
         return when {
             isLocal -> PropertyKind.LOCAL
 
+            hasModifier(KtTokens.CONST_KEYWORD) -> PropertyKind.CONST
+
             private && containingClassOrObject is KtObjectDeclaration -> PropertyKind.OBJECT_PRIVATE
 
             !private && (containingClassOrObject is KtObjectDeclaration) || isTopLevel -> PropertyKind.OBJECT_OR_TOP_LEVEL
-
-            hasModifier(KtTokens.CONST_KEYWORD) -> PropertyKind.CONST
 
             private -> PropertyKind.PRIVATE
 
@@ -354,7 +358,7 @@ class ConstPropertyNameInspection : PropertyNameInspectionBase(
     KotlinBundle.message("const.property"),
     "[A-Z][_A-Z\\d]*"
 ) {
-    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_BAD_CHARACTERS)
+    override fun getNamingRules(): Array<NamingRule> = arrayOf(NO_LOWER, NO_BAD_CHARACTERS)
 }
 
 class LocalVariableNameInspection : PropertyNameInspectionBase(

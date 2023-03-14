@@ -233,6 +233,11 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/naming/class/inspectionData/inspections.test");
         }
 
+        @TestMetadata("naming/constant/inspectionData/inspections.test")
+        public void testNaming_constant_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/naming/constant/inspectionData/inspections.test");
+        }
+
         @TestMetadata("naming/enumEntry/inspectionData/inspections.test")
         public void testNaming_enumEntry_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/naming/enumEntry/inspectionData/inspections.test");
