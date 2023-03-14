@@ -82,13 +82,10 @@ class AddDependencyAction : AnAction(
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
-        val project = e.project
-        val editor = e.getData(CommonDataKeys.EDITOR)
-
-        project ?: return false
-        editor ?: return false
+        val project = e.project ?: return false
+        val file = e.getData(CommonDataKeys.EDITOR)?.virtualFile ?: return false
 
         val module = findSelectedModule(e, project.packageSearchProjectService.packageSearchModulesStateFlow.value)
-        return module?.buildFile?.path.equals(editor.virtualFile.path)
+        return module?.buildFile?.path?.equals(file.path) ?: false
     }
 }
