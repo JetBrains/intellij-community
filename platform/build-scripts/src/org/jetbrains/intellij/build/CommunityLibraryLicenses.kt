@@ -675,6 +675,7 @@ object CommunityLibraryLicenses {
                    version = LibraryLicense.CUSTOM_REVISION).apache(),
     androidDependency(name = "Perfetto Library", libraryName = "trace-perfetto-library"),
     androidDependency(name = "Perfetto protos", libraryName = "perfetto-proto"),
+
     LibraryLicense(name = "pip", attachedTo = "intellij.python", version = "20.3.4",
                    url = "https://pip.pypa.io/")
       .mit("https://github.com/pypa/pip/blob/main/LICENSE.txt"),
@@ -684,11 +685,16 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "plexus-classworlds", attachedTo = "intellij.maven.server.m30.impl", version = "2.4",
                    url = "https://github.com/codehaus-plexus/plexus-classworlds")
       .apache("https://github.com/codehaus-plexus/plexus-classworlds/blob/master/LICENSE.txt"),
+
     LibraryLicense(name = "Plexus Utils", libraryName = "plexus-utils",
                    url = "https://github.com/codehaus-plexus/plexus-utils")
       .apache("https://github.com/codehaus-plexus/plexus-utils/blob/master/LICENSE.txt"),
-    LibraryLicense(name = "PLY", attachedTo = "intellij.python", version = "3.7",
-                   url = "https://www.dabeaz.com/ply/").newBsd(),
+
+    LibraryLicense(name = "PLY", attachedTo = "intellij.python", version = "3.7", url = "https://www.dabeaz.com/ply/").newBsd(),
+
+    LibraryLicense(libraryName = "pngencoder", url = "https://github.com/pngencoder/pngencoder")
+      .mit("https://github.com/pngencoder/pngencoder/blob/develop/LICENSE"),
+
     LibraryLicense(name = "pockets", attachedTo = "intellij.python", version = "0.9.1",
                    url = "https://pockets.readthedocs.io/")
       .newBsd("https://github.com/RobRuana/pockets/blob/master/LICENSE"),
