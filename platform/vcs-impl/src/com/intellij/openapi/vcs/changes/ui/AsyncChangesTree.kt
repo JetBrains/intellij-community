@@ -132,7 +132,7 @@ abstract class AsyncChangesTree : ChangesTree {
     val edtContext = Dispatchers.EDT + ModalityState.any().asContextElement()
     scope.launch(edtContext) {
       _busy.collectLatest {
-        setPaintBusy(it)
+        updatePaintBusy(it)
       }
     }
     scope.launch(edtContext) {
@@ -195,6 +195,17 @@ abstract class AsyncChangesTree : ChangesTree {
     catch (e: Throwable) {
       LOG.error(e)
     }
+  }
+
+  override fun isEmptyTextVisible(): Boolean {
+    @Suppress("UNNECESSARY_SAFE_CALL") // called from super constructor
+    return super.isEmptyTextVisible() && (_busy?.value != true)
+  }
+
+  @RequiresEdt
+  private fun updatePaintBusy(isBusy: Boolean) {
+    setPaintBusy(isBusy)
+    repaint() // repaint empty text
   }
 
   private class Request(

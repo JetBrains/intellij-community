@@ -77,7 +77,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {
-        return Tree.this.isEmpty();
+        return Tree.this.isEmptyTextVisible();
       }
     };
 
@@ -149,6 +149,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @Override
   public boolean isFileColorsEnabled() {
     return false;
+  }
+
+  protected boolean isEmptyTextVisible() {
+    return isEmpty();
   }
 
   @NotNull
