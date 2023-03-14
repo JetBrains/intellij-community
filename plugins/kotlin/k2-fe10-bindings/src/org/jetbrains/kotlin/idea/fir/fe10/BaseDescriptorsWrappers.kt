@@ -525,9 +525,7 @@ class KtSymbolBasedValueParameterDescriptor(
             this.index = index
         } else {
             val containerSymbol = containingDeclaration.ktSymbol
-            this.index = containerSymbol.valueParameters.indexOfFirst {
-                it === ktSymbol
-            }
+            this.index = containerSymbol.valueParameters.indexOf(ktSymbol)
             check(this.index != -1) {
                 "Parameter not found in container symbol = $containerSymbol"
             }
