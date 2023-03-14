@@ -23,7 +23,7 @@ import java.util.function.BiConsumer
 
 private fun createPathList(dir: Path): List<String> {
   val s1 = dir.toString() + File.separatorChar
-  val s2 = dir.toRealPath().toString() + File.separatorChar
+  val s2 = dir.toAbsolutePath().normalize().toString() + File.separatorChar
   return if (s1 == s2) java.util.List.of(s1) else java.util.List.of(s1, s2)
 }
 
