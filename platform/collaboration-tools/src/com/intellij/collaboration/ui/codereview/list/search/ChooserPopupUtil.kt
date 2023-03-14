@@ -3,10 +3,8 @@ package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.popup.*
-import com.intellij.ui.CollectionListModel
-import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.UIBundle
+import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
+import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.PopupState
@@ -25,7 +23,7 @@ object ChooserPopupUtil {
                                    popupState: PopupState<JBPopup>,
                                    items: List<T>,
                                    presenter: (T) -> PopupItemPresentation): T? =
-    showChooserPopup(point, popupState, items, { presenter(it as T).shortText }, SimplePopupItemRenderer(presenter))
+    showChooserPopup(point, popupState, items, { presenter(it as T).shortText }, createSimpleItemRenderer(presenter))
 
   suspend fun <T> showChooserPopup(point: RelativePoint,
                                    popupState: PopupState<JBPopup>,
@@ -52,7 +50,7 @@ object ChooserPopupUtil {
                                         itemsLoader: suspend () -> List<T>,
                                         presenter: (T) -> PopupItemPresentation): T? {
     val listModel = CollectionListModel<T>()
-    val list = createList(listModel, SimplePopupItemRenderer(presenter))
+    val list = createList(listModel, createSimpleItemRenderer(presenter))
     val loadingListener = ListLoadingListener(listModel, itemsLoader, list)
 
     @Suppress("UNCHECKED_CAST")
@@ -169,6 +167,16 @@ object ChooserPopupUtil {
     }
   }
 
+  fun <T> createSimpleItemRenderer(presenter: (T) -> PopupItemPresentation): ListCellRenderer<T> {
+    val simplePopupItemRenderer = SimplePopupItemRenderer(presenter)
+    if (!ExperimentalUI.isNewUI())
+      return simplePopupItemRenderer
+
+    simplePopupItemRenderer.ipad.left = 0
+    simplePopupItemRenderer.ipad.right = 0
+    return RoundedCellRenderer(simplePopupItemRenderer, false)
+  }
+
   class SimplePopupItemRenderer<T>(private val presenter: (T) -> PopupItemPresentation) : ColoredListCellRenderer<T>() {
     override fun customizeCellRenderer(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
       val presentation = presenter(value)
@@ -179,6 +187,9 @@ object ChooserPopupUtil {
         append(" ")
         append("($fullText)", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
+
+      // ColoredListCellRenderer sets null for a background in case of !selected, so it can't work with SelectablePanel
+      if (!selected) background = list.background
     }
   }
 }
