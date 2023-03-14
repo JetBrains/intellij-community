@@ -1,6 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
-
 package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -8,16 +6,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ScrollType
-import com.intellij.openapi.editor.ex.MarkupModelEx
-import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.MarkupEditorFilter
-import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
@@ -29,12 +20,14 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.XSourcePositionEx.NavigationMode
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
-import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
-import com.intellij.xdebugger.ui.DebuggerColors
-import kotlinx.coroutines.*
+import com.intellij.xdebugger.impl.ui.ExecutionPositionUi
+import com.intellij.xdebugger.impl.ui.showExecutionPointUi
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
-import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.launch
 
 
 private val LOG = logger<XDebuggerExecutionPointManager>()
@@ -59,73 +52,41 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   var gutterIconRenderer: GutterIconRenderer? by _gutterIconRendererState::value
 
   init {
-    presentationFlowFor(XSourceKind.MAIN).launchIn(coroutineScope)
-    presentationFlowFor(XSourceKind.ALTERNATIVE).launchIn(coroutineScope)
+    val executionPointVmStateFlow: StateFlow<ExecutionPointVm?> = executionPointState
+      .onCompletion { emit(null) }
+      .map { executionPoint ->
+        kotlin.runCatching {
+          executionPoint?.let {
+            ExecutionPointVmImpl(coroutineScope, it,
+                                 activeSourceKindState,
+                                 gutterIconRendererState)
+          }
+        }.getOrLogException(LOG)
+      }.stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
+
+    val uiScope = coroutineScope.childScope(CoroutineName("${javaClass.simpleName}/UI"))
+    showExecutionPointUi(project, uiScope, executionPointVmStateFlow)
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
-      executionPointState
-        .map { it != null }.distinctUntilChanged()
-        .dropWhile { !it }  // ignore initial 'false' value
-        .onEach { hasHighlight ->
-          if (hasHighlight) {
-            EditorMouseHoverPopupControl.disablePopups(project)
-          }
-          else {
-            EditorMouseHoverPopupControl.enablePopups(project)
-          }
-        }.launchIn(coroutineScope)
-    }
-  }
-
-  private fun presentationFlowFor(sourceKind: XSourceKind): Flow<PositionPresentation?> {
-    return executionPointState
-      .onCompletion { emit(null) }
-      .mapLatest {
-        if (it == null) {
-          delay(25.milliseconds)
-        }
-        it
-      }
-      .transformLatest { executionPoint ->
-        kotlin.runCatching {
-          val sourcePosition = executionPoint?.getSourcePosition(sourceKind) ?: return@transformLatest emit(null)
-          val positionUpdateFlow = sourcePosition.asSafely<XSourcePositionEx>()?.positionUpdateFlow ?: emptyFlow()
-          val externalUpdateFlow = updateRequestFlow
-            .filter { it.file == sourcePosition.file }
-            .map { it.navigationMode }
-
-          merge(positionUpdateFlow, externalUpdateFlow)
-            .onStart { emit(NavigationMode.OPEN) } // initial open
-            .collectLatest { navigationMode ->
-              show(sourcePosition, sourceKind, executionPoint.isTopFrame, navigationMode)
+      uiScope.launch {
+        executionPointVmStateFlow
+          .map { it != null }.distinctUntilChanged()
+          .dropWhile { !it }  // ignore initial 'false' value
+          .collect { hasHighlight ->
+            if (hasHighlight) {
+              EditorMouseHoverPopupControl.disablePopups(project)
             }
-        }.getOrLogException(LOG)
+            else {
+              EditorMouseHoverPopupControl.enablePopups(project)
+            }
+          }
       }
-  }
-
-  private suspend fun FlowCollector<PositionPresentation>.show(sourcePosition: XSourcePosition,
-                                                               sourceKind: XSourceKind,
-                                                               isTopFrame: Boolean,
-                                                               initialNavigationMode: NavigationMode): Nothing = coroutineScope {
-    PositionPresentation(project, this, sourceKind, sourcePosition, isTopFrame,
-                         activeSourceKindState, gutterIconRendererState).use { presentation ->
-      emit(presentation)
-
-      navigationRequestFlow
-        .map { NavigationMode.OPEN }
-        .onStart { emit(initialNavigationMode) }
-        .debounce(10.milliseconds)
-        .onEach { navigationMode ->
-          presentation.navigator.navigateTo(navigationMode)
-        }.launchIn(this)
-
-      awaitCancellation()
     }
   }
 
   @RequiresEdt
   fun isFullLineHighlighterAt(file: VirtualFile, line: Int, project: Project, isToCheckTopFrameOnly: Boolean): Boolean {
-    return isCurrentFile(file) && PositionHighlight.isFullLineHighlighterAt(file, line, project, isToCheckTopFrameOnly)
+    return isCurrentFile(file) && ExecutionPositionUi.isFullLineHighlighterAt(file, line, project, isToCheckTopFrameOnly)
   }
 
   private fun isCurrentFile(file: VirtualFile): Boolean {
@@ -166,121 +127,6 @@ internal class ExecutionPoint private constructor(
     fun create(mainSourcePosition: XSourcePosition?, alternativeSourcePosition: XSourcePosition?, isTopFrame: Boolean): ExecutionPoint? {
       if (mainSourcePosition == null && alternativeSourcePosition == null) return null
       return ExecutionPoint(mainSourcePosition, alternativeSourcePosition, isTopFrame)
-    }
-  }
-}
-
-
-private class PositionPresentation(
-  project: Project,
-  coroutineScope: CoroutineScope,
-  val sourceKind: XSourceKind,
-  sourcePosition: XSourcePosition,
-  isTopFrame: Boolean,
-  activeSourceKindState: StateFlow<XSourceKind>,
-  gutterIconRendererState: StateFlow<GutterIconRenderer?>,
-) : AutoCloseable {
-
-  val highlight = PositionHighlight.create(project, sourcePosition, isTopFrame)?.apply {
-    gutterIconRenderer = gutterIconRendererState.value
-    gutterIconRendererState.onEach(::gutterIconRenderer::set).launchIn(coroutineScope)
-  }
-  val navigator = PositionNavigator.create(project, sourcePosition, isTopFrame)
-
-  var activeSourceKind: XSourceKind = XSourceKind.MAIN
-    @RequiresEdt
-    set(value) {
-      val isActiveSourceKind = (sourceKind == value)
-      highlight?.isActiveSourceKind = isActiveSourceKind
-      navigator.isActiveSourceKind = isActiveSourceKind
-      field = value
-    }
-
-  init {
-    activeSourceKind = activeSourceKindState.value
-    activeSourceKindState.onEach(::activeSourceKind::set).launchIn(coroutineScope)
-  }
-
-  override fun close() {
-    highlight?.hideAndDispose()
-    navigator.disposeDescriptor()
-  }
-}
-
-private class PositionHighlight private constructor(
-  private val isTopFrame: Boolean,
-  private val rangeHighlighter: RangeHighlighter,
-) {
-  var gutterIconRenderer: GutterIconRenderer? by rangeHighlighter::gutterIconRenderer
-  var isActiveSourceKind: Boolean = true
-    @RequiresEdt
-    set(value) {
-      val useTopFrameAttributes = isTopFrame && value
-      val attributesKey = if (useTopFrameAttributes) DebuggerColors.EXECUTIONPOINT_ATTRIBUTES else DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES
-      rangeHighlighter.setTextAttributesKey(attributesKey)
-      rangeHighlighter.putUserData(ExecutionPointHighlighter.EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY, useTopFrameAttributes)
-      field = value
-    }
-
-  fun hideAndDispose() {
-    rangeHighlighter.dispose()
-  }
-
-  companion object {
-    @RequiresEdt
-    fun create(project: Project, sourcePosition: XSourcePosition, isTopFrame: Boolean): PositionHighlight? {
-      val rangeHighlighter = createRangeHighlighter(project, sourcePosition) ?: return null
-      rangeHighlighter.editorFilter = MarkupEditorFilter { it.editorKind == EditorKind.MAIN_EDITOR }
-
-      return PositionHighlight(isTopFrame, rangeHighlighter)
-    }
-
-    private fun createRangeHighlighter(project: Project, sourcePosition: XSourcePosition): RangeHighlighter? {
-      val document = FileDocumentManager.getInstance().getDocument(sourcePosition.file) ?: return null
-
-      val line = sourcePosition.line
-      if (line < 0 || line >= document.lineCount) return null
-
-      val markupModel = DocumentMarkupModel.forDocument(document, project, true)
-      if (sourcePosition is ExecutionPointHighlighter.HighlighterProvider) {
-        val range = sourcePosition.highlightRange
-        if (range != null) {
-          return markupModel.addRangeHighlighter(null, range.startOffset, range.endOffset,
-                                                 DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER,
-                                                 HighlighterTargetArea.EXACT_RANGE)
-        }
-      }
-      return markupModel.addLineHighlighter(null, line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER)
-    }
-
-    @RequiresEdt
-    fun isFullLineHighlighterAt(file: VirtualFile, line: Int, project: Project, isToCheckTopFrameOnly: Boolean = false): Boolean {
-      val rangeHighlighter = findPositionHighlighterAt(file, line, project) ?: return false
-      return isFullLineHighlighter(rangeHighlighter, isToCheckTopFrameOnly)
-    }
-
-    private fun findPositionHighlighterAt(file: VirtualFile, line: Int, project: Project): RangeHighlighter? {
-      val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
-      if (line < 0 || line >= document.lineCount) return null
-      val lineStartOffset = document.getLineStartOffset(line)
-      val lineEndOffset = document.getLineEndOffset(line)
-      val markupModel = DocumentMarkupModel.forDocument(document, project, false) as? MarkupModelEx ?: return null
-      var result: RangeHighlighter? = null
-      markupModel.processRangeHighlightersOverlappingWith(lineStartOffset, lineEndOffset) { rangeHighlighter ->
-        val foundIt = rangeHighlighter.getUserData(ExecutionPointHighlighter.EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY) != null
-        if (foundIt) {
-          result = rangeHighlighter
-        }
-        !foundIt
-      }
-      return result
-    }
-
-    private fun isFullLineHighlighter(rangeHighlighter: RangeHighlighter, isToCheckTopFrameOnly: Boolean): Boolean {
-      val isTopFrame = rangeHighlighter.getUserData(ExecutionPointHighlighter.EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY) ?: return false
-      return rangeHighlighter.isValid &&
-             rangeHighlighter.targetArea == HighlighterTargetArea.LINES_IN_RANGE &&
-             (isTopFrame || !isToCheckTopFrameOnly)
     }
   }
 }
