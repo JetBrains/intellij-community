@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -23,6 +23,7 @@ public interface FileChooserPanel {
   @NotNull JComponent getComponent();
 
   void load(@Nullable Path path);
+  void loadParent();
 
   void reload(@Nullable Path focusOn);
 

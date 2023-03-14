@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.keymap;
 
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +17,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
   private static final Map<String, String[][]> DEFAULT_DUPLICATES = Map.ofEntries(
     Map.entry("$default", new String[][]{
       {"ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
-      {"BACK_SPACE",               "EditorBackSpace", "FileChooserList.LevelUp"},
+      {"BACK_SPACE",               "EditorBackSpace", "FileChooser.GoToParent"},
       {"C",                        "Uml.CollapseNodes", "JupyterNotebookCopyCellCommandModeAction"},
       {"DELETE",                   "$Delete", "DatabaseView.DropAction", "JupyterNotebookDeleteCellCommandModeAction"},
       {"ENTER",                    "Console.Execute", "Console.TableResult.EditValue", "DirDiffMenu.SynchronizeDiff", "EditorChooseLookupItem",
@@ -178,7 +178,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta R",                   "Refresh", "Replace", "Rerun", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
       {"meta T",                   "Terminal.NewTab", "Vcs.UpdateProject"},
       {"meta SLASH",               "CommentByLineComment", "FileChooserList.Root", "Graph.ActualSize"},
-      {"meta UP",                  "ShowNavBar", "FileChooserList.LevelUp"},
+      {"meta UP",                  "ShowNavBar", "FileChooser.GoToParent"},
       {"shift BACK_SPACE",         "EditorBackSpace", "UsageView.Include"},
       {"shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
       {"shift ctrl DOWN",          "MethodDown", "ShowContent"},
@@ -207,7 +207,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta R",                   "WebInspector.Browser.Refresh", "Replace", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
       {"meta SLASH",               "CommentByLineComment", "FileChooserList.Root", "Graph.ActualSize"},
       {"meta T",                   "Terminal.NewTab", "Vcs.UpdateProject"},
-      {"meta UP",                  "EditorScrollUp", "FileChooserList.LevelUp", "MethodOverloadSwitchUp"},
+      {"meta UP",                  "EditorScrollUp", "FileChooser.GoToParent", "MethodOverloadSwitchUp"},
       {"shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
       {"shift meta C",             "CopyPaths", "DatabaseView.CopyDdlAction", "WebInspector.Browser.Selection.Toggle", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
     }),
@@ -503,7 +503,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta R",                   "FileStructurePopup", "Refresh", "Rerun", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
       {"meta SUBTRACT",            "CollapseAll", "CollapseExpandableComponent", "EditorDecreaseFontSize"},
       {"meta T",                   "GotoFile", "Terminal.NewTab"},
-      {"meta UP",                  "EditorTextStart", "FileChooserList.LevelUp"},
+      {"meta UP",                  "EditorTextStart", "FileChooser.GoToParent"},
       {"meta V",                   "EditorPasteSimple", "Terminal.Paste", "JupyterNotebookPasteCellCommandModeAction"},
       {"meta alt DOWN",            "Console.TableResult.NextPage", "GotoDeclaration"},
       {"meta alt G",               "DatabaseView.SqlGenerator", "FindWordAtCaret", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction"},
@@ -528,7 +528,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta DOWN",                "EditSourceNotInEditor", "EditorTextEnd"},
       {"meta I",                   "DatabaseView.PropertiesAction", "QuickJavaDoc", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
       {"meta OPEN_BRACKET",        "Back", "PreviousDiff"},
-      {"meta UP",                  "EditorTextStart", "FileChooserList.LevelUp"},
+      {"meta UP",                  "EditorTextStart", "FileChooser.GoToParent"},
       {"meta alt DOWN",            "Console.TableResult.NextPage", "NotebookSelectCellBelowAction", "NextOccurence"},
       {"meta alt E",               "Console.History.Browse", "GotoNextElementUnderCaretUsage", "PerforceDirect.Edit"},
       {"meta alt I",               "Move", "RMarkdownNewChunk"},

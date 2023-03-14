@@ -1119,6 +1119,9 @@
     </group>
 
     <group id="FileChooserToolbar">
+      <action id="FileChooser.GoToParent" class="com.intellij.openapi.fileChooser.actions.GoToParentDirectoryAction"
+              icon="AllIcons.Nodes.UpFolder"/>
+      <separator/>
       <action id="FileChooser.GotoHome" class="com.intellij.openapi.fileChooser.actions.GotoHomeAction"
               icon="AllIcons.Nodes.HomeFolder"/>
       <action id="FileChooser.GoToWslHome" class="com.intellij.openapi.fileChooser.actions.GoToWslHomeAction"
@@ -1147,8 +1150,6 @@
 
     <group id="FileChooserList">
       <action id="FileChooserList.Root" class="com.intellij.openapi.fileChooser.impl.FileChooserPanelActions$Root"/>
-      <action id="FileChooserList.LevelUp" class="com.intellij.openapi.fileChooser.impl.FileChooserPanelActions$LevelUp"
-              icon="AllIcons.Nodes.UpFolder"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
