@@ -10,8 +10,6 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil
@@ -33,6 +31,7 @@ import training.dsl.LessonUtil.restorePopupPosition
 import training.git.GitLessonsBundle
 import training.git.GitLessonsUtil.highlightLatestCommitsFromBranch
 import training.git.GitLessonsUtil.highlightSubsequentCommitsInGitLog
+import training.git.GitLessonsUtil.openGitWindow
 import training.git.GitLessonsUtil.resetGitLogWindow
 import training.git.GitLessonsUtil.showWarningIfGitWindowClosed
 import training.git.GitLessonsUtil.triggerOnNotification
@@ -63,15 +62,8 @@ class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessons
     }
 
     task("ActivateVersionControlToolWindow") {
-      val gitWindowName = GitBundle.message("git4idea.vcs.name")
-      text(GitLessonsBundle.message("git.interactive.rebase.open.git.window", action(it), strong(gitWindowName)))
-      text(GitLessonsBundle.message("git.open.tool.window.balloon", strong(gitWindowName)),
-           LearningBalloonConfig(Balloon.Position.atRight, width = 0))
-      stateCheck {
-        val toolWindowManager = ToolWindowManager.getInstance(project)
-        toolWindowManager.getToolWindow(ToolWindowId.VCS)?.isVisible == true
-      }
-      test { actions(it) }
+      openGitWindow(GitLessonsBundle.message("git.interactive.rebase.open.git.window", action(it),
+                                             strong(GitBundle.message("git4idea.vcs.name"))))
     }
 
     resetGitLogWindow()
