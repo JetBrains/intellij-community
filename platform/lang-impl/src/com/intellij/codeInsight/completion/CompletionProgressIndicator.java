@@ -196,9 +196,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private void duringCompletion(CompletionInitializationContext initContext, CompletionParameters parameters) {
     PsiUtilCore.ensureValid(parameters.getPosition());
     if (isAutopopupCompletion() && shouldPreselectFirstSuggestion(parameters)) {
-      myLookup.setLookupFocusDegree(CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()
-                                    ? LookupFocusDegree.FOCUSED
-                                    : LookupFocusDegree.SEMI_FOCUSED);
+      LookupFocusDegree degree = CodeInsightSettings.getInstance().isSelectAutopopupSuggestionsByChars()
+                                 ? LookupFocusDegree.FOCUSED
+                                 : LookupFocusDegree.SEMI_FOCUSED;
+      myLookup.setLookupFocusDegree(degree);
     }
     addDefaultAdvertisements(parameters);
 
@@ -833,7 +834,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     return result[0];
   }
 
-  private static boolean shouldPreselectFirstSuggestion(CompletionParameters parameters) {
+  public static boolean shouldPreselectFirstSuggestion(CompletionParameters parameters) {
     if (Registry.is("ide.completion.lookup.element.preselect.depends.on.context")) {
       for (CompletionPreselectionBehaviourProvider provider : CompletionPreselectionBehaviourProvider.EP_NAME.getExtensionList()) {
         if (!provider.shouldPreselectFirstSuggestion(parameters)) {
