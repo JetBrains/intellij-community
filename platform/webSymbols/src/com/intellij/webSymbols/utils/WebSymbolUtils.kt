@@ -18,8 +18,10 @@ import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.impl.sortSymbolsByPriority
+import com.intellij.webSymbols.impl.toCodeCompletionItems
 import com.intellij.webSymbols.query.WebSymbolMatch
 import com.intellij.webSymbols.query.WebSymbolNamesProvider
+import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import java.util.*
@@ -150,6 +152,7 @@ val WebSymbol.completeMatch: Boolean
 
 val WebSymbol.nameSegments: List<WebSymbolNameSegment>
   get() = (this as? CompositeWebSymbol)?.nameSegments
+          ?: pattern?.let { listOf(WebSymbolNameSegment(0, 0, this)) }
           ?: listOf(WebSymbolNameSegment(this))
 
 internal val WebSymbol.matchedNameOrName: String
@@ -241,6 +244,14 @@ fun NavigationTarget.createPsiRangeNavigationItem(element: PsiElement, offsetWit
 
   }
 }
+
+fun WebSymbolsScope.getDefaultCodeCompletions(namespace: SymbolNamespace,
+                                              kind: SymbolKind,
+                                              name: String?,
+                                              params: WebSymbolsCodeCompletionQueryParams,
+                                              scope: Stack<WebSymbolsScope>) =
+  getSymbols(namespace, kind, null, WebSymbolsNameMatchQueryParams(params.queryExecutor), scope)
+    .flatMap { (it as? WebSymbol)?.toCodeCompletionItems(name, params, scope) ?: emptyList() }
 
 internal val List<WebSymbolsScope>.lastWebSymbol: WebSymbol?
   get() = this.lastOrNull { it is WebSymbol } as? WebSymbol
