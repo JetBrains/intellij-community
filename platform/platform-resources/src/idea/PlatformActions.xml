@@ -1121,6 +1121,8 @@
     <group id="FileChooserToolbar">
       <action id="FileChooser.GoToParent" class="com.intellij.openapi.fileChooser.actions.GoToParentDirectoryAction"
               icon="AllIcons.Nodes.UpFolder"/>
+      <action id="FileChooser.GoToRoot" class="com.intellij.openapi.fileChooser.actions.GoToRootDirectoryAction"
+              icon="AllIcons.Nodes.Servlet"/>
       <separator/>
       <action id="FileChooser.GotoHome" class="com.intellij.openapi.fileChooser.actions.GotoHomeAction"
               icon="AllIcons.Nodes.HomeFolder"/>
@@ -1143,13 +1145,7 @@
       <action id="FileChooser.ShowHidden" class="com.intellij.openapi.fileChooser.actions.ToggleVisibilityAction"
               icon="AllIcons.Actions.ToggleVisibility"/>
       <action id="FileChooser.TogglePathBar" class="com.intellij.openapi.fileChooser.actions.TogglePathShowingAction"
-              icon="AllIcons.Debugger.Console"/>
-
-      <add-to-group group-id="Other.KeymapGroup"/>
-    </group>
-
-    <group id="FileChooserList">
-      <action id="FileChooserList.Root" class="com.intellij.openapi.fileChooser.impl.FileChooserPanelActions$Root"/>
+              icon="AllIcons.Nodes.Console"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
