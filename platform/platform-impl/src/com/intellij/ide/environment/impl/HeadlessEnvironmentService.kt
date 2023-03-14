@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import kotlinx.coroutines.*
 import java.io.IOException
 
-class HeadlessEnvironmentParametersService(scope: CoroutineScope) : BaseEnvironmentParametersService() {
+class HeadlessEnvironmentService(scope: CoroutineScope) : BaseEnvironmentService() {
 
   private val configurationFileModel : Deferred<Map<String, String>> = scope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
     getModelFromFile()

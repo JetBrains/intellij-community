@@ -1,12 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.warmup
 
-import com.intellij.execution.environment.JvmEnvironmentKeyRegistry
-import com.intellij.ide.environment.EnvironmentParametersService
+import com.intellij.execution.environment.JvmEnvironmentKeyProvider
+import com.intellij.ide.environment.EnvironmentService
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.progressStep
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -19,7 +17,7 @@ class JdkWarmupConfigurator : WarmupConfigurator {
   override val configuratorPresentableName: String = "warmupJdkConfigurator"
 
   override suspend fun prepareEnvironment(projectPath: Path) {
-    val configuredJdk = service<EnvironmentParametersService>().getEnvironmentValueOrNull(JvmEnvironmentKeyRegistry.JDK_KEY)
+    val configuredJdk = service<EnvironmentService>().getEnvironmentValueOrNull(JvmEnvironmentKeyProvider.JDK_KEY)
     if (configuredJdk == null) {
       println("Environment does not provide configured JDK")
       return

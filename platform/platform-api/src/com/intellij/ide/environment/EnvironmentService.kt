@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  * the environment should contain the answers to all possible cases where normally a user action would be required.
  */
 @ApiStatus.Experimental
-interface EnvironmentParametersService {
+interface EnvironmentService {
 
   /**
    * Retrieves a value from the environment.
@@ -25,11 +25,11 @@ interface EnvironmentParametersService {
    * The supposed workflow is sketched in the following snippet:
    * ```
    * suspend fun requestUserDecision() : ChoiceData {
-   *   val value = service<EnvironmentParametersService>.getEnvironmentValue(MY_AWESOME_KEY)
+   *   val value = service<EnvironmentService>.getEnvironmentValue(MY_AWESOME_KEY)
    *   // if we are in a headless environment and we have no value for a key,
    *   // then the next line will not be executed because of an exception
    *   if (value != null) {
-   *     return value
+   *     return ChoiceData.ofString(value)
    *   }
    *   return showModalDialogAndGetValue()
    * }

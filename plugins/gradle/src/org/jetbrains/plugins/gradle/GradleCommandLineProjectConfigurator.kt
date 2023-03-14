@@ -6,8 +6,8 @@ import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.ide.environment.EnvironmentParametersService
-import com.intellij.ide.impl.ProjectOpenKeyRegistry
+import com.intellij.ide.environment.EnvironmentService
+import com.intellij.ide.impl.ProjectOpenKeyProvider
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -61,8 +61,8 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
 
   override fun configureProject(project: Project, context: ConfiguratorContext) {
     val basePath = project.basePath ?: return
-    val service = service<EnvironmentParametersService>()
-    val projectSelectionKey = runBlockingCancellable { service.getEnvironmentValueOrNull(ProjectOpenKeyRegistry.PROJECT_OPEN_PROCESSOR) }
+    val service = service<EnvironmentService>()
+    val projectSelectionKey = runBlockingCancellable { service.getEnvironmentValueOrNull(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR) }
     if (projectSelectionKey != null && projectSelectionKey != "Gradle") {
        // something else was selected to open the project
       return

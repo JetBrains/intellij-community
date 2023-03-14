@@ -759,7 +759,7 @@
     <javaExpressionSurrounder implementation="com.intellij.debugger.codeinsight.JavaWithRuntimeCastSurrounder"/>
 
     <warmupConfigurator implementation="com.intellij.ide.warmup.JdkWarmupConfigurator"/>
-    <environmentKeyRegistry implementation="com.intellij.execution.environment.JvmEnvironmentKeyRegistry"/>
+    <environmentKeyProvider implementation="com.intellij.execution.environment.JvmEnvironmentKeyProvider"/>
 
     <exceptionFilter implementation="com.intellij.execution.filters.ExceptionBaseFilterFactory"/>
     <exceptionFilter implementation="com.intellij.execution.filters.ExceptionExFilterFactory"/>

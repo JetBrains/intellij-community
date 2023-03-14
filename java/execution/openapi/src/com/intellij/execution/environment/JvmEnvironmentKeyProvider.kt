@@ -2,14 +2,14 @@
 package com.intellij.execution.environment
 
 import com.intellij.ide.environment.EnvironmentKey
-import com.intellij.ide.environment.EnvironmentKeyRegistry
+import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.java.JavaBundle
 import com.intellij.openapi.project.Project
 
-class JvmEnvironmentKeyRegistry : EnvironmentKeyRegistry {
+class JvmEnvironmentKeyProvider : EnvironmentKeyProvider {
 
   companion object {
-    val JDK_KEY = EnvironmentKey.createKey("project.jdk", JavaBundle.messagePointer("environment.key.description.project.jdk"))
+    val JDK_KEY = EnvironmentKey.create("project.jdk", JavaBundle.messagePointer("environment.key.description.project.jdk"))
   }
   override fun getAllKeys(): List<EnvironmentKey> = listOf(JDK_KEY)
 

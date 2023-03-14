@@ -633,7 +633,7 @@
     <extensionPoint name="highlightInfoPostFilter" interface="com.intellij.codeInsight.daemon.impl.HighlightInfoPostFilter" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint name="internalHighlightingLayerSupplier" interface="com.intellij.codeInsight.daemon.impl.InternalLayerSupplier" dynamic="true"/>
     <extensionPoint name="commandLineInspectionProjectConfigurator" interface="com.intellij.ide.CommandLineInspectionProjectConfigurator" dynamic="true"/>
-    <extensionPoint name="environmentKeyRegistry" interface="com.intellij.ide.environment.EnvironmentKeyRegistry" dynamic="true"/>
+    <extensionPoint name="environmentKeyProvider" interface="com.intellij.ide.environment.EnvironmentKeyProvider" dynamic="true"/>
 
     <extensionPoint name="fileTypeStatisticProvider" interface="com.intellij.internal.statistic.fileTypes.FileTypeStatisticProvider" dynamic="true"/>
     <extensionPoint name="lang.directNavigationProvider" dynamic="true" interface="com.intellij.navigation.DirectNavigationProvider"/>

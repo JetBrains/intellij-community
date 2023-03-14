@@ -48,9 +48,9 @@
     <applicationService serviceInterface="com.intellij.ide.ui.ThemesListProvider"
                         serviceImplementation="com.intellij.ide.ui.laf.ThemesListProviderImpl"/>
 
-    <applicationService serviceInterface="com.intellij.ide.environment.EnvironmentParametersService"
-                        serviceImplementation="com.intellij.ide.environment.impl.DefaultEnvironmentParametersService"
-                        headlessImplementation="com.intellij.ide.environment.impl.HeadlessEnvironmentParametersService"/>
+    <applicationService serviceInterface="com.intellij.ide.environment.EnvironmentService"
+                        serviceImplementation="com.intellij.ide.environment.impl.DefaultEnvironmentService"
+                        headlessImplementation="com.intellij.ide.environment.impl.HeadlessEnvironmentService"/>
 
     <applicationService serviceInterface="com.intellij.openapi.wm.WindowManager"
                         serviceImplementation="com.intellij.openapi.wm.impl.WindowManagerImpl"

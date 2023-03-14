@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import com.intellij.ide.environment.EnvironmentKey
-import com.intellij.ide.environment.EnvironmentKeyRegistry
+import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
@@ -65,7 +65,7 @@ class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
 
 private suspend fun generateKeyConfig(generateDescriptions: Boolean, configuration: EnvironmentConfiguration): ByteArray {
   val environmentKeys = blockingContext {
-    EnvironmentKeyRegistry.EP_NAME.extensionList.flatMap { it.getAllKeys() }
+    EnvironmentKeyProvider.EP_NAME.extensionList.flatMap { it.getAllKeys() }
   }.sortedBy(EnvironmentKey::id)
 
   val byteStream = ByteArrayOutputStream()

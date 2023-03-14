@@ -2,13 +2,13 @@
 package com.intellij.ide.impl
 
 import com.intellij.ide.environment.EnvironmentKey
-import com.intellij.ide.environment.EnvironmentKeyRegistry
+import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 
-class ProjectOpenKeyRegistry : EnvironmentKeyRegistry {
+class ProjectOpenKeyProvider : EnvironmentKeyProvider {
   companion object {
-    val PROJECT_OPEN_PROCESSOR = EnvironmentKey.createKey("project.open.type", ProjectBundle.messagePointer("project.open.processor.environment.property"))
+    val PROJECT_OPEN_PROCESSOR: EnvironmentKey = EnvironmentKey.create("project.open.type", ProjectBundle.messagePointer("project.open.processor.environment.property"))
   }
 
   override suspend fun getRequiredKeys(project: Project): List<EnvironmentKey> = listOf()

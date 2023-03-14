@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.environment
 
-import com.intellij.ide.environment.EnvironmentKey.Companion.createKey
+import com.intellij.ide.environment.EnvironmentKey.Companion.create
 import com.intellij.openapi.util.NlsContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -9,10 +9,10 @@ import java.util.function.Supplier
 
 /**
  * Represents a key for a value defined in user environment.
- * The preferable way to work with this class is to store its instances in a static field after calling [createKey].
+ * The preferable way to work with this class is to store its instances in a static field after calling [create].
  *
- * To get a value for a key, use [EnvironmentParametersService].
- * **Note**: every key must be registered in some [EnvironmentKeyRegistry].
+ * To get a value for a key, use [EnvironmentService].
+ * **Note**: every key must be registered in some [EnvironmentKeyProvider].
  */
 sealed interface EnvironmentKey {
 
@@ -30,7 +30,7 @@ sealed interface EnvironmentKey {
   /**
    * The default value for a key.
    * If [defaultValue] for a key is empty, then the key has **no** default value,
-   * and [EnvironmentParametersService.requestEnvironmentValue] enters in its error handling state.
+   * and [EnvironmentService.requestEnvironmentValue] enters in its error handling state.
    */
   val defaultValue: @NonNls String
 
@@ -38,7 +38,7 @@ sealed interface EnvironmentKey {
 
     @JvmStatic
     @JvmOverloads
-    fun createKey(id: @NonNls String, description: Supplier<@EnvironmentKeyDescription String>, defaultValue: @NonNls String = ""): EnvironmentKey {
+    fun create(id: @NonNls String, description: Supplier<@EnvironmentKeyDescription String>, defaultValue: @NonNls String = ""): EnvironmentKey {
       return EnvironmentKeyImpl(id, description, defaultValue)
     }
 

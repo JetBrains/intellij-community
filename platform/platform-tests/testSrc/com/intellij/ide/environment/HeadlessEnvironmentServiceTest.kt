@@ -3,7 +3,7 @@ package com.intellij.ide.environment
 
 import com.intellij.ide.environment.impl.EnvironmentKeyStubGenerator
 import com.intellij.ide.environment.impl.EnvironmentUtil
-import com.intellij.ide.environment.impl.HeadlessEnvironmentParametersService
+import com.intellij.ide.environment.impl.HeadlessEnvironmentService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
@@ -18,29 +18,28 @@ import com.intellij.testFramework.replaceService
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import junit.framework.TestCase
-import junit.framework.TestCase.*
 import kotlinx.coroutines.*
 import java.nio.file.Path
 import kotlin.io.path.deleteIfExists
 
-class HeadlessEnvironmentParametersServiceTest : LightPlatformTestCase() {
+class HeadlessEnvironmentServiceTest : LightPlatformTestCase() {
 
   private val configurationFilePath : Path
     get() = Path.of(project.basePath!! + "/environmentKeys.json")
 
   private suspend fun getExistingKey(key: EnvironmentKey): String {
-    val value1 = service<EnvironmentParametersService>().requestEnvironmentValue(key)
-    val value2 = service<EnvironmentParametersService>().getEnvironmentValueOrNull(key)
+    val value1 = service<EnvironmentService>().requestEnvironmentValue(key)
+    val value2 = service<EnvironmentService>().getEnvironmentValueOrNull(key)
     TestCase.assertEquals(value1!!, value2)
     return value1
   }
 
   private fun runTestWithMaskedServices(action: suspend () -> Unit) {
-    ExtensionTestUtil.maskExtensions(EnvironmentKeyRegistry.EP_NAME, listOf(TestKeyRegistry()), testRootDisposable)
+    ExtensionTestUtil.maskExtensions(EnvironmentKeyProvider.EP_NAME, listOf(TestKeyProvider()), testRootDisposable)
     runBlocking {
       val job = SupervisorJob()
-      val service = HeadlessEnvironmentParametersService(CoroutineScope(coroutineContext + job))
-      ApplicationManager.getApplication().replaceService(EnvironmentParametersService::class.java, service, testRootDisposable)
+      val service = HeadlessEnvironmentService(CoroutineScope(coroutineContext + job))
+      ApplicationManager.getApplication().replaceService(EnvironmentService::class.java, service, testRootDisposable)
       action()
       job.cancel()
     }
@@ -116,10 +115,10 @@ class HeadlessEnvironmentParametersServiceTest : LightPlatformTestCase() {
 
   fun testAbsentKey() = runTestWithValues(null, null) {
     try {
-      assertNull(service<EnvironmentParametersService>().getEnvironmentValueOrNull(dummyKey))
-      service<EnvironmentParametersService>().requestEnvironmentValue(dummyKey)
+      assertNull(service<EnvironmentService>().getEnvironmentValueOrNull(dummyKey))
+      service<EnvironmentService>().requestEnvironmentValue(dummyKey)
       fail("should throw")
-    } catch (e : HeadlessEnvironmentParametersService.MissingEnvironmentKeyException) {
+    } catch (e : HeadlessEnvironmentService.MissingEnvironmentKeyException) {
       // ignored
     }
   }
@@ -136,19 +135,19 @@ class HeadlessEnvironmentParametersServiceTest : LightPlatformTestCase() {
 
   fun testUnknownKey() = runTestWithValues(null, null) {
     try {
-      assertNull(service<EnvironmentParametersService>().getEnvironmentValueOrNull(dummyKey))
-      service<EnvironmentParametersService>().requestEnvironmentValue(notRegisteredDummyKey)
+      assertNull(service<EnvironmentService>().getEnvironmentValueOrNull(dummyKey))
+      service<EnvironmentService>().requestEnvironmentValue(notRegisteredDummyKey)
       // the warning in log is intentional
       fail("should throw")
-    } catch (e : HeadlessEnvironmentParametersService.MissingEnvironmentKeyException) {
+    } catch (e : HeadlessEnvironmentService.MissingEnvironmentKeyException) {
       // ignored
     }
   }
 }
 
-private val dummyKey: EnvironmentKey = EnvironmentKey.createKey("my.dummy.test.key", { "My dummy test key\nWith a long description" })
-private val notRegisteredDummyKey: EnvironmentKey = EnvironmentKey.createKey("not.registered.dummy.key", { "My dummy test key" })
-private val dummyKeyWithDefaultValue: EnvironmentKey = EnvironmentKey.createKey("my.dummy.test.key.with.default.value", { "My dummy test key with default value"}, "Foo")
+private val dummyKey: EnvironmentKey = EnvironmentKey.create("my.dummy.test.key", { "My dummy test key\nWith a long description" })
+private val notRegisteredDummyKey: EnvironmentKey = EnvironmentKey.create("not.registered.dummy.key", { "My dummy test key" })
+private val dummyKeyWithDefaultValue: EnvironmentKey = EnvironmentKey.create("my.dummy.test.key.with.default.value", { "My dummy test key with default value"}, "Foo")
 
 fun getJsonContents(value1: String?, value2: String?) : String =
 """[
@@ -169,7 +168,7 @@ fun getJsonContents(value1: String?, value2: String?) : String =
   }
 ]"""
 
-private class TestKeyRegistry : EnvironmentKeyRegistry {
+private class TestKeyProvider : EnvironmentKeyProvider {
 
   override fun getAllKeys(): List<EnvironmentKey> = listOf(
     dummyKey,

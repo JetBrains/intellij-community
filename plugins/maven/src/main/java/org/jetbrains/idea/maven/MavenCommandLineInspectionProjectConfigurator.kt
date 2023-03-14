@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven
 
 import com.intellij.build.BuildProgressListener
@@ -8,8 +8,8 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.OutputBuildEvent
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
-import com.intellij.ide.environment.EnvironmentParametersService
-import com.intellij.ide.impl.ProjectOpenKeyRegistry
+import com.intellij.ide.environment.EnvironmentService
+import com.intellij.ide.impl.ProjectOpenKeyProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
@@ -70,8 +70,8 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     val pomXmlFile = basePath + "/" + MavenConstants.POM_XML
     if (FileUtil.findFirstThatExist(pomXmlFile) == null) return
 
-    val service = service<EnvironmentParametersService>()
-    val projectSelectionKey = runBlockingCancellable { service.getEnvironmentValueOrNull(ProjectOpenKeyRegistry.PROJECT_OPEN_PROCESSOR) }
+    val service = service<EnvironmentService>()
+    val projectSelectionKey = runBlockingCancellable { service.getEnvironmentValueOrNull(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR) }
     if (projectSelectionKey != null && projectSelectionKey != "Maven") {
       // something else was selected to open the project
       return

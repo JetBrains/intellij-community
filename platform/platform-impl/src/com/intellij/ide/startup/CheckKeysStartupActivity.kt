@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup
 
-import com.intellij.ide.environment.EnvironmentKeyRegistry
-import com.intellij.ide.environment.EnvironmentParametersService
-import com.intellij.ide.environment.impl.HeadlessEnvironmentParametersService
+import com.intellij.ide.environment.EnvironmentKeyProvider
+import com.intellij.ide.environment.EnvironmentService
+import com.intellij.ide.environment.impl.HeadlessEnvironmentService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -17,15 +17,15 @@ class CheckKeysStartupActivity : ProjectActivity {
       return
     }
 
-    val environmentService = blockingContext { service<EnvironmentParametersService>() }
+    val environmentService = blockingContext { service<EnvironmentService>() }
     val messageBuilder = StringBuilder()
     var exceptionOccurred = false
-    for (registry in blockingContext { EnvironmentKeyRegistry.EP_NAME.extensionList }) {
+    for (registry in blockingContext { EnvironmentKeyProvider.EP_NAME.extensionList }) {
       for (requiredKey in registry.getRequiredKeys(project)) {
         val value = environmentService.getEnvironmentValueOrNull(requiredKey)
         if (value == null) {
           exceptionOccurred = true
-          messageBuilder.appendLine(HeadlessEnvironmentParametersService.MissingEnvironmentKeyException(requiredKey).message)
+          messageBuilder.appendLine(HeadlessEnvironmentService.MissingEnvironmentKeyException(requiredKey).message)
         }
       }
     }

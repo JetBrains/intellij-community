@@ -4,7 +4,7 @@ package com.intellij.ide.environment.impl
 import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.openapi.application.ApplicationManager
 
-class DefaultEnvironmentParametersService : BaseEnvironmentParametersService() {
+class DefaultEnvironmentService : BaseEnvironmentService() {
 
   override suspend fun requestEnvironmentValue(key: EnvironmentKey): String? {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
