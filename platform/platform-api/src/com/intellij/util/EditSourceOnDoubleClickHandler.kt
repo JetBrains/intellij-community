@@ -1,186 +1,183 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util;
+package com.intellij.util
 
-import com.intellij.ide.DataManager;
-import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.pom.Navigatable;
-import com.intellij.ui.DoubleClickListener;
-import com.intellij.ui.treeStructure.treetable.TreeTable;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.ExpandOnDoubleClick;
-import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.DataManager
+import com.intellij.ide.util.treeView.NodeDescriptor
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.util.Key
+import com.intellij.ui.ClientProperty
+import com.intellij.ui.DoubleClickListener
+import com.intellij.ui.treeStructure.treetable.TreeTable
+import com.intellij.util.ui.tree.ExpandOnDoubleClick
+import com.intellij.util.ui.tree.TreeUtil
+import java.awt.Component
+import java.awt.event.MouseEvent
+import javax.swing.JList
+import javax.swing.JTable
+import javax.swing.JTree
+import javax.swing.SwingUtilities
+import javax.swing.tree.TreePath
 
-import javax.swing.*;
-import javax.swing.tree.TreeModel;
-import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.awt.event.MouseEvent;
+object EditSourceOnDoubleClickHandler {
+  private val INSTALLED = Key.create<Boolean>("EditSourceOnDoubleClickHandlerInstalled")
 
-public final class EditSourceOnDoubleClickHandler {
-  private static final Key<Boolean> INSTALLED = Key.create("EditSourceOnDoubleClickHandlerInstalled");
-
-  private EditSourceOnDoubleClickHandler() { }
-
-  public static void install(final JTree tree, @Nullable final Runnable whenPerformed) {
-    new TreeMouseListener(tree, whenPerformed).installOn(tree);
+  @JvmOverloads
+  @JvmStatic
+  fun install(tree: JTree, whenPerformed: Runnable? = null) {
+    TreeMouseListener(tree, whenPerformed).installOn(tree)
   }
 
-  public static void install(final JTree tree) {
-    install(tree, null);
-  }
-
-  public static void install(final TreeTable treeTable) {
-    new DoubleClickListener() {
-      @Override
-      protected boolean onDoubleClick(@NotNull MouseEvent e) {
-        if (ModalityState.current().dominates(ModalityState.NON_MODAL)) return false;
-        if (treeTable.getTree().getPathForLocation(e.getX(), e.getY()) == null) return false;
-        DataContext dataContext = DataManager.getInstance().getDataContext(treeTable);
-        Project project = CommonDataKeys.PROJECT.getData(dataContext);
-        if (project == null) return false;
-        OpenSourceUtil.openSourcesFrom(dataContext, true);
-        return true;
-      }
-    }.installOn(treeTable);
-  }
-
-  public static void install(final JTable table) {
-    new DoubleClickListener() {
-      @Override
-      protected boolean onDoubleClick(@NotNull MouseEvent e) {
-        if (ModalityState.current().dominates(ModalityState.NON_MODAL)) return false;
-        if (table.columnAtPoint(e.getPoint()) < 0) return false;
-        if (table.rowAtPoint(e.getPoint()) < 0) return false;
-        DataContext dataContext = DataManager.getInstance().getDataContext(table);
-        Project project = CommonDataKeys.PROJECT.getData(dataContext);
-        if (project == null) return false;
-        OpenSourceUtil.openSourcesFrom(dataContext, true);
-        return true;
-      }
-    }.installOn(table);
-  }
-
-  public static void install(@NotNull JList list) {
-    install(list, null);
-  }
-
-  public static void install(@NotNull JList list, @Nullable Runnable whenPerformed) {
-    new DoubleClickListener() {
-      @Override
-      protected boolean onDoubleClick(@NotNull MouseEvent e) {
-        Point point = e.getPoint();
-        int index = list.locationToIndex(point);
-        if (index == -1) return false;
-        if (!list.getCellBounds(index, index).contains(point)) return false;
-        DataContext dataContext = DataManager.getInstance().getDataContext(list);
-        OpenSourceUtil.openSourcesFrom(dataContext, true);
-        if (whenPerformed != null) {
-          whenPerformed.run();
+  @JvmStatic
+  fun install(treeTable: TreeTable) {
+    object : DoubleClickListener() {
+      override fun onDoubleClick(e: MouseEvent): Boolean {
+        if (ModalityState.current().dominates(ModalityState.NON_MODAL) || treeTable.tree.getPathForLocation(e.x, e.y) == null) {
+          return false
         }
-        return true;
+
+        val dataContext = DataManager.getInstance().getDataContext(treeTable)
+        CommonDataKeys.PROJECT.getData(dataContext) ?: return false
+        OpenSourceUtil.openSourcesFrom(dataContext, true)
+        return true
       }
-    }.installOn(list);
+    }.installOn(treeTable)
   }
 
-  public static boolean isToggleEvent(@NotNull JTree tree, @NotNull MouseEvent e) {
-    if (!SwingUtilities.isLeftMouseButton(e)) return false;
-    int count = tree.getToggleClickCount();
-    if (count <= 0 || e.getClickCount() % count != 0) return false;
-    return isExpandPreferable(tree, tree.getSelectionPath());
+  @JvmStatic
+  fun install(table: JTable) {
+    object : DoubleClickListener() {
+      override fun onDoubleClick(e: MouseEvent): Boolean {
+        if (ModalityState.current().dominates(ModalityState.NON_MODAL) ||
+            table.columnAtPoint(e.point) < 0 ||
+            table.rowAtPoint(e.point) < 0) {
+          return false
+        }
+
+        val dataContext = DataManager.getInstance().getDataContext(table)
+        CommonDataKeys.PROJECT.getData(dataContext) ?: return false
+        OpenSourceUtil.openSourcesFrom(dataContext, true)
+        return true
+      }
+    }.installOn(table)
+  }
+
+  @JvmOverloads
+  @JvmStatic
+  fun install(list: JList<*>, whenPerformed: Runnable? = null) {
+    object : DoubleClickListener() {
+      override fun onDoubleClick(e: MouseEvent): Boolean {
+        val point = e.point
+        val index = list.locationToIndex(point)
+        if (index == -1 || !list.getCellBounds(index, index).contains(point)) {
+          return false
+        }
+
+        val dataContext = DataManager.getInstance().getDataContext(list)
+        OpenSourceUtil.openSourcesFrom(dataContext, true)
+        whenPerformed?.run()
+        return true
+      }
+    }.installOn(list)
+  }
+
+  @JvmStatic
+  fun isToggleEvent(tree: JTree, e: MouseEvent): Boolean {
+    if (!SwingUtilities.isLeftMouseButton(e)) {
+      return false
+    }
+
+    val count = tree.toggleClickCount
+    if (count <= 0 || e.clickCount % count != 0) {
+      return false
+    }
+    else {
+      return isExpandPreferable(tree, tree.selectionPath)
+    }
   }
 
   /**
-   * @return {@code true} to expand/collapse the node, {@code false} to navigate to source if possible
+   * @return `true` to expand/collapse the node, `false` to navigate to source if possible
    */
-  public static boolean isExpandPreferable(@NotNull JTree tree, @Nullable TreePath path) {
-    if (path == null) return false; // path is not specified
+  @JvmStatic
+  fun isExpandPreferable(tree: JTree, path: TreePath?): Boolean {
+    if (path == null) {
+      // path is not specified
+      return false
+    }
 
-    ExpandOnDoubleClick behavior = ExpandOnDoubleClick.getBehavior(tree);
-    if (behavior == ExpandOnDoubleClick.NEVER) return false; // disable expand/collapse
+    val behavior = ExpandOnDoubleClick.getBehavior(tree)
+    if (behavior == ExpandOnDoubleClick.NEVER) {
+      // disable expand/collapse
+      return false
+    }
 
-    TreeModel model = tree.getModel();
-    if (model == null || model.isLeaf(path.getLastPathComponent())) return false;
-    if (!UIUtil.isClientPropertyTrue(tree, INSTALLED)) return true; // expand by default if handler is not installed
+    val model = tree.model
+    if (model == null || model.isLeaf(path.lastPathComponent)) {
+      return false
+    }
+
+    if (!ClientProperty.isTrue(tree, INSTALLED)) {
+      // expand by default if handler is not installed
+      return true
+    }
 
     // navigate to source is preferred if the tree provides a navigatable object for the given path
     if (behavior == ExpandOnDoubleClick.NAVIGATABLE) {
-      Navigatable navigatable = TreeUtil.getNavigatable(tree, path);
-      if (navigatable != null && navigatable.canNavigateToSource()) return false;
+      val navigatable = TreeUtil.getNavigatable(tree, path)
+      if (navigatable != null && navigatable.canNavigateToSource()) {
+        return false
+      }
     }
-    if (behavior == ExpandOnDoubleClick.ALWAYS) return true;
+
+    if (behavior == ExpandOnDoubleClick.ALWAYS) {
+      return true
+    }
+
     // for backward compatibility
-    NodeDescriptor<?> descriptor = TreeUtil.getLastUserObject(NodeDescriptor.class, path);
-    return descriptor == null || descriptor.expandOnDoubleClick();
+    val descriptor = TreeUtil.getLastUserObject(NodeDescriptor::class.java, path)
+    return descriptor == null || descriptor.expandOnDoubleClick()
   }
 
-  public static class TreeMouseListener extends DoubleClickListener {
-    private final JTree myTree;
-    @Nullable private final Runnable myWhenPerformed;
-
-    public TreeMouseListener(final JTree tree) {
-      this(tree, null);
+  open class TreeMouseListener @JvmOverloads constructor(private val tree: JTree,
+                                                         private val whenPerformed: Runnable? = null) : DoubleClickListener() {
+    override fun installOn(c: Component, allowDragWhileClicking: Boolean) {
+      super.installOn(c, allowDragWhileClicking)
+      tree.putClientProperty(INSTALLED, true)
     }
 
-    public TreeMouseListener(final JTree tree, @Nullable final Runnable whenPerformed) {
-      myTree = tree;
-      myWhenPerformed = whenPerformed;
+    override fun uninstall(c: Component) {
+      super.uninstall(c)
+      tree.putClientProperty(INSTALLED, null)
     }
 
-    @Override
-    public void installOn(@NotNull Component c, boolean allowDragWhileClicking) {
-      super.installOn(c, allowDragWhileClicking);
-      myTree.putClientProperty(INSTALLED, true);
+    public override fun onDoubleClick(e: MouseEvent): Boolean {
+      @Suppress("DEPRECATION")
+      val clickPath = (if (com.intellij.util.ui.tree.WideSelectionTreeUI.isWideSelection(tree)) {
+        tree.getClosestPathForLocation(e.x, e.y)
+      }
+      else {
+        tree.getPathForLocation(e.x, e.y)
+      }) ?: return false
+      val dataContext = DataManager.getInstance().getDataContext(tree)
+      CommonDataKeys.PROJECT.getData(dataContext) ?: return false
+      val selectionPath = tree.selectionPath
+      if (clickPath != selectionPath) {
+        return false
+      }
+
+      // node expansion for non-leafs has a higher priority
+      if (isToggleEvent(tree, e)) {
+        return false
+      }
+      processDoubleClick(e = e, dataContext = dataContext, treePath = selectionPath)
+      return true
     }
 
-    @Override
-    public void uninstall(Component c) {
-      super.uninstall(c);
-      myTree.putClientProperty(INSTALLED, null);
-    }
-
-    @Override
-    public boolean onDoubleClick(@NotNull MouseEvent e) {
-      TreePath clickPath = WideSelectionTreeUI.isWideSelection(myTree)
-                           ? myTree.getClosestPathForLocation(e.getX(), e.getY())
-                           : myTree.getPathForLocation(e.getX(), e.getY());
-      if (clickPath == null) {
-        return false;
-      }
-
-      DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-      Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      if (project == null) {
-        return false;
-      }
-
-      TreePath selectionPath = myTree.getSelectionPath();
-      if (!clickPath.equals(selectionPath)) {
-        return false;
-      }
-
-      //Node expansion for non-leafs has a higher priority
-      if (isToggleEvent(myTree, e)) {
-        return false;
-      }
-
-      processDoubleClick(e, dataContext, selectionPath);
-      return true;
-    }
-
-    @SuppressWarnings("UnusedParameters")
-    protected void processDoubleClick(@NotNull MouseEvent e, @NotNull DataContext dataContext, @NotNull TreePath treePath) {
-      OpenSourceUtil.openSourcesFrom(dataContext, true);
-      if (myWhenPerformed != null) {
-        myWhenPerformed.run();
-      }
+    protected open fun processDoubleClick(e: MouseEvent, dataContext: DataContext, treePath: TreePath) {
+      OpenSourceUtil.openSourcesFrom(dataContext, true)
+      whenPerformed?.run()
     }
   }
 }
