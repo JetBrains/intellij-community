@@ -191,7 +191,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
 
     when (cell) {
       is CellImpl<*> -> {
-        val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component, spacingConfiguration)
+        val gaps = cell.customUnscaledGaps ?: getComponentGaps(leftGap, rightGap, cell.component, spacingConfiguration)
         builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
                      resizableColumn = cell.resizableColumn,
                      gaps = gaps, visualPaddings = prepareVisualPaddings(cell.viewComponent),
@@ -199,7 +199,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       }
       is PanelImpl -> {
         // todo visualPaddings
-        val gaps = cell.customGaps ?: Gaps(left = leftGap, right = rightGap)
+        val gaps = cell.customUnscaledGaps ?: UnscaledGaps(left = leftGap, right = rightGap)
         val subGrid = builder.subGrid(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
                                       resizableColumn = cell.resizableColumn, gaps = gaps)
 
@@ -207,7 +207,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
         subBuilder.build()
       }
       is PlaceholderBaseImpl -> {
-        val gaps = cell.customGaps ?: Gaps(left = leftGap, right = rightGap)
+        val gaps = cell.customUnscaledGaps ?: UnscaledGaps(left = leftGap, right = rightGap)
         if (cell.resizableColumn) {
           builder.addResizableColumn()
         }

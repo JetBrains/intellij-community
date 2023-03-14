@@ -13,9 +13,7 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.DslLabel
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.validation.CellValidation
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.map2Array
@@ -353,7 +351,13 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
+  @Deprecated("Use customize(UnscaledGaps) instead")
   override fun customize(customGaps: Gaps): CellImpl<T> {
+    super.customize(customGaps.toUnscaled())
+    return this
+  }
+
+  override fun customize(customGaps: UnscaledGaps): CellImpl<T> {
     super.customize(customGaps)
     return this
   }

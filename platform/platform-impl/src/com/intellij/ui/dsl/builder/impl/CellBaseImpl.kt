@@ -4,9 +4,7 @@ package com.intellij.ui.dsl.builder.impl
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.whenPropertyChanged
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.ComponentPredicate
 import org.jetbrains.annotations.ApiStatus
 
@@ -25,8 +23,14 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
   var rightGap: RightGap? = null
     private set
 
-  var customGaps: Gaps? = null
-    private set
+  @Deprecated("Use unscaledGaps instead")
+  var customGaps: Gaps?
+    private set(value) {
+      customUnscaledGaps = value?.toUnscaled()
+    }
+    get() = Gaps.fromUnscaled(customUnscaledGaps)
+
+  var customUnscaledGaps: UnscaledGaps? = null
 
   abstract fun visibleFromParent(parentVisible: Boolean)
 
@@ -95,8 +99,14 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
     return this
   }
 
+  @Deprecated("Use customize(UnscaledGaps) instead")
   override fun customize(customGaps: Gaps): CellBase<T> {
-    this.customGaps = customGaps
+    this.customUnscaledGaps = customGaps.toUnscaled()
+    return this
+  }
+
+  override fun customize(customGaps: UnscaledGaps): CellBase<T> {
+    this.customUnscaledGaps = customGaps
     return this
   }
 

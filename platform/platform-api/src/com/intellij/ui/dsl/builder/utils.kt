@@ -25,7 +25,7 @@ enum class DslComponentProperty {
   /**
    * Custom visual paddings, which are used instead of [JComponent.getInsets]
    *
-   * Value: [com.intellij.ui.dsl.gridLayout.Gaps]
+   * Value: [com.intellij.ui.dsl.gridLayout.UnscaledGaps]
    */
   VISUAL_PADDINGS,
 
