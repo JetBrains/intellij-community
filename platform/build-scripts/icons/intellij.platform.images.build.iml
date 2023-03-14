@@ -20,7 +20,6 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="commons-imaging" level="project" />
-    <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" scope="PROVIDED" />
     <orderEntry type="library" name="okhttp" level="project" />
