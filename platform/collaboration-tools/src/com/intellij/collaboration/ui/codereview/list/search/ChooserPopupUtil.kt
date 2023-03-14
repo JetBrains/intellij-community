@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
+import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -41,6 +42,7 @@ object ChooserPopupUtil {
       .setFilterAlwaysVisible(true)
       .createPopup()
 
+    tuneSearchField(popup)
     popupState.prepareToShow(popup)
     return popup.showAndAwaitSubmission(list, point)
   }
@@ -62,6 +64,7 @@ object ChooserPopupUtil {
       .addListener(loadingListener)
       .createPopup()
 
+    tuneSearchField(popup)
     popupState.prepareToShow(popup)
     return popup.showAndAwaitSubmission(list, point)
   }
@@ -191,5 +194,11 @@ object ChooserPopupUtil {
       // ColoredListCellRenderer sets null for a background in case of !selected, so it can't work with SelectablePanel
       if (!selected) background = list.background
     }
+  }
+
+  private fun tuneSearchField(popup: JBPopup) {
+    if (!ExperimentalUI.isNewUI()) return
+    val searchTextField = UIUtil.findComponentOfType(popup.content, SearchTextField::class.java) ?: return
+    AbstractPopup.customizeSearchFieldLook(searchTextField, true)
   }
 }

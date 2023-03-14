@@ -1367,31 +1367,35 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     };
     mySpeedSearchPatternField.getTextEditor().setFocusable(mySpeedSearchAlwaysShown);
+    customizeSearchFieldLook(mySpeedSearchPatternField, mySpeedSearchAlwaysShown);
 
-    JBTextField textField = mySpeedSearchPatternField.getTextEditor();
+    if (mySpeedSearchAlwaysShown) {
+      setHeaderComponent(mySpeedSearchPatternField);
+    }
+  }
+
+  public static void customizeSearchFieldLook(@NotNull SearchTextField searchTextField, boolean isAlwaysShown) {
+    JBTextField textField = searchTextField.getTextEditor();
+
     if (ExperimentalUI.isNewUI()) {
-      mySpeedSearchPatternField.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
+      searchTextField.setBackground(JBUI.CurrentTheme.Popup.BACKGROUND);
       textField.setOpaque(false);
       textField.putClientProperty("TextFieldWithoutMargins", true);
       textField.putClientProperty(DarculaUIUtil.COMPACT_PROPERTY, true);
       textField.putClientProperty("TextField.NoMinHeightBounds", true);
       EmptyBorder outsideBorder = new EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldBorderInsets());
       Border lineBorder = JBUI.Borders.customLine(JBUI.CurrentTheme.Popup.separatorColor(), 0, 0, 1, 0);
-      mySpeedSearchPatternField.setBorder(JBUI.Borders.compound(outsideBorder, lineBorder,
+      searchTextField.setBorder(JBUI.Borders.compound(outsideBorder, lineBorder,
                                                                 new EmptyBorder(JBUI.CurrentTheme.Popup.searchFieldInputInsets())));
       textField.setBorder(JBUI.Borders.empty());
     } else {
-      if (mySpeedSearchAlwaysShown) {
-        mySpeedSearchPatternField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
+      if (isAlwaysShown) {
+        searchTextField.setBorder(JBUI.Borders.customLine(JBUI.CurrentTheme.BigPopup.searchFieldBorderColor(), 1, 0, 1, 0));
         textField.setBorder(JBUI.Borders.empty());
       }
     }
     if (SystemInfo.isMac) {
-      RelativeFont.TINY.install(mySpeedSearchPatternField);
-    }
-
-    if (mySpeedSearchAlwaysShown) {
-      setHeaderComponent(mySpeedSearchPatternField);
+      RelativeFont.TINY.install(searchTextField);
     }
   }
 
