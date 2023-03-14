@@ -73,7 +73,7 @@ public interface LibraryEx extends Library {
 
     LibraryProperties getProperties();
 
-    void setKind(@NotNull PersistentLibraryKind<?> type);
+    void setKind(@Nullable PersistentLibraryKind<?> type);
 
     PersistentLibraryKind<?> getKind();
 
