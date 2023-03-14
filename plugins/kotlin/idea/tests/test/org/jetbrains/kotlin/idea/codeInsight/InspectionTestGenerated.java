@@ -248,14 +248,14 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             runTest("testData/inspections/naming/localVariable/inspectionData/inspections.test");
         }
 
+        @TestMetadata("naming/objectOrTopLevelProperty/inspectionData/inspections.test")
+        public void testNaming_objectOrTopLevelProperty_inspectionData_Inspections_test() throws Exception {
+            runTest("testData/inspections/naming/objectOrTopLevelProperty/inspectionData/inspections.test");
+        }
+
         @TestMetadata("naming/objectPrivateProperty/inspectionData/inspections.test")
         public void testNaming_objectPrivateProperty_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspections/naming/objectPrivateProperty/inspectionData/inspections.test");
-        }
-
-        @TestMetadata("naming/objectProperty/inspectionData/inspections.test")
-        public void testNaming_objectProperty_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspections/naming/objectProperty/inspectionData/inspections.test");
         }
 
         @TestMetadata("naming/package/inspectionData/inspections.test")

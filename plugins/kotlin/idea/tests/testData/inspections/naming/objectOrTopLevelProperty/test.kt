@@ -6,6 +6,10 @@ private var FOO: Int = 0
 
 var _FOO: Int = 0
 
+private var _PRIVATE_FOO: Int = 0
+
+lateinit var `with bad symbols`: String
+
 const val THREE = 3
 
 val xyzzy = 1
@@ -23,6 +27,8 @@ object Foo {
     var FOO_BAR: Int = 0
 
     var _FOO: Int = 0
+
+    lateinit var `with bad symbols`: String
 }
 
 class D {
@@ -36,5 +42,9 @@ class D {
         val Foo: String = ""
 
         var FOO_BAR: Int = 0
+
+        var _FOO: Int = 0
+
+        lateinit var `with bad symbols`: String
     }
 }

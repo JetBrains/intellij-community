@@ -9,11 +9,13 @@ class ParameterImpl(
     val ctor_val: String,
     var ctor_var: String,
     ctor_param: String,
+    CtorParam: String,
 ): Parameter {
     override val interface_p2: String = ""
     fun foo(fun_param: String) {
         val local_val = 1
         val (destructured_val, _) = listOf(1, 2)
+        val `a b`: Int
     }
 }
 

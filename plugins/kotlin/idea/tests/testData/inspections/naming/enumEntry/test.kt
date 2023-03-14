@@ -10,4 +10,5 @@ enum class Foo {
     GoodName,
     _Foo,
     quuxDoo,
+    `With bad char`,
 }
