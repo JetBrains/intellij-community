@@ -223,5 +223,5 @@ public class XmlTextExtractor extends TextExtractor {
     }
   }
 
-  private enum TagKind { Block, Inline, Unknown }
+  protected enum TagKind { Block, Inline, Unknown }
 }
