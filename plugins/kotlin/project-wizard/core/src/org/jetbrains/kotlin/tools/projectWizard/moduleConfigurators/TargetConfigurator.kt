@@ -183,8 +183,10 @@ object JvmTargetConfigurator : JvmModuleConfigurator,
             val testFramework = inContextOfModuleConfigurator(module) { getTestFramework(module) }
             if (testFramework != KotlinTestFramework.NONE) {
                 testFramework.usePlatform?.let { usePlatform ->
-                    "testRuns[\"test\"].executionTask.configure" {
-                        +"$usePlatform()"
+                    "testRuns.named(\"test\")" {
+                        "executionTask.configure" {
+                            +"$usePlatform()"
+                        }
                     }
                 }
             }
