@@ -70,7 +70,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     else {
       myWarningText = null;
     }
-    return myErrorText != null;
+    return myErrorText == null;
   }
 
   private @Nullable @NlsContexts.DetailedDescription String checkForErrors(String inputString) {
