@@ -50,31 +50,13 @@ internal data class WebSymbolCodeCompletionItemImpl(override val name: String,
           it.withPresentableText(displayName)
         else it
       }
-      .let {
-        if (completeAfterInsert) {
-          it.withInsertHandler { insertionContext, _ ->
-            insertionContext.setLaterRunnable {
-              CodeCompletionHandlerBase(CompletionType.BASIC)
-                .invokeCompletion(parameters.originalFile.project, parameters.editor)
-            }
-          }
-        }
-        else if (completeAfterChars.isNotEmpty()) {
-          it.withInsertHandler { insertionContext, completionItem ->
-            if (completeAfterChars.contains(insertionContext.completionChar)) {
-              insertionContext.setLaterRunnable {
-                CodeCompletionHandlerBase(CompletionType.BASIC)
-                  .invokeCompletion(parameters.originalFile.project, parameters.editor)
-              }
-            }
-            else {
-              insertHandler?.prepare(insertionContext, completionItem)?.run()
-            }
-          }
-        }
-        else {
-          it.withInsertHandler { insertionContext, completionItem ->
-            insertHandler?.prepare(insertionContext, completionItem)?.run()
+      .withInsertHandler { insertionContext, completionItem ->
+        val invokeCompletion = completeAfterInsert || completeAfterChars.contains(insertionContext.completionChar)
+        insertHandler?.prepare(insertionContext, completionItem, invokeCompletion)?.run()
+        if (invokeCompletion) {
+          insertionContext.setLaterRunnable {
+            CodeCompletionHandlerBase(CompletionType.BASIC)
+              .invokeCompletion(parameters.originalFile.project, parameters.editor)
           }
         }
       }.let {
