@@ -84,18 +84,18 @@ class TerminalCompletionContributor : CompletionContributor() {
           }
           context.addedText.append(text)
           context.cursorY = model.cursorY
-          val parsingResult = parseCompletionItems(allText, context)
-          if (parsingResult.isSingleItem) {
-            future.complete(CompletionResult(parsingResult.items.single()))
+          val items = parseCompletionItems(allText, context)
+          if (items.size == 1) {
+            future.complete(CompletionResult(items.single()))
           }
-          else if (parsingResult.items.isNotEmpty()) {
-            future.complete(CompletionResult(parsingResult.items, parsingResult.newPromptShown))
+          else if (items.isNotEmpty()) {
+            future.complete(CompletionResult(items))
           }
         }
       }, listenerDisposable)
 
       Alarm(Alarm.ThreadToUse.POOLED_THREAD, listenerDisposable).addRequest(Runnable {
-        future.complete(CompletionResult(emptyList(), newPromptShown = false))
+        future.complete(CompletionResult())
       }, timeoutMillis)
 
       completionManager.invokeCompletion(command)
@@ -104,32 +104,29 @@ class TerminalCompletionContributor : CompletionContributor() {
     finally {
       Disposer.dispose(listenerDisposable)
       if (!future.isDone) {
-        future.complete(CompletionResult(emptyList(), false))
+        future.complete(CompletionResult())
       }
       ApplicationManager.getApplication().executeOnPooledThread {
         completionManager.resetPrompt(promptText)
       }
     }
 
-    return if (future.isDone) {
-      future.get()
-    }
-    else CompletionResult(emptyList(), newPromptShown = false)
+    return future.getNow(CompletionResult())
   }
 
-  private fun parseCompletionItems(text: String, context: ParsingContext): ParsingResult {
+  private fun parseCompletionItems(text: String, context: ParsingContext): List<String> {
     if (text.startsWith(context.promptAndCommandText)) {
       context.commandWritten = true
       val addedPart = text.removePrefix(context.promptAndCommandText).substringBefore('\n')
       if (addedPart.isNotBlank()) {
         // There is only one item that complete our command
         // So it is just added to the already typed text
-        return ParsingResult(addedPart)
+        return listOf(addedPart)
       }
     }
 
     if (!context.commandWritten) {
-      return ParsingResult()
+      return emptyList()
     }
 
     val returnedToPrompt = context.addedText.endsWith(context.command)
@@ -149,11 +146,11 @@ class TerminalCompletionContributor : CompletionContributor() {
         // TODO: it is a hack to not parse following zsh question:
         //  "zsh: do you wish to see all <N> possibilities (<M> lines)?"
         //  More general way of avoiding is required here
-        ParsingResult()
+        emptyList()
       }
-      else ParsingResult(items, newPromptShown)
+      else items
     }
-    else ParsingResult()
+    else emptyList()
   }
 
   private fun createOption(option: String): LookupElement {
@@ -181,19 +178,13 @@ class TerminalCompletionContributor : CompletionContributor() {
     }
   }
 
-  private open class ParsingResult private constructor(val items: List<String>, val isSingleItem: Boolean, val newPromptShown: Boolean) {
-    constructor() : this(emptyList(), false, false)
-    constructor(items: List<String>, newPromptShown: Boolean) : this(items, false, newPromptShown)
-    constructor(item: String) : this(listOf(item), true, false)
+  private class CompletionResult private constructor(val items: List<String>, val isSingleItem: Boolean) {
+    constructor() : this(emptyList(), false)
+    constructor(items: List<String>) : this(items, false)
+    constructor(item: String) : this(listOf(item), true)
 
     override fun toString(): String {
-      return "isSingleItem: $isSingleItem, newPromptShown: $newPromptShown, items: $items"
+      return "isSingleItem: $isSingleItem, items: $items"
     }
-  }
-
-  // Now it fully duplicates ParsingResult, but there can be additional fields in the future
-  private class CompletionResult : ParsingResult {
-    constructor(items: List<String>, newPromptShown: Boolean) : super(items, newPromptShown)
-    constructor(item: String) : super(item)
   }
 }
