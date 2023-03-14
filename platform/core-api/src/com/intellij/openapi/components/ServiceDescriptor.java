@@ -66,7 +66,7 @@ public final class ServiceDescriptor {
 
   /**
    * Preload service (before component creation). Not applicable for module level.
-   *
+   * <p>
    * Loading order and thread are not guaranteed, service should be decoupled as much as possible.
    */
   @Attribute
