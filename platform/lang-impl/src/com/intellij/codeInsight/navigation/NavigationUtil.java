@@ -61,32 +61,28 @@ public final class NavigationUtil {
   private NavigationUtil() {
   }
 
-  @NotNull
-  public static JBPopup getPsiElementPopup(PsiElement @NotNull [] elements, @PopupTitle String title) {
+  public static @NotNull JBPopup getPsiElementPopup(PsiElement @NotNull [] elements, @PopupTitle String title) {
     return new PsiTargetNavigator<>(elements).createPopup(elements[0].getProject(), title);
   }
 
-  @NotNull
-  public static JBPopup getPsiElementPopup(PsiElement @NotNull [] elements,
-                                           @NotNull PsiElementListCellRenderer<? super PsiElement> renderer,
-                                           @PopupTitle String title) {
+  public static @NotNull JBPopup getPsiElementPopup(PsiElement @NotNull [] elements,
+                                                    @NotNull PsiElementListCellRenderer<? super PsiElement> renderer,
+                                                    @PopupTitle String title) {
     return getPsiElementPopup(elements, renderer, title, element -> EditSourceUtil.navigateToPsiElement(element));
   }
 
-  @NotNull
-  public static <T extends PsiElement> JBPopup getPsiElementPopup(T @NotNull [] elements,
-                                                                  @NotNull PsiElementListCellRenderer<? super T> renderer,
-                                                                  @PopupTitle String title,
-                                                                  @NotNull PsiElementProcessor<? super T> processor) {
+  public static @NotNull <T extends PsiElement> JBPopup getPsiElementPopup(T @NotNull [] elements,
+                                                                           @NotNull PsiElementListCellRenderer<? super T> renderer,
+                                                                           @PopupTitle String title,
+                                                                           @NotNull PsiElementProcessor<? super T> processor) {
     return getPsiElementPopup(elements, renderer, title, processor, null);
   }
 
-  @NotNull
-  public static <T extends PsiElement> JBPopup getPsiElementPopup(T @NotNull [] elements,
-                                                                  @NotNull PsiElementListCellRenderer<? super T> renderer,
-                                                                  @Nullable @PopupTitle String title,
-                                                                  @NotNull PsiElementProcessor<? super T> processor,
-                                                                  @Nullable T initialSelection) {
+  public static @NotNull <T extends PsiElement> JBPopup getPsiElementPopup(T @NotNull [] elements,
+                                                                           @NotNull PsiElementListCellRenderer<? super T> renderer,
+                                                                           @Nullable @PopupTitle String title,
+                                                                           @NotNull PsiElementProcessor<? super T> processor,
+                                                                           @Nullable T initialSelection) {
     assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
     IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(List.of(elements))
@@ -177,36 +173,45 @@ public final class NavigationUtil {
     return false;
   }
 
-  private static boolean activatePsiElementIfOpen(@NotNull PsiElement elt, boolean searchForOpen, boolean requestFocus) {
-    if (!elt.isValid()) return false;
-    elt = elt.getNavigationElement();
-    final PsiFile file = elt.getContainingFile();
-    if (file == null || !file.isValid()) return false;
-
-    VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null) return false;
-
-    if (!EditorHistoryManager.getInstance(elt.getProject()).hasBeenOpen(vFile)) return false;
-
-    final FileEditorManager fem = FileEditorManager.getInstance(elt.getProject());
-    boolean wasAlreadyOpen = fem.isFileOpen(vFile);
-    if (!wasAlreadyOpen) {
-      fem.openFile(vFile, requestFocus, searchForOpen);
+  private static boolean activatePsiElementIfOpen(@NotNull PsiElement element, boolean searchForOpen, boolean requestFocus) {
+    if (!element.isValid()) {
+      return false;
     }
 
-    final TextRange range = elt.getTextRange();
-    if (range == null) return false;
+    element = element.getNavigationElement();
+    PsiFile file = element.getContainingFile();
+    if (file == null || !file.isValid()) {
+      return false;
+    }
 
-    final FileEditor[] editors = fem.getEditors(vFile);
-    for (FileEditor editor : editors) {
+    VirtualFile vFile = file.getVirtualFile();
+    if (vFile == null) {
+      return false;
+    }
+
+    if (!EditorHistoryManager.getInstance(element.getProject()).hasBeenOpen(vFile)) {
+      return false;
+    }
+
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(element.getProject());
+    boolean wasAlreadyOpen = fileEditorManager.isFileOpen(vFile);
+    if (!wasAlreadyOpen) {
+      fileEditorManager.openFile(vFile, requestFocus, searchForOpen);
+    }
+
+    TextRange range = element.getTextRange();
+    if (range == null) {
+      return false;
+    }
+
+    for (FileEditor editor : fileEditorManager.getEditors(vFile)) {
       if (editor instanceof TextEditor) {
-        final Editor text = ((TextEditor)editor).getEditor();
-        final int offset = text.getCaretModel().getOffset();
-
+        Editor text = ((TextEditor)editor).getEditor();
+        int offset = text.getCaretModel().getOffset();
         if (range.containsOffset(offset)) {
           if (wasAlreadyOpen) {
             // select the file
-            fem.openFile(vFile, requestFocus, searchForOpen);
+            fileEditorManager.openFile(vFile, requestFocus, searchForOpen);
           }
           return true;
         }
@@ -221,30 +226,34 @@ public final class NavigationUtil {
    */
   @SuppressWarnings("UseJBColor")
   public static TextAttributes patchAttributesColor(TextAttributes attributes, @NotNull TextRange range, @NotNull Editor editor) {
-    if (attributes.getForegroundColor() == null && attributes.getEffectColor() == null) return attributes;
+    if (attributes.getForegroundColor() == null && attributes.getEffectColor() == null) {
+      return attributes;
+    }
+
     MarkupModel model = DocumentMarkupModel.forDocument(editor.getDocument(), editor.getProject(), false);
-    if (model != null) {
-      if (!((MarkupModelEx)model).processRangeHighlightersOverlappingWith(range.getStartOffset(), range.getEndOffset(), highlighter -> {
-        if (highlighter.isValid() && highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) {
-          TextAttributes textAttributes = highlighter.getTextAttributes(editor.getColorsScheme());
-          if (textAttributes != null) {
-            Color color = textAttributes.getBackgroundColor();
-            return !(color != null && color.getBlue() > 128 && color.getRed() < 128 && color.getGreen() < 128);
-          }
+    if (model == null) {
+      return attributes;
+    }
+
+    if (!((MarkupModelEx)model).processRangeHighlightersOverlappingWith(range.getStartOffset(), range.getEndOffset(), highlighter -> {
+      if (highlighter.isValid() && highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE) {
+        TextAttributes textAttributes = highlighter.getTextAttributes(editor.getColorsScheme());
+        if (textAttributes != null) {
+          Color color = textAttributes.getBackgroundColor();
+          return !(color != null && color.getBlue() > 128 && color.getRed() < 128 && color.getGreen() < 128);
         }
-        return true;
-      })) {
-        TextAttributes clone = attributes.clone();
-        clone.setForegroundColor(Color.orange);
-        clone.setEffectColor(Color.orange);
-        return clone;
       }
+      return true;
+    })) {
+      TextAttributes clone = attributes.clone();
+      clone.setForegroundColor(Color.orange);
+      clone.setEffectColor(Color.orange);
+      return clone;
     }
     return attributes;
   }
 
-  @NotNull
-  public static JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, @PopupTitle String title) {
+  public static @NotNull JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, @PopupTitle String title) {
     return getRelatedItemsPopup(items, title, false);
   }
 
@@ -254,8 +263,7 @@ public final class NavigationUtil {
    *                              It's usually a module name or library name of corresponding navigation item.<br>
    *                              {@code false} by default
    */
-  @NotNull
-  public static JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, @PopupTitle String title, boolean showContainingModules) {
+  public static @NotNull JBPopup getRelatedItemsPopup(final List<? extends GotoRelatedItem> items, @PopupTitle String title, boolean showContainingModules) {
     List<Object> elements = new ArrayList<>(items.size());
     //todo[nik] move presentation logic to GotoRelatedItem class
     final Map<PsiElement, GotoRelatedItem> itemsMap = new HashMap<>();
@@ -366,9 +374,8 @@ public final class NavigationUtil {
         return component;
       }
     };
-    final ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<>(title, elements) {
+    ListPopupImpl popup = new ListPopupImpl(new BaseListPopupStep<>(title, elements) {
       final Map<Object, ListSeparator> separators = new HashMap<>();
-
       {
         String current = null;
         boolean hasTitle = false;
@@ -411,9 +418,8 @@ public final class NavigationUtil {
         return super.onChosen(selectedValue, finalChoice);
       }
 
-      @Nullable
       @Override
-      public ListSeparator getSeparatorAbove(Object value) {
+      public @Nullable ListSeparator getSeparatorAbove(Object value) {
         return separators.get(value);
       }
     }) {
@@ -477,8 +483,7 @@ public final class NavigationUtil {
     return (item instanceof GotoRelatedItem ? (GotoRelatedItem)item : itemsMap.get((PsiElement)item)).getMnemonic();
   }
 
-  @NotNull
-  public static List<GotoRelatedItem> collectRelatedItems(@NotNull PsiElement contextElement, @Nullable DataContext dataContext) {
+  public static @NotNull List<GotoRelatedItem> collectRelatedItems(@NotNull PsiElement contextElement, @Nullable DataContext dataContext) {
     Set<GotoRelatedItem> items = new LinkedHashSet<>();
     GO_TO_EP_NAME.forEachExtensionSafe(provider -> {
       items.addAll(provider.getItems(contextElement));

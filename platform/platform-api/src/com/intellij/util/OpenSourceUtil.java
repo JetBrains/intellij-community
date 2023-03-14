@@ -7,19 +7,20 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.StatePreservingNavigatable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static java.util.Arrays.asList;
+import java.util.List;
 
 public final class OpenSourceUtil {
   private OpenSourceUtil() {
   }
 
-  public static void openSourcesFrom(DataContext context, boolean requestFocus) {
-    navigate(requestFocus, CommonDataKeys.NAVIGATABLE_ARRAY.getData(context));
+  public static void openSourcesFrom(@NotNull DataContext context, boolean requestFocus) {
+    navigate(requestFocus, false, CommonDataKeys.NAVIGATABLE_ARRAY.getData(context));
   }
 
-  public static void openSourcesFrom(DataProvider context, boolean requestFocus) {
+  public static void openSourcesFrom(@NotNull DataProvider context, boolean requestFocus) {
     navigate(requestFocus, CommonDataKeys.NAVIGATABLE_ARRAY.getData(context));
   }
 
@@ -56,7 +57,7 @@ public final class OpenSourceUtil {
    */
   public static void navigate(boolean requestFocus, boolean tryNotToScroll, Navigatable @Nullable ... navigatables) {
     if (navigatables != null && navigatables.length > 0) {
-      navigate(requestFocus, tryNotToScroll, asList(navigatables));
+      navigate(requestFocus, tryNotToScroll, List.of(navigatables));
     }
   }
 
