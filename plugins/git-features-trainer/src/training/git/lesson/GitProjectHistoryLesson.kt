@@ -54,7 +54,8 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
 
     task("ActivateVersionControlToolWindow") {
       openGitWindow(GitLessonsBundle.message("git.project.history.open.git.window", action(it),
-                                             icon(AllIcons.Toolwindows.ToolWindowChanges)))
+                                             icon(AllIcons.Toolwindows.ToolWindowChanges),
+                                             strong(GitBundle.message("git4idea.vcs.name"))))
     }
 
     resetGitLogWindow()
