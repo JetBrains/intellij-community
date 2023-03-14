@@ -556,7 +556,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
     task {
       text(JavaLessonsBundle.message("java.onboarding.type.division",
                                      code(" / values")))
-      text(JavaLessonsBundle.message("java.onboarding.invoke.completion"))
+      text(JavaLessonsBundle.message("java.onboarding.invoke.completion", code(".")))
       triggerAndBorderHighlight().listItem { // no highlighting
         it.isToStringContains("length")
       }
@@ -649,7 +649,7 @@ class JavaOnboardingTourLesson : KLesson("java.onboarding", JavaLessonsBundle.me
         }
       }
       text(JavaLessonsBundle.message("java.onboarding.search.everywhere.description",
-                                     strong("AVERAGE"), strong(JavaLessonsBundle.message("toggle.case.part"))))
+                                     code("AVERAGE"), code(JavaLessonsBundle.message("toggle.case.part"))))
       triggerAndBorderHighlight().listItem { item ->
         val value = (item as? GotoActionModel.MatchedValue)?.value
         (value as? GotoActionModel.ActionWrapper)?.action is ToggleCaseAction
