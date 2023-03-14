@@ -192,7 +192,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    */
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  fun cellValidation(init: CellValidation<T>.() -> Unit): Cell<T>
+  fun cellValidation(init: CellValidation<T>.(T) -> Unit): Cell<T>
 
   /**
    * Registers custom component data [validation].

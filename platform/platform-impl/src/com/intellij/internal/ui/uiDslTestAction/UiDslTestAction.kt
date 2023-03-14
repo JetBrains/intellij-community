@@ -7,14 +7,12 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.*
 import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.event.ItemEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
@@ -59,6 +57,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     tabbedPane.addTab("Deprecated Api", JScrollPane(DeprecatedApiPanel().panel))
     tabbedPane.addTab("CheckBox/RadioButton", CheckBoxRadioButtonPanel().panel)
     tabbedPane.addTab("Validation API", ValidationPanel(myDisposable).panel)
+    tabbedPane.addTab("Validation Refactoring API", ValidationRefactoringPanel(myDisposable).panel)
     tabbedPane.addTab("OnChange", OnChangePanel().panel)
 
     return panel {
@@ -102,9 +101,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
       }
     }
 
-    val disposable = Disposer.newDisposable()
-    result.registerValidators(disposable)
-    Disposer.register(myDisposable, disposable)
+    result.registerValidators(myDisposable)
 
     return result
   }

@@ -132,8 +132,8 @@ internal class SegmentedButtonImpl<T>(dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun validation(init: CellValidation<SegmentedButton<T>>.() -> Unit): SegmentedButton<T> {
-    cellValidation.init()
+  override fun validation(init: CellValidation<SegmentedButton<T>>.(SegmentedButton<T>) -> Unit): SegmentedButton<T> {
+    cellValidation.init(this)
     return this
   }
 

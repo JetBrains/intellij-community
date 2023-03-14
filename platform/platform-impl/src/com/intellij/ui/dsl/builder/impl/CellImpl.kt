@@ -218,8 +218,8 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun validationRequestor(validationRequestor: DialogValidationRequestor): CellImpl<T> {
-    val origin = component.interactiveComponent
-    dialogPanelConfig.validationRequestors.list(origin).add(validationRequestor)
+    val interactiveComponent = component.interactiveComponent
+    dialogPanelConfig.validationRequestors.list(interactiveComponent).add(validationRequestor)
     return this
   }
 
@@ -251,20 +251,20 @@ internal class CellImpl<T : JComponent>(
     return this
   }
 
-  override fun cellValidation(init: CellValidation<T>.() -> Unit): CellImpl<T> {
-    cellValidation.init()
+  override fun cellValidation(init: CellValidation<T>.(T) -> Unit): CellImpl<T> {
+    cellValidation.init(component)
     return this
   }
 
   override fun validationOnInput(validation: ValidationInfoBuilder.(T) -> ValidationInfo?): CellImpl<T> {
-    val origin = component.interactiveComponent
-    return validationOnInput(DialogValidation { ValidationInfoBuilder(origin).validation(component) })
+    val interactiveComponent = component.interactiveComponent
+    return validationOnInput(DialogValidation { ValidationInfoBuilder(interactiveComponent).validation(component) })
   }
 
   override fun validationOnInput(vararg validations: DialogValidation): CellImpl<T> {
-    val origin = component.interactiveComponent
-    dialogPanelConfig.validationsOnInput.list(origin)
-      .addAll(validations.map { it.forComponentIfNeeded(origin) })
+    val interactiveComponent = component.interactiveComponent
+    dialogPanelConfig.validationsOnInput.list(interactiveComponent)
+      .addAll(validations.map { it.forComponentIfNeeded(interactiveComponent) })
 
     // Fallback in case if no validation requestors is defined
     guessAndInstallValidationRequestor()
@@ -282,9 +282,9 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun validationOnApply(vararg validations: DialogValidation): CellImpl<T> {
-    val origin = component.interactiveComponent
-    dialogPanelConfig.validationsOnApply.list(origin)
-      .addAll(validations.map { it.forComponentIfNeeded(origin) })
+    val interactiveComponent = component.interactiveComponent
+    dialogPanelConfig.validationsOnApply.list(interactiveComponent)
+      .addAll(validations.map { it.forComponentIfNeeded(interactiveComponent) })
     return this
   }
 
@@ -300,8 +300,8 @@ internal class CellImpl<T : JComponent>(
 
   private fun guessAndInstallValidationRequestor() {
     val stackTrace = Throwable()
-    val origin = component.interactiveComponent
-    val validationRequestors = dialogPanelConfig.validationRequestors.list(origin)
+    val interactiveComponent = component.interactiveComponent
+    val validationRequestors = dialogPanelConfig.validationRequestors.list(interactiveComponent)
     if (validationRequestors.isNotEmpty()) return
 
     validationRequestors.add(object : DialogValidationRequestor {
@@ -311,9 +311,9 @@ internal class CellImpl<T : JComponent>(
         val property = property
         val requestor = when {
           property != null -> WHEN_PROPERTY_CHANGED(property)
-          origin is JTextComponent -> WHEN_TEXT_CHANGED(origin)
-          origin is ItemSelectable -> WHEN_STATE_CHANGED(origin)
-          origin is EditorTextField -> WHEN_TEXT_FIELD_TEXT_CHANGED(origin)
+          interactiveComponent is JTextComponent -> WHEN_TEXT_CHANGED(interactiveComponent)
+          interactiveComponent is ItemSelectable -> WHEN_STATE_CHANGED(interactiveComponent)
+          interactiveComponent is EditorTextField -> WHEN_TEXT_FIELD_TEXT_CHANGED(interactiveComponent)
           else -> null
         }
         if (requestor != null) {

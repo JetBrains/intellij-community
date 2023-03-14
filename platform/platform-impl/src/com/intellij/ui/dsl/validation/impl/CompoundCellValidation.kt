@@ -31,7 +31,7 @@ internal class CompoundCellValidation<out T>(private vararg val cellValidations:
     }
   }
 
-  override fun addApplyRule(message: String, level: Level, condition: (T) -> Boolean) {
+  override fun addApplyRule(message: String, level: Level, condition: () -> Boolean) {
     for (cellValidation in cellValidations) {
       cellValidation.addApplyRule(message, level, condition)
     }
@@ -40,6 +40,18 @@ internal class CompoundCellValidation<out T>(private vararg val cellValidations:
   override fun addApplyRule(validation: () -> ValidationInfo?) {
     for (cellValidation in cellValidations) {
       cellValidation.addApplyRule(validation)
+    }
+  }
+
+  override fun addInputRule(message: String, level: Level, condition: () -> Boolean) {
+    for (cellValidation in cellValidations) {
+      cellValidation.addInputRule(message, level, condition)
+    }
+  }
+
+  override fun addInputRule(validation: () -> ValidationInfo?) {
+    for (cellValidation in cellValidations) {
+      cellValidation.addInputRule(validation)
     }
   }
 }

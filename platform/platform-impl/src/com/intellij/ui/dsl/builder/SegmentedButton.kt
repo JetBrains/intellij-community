@@ -51,5 +51,5 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
    */
   fun maxButtonsCount(value: Int): SegmentedButton<T>
 
-  fun validation(init: CellValidation<SegmentedButton<T>>.() -> Unit): SegmentedButton<T>
+  fun validation(init: CellValidation<SegmentedButton<T>>.(SegmentedButton<T>) -> Unit): SegmentedButton<T>
 }
