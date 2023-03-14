@@ -4,6 +4,7 @@ package com.intellij.openapi.project
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -35,6 +36,7 @@ import org.junit.runners.JUnit4
 import java.io.File
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(JUnit4::class)
 class DumbServiceImplTest {
@@ -392,5 +394,93 @@ class DumbServiceImplTest {
 
     assertEquals("DumbModeTask didn't dispose in 5 seconds", 0, dumbTaskFinished.count)
     assertFalse(queuedTaskInvoked.get())
+  }
+
+  @Test
+  fun `test DumbService becomes dumb immediately on EDT`() {
+    runInEdtAndWait {
+      assertFalse(dumbService.isDumb)
+      dumbService.queueTask(object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) = Unit
+      })
+      assertTrue(dumbService.isDumb)
+    }
+  }
+
+  @Test
+  fun `test DumbService does not become dumb in the middle of read action`() {
+    val taskFinished = CountDownLatch(1)
+
+    application.runReadAction {
+      assertFalse(dumbService.isDumb)
+
+      dumbService.queueTask(object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) = taskFinished.countDown()
+      })
+
+      // Wait a bit for dumb task to start (it is expected that it does not start until the end of read action)
+      assertFalse(taskFinished.await(200, TimeUnit.MILLISECONDS))
+      assertFalse(dumbService.isDumb)
+    }
+
+    assertTrue("DumbTask should start immediately after read action finished", taskFinished.await(2, TimeUnit.SECONDS))
+  }
+
+  @Test
+  fun `test DumbService does not become smart in the middle of read action`() {
+    val finishTask = CountDownLatch(1)
+    val taskFinished = CountDownLatch(1)
+    val taskStarted = CountDownLatch(1)
+
+    dumbService.queueTask(object : DumbModeTask() {
+      override fun performInDumbMode(indicator: ProgressIndicator) {
+        taskStarted.countDown()
+        finishTask.await(5, TimeUnit.SECONDS)
+        taskFinished.countDown()
+      }
+    })
+
+    assertTrue(taskStarted.await(500, TimeUnit.MILLISECONDS))
+    application.runReadAction {
+      assertTrue(dumbService.isDumb)
+      finishTask.countDown()
+      assertTrue(taskFinished.await(500, TimeUnit.MILLISECONDS))
+      // Wait a bit for dumb mode to end (it is expected that it does not end until the end of read action)
+      Thread.sleep(200)
+      assertTrue(dumbService.isDumb)
+    }
+
+    for (i in 0..10) {
+      if (dumbService.isDumb) Thread.sleep(50)
+      else break;
+    }
+    assertFalse("DumbTask should become smart after read action finished", dumbService.isDumb)
+  }
+
+  @Test
+  fun `test DumbService does not execute tasks immediately to give a chance to completeJustSubmittedTasks`() {
+    val taskFinished = CountDownLatch(1)
+    val startEdtTask = CountDownLatch(1)
+    val exception = AtomicReference<Throwable?>()
+
+    runInEdt /*Async*/ {
+      try {
+        // occupy EDT to postpone dumb task execution
+        assertTrue(startEdtTask.await(5, TimeUnit.SECONDS))
+        assertFalse("DumbTask should not start until EDT is freed", taskFinished.await(500, TimeUnit.MILLISECONDS))
+      }
+      catch (t: Throwable) {
+        exception.set(t)
+      }
+    }
+
+    // queue task while EDT is busy
+    dumbService.queueTask(object : DumbModeTask() {
+      override fun performInDumbMode(indicator: ProgressIndicator) = taskFinished.countDown()
+    })
+
+    startEdtTask.countDown()
+    assertTrue("DumbTask should start immediately after EDT is freed", taskFinished.await(2, TimeUnit.SECONDS))
+    assertNull(exception.get())
   }
 }
