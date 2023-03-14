@@ -11,6 +11,10 @@ import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
 class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
+  init {
+    templatePresentation.text = ActionsBundle.message("group.CustomLayoutsActionGroup.text")
+  }
+
   private val childrenCache = NamedLayoutListBasedCache<AnAction> {
     CustomLayoutActionGroup(it)
   }
@@ -29,6 +33,7 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
     )
 
     init {
+      templatePresentation.text = ActionsBundle.message("group.CustomLayoutActionsGroup.text")
       templatePresentation.isPopupGroup = true
     }
 
