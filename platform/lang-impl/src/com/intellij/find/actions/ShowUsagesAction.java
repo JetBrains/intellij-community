@@ -56,11 +56,7 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.SmartPsiFileRange;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -396,9 +392,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         PsiElement selectedUsagesElement = selectedUsage != null ? selectedUsage.getElement() : null;
         if (selectedUsagesElement != null) {
           PsiFile containingFile = selectedUsagesElement.getContainingFile();
-          eventData.add(UsageViewStatisticsCollector.IS_THE_SAME_FILE.with(selectedUsagesElement.getManager()
-                                                                             .areElementsEquivalent(target.getContainingFile(),
-                                                                                                    containingFile)));
+          PsiManager manager = selectedUsagesElement.getManager();
+          eventData.add(UsageViewStatisticsCollector.IS_THE_SAME_FILE.with(
+            manager != null && manager.areElementsEquivalent(target.getContainingFile(), containingFile)));
           eventData.add(UsageViewStatisticsCollector.SELECTED_ELEMENT_DATA.with(
             UsageViewStatisticsCollector.calculateElementData(selectedUsagesElement)));
           eventData.add(UsageViewStatisticsCollector.IS_SELECTED_ELEMENT_AMONG_RECENT_FILES.with(
