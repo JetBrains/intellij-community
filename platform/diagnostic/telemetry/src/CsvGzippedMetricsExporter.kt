@@ -93,6 +93,18 @@ class CsvGzippedMetricsExporter(writeToFile: Path) : MetricExporter {
       val pathResolvedAgainstLogDir = PathManager.getLogDir().resolve(connectionMetricsPath).toAbsolutePath()
       val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.rdct.metrics.max-files-to-keep", 14)
 
+      return generatePath(pathResolvedAgainstLogDir, maxFilesToKeep)
+    }
+
+    fun generateFileForLuxMetrics(): Path {
+      val luxMetricsPath = "open-telemetry-lux-metrics.gz"
+      val pathResolvedAgainstLogDir = PathManager.getLogDir().resolve(luxMetricsPath).toAbsolutePath()
+      val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.lux.metrics.max-files-to-keep", 14)
+
+      return generatePath(pathResolvedAgainstLogDir, maxFilesToKeep)
+    }
+
+    private fun generatePath(pathResolvedAgainstLogDir: Path, maxFilesToKeep: Int): Path {
       return FileSetLimiter.inDirectory(pathResolvedAgainstLogDir.parent).withBaseNameAndDateFormatSuffix(
         pathResolvedAgainstLogDir.fileName.toString(), "yyyy-MM-dd-HH-mm-ss").removeOldFilesBut(maxFilesToKeep,
                                                                                                 FileSetLimiter.DELETE_ASYNC).createNewFile()

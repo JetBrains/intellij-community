@@ -53,6 +53,7 @@ object TraceManager {
                                                   "open-telemetry-metrics.csv")
 
     val connectionMetricsFlag = System.getProperty("rdct.connection.metrics.enabled")
+    val luxMetricsFlag = System.getProperty("lux.metrics.enabled")
 
     val rdctOtlpEndpoint = System.getProperty("rdct.diagnostic.otlp")
     val metricsEnabled = !metricsReportingPath.isNullOrEmpty()
@@ -69,6 +70,7 @@ object TraceManager {
 
     val spanExporters = mutableListOf<AsyncSpanExporter>()
     var connectionMetricsReader: PeriodicMetricReader? = null
+    var luxMetricsReader: PeriodicMetricReader? = null
     if (traceFile != null) {
       spanExporters.add(JaegerJsonSpanExporter(file = Path.of(traceFile),
                                                serviceName = serviceName,
@@ -91,6 +93,15 @@ object TraceManager {
           metric.name.contains("rdct")
         }
         connectionMetricsReader = PeriodicMetricReader.builder(connectionExporter)
+          .setInterval(Duration.ofSeconds(1))
+          .build()
+      }
+      if (luxMetricsFlag != null) {
+        val luxMetricsExporter = FilteredMetricsExporter(
+          CsvGzippedMetricsExporter(CsvGzippedMetricsExporter.generateFileForLuxMetrics())) { metric ->
+          metric.name.contains("lux")
+        }
+        luxMetricsReader = PeriodicMetricReader.builder(luxMetricsExporter)
           .setInterval(Duration.ofSeconds(1))
           .build()
       }
@@ -136,6 +147,10 @@ object TraceManager {
       connectionMetricsReader?.let {
         registeredMetricsReaders.registerMetricReader(it)
       }
+      luxMetricsReader?.let {
+        registeredMetricsReaders.registerMetricReader(it)
+      }
+
       val meterProvider = registeredMetricsReaders
         .setResource(resource)
         .build()
