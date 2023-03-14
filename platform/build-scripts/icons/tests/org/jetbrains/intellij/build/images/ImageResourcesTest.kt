@@ -201,7 +201,7 @@ private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean
     val allImages = ImageCollector(projectHome, iconsOnly, ignoreSkipTag, moduleConfig = config.getConfigForModule(module.name)).collect(module)
     allImages.parallelStream().filter { it.basicFile != null }.forEach { image ->
       image.files.parallelStream().forEach { file ->
-        val optimized = ImageSizeOptimizer.optimizeImage(file)
+        val optimized = optimizeImage(file)
         if (optimized != null && !optimized.hasOptimumSize) {
           failures.add(FailedTest(module, "image size can be optimized using " +
                                           "\"Icons processing | Generate icon classes\" run configuration: " +

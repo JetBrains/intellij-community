@@ -194,7 +194,7 @@ internal class ImageCollector(private val projectHome: Path,
                                prefix: String,
                                level: Int) {
     // do not process in parallel for if level >= 3 because no sense - parents processed in parallel already
-    dir.processChildren(level < 3) { file ->
+    processChildren(dir, level < 3) { file ->
       if (robotData.isSkipped(file)) {
         return@processChildren
       }
@@ -446,8 +446,8 @@ private fun mergeDeprecations(data1: DeprecationData?,
   throw AssertionError("Different deprecation statements found for icon: $comment\n$data1\n$data2")
 }
 
-fun Path.processChildren(isParallel: Boolean = true, consumer: (Path) -> Unit) {
-  DirectorySpliterator.list(this, isParallel).use {
+internal fun processChildren(path: Path, isParallel: Boolean = true, consumer: (Path) -> Unit) {
+  DirectorySpliterator.list(path, isParallel).use {
     it.forEach(consumer)
   }
 }
