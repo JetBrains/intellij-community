@@ -1037,7 +1037,7 @@ public class SwitchBlockHighlightingModel {
                                            @NotNull PsiClass selectorClass,
                                            @NotNull HighlightInfoHolder results) {
       PatternHighlightingModel.RecordExhaustivenessResult exhaustivenessResult = PatternHighlightingModel.checkRecordExhaustiveness(elements);
-      if (!exhaustivenessResult.isExhausted()) {
+      if (!exhaustivenessResult.isExhaustive()) {
         HighlightInfo.Builder builder = createCompletenessInfoForSwitch(!elements.isEmpty());
         if (exhaustivenessResult.canBeAdded() && selectorClass.isRecord()) {
           IntentionAction fix =
