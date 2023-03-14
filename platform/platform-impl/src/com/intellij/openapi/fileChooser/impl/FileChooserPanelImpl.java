@@ -80,7 +80,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private final FileTypeRegistry myRegistry;
   private final FileChooserDescriptor myDescriptor;
   private final Runnable myCallback;
-  private final @NotNull Consumer<? super @Nullable @DialogMessage String> myErrorSink;
+  private final Consumer<@Nullable @DialogMessage String> myErrorSink;
   private final @Nullable WatchService myWatcher;
   private final Map<Path, FileSystem> myOpenFileSystems;
 
@@ -101,7 +101,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
   FileChooserPanelImpl(@NotNull FileChooserDescriptor descriptor,
                        @NotNull Runnable callback,
-                       @NotNull Consumer<? super @Nullable @DialogMessage String> errorSink,
+                       @NotNull Consumer<@Nullable @DialogMessage String> errorSink,
                        Path @NotNull [] recentPaths) {
     super(new GridBagLayout());
 
@@ -194,9 +194,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       }
     });
     var finder = new LocalFsFinder(false).withBaseDir(null);
-    FileLookup.LookupFilter filter =
+    var filter = (FileLookup.LookupFilter)
       f -> myDescriptor.isFileVisible(new CoreLocalVirtualFile(FS, ((LocalFsFinder.IoFile)f).getFile()), myShowHiddenFiles);
-    new FileTextFieldImpl(pathEditor, finder, filter, FileChooserFactoryImpl.getMacroMap(), this) {
+    var ignored = new FileTextFieldImpl(pathEditor, finder, filter, FileChooserFactoryImpl.getMacroMap(), this) {
       @Override
       protected void setTextToFile(FileLookup.LookupFile file) {
         super.setTextToFile(file);
