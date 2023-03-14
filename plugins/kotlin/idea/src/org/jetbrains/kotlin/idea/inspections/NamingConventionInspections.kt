@@ -74,6 +74,12 @@ private val NO_MIDDLE_UNDERSCORES = NamingRule(KotlinBundle.message("should.not.
     '_' in it.substring(1)
 }
 
+
+private val NO_UNDERSCORES_IN_CAMEL_CASE = NamingRule(
+    KotlinBundle.message("should.not.contain.underscores.with.camel.case")) {
+    it.contains('_') && it.any { it.isUpperCase() } && it.any { it.isLowerCase() }
+}
+
 private val NO_BAD_CHARACTERS = NamingRule(KotlinBundle.message("may.contain.only.letters.and.digits")) {
     it.any { c -> c !in 'a'..'z' && c !in 'A'..'Z' && c !in '0'..'9' }
 }
@@ -192,7 +198,8 @@ class EnumEntryNameInspection : NamingConventionInspection(
     KotlinBundle.message("enum.entry"),
     "[A-Z]([A-Za-z\\d]*|[A-Z_\\d]*)"
 ) {
-    override fun getNamingRules(): Array<NamingRule> = arrayOf(START_UPPER, NO_START_UNDERSCORE, NO_BAD_CHARACTERS_OR_UNDERSCORE)
+  override fun getNamingRules(): Array<NamingRule> = arrayOf(
+      START_UPPER, NO_START_UNDERSCORE, NO_BAD_CHARACTERS_OR_UNDERSCORE, NO_UNDERSCORES_IN_CAMEL_CASE)
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return enumEntryVisitor { enumEntry -> verifyName(enumEntry, holder) }

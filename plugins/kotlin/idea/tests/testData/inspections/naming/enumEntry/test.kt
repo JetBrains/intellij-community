@@ -11,4 +11,5 @@ enum class Foo {
     _Foo,
     quuxDoo,
     `With bad char`,
+    Camel_Underscore_Case
 }
