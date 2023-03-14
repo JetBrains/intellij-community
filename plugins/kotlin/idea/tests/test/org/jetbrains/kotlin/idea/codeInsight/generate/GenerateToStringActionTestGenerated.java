@@ -38,65 +38,65 @@ public abstract class GenerateToStringActionTestGenerated extends AbstractGenera
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/codeInsight/generate/toString/multipeTemplates")
-    public static class MultipeTemplates extends AbstractGenerateToStringActionTest {
+    @TestMetadata("testData/codeInsight/generate/toString/multipleTemplates")
+    public static class MultipleTemplates extends AbstractGenerateToStringActionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("abstractSuper.kt")
         public void testAbstractSuper() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/abstractSuper.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/abstractSuper.kt");
         }
 
         @TestMetadata("arrays.kt")
         public void testArrays() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/arrays.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/arrays.kt");
         }
 
         @TestMetadata("customAccessors.kt")
         public void testCustomAccessors() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/customAccessors.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/customAccessors.kt");
         }
 
         @TestMetadata("dataClass.kt")
         public void testDataClass() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/dataClass.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/dataClass.kt");
         }
 
         @TestMetadata("keepQuotes.kt")
         public void testKeepQuotes() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/keepQuotes.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/keepQuotes.kt");
         }
 
         @TestMetadata("multipleVars.kt")
         public void testMultipleVars() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/multipleVars.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/multipleVars.kt");
         }
 
         @TestMetadata("multipleVarsWithSuperClass.kt")
         public void testMultipleVarsWithSuperClass() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/multipleVarsWithSuperClass.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/multipleVarsWithSuperClass.kt");
         }
 
         @TestMetadata("noVars.kt")
         public void testNoVars() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/noVars.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/noVars.kt");
         }
 
         @TestMetadata("object.kt")
         public void testObject() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/object.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/object.kt");
         }
 
         @TestMetadata("singleVar.kt")
         public void testSingleVar() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/singleVar.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/singleVar.kt");
         }
 
         @TestMetadata("superClassNoVars.kt")
         public void testSuperClassNoVars() throws Exception {
-            runTest("testData/codeInsight/generate/toString/multipeTemplates/superClassNoVars.kt");
+            runTest("testData/codeInsight/generate/toString/multipleTemplates/superClassNoVars.kt");
         }
     }
 
