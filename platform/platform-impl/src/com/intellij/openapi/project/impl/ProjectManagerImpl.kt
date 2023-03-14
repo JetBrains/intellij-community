@@ -57,6 +57,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.FrameLoadingState
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
@@ -91,6 +92,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     @TestOnly
     @JvmStatic
     fun isLight(project: Project): Boolean = project is ProjectEx && project.isLight
+
 
     internal suspend fun dispatchEarlyNotifications() {
       val notificationManager = NotificationsManager.getNotificationsManager() as NotificationsManagerImpl
@@ -185,7 +187,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   override fun loadProject(path: Path): Project {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
 
     val project = ProjectImpl(filePath = path, projectName = null)
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
@@ -669,7 +671,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         }
         failedToOpenProject(frameAllocator = frameAllocator, exception = null, options = options)
       }
-      throw e
+
+      if (e.message == FrameLoadingState.PROJECT_LOADING_CANCELLED_BY_USER) {
+        return null
+      }
+      else {
+        throw e
+      }
     }
     catch (e: Throwable) {
       result?.let { project ->
