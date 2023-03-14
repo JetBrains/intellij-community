@@ -20,6 +20,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.util.ui.StatusText
@@ -78,11 +79,12 @@ internal val AbstractTreeNode<*>.location: Location<*>?
     val endOffset = doc.getLineEndOffset(lineNum - 1)
 
     var elementAtLine: PsiElement? = null
-    while (offset <= endOffset) {
-      elementAtLine = psiFile.findElementAt(offset)
+    var nextElement: PsiElement? = psiFile.findElementAt(offset)
+    while (offset <= endOffset && nextElement != null) {
+      elementAtLine = nextElement
       if (elementAtLine !is PsiWhiteSpace) break
-      val length = elementAtLine.getTextLength()
-      offset += if (length > 1) length - 1 else 1
+      offset += elementAtLine.getTextLength()
+      nextElement = PsiTreeUtil.nextLeaf(elementAtLine)
     }
 
     if (elementAtLine is PsiPlainText && offset > 0) {
