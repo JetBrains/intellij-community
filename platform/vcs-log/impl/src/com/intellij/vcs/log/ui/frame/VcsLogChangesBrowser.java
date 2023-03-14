@@ -164,8 +164,9 @@ public final class VcsLogChangesBrowser extends AsyncChangesBrowserBase implemen
 
   private void updateModel() {
     updateStatusText();
-    myViewer.rebuildTree();
-    myDispatcher.getMulticaster().onModelUpdated();
+    getViewer().requestRefresh(() -> {
+      myDispatcher.getMulticaster().onModelUpdated();
+    });
   }
 
   public void resetSelectedDetails() {
