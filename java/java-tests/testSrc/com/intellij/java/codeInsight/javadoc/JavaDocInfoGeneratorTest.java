@@ -127,14 +127,32 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testInlineTagSnippet() { doTestClass(); }
   public void testInlineTagSnippetNoMarkup() { doTestClass(); }
   public void testInlineTagSnippetWithoutBody() { doTestClass(); }
-  public void testExternalSnippet() {
+  public void testExternalSnippetRegion() {
     createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
     verifyJavadocFor("Region");
+  }
+  public void testExternalSnippetRegionNoMarkup() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
     verifyJavadocFor("RegionNoMarkup");
+  }
+  public void testExternalSnippetNoRegion() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
     verifyJavadocFor("NoRegion");
+  }
+  public void testExternalSnippetMain() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
     verifyJavadocFor("Main");
+  }
+  public void testExternalSnippetMultiTag() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
     verifyJavadocFor("MultiTag");
-    verifyJavadocFor("TextFile");
+  }
+  public void testExternalSnippetTextFile() {
+      createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
+      verifyJavadocFor("TextFile");
+    }
+  public void testExternalSnippetUnresolved() {
+    createProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "externalSnippet");
     verifyJavadocFor("Unresolved");
   }
   public void testUnknownInlineTag() { doTestClass(); }
