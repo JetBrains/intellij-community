@@ -4,10 +4,7 @@ package com.intellij.warmup.util
 import com.intellij.conversion.ConversionListener
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
-import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.PatchProjectUtil
-import com.intellij.ide.impl.ProjectUtil
-import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.ide.impl.*
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -191,5 +188,8 @@ private suspend fun callProjectConfigurators(
 }
 
 private fun getAllConfigurators() : List<WarmupConfigurator> {
-  return WarmupConfigurator.EP_NAME.extensionList + CommandLineInspectionProjectConfigurator.EP_NAME.extensionList.map(::WarmupConfiguratorOfCLIConfigurator)
+  return WarmupConfigurator.EP_NAME.extensionList +
+         CommandLineInspectionProjectConfigurator.EP_NAME.extensionList
+           .filter { it.name.startsWith("qodana").not() }
+           .map(::WarmupConfiguratorOfCLIConfigurator)
 }
