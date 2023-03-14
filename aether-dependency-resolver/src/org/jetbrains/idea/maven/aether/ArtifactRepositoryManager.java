@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.aether;
 
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.DefaultSessionData;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.Artifact;
@@ -33,6 +34,7 @@ import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.FilteringDependencyVisitor;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
+import org.eclipse.aether.util.repository.SimpleResolutionErrorPolicy;
 import org.eclipse.aether.util.version.GenericVersionScheme;
 import org.eclipse.aether.version.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -56,7 +58,6 @@ public final class ArtifactRepositoryManager {
   private static final JreProxySelector ourProxySelector = new JreProxySelector();
   private static final Logger LOG = LoggerFactory.getLogger(ArtifactRepositoryManager.class);
   private final RepositorySystemSessionFactory mySessionFactory;
-  private final Retry myRetry;
 
   private static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = createRemoteRepository(
     "central", "https://repo1.maven.org/maven2/"
@@ -109,8 +110,7 @@ public final class ArtifactRepositoryManager {
   public ArtifactRepositoryManager(@NotNull File localRepositoryPath, List<RemoteRepository> remoteRepositories,
                                    @NotNull ProgressConsumer progressConsumer, boolean offline, @NotNull Retry retry) {
     myRemoteRepositories.addAll(remoteRepositories);
-    mySessionFactory = new RepositorySystemSessionFactory(localRepositoryPath, progressConsumer, offline);
-    myRetry = retry;
+    mySessionFactory = new RepositorySystemSessionFactory(localRepositoryPath, progressConsumer, offline, retry);
   }
 
   @ApiStatus.Internal
@@ -121,10 +121,12 @@ public final class ArtifactRepositoryManager {
 
   private static final class RepositorySystemSessionFactory {
     private final RepositorySystemSession sessionTemplate;
+    private final Retry myRetry;
 
     private RepositorySystemSessionFactory(@NotNull File localRepositoryPath,
                                            @NotNull ProgressConsumer progressConsumer,
-                                           boolean offline) {
+                                           boolean offline,
+                                           Retry retry) {
       DefaultRepositorySystemSession session = MavenRepositorySystemUtils.newSession();
       if (progressConsumer != ProgressConsumer.DEAF) {
         session.setTransferListener(new TransferListener() {
@@ -164,8 +166,17 @@ public final class ArtifactRepositoryManager {
       session.setLocalRepositoryManager(new StrictLocalRepositoryManager(ourSystem.newLocalRepositoryManager(session, new LocalRepository(localRepositoryPath))));
       session.setProxySelector(ourProxySelector);
       session.setOffline(offline);
+
+      // Disable transfer errors caching to force re-request missing artifacts and metadata on network failures.
+      // Despite this, some errors are still cached in session data, and for proper retries work we must reset this data after failure
+      // what's performed by retryWithClearSessionData()
+      var artifactCachePolicy = ResolutionErrorPolicy.CACHE_NOT_FOUND;
+      var metadataCachePolicy = ResolutionErrorPolicy.CACHE_NOT_FOUND;
+      session.setResolutionErrorPolicy(new SimpleResolutionErrorPolicy(artifactCachePolicy, metadataCachePolicy));
+
       session.setReadOnly();
       sessionTemplate = session;
+      myRetry = retry;
     }
 
     private RepositorySystemSession createDefaultSession() {
@@ -207,6 +218,42 @@ public final class ArtifactRepositoryManager {
         String artifactName = split[1];
         return new Exclusion(groupId, artifactName, "*", "*");
       }).collect(Collectors.toList());
+    }
+
+    private <R> RetryWithClearSessionDataResult<R> retryWithClearSessionData(@NotNull RepositorySystemSession sessionTemplate,
+                                                                             @NotNull ThrowingFunction<RepositorySystemSession, ? extends R> func)
+      throws Exception {
+      // Some errors are cached in session data, and for proper retries work, we must
+      // reset this data with RepositorySystemSession#setData after failure.
+      return myRetry.retry(() -> {
+        RepositorySystemSession newSession = cloneSessionAndClearData(sessionTemplate);
+        R result = func.get(newSession);
+        return new RetryWithClearSessionDataResult<>(newSession, result);
+      }, LOG);
+    }
+
+    private static RepositorySystemSession cloneSessionAndClearData(RepositorySystemSession session) {
+      DefaultRepositorySystemSession newSession = new DefaultRepositorySystemSession(session);
+      newSession.setData(new DefaultSessionData());
+      return newSession;
+    }
+
+    private static final class RetryWithClearSessionDataResult<R> {
+      private final RepositorySystemSession session;
+      private final R result;
+
+      RetryWithClearSessionDataResult(RepositorySystemSession session, R result) {
+        this.session = session;
+        this.result = result;
+      }
+
+      private RepositorySystemSession getSession() {
+        return session;
+      }
+
+      private R getResult() {
+        return result;
+      }
     }
   }
 
@@ -264,7 +311,12 @@ public final class ArtifactRepositoryManager {
     Set<VersionConstraint> constraints = Collections.singleton(asVersionConstraint(versionConstraint));
     CollectRequest collectRequest = createCollectRequest(groupId, artifactId, constraints, EnumSet.of(ArtifactKind.ARTIFACT));
     ArtifactDependencyTreeBuilder builder = new ArtifactDependencyTreeBuilder();
-    DependencyNode root = myRetry.retry(() -> ourSystem.collectDependencies(mySessionFactory.createVerboseSession(), collectRequest), LOG).getRoot();
+
+    DependencyNode root = mySessionFactory.retryWithClearSessionData(
+      mySessionFactory.createVerboseSession(),
+      s -> ourSystem.collectDependencies(s, collectRequest)
+    ).getResult().getRoot();
+
     if (root.getArtifact() == null && root.getChildren().size() == 1) {
       root = root.getChildren().get(0);
     }
@@ -293,7 +345,11 @@ public final class ArtifactRepositoryManager {
 
         if (!requests.isEmpty()) {
           try {
-            List<ArtifactResult> resultList = myRetry.retry(() -> ourSystem.resolveArtifacts(session, requests), LOG);
+            List<ArtifactResult> resultList = mySessionFactory.retryWithClearSessionData(
+              session,
+              s -> ourSystem.resolveArtifacts(s, requests)
+            ).getResult();
+
             for (ArtifactResult result : resultList) {
               artifacts.add(result.getArtifact());
             }
@@ -304,7 +360,9 @@ public final class ArtifactRepositoryManager {
               if (requests.size() > 1) {
                 for (ArtifactRequest request : requests) {
                   try {
-                    ArtifactResult result = myRetry.retry(() -> ourSystem.resolveArtifact(session, request), LOG);
+                    // Don't retry on sources or javadocs resolution: used only in IDE, will only waste user's time if the artifact does not
+                    // exist.
+                    ArtifactResult result = ourSystem.resolveArtifact(session, request);
                     artifacts.add(result.getArtifact());
                   }
                   catch (ArtifactResolutionException ignored) {
@@ -338,10 +396,14 @@ public final class ArtifactRepositoryManager {
                                                   List<ArtifactRequest> requests) throws Exception {
     RepositorySystemSession session;
     if (includeTransitiveDependencies) {
-      session = mySessionFactory.createSession(excludedDependencies);
-      CollectResult collectResult = myRetry.retry(() -> ourSystem.collectDependencies(
-        session, createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind))
-      ), LOG);
+      CollectRequest collectRequest = createCollectRequest(groupId, artifactId, constraints, EnumSet.of(kind));
+      var resultAndSession = mySessionFactory.retryWithClearSessionData(
+        mySessionFactory.createSession(excludedDependencies),
+        (s) -> ourSystem.collectDependencies(s, collectRequest)
+      );
+      session = resultAndSession.getSession();
+      CollectResult collectResult = resultAndSession.getResult();
+
       ArtifactRequestBuilder builder = new ArtifactRequestBuilder(kind);
       DependencyFilter filter = createScopeFilter();
       if (!excludedDependencies.isEmpty()) {
@@ -379,7 +441,11 @@ public final class ArtifactRepositoryManager {
     RepositorySystemSession session = prepareRequests(groupId, artifactId, constraints, kind, includeTransitiveDependencies, excludedDependencies, requests);
 
     if (!requests.isEmpty()) {
-      List<ArtifactResult> resultList = myRetry.retry(() -> ourSystem.resolveArtifacts(session, requests), LOG);
+      List<ArtifactResult> resultList = mySessionFactory.retryWithClearSessionData(
+        session,
+        (s) -> ourSystem.resolveArtifacts(s, requests)
+      ).getResult();
+
       for (ArtifactResult result : resultList) {
         artifacts.add(result.getArtifact());
       }
