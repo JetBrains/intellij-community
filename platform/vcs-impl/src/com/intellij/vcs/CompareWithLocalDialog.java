@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.DiffPreview;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction.FileRevisionProvider;
@@ -113,10 +113,10 @@ public final class CompareWithLocalDialog {
   private static abstract class MyLoadingChangesPanel extends JPanel implements DataProvider, Disposable {
     public static final DataKey<MyLoadingChangesPanel> DATA_KEY = DataKey.create("git4idea.log.MyLoadingChangesPanel");
 
-    private final SimpleChangesBrowser myChangesBrowser;
+    private final SimpleAsyncChangesBrowser myChangesBrowser;
     private final LoadingChangesPanel myLoadingPanel;
 
-    private MyLoadingChangesPanel(@NotNull SimpleChangesBrowser changesBrowser) {
+    private MyLoadingChangesPanel(@NotNull SimpleAsyncChangesBrowser changesBrowser) {
       super(new BorderLayout());
 
       myChangesBrowser = changesBrowser;
@@ -156,7 +156,7 @@ public final class CompareWithLocalDialog {
     }
   }
 
-  private static class MyChangesBrowser extends SimpleChangesBrowser implements Disposable {
+  private static class MyChangesBrowser extends SimpleAsyncChangesBrowser implements Disposable {
     @NotNull private final CompareWithLocalDialog.LocalContent myLocalContent;
 
     private MyChangesBrowser(@NotNull Project project, @NotNull LocalContent localContent) {
@@ -169,6 +169,7 @@ public final class CompareWithLocalDialog {
 
     @Override
     public void dispose() {
+      shutdown();
     }
 
     @NotNull

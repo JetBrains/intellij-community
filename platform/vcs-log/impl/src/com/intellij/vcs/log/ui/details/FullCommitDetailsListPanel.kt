@@ -9,10 +9,11 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
@@ -64,8 +65,11 @@ abstract class FullCommitDetailsListPanel(
 }
 
 private class ChangesBrowserWithLoadingPanel(project: Project, disposable: Disposable) : JPanel(BorderLayout()) {
-  private val changesBrowser = SimpleChangesBrowser(project, false, false)
-    .also { it.hideViewerBorder() }
+  private val changesBrowser = SimpleAsyncChangesBrowser(project, false, false)
+    .also {
+      it.hideViewerBorder()
+      Disposer.register(disposable) { it.shutdown() }
+    }
 
   private val changesBrowserLoadingPanel =
     JBLoadingPanel(BorderLayout(), disposable, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {

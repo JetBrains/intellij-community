@@ -13,7 +13,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
 import com.intellij.openapi.vcs.ex.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -363,6 +363,8 @@ public final class VcsFacadeImpl extends VcsFacade {
       ContentRevision changed = new SimpleContentRevision(content.toString(), filePath, VcsBundle.message("patched.version.name"));
       return new Change(current, changed);
     }).toList();
-    return new SimpleChangesBrowser(project, changes);
+    SimpleAsyncChangesBrowser browser = new SimpleAsyncChangesBrowser(project, false, false);
+    browser.setChangesToDisplay(changes);
+    return browser;
   }
 }
