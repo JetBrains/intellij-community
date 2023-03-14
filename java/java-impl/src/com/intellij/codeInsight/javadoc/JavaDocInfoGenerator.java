@@ -1871,11 +1871,20 @@ public class JavaDocInfoGenerator {
       }
       return;
     }
+    int indent = markup.getCommonIndent(region);
     markup.visitSnippet(region, new SnippetVisitor() {
       @Override
       public void visitPlainText(@NotNull PlainText plainText,
                                  @NotNull List<@NotNull LocationMarkupNode> activeNodes) {
         String content = plainText.content();
+        int curIndent = 0;
+        while (curIndent < indent &&
+               curIndent < content.length() &&
+               content.charAt(curIndent) != '\n' &&
+               Character.isWhitespace(content.charAt(curIndent))) {
+          curIndent++;
+        }
+        content = content.substring(curIndent);
         for (LocationMarkupNode node : activeNodes) {
           UnaryOperator<String> replacement;
           if (node instanceof Replace replace) {
@@ -1883,8 +1892,8 @@ public class JavaDocInfoGenerator {
           }
           else if (node instanceof Highlight highlight) {
             replacement = switch (highlight.type()) {
-              case BOLD -> orig -> "<b>"+orig+"</b>";
-              case ITALIC -> orig -> "<i>"+orig+"</i>";
+              case BOLD -> orig -> "<b>" + orig + "</b>";
+              case ITALIC -> orig -> "<i>" + orig + "</i>";
               case HIGHLIGHTED -> {
                 TextAttributes attributes =
                   EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);

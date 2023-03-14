@@ -183,6 +183,9 @@ public class SnippetMarkupTest {
           }
         }
       """);
+    SnippetMarkup markup = SnippetMarkup.parse(text);
+    assertEquals(0, markup.getCommonIndent(null));
+    assertEquals(2, markup.getCommonIndent("main"));
     assertEquals("""
                      public static void main(String[] args) {
                        code:\s
@@ -191,7 +194,7 @@ public class SnippetMarkupTest {
                          System.out.println(idx);
                        }
                      }
-                   """, SnippetMarkup.parse(text).getTextWithoutMarkup("main"));
+                   """, markup.getTextWithoutMarkup("main"));
     
   }
 

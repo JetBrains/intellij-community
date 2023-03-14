@@ -65,10 +65,38 @@ public class SnippetMarkup {
     return myContext;
   }
 
+  /**
+   * @param region region
+   * @return starting node of the region
+   */
   public @Nullable MarkupNode getRegionStart(@NotNull String region) {
     return myRegionStarts.get(region);
   }
 
+  /**
+   * @param region region to process; null for the whole snippet
+   * @return common indent of all the lines in the region
+   */
+  public int getCommonIndent(@Nullable String region) {
+    var visitor = new SnippetVisitor() {
+      int maxIndent = Integer.MAX_VALUE;
+
+      @Override
+      public void visitPlainText(@NotNull PlainText plainText, @NotNull List<@NotNull LocationMarkupNode> activeNodes) {
+        if (maxIndent == 0) return;
+        String content = plainText.content();
+        if (content.isBlank()) return;
+        int curIndent = 0;
+        while (curIndent < content.length() && content.charAt(curIndent) != '\n' && Character.isWhitespace(content.charAt(curIndent))) {
+          curIndent++;
+        }
+        maxIndent = Math.min(maxIndent, curIndent);
+      }
+    };
+    visitSnippet(region, visitor);
+    return visitor.maxIndent == Integer.MAX_VALUE ? 0 : visitor.maxIndent;
+  }
+  
   /**
    * @param region region to test; null for the whole snippet
    * @return true if any of {@code @replacement}, {@code @highlight}, or {@code @link} tags exist within the region
