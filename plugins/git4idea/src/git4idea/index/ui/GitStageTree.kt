@@ -319,7 +319,7 @@ abstract class GitStageTree(project: Project,
   }
 
   private class MyUntrackedNode(project: Project, files: List<FilePath>) :
-    ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.UNTRACKED, files, { UnversionedViewDialog(project, files).show() }) {
+    ChangesBrowserSpecificFilePathsNode<NodeKind>(NodeKind.UNTRACKED, files, { UnversionedViewDialog(project).show() }) {
     init {
       markAsHelperNode()
       setAttributes(SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)

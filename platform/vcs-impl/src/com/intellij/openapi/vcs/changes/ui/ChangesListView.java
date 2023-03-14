@@ -57,6 +57,8 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES
     = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
+  private boolean myBusy = false;
+
   public ChangesListView(@NotNull Project project, boolean showCheckboxes) {
     super(project, showCheckboxes, true);
     // setDragEnabled throws an exception in headless mode which leads to a memory leak
@@ -68,6 +70,17 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
   @Override
   public int getToggleClickCount() {
     return 2;
+  }
+
+  @Override
+  public void setPaintBusy(boolean paintBusy) {
+    myBusy = paintBusy;
+    super.setPaintBusy(paintBusy);
+  }
+
+  @Override
+  protected boolean isEmptyTextVisible() {
+    return super.isEmptyTextVisible() && !myBusy;
   }
 
   @Override
