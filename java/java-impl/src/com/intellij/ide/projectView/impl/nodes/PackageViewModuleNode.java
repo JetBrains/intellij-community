@@ -4,7 +4,6 @@ package com.intellij.ide.projectView.impl.nodes;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -23,26 +22,24 @@ public class PackageViewModuleNode extends AbstractModuleNode{
   @Override
   @NotNull
   public Collection<AbstractTreeNode<?>> getChildren() {
-    return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
-      Module module = getValue();
-      if (module == null || module.isDisposed()) return Collections.emptyList();
-      var result = new ArrayList<AbstractTreeNode<?>>();
-      var grouper = ModuleGrouper.instanceFor(getProject());
-      var moduleGroupPath = grouper.getModuleAsGroupPath(module);
-      if (moduleGroupPath != null) {
-        var moduleGroup = new ModuleGroup(moduleGroupPath);
-        var childModules = moduleGroup.modulesInGroup(getProject());
-        for (Module childModule : childModules) {
-          result.add(new PackageViewModuleNode(getProject(), childModule, getSettings()));
-        }
+    Module module = getValue();
+    if (module == null || module.isDisposed()) return Collections.emptyList();
+    var result = new ArrayList<AbstractTreeNode<?>>();
+    var grouper = ModuleGrouper.instanceFor(getProject());
+    var moduleGroupPath = grouper.getModuleAsGroupPath(module);
+    if (moduleGroupPath != null) {
+      var moduleGroup = new ModuleGroup(moduleGroupPath);
+      var childModules = moduleGroup.modulesInGroup(getProject());
+      for (Module childModule : childModules) {
+        result.add(new PackageViewModuleNode(getProject(), childModule, getSettings()));
       }
-      List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots());
-      result.addAll(PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), module, false));
-      if (getSettings().isShowLibraryContents()) {
-        result.add(new PackageViewLibrariesNode(getProject(), module, getSettings()));
-      }
-      return result;
-    });
+    }
+    List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(module).getSourceRoots());
+    result.addAll(PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), module, false));
+    if (getSettings().isShowLibraryContents()) {
+      result.add(new PackageViewLibrariesNode(getProject(), module, getSettings()));
+    }
+    return result;
   }
 
   @Override
