@@ -41,9 +41,6 @@ interface OperationLogStorage {
    */
   fun readAll(action: (OperationReadResult) -> Boolean)
 
-  fun serialize(operation: VfsOperation<*>): ByteArray
-  fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T
-
   /**
    * Size of storage in bytes. The range [0, size) of storage is guaranteed to contain only operations
    * for which their write procedures have been finished already.

@@ -35,44 +35,7 @@ class OperationLogStorageImpl(
   }
 
   override fun bytesForOperationDescriptor(tag: VfsOperationTag): Int =
-    when (tag) {
-      VfsOperationTag.NULL -> throw IllegalArgumentException("NULL operations are not expected in storage")
-
-      VfsOperationTag.REC_ALLOC -> VfsOperation.RecordsOperation.AllocateRecord.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_SET_ATTR_REC_ID -> VfsOperation.RecordsOperation.SetAttributeRecordId.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_SET_CONTENT_RECORD_ID -> VfsOperation.RecordsOperation.SetContentRecordId.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_SET_PARENT -> VfsOperation.RecordsOperation.SetParent.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_SET_NAME_ID -> VfsOperation.RecordsOperation.SetNameId.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_SET_FLAGS -> VfsOperation.RecordsOperation.SetFlags.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_SET_LENGTH -> VfsOperation.RecordsOperation.SetLength.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_SET_TIMESTAMP -> VfsOperation.RecordsOperation.SetTimestamp.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_MARK_RECORD_AS_MODIFIED -> VfsOperation.RecordsOperation.MarkRecordAsModified.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_FILL_RECORD -> VfsOperation.RecordsOperation.FillRecord.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_CLEAN_RECORD -> VfsOperation.RecordsOperation.CleanRecord.VALUE_SIZE_BYTES
-      VfsOperationTag.REC_SET_VERSION -> VfsOperation.RecordsOperation.SetVersion.VALUE_SIZE_BYTES
-
-      VfsOperationTag.ATTR_WRITE_ATTR -> VfsOperation.AttributesOperation.WriteAttribute.VALUE_SIZE_BYTES
-      VfsOperationTag.ATTR_DELETE_ATTRS -> VfsOperation.AttributesOperation.DeleteAttributes.VALUE_SIZE_BYTES
-      VfsOperationTag.ATTR_SET_VERSION -> VfsOperation.AttributesOperation.SetVersion.VALUE_SIZE_BYTES
-
-      VfsOperationTag.CONTENT_WRITE_BYTES -> VfsOperation.ContentsOperation.WriteBytes.VALUE_SIZE_BYTES
-      VfsOperationTag.CONTENT_WRITE_STREAM -> VfsOperation.ContentsOperation.WriteStream.VALUE_SIZE_BYTES
-      VfsOperationTag.CONTENT_WRITE_STREAM_2 -> VfsOperation.ContentsOperation.WriteStream2.VALUE_SIZE_BYTES
-      VfsOperationTag.CONTENT_APPEND_STREAM -> VfsOperation.ContentsOperation.AppendStream.VALUE_SIZE_BYTES
-      VfsOperationTag.CONTENT_REPLACE_BYTES -> VfsOperation.ContentsOperation.ReplaceBytes.VALUE_SIZE_BYTES
-      VfsOperationTag.CONTENT_ACQUIRE_NEW_RECORD -> VfsOperation.ContentsOperation.AcquireNewRecord.VALUE_SIZE_BYTES
-      VfsOperationTag.CONTENT_ACQUIRE_RECORD -> VfsOperation.ContentsOperation.AcquireRecord.VALUE_SIZE_BYTES
-      VfsOperationTag.CONTENT_RELEASE_RECORD -> VfsOperation.ContentsOperation.ReleaseRecord.VALUE_SIZE_BYTES
-      VfsOperationTag.CONTENT_SET_VERSION -> VfsOperation.ContentsOperation.SetVersion.VALUE_SIZE_BYTES
-
-      VfsOperationTag.VFILE_EVENT_CONTENT_CHANGE -> VfsOperation.VFileEventOperation.EventStart.ContentChange.VALUE_SIZE_BYTES
-      VfsOperationTag.VFILE_EVENT_COPY -> VfsOperation.VFileEventOperation.EventStart.Copy.VALUE_SIZE_BYTES
-      VfsOperationTag.VFILE_EVENT_CREATE -> VfsOperation.VFileEventOperation.EventStart.Create.VALUE_SIZE_BYTES
-      VfsOperationTag.VFILE_EVENT_DELETE -> VfsOperation.VFileEventOperation.EventStart.Delete.VALUE_SIZE_BYTES
-      VfsOperationTag.VFILE_EVENT_MOVE -> VfsOperation.VFileEventOperation.EventStart.Move.VALUE_SIZE_BYTES
-      VfsOperationTag.VFILE_EVENT_PROPERTY_CHANGED -> VfsOperation.VFileEventOperation.EventStart.PropertyChange.VALUE_SIZE_BYTES
-      VfsOperationTag.VFILE_EVENT_END -> VfsOperation.VFileEventOperation.EventEnd.VALUE_SIZE_BYTES
-    } + VfsOperationTag.SIZE_BYTES * 2
+    tag.operationSerializer.valueSizeBytes + VfsOperationTag.SIZE_BYTES * 2
 
   private fun sizeOfValueInDescriptor(size: Int) = size - VfsOperationTag.SIZE_BYTES * 2
 
@@ -101,14 +64,11 @@ class OperationLogStorageImpl(
 
   override fun writeOperation(position: Long, op: VfsOperation<*>) {
     val descriptorSize = bytesForOperationDescriptor(op.tag)
-    val data = serialize(op)
-    if (data.size != sizeOfValueInDescriptor(descriptorSize)) {
-      throw IllegalStateException("for ${op.tag} expected value of size ${sizeOfValueInDescriptor(descriptorSize)}, got ${data.size}")
-    }
     storageIO.offsetOutputStream(position).use {
       it.write(op.tag.ordinal)
-      it.write(data)
+      op.serializer.serializeOperation(op, stringEnumerator, it)
       it.write(op.tag.ordinal)
+      it.validateWrittenBytesCount(descriptorSize.toLong())
     }
   }
 
@@ -176,7 +136,12 @@ class OperationLogStorageImpl(
     if (descrData.last() != descrData.first()) {
       return OperationReadResult.Invalid(IllegalStateException("bounding tags do not match: ${descrData.first()} ${descrData.last()}"))
     }
-    val op = deserialize<VfsOperation<*>>(tag, descrData.copyOfRange(1, descrData.size - 1))
+    val op = tag.operationSerializer.deserializeOperation(
+      descrData, VfsOperationTag.SIZE_BYTES, sizeOfValueInDescriptor(descrSize),
+      // TODO: both variants seem to give nearly the same performance, but that needs to be checked in the future
+      //descrData.copyOfRange(VfsOperationTag.SIZE_BYTES, descrSize - VfsOperationTag.SIZE_BYTES),
+      stringEnumerator
+    )
     return OperationReadResult.Valid(op)
   }
 
@@ -190,7 +155,8 @@ class OperationLogStorageImpl(
     storageIO.read(position + descriptorSize - VfsOperationTag.SIZE_BYTES, buf)
     if (probableTagByte != buf[0].toInt()) {
       return OperationReadResult.Invalid(
-        IllegalStateException("failed to recover incomplete operation, bounding bytes: ${-probableTagByte} ${buf[0]}"))
+        IllegalStateException("failed to recover incomplete operation, bounding bytes: ${-probableTagByte} ${buf[0]}")
+      )
     }
     return OperationReadResult.Incomplete(probableTag)
   }
@@ -201,10 +167,6 @@ class OperationLogStorageImpl(
       if (!action(iter.next())) break
     }
   }
-
-  override fun serialize(operation: VfsOperation<*>): ByteArray = operation.serializeValue(stringEnumerator)
-  override fun <T : VfsOperation<*>> deserialize(tag: VfsOperationTag, data: ByteArray): T =
-    VfsOperation.deserialize(tag, data, stringEnumerator)
 
   override fun size(): Long = position.getReadyPosition()
   override fun emergingSize(): Long = position.getCurrentAdvancePosition()
