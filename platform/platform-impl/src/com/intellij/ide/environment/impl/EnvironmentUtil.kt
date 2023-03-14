@@ -32,6 +32,21 @@ object EnvironmentUtil {
     application.putUserData(pathToEnvironmentConfig, path)
   }
 
+  fun buildEnvironmentConfiguration(action: EnvironmentFileBuilder.() -> Unit) : EnvironmentConfiguration {
+    return EnvironmentFileBuilder().apply(action).build()
+  }
+
+  class EnvironmentFileBuilder {
+    private val map : MutableMap<EnvironmentKey, String> = mutableMapOf()
+    fun EnvironmentKey.assign(value: String) {
+      check(map.put(this, value) == null) {
+        "Duplicate assignment"
+      }
+    }
+
+    fun build() : EnvironmentConfiguration = EnvironmentConfiguration(map)
+  }
+
   @TestOnly
   fun setPathTemporarily(path: Path, disposable: Disposable) {
     val application = ApplicationManager.getApplication()

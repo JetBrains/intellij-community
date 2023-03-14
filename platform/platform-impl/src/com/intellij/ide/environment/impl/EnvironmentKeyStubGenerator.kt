@@ -37,10 +37,10 @@ class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
     }
   }
 
-  suspend fun performGeneration(args: List<String>) {
+  suspend fun performGeneration(args: List<String>, configuration: EnvironmentConfiguration = EnvironmentConfiguration.EMPTY) {
     val parsedArgs = parseCommandLine(args)
 
-    val config = generateKeyConfig(!parsedArgs.noDescriptions)
+    val config = generateKeyConfig(!parsedArgs.noDescriptions, configuration)
 
     withContext(Dispatchers.IO) {
       try {
@@ -63,7 +63,7 @@ class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
   }
 }
 
-private suspend fun generateKeyConfig(generateDescriptions: Boolean): ByteArray {
+private suspend fun generateKeyConfig(generateDescriptions: Boolean, configuration: EnvironmentConfiguration): ByteArray {
   val environmentKeys = blockingContext {
     EnvironmentKeyRegistry.EP_NAME.extensionList.flatMap { it.getAllKeys() }
   }.sortedBy(EnvironmentKey::id)
@@ -82,7 +82,8 @@ private suspend fun generateKeyConfig(generateDescriptions: Boolean): ByteArray 
         writeEndArray()
       }
       writeStringField("key", key.id)
-      writeStringField("value", key.defaultValue)
+      val value = configuration.get(key) ?: key.defaultValue
+      writeStringField("value", value)
       writeEndObject()
     }
     writeEndArray()
