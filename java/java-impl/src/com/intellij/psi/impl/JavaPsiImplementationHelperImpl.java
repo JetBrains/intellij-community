@@ -355,7 +355,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     PsiElement markupContext = markup.getContext();
     PsiFile file = markupContext.getContainingFile();
     if (file == null) return null;
-    return new SnippetRegionTarget(file, start.range().shiftRight(markupContext.getTextRange().getStartOffset() - 1));
+    return new SnippetRegionTarget(file, start.range().shiftRight(markupContext.getTextRange().getStartOffset()));
   }
 
   public static final class SnippetRegionTarget extends FakePsiElement implements SyntheticElement {

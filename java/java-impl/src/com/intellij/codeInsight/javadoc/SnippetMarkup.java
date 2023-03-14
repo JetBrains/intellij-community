@@ -31,11 +31,6 @@ public class SnippetMarkup {
   private final @NotNull Map<@NotNull String, @NotNull MarkupNode> myRegionStarts;
   private final @NotNull PsiElement myContext;
   private final @NotNull BitSet myTextOffsets = new BitSet();
-  
-  // \\S+ = language-dependent comment start token, like "//" or "#"
-  private static final Pattern MARKUP_TAG = Pattern.compile("\\S+\\s*@(start|end|highlight|replace|link)\\s*(\\S.+?)?\\s*(:?)\\s*$");
-
-  private static final Pattern ATTRIBUTE = Pattern.compile("(\\w+)\\s*(=\\s*('([^']*)'|\"([^\"]*)\"|(\\S*)))?");
 
   private static final Map<String, Set<String>> ALLOWED_ATTRS =
     Map.of(
@@ -45,6 +40,13 @@ public class SnippetMarkup {
       "replace", Set.of("substring", "regex", "region", "replacement"),
       "link", Set.of("substring", "regex", "region", "target", "type")
     );
+
+  private static final String ALLOWED_TAGS = "start|end|highlight|replace|link";
+  private static final Pattern MARKUP_SPEC = Pattern.compile("(?://|#|rem|REM|')\\s*(@(?:" + ALLOWED_TAGS + ")(?:\\s.+)?)$");
+
+  private static final Pattern MARKUP_TAG = Pattern.compile("@(" + ALLOWED_TAGS + ")\\s*");
+
+  private static final Pattern ATTRIBUTE = Pattern.compile("(\\w+)\\s*(=\\s*('([^']*)'|\"([^\"]*)\"|(\\S*)))?\\s*");
 
   private SnippetMarkup(@NotNull List<@NotNull MarkupNode> nodes, @NotNull PsiElement context) {
     myNodes = nodes;
@@ -345,27 +347,96 @@ public class SnippetMarkup {
 
   private static Stream<MarkupNode> parseLine(@NotNull PlainText text) {
     String content = text.content();
-    Matcher matcher = MARKUP_TAG.matcher(content);
+    Matcher matcher = MARKUP_SPEC.matcher(content);
     if (!matcher.find()) return Stream.of(text);
-    int start = matcher.start();
     int offset = text.range().getStartOffset();
+    String markupSpec = matcher.group(1).stripTrailing();
+    boolean hasColon = markupSpec.endsWith(":");
+    if (hasColon) {
+      markupSpec = markupSpec.substring(0, markupSpec.length() - 1);
+    }
+    int start = matcher.start(0);
     PlainText prev = new PlainText(TextRange.create(offset, offset + start), text.content.substring(0, start) + "\n");
-    String tagName = matcher.group(1);
-    List<MarkupNode> attrs = parseAttributes(text.range().getStartOffset() + matcher.start(2), matcher.group(2),
-                                             ALLOWED_ATTRS.get(tagName));
-    List<ErrorMarkup> errors = new ArrayList<>(ContainerUtil.filterIsInstance(attrs, ErrorMarkup.class));
+    start = matcher.start(1);
+    List<MarkupNode> markupNodes = new ArrayList<>();
+    while (!markupSpec.isEmpty()) {
+      Matcher tagMatcher = MARKUP_TAG.matcher(markupSpec);
+      if (!tagMatcher.find()) {
+        markupNodes.add(new ErrorMarkup(TextRange.create(0, markupSpec.length()).shiftRight(start + offset),
+                                        JavaBundle.message("javadoc.snippet.error.markup.tag.expected")));
+        break;
+      }
+      if (tagMatcher.start() != 0) {
+        markupNodes.add(new ErrorMarkup(TextRange.create(0, tagMatcher.start()).shiftRight(start + offset),
+                                        JavaBundle.message("javadoc.snippet.error.markup.tag.expected")));
+        break;
+      }
+      String tagName = tagMatcher.group(1);
+
+      Set<String> allowedAttrs = ALLOWED_ATTRS.get(tagName);
+      List<MarkupNode> attrs = new ArrayList<>();
+      int attrPos = tagMatcher.end();
+      Set<String> used = new HashSet<>();
+      while (attrPos < markupSpec.length()) {
+        Matcher attrMatcher = ATTRIBUTE.matcher(markupSpec);
+        boolean found = attrMatcher.find(attrPos);
+        if (!found || attrMatcher.start() != attrPos) break;
+        String key = attrMatcher.group(1);
+        TextRange attrRange = TextRange.create(attrMatcher.start(), attrMatcher.end()).shiftRight(start + offset);
+        if (!allowedAttrs.contains(key)) {
+          attrs.add(new ErrorMarkup(attrRange, JavaBundle.message("javadoc.snippet.error.unsupported.attribute", key)));
+        }
+        else if (!used.add(key)) {
+          attrs.add(new ErrorMarkup(attrRange, JavaBundle.message("javadoc.snippet.error.duplicate.attribute", key)));
+        }
+        else {
+          String value = attrMatcher.group(4);
+          if (value == null) value = attrMatcher.group(5);
+          if (value == null) value = attrMatcher.group(6);
+          if (value == null) value = "";
+          attrs.add(new Attribute(attrRange, key, value));
+        }
+        attrPos = attrMatcher.end();
+      }
+      markupNodes.addAll(ContainerUtil.filterIsInstance(attrs, ErrorMarkup.class));
+      int rangeEnd = attrPos;
+      while (rangeEnd > 0 && Character.isWhitespace(markupSpec.charAt(rangeEnd - 1))) {
+        rangeEnd--;
+      }
+      TextRange range = TextRange.create(0, rangeEnd).shiftRight(start + offset);
+      validateAndAddTag(markupNodes, tagName, attrs, range);
+      start += attrPos;
+      markupSpec = markupSpec.substring(attrPos);
+    }
+    if (hasColon) {
+      if (!prev.content().isBlank()) {
+        markupNodes.add(0, prev);
+      }
+    }
+    else if (!prev.content().isBlank()) {
+      markupNodes.add(prev);
+    }
+    else if (ContainerUtil.exists(markupNodes, e -> e instanceof LocationMarkupNode lmn && lmn.region() == null)) {
+      // No colon and no previous content: still create node, as markup should apply to it
+      markupNodes.add(new PlainText(TextRange.create(prev.range().getStartOffset(), prev.range().getStartOffset()), ""));
+    }
+    return markupNodes.stream();
+  }
+
+  private static void validateAndAddTag(@NotNull List<MarkupNode> markupNodes,
+                                        @NotNull String tagName,
+                                        @NotNull List<MarkupNode> attrs,
+                                        @NotNull TextRange range) {
     Map<String, String> attrValues = StreamEx.of(attrs).select(Attribute.class).toMap(Attribute::key, Attribute::value);
-    TextRange range = TextRange.create(matcher.start(1), matcher.end()).shiftRight(offset);
-    boolean hasColon = !matcher.group(3).isEmpty();
-    MarkupNode node = switch (tagName) {
+    switch (tagName) {
       case "start" -> {
         String region = attrValues.get("region");
-        if (region == null) {
-          yield new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.missing.required.attribute", "@start", "region"));
-        }
-        yield new StartRegion(range, region);
+        markupNodes.add(
+          region == null ?
+          new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.missing.required.attribute", "@start", "region")) :
+          new StartRegion(range, region));
       }
-      case "end" -> new EndRegion(range, attrValues.get("region"));
+      case "end" -> markupNodes.add(new EndRegion(range, attrValues.get("region")));
       case "highlight" -> {
         Attribute typeAttr =
           (Attribute)ContainerUtil.find(attrs, n -> n instanceof Attribute attr && attr.key().equals("type"));
@@ -374,24 +445,27 @@ public class SnippetMarkup {
           type = ContainerUtil.find(HighlightType.values(),
                                     ht -> ht.name().toLowerCase(Locale.ROOT).equals(typeAttr.value()));
           if (type == null) {
-            errors.add(new ErrorMarkup(typeAttr.range(), JavaBundle.message("javadoc.snippet.error.unknown.highlight.type", typeAttr.value())));
+            markupNodes.add(
+              new ErrorMarkup(typeAttr.range(), JavaBundle.message("javadoc.snippet.error.unknown.highlight.type", typeAttr.value())));
           }
         }
-        yield new Highlight(range, attrValues.get("substring"), attrValues.get("regex"), attrValues.get("region"),
-                            Objects.requireNonNullElse(type, HighlightType.HIGHLIGHTED));
+        markupNodes.add(new Highlight(range, attrValues.get("substring"), attrValues.get("regex"), attrValues.get("region"),
+                                      Objects.requireNonNullElse(type, HighlightType.HIGHLIGHTED)));
       }
       case "replace" -> {
         String replacement = attrValues.get("replacement");
         if (replacement == null) {
-          errors.add(new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.missing.required.attribute", "@replace", "replacement")));
+          markupNodes.add(
+            new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.missing.required.attribute", "@replace", "replacement")));
           replacement = "";
         }
-        yield new Replace(range, attrValues.get("substring"), attrValues.get("regex"), attrValues.get("region"), replacement);
+        markupNodes.add(new Replace(range, attrValues.get("substring"), attrValues.get("regex"), attrValues.get("region"), replacement));
       }
       case "link" -> {
         String target = attrValues.get("target");
         if (target == null) {
-          errors.add(new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.missing.required.attribute", "@link", "target")));
+          markupNodes.add(
+            new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.missing.required.attribute", "@link", "target")));
           target = "";
         }
         Attribute typeAttr =
@@ -401,61 +475,17 @@ public class SnippetMarkup {
           type = ContainerUtil.find(LinkType.values(),
                                     ht -> ht.name().toLowerCase(Locale.ROOT).equals(typeAttr.value()));
           if (type == null) {
-            errors.add(new ErrorMarkup(typeAttr.range(), JavaBundle.message("javadoc.snippet.error.unknown.link.type", typeAttr.value())));
+            markupNodes.add(
+              new ErrorMarkup(typeAttr.range(), JavaBundle.message("javadoc.snippet.error.unknown.link.type", typeAttr.value())));
           }
         }
-        yield new Link(range, attrValues.get("substring"), attrValues.get("regex"), attrValues.get("region"), 
-                       target, Objects.requireNonNullElse(type, LinkType.LINK));
+        markupNodes.add(new Link(range, attrValues.get("substring"), attrValues.get("regex"), attrValues.get("region"),
+                                 target, Objects.requireNonNullElse(type, LinkType.LINK)));
       }
       default -> throw new AssertionError("Unexpected tag: " + tagName);
-    };
-    return prev.content().isBlank() ? StreamEx.of(node).append(errors) :
-            hasColon ? StreamEx.of(prev, node).append(errors) : 
-            StreamEx.of(node).append(errors).append(prev);
+    }
   }
 
-  private static List<MarkupNode> parseAttributes(int offset, @Nullable String attrs, Set<String> allowedAttrs) {
-    if (attrs == null) {
-      return List.of();
-    }
-    Matcher matcher = ATTRIBUTE.matcher(attrs);
-    int pos = 0;
-    List<MarkupNode> result = new ArrayList<>();
-    Set<String> used = new HashSet<>();
-    while (true) {
-      boolean found = matcher.find(pos);
-      if (!found) {
-        if (pos < attrs.length()) {
-          result.add(new ErrorMarkup(TextRange.create(offset + pos, offset + attrs.length()),
-                                     JavaBundle.message("javadoc.snippet.error.malformed.attribute")));
-        }
-        break;
-      }
-      if (!attrs.substring(pos, matcher.start()).isBlank()) {
-        result.add(new ErrorMarkup(TextRange.create(offset + pos, offset + matcher.start()),
-                                   JavaBundle.message("javadoc.snippet.error.malformed.attribute")));
-        break;
-      }
-      String key = matcher.group(1);
-      TextRange range = TextRange.create(offset + matcher.start(), offset + matcher.end());
-      if (!allowedAttrs.contains(key)) {
-        result.add(new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.unsupported.attribute", key)));
-      }
-      else if (!used.add(key)) {
-        result.add(new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.duplicate.attribute", key)));
-      }
-      else {
-        String value = matcher.group(4);
-        if (value == null) value = matcher.group(5);
-        if (value == null) value = matcher.group(6);
-        if (value == null) value = "";
-        result.add(new Attribute(range, key, value));
-      }
-      pos = matcher.end();
-    }
-    return result;
-  }
-  
   public interface SnippetVisitor {
     /**
      * Called for every plain text chunk

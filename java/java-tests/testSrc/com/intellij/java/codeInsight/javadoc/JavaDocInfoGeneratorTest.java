@@ -133,6 +133,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     verifyJavadocFor("RegionNoMarkup");
     verifyJavadocFor("NoRegion");
     verifyJavadocFor("Main");
+    verifyJavadocFor("MultiTag");
     verifyJavadocFor("TextFile");
     verifyJavadocFor("Unresolved");
   }
