@@ -40,7 +40,7 @@ class KotlinShortClassNameFileIndex : FileBasedIndexExtension<String, Collection
             JavaClassFileType.INSTANCE
         )
 
-    override fun getVersion() = 2
+    override fun getVersion() = 3
 
     override fun traceKeyHashToVirtualFileMapping(): Boolean = true
 
