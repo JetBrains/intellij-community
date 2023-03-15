@@ -54,7 +54,13 @@ internal class IdeHeartbeatEventReporter : ProjectActivity {
       val gcBeans = ManagementFactory.getGarbageCollectorMXBeans()
       while (true) {
         val mxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
-        val systemCpuLoad = (mxBean.cpuLoad * 100).roundToInt().let { if (it >= 0) it else -1 }
+        val cpuLoad: Double = mxBean.cpuLoad
+        val cpuLoadInt = if (cpuLoad in 0.0..1.0) {
+          (cpuLoad * 100).roundToInt()
+        }
+        else {
+          -1
+        }
         val swapSize = mxBean.totalSwapSpaceSize.toDouble()
         val swapLoad = if (swapSize > 0) ((1 - mxBean.freeSwapSpaceSize / swapSize) * 100).toInt() else 0
         val totalGcTime = gcBeans.sumOf { it.collectionTime }
@@ -72,7 +78,7 @@ internal class IdeHeartbeatEventReporter : ProjectActivity {
 
         // don't report total GC time in the first 5 minutes of IJ execution
         UILatencyLogger.HEARTBEAT.log(
-          UILatencyLogger.SYSTEM_CPU_LOAD.with(systemCpuLoad),
+          UILatencyLogger.SYSTEM_CPU_LOAD.with(cpuLoadInt),
           UILatencyLogger.SWAP_LOAD.with(swapLoad),
           UILatencyLogger.CPU_TIME.with(TimeUnit.NANOSECONDS.toMillis(thisCpuTime).toInt()),
           UILatencyLogger.GC_TIME.with(thisGcTime.toInt())
