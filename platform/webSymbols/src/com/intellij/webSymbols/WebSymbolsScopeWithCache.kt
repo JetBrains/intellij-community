@@ -67,7 +67,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(protected val fra
       initialize(map::add, dependencies)
       if (dependencies.isEmpty()) {
         throw IllegalArgumentException(
-          "CacheDependencies cannot be empty. Add ModificationTracker.NEVER_CHANGED if cache should never be dropped.")
+          "CacheDependencies cannot be empty. Failed to initialize $javaClass. Add ModificationTracker.NEVER_CHANGED if cache should never be dropped.")
       }
       dependencies.add(namesProvider)
       CachedValueProvider.Result.create(map, dependencies.toList())
@@ -80,8 +80,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(protected val fra
                           name: String?,
                           params: WebSymbolsNameMatchQueryParams,
                           scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
-    if (namespace != null
-        && (params.queryExecutor.allowResolve || !requiresResolve)
+    if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(namespace, kind)) {
       getMap(params.queryExecutor).getSymbols(namespace, kind, name, params, Stack(scope)).toList()
@@ -93,8 +92,7 @@ abstract class WebSymbolsScopeWithCache<T : UserDataHolder, K>(protected val fra
                                   name: String?,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
-    if (namespace != null
-        && (params.queryExecutor.allowResolve || !requiresResolve)
+    if ((params.queryExecutor.allowResolve || !requiresResolve)
         && (framework == null || params.framework == framework)
         && provides(namespace, kind)) {
       getMap(params.queryExecutor).getCodeCompletions(namespace, kind, name, params, Stack(scope)).toList()
