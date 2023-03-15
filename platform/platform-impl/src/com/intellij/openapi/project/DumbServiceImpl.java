@@ -94,18 +94,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     public void afterLastTask() {
       boolean changed = myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.WAITING_FOR_FINISH);
       LOG.assertTrue(changed, "Failed to change state: SCHEDULED_TASKS>WAITING_FOR_FINISH. Current state: " + myState.get());
-
-      if (myTaskQueue.isEmpty()) {
-        myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(DumbServiceImpl.this::updateFinished);
-      }
-      else {
-        // because of tryEnterDumbMode in queueTaskOnEdt, it is possible that myGuiDumbTaskRunner::startBackgroundProcess is not invoked
-        // for some queued tasks. Code below makes sure that dumb tasks do not stuck in dumb queue.
-        boolean needToScheduleNow = myState.compareAndSet(State.WAITING_FOR_FINISH, State.SCHEDULED_OR_RUNNING_TASKS);
-        if (needToScheduleNow) {
-          myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
-        }
-      }
+      myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(DumbServiceImpl.this::updateFinished);
     }
   }
 
@@ -272,14 +261,14 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
 
     myTaskQueue.addTask(task);
-    if (tryEnterDumbMode(modality, trace)) {
-      // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
-      // drain the queue synchronously under modal progress
-      myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
-    }
+    enterDumbModeIfSmart(modality, trace);
+
+    // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
+    // drain the queue synchronously under modal progress
+    myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
   }
 
-  private boolean tryEnterDumbMode(@NotNull ModalityState modality, @NotNull Throwable trace) {
+  private void enterDumbModeIfSmart(@NotNull ModalityState modality, @NotNull Throwable trace) {
     boolean wasSmart = !isDumb();
     boolean entered = WriteAction.compute(() -> {
       State old = myState.getAndSet(State.SCHEDULED_OR_RUNNING_TASKS);
@@ -299,7 +288,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         LOG.error(e);
       }
     }
-    return entered;
   }
 
   private boolean switchToSmartMode() {
