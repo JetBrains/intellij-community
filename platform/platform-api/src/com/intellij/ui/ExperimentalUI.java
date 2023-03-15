@@ -38,9 +38,6 @@ import static java.time.temporal.ChronoUnit.DAYS;
  */
 @ApiStatus.Internal
 public abstract class ExperimentalUI {
-
-  private static final Logger LOG = Logger.getInstance(ExperimentalUI.class);
-
   public static final String KEY = "ide.experimental.ui";
 
   public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
@@ -55,9 +52,8 @@ public abstract class ExperimentalUI {
   @Contract(pure = true)
   public static boolean isNewUI() {
     // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
-    // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
-
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY) && isSupported();
+    // Please apply any modifications here and there synchronously. Or solve the dependency problem :)
+    return EarlyAccessRegistryManager.INSTANCE.getBoolean(KEY);
   }
 
   public static void setNewUI(boolean newUI) {
@@ -83,17 +79,10 @@ public abstract class ExperimentalUI {
       return (int)DAYS.between(firstDate, now);
     }
     catch (DateTimeParseException e) {
-      LOG.warn("Invalid stored date " + value);
+      Logger.getInstance(ExperimentalUI.class).warn("Invalid stored date " + value);
       propertyComponent.setValue(FIRST_PROMOTION_DATE_PROPERTY, now.toString());
       return 0;
     }
-  }
-
-  public static boolean isSupported() {
-    // The content of this method is duplicated to EmptyIntentionAction.isNewUi (because of modules dependency problem).
-    // Please, apply any modifications here and there synchronously. Or solve the dependency problem :)
-
-    return true;
   }
 
   public static boolean isNewNavbar() {
