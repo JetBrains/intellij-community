@@ -11,10 +11,6 @@ import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
 class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
-  init {
-    templatePresentation.text = ActionsBundle.message("group.CustomLayoutsActionGroup.text")
-  }
-
   private val childrenCache = NamedLayoutListBasedCache<AnAction> {
     CustomLayoutActionGroup(it)
   }
@@ -23,7 +19,9 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-  private class CustomLayoutActionGroup(@NlsSafe private val layoutName: String) : ActionGroup(), DumbAware {
+  private class CustomLayoutActionGroup(
+    @NlsSafe private val layoutName: String
+  ) : ActionGroup(ActionsBundle.message("group.CustomLayoutActionsGroup.text"), true), DumbAware {
 
     private val children = arrayOf<AnAction>(
       Apply(layoutName),
@@ -31,11 +29,6 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
       Separator(),
       Delete(layoutName),
     )
-
-    init {
-      templatePresentation.text = ActionsBundle.message("group.CustomLayoutActionsGroup.text")
-      templatePresentation.isPopupGroup = true
-    }
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
