@@ -27,16 +27,14 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
     when {
       isXcodeLicenseError(exception) -> showXCodeLicenseError(errorNotifier)
       isInvalidActiveDeveloperPath(exception) -> showInvalidActiveDeveloperPathError(errorNotifier)
-      else -> showGenericError(exception, errorNotifier, onErrorResolved)
+      else -> showGenericError(exception, errorNotifier)
     }
   }
 
-  private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
+  private fun showGenericError(exception: Throwable, errorNotifier: ErrorNotifier) {
     errorNotifier.showError(GitBundle.message("executable.error.git.not.installed"),
                             getHumanReadableErrorFor(exception),
-                            ErrorNotifier.FixOption.Standard(GitBundle.message("install.download.and.install.action")) {
-                              this.downloadAndInstall(errorNotifier, onErrorResolved)
-                            })
+                            null)
   }
 
   internal fun downloadAndInstall(errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit) {
