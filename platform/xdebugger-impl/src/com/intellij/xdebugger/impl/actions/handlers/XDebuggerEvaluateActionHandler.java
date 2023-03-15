@@ -42,7 +42,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
     }
 
     // replace data context, because we need to have it for the focused component, not the target component (if from the toolbar)
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
     if (focusOwner != null) {
       dataContext = DataManager.getInstance().getDataContext(focusOwner);
     }
