@@ -35,7 +35,9 @@ class KtInternalFileTreeNode(project: Project?, lightClass: KtLightClass, viewSe
         val prj = getProject()
         val baseName = virtualFile.nameWithoutExtension
         val smartPointerManager = SmartPointerManager.getInstance(prj)
-        val scope = GlobalSearchScope.union(SourceNavigationHelper.targetClassFilesToSourcesScopes(virtualFile, prj))
+        val scopes = SourceNavigationHelper.targetClassFilesToSourcesScopes(virtualFile, prj)
+        if (scopes.isEmpty()) return@lazy null
+        val scope = GlobalSearchScope.union(scopes)
 
         val originalPackageName = ktClsFile.packageFqName
         val filesFromFacade = SmartList<KtFile>()
