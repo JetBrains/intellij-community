@@ -1,15 +1,35 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
 import org.jetbrains.tools.model.updater.GeneratorPreferences.ArtifactMode
-import org.jetbrains.tools.model.updater.impl.*
+import org.jetbrains.tools.model.updater.impl.JpsLibrary
+import org.jetbrains.tools.model.updater.impl.JpsPath
+import org.jetbrains.tools.model.updater.impl.JpsUrl
+import org.jetbrains.tools.model.updater.impl.MavenId
 
 private const val ktGroup = "org.jetbrains.kotlin"
+private const val BOOTSTRAP_VERSION = "1.9.255"
 
-private class ArtifactCoordinates(val version: String, val mode: ArtifactMode)
+private class ArtifactCoordinates(private val originalVersion: String, val mode: ArtifactMode) {
+    val version: String
+        get() = when (mode) {
+            ArtifactMode.MAVEN -> originalVersion
+            ArtifactMode.BOOTSTRAP -> BOOTSTRAP_VERSION
+        }
+}
 
 private val GeneratorPreferences.kotlincArtifactCoordinates: ArtifactCoordinates
     get() = ArtifactCoordinates(kotlincVersion, kotlincArtifactsMode)
+
+private val GeneratorPreferences.nativeArtifactCoordinates: ArtifactCoordinates
+    get() = when (kotlincArtifactsMode) {
+        ArtifactMode.MAVEN -> kotlincArtifactCoordinates
+        ArtifactMode.BOOTSTRAP ->
+            if (bootstrapWithNative)
+                kotlincArtifactCoordinates
+            else
+                ArtifactCoordinates(originalVersion = kotlincVersion, mode = ArtifactMode.MAVEN)
+    }
 
 private val GeneratorPreferences.jpsArtifactCoordinates: ArtifactCoordinates
     get() = ArtifactCoordinates(jpsPluginVersion, jpsPluginArtifactsMode)
@@ -50,7 +70,7 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", kotlincCoordinates)
 
         if (!isCommunity) {
-            kotlincForIdeWithStandardNaming("kotlinc.kotlin-backend-native", kotlincCoordinates)
+            kotlincForIdeWithStandardNaming("kotlinc.kotlin-backend-native", preferences.nativeArtifactCoordinates)
         }
 
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-common", kotlincCoordinates)
