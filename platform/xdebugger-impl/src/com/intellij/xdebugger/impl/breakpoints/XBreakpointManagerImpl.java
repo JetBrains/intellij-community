@@ -127,7 +127,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     Project project = myProject;
     if (!project.isDefault()) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        HttpFileSystem.getInstance().addFileListener(this::updateBreakpointInFile, project);
+        HttpFileSystem.getInstance().addFileListener(this::updateBreakpointInHttpFile, project);
       }
     }
   }
@@ -135,7 +135,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   private final ExecutorService myHttpBreakpointUpdater =
     SequentialTaskExecutor.createSequentialApplicationPoolExecutor("HttpFileSystem breakpoints updater");
 
-  private void updateBreakpointInFile(final VirtualFile file) {
+  private void updateBreakpointInHttpFile(final VirtualFile file) {
     ReadAction
       .nonBlocking(() -> changedBreakpoints(file))
       .coalesceBy(Pair.create(this, file))
