@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
@@ -34,6 +35,8 @@ import org.jetbrains.kotlin.psi.*
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
+
+const val CONTEXT_RECEIVER_THIS_NAME = "<${AsmUtil.THIS}>"
 
 fun Location.isInKotlinSources(): Boolean {
     return declaringType().isInKotlinSources()

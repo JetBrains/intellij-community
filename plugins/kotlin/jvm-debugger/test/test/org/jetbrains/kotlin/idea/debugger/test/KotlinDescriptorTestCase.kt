@@ -33,9 +33,9 @@ import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebugSession
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
-import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator
 import org.jetbrains.kotlin.idea.debugger.test.preference.*
 import org.jetbrains.kotlin.idea.debugger.test.util.BreakpointCreator
@@ -173,7 +173,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         DebuggerTestCompilerFacility(testFiles, jvmTarget, useIrBackend, lambdasGenerationScheme)
 
     @Suppress("UNUSED_PARAMETER")
-    fun doTest(unused: String) {
+    open fun doTest(unused: String) {
         val wholeFile = dataFile()
         val wholeFileContents = FileUtil.loadFile(wholeFile, true)
 
@@ -202,6 +202,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         mainClassName = compilerFacility.compileTestSources(
             myModule, jvmSourcesOutputDirectory, commonSourcesOutputDirectory, File(appOutputPath), libraryOutputDirectory
         )
+
         breakpointCreator = BreakpointCreator(
             project,
             ::systemLogger,

@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.codegen.inline.INLINE_TRANSFORMATION_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.core.CONTEXT_RECEIVER_THIS_NAME
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
@@ -86,6 +87,11 @@ class VariableFinder(val context: ExecutionContext) {
             private val capturedNameRegex = getCapturedVariableNameRegex(fieldName)
             override fun capturedNameMatches(name: String) = capturedNameRegex.matches(name)
         }
+
+        class ContextReceiver(asmType: AsmType) : VariableKind(asmType) {
+            override fun capturedNameMatches(name: String) =
+                name.startsWith(AsmUtil.THIS_IN_DEFAULT_IMPLS)
+        }
     }
 
     class Result(val value: Value?)
@@ -124,6 +130,7 @@ class VariableFinder(val context: ExecutionContext) {
             Kind.DELEGATED -> findOrdinary(VariableKind.Ordinary(parameter.name, asmType, isDelegated = true))
             Kind.FAKE_JAVA_OUTER_CLASS -> thisObject()?.let { Result(it) }
             Kind.EXTENSION_RECEIVER -> findExtensionThis(VariableKind.ExtensionThis(parameter.name, asmType))
+            Kind.CONTEXT_RECEIVER -> findContextReceiverThis(VariableKind.ContextReceiver(asmType))
             Kind.LOCAL_FUNCTION -> findLocalFunction(VariableKind.LocalFunction(parameter.name, asmType))
             Kind.DISPATCH_RECEIVER -> findDispatchThis(VariableKind.OuterClassThis(asmType))
             Kind.COROUTINE_CONTEXT -> findCoroutineContext()
@@ -206,6 +213,27 @@ class VariableFinder(val context: ExecutionContext) {
         }
 
         return null
+    }
+
+    private fun findContextReceiverThis(kind: VariableKind.ContextReceiver): Result? {
+        // Here we must fetch variables from a method manually to get all existing context receivers.
+        // In this example:
+        //   context(Context1, Context2)
+        //   fun foo() {
+        //      ...
+        //   }
+        // there are two context receivers with name '<this>' in the LVT of the `foo` function.
+        // However, calling `frameProxy.visibleVariables()` will return us only one `<this>` variable,
+        // because inside the JDI implementation only unique entries of variables by name are preserved.
+        val variables = frameProxy.safeLocation()?.safeMethod()?.safeVariables() ?: return null
+        val variableProxies = variables.map { LocalVariableProxyImpl(frameProxy, it) }
+
+        findLocalVariable(variableProxies, kind) {
+            it == CONTEXT_RECEIVER_THIS_NAME ||
+                    it.startsWith(AsmUtil.THIS_IN_DEFAULT_IMPLS)
+        }?.let { return it }
+
+        return findCapturedVariableInContainingThis(kind)
     }
 
     private fun findDispatchThis(kind: VariableKind.OuterClassThis): Result? {

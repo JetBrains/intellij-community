@@ -23,12 +23,10 @@ import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.codegen.ClassBuilderFactory
 import org.jetbrains.kotlin.codegen.GenerationUtils
 import org.jetbrains.kotlin.codegen.state.GenerationState
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.JVMConfigurationKeys
-import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
-import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.projectStructure.withLanguageVersionSettings
 import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
@@ -157,12 +155,26 @@ open class DebuggerTestCompilerFacility(
 
         lateinit var mainClassName: String
 
-        doWriteAction {
+        fun compileKotlinFiles() {
             if (kotlinCommon.isNotEmpty()) {
                 compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir)
                 mainClassName = analyzeAndFindMainClass(project, jvmKtFiles)
             } else {
                 mainClassName = compileKotlinFilesInIdeAndFindMainClass(project, allKtFiles, classesDir)
+            }
+        }
+
+        doWriteAction {
+            if (useIrBackend) {
+                // TODO: Remove custom language version settings when context receivers are defaulted
+                val languageVersionSettings = LanguageVersionSettingsImpl(
+                    LanguageVersion.LATEST_STABLE,
+                    ApiVersion.LATEST_STABLE,
+                    specificFeatures = mapOf(LanguageFeature.ContextReceivers to LanguageFeature.State.ENABLED)
+                )
+                module.withLanguageVersionSettings(languageVersionSettings, ::compileKotlinFiles)
+            } else {
+                compileKotlinFiles()
             }
         }
 
