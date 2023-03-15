@@ -224,7 +224,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   suspend fun loadProjectToEmptyStorage(project: Project): LoadedProjectEntities? {
     val configLocation = getJpsProjectConfigLocation(project)!!
     LOG.debug { "Initial loading of project located at $configLocation" }
-    activity = startActivity("project files loading", ActivityCategory.DEFAULT)
+    activity = startActivity("project workspace model loading")
     childActivity = activity?.startChild("serializers creation")
     val serializers = prepareSerializers()
     registerListener()
