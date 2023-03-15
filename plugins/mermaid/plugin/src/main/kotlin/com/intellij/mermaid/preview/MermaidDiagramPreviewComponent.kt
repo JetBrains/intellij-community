@@ -4,16 +4,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.jcef.JBCefBrowser
 import com.intellij.ui.jcef.JBCefClient
-import com.intellij.ui.jcef.executeJavaScriptAsync
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.concurrency.await
 
 internal class MermaidDiagramPreviewComponent: BorderLayoutPanel(), Disposable {
   private val browser = createBrowser()
 
   init {
     Disposer.register(this, browser)
-    browser.jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 10)
+    browser.jbCefClient.setProperty(JBCefClient.Properties.JS_QUERY_POOL_SIZE, 20)
     addToCenter(browser.component)
   }
 
@@ -28,11 +26,17 @@ internal class MermaidDiagramPreviewComponent: BorderLayoutPanel(), Disposable {
     }
   }
 
+  internal class PreviewUpdateException(cause: Exception): IllegalStateException(cause)
+
   suspend fun update(text: String) {
     val content = PreviewEncodingUtil.encodeContent(text)
     // language=JavaScript
     val code = """window["updateMermaidDiagramContent"]("$content");"""
-    browser.executeCancellableJavaScript(code)
+    try {
+      browser.executeCancellableJavaScript(code)
+    } catch (exception: JsCallExecutionException) {
+      throw PreviewUpdateException(exception)
+    }
   }
 
   override fun dispose() = Unit
