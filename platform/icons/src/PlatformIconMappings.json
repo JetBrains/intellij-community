@@ -68,6 +68,13 @@
       "taskGroup.svg": "nodes/configFolder.svg",
       "toggleOfflineMode.svg": "actions/offlineMode.svg"
     },
+    "codeWithMe": {
+      "cwmAccess.svg": "codeWithMe/cwmAccess.svg",
+      "cwmDisableCall.svg": "codeWithMe/cwmDisableCall.svg",
+      "cwmEnableCall.svg": "codeWithMe/cwmEnableCall.svg",
+      "cwmInvite.svg": "codeWithMe/cwmInvite.svg",
+      "cwmUsers.svg": "users.svg"
+    },
     "diff": {
       "applyNotConflicts.svg": "diff/applyNotConflicts.svg",
       "applyNotConflictsLeft.svg": "diff/applyNotConflictsLeft.svg",
@@ -218,7 +225,6 @@
         "general/add.svg",
         "actions/AddMulticaret.svg"
       ],
-      "addAccount.svg": "codeWithMe/cwmAccess.svg",
       "user.svg": "general/user.svg",
       "chevronDown.svg": [
         "actions/findAndShowNextMatches.svg",
