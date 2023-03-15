@@ -206,7 +206,7 @@ private fun doCreateFromWizard(project: Project?, wizard: AbstractProjectWizard)
       return listOfNotNull(NewModuleAction().createModuleFromWizard(project, null, wizard))
     }
     else {
-      return if (projectBuilder!!.validate(project, project)) projectBuilder.commit(project) else emptyList()
+      return if (projectBuilder!!.validate(project, project)) projectBuilder.commit(project) ?: emptyList() else emptyList()
     }
   }
   finally {

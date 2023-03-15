@@ -183,6 +183,6 @@ fun whenProjectCreated(project: Project, action: () -> Unit) {
 @ApiStatus.Internal
 fun NewProjectWizardStep.setupProjectFromBuilder(project: Project, builder: ProjectBuilder): Module? {
   val model = context.getUserData(NewProjectWizardStep.MODIFIABLE_MODULE_MODEL_KEY)
-  return builder.commit(project, model).firstOrNull()
+  return builder.commit(project, model)?.firstOrNull()
 }
 
