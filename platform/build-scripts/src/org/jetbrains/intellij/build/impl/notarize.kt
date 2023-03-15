@@ -42,7 +42,7 @@ internal suspend fun notarize(sitFile: Path, context: BuildContext) {
     )
     val notaryApiClient = NotaryClientV2(credentials)
     val statusPollingConfiguration = StatusPollingConfiguration(
-      timeout = 3.hours,
+      timeout = 5.hours,
       pollingPeriod = 1.minutes,
       ignoreServerError = true,
       ignoreTimeoutExceptions = true,
