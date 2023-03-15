@@ -71,7 +71,7 @@ open class StartUpPerformanceReporter : StartUpPerformanceService {
 
       // not all activities are performed always, so, we wait only activities that were started
       @Volatile
-      private var editorRestoringTillPaint = true
+      private var editorRestoringTillHighlighted = true
 
       override fun accept(activity: ActivityImpl) {
         if (activity.category != null && activity.category != ActivityCategory.DEFAULT) {
@@ -80,19 +80,19 @@ open class StartUpPerformanceReporter : StartUpPerformanceService {
 
         if (activity.end == 0L) {
           if (activity.name == Activities.EDITOR_RESTORING_TILL_PAINT) {
-            editorRestoringTillPaint = false
+            editorRestoringTillHighlighted = false
           }
         }
         else {
           when (activity.name) {
             Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES -> {
               projectOpenedActivitiesPassed = true
-              if (editorRestoringTillPaint) {
+              if (editorRestoringTillHighlighted) {
                 completed()
               }
             }
-            Activities.EDITOR_RESTORING_TILL_PAINT -> {
-              editorRestoringTillPaint = true
+            Activities.EDITOR_RESTORING_TILL_HIGHLIGHTED -> {
+              editorRestoringTillHighlighted = true
               if (projectOpenedActivitiesPassed) {
                 completed()
               }

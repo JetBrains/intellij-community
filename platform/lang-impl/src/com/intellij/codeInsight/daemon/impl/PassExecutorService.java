@@ -9,6 +9,8 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.telemetry.TraceUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
@@ -380,8 +382,9 @@ final class PassExecutorService implements Disposable {
 
             if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
               String fileName = myFileEditor.getFile().getName();
-              TraceUtil.runWithSpanThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER, myPass.getClass().toString(), span -> {
-                span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, fileName);
+              String passClassName = StringUtil.getShortName(myPass.getClass());
+              TraceUtil.runWithSpanThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER, passClassName, span -> {
+                Activity startupActivity = StartUpMeasurer.startActivity("running " + passClassName);
                 boolean cancelled = false;
                 try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
                   myPass.collectInformation(myUpdateProgress);
@@ -391,6 +394,8 @@ final class PassExecutorService implements Disposable {
                   throw e;
                 }
                 finally {
+                  startupActivity.end();
+                  span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, fileName);
                   span.setAttribute(HighlightingPassTracer.CANCELLED_ATTR_SPAN_KEY, Boolean.toString(cancelled));
                 }
               });

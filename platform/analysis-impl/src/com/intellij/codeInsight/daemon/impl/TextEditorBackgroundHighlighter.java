@@ -5,6 +5,8 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diagnostic.telemetry.TraceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -77,8 +79,8 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     int @NotNull [] finalPassesToIgnore = passesToIgnore;
     PsiFile finalFile = file;
     return TraceUtil.computeWithSpanThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER, "passes instantiation", span -> {
+      Activity startupActivity = StartUpMeasurer.startActivity("highlighting passes instantiation");
       boolean cancelled = false;
-      span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, finalFile.getName());
       try {
         TextEditorHighlightingPassRegistrarEx passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(myProject);
         return passRegistrar.instantiatePasses(finalFile, myEditor, finalPassesToIgnore);
@@ -88,6 +90,8 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
         throw e;
       }
       finally {
+        startupActivity.end();
+        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, finalFile.getName());
         span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, Boolean.toString(cancelled));
       }
     });
