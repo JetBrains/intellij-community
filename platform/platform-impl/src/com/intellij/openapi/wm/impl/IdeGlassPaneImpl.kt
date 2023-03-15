@@ -703,7 +703,7 @@ private class IdePaneLoadingLayer(
       is KeyEvent -> {
         @Suppress("DEPRECATION")
         if (event.getID() == KeyEvent.KEY_PRESSED && event.keyCode == KeyEvent.VK_ESCAPE && event.modifiers == 0) {
-          loadingJob.cancel("")
+          loadingJob.cancel(FrameLoadingState.PROJECT_LOADING_CANCELLED_BY_USER)
         }
 
         event.consume()
