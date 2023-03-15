@@ -28,8 +28,10 @@ import com.intellij.openapi.application.impl.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AppUIUtil
@@ -399,6 +401,8 @@ private suspend fun importConfig(args: List<String>, log: Logger,
     ConfigImportHelper.importConfigsTo(veryFirstStartOnThisComputer, newConfigDir, args, log)
   }
   appStarter.importFinished(newConfigDir)
+  EarlyAccessRegistryManager.invalidate()
+  IconLoader.clearCache()
   activity.end()
 }
 
