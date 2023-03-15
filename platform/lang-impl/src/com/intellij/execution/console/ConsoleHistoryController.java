@@ -60,6 +60,7 @@ import java.util.*;
  */
 public class ConsoleHistoryController implements Disposable {
   private static final Logger LOG = Logger.getInstance(ConsoleHistoryController.class);
+  private static final char P = 'P';
 
   @Service
   private static final class ControllerRegistry implements SettingsSavingComponentJavaAdapter {
@@ -368,7 +369,7 @@ public class ConsoleHistoryController implements Disposable {
       final ContentChooser<String> chooser = new ContentChooser<>(myConsole.getProject(), title, true, true) {
         {
           setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
-          setOKButtonMnemonic('P');
+          setOKButtonMnemonic(P);
           setCancelButtonText(CommonBundle.getCloseButtonText());
           setUseNumbering(false);
         }
