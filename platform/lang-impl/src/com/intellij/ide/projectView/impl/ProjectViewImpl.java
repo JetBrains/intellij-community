@@ -32,6 +32,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
@@ -98,6 +99,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.application.options.OptionId.PROJECT_VIEW_SHOW_VISIBILITY_ICONS;
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
@@ -1725,38 +1727,17 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     void scrollFromSource(@Nullable FileEditor fileEditor, boolean requestFocus) {
-      SimpleSelectInContext context = fileEditor == null ? findSelectInContext() : getSelectInContext(fileEditor);
-      if (context != null) context.selectInCurrentTarget(requestFocus);
+      var editorsToCheck = fileEditor == null ? allEditors() : List.of(fileEditor);
+      SelectorInCurrentTarget selector = new SelectorInCurrentTarget(editorsToCheck);
+      selector.selectInCurrentTarget(requestFocus);
     }
 
-    @Nullable
-    private SimpleSelectInContext findSelectInContext() {
+    private List<@Nullable FileEditor> allEditors() {
       FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-      SimpleSelectInContext context = getSelectInContext(fileEditorManager.getSelectedEditor());
-      if (context != null) return context;
-      for (FileEditor fileEditor : fileEditorManager.getSelectedEditors()) {
-        context = getSelectInContext(fileEditor);
-        if (context != null) return context;
-      }
-      return null;
-    }
-
-    @Nullable
-    private SimpleSelectInContext getSelectInContext(@Nullable FileEditor fileEditor) {
-      if (fileEditor instanceof TextEditor textEditor) {
-        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(textEditor.getEditor().getDocument());
-        return psiFile == null ? null : new EditorSelectInContext(psiFile, textEditor.getEditor());
-      }
-      PsiFile psiFile = getPsiFile(getVirtualFile(fileEditor));
-      return psiFile == null ? null : new SimpleSelectInContext(psiFile);
-    }
-
-    private PsiFile getPsiFile(VirtualFile file) {
-      return file == null || !file.isValid() ? null : PsiManager.getInstance(myProject).findFile(file);
-    }
-
-    private VirtualFile getVirtualFile(FileEditor fileEditor) {
-      return fileEditor == null ? null : fileEditor.getFile();
+      var result = new ArrayList<@Nullable FileEditor>();
+      result.add(fileEditorManager.getSelectedEditor());
+      result.addAll(Arrays.asList(fileEditorManager.getSelectedEditors()));
+      return result;
     }
 
     private boolean isCurrentProjectViewPaneFocused() {
@@ -1783,6 +1764,95 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     protected String getActionDescription() {
       return ActionsBundle.message("action.ProjectView.AutoscrollFromSource.description");
     }
+  }
+
+  private class SelectorInCurrentTarget {
+
+    private final List<@Nullable FileEditor> myEditors;
+    private int myEditorIndex = 0;
+
+    SelectorInCurrentTarget(List<@Nullable FileEditor> editors) {
+      myEditors = editors;
+    }
+
+    public void selectInCurrentTarget(boolean requestFocus) {
+      var psiFileSupplierAndEditor = findNextPsiFileSupplierAndEditor();
+      if (psiFileSupplierAndEditor == null) return;
+      ReadAction
+        .nonBlocking(psiFileSupplierAndEditor.psiFileSupplier::get)
+        .withDocumentsCommitted(myProject)
+        .finishOnUiThread(ModalityState.defaultModalityState(), psiFile -> {
+          if (psiFile == null) {
+            ++myEditorIndex;
+            selectInCurrentTarget(requestFocus);
+          }
+          else {
+            createSelectInContext(psiFile, psiFileSupplierAndEditor.editor).selectInCurrentTarget(requestFocus);
+          }
+        })
+        .coalesceBy(SelectorInCurrentTarget.class, ProjectViewImpl.this)
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
+
+    private record PsiFileSupplierAndEditor(Supplier<PsiFile> psiFileSupplier, FileEditor editor) { }
+
+    private @Nullable PsiFileSupplierAndEditor findNextPsiFileSupplierAndEditor() {
+      Supplier<@Nullable PsiFile> psiFileSupplier = null;
+      @Nullable FileEditor editor = null;
+      while (myEditorIndex < myEditors.size()) {
+        editor = myEditors.get(myEditorIndex);
+        psiFileSupplier = getPsiFileSupplier(editor);
+        if (psiFileSupplier != null) {
+          break;
+        }
+        ++myEditorIndex;
+      }
+      if (psiFileSupplier == null) {
+        return null;
+      }
+      return new PsiFileSupplierAndEditor(psiFileSupplier, editor);
+    }
+
+    private @Nullable Supplier<@Nullable PsiFile> getPsiFileSupplier(@Nullable FileEditor fileEditor) {
+      if (fileEditor == null || !fileEditor.isValid()) {
+        return null;
+      }
+      if (fileEditor instanceof TextEditor textEditor) {
+        // EDT code
+        Editor editor = textEditor.getEditor();
+        if (editor.isDisposed()) {
+          return null;
+        }
+        Document document = editor.getDocument();
+        return () -> { // BGT code
+          var psiDocumentManager = PsiDocumentManager.getInstance(myProject);
+          if (psiDocumentManager == null) {
+            return null;
+          }
+          return psiDocumentManager.getPsiFile(document);
+        };
+      }
+      else {
+        // EDT code
+        VirtualFile file = fileEditor.getFile();
+        return () -> { // BGT code
+          if (file == null || !file.isValid()) {
+            return null;
+          }
+          return PsiManager.getInstance(myProject).findFile(file);
+        };
+      }
+    }
+
+    private @NotNull SimpleSelectInContext createSelectInContext(@NotNull PsiFile file, FileEditor fileEditor) {
+      if (fileEditor instanceof TextEditor textEditor) {
+        return new EditorSelectInContext(file, textEditor.getEditor());
+      }
+      else {
+        return new SimpleSelectInContext(file);
+      }
+    }
+
   }
 
   private class SimpleSelectInContext extends SmartSelectInContext {
