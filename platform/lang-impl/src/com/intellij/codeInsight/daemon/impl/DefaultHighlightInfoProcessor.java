@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +80,8 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
     if (pass == null) {
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         ShowAutoImportPassFactory siFactory = TextEditorHighlightingPassRegistrarImpl.EP_NAME.findExtensionOrFail(ShowAutoImportPassFactory.class);
-        try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
+        try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor));
+             AccessToken ignored2 = SlowOperations.knownIssue("IDEA-305557, EA-599727")) {
           TextEditorHighlightingPass highlightingPass = siFactory.createHighlightingPass(psiFile, editor);
           if (highlightingPass != null) {
             myCachedShowAutoImportPass = highlightingPass;

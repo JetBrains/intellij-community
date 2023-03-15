@@ -11,6 +11,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.await
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.OpenSourceUtil
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,7 +41,9 @@ private class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager 
       }
 
       if (navigatable != null) {
-        OpenSourceUtil.navigateToSource(false, true, navigatable)
+        SlowOperations.knownIssue("IDEA-304701, EA-677533").use {
+          OpenSourceUtil.navigateToSource(false, true, navigatable)
+        }
       }
     }
   }

@@ -25,6 +25,7 @@ import com.intellij.ui.*
 import com.intellij.ui.render.RenderingUtil
 import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.IconUtil
+import com.intellij.util.SlowOperations
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -148,7 +149,9 @@ internal class SwitcherVirtualFile(
       true -> RenderingUtil.getIcon(icon, selected)
       else -> icon
     }
-    val foreground = if (selected) null else FileStatusManager.getInstance(project).getStatus(file).color
+    val foreground = if (selected) null else SlowOperations.knownIssue("IDEA-304502, EA-596531").use {
+      FileStatusManager.getInstance(project).getStatus(file).color
+    }
     val effectColor = if (isProblemFile) JBColor.red else null
     val style = when (effectColor) {
       null -> SimpleTextAttributes.STYLE_PLAIN
@@ -157,8 +160,8 @@ internal class SwitcherVirtualFile(
     component.append(mainText, SimpleTextAttributes(style, foreground, effectColor))
   }
 
-  override fun getElementBackground(row: Int) : Color? {
-    return runReadAction { getFileBackgroundColor(project, file) }
+  override fun getElementBackground(row: Int) : Color? = SlowOperations.knownIssue("IDEA-304502, EA-658555").use {
+    runReadAction { getFileBackgroundColor(project, file) }
   }
 }
 

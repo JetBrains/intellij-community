@@ -4,6 +4,7 @@ package com.intellij.openapi.diff.impl.patch.formove;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
@@ -298,11 +300,13 @@ public final class PatchApplier {
 
   @Nullable
   private ApplyPatchStatus executeWritable() {
-    ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus =
-      ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myVerifier.getWritableFiles());
-    if (readOnlyFilesStatus.hasReadonlyFiles()) {
-      showError(myProject, readOnlyFilesStatus.getReadonlyFilesMessage());
-      return ApplyPatchStatus.ABORT;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-305053, EA-659443")) {
+      ReadonlyStatusHandler.OperationStatus readOnlyFilesStatus =
+        ReadonlyStatusHandler.getInstance(myProject).ensureFilesWritable(myVerifier.getWritableFiles());
+      if (readOnlyFilesStatus.hasReadonlyFiles()) {
+        showError(myProject, readOnlyFilesStatus.getReadonlyFilesMessage());
+        return ApplyPatchStatus.ABORT;
+      }
     }
 
     myFailedPatches.addAll(myVerifier.filterBadFileTypePatches());

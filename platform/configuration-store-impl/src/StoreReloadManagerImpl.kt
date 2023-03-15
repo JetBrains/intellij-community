@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManagerListener
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.*
@@ -100,8 +101,10 @@ internal class StoreReloadManagerImpl(cs: CoroutineScope) : StoreReloadManager {
       if (changedSchemes != null) {
         for ((tracker, files) in changedSchemes) {
           runCatching {
-            @Suppress("UNCHECKED_CAST")
-            (tracker as SchemeChangeApplicator<Scheme, Scheme>).reload(files as Set<SchemeChangeEvent<Scheme, Scheme>>)
+            SlowOperations.knownIssue("IDEA-307617, EA-680581").use {
+              @Suppress("UNCHECKED_CAST")
+              (tracker as SchemeChangeApplicator<Scheme, Scheme>).reload(files as Set<SchemeChangeEvent<Scheme, Scheme>>)
+            }
           }.getOrLogException(LOG)
         }
       }

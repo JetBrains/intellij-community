@@ -176,7 +176,9 @@ object EditSourceOnDoubleClickHandler {
     }
 
     protected open fun processDoubleClick(e: MouseEvent, dataContext: DataContext, treePath: TreePath) {
-      OpenSourceUtil.openSourcesFrom(dataContext, true)
+      SlowOperations.knownIssue("IDEA-304701, EA-659716").use {
+        OpenSourceUtil.openSourcesFrom(dataContext, true)
+      }
       whenPerformed?.run()
     }
   }

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -261,8 +263,10 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
   }
 
   private boolean shouldBeIgnored(@NotNull VirtualFile virtualFile) {
-    return ProjectUtil.isProjectOrWorkspaceFile(virtualFile) ||
-           ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(virtualFile);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307614, EA-698479")) {
+      return ProjectUtil.isProjectOrWorkspaceFile(virtualFile) ||
+             ProjectRootManager.getInstance(myProject).getFileIndex().isExcluded(virtualFile);
+    }
   }
 
   private static @Nullable PsiElement getChangeHighlightingScope(@NotNull PsiElement element) {
