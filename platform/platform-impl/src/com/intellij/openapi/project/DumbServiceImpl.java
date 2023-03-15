@@ -463,7 +463,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   @Override
   public void completeJustSubmittedTasks() {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
-    assert myProject.isInitialized();
+    LOG.assertTrue(myProject.isInitialized(), "Project should have been initialized");
     if (myState.get() != State.SCHEDULED_OR_RUNNING_TASKS) {
       if (!isSynchronousTaskExecution()) {
         // DumbServiceSyncTaskQueue does not respect threading policies: it can add tasks outside of EDT
