@@ -2,8 +2,8 @@
 package com.intellij.ide
 
 import com.intellij.ide.plugins.DependencyCollector
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.advertiser.PluginFeatureEnabler
+import com.intellij.ide.plugins.isOnDemandPluginEnabled
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
@@ -46,9 +46,10 @@ internal class JavaDependencyCollector : DependencyCollector {
 
 @ApiStatus.Experimental
 private class ProjectLoadedListener(private val project: Project) : JpsProjectLoadedListener {
-
   override fun loaded() {
-    if (!IdeaPluginDescriptorImpl.isOnDemandEnabled) return
+    if (!isOnDemandPluginEnabled) {
+      return
+    }
 
     PluginFeatureEnabler.getInstance(project).scheduleEnableSuggested()
   }
@@ -56,10 +57,10 @@ private class ProjectLoadedListener(private val project: Project) : JpsProjectLo
 
 @ApiStatus.Experimental
 private class LibraryAddedListener(private val project: Project) : WorkspaceModelChangeListener {
-
   override fun changed(event: VersionedStorageChange) {
-    if (!IdeaPluginDescriptorImpl.isOnDemandEnabled
-        || event.getChanges(LibraryEntity::class.java).none { it is EntityChange.Added }) return
+    if (!isOnDemandPluginEnabled || event.getChanges(LibraryEntity::class.java).none { it is EntityChange.Added }) {
+      return
+    }
 
     PluginAdvertiserService.getInstance(project).rescanDependencies {
       PluginFeatureEnabler.getInstance(project).enableSuggested()

@@ -151,10 +151,7 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
 
     private fun splitByComma(key: String): Set<PluginId> {
       val property = System.getProperty(key, "")
-      return if (property.isEmpty())
-        emptySet()
-      else
-        property.split(',').toPluginIds()
+      return if (property.isEmpty()) emptySet() else PluginManagerCore.toPluginIds(property.split(','))
     }
   }
 

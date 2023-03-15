@@ -975,20 +975,21 @@ public final class PluginManagerCore {
                                                        @NotNull Collection<String> pluginIds,
                                                        OpenOption... openOptions) throws IOException {
     NioFiles.createDirectories(path.getParent());
-    Files.write(path,
-                new TreeSet<>(pluginIds),
-                openOptions);
+    Files.write(path, new TreeSet<>(pluginIds), openOptions);
   }
 
   @ReviseWhenPortedToJDK(value = "10", description = "toUnmodifiableSet")
   @VisibleForTesting
   public static @NotNull Set<PluginId> toPluginIds(@NotNull Collection<String> pluginIdStrings) {
-    Set<PluginId> pluginIds = pluginIdStrings.stream()
-      .map(String::trim)
-      .filter(s -> !s.isEmpty())
-      .map(PluginId::getId)
-      .collect(Collectors.toSet());
-    return Collections.unmodifiableSet(pluginIds);
+    Set<PluginId> result = new HashSet<>();
+    for (String pluginIdString : pluginIdStrings) {
+      String s = pluginIdString.trim();
+      if (!s.isEmpty()) {
+        PluginId id = PluginId.getId(s);
+        result.add(id);
+      }
+    }
+    return result;
   }
 
   private static boolean ask3rdPartyPluginsPrivacyConsent(@NotNull List<IdeaPluginDescriptorImpl> descriptors) {

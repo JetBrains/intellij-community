@@ -692,12 +692,12 @@ fun createFromDescriptor(path: Path,
 }
 
 private fun withOnDemandEnabled(runnable: ThrowableRunnable<Throwable>) {
-  val defaultValue = IdeaPluginDescriptorImpl.isOnDemandEnabled
-  IdeaPluginDescriptorImpl.isOnDemandEnabled = true
+  val defaultValue = isOnDemandPluginEnabled
+  isOnDemandPluginEnabled = true
   try {
     runnable.run()
   }
   finally {
-    IdeaPluginDescriptorImpl.isOnDemandEnabled = defaultValue
+    isOnDemandPluginEnabled = defaultValue
   }
 }

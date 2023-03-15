@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.*
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
@@ -15,17 +16,17 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.coroutineContext
 
-private val LOG get() = logger<OnDemandPluginFeatureEnablerImpl>()
+private val LOG: Logger
+  get() = logger<OnDemandPluginFeatureEnablerImpl>()
 
 @ApiStatus.Experimental
 private class OnDemandPluginFeatureEnablerImpl(private val project: Project, private val cs: CoroutineScope) : PluginFeatureEnabler {
-
   override suspend fun enableSuggested(): Boolean {
     val application = ApplicationManager.getApplication()
     LOG.assertTrue(!application.isReadAccessAllowed
                    || application.isUnitTestMode)
 
-    if (!IdeaPluginDescriptorImpl.isOnDemandEnabled) {
+    if (!isOnDemandPluginEnabled) {
       return false
     }
 
