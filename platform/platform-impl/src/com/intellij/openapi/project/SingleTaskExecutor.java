@@ -91,22 +91,24 @@ class SingleTaskExecutor {
    * of this method will have no effect until previous task completes either of its `run` or `closed` methods
    *
    * @param processRunner receiver for the task that must be executed by consumer (in any thread).
+   * @return true if current thread won the competition and started processing
    */
-  final void tryStartProcess(Consumer<AutoclosableProgressive> processRunner) {
+  final boolean tryStartProcess(Consumer<AutoclosableProgressive> processRunner) {
     if (!shouldContinueBackgroundProcessing.compareAndSet(false, true)) {
-      return; // the thread that set shouldContinueBackgroundProcessing (not this thread) should compete with the background thread
+      return false; // the thread that set shouldContinueBackgroundProcessing (not this thread) should compete with the background thread
     }
     if (runState.get() == RUN_STATE.RUNNING) {
-      return; // there will be at least one more check of shouldContinueBackgroundProcessing in the background thread
+      return false; // there will be at least one more check of shouldContinueBackgroundProcessing in the background thread
     }
     else {
       boolean thisThreadShouldProcessQueue = runState.compareAndSet(RUN_STATE.STOPPING, RUN_STATE.STARTING) ||
                                              runState.compareAndSet(RUN_STATE.STOPPED, RUN_STATE.STARTING);
       // whatever thread (this or background) wins the competition and sets STARTING - that thread should process the queue
-      if (!thisThreadShouldProcessQueue) return;
+      if (!thisThreadShouldProcessQueue) return false;
     }
 
     processRunner.accept(new StateAwareTask(task));
+    return true;
   }
 
   public void clearScheduledFlag() {

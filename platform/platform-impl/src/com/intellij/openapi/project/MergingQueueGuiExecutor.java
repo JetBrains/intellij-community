@@ -23,6 +23,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * Single-threaded executor for {@link MergingTaskQueue}.
@@ -173,12 +174,8 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
    * Start task queue processing in this thread under progress indicator. If background thread is already running, this method does nothing
    * and returns immediately.
    */
-  public final void tryStartProcessInThisThread(@NotNull ProgressIndicator indicator) {
-    mySingleTaskExecutor.tryStartProcess(task -> {
-      try (task) {
-        task.run(indicator);
-      }
-    });
+  public final boolean tryStartProcessInThisThread(@NotNull Consumer<SingleTaskExecutor.AutoclosableProgressive> processRunner) {
+    return mySingleTaskExecutor.tryStartProcess(processRunner);
   }
 
   private void runWithCallbacks(Runnable runnable) {

@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.startup.StartupActivity;
@@ -469,29 +468,30 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (myState.get() != State.SCHEDULED_TASKS) {
       return;
     }
-    while (isDumb()) {
+
+    boolean queueProcessedUnderModalProgress;
+    do {
       assertState(State.SCHEDULED_TASKS);
-      showModalProgress();
-    }
+      queueProcessedUnderModalProgress = processQueueUnderModalProgress();
+      // until we reach smart mode, or processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
+    } while (isDumb() && queueProcessedUnderModalProgress);
   }
 
-  private void showModalProgress() {
+  private boolean processQueueUnderModalProgress() {
     NoAccessDuringPsiEvents.checkCallContext("modal indexing");
-    try {
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IndexingBundle.message("progress.indexing.title"), () -> {
-        assertState(State.SCHEDULED_TASKS);
-        runBackgroundProcess(ProgressManager.getInstance().getProgressIndicator());
-        assertState(State.SMART, State.WAITING_FOR_FINISH);
-      });
-      assertState(State.SMART, State.WAITING_FOR_FINISH);
-    }
-    finally {
-      if (myState.get() != State.SMART) {
-        assertState(State.WAITING_FOR_FINISH);
-        updateFinished();
-        assertState(State.SMART, State.SCHEDULED_TASKS);
+
+    return myGuiDumbTaskRunner.tryStartProcessInThisThread(processTask -> {
+      try {
+        ((ApplicationImpl)ApplicationManager.getApplication()).executeSuspendingWriteAction(myProject, IndexingBundle.message("progress.indexing.title"), () -> {
+          try(processTask) {
+            processTask.run(ProgressManager.getInstance().getProgressIndicator());
+          }
+        });
       }
-    }
+      finally {
+        updateFinished();
+      }
+    });
   }
 
   private void assertState(@NotNull State @NotNull ... expected) {
@@ -506,10 +506,6 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
                                                 "Expected " + Arrays.asList(expected) + ", but was " + state.toString(),
                                                 attachments.toArray(Attachment.EMPTY_ARRAY));
     }
-  }
-
-  private void runBackgroundProcess(final @NotNull ProgressIndicator visibleIndicator) {
-    myGuiDumbTaskRunner.tryStartProcessInThisThread(visibleIndicator);
   }
 
   @Override
@@ -537,7 +533,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     SMART,
 
     /**
-     * A state between entering dumb mode ({@link #queueTaskOnEdt}) and actually starting the background progress later ({@link #runBackgroundProcess}).
+     * A state between entering dumb mode ({@link #queueTaskOnEdt}) and actually starting the background progress later ({@link #TODO}).
      * In this state, it's possible to call {@link #completeJustSubmittedTasks()} and perform all the submitted tasks synchronously.
      * This state can happen after {@link #SMART}, or {@link #WAITING_FOR_FINISH}.
      * Followed by {@link #RUNNING_DUMB_TASKS}.
