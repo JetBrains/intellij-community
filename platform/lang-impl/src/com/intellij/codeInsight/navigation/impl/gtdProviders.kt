@@ -8,6 +8,7 @@ import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo.getReferenceRanges
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -27,7 +28,16 @@ private fun fromGTDProvidersInner(project: Project, editor: Editor, offset: Int)
   val adjustedOffset: Int = TargetElementUtil.adjustOffset(file, document, offset)
   val leafElement: PsiElement = file.findElementAt(adjustedOffset) ?: return null
   for (handler in GotoDeclarationHandler.EP_NAME.extensionList) {
-    val fromProvider: Array<out PsiElement>? = handler.getGotoDeclarationTargets(leafElement, offset, editor)
+    val fromProvider: Array<out PsiElement>? = try {
+      handler.getGotoDeclarationTargets(leafElement, offset, editor)
+    }
+    catch (pce: ProcessCanceledException) {
+      throw pce
+    }
+    catch (t: Throwable) {
+      LOG.error(t)
+      null
+    }
     if (fromProvider.isNullOrEmpty()) {
       continue
     }
