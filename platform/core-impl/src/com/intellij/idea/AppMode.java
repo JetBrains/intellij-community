@@ -3,6 +3,7 @@ package com.intellij.idea;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.nio.file.Files;
@@ -144,7 +145,7 @@ public final class AppMode {
     return Boolean.getBoolean("idea.use.dev.build.server");
   }
 
-  public static boolean getDevIdeaProjectDir() {
-    return Boolean.getBoolean("idea.dev.project.root");
+  public static @Nullable String getDevIdeaProjectDir() {
+    return System.getProperty("idea.dev.project.root");
   }
 }
