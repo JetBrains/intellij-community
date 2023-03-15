@@ -4,8 +4,9 @@ package com.intellij.ui.jcef
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 
-class JBCefAppCacheInvalidator : CachesInvalidator() {
+private class JBCefAppCacheInvalidator : CachesInvalidator() {
 
   override fun getComment(): String = IdeBundle.message("jcef.local.cache.invalidate.action.description")
 
@@ -14,6 +15,6 @@ class JBCefAppCacheInvalidator : CachesInvalidator() {
   override fun optionalCheckboxDefaultValue(): Boolean = false
 
   override fun invalidateCaches() {
-    ApplicationManager.getApplication().getService(JBCefAppCache::class.java).markInvalidated()
+    ApplicationManager.getApplication().service<JBCefAppCache>().markInvalidated()
   }
 }
