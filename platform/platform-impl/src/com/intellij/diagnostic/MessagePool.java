@@ -4,6 +4,7 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,17 +39,21 @@ public final class MessagePool {
   private MessagePool() { }
 
   public void addIdeFatalMessage(@NotNull IdeaLoggingEvent event) {
+    AbstractMessage message;
     if (myErrors.size() < MAX_POOL_SIZE) {
       Object data = event.getData();
-      if (data instanceof AbstractMessage) {
-        myGrouper.addToGroup((AbstractMessage)data);
-      }
-      else {
-        myGrouper.addToGroup(new LogMessage(event.getThrowable(), event.getMessage(), Collections.emptyList()));
-      }
+      message = data instanceof AbstractMessage ? (AbstractMessage)data :
+                new LogMessage(event.getThrowable(), event.getMessage(), Collections.emptyList());
     }
     else if (myErrors.size() == MAX_POOL_SIZE) {
-      myGrouper.addToGroup(new LogMessage(new TooManyErrorsException(), null, Collections.emptyList()));
+      message = new LogMessage(new TooManyErrorsException(), null, Collections.emptyList());
+    }
+    else return;
+    if (Registry.is("ide.error.reporter.group.reports", false)) {
+      doAddMessage(message);
+    }
+    else {
+      myGrouper.addToGroup(message);
     }
   }
 
@@ -100,6 +105,17 @@ public final class MessagePool {
     myListeners.forEach(MessagePoolListener::entryWasRead);
   }
 
+  private void doAddMessage(@NotNull AbstractMessage message) {
+    message.setOnReadCallback(() -> notifyEntryRead());
+    if (ApplicationManager.getApplication().isInternal()) {
+      for (Attachment attachment : message.getAllAttachments()) {
+        attachment.setIncluded(true);
+      }
+    }
+    myErrors.add(message);
+    notifyEntryAdded();
+  }
+
   private class MessageGrouper implements Runnable {
     private final List<AbstractMessage> myMessages = new ArrayList<>();
     private Future<?> myAlarm = CompletableFuture.completedFuture(null);
@@ -115,15 +131,8 @@ public final class MessagePool {
 
     private void post() {
       AbstractMessage message = myMessages.size() == 1 ? myMessages.get(0) : groupMessages();
-      message.setOnReadCallback(() -> notifyEntryRead());
       myMessages.clear();
-      if (ApplicationManager.getApplication().isInternal()) {
-        for (Attachment attachment : message.getAllAttachments()) {
-          attachment.setIncluded(true);
-        }
-      }
-      myErrors.add(message);
-      notifyEntryAdded();
+      doAddMessage(message);
     }
 
     private AbstractMessage groupMessages() {
