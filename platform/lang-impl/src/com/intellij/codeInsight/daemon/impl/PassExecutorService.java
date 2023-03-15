@@ -9,6 +9,7 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.diagnostic.telemetry.TraceUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -378,9 +379,21 @@ final class PassExecutorService implements Disposable {
             }
 
             if (!myUpdateProgress.isCanceled() && !myProject.isDisposed()) {
-              try(AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
-                myPass.collectInformation(myUpdateProgress);
-              }
+              String fileName = myFileEditor.getFile().getName();
+              TraceUtil.runWithSpanThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER, myPass.getClass().toString(), span -> {
+                span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, fileName);
+                boolean cancelled = false;
+                try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(myFileEditor))) {
+                  myPass.collectInformation(myUpdateProgress);
+                }
+                catch (ProcessCanceledException | CancellationException e) {
+                  cancelled = true;
+                  throw e;
+                }
+                finally {
+                  span.setAttribute(HighlightingPassTracer.CANCELLED_ATTR_SPAN_KEY, Boolean.toString(cancelled));
+                }
+              });
             }
           }
           catch (ProcessCanceledException e) {

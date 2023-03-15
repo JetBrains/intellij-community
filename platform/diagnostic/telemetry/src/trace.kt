@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.telemetry
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ThrowableNotNullFunction
 import com.intellij.util.ThrowableConsumer
 import io.opentelemetry.api.trace.Span
@@ -95,6 +96,9 @@ inline fun <T> Span.use(operation: (Span) -> T): T {
     return operation(this)
   }
   catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: ProcessCanceledException) {
     throw e
   }
   catch (e: Throwable) {
