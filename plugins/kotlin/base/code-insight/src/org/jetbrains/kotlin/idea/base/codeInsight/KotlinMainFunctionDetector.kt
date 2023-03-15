@@ -18,10 +18,37 @@ interface KotlinMainFunctionDetector {
     class Configuration(
         val checkJvmStaticAnnotation: Boolean = true,
         val checkParameterType: Boolean = true,
-        val checkResultType: Boolean = true
+        val checkResultType: Boolean = true,
+        val allowParameterless: Boolean = true,
     ) {
         companion object {
             val DEFAULT = Configuration()
+        }
+
+        class Builder(
+            var checkJvmStaticAnnotation: Boolean,
+            var checkParameterType: Boolean,
+            var checkResultType: Boolean,
+            var allowParameterless: Boolean,
+        ) {
+            fun build(): Configuration = Configuration(
+                checkJvmStaticAnnotation,
+                checkParameterType,
+                checkResultType,
+                allowParameterless
+            )
+        }
+
+        inline fun with(action: Builder.() -> Unit): Configuration {
+            val configuration = this
+            return Builder(
+                checkJvmStaticAnnotation = configuration.checkJvmStaticAnnotation,
+                checkParameterType = configuration.checkParameterType,
+                checkResultType = configuration.checkResultType,
+                allowParameterless = configuration.allowParameterless,
+            ).apply {
+                action()
+            }.build()
         }
     }
 
@@ -35,6 +62,8 @@ interface KotlinMainFunctionDetector {
     fun isMain(function: KtNamedFunction, configuration: Configuration = Configuration.DEFAULT): Boolean
 
     companion object {
+        const val MAIN_FUNCTION_NAME: String = "main"
+
         fun getInstance(): KotlinMainFunctionDetector = service()
     }
 }
@@ -55,7 +84,10 @@ fun KotlinMainFunctionDetector.hasMain(declaration: KtClassOrObject, configurati
 }
 
 @RequiresReadLock
-fun KotlinMainFunctionDetector.findMain(declaration: KtClassOrObject, configuration: Configuration = Configuration.DEFAULT): KtNamedFunction? {
+fun KotlinMainFunctionDetector.findMain(
+    declaration: KtClassOrObject,
+    configuration: Configuration = Configuration.DEFAULT
+): KtNamedFunction? {
     if (declaration is KtObjectDeclaration) {
         if (declaration.isObjectLiteral()) {
             return null
@@ -101,5 +133,5 @@ fun KotlinMainFunctionDetector.findMainOwner(element: PsiElement): KtDeclaration
         return containingFile
     }
 
-     return null
+    return null
 }

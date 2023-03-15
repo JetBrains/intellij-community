@@ -25,7 +25,7 @@ internal class KotlinFE10MainFunctionDetector : KotlinMainFunctionDetector {
         }
 
         /* Psi only check for kotlin.jvm.jvmName annotation */
-        if ("main" != function.name && !hasAnnotationWithExactNumberOfArguments(function, 1)) {
+        if (KotlinMainFunctionDetector.MAIN_FUNCTION_NAME != function.name && !hasAnnotationWithExactNumberOfArguments(function, 1)) {
             return false
         }
 
@@ -37,7 +37,11 @@ internal class KotlinFE10MainFunctionDetector : KotlinMainFunctionDetector {
 
         val languageVersionSettings = function.languageVersionSettings
         val mainFunctionDetector = MainFunctionDetector(languageVersionSettings) { it.resolveToDescriptorIfAny() }
-        return mainFunctionDetector.isMain(function, checkJvmStaticAnnotation = configuration.checkJvmStaticAnnotation)
+        return mainFunctionDetector.isMain(
+            function,
+            checkJvmStaticAnnotation = configuration.checkJvmStaticAnnotation,
+            allowParameterless = configuration.allowParameterless
+        )
     }
 
     private fun isParameterNumberSuitsForMain(

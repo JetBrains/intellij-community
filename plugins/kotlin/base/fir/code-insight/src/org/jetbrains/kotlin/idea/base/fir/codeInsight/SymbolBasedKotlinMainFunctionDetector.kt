@@ -25,11 +25,13 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
             return false
         }
 
+        val supportsExtendedMainConvention = function.languageVersionSettings.supportsFeature(LanguageFeature.ExtendedMainConvention)
+
         val isTopLevel = function.isTopLevel
         val parameterCount = function.valueParameters.size + (if (function.receiverTypeReference != null) 1 else 0)
 
         if (parameterCount == 0) {
-            if (!isTopLevel || !function.languageVersionSettings.supportsFeature(LanguageFeature.ExtendedMainConvention)) {
+            if (!isTopLevel || !configuration.allowParameterless || !supportsExtendedMainConvention) {
                 return false
             }
         } else if (parameterCount > 1) {
@@ -56,7 +58,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                 }
 
                 val jvmName = getJvmName(functionSymbol) ?: functionSymbol.name.asString()
-                if (jvmName != "main") {
+                if (jvmName != KotlinMainFunctionDetector.MAIN_FUNCTION_NAME) {
                     return false
                 }
 
@@ -70,6 +72,18 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                     return containingClass.classKind.isObject
                             && (!configuration.checkJvmStaticAnnotation || functionSymbol.hasAnnotation(annotationJvmStatic))
 
+                }
+
+                if (parameterCount == 0) {
+                    // We do not support parameterless entry points having JvmName("name") but different real names
+                    // See more at https://github.com/Kotlin/KEEP/blob/master/proposals/enhancing-main-convention.md#parameterless-main
+                    if (function.name.toString() != KotlinMainFunctionDetector.MAIN_FUNCTION_NAME) return false
+
+                    val functionsInFile = function.containingKtFile.declarations.filterIsInstance<KtNamedFunction>()
+                    // Parameterless function is considered as an entry point only if there's no entry point with an array parameter
+                    if (functionsInFile.any { isMain(it, configuration.with { allowParameterless = false }) }) {
+                        return false
+                    }
                 }
             }
         }
