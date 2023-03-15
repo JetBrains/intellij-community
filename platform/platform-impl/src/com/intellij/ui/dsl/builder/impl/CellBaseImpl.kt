@@ -23,14 +23,7 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
   var rightGap: RightGap? = null
     private set
 
-  @Deprecated("Use unscaledGaps instead")
-  var customGaps: Gaps?
-    private set(value) {
-      customUnscaledGaps = value?.toUnscaled()
-    }
-    get() = Gaps.fromUnscaled(customUnscaledGaps)
-
-  var customUnscaledGaps: UnscaledGaps? = null
+  var customGaps: UnscaledGaps? = null
 
   abstract fun visibleFromParent(parentVisible: Boolean)
 
@@ -101,12 +94,12 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
 
   @Deprecated("Use customize(UnscaledGaps) instead")
   override fun customize(customGaps: Gaps): CellBase<T> {
-    this.customUnscaledGaps = customGaps.toUnscaled()
+    this.customGaps = customGaps.toUnscaled()
     return this
   }
 
   override fun customize(customGaps: UnscaledGaps): CellBase<T> {
-    this.customUnscaledGaps = customGaps
+    this.customGaps = customGaps
     return this
   }
 

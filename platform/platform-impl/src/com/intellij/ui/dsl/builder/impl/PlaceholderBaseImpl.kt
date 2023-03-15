@@ -94,7 +94,7 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
     UiSwitcher.appendAll(installedComponent, uiSwitchers)
 
     placeholderCellData?.let {
-      val gaps = customUnscaledGaps ?: getComponentGaps(it.constraints.gaps.left, it.constraints.gaps.right, installedComponent, it.spacing)
+      val gaps = customGaps ?: getComponentGaps(it.constraints.gaps.left, it.constraints.gaps.right, installedComponent, it.spacing)
       it.constraints = it.constraints.copy(
         gaps = gaps,
         visualPaddings = prepareVisualPaddings(installedComponent)
