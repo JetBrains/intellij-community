@@ -10,13 +10,11 @@ import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.UserActivityWatcher;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
@@ -52,20 +50,6 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     myRunConfigurationMode = isRunConfiguration;
   }
 
-  private static JCheckBox newCheckBox(@NotNull @Nls String text) {
-    var textWithMnemonic = TextWithMnemonic.parse(text);
-    var checkBox = new JCheckBox(textWithMnemonic.getText());
-    checkBox.setMnemonic(textWithMnemonic.getMnemonicChar());
-    return checkBox;
-  }
-
-  private static JLabel newLabel(@NotNull @Nls String text) {
-    var textWithMnemonic = TextWithMnemonic.parse(text);
-    var checkBox = new JLabel(textWithMnemonic.getText());
-    checkBox.setDisplayedMnemonic(textWithMnemonic.getMnemonicChar());
-    return checkBox;
-  }
-
   public JComponent createComponent() {
     JPanel panel = new JPanel(new GridBagLayout());
 
@@ -74,9 +58,9 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     c.anchor = GridBagConstraints.WEST;
     c.insets.bottom = 5;
 
-    myDelegateToMavenCheckbox = newCheckBox(MavenConfigurableBundle.message("maven.settings.runner.delegate"));
+    myDelegateToMavenCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.delegate"));
 
-    myRunInBackgroundCheckbox = newCheckBox(MavenConfigurableBundle.message("maven.settings.runner.run.in.background"));
+    myRunInBackgroundCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.run.in.background"));
     if (!myRunConfigurationMode) {
       c.gridx = 0;
       c.gridy++;
@@ -90,7 +74,7 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     }
     c.gridwidth = 1;
 
-    JLabel labelVMParameters = newLabel(MavenConfigurableBundle.message("maven.settings.runner.vm.options"));
+    JLabel labelVMParameters = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.vm.options"));
     labelVMParameters.setLabelFor(myVMParametersEditor = new RawCommandLineEditor());
     myVMParametersEditor.setDialogCaption(labelVMParameters.getText());
 
@@ -104,7 +88,7 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     c.insets.left = 10;
     panel.add(myVMParametersEditor, c);
 
-    JLabel labelOverrideJvmConfig = newLabel(MavenConfigurableBundle.message("maven.settings.vm.options.tooltip"));
+    JLabel labelOverrideJvmConfig = new JLabel(MavenConfigurableBundle.message("maven.settings.vm.options.tooltip"));
     Font font = labelOverrideJvmConfig.getFont();
     labelOverrideJvmConfig.setFont(new Font(font.getName(), font.getStyle(), font.getSize() - 2));
     c.gridx = 1;
@@ -114,7 +98,7 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     panel.add(labelOverrideJvmConfig, c);
     c.insets.left = 0;
 
-    myJdkLabel = newLabel(MavenConfigurableBundle.message("maven.settings.runner.jre"));
+    myJdkLabel = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.jre"));
     myJdkLabel.setLabelFor(myJdkCombo = new ExternalSystemJdkComboBox(myProject));
     c.gridx = 0;
     c.gridy++;
@@ -144,7 +128,7 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     JPanel propertiesPanel = new JPanel(new BorderLayout());
     propertiesPanel.setBorder(IdeBorderFactory.createTitledBorder(MavenConfigurableBundle.message("maven.settings.runner.properties"), false));
 
-    propertiesPanel.add(mySkipTestsCheckBox = newCheckBox(MavenConfigurableBundle.message("maven.settings.runner.skip.tests")), BorderLayout.NORTH);
+    propertiesPanel.add(mySkipTestsCheckBox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.skip.tests")), BorderLayout.NORTH);
 
     collectProperties();
     propertiesPanel.add(myPropertiesPanel = new MavenPropertiesPanel(myProperties), BorderLayout.CENTER);
