@@ -87,14 +87,13 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     @Override
     public boolean beforeFirstTask() {
       // if a queue has already been emptied by modal dumb progress, the state can be SMART, not SCHEDULED_TASKS
-      return myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS);
+      return myState.get() == State.SCHEDULED_OR_RUNNING_TASKS;
     }
 
     @Override
     public void afterLastTask() {
-      assertState(State.RUNNING_DUMB_TASKS);
-      boolean changed = myState.compareAndSet(State.RUNNING_DUMB_TASKS, State.WAITING_FOR_FINISH);
-      LOG.assertTrue(changed, "Failed to change state: RUNNING_DUMB_TASKS>WAITING_FOR_FINISH. Current state: " + myState.get());
+      boolean changed = myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.WAITING_FOR_FINISH);
+      LOG.assertTrue(changed, "Failed to change state: SCHEDULED_TASKS>WAITING_FOR_FINISH. Current state: " + myState.get());
 
       if (myTaskQueue.isEmpty()) {
         myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(DumbServiceImpl.this::updateFinished);
@@ -102,7 +101,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       else {
         // because of tryEnterDumbMode in queueTaskOnEdt, it is possible that myGuiDumbTaskRunner::startBackgroundProcess is not invoked
         // for some queued tasks. Code below makes sure that dumb tasks do not stuck in dumb queue.
-        boolean needToScheduleNow = myState.compareAndSet(State.WAITING_FOR_FINISH, State.SCHEDULED_TASKS);
+        boolean needToScheduleNow = myState.compareAndSet(State.WAITING_FOR_FINISH, State.SCHEDULED_OR_RUNNING_TASKS);
         if (needToScheduleNow) {
           myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
         }
@@ -207,7 +206,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public void setDumb(boolean dumb) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (dumb) {
-      myState.set(State.RUNNING_DUMB_TASKS);
+      myState.set(State.SCHEDULED_OR_RUNNING_TASKS);
       myPublisher.enteredDumbMode();
     }
     else {
@@ -277,7 +276,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (state == State.SMART ||
         state == State.WAITING_FOR_FINISH) {
       if (tryEnterDumbMode(modality, trace)) {
-        // we need one more invoke later because we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
+        // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
         // drain the queue synchronously under modal progress
         myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
       }
@@ -287,8 +286,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private boolean tryEnterDumbMode(@NotNull ModalityState modality, @NotNull Throwable trace) {
     boolean wasSmart = !isDumb();
     boolean entered = WriteAction.compute(() -> {
-      State old = myState.getAndSet(State.SCHEDULED_TASKS);
-      if (old == State.SCHEDULED_TASKS) return false;
+      State old = myState.getAndSet(State.SCHEDULED_OR_RUNNING_TASKS);
+      if (old == State.SCHEDULED_OR_RUNNING_TASKS) return false;
       myDumbStart = trace;
       myDumbEnterTrace = new Throwable();
       myTrackedEdtActivityService.setDumbStartModality(modality);
@@ -465,13 +464,20 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   public void completeJustSubmittedTasks() {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     assert myProject.isInitialized();
-    if (myState.get() != State.SCHEDULED_TASKS) {
+    if (myState.get() != State.SCHEDULED_OR_RUNNING_TASKS) {
+      if (!isSynchronousTaskExecution()) {
+        // DumbServiceSyncTaskQueue does not respect threading policies: it can add tasks outside of EDT
+        // and process them without switching to dumb mode. This behavior has to be fixed, but for now just ignore
+        // it, because it has been working like this for years already.
+        // Reproducing in test: com.jetbrains.cidr.lang.refactoring.OCRenameMoveFileTest
+        LOG.assertTrue(myTaskQueue.isEmpty(), "Task queue is not empty. Current state is " + myState.get());
+      }
       return;
     }
 
     boolean queueProcessedUnderModalProgress;
     do {
-      assertState(State.SCHEDULED_TASKS);
+      assertState(State.SCHEDULED_OR_RUNNING_TASKS);
       queueProcessedUnderModalProgress = processQueueUnderModalProgress();
       // until we reach smart mode, or processQueueUnderModalProgress did nothing (i.e. processing is being done under non-modal indicator)
     } while (isDumb() && queueProcessedUnderModalProgress);
@@ -533,21 +539,23 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     SMART,
 
     /**
-     * A state between entering dumb mode ({@link #queueTaskOnEdt}) and actually starting the background progress later ({@link #TODO}).
+     * A state when dumb service is already dumb, but background processing may or may not start yet.
      * In this state, it's possible to call {@link #completeJustSubmittedTasks()} and perform all the submitted tasks synchronously.
      * This state can happen after {@link #SMART}, or {@link #WAITING_FOR_FINISH}.
-     * Followed by {@link #RUNNING_DUMB_TASKS}.
+     * Followed by {@link #WAITING_FOR_FINISH}.
+     * <p>
+     * This state is not the same as checking `!myTaskQueue.isEmpty`, because myTaskQueue may become empty or non-empty without write action
+     * (however DumbService should not become dumb/smart while other read actions are in progress)
+     * <p>
+     * This state is not the same as checking `!myGuiDumbTaskRunner.isRunning`, because when task is queued on EDT, the service becomes
+     * dumb immediately, but background processing will be started via invokeLater (to give a chance for
+     * {@link #completeJustSubmittedTasks()} to process the queue under modal indicator)
      */
-    SCHEDULED_TASKS,
+    SCHEDULED_OR_RUNNING_TASKS,
 
     /**
-     * Indicates that a background thread is currently executing dumb tasks.
-     */
-    RUNNING_DUMB_TASKS,
-
-    /**
-     * Set after background execution ({@link #RUNNING_DUMB_TASKS}) finishes, until the dumb mode can be exited
-     * (in a write-safe context on EDT when project is initialized). If new tasks are queued at this state, it's switched to {@link #SCHEDULED_TASKS}.
+     * Set after background execution ({@link #SCHEDULED_OR_RUNNING_TASKS}) finishes, until the dumb mode can be exited
+     * (in a write-safe context on EDT when project is initialized). If new tasks are queued at this state, it's switched to {@link #SCHEDULED_OR_RUNNING_TASKS}.
      * <p>
      * This is also the initial state of the state machine in non-default project
      */
