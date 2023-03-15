@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import java.nio.file.Path
 import kotlin.io.path.pathString
-import kotlin.io.path.relativeTo
+import kotlin.io.path.relativeToOrNull
 
 /**
  * This file contains functions to work with [WorkspaceModel] in the context of [KotlinScriptEntity].
@@ -307,7 +307,8 @@ private fun KotlinScriptLibraryEntity.hasSameRootsAs(dependency: KotlinScriptLib
 
 fun VirtualFile.relativeName(project: Project): String =
     if (ScratchUtil.isScratch(this) || this is LightVirtualFile) presentableName
-    else toNioPath().relativeTo(Path.of(project.basePath!!)).pathString
+    else toNioPath().relativeToOrNull(Path.of(project.basePath!!))?.pathString
+        ?: presentableName
 
 private fun Project.createLibraryEntity(
     name: String,
