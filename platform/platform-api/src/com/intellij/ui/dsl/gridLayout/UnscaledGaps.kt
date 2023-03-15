@@ -3,7 +3,9 @@ package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.awt.Insets
 import kotlin.math.roundToInt
 
 data class UnscaledGaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val right: Int = 0) {
@@ -27,6 +29,12 @@ data class UnscaledGaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0
   val height: Int
     get() = top + bottom
 }
+
+fun Insets.toUnscaledGaps(): UnscaledGaps =
+  if (this is JBInsets) unscaled.let { insets ->
+    UnscaledGaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
+  }
+  else toGaps().toUnscaled()
 
 @Internal
 fun Int.unscale(): Int = (this / JBUIScale.scale(1f)).roundToInt()

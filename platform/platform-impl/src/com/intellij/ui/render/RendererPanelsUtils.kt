@@ -44,12 +44,13 @@ import kotlin.math.max
 class RendererPanelsUtils {
 
   companion object {
+    internal const val iconTextUnscaledGap = 4
+
     /**
      * Gap between icon and related text. Can be extracted into a separate UI constant later if needed
      */
     @JvmStatic
     val iconTextGap: Int get() = JBUI.scale(iconTextUnscaledGap)
-    val iconTextUnscaledGap: Int get() = 4
 
     /**
      * Calculate width of all non-resizeable components and gaps in the panel. Works only if layout is
@@ -86,7 +87,7 @@ class RendererPanelsUtils {
 /**
  * Gap between centered and right component. Can be changed by a separate UI constant later if needed
  */
-private val centerRightGap: Int get() = 4
+private const val centerRightGap = 4
 
 open class IconCompCompPanel<C1 : JComponent, C2 : JComponent>(val center: C1, val right: C2) : IconPanel() {
 

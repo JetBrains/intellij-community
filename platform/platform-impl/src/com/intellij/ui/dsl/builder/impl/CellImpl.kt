@@ -353,8 +353,7 @@ internal class CellImpl<T : JComponent>(
 
   @Deprecated("Use customize(UnscaledGaps) instead")
   override fun customize(customGaps: Gaps): CellImpl<T> {
-    super.customize(customGaps.toUnscaled())
-    return this
+    return customize(customGaps.toUnscaled())
   }
 
   override fun customize(customGaps: UnscaledGaps): CellImpl<T> {

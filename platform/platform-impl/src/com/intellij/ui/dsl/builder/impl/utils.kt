@@ -69,12 +69,13 @@ val JComponent.interactiveComponent: JComponent
   }
 
 internal fun prepareVisualPaddings(component: JComponent): UnscaledGaps {
-  val customVisualPaddingsObject = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS)
-  var customVisualPaddings: UnscaledGaps? = customVisualPaddingsObject as? UnscaledGaps
-
-  if (customVisualPaddingsObject is Gaps) {
-    customVisualPaddings = customVisualPaddingsObject.toUnscaled()
-  }
+  var customVisualPaddings: UnscaledGaps? =
+    when (val value = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS)) {
+      null -> null
+      is Gaps -> value.toUnscaled()
+      is UnscaledGaps -> value
+      else -> throw UiDslException("Invalid VISUAL_PADDINGS")
+    }
 
   if (customVisualPaddings == null && component is JScrollPane) {
     customVisualPaddings = UnscaledGaps.EMPTY

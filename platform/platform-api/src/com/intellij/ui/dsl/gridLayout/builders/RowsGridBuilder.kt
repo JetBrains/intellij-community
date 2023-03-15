@@ -68,6 +68,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
                 gaps.toUnscaled(), visualPaddings.toUnscaled(), widthGroup, componentHelper)
   }
 
+  // todo needed only while migration Gaps to UnscaledGaps. Should be removed later
   fun cell(component: JComponent,
            width: Int = 1,
            horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
@@ -119,6 +120,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
                        gaps.toUnscaled(), visualPaddings.toUnscaled(), widthGroup, componentHelper)
   }
 
+  // todo needed only while migration Gaps to UnscaledGaps. Should be removed later
   fun constraints(width: Int = 1,
                   horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
                   verticalAlign: VerticalAlign = defaultVerticalAlign,
@@ -166,14 +168,6 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
               horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
               verticalAlign: VerticalAlign = defaultVerticalAlign,
               baselineAlign: Boolean = defaultBaselineAlign,
-              resizableColumn: Boolean = false): Grid {
-    return subGrid(width, horizontalAlign, verticalAlign, baselineAlign, resizableColumn, UnscaledGaps.EMPTY, UnscaledGaps.EMPTY)
-  }
-
-  fun subGrid(width: Int = 1,
-              horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
-              verticalAlign: VerticalAlign = defaultVerticalAlign,
-              baselineAlign: Boolean = defaultBaselineAlign,
               resizableColumn: Boolean = false,
               gaps: UnscaledGaps = UnscaledGaps.EMPTY,
               visualPaddings: UnscaledGaps = UnscaledGaps.EMPTY): Grid {
@@ -203,6 +197,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
   }
 
 
+  // todo needed only while migration Gaps to UnscaledGaps. Should be removed later
   fun subGridBuilder(width: Int = 1,
                      horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
                      verticalAlign: VerticalAlign = defaultVerticalAlign,

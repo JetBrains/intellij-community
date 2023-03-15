@@ -47,8 +47,7 @@ internal class PlaceholderImpl(parent: RowImpl) : PlaceholderBaseImpl<Placeholde
 
   @Deprecated("Use customize(UnscaledGaps) instead")
   override fun customize(customGaps: Gaps): Placeholder {
-    super.customize(customGaps.toUnscaled())
-    return this
+    return customize(customGaps.toUnscaled())
   }
 
   override fun customize(customGaps: UnscaledGaps): Placeholder {

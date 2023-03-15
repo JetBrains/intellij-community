@@ -304,8 +304,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   @Deprecated("Use customize(UnscaledGaps) instead")
   override fun customize(customGaps: Gaps): PanelImpl {
-    super.customize(customGaps.toUnscaled())
-    return this
+    return customize(customGaps.toUnscaled())
   }
 
   override fun customize(customGaps: UnscaledGaps): PanelImpl {

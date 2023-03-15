@@ -4,7 +4,6 @@ package com.intellij.ui.dsl.gridLayout
 import com.intellij.ui.dsl.checkNonNegative
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Insets
 
@@ -49,12 +48,6 @@ fun Gaps.toJBEmptyBorder(): JBEmptyBorder {
 fun Insets.toGaps(): Gaps {
   return Gaps(top = top, left = left, bottom = bottom, right = right)
 }
-
-fun Insets.toUnscaledGaps(): UnscaledGaps =
-  if (this is JBInsets) unscaled.let { insets ->
-    UnscaledGaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
-  }
-  else toGaps().toUnscaled()
 
 @Internal
 fun Gaps.toUnscaled() = UnscaledGaps(top = top.unscale(), left = left.unscale(), bottom = bottom.unscale(), right = right.unscale())

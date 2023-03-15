@@ -94,8 +94,7 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
 
   @Deprecated("Use customize(UnscaledGaps) instead")
   override fun customize(customGaps: Gaps): CellBase<T> {
-    this.customGaps = customGaps.toUnscaled()
-    return this
+    return customize(customGaps.toUnscaled())
   }
 
   override fun customize(customGaps: UnscaledGaps): CellBase<T> {
