@@ -67,7 +67,7 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
   }
 
   @Override
-  public String getValue() {
+  public @NotNull String getValue() {
     return getValueRange().substring(getText());
   }
 

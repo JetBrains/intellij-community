@@ -3,6 +3,7 @@ package com.intellij.psi.javadoc;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,15 +48,18 @@ public interface PsiSnippetAttribute extends PsiElement {
   /**
    * @return name element of this name-value pair.
    */
+  @Contract(pure = true)
   @NotNull PsiElement getNameIdentifier();
 
   /**
    * @return name of this name-value pair.
    */
+  @Contract(pure = true)
   @NotNull String getName();
 
   /**
    * @return value of this name-value pair or null if absent.
    */
+  @Contract(pure = true)
   @Nullable PsiSnippetAttributeValue getValue();
 }

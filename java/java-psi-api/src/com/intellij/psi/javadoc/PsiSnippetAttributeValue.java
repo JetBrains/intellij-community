@@ -3,6 +3,8 @@ package com.intellij.psi.javadoc;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents an attribute value for a snippet attribute
@@ -14,5 +16,6 @@ public interface PsiSnippetAttributeValue extends PsiElement {
   /**
    * Returns the content of the attribute value (without quotes, if any)
    */
-  String getValue();
+  @Contract(pure = true)
+  @NotNull String getValue();
 }
