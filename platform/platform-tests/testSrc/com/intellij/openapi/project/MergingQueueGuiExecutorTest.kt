@@ -30,11 +30,13 @@ private fun Phaser.arriveAndAwaitAdvanceWithTimeout() {
 
 private open class ValidatingListener(private val exceptionRef: AtomicReference<Throwable>) : ExecutorStateListener {
   val isRunning = AtomicBoolean(false)
+  var beforeCount: Int = 0
+  var afterCount: Int = 0
   override fun beforeFirstTask(): Boolean {
     try {
+      beforeCount++
       val wasRunning = isRunning.getAndSet(true)
       TestCase.assertFalse(wasRunning)
-      //println("before first task")
       return true
     }
     catch (t: Throwable) {
@@ -45,7 +47,7 @@ private open class ValidatingListener(private val exceptionRef: AtomicReference<
 
   override fun afterLastTask() {
     try {
-      //println("after last task")
+      afterCount++
       val wasRunning = isRunning.getAndSet(false)
       TestCase.assertTrue(wasRunning)
     }
@@ -104,6 +106,27 @@ class MergingQueueGuiExecutorTest {
   @After
   fun tearDown() {
     SystemProperties.setProperty(ignoreHeadlessKey, prevIgnoreHeadlessVal)
+  }
+
+  @Test
+  fun `test no redundant progress indicators and callbacks when startBackgroundProcess on empty queue`() {
+    val exceptionRef = AtomicReference<Throwable>()
+    val listener = ValidatingListener(exceptionRef)
+    val queue = MergingTaskQueue<LoggingTask>()
+    val executor = MergingQueueGuiExecutor(
+      project, queue, listener, "title", "suspend"
+    )
+
+    repeat(10) {
+      executor.startBackgroundProcess()
+    }
+
+    Thread.sleep(10) // give it some time just in case (we don't expect that anything will be started)
+    TestCase.assertEquals(0, executor.backgroundTasksSubmittedCount)
+    TestCase.assertEquals(0, listener.beforeCount)
+    TestCase.assertEquals(0, listener.afterCount)
+
+    stopExecutor(executor)
   }
 
   @Test

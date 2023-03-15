@@ -142,6 +142,8 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
    */
   public final void startBackgroundProcess() {
     if (mySuspended.get()) return;
+    if (myTaskQueue.isEmpty()) return; // there is no race: client first adds a task to myTaskQueue, then invokes startBackgroundProcess
+    // this means that if myTaskQueue empty, then recently added task is already handled
 
     mySingleTaskExecutor.tryStartProcess(task -> {
       try {
