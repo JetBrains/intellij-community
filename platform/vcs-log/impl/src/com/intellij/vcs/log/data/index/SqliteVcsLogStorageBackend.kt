@@ -50,7 +50,7 @@ private const val TABLE_SCHEMA = """
     message text not null,
     authorTime integer not null,
     commitTime integer not null,
-    committerId integer null
+    isCommitter integer not null
   ) strict;
   create virtual table fts_message_index using fts5(message, content='log', content_rowid='commitId', tokenize='trigram');
   
@@ -72,7 +72,7 @@ private const val TABLE_SCHEMA = """
   create table rename (parent integer not null, child integer not null, rename integer not null) strict;
   create index rename_index on rename (parent, child);
   
-  create table user (commitId integer not null, committerId integer null, name text not null, email text not null) strict;
+  create table user (commitId integer not null, isCommitter integer not null, name text not null, email text not null) strict;
   create index user_index on user (name, email);
   
   create table path (relativePath text not null, position integer not null) strict;
@@ -184,15 +184,15 @@ internal class SqliteVcsLogStorageBackend(project: Project,
 
   override fun getCommitterOrAuthor(commitId: Int, getUserById: IntFunction<VcsUser>, getAuthorForCommit: IntFunction<VcsUser>): VcsUser? {
     val batch = IntBinder(paramCount = 1)
-    connection.prepareStatement("select committerId from log where commitId = ?", batch).use { statement ->
+    connection.prepareStatement("select isCommitter from log where commitId = ?", batch).use { statement ->
       batch.bind(commitId)
       val resultSet = statement.executeQuery()
       if (!resultSet.next()) {
         return null
       }
 
-      val committerId = resultSet.getInt(0)
-      return if (resultSet.wasNull()) getAuthorForCommit(commitId) else getCommitterForCommit(commitId, committerId)
+      val isCommitter = resultSet.getInt(0)
+      return if (isCommitter == 1) getCommitterForCommit(commitId, isCommitter) else getAuthorForCommit(commitId)
     }
   }
 
@@ -322,7 +322,7 @@ internal class SqliteVcsLogStorageBackend(project: Project,
 
   override fun getAuthorForCommit(commitId: Int): VcsUser? {
     val paramBinder = IntBinder(paramCount = 1)
-    connection.prepareStatement("select name, email from user where commitId = ? and committerId is null",
+    connection.prepareStatement("select name, email from user where commitId = ? and isCommitter is null",
                                 paramBinder)
       .use { statement ->
         paramBinder.bind(commitId)
@@ -365,10 +365,10 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     throw IOException("User $user not found for commit $commitId")
   }
 
-  private fun getCommitterForCommit(commitId: Int, committerId: Int): VcsUser? {
+  private fun getCommitterForCommit(commitId: Int, isCommitter: Int): VcsUser? {
     val paramBinder = IntBinder(paramCount = 2)
-    connection.prepareStatement("select name, email from user where commitId = ? and committerId = ?", paramBinder).use { statement ->
-      paramBinder.bind(commitId, committerId)
+    connection.prepareStatement("select name, email from user where commitId = ? and isCommitter = ?", paramBinder).use { statement ->
+      paramBinder.bind(commitId, isCommitter)
       val rs = statement.executeQuery()
       if (rs.next()) {
         return userRegistry.createUser(rs.getString(0)!!, rs.getString(1)!!)
@@ -505,18 +505,14 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
   private val statementCollection = StatementCollection(connection)
 
   private val logBatch = statementCollection.prepareStatement("""
-    insert into log(commitId, message, authorTime, commitTime, committerId) 
+    insert into log(commitId, message, authorTime, commitTime, isCommitter) 
     values(?, ?, ?, ?, ?) 
     on conflict(commitId) do update set message=excluded.message
     """, ObjectBinder(paramCount = 5, batchCountHint = 256)).binder
-  private val committerBatch = statementCollection.prepareStatement("""
-    insert into user(commitId, committerId, name, email) 
+  private val userBatch = statementCollection.prepareStatement("""
+    insert into user(commitId, isCommitter, name, email) 
     values(?, ?, ?, ?) 
     """, ObjectBinder(paramCount = 4, batchCountHint = 256)).binder
-  private val authorBatch = statementCollection.prepareStatement("""
-    insert into user(commitId, name, email) 
-    values(?, ?, ?) 
-    """, ObjectBinder(paramCount = 3, batchCountHint = 256)).binder
 
   // first `delete`, then `insert` - `delete` statement must be added to the statement collection first
   private val parentDeleteStatement = statementCollection.prepareIntStatement("delete from parent where commitId = ?")
@@ -528,14 +524,14 @@ private class SqliteVcsLogWriter(private val connection: SqliteConnection) : Vcs
   private val changeStatement = statementCollection.prepareIntStatement("insert into path_change(commitId, pathId, kind) values(?, ?, ?)")
 
   override fun putCommit(commitId: Int, details: VcsLogIndexer.CompressedDetails, userToId: ToIntFunction<VcsUser>) {
-    val committerId = if (details.author == details.committer) null else 0
-    if (committerId != null) {
-      committerBatch.bindMultiple(commitId, committerId, details.committer.name, details.committer.email)
-      committerBatch.addBatch()
+    val isCommitter = if (details.author == details.committer) 0 else 1
+    if (isCommitter == 1) {
+      userBatch.bindMultiple(commitId, isCommitter, details.committer.name, details.committer.email)
+      userBatch.addBatch()
     }
-    authorBatch.bindMultiple(commitId, details.author.name, details.author.email)
-    authorBatch.addBatch()
-    logBatch.bind(commitId, details.fullMessage, details.authorTime, details.commitTime, committerId)
+    userBatch.bindMultiple(commitId, 0, details.author.name, details.author.email)
+    userBatch.addBatch()
+    logBatch.bind(commitId, details.fullMessage, details.authorTime, details.commitTime, isCommitter)
     logBatch.addBatch()
   }
 
