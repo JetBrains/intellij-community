@@ -11,14 +11,6 @@ data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val ri
   companion object {
     @JvmField
     val EMPTY = Gaps(0)
-
-    @Internal
-    fun fromUnscaled(unscaledGaps: UnscaledGaps?) = unscaledGaps?.let {
-      Gaps(top = JBUIScale.scale(unscaledGaps.top),
-           left = JBUIScale.scale(unscaledGaps.left),
-           bottom = JBUIScale.scale(unscaledGaps.bottom),
-           right = JBUIScale.scale(unscaledGaps.right))
-    }
   }
 
   init {
