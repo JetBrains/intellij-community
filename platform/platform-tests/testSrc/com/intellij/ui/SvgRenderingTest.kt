@@ -117,7 +117,7 @@ class SvgRenderingTest {
       </g>
     </svg>
     """.trimIndent()
-    val image = renderSvg(svg.byteInputStream())
+    val image = renderSvg(svg.byteInputStream(), scale = 2f)
 
     val goldImage = loadOrSaveGoldSnapshot(image, "svg2")
     ImageComparator.compareAndAssert(null, image, goldImage, null)
