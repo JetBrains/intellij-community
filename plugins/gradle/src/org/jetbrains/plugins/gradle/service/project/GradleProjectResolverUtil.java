@@ -23,7 +23,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
-import kotlin.Suppress;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -56,7 +55,6 @@ import java.util.stream.Stream;
  */
 public final class GradleProjectResolverUtil {
   private static final Logger LOG = Logger.getInstance(GradleProjectResolverUtil.class);
-  @NonNls public static final String BUILD_SRC_NAME = "buildSrc";
   @NonNls private static final String SOURCE_JAR_SUFFIX = "-sources.jar";
   @NonNls private static final String JAVADOC_JAR_SUFFIX = "-javadoc.jar";
 
