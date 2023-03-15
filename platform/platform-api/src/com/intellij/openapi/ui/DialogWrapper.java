@@ -1460,6 +1460,7 @@ public abstract class DialogWrapper {
     myCrossClosesWindow = crossClosesWindow;
   }
 
+  /** @see #setOKButtonText(String) for mnemonic hadling */
   protected final void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
     myCancelAction.putValue(Action.NAME, text);
   }
@@ -1489,9 +1490,11 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @param text action without mnemonic. If mnemonic is set, presentation would be shifted by one to the left
-   *             {@link AbstractButton#setText(String)}
-   *             {@link AbstractButton#updateDisplayedMnemonicIndex(String, int)}
+   * Passed action text WILL be processed by {@link #extractMnemonic(String)} if setter is called before the {@link #init()}.
+   * It WILL NOT be processed if setter is called after the {@link #init()}.
+   *
+   * @see AbstractButton#setText(String)
+   * @see AbstractButton#updateDisplayedMnemonicIndex(String, int)
    */
   protected final void setOKButtonText(@NlsContexts.Button @NotNull String text) {
     myOKAction.putValue(Action.NAME, text);
