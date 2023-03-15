@@ -16,7 +16,7 @@ internal fun createCompletionGolfMetrics(): List<Metric> =
     Precision(),
     RecallAt(1),
     RecallAt(5),
-    RecallAt(null, showByDefault = false)
+    Recall()
   )
 
 internal abstract class CompletionGolfMetric<T : Number> : Metric {
@@ -205,9 +205,9 @@ internal class Precision : Metric {
   }
 }
 
-internal class RecallAt(private val n: Int?, override val showByDefault: Boolean = true) : Metric {
+internal open class RecallAt(private val n: Int) : Metric {
   private val sample = Sample()
-  override val name = n?.let { "RecallAt$n" } ?: "Recall"
+  override val name = "RecallAt$n"
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
     get() = sample.mean()
@@ -216,7 +216,7 @@ internal class RecallAt(private val n: Int?, override val showByDefault: Boolean
     val fileSample = Sample()
 
     for (lookup in sessions.flatMap { it.lookups }) {
-      if (n != null && lookup.selectedPosition in 0 until n || n == null && lookup.selectedPosition >= 0) {
+      if (lookup.selectedPosition in 0 until n) {
         fileSample.add(1.0)
         sample.add(1.0)
       }
@@ -227,6 +227,11 @@ internal class RecallAt(private val n: Int?, override val showByDefault: Boolean
     }
     return fileSample.mean()
   }
+}
+
+internal class Recall : RecallAt(Int.MAX_VALUE) {
+  override val name = "Recall"
+  override val showByDefault: Boolean = false
 }
 
 private fun Session.expectedLength(): Int = expectedText.length - (lookups.firstOrNull()?.offset ?: 0)
