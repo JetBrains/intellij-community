@@ -11,7 +11,6 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -377,8 +376,6 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
         override fun handleInsert(context: InsertionContext, item: LookupElement) {
             val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
             val document = context.document
-            // Calling document.commit() will invalidate injected trees and context data
-            val isInjected = context.file.viewProvider.virtualFile is VirtualFileWindow
 
             if (!argumentsOnly) {
                 surroundWithBracesIfInStringTemplate(context)
@@ -392,7 +389,7 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
             val startOffset = context.startOffset
             val element = context.file.findElementAt(startOffset) ?: return
 
-            addArguments(context, element, isInjected)
+            addArguments(context, element)
 
             // hack for KT-31902
             if (callType == CallType.DEFAULT) {
@@ -400,16 +397,14 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
                     .findElementAt(startOffset)
                     ?.parent?.getLastParentOfTypeInRow<KtDotQualifiedExpression>()
                     ?.createSmartPointer()?.let {
-                        if (!isInjected) {
-                            psiDocumentManager.commitDocument(document)
-                        }
+                        psiDocumentManager.commitDocument(document)
                         val dotQualifiedExpression = it.element ?: return@let
                         SHORTEN_REFERENCES.process(dotQualifiedExpression)
                     }
             }
         }
 
-        private fun addArguments(context: InsertionContext, offsetElement: PsiElement, isInjected: Boolean) {
+        private fun addArguments(context: InsertionContext, offsetElement: PsiElement) {
             val completionChar = context.completionChar
             if (completionChar == '(') { //TODO: more correct behavior related to braces type
                 context.setAddCompletionChar(false)
@@ -437,9 +432,7 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
                 val offset1 = chars.skipSpaces(offset)
                 if (offset1 < chars.length) {
                     if (chars[offset1] == '<') {
-                        if (!isInjected) {
-                            psiDocumentManager.commitDocument(document)
-                        }
+                        psiDocumentManager.commitDocument(document)
                         val token = context.file.findElementAt(offset1)!!
                         if (token.node.elementType == KtTokens.LT) {
                             val parent = token.parent
@@ -491,9 +484,7 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
                         document.insertString(offset, "()")
                     }
                 }
-                if (!isInjected) {
-                    psiDocumentManager.commitDocument(document)
-                }
+                psiDocumentManager.commitDocument(document)
 
                 openingBracketOffset = document.charsSequence.indexOfSkippingSpace(openingBracket, offset)!!
                 closeBracketOffset = document.charsSequence.indexOfSkippingSpace(closingBracket, openingBracketOffset + 1)
@@ -548,10 +539,8 @@ sealed class KotlinFunctionInsertHandler(callType: CallType<*>) : KotlinCallable
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         super.handleInsert(context, item)
 
-        if (context.file.viewProvider.virtualFile !is VirtualFileWindow) {
-            val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-            psiDocumentManager.commitDocument(context.document)
-            psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
-        }
+        val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
+        psiDocumentManager.commitDocument(context.document)
+        psiDocumentManager.doPostponedOperationsAndUnblockDocument(context.document)
     }
 }
