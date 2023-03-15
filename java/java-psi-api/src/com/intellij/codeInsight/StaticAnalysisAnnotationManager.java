@@ -21,7 +21,8 @@ public final class StaticAnalysisAnnotationManager {
     "rx.annotations.Experimental",
     "rx.annotations.Beta",
     "org.apache.http.annotation.Beta",
-    "org.gradle.api.Incubating"
+    "org.gradle.api.Incubating",
+    "org.openrewrite.Incubating"
   };
 
   public static StaticAnalysisAnnotationManager getInstance() {
