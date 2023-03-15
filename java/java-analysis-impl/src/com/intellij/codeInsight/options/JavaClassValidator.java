@@ -77,7 +77,7 @@ public class JavaClassValidator implements StringValidatorWithSwingSelector {
     }
     if (project == null) return null;
     //wait for loading
-    if (DumbService.isDumb(project)) {
+    if (project.isDefault() || DumbService.isDumb(project)) {
       return null;
     }
     GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -102,6 +102,11 @@ public class JavaClassValidator implements StringValidatorWithSwingSelector {
 
   @Override
   public @Nullable String select(@NotNull Project project) {
+    //wait for loading
+    if (project.isDefault() || DumbService.isDumb(project)) {
+      return null;
+    }
+
     String title = myTitle != null ? myTitle :
                    myAnnotationOnly ?
                    JavaBundle.message("special.annotations.list.annotation.class") :
