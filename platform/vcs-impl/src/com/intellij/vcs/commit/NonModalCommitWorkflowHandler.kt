@@ -320,9 +320,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     try {
       val handlers = workflow.commitHandlers
       val commitChecks = handlers
+        .filter { it.acceptExecutor(commitInfo.executor) }
         .map { it.asCommitCheck(commitInfo) }
         .filter { it.isEnabled() }
-        .filter { it !is CheckinHandler || it.acceptExecutor(commitInfo.executor) }
         .groupBy { it.getExecutionOrder() }
 
       val earlyChecks = commitChecks[CommitCheck.ExecutionOrder.EARLY].orEmpty()

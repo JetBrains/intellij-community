@@ -257,9 +257,9 @@ abstract class AbstractCommitWorkflow(val project: Project) {
     try {
       val handlers = commitHandlers
       val commitChecks = handlers
+        .filter { it.acceptExecutor(commitInfo.executor) }
         .map { it.asCommitCheck(commitInfo) }
         .filter { it.isEnabled() }
-        .filter { it !is CheckinHandler || it.acceptExecutor(commitInfo.executor) }
         .groupBy { it.getExecutionOrder() }
 
       if (!checkDumbMode(commitInfo, commitChecks.values.flatten())) {
