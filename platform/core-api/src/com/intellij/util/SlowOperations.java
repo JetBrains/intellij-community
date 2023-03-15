@@ -31,6 +31,7 @@ public final class SlowOperations {
   public static final String ACTION_UPDATE = "action.update";     // action update in menus, toolbars and popups
   public static final String ACTION_PERFORM = "action.perform";   // user triggered actions
   public static final String RENDERING = "rendering";             // UI rendering
+  public static final String KNOWN_ISSUE = "known-issues";        // known YT issue
   public static final String GENERIC = "generic";                 // generic activity
 
   public static final String FORCE_ASSERT = "  force assert  ";   // assertion is thrown even if disabled
@@ -193,6 +194,12 @@ public final class SlowOperations {
     try (AccessToken ignore = startSection(GENERIC)) {
       runnable.run();
     }
+  }
+
+  /** @noinspection unused */
+  @ApiStatus.Internal
+  public static @NotNull AccessToken knownIssue(@NotNull @NonNls String ytIssueId) {
+    return startSection(KNOWN_ISSUE);
   }
 
   /**
