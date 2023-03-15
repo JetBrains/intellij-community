@@ -5,21 +5,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.asSafely
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.XSourcePositionEx.NavigationMode
-import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.ExecutionPositionUi
 import com.intellij.xdebugger.impl.ui.showExecutionPointUi
 import kotlinx.coroutines.CoroutineName
@@ -36,7 +29,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
                                               parentScope: CoroutineScope) {
   private val coroutineScope: CoroutineScope = parentScope.childScope(Dispatchers.EDT + CoroutineName(javaClass.simpleName))
 
-  private val updateRequestFlow = MutableSharedFlow<PositionUpdateRequest>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
+  private val updateRequestFlow = MutableSharedFlow<ExecutionPositionUpdateRequest>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
   private val navigationRequestFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
 
   private val _executionPointState = MutableStateFlow<ExecutionPoint?>(null)
@@ -59,7 +52,8 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
           executionPoint?.let {
             ExecutionPointVmImpl(coroutineScope, it,
                                  activeSourceKindState,
-                                 gutterIconRendererState)
+                                 gutterIconRendererState,
+                                 updateRequestFlow)
           }
         }.getOrLogException(LOG)
       }.stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
@@ -98,7 +92,7 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   fun updateExecutionPosition(file: VirtualFile, toNavigate: Boolean) {
     if (isCurrentFile(file)) {
       val navigationMode = if (toNavigate) NavigationMode.OPEN else NavigationMode.NONE
-      val updateRequest = PositionUpdateRequest(file, navigationMode)
+      val updateRequest = ExecutionPositionUpdateRequest(file, navigationMode)
       updateRequestFlow.tryEmit(updateRequest).also { check(it) }
     }
   }
@@ -106,8 +100,6 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   fun showExecutionPosition() {
     navigationRequestFlow.tryEmit(Unit).also { check(it) }
   }
-
-  private data class PositionUpdateRequest(val file: VirtualFile, val navigationMode: NavigationMode)
 }
 
 internal class ExecutionPoint private constructor(
@@ -130,3 +122,5 @@ internal class ExecutionPoint private constructor(
     }
   }
 }
+
+internal data class ExecutionPositionUpdateRequest(val file: VirtualFile, val navigationMode: NavigationMode)

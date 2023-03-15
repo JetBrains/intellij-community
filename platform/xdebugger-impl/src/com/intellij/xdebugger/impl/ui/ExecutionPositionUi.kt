@@ -79,11 +79,14 @@ internal class ExecutionPositionUi private constructor(
 
   companion object {
     suspend fun showUntilCancelled(project: Project, vm: ExecutionPositionVm): Nothing {
-      coroutineScope {
-        create(this, project, vm).use {
-          awaitCancellation()
+      vm.updatesFlow.collectLatest {
+        coroutineScope {
+          create(this, project, vm).use {
+            awaitCancellation()
+          }
         }
       }
+      error("not reached")
     }
 
     @RequiresEdt
