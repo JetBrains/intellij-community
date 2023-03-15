@@ -27,6 +27,7 @@ class NastradamusClient(
     private val jacksonMapper: ObjectMapper = jacksonObjectMapper()
   }
 
+  /** Classes for current bucket. Map<Class to Sorting order> */
   private lateinit var sortedClassesCachedResult: Map<Class<*>, Int>
 
   fun collectTestRunResults(): TestResultRequestEntity {
@@ -221,8 +222,11 @@ class NastradamusClient(
           )
 
           var rank = 1
-          val ranked = sortedCases.associate { case -> case.name to rank++ }
-          sortedClassesCachedResult = unsortedClasses.associateWith { clazz -> ranked[clazz.name] ?: Int.MAX_VALUE }
+          val rankedTestClassesForCurrentBucket = sortedCases.associate { case -> case.name to rank++ }
+
+          sortedClassesCachedResult = unsortedClasses
+            .filter { it.name in rankedTestClassesForCurrentBucket.keys }
+            .associateWith { clazz -> rankedTestClassesForCurrentBucket[clazz.name] ?: Int.MAX_VALUE }
           println("Fetching sorted test classes from Nastradamus completed")
           sortedClassesCachedResult
         },
