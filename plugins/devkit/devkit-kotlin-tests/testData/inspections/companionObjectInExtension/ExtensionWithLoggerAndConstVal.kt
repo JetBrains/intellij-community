@@ -1,6 +1,6 @@
 import com.intellij.openapi.diagnostic.Logger
 
-class ExtensionWithLoggerAndConstVal : MyExtension {
+class MyExtensionImpl : MyExtension {
 
   companion object {
     // loggers are allowed
