@@ -10,7 +10,6 @@ import com.intellij.collaboration.ui.util.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.Wrapper
@@ -50,13 +49,13 @@ internal object GHPRStatusChecksComponentFactory {
     avatarIconsProvider: GHAvatarIconsProvider
   ): JComponent {
     val scope = parentScope.childScope(Dispatchers.Main.immediate)
-    val loadingPanel = createLoadingComponent(reviewDetailsVm, securityService)
+    val loadingPanel = createLoadingComponent(scope, reviewDetailsVm, securityService)
     val checksPanel = VerticalListPanel(STATUSES_GAP).apply {
       add(createChecksStateComponent(scope, reviewDetailsVm))
       add(createConflictsComponent(scope, reviewDetailsVm))
       add(createRequiredReviewsComponent(scope, reviewDetailsVm))
       add(createRestrictionsLabel(scope, reviewDetailsVm))
-      add(createAccessDeniedLabel(reviewDetailsVm, securityService))
+      add(createAccessDeniedLabel(scope, reviewDetailsVm, securityService))
       add(createNeedReviewerLabel(scope, reviewFlowVm))
       add(createReviewersReviewStateLabel(scope, reviewFlowVm, avatarIconsProvider))
     }
@@ -69,12 +68,16 @@ internal object GHPRStatusChecksComponentFactory {
     }
   }
 
-  private fun createLoadingComponent(reviewDetailsVm: GHPRDetailsViewModel, securityService: GHPRSecurityService): JComponent {
+  private fun createLoadingComponent(
+    scope: CoroutineScope,
+    reviewDetailsVm: GHPRDetailsViewModel,
+    securityService: GHPRSecurityService
+  ): JComponent {
     val stateLabel = JLabel().apply {
       icon = AllIcons.RunConfigurations.TestNotRan
       text = GithubBundle.message("pull.request.loading.status")
     }
-    val accessDeniedLabel = createAccessDeniedLabel(reviewDetailsVm, securityService)
+    val accessDeniedLabel = createAccessDeniedLabel(scope, reviewDetailsVm, securityService)
     return VerticalListPanel(STATUSES_GAP).apply {
       name = "Loading statuses panel"
       add(stateLabel)
@@ -114,7 +117,7 @@ internal object GHPRStatusChecksComponentFactory {
       icon = AllIcons.RunConfigurations.TestError
       text = CollaborationToolsBundle.message("review.details.status.conflicts")
       JLabelUtil.setTrimOverflow(this, true)
-      bindVisibility(scope, reviewDetailsVm.hasConflictsState.map { it == true })
+      bindVisibility(scope, reviewDetailsVm.hasConflicts.map { it == true })
     }
   }
 
@@ -126,12 +129,12 @@ internal object GHPRStatusChecksComponentFactory {
       icon = AllIcons.RunConfigurations.TestError
       JLabelUtil.setTrimOverflow(this, true)
       bindVisibility(scope, combine(
-        reviewDetailsVm.requiredApprovingReviewsCountState,
-        reviewDetailsVm.isDraftState
+        reviewDetailsVm.requiredApprovingReviewsCount,
+        reviewDetailsVm.isDraft
       ) { requiredApprovingReviewsCount, isDraft ->
         requiredApprovingReviewsCount > 0 && !isDraft
       })
-      bindText(scope, reviewDetailsVm.requiredApprovingReviewsCountState.map { requiredApprovingReviewsCount ->
+      bindText(scope, reviewDetailsVm.requiredApprovingReviewsCount.map { requiredApprovingReviewsCount ->
         GithubBundle.message("pull.request.reviewers.required", requiredApprovingReviewsCount)
       })
     }
@@ -145,14 +148,17 @@ internal object GHPRStatusChecksComponentFactory {
       icon = AllIcons.RunConfigurations.TestError
       text = GithubBundle.message("pull.request.not.authorized.to.merge")
       JLabelUtil.setTrimOverflow(this, true)
-      bindVisibility(scope, combine(reviewDetailsVm.isRestrictedState, reviewDetailsVm.isDraftState) { isRestricted, isDraft ->
+      bindVisibility(scope, combine(reviewDetailsVm.isRestricted, reviewDetailsVm.isDraft) { isRestricted, isDraft ->
         isRestricted && !isDraft
       })
     }
   }
 
-  private fun createAccessDeniedLabel(reviewDetailsVm: GHPRDetailsViewModel, securityService: GHPRSecurityService): JComponent {
-    val isDraft = reviewDetailsVm.isDraftState.value
+  private fun createAccessDeniedLabel(
+    scope: CoroutineScope,
+    reviewDetailsVm: GHPRDetailsViewModel,
+    securityService: GHPRSecurityService
+  ): JComponent {
     val viewerDidAuthor = reviewDetailsVm.viewerDidAuthor
 
     val mergeForbidden = securityService.isMergeForbiddenForProject()
@@ -164,27 +170,19 @@ internal object GHPRStatusChecksComponentFactory {
       isOpaque = false
       name = "Access denied label"
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      when {
-        !canClose -> {
-          icon = AllIcons.RunConfigurations.TestError
-          text = GithubBundle.message("pull.request.repo.access.required")
+      icon = AllIcons.RunConfigurations.TestError
+      bindText(scope, reviewDetailsVm.isDraft.map { isDraft ->
+        when {
+          !canClose -> GithubBundle.message("pull.request.repo.access.required")
+          !canMarkReadyForReview && isDraft -> GithubBundle.message("pull.request.repo.write.access.required")
+          !canMerge && !isDraft -> GithubBundle.message("pull.request.repo.write.access.required")
+          mergeForbidden && !isDraft -> GithubBundle.message("pull.request.merge.disabled")
+          else -> {
+            isVisible = false
+            return@map ""
+          }
         }
-        !canMarkReadyForReview && isDraft -> {
-          icon = AllIcons.RunConfigurations.TestError
-          text = GithubBundle.message("pull.request.repo.write.access.required")
-        }
-        !canMerge && !isDraft -> {
-          icon = AllIcons.RunConfigurations.TestError
-          text = GithubBundle.message("pull.request.repo.write.access.required")
-        }
-        mergeForbidden && !isDraft -> {
-          icon = AllIcons.RunConfigurations.TestError
-          text = GithubBundle.message("pull.request.merge.disabled")
-        }
-        else -> {
-          isVisible = false
-        }
-      }
+      })
       JLabelUtil.setTrimOverflow(this, true)
     }
   }

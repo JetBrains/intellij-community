@@ -47,7 +47,7 @@ internal class GHPRStatePanel(
 
   init {
     scope.launch {
-      reviewFlowVm.roleState.collect { role ->
+      reviewFlowVm.role.collect { role ->
         select(role, true)
       }
     }
@@ -132,7 +132,7 @@ internal class GHPRStatePanel(
           isOpaque = false
           text = CollaborationToolsBundle.message("review.details.action.request")
           action = GHPRRequestReviewAction(scope, reviewFlowVm)
-          bindVisibility(scope, combine(reviewFlowVm.reviewState, reviewFlowVm.requestedReviewersState) { reviewState, requestedReviewers ->
+          bindVisibility(scope, combine(reviewFlowVm.reviewState, reviewFlowVm.requestedReviewers) { reviewState, requestedReviewers ->
             reviewState == ReviewState.NEED_REVIEW ||
             (reviewState == ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isNotEmpty())
           })
@@ -141,7 +141,7 @@ internal class GHPRStatePanel(
           isOpaque = false
           text = CollaborationToolsBundle.message("review.details.action.rerequest")
           action = GHPRReRequestReviewAction(scope, reviewFlowVm)
-          bindVisibility(scope, combine(reviewFlowVm.reviewState, reviewFlowVm.requestedReviewersState) { reviewState, requestedReviewers ->
+          bindVisibility(scope, combine(reviewFlowVm.reviewState, reviewFlowVm.requestedReviewers) { reviewState, requestedReviewers ->
             reviewState == ReviewState.WAIT_FOR_UPDATES && requestedReviewers.isEmpty()
           })
         }
@@ -229,7 +229,7 @@ internal class GHPRStatePanel(
             GHPRReviewSubmitAction().actionPerformed(anActionEvent)
           }
 
-          bindText(scope, reviewFlowVm.pendingCommentsState.map { pendingComments ->
+          bindText(scope, reviewFlowVm.pendingComments.map { pendingComments ->
             GithubBundle.message("pull.request.review.actions.submit", pendingComments)
           })
           bindVisibility(scope, reviewFlowVm.reviewState.map {

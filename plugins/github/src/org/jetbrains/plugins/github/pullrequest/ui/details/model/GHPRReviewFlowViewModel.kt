@@ -10,11 +10,11 @@ import javax.swing.JComponent
 
 internal interface GHPRReviewFlowViewModel {
   val isBusy: Flow<Boolean>
-  val requestedReviewersState: StateFlow<List<GHPullRequestRequestedReviewer>>
+  val requestedReviewers: Flow<List<GHPullRequestRequestedReviewer>>
   val reviewerAndReviewState: StateFlow<Map<GHPullRequestRequestedReviewer, ReviewState>>
   val reviewState: Flow<ReviewState>
-  val roleState: StateFlow<ReviewRole>
-  val pendingCommentsState: StateFlow<Int>
+  val role: Flow<ReviewRole>
+  val pendingComments: Flow<Int>
 
   val userCanManageReview: Boolean
   val userCanMergeReview: Boolean

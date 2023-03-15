@@ -52,7 +52,7 @@ internal object GHPRTitleComponent {
   fun create(scope: CoroutineScope, reviewDetailsVm: GHPRDetailsViewModel): JComponent {
     val titleLabel = HtmlEditorPane().apply {
       font = JBFont.h2().asBold()
-      bindTextHtml(scope, reviewDetailsVm.titleState.map { title ->
+      bindTextHtml(scope, reviewDetailsVm.title.map { title ->
         CodeReviewTitleUIUtil.createTitleText(
           title = title,
           reviewNumber = "#${reviewDetailsVm.number}",

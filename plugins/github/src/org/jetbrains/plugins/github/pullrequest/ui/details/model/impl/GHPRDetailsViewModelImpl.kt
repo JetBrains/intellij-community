@@ -1,9 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
-import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.ui.codereview.details.RequestState
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
@@ -12,20 +10,19 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsView
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
 
 internal class GHPRDetailsViewModelImpl(
-  scope: CoroutineScope,
   detailsModel: GHPRDetailsModel,
   stateModel: GHPRStateModel
 ) : GHPRDetailsViewModel {
   private val _titleState: MutableStateFlow<String> = MutableStateFlow(detailsModel.title)
-  override val titleState: StateFlow<String> = _titleState.asStateFlow()
+  override val title: Flow<String> = _titleState.asSharedFlow()
 
   private val _descriptionState: MutableStateFlow<String> = MutableStateFlow(detailsModel.description)
-  override val descriptionState: StateFlow<String> = _descriptionState.asStateFlow()
+  override val description: Flow<String> = _descriptionState.asSharedFlow()
 
   private val _reviewMergeState: MutableStateFlow<GHPullRequestState> = MutableStateFlow(detailsModel.state)
 
   private val _isDraftState: MutableStateFlow<Boolean> = MutableStateFlow(stateModel.isDraft)
-  override val isDraftState: StateFlow<Boolean> = _isDraftState.asStateFlow()
+  override val isDraft: Flow<Boolean> = _isDraftState.asSharedFlow()
 
   override val requestState: Flow<RequestState> = combine(_reviewMergeState, _isDraftState) { reviewMergeState, isDraft ->
     if (isDraft) return@combine RequestState.DRAFT
@@ -41,21 +38,21 @@ internal class GHPRDetailsViewModelImpl(
   override val viewerDidAuthor: Boolean = stateModel.viewerDidAuthor
 
   private val _mergeabilityState: MutableStateFlow<GHPRMergeabilityState?> = MutableStateFlow(stateModel.mergeabilityState)
-  override val mergeabilityState: StateFlow<GHPRMergeabilityState?> = _mergeabilityState.asStateFlow()
+  override val mergeabilityState: Flow<GHPRMergeabilityState?> = _mergeabilityState.asSharedFlow()
 
-  override val hasConflictsState: StateFlow<Boolean?> = _mergeabilityState.mapState(scope) { mergeability ->
-    mergeability?.hasConflicts
+  override val hasConflicts: Flow<Boolean?> = _mergeabilityState.map { mergeability ->
+    mergeability?.hasConflicts ?: false
   }
 
-  override val isRestrictedState: StateFlow<Boolean> = _mergeabilityState.mapState(scope) { mergeability ->
+  override val isRestricted: Flow<Boolean> = _mergeabilityState.map { mergeability ->
     mergeability?.isRestricted ?: false
   }
 
-  override val checksState: StateFlow<GHPRMergeabilityState.ChecksState> = _mergeabilityState.mapState(scope) { mergeability ->
+  override val checksState: Flow<GHPRMergeabilityState.ChecksState> = _mergeabilityState.map { mergeability ->
     mergeability?.checksState ?: GHPRMergeabilityState.ChecksState.NONE
   }
 
-  override val requiredApprovingReviewsCountState: StateFlow<Int> = _mergeabilityState.mapState(scope) { mergeability ->
+  override val requiredApprovingReviewsCount: Flow<Int> = _mergeabilityState.map { mergeability ->
     mergeability?.requiredApprovingReviewsCount ?: 0
   }
 

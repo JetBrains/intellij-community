@@ -189,7 +189,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
       val stateModel = GHPRStateModelImpl(project, dataProvider.stateData, dataProvider.changesData, model, disposable)
 
       val scope = DisposingScope(disposable, SupervisorJob() + Dispatchers.Main.immediate)
-      val reviewDetailsVm = GHPRDetailsViewModelImpl(scope, detailsModel, stateModel)
+      val reviewDetailsVm = GHPRDetailsViewModelImpl(detailsModel, stateModel)
       val reviewFlowVm = GHPRReviewFlowViewModelImpl(scope,
                                                      metadataModel,
                                                      stateModel,

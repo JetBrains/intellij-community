@@ -23,7 +23,7 @@ internal object GHPRDetailsDescriptionComponentFactory {
 
   fun create(scope: CoroutineScope, reviewDetailsVM: GHPRDetailsViewModel): JComponent {
     val descriptionPanel = HtmlEditorPane().apply {
-      bindText(scope, reviewDetailsVM.descriptionState)
+      bindText(scope, reviewDetailsVM.description)
       val group = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
       PopupHandler.installPopupMenu(this, group, "GHPRDetailsPopup")
     }.let { editor ->
