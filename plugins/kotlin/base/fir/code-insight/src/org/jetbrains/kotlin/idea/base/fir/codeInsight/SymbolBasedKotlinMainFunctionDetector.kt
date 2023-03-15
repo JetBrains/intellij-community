@@ -64,10 +64,12 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                     return false
                 }
 
-                if (!isTopLevel && configuration.checkJvmStaticAnnotation) {
-                    if (!functionSymbol.hasAnnotation(StandardClassIds.Annotations.JvmStatic)) {
-                        return false
-                    }
+                if (!isTopLevel) {
+                    val containingClass = functionSymbol.originalContainingClassForOverride ?: return false
+                    val annotationJvmStatic = StandardClassIds.Annotations.JvmStatic
+                    return containingClass.classKind.isObject
+                            && (!configuration.checkJvmStaticAnnotation || functionSymbol.hasAnnotation(annotationJvmStatic))
+
                 }
             }
         }
