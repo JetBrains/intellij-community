@@ -7,14 +7,49 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.scale.paint.ImageComparator
 import com.intellij.ui.svg.renderSvg
 import com.intellij.util.io.inputStream
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import java.awt.Image
 import java.awt.image.BufferedImage
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import javax.imageio.ImageIO
+
+internal object IntelliJIconsIconsVerifier {
+  @JvmStatic
+  fun main(args: Array<String>) {
+    runBlocking(Dispatchers.IO) {
+      val list = mutableListOf<Pair<Path, ByteArray>>()
+      val root = Path.of(System.getProperty("user.home"), "projects/IntelliJIcons")
+      Files.walkFileTree(root, object : SimpleFileVisitor<Path>() {
+        override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+          if (attrs.isRegularFile && file.toString().endsWith(".svg")) {
+            list.add(file to Files.readAllBytes(file))
+          }
+          return FileVisitResult.CONTINUE
+        }
+      })
+
+      println("icons: ${list.joinToString(separator = "\n") { it.first.toString() }}")
+
+      // process in parallel to test concurrent rendering
+      repeat(4) {
+        for ((_, data) in list) {
+          launch {
+            renderSvg(data = data, scale = 2f)
+          }
+        }
+      }
+    }
+  }
+}
 
 class SvgRenderingTest {
   @Test

@@ -19,7 +19,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiFunction
 import java.util.function.Function
 import javax.xml.stream.XMLStreamConstants
-import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 
 @Internal
@@ -33,16 +32,12 @@ fun createJSvgDocument(data: ByteArray): SVG = createJSvgDocument(createXmlStrea
 typealias AttributeMutator = (MutableMap<String, String>) -> Unit
 
 internal fun createJSvgDocument(xmlStreamReader: XMLStreamReader2, attributeMutator: AttributeMutator? = null): SVG {
-  val result = try {
-    buildDocument(xmlStreamReader, attributeMutator)
-  }
-  catch (e: XMLStreamException) {
-    throw IOException(e)
+  try {
+    return buildDocument(xmlStreamReader, attributeMutator)
   }
   finally {
-    xmlStreamReader.close()
+    xmlStreamReader.closeCompletely()
   }
-  return result
 }
 
 private fun buildDocument(reader: XMLStreamReader2, attributeMutator: AttributeMutator?): SVG {
