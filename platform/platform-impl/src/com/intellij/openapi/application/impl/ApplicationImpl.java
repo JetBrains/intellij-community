@@ -1015,7 +1015,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void assertReadAccessAllowed() {
     if (!isReadAccessAllowed()) {
-      throwThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION);
+      LOG.error(createThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION));
     }
   }
 
@@ -1056,8 +1056,13 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private static void throwThreadAccessException(@NotNull @NonNls String message) {
-    throw new RuntimeExceptionWithAttachments(message + DOCUMENTATION_LINK + "\n" + getThreadDetails(),
-                                              new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
+    throw createThreadAccessException(message);
+  }
+
+  @NotNull
+  private static RuntimeExceptionWithAttachments createThreadAccessException(@NonNls @NotNull String message) {
+    return new RuntimeExceptionWithAttachments(message + DOCUMENTATION_LINK + "\n" + getThreadDetails(),
+                                               new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
   @NotNull
