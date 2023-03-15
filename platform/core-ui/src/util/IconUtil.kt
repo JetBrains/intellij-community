@@ -185,7 +185,7 @@ object IconUtil {
 
   /**
    * @return a deferred icon for the file, taking into account [FileIconProvider] and [FileIconPatcher] extensions.
-   * Use [.computeFileIcon] where possible (e.g. in background threads) to get a non-deferred icon.
+   * Use [computeFileIcon] where possible (e.g. in background threads) to get a non-deferred icon.
    */
   @JvmStatic
   fun getIcon(file: VirtualFile, @IconFlags flags: Int, project: Project?): Icon {
