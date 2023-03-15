@@ -121,7 +121,12 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private final @NotNull EditorImpl myEditor;
   // null renderer means we should not show a traffic light icon
   private @Nullable ErrorStripeRenderer myErrorStripeRenderer;
-  private final MergingUpdateQueue myStatusUpdates;
+  private final CheckedDisposable resourcesDisposable = Disposer.newCheckedDisposable();
+  private final MergingUpdateQueue myStatusUpdates =
+    new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable);
+  // query daemon status in BGT (because it's rather expensive and PSI-related) and then update the icon in EDT later
+  private final MergingUpdateQueue myTrafficLightIconUpdates =
+    new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable, null, Alarm.ThreadToUse.POOLED_THREAD);
   private final ErrorStripeMarkersModel myErrorStripeMarkersModel;
 
   private boolean dimensionsAreValid;
@@ -144,20 +149,19 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private boolean myKeepHint;
 
   private final ActionToolbarImpl statusToolbar;
-  private boolean showToolbar;
-  private boolean trafficLightVisible;
+  private boolean showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget();
+  private boolean trafficLightVisible = true;
   private final ComponentListener toolbarComponentListener;
   private Rectangle cachedToolbarBounds = new Rectangle();
-  private final JLabel smallIconLabel;
+  private final JLabel smallIconLabel = new JLabel();
   @NotNull
-  private AnalyzerStatus analyzerStatus = AnalyzerStatus.getEMPTY();
+  private volatile AnalyzerStatus analyzerStatus = AnalyzerStatus.getEMPTY();
   private boolean hasAnalyzed;
   private boolean isAnalyzing;
   private boolean showNavigation;
   private boolean reportErrorStripeInconsistency = true;
   @NotNull
   private final TrafficLightPopup myTrafficLightPopup;
-  private final Disposable resourcesDisposable = Disposer.newDisposable();
   private final Alarm statusTimer = new Alarm(resourcesDisposable);
   private final Map<InspectionWidgetActionProvider, AnAction> extensionActions = new HashMap<>();
 
@@ -168,8 +172,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().getErrorStripeMarkMinHeight());
 
     myTrafficLightPopup = new TrafficLightPopup(editor, new CompactViewAction());
-    showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget();
-    trafficLightVisible = true;
 
     AnAction nextErrorAction = createAction("GotoNextError", AllIcons.Actions.FindAndShowNextMatchesSmall);
     AnAction prevErrorAction = createAction("GotoPreviousError", AllIcons.Actions.FindAndShowPrevMatchesSmall);
@@ -190,7 +192,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
-
       @Override
       public void addNotify() {
         setTargetComponent(editor.getContentComponent());
@@ -284,7 +285,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     toolbar.addComponentListener(toolbarComponentListener);
     toolbar.setBorder(JBUI.Borders.empty(2));
 
-    smallIconLabel = new JLabel();
     smallIconLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
@@ -334,7 +334,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         updateTrafficLightVisibility();
       }
     });
-    myStatusUpdates = new MergingUpdateQueue(getClass().getName(), 50, true, MergingUpdateQueue.ANY_COMPONENT, resourcesDisposable);
 
     myErrorStripeMarkersModel = new ErrorStripeMarkersModel(myEditor, resourcesDisposable);
   }
@@ -476,17 +475,22 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   public void repaintTrafficLightIcon() {
     if (myErrorStripeRenderer == null) return;
 
-    myStatusUpdates.queue(Update.create("icon", () -> {
-      if (myErrorStripeRenderer != null) {
-        AnalyzerStatus newStatus = myErrorStripeRenderer.getStatus();
+    myTrafficLightIconUpdates.queue(Update.create("traffic light icon", () -> {
+      ErrorStripeRenderer errorStripeRenderer = myErrorStripeRenderer;
+      if (errorStripeRenderer != null) {
+        AnalyzerStatus newStatus = ReadAction.compute(() -> errorStripeRenderer.getStatus());
         if (!newStatus.equalsTo(analyzerStatus)) {
-          changeStatus(newStatus);
+          ApplicationManager.getApplication().invokeLater(() -> changeStatus(newStatus));
         }
       }
     }));
   }
 
   private void changeStatus(@NotNull AnalyzerStatus newStatus) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (!isErrorStripeVisible() || resourcesDisposable.isDisposed()) {
+      return;
+    }
     statusTimer.cancelAllRequests();
 
     AnalyzingType analyzingType = newStatus.getAnalyzingType();

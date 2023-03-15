@@ -229,10 +229,15 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   @ApiStatus.Internal
   public @NotNull DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     return getDaemonCodeAnalyzerStatus(mySeverityRegistrar);
   }
 
   protected @NotNull DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(@NotNull SeverityRegistrar severityRegistrar) {
+    // this method is rather expensive and PSI-related, need to execute in BGT and cache the result to show in EDT later
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
     status.errorAnalyzingFinished = true;
     PsiFile psiFile = getPsiFile();
@@ -307,6 +312,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   @Override
   public @NotNull AnalyzerStatus getStatus() {
+    // this method is rather expensive and PSI-related, need to execute in BGT and cache the result to show in EDT later
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (PowerSaveMode.isEnabled()) {
       return new AnalyzerStatus(AllIcons.General.InspectionsPowerSaveMode,
                                 InspectionsBundle.message("code.analysis.is.disabled.in.power.save.mode"),

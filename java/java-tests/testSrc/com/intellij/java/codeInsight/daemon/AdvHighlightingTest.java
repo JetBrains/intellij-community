@@ -213,7 +213,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
       AppExecutorUtil.getAppExecutorService()).get();
     Disposer.register(getTestRootDisposable(), renderer);
     while (true) {
-      TrafficLightRenderer.DaemonCodeAnalyzerStatus status = renderer.getDaemonCodeAnalyzerStatus();
+      TrafficLightRenderer.DaemonCodeAnalyzerStatus status = ReadAction.nonBlocking(() -> renderer.getDaemonCodeAnalyzerStatus()).submit(AppExecutorUtil.getAppExecutorService()).get();
       assertNotNull(status.reasonWhyDisabled);
       if (status.errorAnalyzingFinished) {
         break;
