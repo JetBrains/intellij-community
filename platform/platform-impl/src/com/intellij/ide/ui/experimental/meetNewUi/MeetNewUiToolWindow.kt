@@ -140,7 +140,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
 
           cell() // Deny right component to shrink
         }
-      }.customize(JBGaps(32, 32, 32, 32))
+      }.customize(JBGaps(32, 32, 16, 32))
     }
   }
 
