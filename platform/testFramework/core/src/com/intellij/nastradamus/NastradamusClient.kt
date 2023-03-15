@@ -28,7 +28,8 @@ class NastradamusClient(
   }
 
   /** Classes for current bucket. Map<Class to Sorting order> */
-  private lateinit var sortedClassesCachedResult: Map<Class<*>, Int>
+  private lateinit var sortedClassesInCurrentBucket: Set<Class<*>>
+  private lateinit var allSortedClasses: Map<Class<*>, Int>
 
   fun collectTestRunResults(): TestResultRequestEntity {
     val tests = teamCityClient.getTestRunInfo()
@@ -224,11 +225,11 @@ class NastradamusClient(
           var rank = 1
           val rankedTestClassesForCurrentBucket = sortedCases.associate { case -> case.name to rank++ }
 
-          sortedClassesCachedResult = unsortedClasses
-            .filter { it.name in rankedTestClassesForCurrentBucket.keys }
-            .associateWith { clazz -> rankedTestClassesForCurrentBucket[clazz.name] ?: Int.MAX_VALUE }
+          sortedClassesInCurrentBucket = unsortedClasses.filter { it.name in rankedTestClassesForCurrentBucket.keys }.toSet()
+
+          allSortedClasses = unsortedClasses.associateWith { clazz -> rankedTestClassesForCurrentBucket[clazz.name] ?: Int.MAX_VALUE }
           println("Fetching sorted test classes from Nastradamus completed")
-          sortedClassesCachedResult
+          allSortedClasses
         },
         fallbackOnThresholdReached = { fallback() }
       )
@@ -236,21 +237,22 @@ class NastradamusClient(
     catch (e: Throwable) {
       // fallback in case of any failure (just to get aggregator running)
       System.err.println("Failure during sorting test classes via Nastradamus. Fallback to simple natural sorting.")
-      sortedClassesCachedResult = fallback()
-      sortedClassesCachedResult
+      allSortedClasses = fallback()
+      allSortedClasses
     }
   }
 
-  fun isClassInBucket(testIdentifier: String): Boolean {
-    if (!this::sortedClassesCachedResult.isInitialized) getRankedClasses()
+  fun isClassInBucket(testIdentifier: String, fallbackFunc: (String) -> Boolean): Boolean {
+    if (!this::allSortedClasses.isInitialized) getRankedClasses()
 
     val isMatch: Boolean = withErrorThreshold(
       objName = "NastradamusClient-isClassInBucket",
       errorThreshold = 1,
-      action = {
-        sortedClassesCachedResult.keys.any { it.name == testIdentifier }
-      },
-      fallbackOnThresholdReached = { throw RuntimeException("Couldn't find appropriate bucket for $testIdentifier via Nastradamus") }
+      action = { sortedClassesInCurrentBucket.any { it.name == testIdentifier } },
+      fallbackOnThresholdReached = {
+        System.err.println("Couldn't find appropriate bucket for $testIdentifier via Nastradamus")
+        fallbackFunc(testIdentifier)
+      }
     )
 
     if (TestCaseLoader.IS_VERBOSE_LOG_ENABLED) {
