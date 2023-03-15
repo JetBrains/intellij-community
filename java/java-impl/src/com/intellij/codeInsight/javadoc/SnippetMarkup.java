@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
@@ -375,36 +376,38 @@ public class SnippetMarkup {
       String tagName = tagMatcher.group(1);
 
       Set<String> allowedAttrs = ALLOWED_ATTRS.get(tagName);
-      List<MarkupNode> attrs = new ArrayList<>();
+      Map<String, Attribute> attrs = new HashMap<>();
       int attrPos = tagMatcher.end();
-      Set<String> used = new HashSet<>();
+      int attrEnd = attrPos;
       while (attrPos < markupSpec.length()) {
         Matcher attrMatcher = ATTRIBUTE.matcher(markupSpec);
         boolean found = attrMatcher.find(attrPos);
         if (!found || attrMatcher.start() != attrPos) break;
         String key = attrMatcher.group(1);
-        TextRange attrRange = TextRange.create(attrMatcher.start(), attrMatcher.end()).shiftRight(start + offset);
-        if (!allowedAttrs.contains(key)) {
-          attrs.add(new ErrorMarkup(attrRange, JavaBundle.message("javadoc.snippet.error.unsupported.attribute", key)));
+        attrEnd = attrMatcher.end(2);
+        if (attrEnd == -1) {
+          attrEnd = attrMatcher.end(1);
         }
-        else if (!used.add(key)) {
-          attrs.add(new ErrorMarkup(attrRange, JavaBundle.message("javadoc.snippet.error.duplicate.attribute", key)));
+        TextRange attrRange = TextRange.create(attrMatcher.start(), attrEnd).shiftRight(start + offset);
+        if (!allowedAttrs.contains(key)) {
+          markupNodes.add(new ErrorMarkup(attrRange, JavaBundle.message("javadoc.snippet.error.unsupported.attribute", tagName, key)));
+        }
+        else if (attrs.containsKey(key)) {
+          markupNodes.add(new ErrorMarkup(attrRange, JavaBundle.message("javadoc.snippet.error.duplicate.attribute", tagName, key)));
         }
         else {
           String value = attrMatcher.group(4);
           if (value == null) value = attrMatcher.group(5);
           if (value == null) value = attrMatcher.group(6);
           if (value == null) value = "";
-          attrs.add(new Attribute(attrRange, key, value));
+          attrs.put(key, new Attribute(attrRange, key, value));
         }
         attrPos = attrMatcher.end();
       }
-      markupNodes.addAll(ContainerUtil.filterIsInstance(attrs, ErrorMarkup.class));
-      int rangeEnd = attrPos;
-      while (rangeEnd > 0 && Character.isWhitespace(markupSpec.charAt(rangeEnd - 1))) {
-        rangeEnd--;
+      while (attrEnd > 0 && Character.isWhitespace(markupSpec.charAt(attrEnd - 1))) {
+        attrEnd--;
       }
-      TextRange range = TextRange.create(0, rangeEnd).shiftRight(start + offset);
+      TextRange range = TextRange.create(0, attrEnd).shiftRight(start + offset);
       validateAndAddTag(markupNodes, tagName, attrs, range);
       start += attrPos;
       markupSpec = markupSpec.substring(attrPos);
@@ -426,71 +429,81 @@ public class SnippetMarkup {
 
   private static void validateAndAddTag(@NotNull List<MarkupNode> markupNodes,
                                         @NotNull String tagName,
-                                        @NotNull List<MarkupNode> attrs,
+                                        @NotNull Map<String, Attribute> attrs,
                                         @NotNull TextRange range) {
-    Map<String, String> attrValues = StreamEx.of(attrs).select(Attribute.class).toMap(Attribute::key, Attribute::value);
     switch (tagName) {
       case "start" -> {
-        String region = attrValues.get("region");
-        markupNodes.add(
-          region == null ?
-          new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.missing.required.attribute", "@start", "region")) :
-          new StartRegion(range, region));
-      }
-      case "end" -> markupNodes.add(new EndRegion(range, attrValues.get("region")));
-      case "highlight" -> {
-        Attribute typeAttr =
-          (Attribute)ContainerUtil.find(attrs, n -> n instanceof Attribute attr && attr.key().equals("type"));
-        HighlightType type = null;
-        if (typeAttr != null) {
-          type = ContainerUtil.find(HighlightType.values(),
-                                    ht -> ht.name().toLowerCase(Locale.ROOT).equals(typeAttr.value()));
-          if (type == null) {
-            markupNodes.add(
-              new ErrorMarkup(typeAttr.range(), JavaBundle.message("javadoc.snippet.error.unknown.highlight.type", typeAttr.value())));
-          }
+        String region = getRequiredString(markupNodes, attrs, tagName, range, "region");
+        if (region != null) {
+          markupNodes.add(new StartRegion(range, region));
         }
-        markupNodes.add(new Highlight(range, attrValues.get("substring"), getPattern(markupNodes, attrs), attrValues.get("region"),
-                                      Objects.requireNonNullElse(type, HighlightType.HIGHLIGHTED)));
+      }
+      case "end" -> markupNodes.add(new EndRegion(range, getOptionalString(attrs, "region")));
+      case "highlight" -> {
+        Attribute typeAttr = attrs.get("type");
+        HighlightType type = getEnumValue(markupNodes, "highlight", typeAttr, HighlightType.class, HighlightType.HIGHLIGHTED);
+        markupNodes.add(new Highlight(range, getOptionalString(attrs, "substring"), getPattern(markupNodes, attrs),
+                                      getOptionalString(attrs, "region"), type));
       }
       case "replace" -> {
-        String replacement = attrValues.get("replacement");
-        if (replacement == null) {
+        String replacement = getRequiredString(markupNodes, attrs, tagName, range, "replacement");
+        if (replacement != null) {
           markupNodes.add(
-            new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.missing.required.attribute", "@replace", "replacement")));
-          replacement = "";
+            new Replace(range, getOptionalString(attrs, "substring"), getPattern(markupNodes, attrs),
+                        getOptionalString(attrs, "region"), replacement));
         }
-        markupNodes.add(new Replace(range, attrValues.get("substring"), getPattern(markupNodes, attrs), attrValues.get("region"), replacement));
       }
       case "link" -> {
-        String target = attrValues.get("target");
-        if (target == null) {
-          markupNodes.add(
-            new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.missing.required.attribute", "@link", "target")));
-          target = "";
+        String target = getRequiredString(markupNodes, attrs, tagName, range, "target");
+        Attribute typeAttr = attrs.get("type");
+        LinkType type = getEnumValue(markupNodes, "link", typeAttr, LinkType.class, LinkType.LINK);
+        if (target != null) {
+          markupNodes.add(new Link(range, getOptionalString(attrs, "substring"), getPattern(markupNodes, attrs),
+                                   getOptionalString(attrs, "region"), target, type));
         }
-        Attribute typeAttr =
-          (Attribute)ContainerUtil.find(attrs, n -> n instanceof Attribute attr && attr.key().equals("type"));
-        LinkType type = null;
-        if (typeAttr != null) {
-          type = ContainerUtil.find(LinkType.values(),
-                                    ht -> ht.name().toLowerCase(Locale.ROOT).equals(typeAttr.value()));
-          if (type == null) {
-            markupNodes.add(
-              new ErrorMarkup(typeAttr.range(), JavaBundle.message("javadoc.snippet.error.unknown.link.type", typeAttr.value())));
-          }
-        }
-        markupNodes.add(new Link(range, attrValues.get("substring"), getPattern(markupNodes, attrs), attrValues.get("region"),
-                                 target, Objects.requireNonNullElse(type, LinkType.LINK)));
       }
       default -> throw new AssertionError("Unexpected tag: " + tagName);
     }
   }
 
+  private static <T extends Enum<T>> @NotNull T getEnumValue(@NotNull List<MarkupNode> markupNodes, @NotNull String tagName,
+                                                    @Nullable Attribute attribute, @NotNull Class<T> enumClass, @NotNull T defaultValue) {
+    if (attribute == null) return defaultValue;
+    T value = ContainerUtil.find(enumClass.getEnumConstants(), val -> val.name().toLowerCase(Locale.ROOT).equals(attribute.value()));
+    if (value == null) {
+      markupNodes.add(
+        new ErrorMarkup(attribute.range(), JavaBundle.message(
+          "javadoc.snippet.error.unknown.enum.value",
+          tagName, attribute.key(), attribute.value(),
+          StreamEx.of(enumClass.getEnumConstants()).map(val -> "'" + val.name().toLowerCase(Locale.ROOT) + "'")
+            .collect(NlsMessages.joiningAnd()))));
+      return defaultValue;
+    }
+    return value;
+  }
+
+  private static @Nullable String getOptionalString(@NotNull Map<String, Attribute> attrs, @NotNull String attrName) {
+    Attribute attr = attrs.get(attrName);
+    return attr == null ? null : attr.value();
+  }
+
+  private static @Nullable String getRequiredString(@NotNull List<MarkupNode> markupNodes, @NotNull Map<String, Attribute> attrs,
+                                                    @NotNull String tagName, @NotNull TextRange range, @NotNull String attrName) {
+    Attribute attr = attrs.get(attrName);
+    if (attr == null) {
+      markupNodes.add(new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.missing.required.attribute", tagName, attrName)));
+      return null;
+    }
+    if (attr.value() == null) {
+      markupNodes.add(
+        new ErrorMarkup(attr.range(), JavaBundle.message("javadoc.snippet.error.missing.required.attribute", tagName, attrName)));
+    }
+    return attr.value();
+  }
+
   @Nullable
-  private static Pattern getPattern(@NotNull List<MarkupNode> markupNodes, @NotNull List<MarkupNode> attrs) {
-    Attribute attr =
-      (Attribute)ContainerUtil.find(attrs, n -> n instanceof Attribute a && a.key().equals("regex"));
+  private static Pattern getPattern(@NotNull List<MarkupNode> markupNodes, @NotNull Map<String, Attribute> attrs) {
+    Attribute attr = attrs.get("regex");
     if (attr == null) return null;
     String regex = attr.value();
     if (regex == null) {
@@ -510,10 +523,11 @@ public class SnippetMarkup {
   public interface SnippetVisitor {
     /**
      * Called for every plain text chunk
-     * @param plainText text chunk
+     *
+     * @param plainText   text chunk
      * @param activeNodes active markup nodes to apply to this chunk
      */
-    void visitPlainText(@NotNull PlainText plainText, @NotNull List<@NotNull LocationMarkupNode> activeNodes);
+    default void visitPlainText(@NotNull PlainText plainText, @NotNull List<@NotNull LocationMarkupNode> activeNodes) { }
 
     /**
      * Called for every markup error visited
@@ -531,20 +545,22 @@ public class SnippetMarkup {
   public void visitSnippet(@Nullable String region, SnippetVisitor visitor) {
     Stack<String> regions = new Stack<>();
     Map<String, List<LocationMarkupNode>> active = new LinkedHashMap<>();
-    for (int i = 0; i < myNodes.size(); i++) {
-      MarkupNode node = myNodes.get(i);
+    for (MarkupNode node : myNodes) {
       if (node instanceof StartRegion start) {
         regions.push(start.region());
-      } else if (node instanceof EndRegion end) {
+      }
+      else if (node instanceof EndRegion end) {
         if (end.region() == null) {
           if (!regions.isEmpty()) {
             active.remove(regions.pop());
           }
-        } else {
+        }
+        else {
           regions.remove(end.region());
           active.remove(end.region());
         }
-      } else if (node instanceof LocationMarkupNode loc) {
+      }
+      else if (node instanceof LocationMarkupNode loc) {
         String regionName = loc.region();
         if (regionName != null) {
           regions.push(regionName);
@@ -556,7 +572,8 @@ public class SnippetMarkup {
           visitor.visitPlainText(plainText, StreamEx.ofValues(active).toFlatList(Function.identity()));
         }
         active.values().forEach(
-          list -> list.replaceAll(n -> n instanceof Replace repl && repl.substring() == null && repl.regex() == null ? repl.withReplacement("") : n));
+          list -> list.replaceAll(
+            n -> n instanceof Replace repl && repl.substring() == null && repl.regex() == null ? repl.withReplacement("") : n));
         active.remove(null);
       }
       else if (node instanceof ErrorMarkup errorMarkup) {

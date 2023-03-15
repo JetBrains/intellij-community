@@ -88,22 +88,20 @@ public class SnippetMarkupTest {
         ErrorMarkup[range=(22,28), message=@start: missing 'region' attribute]
         PlainText[range=(29,45), content=  void main() {
         ]
-        ErrorMarkup[range=(108,128), message=Unsupported attribute: 'substring2']
+        ErrorMarkup[range=(108,128), message=@replace: unsupported attribute: 'substring2']
         ErrorMarkup[range=(81,128), message=@replace: missing 'replacement' attribute]
-        Replace[range=(81,128), substring=Hello, regex=null, region=null, replacement=]
         PlainText[range=(45,78), content=    System.out.println("Hello");\s
         ]
-        ErrorMarkup[range=(147,161), message=Unknown type 'underline'; only 'bold', 'italic', and 'highlighted' are supported]
+        ErrorMarkup[range=(147,161), message=@highlight: unknown type 'underline'; only 'bold', 'italic', and 'highlighted' are supported]
         Highlight[range=(136,161), substring=null, regex=null, region=null, type=HIGHLIGHTED]
         PlainText[range=(129,129), content=]
         ErrorMarkup[range=(198,213), message=@link: missing 'target' attribute]
-        ErrorMarkup[range=(204,213), message=Unknown type 'pfff'; only 'link' and 'linkplain' are supported]
-        Link[range=(198,213), substring=null, regex=null, region=null, target=, linkType=LINK]
+        ErrorMarkup[range=(204,213), message=@link: unknown type 'pfff'; only 'link' and 'linkplain' are supported]
         PlainText[range=(162,195), content=    System.out.println("Hello");\s
         ]
         PlainText[range=(214,218), content=  }
         ]
-        ErrorMarkup[range=(228,232), message=Unsupported attribute: 'test']
+        ErrorMarkup[range=(228,232), message=@end: unsupported attribute: 'test']
         EndRegion[range=(223,232), region=null]
         PlainText[range=(233,235), content=}
         ]
@@ -116,7 +114,6 @@ public class SnippetMarkupTest {
                   Hello // @replace @pff
                   """, """
       ErrorMarkup[range=(9,17), message=@replace: missing 'replacement' attribute]
-      Replace[range=(9,17), substring=null, regex=null, region=null, replacement=]
       ErrorMarkup[range=(18,22), message=Markup tag or attribute expected]
       PlainText[range=(0,6), content=Hello\s
       ]
