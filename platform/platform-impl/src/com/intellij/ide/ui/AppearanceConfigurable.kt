@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.service.fus.collectors.IdeZoomChanged
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -175,7 +176,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 logIdeZoomChanged(scale, false)
                 resetZoom?.visible(scale.percentValue != defaultScale.percentValue)
                 settings.ideScale = scale
-                settings.fireUISettingsChanged()
+                invokeLater {
+                  // Invoke later to avoid NPE in JComboBox.repaint()
+                  settings.fireUISettingsChanged()
+                }
               }
             }.gap(RightGap.SMALL)
 
