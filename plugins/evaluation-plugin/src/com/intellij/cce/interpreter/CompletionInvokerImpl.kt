@@ -192,23 +192,26 @@ class CompletionInvokerImpl(private val project: Project,
   }
 
   override fun emulateCompletionGolfSession(expectedLine: String, completableRanges: List<TextRange>, offset: Int): Session {
-    val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
-    val isBenchmark = completionGolfSettings?.isBenchmark ?: false
+    val settings = completionGolfSettings ?: throw IllegalStateException("No completion golf settings in completion golf mode")
     val session = Session(offset, expectedLine, completableRanges.sumOf { it.end - it.start }, null, TokenProperties.UNKNOWN)
-    if (isBenchmark) {
-      session.benchmark(expectedLine, completableRanges, offset, emulator)
+    if (settings.isBenchmark) {
+      session.benchmark(expectedLine, completableRanges, offset, settings)
     }
     else {
-      session.emulateCG(expectedLine, completableRanges, offset, emulator)
+      session.emulateCG(expectedLine, completableRanges, offset, settings)
     }
     return session
   }
 
-  private fun Session.benchmark(expectedLine: String, completableRanges: List<TextRange>, offset: Int, emulator: CompletionGolfEmulation) {
+  private fun Session.benchmark(expectedLine: String,
+                                completableRanges: List<TextRange>,
+                                offset: Int,
+                                settings: CompletionGolfEmulation.Settings) {
+    val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
     for (range in completableRanges) {
       val prefixLength = benchmarkRandom.nextInt(range.end - range.start)
       moveCaret(range.start + prefixLength)
-      val lookup = getSuggestions(expectedLine, completionGolfSettings?.suggestionsProvider)
+      val lookup = getSuggestions(expectedLine, settings)
       emulator.pickBestSuggestion(expectedLine.substring(0, range.start - offset + prefixLength), lookup, this).also {
         LookupManager.hideActiveLookup(project)
         addLookup(it)
@@ -216,8 +219,8 @@ class CompletionInvokerImpl(private val project: Project,
     }
   }
 
-  private fun Session.emulateCG(expectedLine: String, completableRanges: List<TextRange>, offset: Int, emulator: CompletionGolfEmulation) {
-    val invokeOnEachChar = completionGolfSettings?.invokeOnEachChar ?: false
+  private fun Session.emulateCG(expectedLine: String, completableRanges: List<TextRange>, offset: Int, settings: CompletionGolfEmulation.Settings) {
+    val emulator = CompletionGolfEmulation.createFromSettings(completionGolfSettings, expectedLine)
     var currentString = ""
     while (currentString != expectedLine) {
       val nextChar = expectedLine[currentString.length].toString()
@@ -227,14 +230,14 @@ class CompletionInvokerImpl(private val project: Project,
       }
 
       moveCaret(offset + currentString.length)
-      val lookup = getSuggestions(expectedLine, completionGolfSettings?.suggestionsProvider)
+      val lookup = getSuggestions(expectedLine, settings)
 
       emulator.pickBestSuggestion(currentString, lookup, this).also {
-        if (invokeOnEachChar) {
+        if (settings.invokeOnEachChar) {
           LookupManager.hideActiveLookup(project)
         }
         currentString += it.selectedWithoutPrefix() ?: nextChar
-        if (currentString.isNotEmpty() && !invokeOnEachChar) {
+        if (currentString.isNotEmpty() && !settings.invokeOnEachChar) {
           if (it.suggestions.isEmpty() || currentString.last().let { ch -> !(ch == '_' || ch.isLetter() || ch.isDigit()) }) {
             LookupManager.hideActiveLookup(project)
           }
@@ -244,14 +247,14 @@ class CompletionInvokerImpl(private val project: Project,
     }
   }
 
-  private fun getSuggestions(expectedLine: String, suggestionsProvider: String?): com.intellij.cce.core.Lookup {
-    if (suggestionsProvider == null) {
+  private fun getSuggestions(expectedLine: String, settings: CompletionGolfEmulation.Settings): com.intellij.cce.core.Lookup {
+    if (settings.isDefaultProvider()) {
       return callCompletion(expectedLine, null)
     }
     val lang = com.intellij.lang.Language.findLanguageByID(language.ideaLanguageId)
                ?: throw IllegalStateException("Can't find language \"${language.ideaLanguageId}\"")
-    val provider = SuggestionsProvider.find(project, suggestionsProvider)
-                   ?: throw IllegalStateException("Can't find suggestions provider \"$suggestionsProvider\"")
+    val provider = SuggestionsProvider.find(project, settings.suggestionsProvider)
+                   ?: throw IllegalStateException("Can't find suggestions provider \"${settings.suggestionsProvider}\"")
     return provider.getSuggestions(expectedLine, editor!!, lang)
   }
 

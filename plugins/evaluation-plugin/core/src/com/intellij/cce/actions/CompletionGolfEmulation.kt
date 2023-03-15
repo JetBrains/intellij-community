@@ -90,7 +90,7 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
    * @param topN Take only N top suggestions, applying after filtering by source
    * @param isBenchmark Call completion once for each token.
    * @param randomSeed Random seed for evaluation. Currently used to select token prefix in benchmark mode.
-   * @param suggestionsProvider Name of provider of suggestions if it's not an IDE completion
+   * @param suggestionsProvider Name of provider of suggestions (use DEFAULT for IDE completion)
    */
   data class Settings(
     val checkLine: Boolean = true,
@@ -102,13 +102,17 @@ class CompletionGolfEmulation(private val settings: Settings = Settings(), priva
 
     val isBenchmark: Boolean = false,
     val randomSeed: Int = 0,
-    val suggestionsProvider: String? = null
-  )
+    val suggestionsProvider: String = DEFAULT_PROVIDER
+  ) {
+    fun isDefaultProvider(): Boolean = suggestionsProvider == DEFAULT_PROVIDER
+  }
 
   companion object {
     fun createFromSettings(settings: Settings?, expectedLine: String): CompletionGolfEmulation {
       return CompletionGolfEmulation(settings ?: Settings(), expectedLine)
     }
+
+    private const val DEFAULT_PROVIDER: String = "DEFAULT"
   }
 }
 
