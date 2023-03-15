@@ -17,14 +17,14 @@ public class Test {
 
     public enum EEnum {
         ONE(1), TWO(2), THREE(3);
-        private int value;
-
-        public int getValue() {
-            return value;
-        }
+        private final int value;
 
         EEnum(int value) {
             this.value = value;
+        }
+
+        public int getValue() {
+            return value;
         }
     }
 }

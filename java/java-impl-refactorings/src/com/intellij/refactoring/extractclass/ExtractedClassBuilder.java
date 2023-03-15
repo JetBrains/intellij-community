@@ -140,11 +140,12 @@ class ExtractedClassBuilder {
     outputFieldsAndInitializers(out, normalizeDeclaration);
     if (hasEnumConstants()) {
       final String fieldName = getValueFieldName();
-      out.append("\n").append("private ").append(myEnumParameterType.getCanonicalText()).append(" ").append(fieldName).append(";\n");
+      out.append("private final ").append(myEnumParameterType.getCanonicalText()).append(" ").append(fieldName).append(";\n");
+      outputConstructor(out);
       out.append("public ").append(myEnumParameterType.getCanonicalText()).append(" ")
         .append(getterName()).append("(){\nreturn ").append(fieldName).append(";\n}\n");
     }
-    if (hasEnumConstants() || needConstructor() || requiresBackPointer) {
+    else if (needConstructor() || requiresBackPointer) {
       outputConstructor(out);
     }
     outputMethods(out);
