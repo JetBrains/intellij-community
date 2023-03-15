@@ -10,6 +10,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -28,13 +29,13 @@ object EarlyAccessRegistryManager {
     PathManager.getConfigDir().resolve("early-access-registry.txt")
   }
 
-  private val lazyMap = lazy {
+  private val lazyMap = SynchronizedClearableLazy {
     val result = ConcurrentHashMap<String, String>()
     val lines = try {
       Files.lines(configFile)
     }
     catch (ignore: NoSuchFileException) {
-      return@lazy result
+      return@SynchronizedClearableLazy result
     }
 
     lines.use { lineStream ->
@@ -117,6 +118,11 @@ object EarlyAccessRegistryManager {
     catch (e: Throwable) {
       LOG.error("cannot save early access registry", e)
     }
+  }
+
+  fun invalidate() {
+    check(!LoadingState.COMPONENTS_REGISTERED.isOccurred)
+    lazyMap.drop()
   }
 
   @Suppress("unused") // registered in an `*.xml` file
