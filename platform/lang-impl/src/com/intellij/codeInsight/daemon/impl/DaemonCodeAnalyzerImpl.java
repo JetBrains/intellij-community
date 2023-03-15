@@ -916,9 +916,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
           project.isDefault() ||
           !project.isInitialized() ||
           project.isDisposed() ||
-          PowerSaveMode.isEnabled() ||
           LightEdit.owns(project) ||
           (dca = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project)).myDisposed) {
+        return;
+      }
+      if (PowerSaveMode.isEnabled()) {
+        // to show correct "power save" traffic light icon
+        DaemonListeners.getInstance(project).repaintTrafficLightIconForAllEditors();
         return;
       }
 

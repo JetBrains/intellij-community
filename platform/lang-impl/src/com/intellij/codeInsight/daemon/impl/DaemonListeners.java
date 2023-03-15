@@ -40,6 +40,7 @@ import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -237,13 +238,7 @@ public final class DaemonListeners implements Disposable {
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         stopDaemonAndRestartAllFiles("Project roots changed");
         // re-initialize TrafficLightRenderer in each editor since root change event could change highlightability
-        for (Editor editor : myActiveEditors) {
-          EditorMarkupModel editorMarkupModel = (EditorMarkupModel)editor.getMarkupModel();
-          ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
-          if (renderer instanceof TrafficLightRenderer tlr) {
-            tlr.invalidate();
-          }
-        }
+        reInitTrafficLightRendererForAllEditors();
       }
     });
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (_1, _2, _3, _4) -> stopDaemonAndRestartAllFiles("Additional libraries changed"));
@@ -260,7 +255,14 @@ public final class DaemonListeners implements Disposable {
       }
     });
 
-    connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemonAndRestartAllFiles("Power save mode changed to " + PowerSaveMode.isEnabled()));
+    connection.subscribe(PowerSaveMode.TOPIC, () -> {
+      stopDaemonAndRestartAllFiles("Power save mode changed to " + PowerSaveMode.isEnabled());
+      if (PowerSaveMode.isEnabled()) {
+        clearAllHighlightersInAllEditors();
+        reInitTrafficLightRendererForAllEditors();
+        repaintTrafficLightIconForAllEditors();
+      }
+    });
     connection.subscribe(EditorColorsManager.TOPIC, __ -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
     connection.subscribe(CommandListener.TOPIC, new MyCommandListener());
     connection.subscribe(ProfileChangeAdapter.TOPIC, new MyProfileChangeListener());
@@ -409,6 +411,35 @@ public final class DaemonListeners implements Disposable {
         }
       }));
     HeavyProcessLatch.INSTANCE.addListener(this, __ -> stopDaemon(true, "re-scheduled to execute after heavy processing finished"));
+  }
+
+  void repaintTrafficLightIconForAllEditors() {
+    for (Editor editor : myActiveEditors) {
+      MarkupModel markup = editor.getMarkupModel();
+      if (markup instanceof EditorMarkupModelImpl) {
+        ((EditorMarkupModelImpl)markup).repaintTrafficLightIcon();
+      }
+    }
+  }
+
+  private void reInitTrafficLightRendererForAllEditors() {
+    for (Editor editor : myActiveEditors) {
+      EditorMarkupModel editorMarkupModel = (EditorMarkupModel)editor.getMarkupModel();
+      ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
+      if (renderer instanceof TrafficLightRenderer tlr) {
+        tlr.invalidate();
+      }
+    }
+  }
+
+  private void clearAllHighlightersInAllEditors() {
+    for (Editor editor : myActiveEditors) {
+      editor.getMarkupModel().removeAllHighlighters();
+      MarkupModel documentMarkupModel = DocumentMarkupModel.forDocument(editor.getDocument(), myProject, false);
+      if (documentMarkupModel != null) {
+        documentMarkupModel.removeAllHighlighters();
+      }
+    }
   }
 
   private Project guessProject(@NotNull VirtualFile virtualFile) {
@@ -678,18 +709,11 @@ public final class DaemonListeners implements Disposable {
   }
 
   private static void removeHighlightersOnPluginUnload(@NotNull MarkupModel model, @NotNull PluginDescriptor pluginDescriptor) {
+    ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
     for (RangeHighlighter highlighter: model.getAllHighlighters()) {
-      if (!(highlighter instanceof RangeHighlighterEx && ((RangeHighlighterEx)highlighter).isPersistent())) {
-        model.removeHighlighter(highlighter);
-        continue;
-      }
-
-      ClassLoader pluginClassLoader = pluginDescriptor.getPluginClassLoader();
-      if (!(pluginClassLoader instanceof PluginAwareClassLoader)) {
-        continue;
-      }
-
-      if (isHighlighterFromPlugin(highlighter, pluginClassLoader)) {
+      if (!(highlighter instanceof RangeHighlighterEx)
+          || !((RangeHighlighterEx)highlighter).isPersistent()
+          || pluginClassLoader instanceof PluginAwareClassLoader && isHighlighterFromPlugin(highlighter, pluginClassLoader)) {
         model.removeHighlighter(highlighter);
       }
     }
