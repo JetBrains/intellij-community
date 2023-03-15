@@ -272,14 +272,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
 
     myTaskQueue.addTask(task);
-    State state = myState.get();
-    if (state == State.SMART ||
-        state == State.WAITING_FOR_FINISH) {
-      if (tryEnterDumbMode(modality, trace)) {
-        // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
-        // drain the queue synchronously under modal progress
-        myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
-      }
+    if (tryEnterDumbMode(modality, trace)) {
+      // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
+      // drain the queue synchronously under modal progress
+      myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
     }
   }
 
