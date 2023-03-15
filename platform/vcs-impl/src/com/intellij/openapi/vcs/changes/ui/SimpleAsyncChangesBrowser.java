@@ -35,6 +35,12 @@ public class SimpleAsyncChangesBrowser extends AsyncChangesBrowserBase {
     myViewer.rebuildTree();
   }
 
+  public void setChangesToDisplay(@NotNull Collection<? extends Change> changes,
+                                  @NotNull ChangesTree.TreeStateStrategy<?> treeStateStrategy) {
+    myChanges = new ArrayList<>(changes);
+    myViewer.rebuildTree(treeStateStrategy);
+  }
+
   public void setChangeNodeDecorator(@Nullable ChangeNodeDecorator value) {
     myChangeNodeDecorator = value;
     myViewer.rebuildTree();
