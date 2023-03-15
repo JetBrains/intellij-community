@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history
 
 import com.intellij.openapi.project.Project
@@ -31,14 +31,14 @@ internal class CompressedRecordBuilder(private val root: VirtualFile,
   private var renames = Int2IntOpenHashMap()
 
   override fun addPath(type: Change.Type, firstPath: String, secondPath: String?) {
-    if (secondPath != null) {
+    if (!secondPath.isNullOrBlank() && firstPath.isNotBlank()) {
       val beforeId = pathsEncoder.encode(root, firstPath, false)
       val afterId = pathsEncoder.encode(root, secondPath, false)
       addPath(firstPath, beforeId, Change.Type.DELETED)
       addPath(secondPath, afterId, Change.Type.NEW)
       renames.put(beforeId, afterId)
     }
-    else {
+    else if (firstPath.isNotBlank()) {
       val pathId = pathsEncoder.encode(root, firstPath, false)
       addPath(firstPath, pathId, type)
     }
@@ -51,14 +51,16 @@ internal class CompressedRecordBuilder(private val root: VirtualFile,
 
   private fun addParents(path: String) {
     var parentPath = getParentPath(path)
+    if (parentPath.isEmpty()) return
+
     var parentPathId = pathsEncoder.encode(root, parentPath, true)
 
     while (!parents.contains(parentPathId)) {
-      if (parentPath.isEmpty()) break
-
       parents.add(parentPathId)
 
       parentPath = getParentPath(parentPath)
+      if (parentPath.isEmpty()) break
+
       parentPathId = pathsEncoder.encode(root, parentPath, true)
     }
   }
