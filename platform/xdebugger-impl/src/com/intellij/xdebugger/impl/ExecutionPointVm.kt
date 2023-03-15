@@ -8,10 +8,7 @@ import com.intellij.util.asSafely
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 
 
 interface ExecutionPointVm {
@@ -27,6 +24,7 @@ interface ExecutionPositionVm {
   val isTopFrame: Boolean
   val isActiveSourceKindState: StateFlow<Boolean>
   val gutterVm: ExecutionPositionGutterVm
+  val updatesFlow: Flow<XSourcePositionEx.NavigationMode>
 }
 
 class ExecutionPositionGutterVm(val gutterIconRendererState: StateFlow<GutterIconRenderer?>)
@@ -68,6 +66,9 @@ internal class ExecutionPositionVmImpl(
 
   private val highlighterProvider = sourcePosition.asSafely<ExecutionPointHighlighter.HighlighterProvider>()
   override val exactRange: TextRange? get() = highlighterProvider?.highlightRange
+
+  override val updatesFlow: Flow<XSourcePositionEx.NavigationMode>
+    get() = sourcePosition.asSafely<XSourcePositionEx>()?.positionUpdateFlow ?: emptyFlow()
 }
 
 
