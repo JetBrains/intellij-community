@@ -103,7 +103,7 @@ internal class OpenFileHttpService : RestService() {
     if (requestedFile == null) {
       return parameterMissedErrorMessage("file")
     }
-    if (PathUtilRt.startsWithSeparatorSeparator(requestedFile)) {
+    if (PathUtilRt.startsWithSeparatorSeparator(FileUtil.toSystemIndependentName(requestedFile))) {
       return "UNC paths are not supported"
     }
 
