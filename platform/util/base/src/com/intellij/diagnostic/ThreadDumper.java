@@ -2,6 +2,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,7 +120,8 @@ public final class ThreadDumper {
     return threads;
   }
 
-  private static void dumpThreadInfo(@NotNull ThreadInfo info, @NotNull Writer f) {
+  @Internal
+  public static void dumpThreadInfo(@NotNull ThreadInfo info, @NotNull Writer f) {
     dumpCallStack(info, f, info.getStackTrace());
   }
 
