@@ -187,20 +187,37 @@ public class SnippetMarkup {
   }
 
   /**
+   * An interface that specifies to which part of text content the {@link LocationMarkupNode} is applied
+   */
+  public sealed interface Selector {
+  }
+
+  /**
+   * Substring-selector; applicable to a specific substring
+   * @param substring substring to apply to
+   */
+  public record Substring(@NotNull String substring) implements Selector {}
+
+  /**
+   * Regex-selector; applicable to a specific regex
+   * @param pattern pattern to apply to
+   */
+  public record Regex(@NotNull Pattern pattern) implements Selector {}
+
+  /**
+   * Selector which is applicable to the whole line
+   */
+  public record WholeLine() implements Selector {}
+
+  /**
    * A markup tag applicable to a particular part of original text
    */
   public sealed interface LocationMarkupNode extends MarkupNode {
     /**
-     * @return substring text to which this node is applicable
+     * @return selector to which this node is applicable
      */
     @Contract(pure = true)
-    @Nullable String substring();
-
-    /**
-     * @return regular expression, so this node is applicable to the matching substrings
-     */
-    @Contract(pure = true)
-    @Nullable Pattern regex();
+    @NotNull Selector selector();
 
     /**
      * @return if present, defines a region name to which this tag is applicable. If null, then the tag is applicable to the next 
@@ -218,7 +235,7 @@ public class SnippetMarkup {
   public record PlainText(@NotNull TextRange range, @NotNull String content) implements MarkupNode {
   }
 
-  private record Attribute(@NotNull TextRange range, @NotNull String key, @Nullable String value) implements MarkupNode {
+  private record Attribute(@NotNull TextRange range, @NotNull String key, @NotNull String value) implements MarkupNode {
   }
 
   /**
@@ -249,7 +266,7 @@ public class SnippetMarkup {
    * 
    * @param type highlighting type
    */
-  public record Highlight(@NotNull TextRange range, @Nullable String substring, @Nullable Pattern regex, @Nullable String region,
+  public record Highlight(@NotNull TextRange range, @NotNull Selector selector, @Nullable String region,
                    @NotNull HighlightType type) implements LocationMarkupNode {
   }
 
@@ -258,10 +275,10 @@ public class SnippetMarkup {
    *
    * @param replacement replacement text
    */
-  public record Replace(@NotNull TextRange range, @Nullable String substring, @Nullable Pattern regex, @Nullable String region,
+  public record Replace(@NotNull TextRange range, @NotNull Selector selector, @Nullable String region,
                  @NotNull String replacement) implements LocationMarkupNode {
     public Replace withReplacement(@NotNull String replacement) {
-      return replacement.equals(this.replacement) ? this : new Replace(range, substring, regex, region, replacement);
+      return replacement.equals(this.replacement) ? this : new Replace(range, selector, region, replacement);
     }
   }
 
@@ -271,7 +288,7 @@ public class SnippetMarkup {
    * @param target link target
    * @param linkType link type
    */
-  public record Link(@NotNull TextRange range, @Nullable String substring, @Nullable Pattern regex, @Nullable String region, @NotNull String target,
+  public record Link(@NotNull TextRange range, @NotNull Selector selector, @Nullable String region, @NotNull String target,
               @NotNull LinkType linkType) implements LocationMarkupNode {
   }
 
@@ -438,28 +455,29 @@ public class SnippetMarkup {
           markupNodes.add(new StartRegion(range, region));
         }
       }
-      case "end" -> markupNodes.add(new EndRegion(range, getOptionalString(attrs, "region")));
+      case "end" -> markupNodes.add(new EndRegion(range, getRegion(attrs)));
       case "highlight" -> {
         Attribute typeAttr = attrs.get("type");
         HighlightType type = getEnumValue(markupNodes, "highlight", typeAttr, HighlightType.class, HighlightType.HIGHLIGHTED);
-        markupNodes.add(new Highlight(range, getOptionalString(attrs, "substring"), getPattern(markupNodes, attrs),
-                                      getOptionalString(attrs, "region"), type));
+        Selector selector = getSelector(markupNodes, attrs, tagName);
+        if (selector != null) {
+          markupNodes.add(new Highlight(range, selector, getRegion(attrs), type));
+        }
       }
       case "replace" -> {
         String replacement = getRequiredString(markupNodes, attrs, tagName, range, "replacement");
-        if (replacement != null) {
-          markupNodes.add(
-            new Replace(range, getOptionalString(attrs, "substring"), getPattern(markupNodes, attrs),
-                        getOptionalString(attrs, "region"), replacement));
+        Selector selector = getSelector(markupNodes, attrs, tagName);
+        if (replacement != null && selector != null) {
+          markupNodes.add(new Replace(range, selector, getRegion(attrs), replacement));
         }
       }
       case "link" -> {
         String target = getRequiredString(markupNodes, attrs, tagName, range, "target");
         Attribute typeAttr = attrs.get("type");
         LinkType type = getEnumValue(markupNodes, "link", typeAttr, LinkType.class, LinkType.LINK);
-        if (target != null) {
-          markupNodes.add(new Link(range, getOptionalString(attrs, "substring"), getPattern(markupNodes, attrs),
-                                   getOptionalString(attrs, "region"), target, type));
+        Selector selector = getSelector(markupNodes, attrs, tagName);
+        if (target != null && selector != null) {
+          markupNodes.add(new Link(range, selector, getRegion(attrs), target, type));
         }
       }
       default -> throw new AssertionError("Unexpected tag: " + tagName);
@@ -482,8 +500,8 @@ public class SnippetMarkup {
     return value;
   }
 
-  private static @Nullable String getOptionalString(@NotNull Map<String, Attribute> attrs, @NotNull String attrName) {
-    Attribute attr = attrs.get(attrName);
+  private static @Nullable String getRegion(@NotNull Map<String, Attribute> attrs) {
+    Attribute attr = attrs.get("region");
     return attr == null ? null : attr.value();
   }
 
@@ -494,30 +512,27 @@ public class SnippetMarkup {
       markupNodes.add(new ErrorMarkup(range, JavaBundle.message("javadoc.snippet.error.missing.required.attribute", tagName, attrName)));
       return null;
     }
-    if (attr.value() == null) {
-      markupNodes.add(
-        new ErrorMarkup(attr.range(), JavaBundle.message("javadoc.snippet.error.missing.required.attribute", tagName, attrName)));
-    }
     return attr.value();
   }
-
-  @Nullable
-  private static Pattern getPattern(@NotNull List<MarkupNode> markupNodes, @NotNull Map<String, Attribute> attrs) {
-    Attribute attr = attrs.get("regex");
-    if (attr == null) return null;
-    String regex = attr.value();
-    if (regex == null) {
-      markupNodes.add(new ErrorMarkup(attr.range(), JavaBundle.message("javadoc.snippet.error.no.regular.expression")));
+  
+  private static @Nullable Selector getSelector(@NotNull List<MarkupNode> markupNodes, @NotNull Map<String, Attribute> attrs,
+                                                @NotNull String tagName) {
+    Attribute substring = attrs.get("substring");
+    Attribute regex = attrs.get("regex");
+    if (substring == null && regex == null) return new WholeLine();
+    if (substring != null && regex != null) {
+      markupNodes.add(new ErrorMarkup(regex.range(), JavaBundle.message("javadoc.snippet.error.both.substring.and.regex", tagName)));
       return null;
     }
+    if (regex == null) return new Substring(substring.value());
     try {
-      return Pattern.compile(regex);
+      return new Regex(Pattern.compile(regex.value()));
     }
     catch (PatternSyntaxException e) {
-      markupNodes.add(new ErrorMarkup(attr.range(),
-                                      JavaBundle.message("javadoc.snippet.error.malformed.regular.expression", e.getMessage())));
+      markupNodes.add(new ErrorMarkup(regex.range(),
+                                      JavaBundle.message("javadoc.snippet.error.malformed.regular.expression", tagName, e.getMessage().replace("\r\n", "\n"))));
+      return null;
     }
-    return null;
   }
 
   public interface SnippetVisitor {
@@ -573,7 +588,7 @@ public class SnippetMarkup {
         }
         active.values().forEach(
           list -> list.replaceAll(
-            n -> n instanceof Replace repl && repl.substring() == null && repl.regex() == null ? repl.withReplacement("") : n));
+            n -> n instanceof Replace repl && repl.selector() instanceof WholeLine ? repl.withReplacement("") : n));
         active.remove(null);
       }
       else if (node instanceof ErrorMarkup errorMarkup) {

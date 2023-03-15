@@ -1886,10 +1886,13 @@ public class JavaDocInfoGenerator {
         content = content.substring(curIndent);
         for (LocationMarkupNode node : activeNodes) {
           UnaryOperator<String> replacement;
+          String tagName;
           if (node instanceof Replace replace) {
+            tagName = "replace";
             replacement = orig -> replace.replacement();
           }
           else if (node instanceof Highlight highlight) {
+            tagName = "highlight";
             replacement = switch (highlight.type()) {
               case BOLD -> orig -> "<b>" + orig + "</b>";
               case ITALIC -> orig -> "<i>" + orig + "</i>";
@@ -1901,6 +1904,7 @@ public class JavaDocInfoGenerator {
             };
           }
           else if (node instanceof Link link) {
+            tagName = "link";
             replacement = orig -> {
               StringBuilder buffer = new StringBuilder();
               DocumentationManagerUtil.createHyperlink(buffer, link.target(), orig, link.linkType() == LinkType.LINKPLAIN);
@@ -1910,16 +1914,19 @@ public class JavaDocInfoGenerator {
           else {
             throw new AssertionError(node.toString());
           }
-          if (node.regex() != null) {
+          Selector selector = node.selector();
+          if (selector instanceof Regex regex) {
+            String repl = replacement.apply("$0");
             try {
-              content = node.regex().matcher(content).replaceAll(replacement.apply("$0"));
+              content = regex.pattern().matcher(content).replaceAll(repl);
             }
             catch (IllegalArgumentException | IndexOutOfBoundsException e) {
-              buffer.append(getSpanForUnresolvedItem()).append("[").append(e.getMessage()).append("]</span>\n");
+              buffer.append(getSpanForUnresolvedItem()).append("[").append(
+                JavaBundle.message("javadoc.snippet.error.malformed.replacement", tagName, repl, e.getMessage())).append("]</span>\n");
             }
           }
-          else if (node.substring() != null) {
-            content = content.replace(node.substring(), replacement.apply(node.substring()));
+          else if (selector instanceof Substring substring) {
+            content = content.replace(substring.substring(), replacement.apply(substring.substring()));
           }
           else {
             content = replacement.apply(content);
