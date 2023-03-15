@@ -10,10 +10,8 @@ import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
@@ -96,7 +94,6 @@ object CodeReviewDetailsCommitsComponentFactory {
     commitPresenter: (T?) -> CommitPresenter
   ): ActionListener {
     return ActionListener { event ->
-      val popupState: PopupState<JBPopup> = PopupState.forPopup()
       val parentComponent = event.source as? JComponent ?: return@ActionListener
       val point = RelativePoint.getSouthWestOf(parentComponent)
       scope.launch {
@@ -107,7 +104,6 @@ object CodeReviewDetailsCommitsComponentFactory {
         }
         val chosenCommit = ChooserPopupUtil.showChooserPopup(
           point,
-          popupState,
           popupItems,
           filteringMapper = { commit: T? ->
             when (val presentation = commitPresenter(commit)) {

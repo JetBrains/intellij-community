@@ -33,7 +33,6 @@ internal class GitLabMergeRequestRequestReviewAction(
   }
 
   override fun actionPerformed(event: ActionEvent) {
-    val popupState: PopupState<JBPopup> = PopupState.forPopup()
     val parentComponent = event.source as? JComponent ?: return
     val point = RelativePoint.getSouthWestOf(parentComponent)
     scope.launch {
@@ -41,7 +40,6 @@ internal class GitLabMergeRequestRequestReviewAction(
 
       val selectedUser = ChooserPopupUtil.showChooserPopup(
         point,
-        popupState,
         users,
         filteringMapper = { user -> user.username },
         renderer = SimpleSelectablePopupItemRenderer.create { reviewer ->

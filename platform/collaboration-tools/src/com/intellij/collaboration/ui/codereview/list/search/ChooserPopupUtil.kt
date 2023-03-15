@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.*
@@ -12,7 +13,6 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.AbstractPopup
-import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
@@ -29,14 +29,12 @@ import javax.swing.ListSelectionModel
 object ChooserPopupUtil {
 
   suspend fun <T> showChooserPopup(point: RelativePoint,
-                                   popupState: PopupState<JBPopup>,
                                    items: List<T>,
                                    presenter: (T) -> PopupItemPresentation,
                                    popupConfig: PopupConfig = PopupConfig.DEFAULT): T? =
-    showChooserPopup(point, popupState, items, { presenter(it as T).shortText }, createSimpleItemRenderer(presenter), popupConfig)
+    showChooserPopup(point, items, { presenter(it).shortText }, createSimpleItemRenderer(presenter), popupConfig)
 
   suspend fun <T> showChooserPopup(point: RelativePoint,
-                                   popupState: PopupState<JBPopup>,
                                    items: List<T>,
                                    filteringMapper: (T) -> String,
                                    renderer: ListCellRenderer<T>,
@@ -54,12 +52,11 @@ object ChooserPopupUtil {
 
     configureSearchField(popup, popupConfig)
 
-    popupState.prepareToShow(popup)
+    PopupUtil.setPopupToggleComponent(popup, point.component)
     return popup.showAndAwaitSubmission(list, point)
   }
 
   suspend fun <T> showAsyncChooserPopup(point: RelativePoint,
-                                        popupState: PopupState<JBPopup>,
                                         itemsLoader: suspend () -> List<T>,
                                         presenter: (T) -> PopupItemPresentation,
                                         popupConfig: PopupConfig = PopupConfig.DEFAULT): T? {
@@ -78,7 +75,7 @@ object ChooserPopupUtil {
 
     configureSearchField(popup, popupConfig)
 
-    popupState.prepareToShow(popup)
+    PopupUtil.setPopupToggleComponent(popup, point.component)
     return popup.showAndAwaitSubmission(list, point)
   }
 

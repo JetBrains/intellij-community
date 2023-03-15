@@ -5,9 +5,7 @@ import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.ui.popup.PopupState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.jetbrains.annotations.Nls
@@ -83,9 +81,9 @@ internal class GitLabFiltersPanelFactory(
     viewScope,
     filterName = GitLabBundle.message("merge.request.list.filter.category.label"),
     valuePresenter = { labelFilterValue -> labelFilterValue.title },
-    chooseValue = { point, popupState ->
+    chooseValue = { point ->
       ChooserPopupUtil.showAsyncChooserPopup(
-        point, popupState,
+        point,
         itemsLoader = { vm.getLabels().map { label -> LabelFilterValue(label.title) } },
         presenter = { labelFilterValue -> ChooserPopupUtil.PopupItemPresentation.Simple(shortText = labelFilterValue.title) }
       )
@@ -101,8 +99,8 @@ internal class GitLabFiltersPanelFactory(
     viewScope,
     filterName,
     valuePresenter = { participant -> participant.fullname },
-    chooseValue = { point, popupState ->
-      val selectedAuthor = showParticipantChooser(point, popupState, participantsLoader = {
+    chooseValue = { point ->
+      val selectedAuthor = showParticipantChooser(point, participantsLoader = {
         vm.getMergeRequestMembers().map { member -> member.user }
       })
       selectedAuthor?.let { user -> participantCreator(user) }
@@ -110,11 +108,9 @@ internal class GitLabFiltersPanelFactory(
 
   private suspend fun showParticipantChooser(
     point: RelativePoint,
-    popupState: PopupState<JBPopup>,
     participantsLoader: suspend () -> List<GitLabUserDTO>
   ): GitLabUserDTO? = ChooserPopupUtil.showAsyncChooserPopup(
-    point, popupState,
-    itemsLoader = { participantsLoader() },
+    point, itemsLoader = { participantsLoader() },
     presenter = { user ->
       ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, Avatar.Sizes.BASE))
     })
