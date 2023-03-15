@@ -396,10 +396,10 @@ public final class OverrideImplementUtil extends OverrideImplementExploreUtil {
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), originalMethod.getProject());
     if (factory == null) factory = JavaPsiFacade.getElementFactory(originalMethod.getProject());
     @NonNls String methodText;
-
+    Project project = result.getProject();
     try {
       methodText = "void foo () {\n" + template.getText(properties) + "\n}";
-      methodText = FileTemplateUtil.indent(methodText, result.getProject(), fileType);
+      methodText = FileTemplateUtil.indent(methodText, project, fileType);
     }
     catch (Exception e) {
       throw new IncorrectOperationException("Failed to parse file template", (Throwable)e);
