@@ -23,7 +23,6 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.WizardPopup;
-import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
@@ -248,7 +247,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     popup.setShowSubmenuOnHover(true);
     popup.setAlignByParentBounds(false);
     popup.setActiveRoot(getPopupContainer(this) == null);
-    PopupImplUtil.setPopupToggleButton(popup, this);
     popup.showUnderneathOf(event.getInputEvent().getComponent());
     return popup;
   }

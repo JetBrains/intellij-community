@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.ComboBoxPopup;
-import com.intellij.ui.popup.util.PopupImplUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -280,7 +279,6 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
 
   protected ComboBoxPopup<T> createPopup(@Nullable T selectedItem) {
     ComboBoxPopup<T> popup = new ComboBoxPopup<>(this, selectedItem, value -> myComboBox.setSelectedItem(value));
-    PopupImplUtil.setPopupToggleButton(popup, myComboBox);
     return popup;
   }
 

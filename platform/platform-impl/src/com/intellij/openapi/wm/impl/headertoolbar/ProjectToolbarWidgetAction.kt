@@ -25,7 +25,6 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
-import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -90,7 +89,6 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     }
 
     val res = JBPopupFactory.getInstance().createListPopup(it, step, renderer)
-    PopupImplUtil.setPopupToggleButton(res, widget)
     res.setRequestFocus(false)
     return res
   }

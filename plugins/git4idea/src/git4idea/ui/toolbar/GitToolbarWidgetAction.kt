@@ -18,7 +18,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
-import com.intellij.ui.popup.util.PopupImplUtil
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
@@ -57,9 +56,6 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
       JBPopupFactory.getInstance()
         .createActionGroupPopup(null, group, event.dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true, place)
     }
-    val widget = event.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? ToolbarComboWidget
-    PopupImplUtil.setPopupToggleButton(popup, widget)
-
     return popup
   }
 

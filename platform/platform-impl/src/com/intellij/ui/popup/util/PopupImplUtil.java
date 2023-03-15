@@ -73,6 +73,8 @@ public final class PopupImplUtil {
   }
 
   /**
+   * In most cases this method is not needed: {@link com.intellij.ui.popup.AbstractPopup} stores the source component automatically.
+   *
    * @param toggleButton treat this component as toggle button and block further mouse event processing
    *                     if user closed the popup by clicking on it
    */
