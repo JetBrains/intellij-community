@@ -1820,10 +1820,13 @@ public class JavaDocInfoGenerator {
     PsiSnippetAttribute regionAttribute = list.getAttribute(PsiSnippetAttribute.REGION_ATTRIBUTE);
     String region = regionAttribute == null || regionAttribute.getValue() == null ? null :
                     regionAttribute.getValue().getValue();
+    PsiSnippetAttribute idAttr = list.getAttribute(PsiSnippetAttribute.ID_ATTRIBUTE);
+    String id = idAttr == null || idAttr.getValue() == null ? null : idAttr.getValue().getValue();
+    String preTag = id == null ? "<pre>" : "<pre id=\"" + StringUtil.escapeXmlEntities(id) + "\">";
     if (body != null) {
       List<Pair<PsiElement, TextRange>> files = InjectedLanguageManager.getInstance(snippetTag.getProject()).getInjectedPsiFiles(snippetTag);
       PsiElement element = files != null ? files.get(0).first : null;
-      buffer.append("<pre>");
+      buffer.append(preTag);
       generateSnippetBody(buffer, element != null ? element : body, region);
       buffer.append("</pre>");
     } else {
@@ -1837,7 +1840,7 @@ public class JavaDocInfoGenerator {
           PsiReference ref = attrValue.getReference();
           PsiElement resolved = ref == null ? null : ref.resolve();
           if (resolved instanceof PsiFile file) {
-            buffer.append("<pre>");
+            buffer.append(preTag);
             generateSnippetBody(buffer, file, region);
             buffer.append("</pre>");
           }
