@@ -137,13 +137,13 @@ internal class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
 
     fillGridByLabels(panel, rootGrid, 3, 4) { grid, x, y ->
       if (x == 0 && y == 1) {
-        Constraints(grid, x, y, visualPaddings = Gaps(10, 10, 10, 10))
+        Constraints(grid, x, y, visualPaddings = UnscaledGaps(10, 10, 10, 10))
       }
       else if (x == 1 && y == 2) {
         Constraints(
           grid, x, y, horizontalAlign = HorizontalAlign.FILL,
           verticalAlign = VerticalAlign.FILL,
-          visualPaddings = Gaps(10, 10, 10, 10)
+          visualPaddings = UnscaledGaps(10, 10, 10, 10)
         )
       }
       else {
@@ -162,7 +162,7 @@ internal class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
         y,
         horizontalAlign = HorizontalAlign.FILL,
         verticalAlign = VerticalAlign.FILL,
-        gaps = if ((x + y) % 2 == 0) Gaps.EMPTY else Gaps(y * 20, x * 20, y * 30, x * 30)
+        gaps = if ((x + y) % 2 == 0) UnscaledGaps.EMPTY else UnscaledGaps(y * 20, x * 20, y * 30, x * 30)
       )
     }
     val grid = (panel.layout as GridLayout).rootGrid
@@ -363,10 +363,10 @@ internal class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
     var result = "x = ${constraints.x}, y = ${constraints.y}<br>" +
                  "width = ${constraints.width}, height = ${constraints.height}<br>" +
                  "hAlign = ${constraints.horizontalAlign}, vAlign = ${constraints.verticalAlign}<br>"
-    if (constraints.gaps != Gaps.EMPTY) {
+    if (constraints.gaps != UnscaledGaps.EMPTY) {
       result += "gaps = ${constraints.gaps}<br>"
     }
-    if (constraints.visualPaddings != Gaps.EMPTY) {
+    if (constraints.visualPaddings != UnscaledGaps.EMPTY) {
       result += "visualPaddings = ${constraints.visualPaddings}<br>"
     }
     return result

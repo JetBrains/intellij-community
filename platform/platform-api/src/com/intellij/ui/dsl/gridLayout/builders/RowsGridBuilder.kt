@@ -99,7 +99,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
     val constraints = Constraints(grid, x, y, width = width, horizontalAlign = horizontalAlign,
                                   verticalAlign = verticalAlign, baselineAlign = baselineAlign,
-                                  unscaledGaps = gaps, unscaledVisualPaddings = visualPaddings, widthGroup = widthGroup,
+                                  gaps = gaps, visualPaddings = visualPaddings, widthGroup = widthGroup,
                                   componentHelper = componentHelper)
     panel.add(component, constraints)
     return skip(width)
@@ -143,7 +143,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     val result = Constraints(grid, x, y,
                              width = width, horizontalAlign = horizontalAlign,
                              verticalAlign = verticalAlign, baselineAlign = baselineAlign,
-                             unscaledGaps = gaps, unscaledVisualPaddings = visualPaddings,
+                             gaps = gaps, visualPaddings = visualPaddings,
                              widthGroup = widthGroup,
                              componentHelper = componentHelper)
     skip(width)
@@ -184,7 +184,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
 
     val constraints = Constraints(grid, x, y, width = width, horizontalAlign = horizontalAlign,
       verticalAlign = verticalAlign, baselineAlign = baselineAlign,
-      unscaledGaps = gaps, unscaledVisualPaddings = visualPaddings)
+      gaps = gaps, visualPaddings = visualPaddings)
     skip(width)
     return layout.addLayoutSubGrid(constraints)
   }

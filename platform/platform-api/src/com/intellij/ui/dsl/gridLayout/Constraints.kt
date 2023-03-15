@@ -72,28 +72,19 @@ data class Constraints(
   /**
    * Gaps between grid cell bounds and components visual bounds (visual bounds is component bounds minus [visualPaddings])
    */
-  @Deprecated("Use unscaledGaps instead")
-  val gaps: Gaps = Gaps.EMPTY,
-
-  /**
-   * Gaps between grid cell bounds and components visual bounds (visual bounds is component bounds minus [visualPaddings])
-   */
-  val unscaledGaps: UnscaledGaps = UnscaledGaps.EMPTY,
-
-  @Deprecated("Use unscaledVisualPaddings instead")
-  var visualPaddings: Gaps = Gaps.EMPTY,
+  val gaps: UnscaledGaps = UnscaledGaps.EMPTY,
 
   /**
    * Gaps between component bounds and its visual bounds. Can be used when component has focus ring outside of
    * its usual size. In such case components size is increased on focus size (so focus ring is not clipped)
-   * and [unscaledVisualPaddings] should be set to maintain right alignments
+   * and [visualPaddings] should be set to maintain right alignments
    *
    * 1. Layout manager aligns components by their visual bounds
-   * 2. Cell size with gaps is calculated as component.bounds + [unscaledGaps] - [unscaledVisualPaddings]
-   * 3. Cells that contain [JComponent] with own [GridLayout] calculate and update [unscaledVisualPaddings] automatically.
+   * 2. Cell size with gaps is calculated as component.bounds + [gaps] - [visualPaddings]
+   * 3. Cells that contain [JComponent] with own [GridLayout] calculate and update [visualPaddings] automatically.
    * To disable this behaviour set [GridLayoutComponentProperty.SUB_GRID_AUTO_VISUAL_PADDINGS] to false
    */
-  var unscaledVisualPaddings: UnscaledGaps = UnscaledGaps.EMPTY,
+  var visualPaddings: UnscaledGaps = UnscaledGaps.EMPTY,
 
   /**
    * All components from the same width group will have the same width equals to maximum width from the group.
