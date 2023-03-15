@@ -537,6 +537,8 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
           myIndexStorage.paths.flush();
           mutator.close(performCommit);
         }
+        catch (ProcessCanceledException ignored) {
+        }
         catch (Exception e) {
           myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
         }
