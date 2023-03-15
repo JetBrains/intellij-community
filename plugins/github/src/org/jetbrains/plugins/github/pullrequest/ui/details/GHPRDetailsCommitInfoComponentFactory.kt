@@ -22,9 +22,6 @@ internal object GHPRDetailsCommitInfoComponentFactory {
     val title = HtmlEditorPane().apply {
       bindText(scope, commitsVm.selectedCommit.map { commit -> commit?.messageHeadlineHTML.orEmpty() })
     }
-    val description = HtmlEditorPane().apply {
-      bindText(scope, commitsVm.selectedCommit.map { commit -> commit?.messageBodyHTML.orEmpty() })
-    }
     val info = HtmlEditorPane().apply {
       bindText(scope, commitsVm.selectedCommit.map { commit ->
         commit ?: return@map ""
@@ -41,7 +38,6 @@ internal object GHPRDetailsCommitInfoComponentFactory {
       bindVisibility(scope, commitsVm.selectedCommit.map { commit -> commit != null })
 
       add(title)
-      add(description)
       add(info)
     }
   }
