@@ -31,12 +31,16 @@ value class SvgCacheClassifier(internal val key: Int) {
     this((scale + (if (isDark) 1_000 else 0) + (if (isStroke) 1_100 else 0)).toBits())
 }
 
+fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-v8.db")
+
+fun getSvgIconCacheInvalidMarkerFile(file: Path): Path = file.parent.resolve("${file.fileName}.invalidated")
+
 @get:ApiStatus.Internal
 val svgCache: SvgCacheManager? by lazy {
   try {
     if (java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true")) &&
         !System.getProperty("java.awt.headless", "false").toBoolean()) {
-      SvgCacheManager(Path.of(PathManager.getSystemPath(), "icon-v8.db"))
+      SvgCacheManager(getSvgIconCacheFile())
     }
     else {
       null
@@ -58,6 +62,12 @@ class SvgCacheManager(dbFile: Path) {
   private val insertPrecomputedStatementPool: SqlStatementPool<ObjectBinder>
 
   init {
+    val markerFile = getSvgIconCacheInvalidMarkerFile(dbFile)
+    if (Files.exists(markerFile)) {
+      Files.deleteIfExists(dbFile)
+      Files.deleteIfExists(markerFile)
+    }
+
     var isNew = Files.notExists(dbFile)
     connection = try {
       SqliteConnection(dbFile)
