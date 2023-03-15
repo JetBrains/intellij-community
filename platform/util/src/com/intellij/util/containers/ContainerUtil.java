@@ -850,6 +850,10 @@ public final class ContainerUtil {
     return true;
   }
 
+  /**
+   * Call {@code processor} on each element of {@code list} sequentially
+   * @return true if all {@link Processor#process(Object)} returned true; false otherwise
+   */
   public static <T> boolean process(@NotNull List<? extends T> list, @NotNull Processor<? super T> processor) {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, size = list.size(); i < size; i++) {
