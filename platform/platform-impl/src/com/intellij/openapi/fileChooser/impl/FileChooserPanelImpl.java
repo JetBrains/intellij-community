@@ -98,6 +98,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private @Nullable Path myCurrentDirectory;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private final List<FsItem> myCurrentContent = new ArrayList<>();
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private @Nullable WatchKey myWatchKey;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private final List<@Nullable Path> myHistory = new ArrayList<>();
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private int myHistoryIndex = -1;  // points to the last added or used element
 
   FileChooserPanelImpl(@NotNull FileChooserDescriptor descriptor,
                        @NotNull Runnable callback,
@@ -202,7 +204,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         super.setTextToFile(file);
         var path = typedPath();
         if (path != null) {
-          load(path, null, 0, false);
+          load(path, null, Set.of());
         }
       }
     };
@@ -214,10 +216,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         }
         var path = typedPath();
         if (path != null) {
-          load(path, null, 0, false);
+          load(path, null, Set.of());
         }
         else if (((String)myPath.getEditor().getItem()).isBlank()) {
-          load(null, null, 0, false);
+          load(null, null, Set.of());
         }
       }
     });
@@ -276,10 +278,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private void openItemAtIndex(int idx, InputEvent e) {
     FsItem item = myModel.get(idx);
     if (item.directory) {
-      load(item.path, null, 0, true);
+      load(item.path, null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR));
     }
     else if (myDescriptor.isChooseJarContents() && myRegistry.getFileTypeByFileName(item.name) == ArchiveFileType.INSTANCE) {
-      load(item.path, null, INTO_ARCHIVE, true);
+      load(item.path, null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR, OpenFlags.INTO_ARCHIVE));
     }
     else {
       myCallback.run();
@@ -316,14 +318,25 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       LOG.info("unexpected relative path: " + path);
       path = null;
     }
-    load(path, null, 0, true);
+    load(path, null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR));
   }
 
   @Override
   public void loadParent() {
     if (myCurrentDirectory != null) {
-      load(parent(myCurrentDirectory), null, UPPER_LEVEL, true);
+      load(parent(myCurrentDirectory), null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR, OpenFlags.UPPER_LEVEL));
     }
+  }
+
+  @Override
+  public boolean hasHistory(boolean backward) {
+    return !myHistory.isEmpty() && (backward ? myHistoryIndex > 0 : myHistoryIndex < myHistory.size() - 1);
+  }
+
+  @Override
+  public void loadHistory(boolean backward) {
+    var path = myHistory.get(backward ? --myHistoryIndex : ++myHistoryIndex);
+    load(path, null, EnumSet.of(OpenFlags.UPDATE_PATH_BAR, OpenFlags.KEEP_HISTORY));
   }
 
   @Override
@@ -335,7 +348,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       }
     }
     synchronized (myLock) {
-      load(myCurrentDirectory, focusOn, 0, true);
+      load(myCurrentDirectory, focusOn, EnumSet.of(OpenFlags.UPDATE_PATH_BAR, OpenFlags.KEEP_HISTORY));
     }
   }
 
@@ -408,11 +421,15 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     });
   }
 
-  private static final int UPPER_LEVEL = 1;
-  private static final int INTO_ARCHIVE = 2;
+  private enum OpenFlags {
+    UPPER_LEVEL, INTO_ARCHIVE, UPDATE_PATH_BAR, KEEP_HISTORY
+  }
 
-  private void load(@Nullable Path path, @Nullable Path focusOn, int direction, boolean updatePathBar) {
+  private void load(@Nullable Path path, @Nullable Path focusOn, Set<OpenFlags> flags) {
     synchronized (myLock) {
+      var updatePathBar = flags.contains(OpenFlags.UPDATE_PATH_BAR);
+      var updateHistory = !flags.contains(OpenFlags.KEEP_HISTORY);
+
       if (updatePathBar) {
         myPath.setItem(path != null ? new PathWrapper(path) : null);
       }
@@ -421,22 +438,22 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       myList.clearSelection();
       myList.setPaintBusy(true);
 
-      var childDir = direction == UPPER_LEVEL ? myCurrentDirectory : null;
+      var childDir = flags.contains(OpenFlags.UPPER_LEVEL) ? myCurrentDirectory : null;
       myCurrentDirectory = null;
       myCurrentContent.clear();
       cancelCurrentTask();
       var id = myCounter++;
       if (LOG.isTraceEnabled()) LOG.trace("starting: " + id + ", " + path);
       myCurrentTask = pair(id, execute(() -> {
-        var directory = directoryToLoad(path, direction == INTO_ARCHIVE);
+        var directory = directoryToLoad(path, flags.contains(OpenFlags.INTO_ARCHIVE));
         if (directory != null) {
           var pathToSelect = focusOn != null ? focusOn :
                              childDir != null && childDir.getParent() == null && !isLocalFs(childDir) ? parent(childDir) :
                              childDir;
-          loadDirectory(id, directory, pathToSelect, updatePathBar);
+          loadDirectory(id, directory, pathToSelect, updatePathBar, updateHistory);
         }
         else {
-          loadRoots(id, childDir, updatePathBar);
+          loadRoots(id, childDir, updatePathBar, updateHistory);
         }
       }));
     }
@@ -482,15 +499,13 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     return null;
   }
 
-  private void loadDirectory(int id, Path directory, @Nullable Path pathToSelect, boolean updatePathBar) {
+  private void loadDirectory(int id, Path directory, @Nullable Path pathToSelect, boolean updatePathBar, boolean updateHistory) {
     var cancelled = new AtomicBoolean(false);
 
     var vfsDirectory = new PreloadedDirectory(directory);
     update(id, cancelled, () -> {
       myCurrentDirectory = directory;
-      if (updatePathBar) {
-        myPath.setItem(new PathWrapper(directory));
-      }
+      updatePathBarAndHistory(directory, updatePathBar, updateHistory);
     });
 
     var selection = new AtomicReference<FsItem>();
@@ -566,14 +581,12 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     }
   }
 
-  private void loadRoots(int id, @Nullable Path pathToSelect, boolean updatePathBar) {
+  private void loadRoots(int id, @Nullable Path pathToSelect, boolean updatePathBar, boolean updateHistory) {
     var cancelled = new AtomicBoolean(false);
 
     update(id, cancelled, () -> {
       myCurrentDirectory = null;
-      if (updatePathBar) {
-        myPath.setItem(null);
-      }
+      updatePathBarAndHistory(null, updatePathBar, updateHistory);
     });
 
     var roots = new ArrayList<Path>();
@@ -693,6 +706,16 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         (active ? whenActive : whenCancelled).run();
       }
     });
+  }
+
+  private void updatePathBarAndHistory(@Nullable Path path, boolean updatePathBar, boolean updateHistory) {
+    if (updatePathBar) {
+      myPath.setItem(path != null ? new PathWrapper(path) : null);
+    }
+    if (updateHistory) {
+      myHistory.subList(++myHistoryIndex, myHistory.size()).clear();
+      myHistory.add(path);
+    }
   }
 
   private void updateSelection(AtomicReference<FsItem> selection) {

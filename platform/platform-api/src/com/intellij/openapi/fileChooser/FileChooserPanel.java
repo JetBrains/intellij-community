@@ -25,6 +25,9 @@ public interface FileChooserPanel {
   void load(@Nullable Path path);
   void loadParent();
 
+  boolean hasHistory(boolean backward);
+  void loadHistory(boolean backward);
+
   void reload(@Nullable Path focusOn);
 
   boolean showPathBar();
