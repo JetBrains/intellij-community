@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
+import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ASTNode;
@@ -443,12 +444,26 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
   }
 
   private static void checkSnippetTag(@NotNull ProblemsHolder holder, PsiElement element, PsiInlineDocTag tag) {
-    if (element instanceof PsiSnippetDocTag) {
-      if (!PsiUtil.getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_18)) {
+    if (element instanceof PsiSnippetDocTag snippet) {
+      if (!PsiUtil.getLanguageLevel(snippet).isAtLeast(LanguageLevel.JDK_18)) {
         PsiElement nameElement = tag.getNameElement();
         if (nameElement != null) {
           String message = JavaBundle.message("inspection.javadoc.problem.snippet.tag.is.not.available");
           holder.registerProblem(nameElement, message, new IncreaseLanguageLevelFix(LanguageLevel.JDK_18));
+        }
+        return;
+      }
+      PsiSnippetDocTagValue valueElement = snippet.getValueElement();
+      if (valueElement != null) {
+        PsiSnippetDocTagBody body = valueElement.getBody();
+        if (body != null) {
+          SnippetMarkup markup = SnippetMarkup.fromElement(body);
+          markup.visitSnippet(null, new SnippetMarkup.SnippetVisitor() {
+            @Override
+            public void visitError(SnippetMarkup.@NotNull ErrorMarkup errorMarkup) {
+              holder.registerProblem(body, errorMarkup.range(), errorMarkup.message());
+            }
+          });
         }
       }
     }
