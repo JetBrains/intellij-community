@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsTitleComponentFactory
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindContent
@@ -25,6 +26,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsViewModel
+import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -79,6 +81,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       add(GitLabMergeRequestDetailsCommitsComponentFactory.create(cs, changesVm))
       add(GitLabMergeRequestDetailsBranchComponentFactory.create(project, cs, detailsInfoVm, repository))
     }
+    val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Requests.Details.Popup") as ActionGroup
 
     val layout = MigLayout(
       LC()
@@ -92,7 +95,8 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       isOpaque = true
       background = UIUtil.getListBackground()
 
-      add(GitLabMergeRequestDetailsTitleComponentFactory.create(cs, detailsInfoVm),
+      add(CodeReviewDetailsTitleComponentFactory.create(cs, detailsInfoVm, GitLabBundle.message("open.on.gitlab.tooltip"), actionGroup,
+                                                        htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
       add(GitLabMergeRequestDetailsDescriptionComponentFactory.create(cs, detailsInfoVm),
           CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))

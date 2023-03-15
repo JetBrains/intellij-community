@@ -33,7 +33,7 @@ internal class GHPRDetailsViewModelImpl(
     }
   }
 
-  override val number: String = detailsModel.number
+  override val number: String = "#${detailsModel.number}"
   override val url: String = detailsModel.url
   override val viewerDidAuthor: Boolean = stateModel.viewerDidAuthor
 

@@ -1,17 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.ui.details
+package com.intellij.collaboration.ui.codereview.details
 
-import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.CodeReviewTitleUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
-import com.intellij.collaboration.ui.codereview.details.RequestState
-import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindTextHtml
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.ui.PopupHandler
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -23,40 +20,45 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsInfoViewModel
-import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
+import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-internal object GitLabMergeRequestDetailsTitleComponentFactory {
-  fun create(scope: CoroutineScope, detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel): JComponent {
-    val titleLabel = SimpleHtmlPane().apply {
+object CodeReviewDetailsTitleComponentFactory {
+  fun create(
+    scope: CoroutineScope,
+    detailsVm: CodeReviewDetailsViewModel,
+    urlTooltip: @Nls String,
+    actionGroup: ActionGroup,
+    htmlPaneFactory: () -> JEditorPane
+  ): JComponent {
+    val titleLabel = htmlPaneFactory().apply {
       name = "Review details title panel"
       font = JBFont.h2().asBold()
-      bindTextHtml(scope, detailsInfoVm.title.map { title ->
+      bindTextHtml(scope, detailsVm.title.map { title ->
         CodeReviewTitleUIUtil.createTitleText(
           title = title,
-          reviewNumber = "!${detailsInfoVm.number}",
-          url = detailsInfoVm.url,
-          tooltip = GitLabBundle.message("open.on.gitlab.tooltip")
+          reviewNumber = detailsVm.number,
+          url = detailsVm.url,
+          tooltip = urlTooltip
         )
       })
-      val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Requests.Details.Popup") as ActionGroup
-      PopupHandler.installPopupMenu(this, actionGroup, "GitLabMergeRequestDetailsPanelPopup")
+      PopupHandler.installPopupMenu(this, actionGroup, "CodeReviewDetailsPopup")
     }
     val stateLabel = JLabel().apply {
       font = JBFont.small()
       foreground = UIUtil.getContextHelpForeground()
       border = JBUI.Borders.empty(0, 4)
-      bindText(scope, detailsInfoVm.requestState.map { requestState ->
+      bindText(scope, detailsVm.requestState.map { requestState ->
         ReviewDetailsUIUtil.getRequestStateText(requestState)
       })
     }.let {
       RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
         border = JBUI.Borders.empty()
         background = UIUtil.getPanelBackground()
-        bindVisibility(scope, detailsInfoVm.requestState.map { mergeState ->
+        bindVisibility(scope, detailsVm.requestState.map { mergeState ->
           mergeState == RequestState.CLOSED || mergeState == RequestState.MERGED || mergeState == RequestState.DRAFT
         })
         add(it)

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.ui.codereview.details.RequestState
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -10,19 +11,13 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
-internal interface GitLabMergeRequestDetailsInfoViewModel {
+internal interface GitLabMergeRequestDetailsInfoViewModel : CodeReviewDetailsViewModel {
   val mergeRequest: GitLabMergeRequest
 
-  val number: String
-  val url: String
-
-  val title: Flow<String>
   val description: Flow<String>
   val targetBranch: Flow<String>
   val sourceBranch: Flow<String>
   val hasConflicts: Flow<Boolean>
-  val isDraft: Flow<Boolean>
-  val requestState: Flow<RequestState>
 
   val showTimelineRequests: Flow<Unit>
 
@@ -36,7 +31,7 @@ internal class GitLabMergeRequestDetailsInfoViewModelImpl(
 
   private val cs = parentCs.childScope()
 
-  override val number: String = mergeRequest.number
+  override val number: String = "!${mergeRequest.number}"
   override val url: String = mergeRequest.url
 
   override val title: Flow<String> = mergeRequest.title
@@ -44,7 +39,6 @@ internal class GitLabMergeRequestDetailsInfoViewModelImpl(
   override val targetBranch: Flow<String> = mergeRequest.targetBranch
   override val sourceBranch: Flow<String> = mergeRequest.sourceBranch
   override val hasConflicts: Flow<Boolean> = mergeRequest.hasConflicts
-  override val isDraft: Flow<Boolean> = mergeRequest.isDraft
   override val requestState: Flow<RequestState> = mergeRequest.requestState
 
   private val _showTimelineRequests = MutableSharedFlow<Unit>()
