@@ -16937,6 +16937,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedUnaryOperator/namedParameter.kt");
         }
 
+        @TestMetadata("plusAfterDiv.kt")
+        public void testPlusAfterDiv() throws Exception {
+            runTest("testData/inspectionsLocal/unusedUnaryOperator/plusAfterDiv.kt");
+        }
+
+        @TestMetadata("plusAfterMinus.kt")
+        public void testPlusAfterMinus() throws Exception {
+            runTest("testData/inspectionsLocal/unusedUnaryOperator/plusAfterMinus.kt");
+        }
+
         @TestMetadata("usedAsExpression.kt")
         public void testUsedAsExpression() throws Exception {
             runTest("testData/inspectionsLocal/unusedUnaryOperator/usedAsExpression.kt");
