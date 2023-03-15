@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 public final class SlowOperations {
   private static final Logger LOG = Logger.getInstance(SlowOperations.class);
 
+  public static final String ERROR_MESSAGE = "Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.";
+
   public static final String ACTION_UPDATE = "action.update";     // action update in menus, toolbars and popups
   public static final String ACTION_PERFORM = "action.perform";   // user triggered actions
   public static final String RENDERING = "rendering";             // UI rendering
@@ -125,7 +127,7 @@ public final class SlowOperations {
     if (ThrowableInterner.intern(throwable) != throwable) {
       return;
     }
-    LOG.error("Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.");
+    LOG.error(ERROR_MESSAGE);
   }
 
   private static void reportNonCancellableSectionInFastTrack() {
