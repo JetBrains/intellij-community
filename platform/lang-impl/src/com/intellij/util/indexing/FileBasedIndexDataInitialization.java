@@ -59,6 +59,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
   private final PersistentDirtyFilesQueue myPersistentDirtyFilesQueue = new PersistentDirtyFilesQueue();
 
   FileBasedIndexDataInitialization(@NotNull FileBasedIndexImpl index, @NotNull RegisteredIndexes registeredIndexes) {
+    super("file based index");
     myFileBasedIndex = index;
     myRegisteredIndexes = registeredIndexes;
   }

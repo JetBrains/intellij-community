@@ -355,6 +355,10 @@ public final class StubIndexImpl extends StubIndexEx {
     private final AsyncState state = new AsyncState();
     private final IndexVersionRegistrationSink indicesRegistrationSink = new IndexVersionRegistrationSink();
 
+    StubIndexInitialization() {
+      super("stub index");
+    }
+
     @Override
     protected @NotNull AsyncState finish() {
       indicesRegistrationSink.logChangedAndFullyBuiltIndices(LOG, "Following stub indices will be updated:",
