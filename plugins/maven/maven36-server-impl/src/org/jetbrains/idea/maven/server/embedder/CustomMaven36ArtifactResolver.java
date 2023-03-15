@@ -67,7 +67,8 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
   private List<ArtifactResult> doResolveArtifacts(RepositorySystemSession session, Collection<? extends ArtifactRequest> requests) {
     if (null == requests) return null;
 
-    Collection<ArtifactResult> results = MavenServerParallelRunner.executeInParallel(
+    Collection<ArtifactResult> results = MavenServerParallelRunner.execute(
+      true,
       requests,
       request -> doResolveArtifact(session, request)
     );

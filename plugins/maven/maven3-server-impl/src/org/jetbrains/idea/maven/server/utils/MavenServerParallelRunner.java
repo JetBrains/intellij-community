@@ -3,12 +3,13 @@ package org.jetbrains.idea.maven.server.utils;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 public final class MavenServerParallelRunner {
   public static <T> void runInParallel(@NotNull Collection<T> collection, @NotNull Consumer<T> method) {
@@ -22,27 +23,67 @@ public final class MavenServerParallelRunner {
   public static <T> void run(boolean runInParallel, @NotNull Collection<T> collection, @NotNull Consumer<T> method) {
     if (runInParallel) {
       runInParallel(collection, method);
-    } else {
+    }
+    else {
       runSequentially(collection, method);
     }
   }
 
-  public static <T, R> Set<R> executeInParallel(@NotNull Collection<T> collection, @NotNull Function<T, R> method) {
-    Set<R> result = ConcurrentHashMap.newKeySet();
-    collection.parallelStream().flatMap(item -> {
+  public static <T, R, E extends Exception> List<R> executeSequentially(@NotNull Collection<T> collection,
+                                                                        @NotNull CheckedFunction<T, R, E> method) throws E {
+    List<R> result = new ArrayList<>();
+
+    for (T item : collection) {
+      result.add(method.apply(item));
+    }
+
+    return result;
+  }
+
+  public static <T, R, E extends Exception> List<R> executeInParallel(@NotNull Collection<T> collection,
+                                                                      @NotNull CheckedFunction<T, R, E> method) throws E {
+    Set<RuntimeException> runtimeExceptions = ConcurrentHashMap.newKeySet();
+    Set<E> checkedExceptions = ConcurrentHashMap.newKeySet();
+
+    List<R> result = collection.parallelStream().map(item -> {
       try {
-        result.add(method.apply(item));
-        return null;
+        return method.apply(item);
       }
       catch (RuntimeException ex) {
-        return Stream.of(ex);
+        runtimeExceptions.add(ex);
+        throw ex;
       }
-    }).reduce((ex1, ex2) -> {
-      ex1.addSuppressed(ex2);
-      return ex1;
-    }).ifPresent(ex -> {
-      throw ex;
-    });
+      catch (Exception ex) {
+        checkedExceptions.add((E)ex);
+        throw new RuntimeException(ex);
+      }
+    }).collect(Collectors.toList());
+
+    if (!runtimeExceptions.isEmpty()) {
+      throw runtimeExceptions.stream().reduce((ex1, ex2) -> {
+        ex1.addSuppressed(ex2);
+        return ex1;
+      }).get();
+    }
+
+    if (!checkedExceptions.isEmpty()) {
+      throw checkedExceptions.stream().reduce((ex1, ex2) -> {
+        ex1.addSuppressed(ex2);
+        return ex1;
+      }).get();
+    }
+
     return result;
+  }
+
+  public static <T, R, E extends Exception> List<R> execute(boolean inParallel,
+                                                            @NotNull Collection<T> collection,
+                                                            @NotNull CheckedFunction<T, R, E> method) throws E {
+    return inParallel ? executeInParallel(collection, method) : executeSequentially(collection, method);
+  }
+
+  @FunctionalInterface
+  public interface CheckedFunction<T, R, E extends Exception> {
+    R apply(T t) throws E;
   }
 }

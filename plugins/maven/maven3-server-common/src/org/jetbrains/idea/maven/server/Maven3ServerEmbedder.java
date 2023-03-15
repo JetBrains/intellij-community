@@ -235,11 +235,10 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     }
   }
 
-  protected void addMvn2CompatResults(MavenProject project,
-                                      List<Exception> exceptions,
-                                      List<ResolutionListener> listeners,
-                                      ArtifactRepository localRepository,
-                                      Collection<MavenExecutionResult> executionResults) {
+  protected MavenExecutionResult resolveMvn2CompatResult(MavenProject project,
+                                                         List<Exception> exceptions,
+                                                         List<ResolutionListener> listeners,
+                                                         ArtifactRepository localRepository) {
     ArtifactResolutionRequest resolutionRequest = new ArtifactResolutionRequest();
     resolutionRequest.setArtifactDependencies(project.getDependencyArtifacts());
     resolutionRequest.setArtifact(project.getArtifact());
@@ -255,7 +254,15 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     ArtifactResolutionResult result = resolver.resolve(resolutionRequest);
 
     project.setArtifacts(result.getArtifacts());
-    executionResults.add(new MavenExecutionResult(project, exceptions));
+    return new MavenExecutionResult(project, exceptions);
+  }
+
+  protected void addMvn2CompatResults(MavenProject project,
+                                      List<Exception> exceptions,
+                                      List<ResolutionListener> listeners,
+                                      ArtifactRepository localRepository,
+                                      Collection<MavenExecutionResult> executionResults) {
+    executionResults.add(resolveMvn2CompatResult(project, exceptions, listeners, localRepository));
   }
 
   @Override
