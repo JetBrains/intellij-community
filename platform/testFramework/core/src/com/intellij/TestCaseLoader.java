@@ -223,7 +223,7 @@ public class TestCaseLoader {
 
   private static boolean matchesBucketViaNastradamus(@NotNull String testIdentifier) {
     try {
-      return nastradamusClient.isClassInBucket(testIdentifier);
+      return nastradamusClient.isClassInBucket(testIdentifier, (testClassName) -> matchesCurrentBucketViaHashing(testClassName));
     }
     catch (Exception e) {
       // if fails, just fallback to consistent hashing
