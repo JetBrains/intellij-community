@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.textarea;
 
-import com.intellij.idea.AppStarter;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
@@ -320,7 +319,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
     if (!classesLoaded.compareAndSet(false, true)) {
       return;
     }
-    var classLoader = AppStarter.class.getClassLoader();
+    var classLoader = TextComponentEditorImpl.class.getClassLoader();
     for (var c : Arrays.asList(
       Border.class,
       CaretModel.class,
