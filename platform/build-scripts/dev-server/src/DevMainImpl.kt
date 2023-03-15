@@ -13,20 +13,22 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 private class DevMainImpl {
   companion object {
-    @Suppress("SpellCheckingInspection")
     @JvmStatic
     fun build(): Collection<Path> {
       // don't use JaegerJsonSpanExporter - not needed for clients, should be enabled only if needed to avoid writing ~500KB JSON file
       TracerProviderManager.spanExporterProvider = { listOf(ConsoleSpanExporter()) }
       //TracerProviderManager.setOutput(Path.of(System.getProperty("user.home"), "trace.json"))
       try {
+        val ideaProjectRoot = Path.of(PathManager.getHomePathFor(PathManager::class.java)!!)
+        System.setProperty("idea.dev.project.root", ideaProjectRoot.invariantSeparatorsPathString)
+
         var homePath: String? = null
         return runBlocking(Dispatchers.Default) {
           var newClassPath: Collection<Path>? = null
           buildProductInProcess(BuildRequest(
             platformPrefix = System.getProperty("idea.platform.prefix") ?: "idea",
             additionalModules = getAdditionalModules()?.toList() ?: emptyList(),
-            homePath = Path.of(PathManager.getHomePathFor(PathManager::class.java)!!),
+            homePath = ideaProjectRoot,
             keepHttpClient = false,
             platformClassPathConsumer = { classPath, runDir ->
               newClassPath = classPath

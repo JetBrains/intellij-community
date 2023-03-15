@@ -143,4 +143,8 @@ public final class AppMode {
   public static boolean isDevServer() {
     return Boolean.getBoolean("idea.use.dev.build.server");
   }
+
+  public static boolean getDevIdeaProjectDir() {
+    return Boolean.getBoolean("idea.dev.project.root");
+  }
 }
