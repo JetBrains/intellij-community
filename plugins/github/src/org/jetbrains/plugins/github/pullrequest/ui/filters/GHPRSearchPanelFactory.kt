@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.filters
 
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.PopupItemPresentation
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.showAsyncChooserPopup
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
@@ -9,7 +10,6 @@ import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 
 internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val avatarIconsProvider: GHAvatarIconsProvider) :
@@ -37,7 +37,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
     DropDownComponentFactory(vm.authorFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.author")) { point, popupState ->
         showAsyncChooserPopup(point, popupState, { vm.getAuthors() }) {
-          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, GHUIUtil.AVATAR_SIZE), it.name)
+          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE), it.name)
         }?.login
       },
     DropDownComponentFactory(vm.labelFilterState)
@@ -49,7 +49,7 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
     DropDownComponentFactory(vm.assigneeFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.assignee")) { point, popupState ->
         showAsyncChooserPopup(point, popupState, { vm.getAssignees() }) {
-          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, GHUIUtil.AVATAR_SIZE), it.name)
+          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE), it.name)
         }?.login
       },
     DropDownComponentFactory(vm.reviewFilterState)

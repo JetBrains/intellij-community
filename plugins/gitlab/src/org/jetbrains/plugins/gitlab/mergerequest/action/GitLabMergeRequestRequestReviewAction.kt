@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.action
 
 import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.ui.popup.JBPopup
@@ -95,7 +96,7 @@ internal class GitLabMergeRequestRequestReviewAction(
       label.apply {
         clear()
         append(value.username)
-        icon = avatarIconsProvider.getIcon(value, AVATAR_SIZE)
+        icon = avatarIconsProvider.getIcon(value, Avatar.Sizes.BASE)
         foreground = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
       }
 
@@ -103,10 +104,6 @@ internal class GitLabMergeRequestRequestReviewAction(
 
       return panel
     }
-  }
-
-  companion object {
-    private const val AVATAR_SIZE = 20
   }
 }
 

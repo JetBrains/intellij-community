@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
@@ -113,13 +114,11 @@ internal class GitLabFiltersPanelFactory(
     participantsLoader: suspend () -> List<GitLabUserDTO>
   ): GitLabUserDTO? {
     return ChooserPopupUtil.showAsyncChooserPopup(point, popupState, itemsLoader = { participantsLoader() }) { user ->
-      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, AVATAR_SIZE))
+      ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, Avatar.Sizes.BASE))
     }
   }
 
   companion object {
-    private const val AVATAR_SIZE = 20
-
     private fun getShortText(stateFilterValue: MergeRequestStateFilterValue): @Nls String = when (stateFilterValue) {
       MergeRequestStateFilterValue.OPENED -> GitLabBundle.message("merge.request.list.filter.state.open")
       MergeRequestStateFilterValue.MERGED -> GitLabBundle.message("merge.request.list.filter.state.merged")

@@ -7,6 +7,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies.ActionsFolded
 import com.intellij.collaboration.ui.codereview.ToggleableContainer
@@ -36,7 +37,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRSuggestedChangeHe
 import org.jetbrains.plugins.github.pullrequest.ui.timeline.GHPRSelectInToolWindowHelper
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.ui.cloneDialog.GHCloneDialogExtensionComponentBase.Companion.items
-import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
@@ -238,7 +238,7 @@ object GHPRReviewThreadComponent {
         }
 
         authorsLabel.apply {
-          icon = authors.map { avatarIconsProvider.getIcon(it.avatarUrl, GHUIUtil.AVATAR_SIZE) }.nullize()?.let {
+          icon = authors.map { avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE) }.nullize()?.let {
             OverlaidOffsetIconsIcon(it)
           }
           isVisible = icon != null

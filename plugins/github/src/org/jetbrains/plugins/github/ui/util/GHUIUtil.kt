@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -43,8 +44,6 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.*
 
 object GHUIUtil {
-  const val AVATAR_SIZE = 20
-
   fun getPullRequestStateIcon(state: GHPullRequestState, isDraft: Boolean): Icon =
     if (isDraft) GithubIcons.PullRequestDraft
     else when (state) {
@@ -220,13 +219,13 @@ object GHUIUtil {
     class PRReviewers(private val iconsProvider: GHAvatarIconsProvider)
       : SelectionListCellRenderer<GHPullRequestRequestedReviewer>() {
       override fun getText(value: GHPullRequestRequestedReviewer) = value.shortName
-      override fun getIcon(value: GHPullRequestRequestedReviewer) = iconsProvider.getIcon(value.avatarUrl, AVATAR_SIZE)
+      override fun getIcon(value: GHPullRequestRequestedReviewer) = iconsProvider.getIcon(value.avatarUrl, Avatar.Sizes.BASE)
     }
 
     class Users(private val iconsProvider: GHAvatarIconsProvider)
       : SelectionListCellRenderer<GHUser>() {
       override fun getText(value: GHUser) = value.login
-      override fun getIcon(value: GHUser) = iconsProvider.getIcon(value.avatarUrl, AVATAR_SIZE)
+      override fun getIcon(value: GHUser) = iconsProvider.getIcon(value.avatarUrl, Avatar.Sizes.BASE)
     }
 
     class Labels : SelectionListCellRenderer<GHLabel>() {

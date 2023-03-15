@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview.details
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
 import com.intellij.collaboration.ui.util.bindIcon
 import com.intellij.collaboration.ui.util.bindText
@@ -30,7 +31,6 @@ object CodeReviewDetailsStatusComponentFactory {
   private const val STATUS_REVIEWER_GAP = 10
   private const val CI_COMPONENTS_GAP = 8
   private const val CI_COMPONENT_BORDER = 5
-  private const val AVATAR_SIZE = 24
 
   fun createConflictsComponent(scope: CoroutineScope, hasConflicts: Flow<Boolean>): JComponent {
     return ReviewDetailsStatusLabel("Code review status: review has conflicts").apply {
@@ -143,7 +143,7 @@ object CodeReviewDetailsStatusComponentFactory {
       }
       val reviewerLabel = ReviewDetailsStatusLabel("Code review status: reviewer").apply {
         iconTextGap = STATUS_REVIEWER_COMPONENT_GAP
-        icon = iconProvider(avatarKeyProvider(reviewer), AVATAR_SIZE)
+        icon = iconProvider(avatarKeyProvider(reviewer), Avatar.Sizes.BASE)
         text = ReviewDetailsUIUtil.getReviewStateText(reviewState, reviewerNameProvider(reviewer))
       }
 

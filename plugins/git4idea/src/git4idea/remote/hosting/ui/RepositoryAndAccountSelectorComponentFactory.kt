@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.AccountSelectorComponentFactory
 import com.intellij.collaboration.ui.ActionLinkListener
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
+import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
 import com.intellij.collaboration.ui.util.bindDisabled
@@ -34,9 +35,6 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.*
-
-private const val AVATAR_SIZE = 20
-private const val AVATAR_SIZE_POPUP = 40
 
 class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMapping, A : ServerAccount>(
   private val vm: RepositoryAndAccountSelectorViewModel<M, A>
@@ -65,8 +63,8 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
     val accountCombo = AccountSelectorComponentFactory(vm.accountsState, vm.accountSelectionState).create(
       scope,
       detailsProvider,
-      AVATAR_SIZE,
-      AVATAR_SIZE_POPUP,
+      Avatar.Sizes.BASE,
+      Avatar.Sizes.ACCOUNT,
       CollaborationToolsBundle.message("account.choose.link"),
       vm.repoSelectionState.mapState(scope) { if (it == null) emptyList() else accountsPopupActionsSupplier(it) }
     ).apply {
