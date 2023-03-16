@@ -167,13 +167,9 @@ internal open class FirCallableCompletionContributor(
             }
             .forEach { yield(createCallableWithMetadata(it.signature, it.scopeKind)) }
 
-        // Here we can't rely on deduplication in LookupElementSink because extension members can have types substituted, which won't be
-        // equal to the same symbols from top level without substitution.
-        val extensionMembers = mutableSetOf<KtCallableSymbol>()
         extensionsWhichCanBeCalled.forEach { (signatureWithScopeKind, applicabilityResult) ->
             val signature = signatureWithScopeKind.signature
             getExtensionOptions(signature, applicabilityResult)?.let {
-                extensionMembers += signature.symbol
                 yield(createCallableWithMetadata(signature, signatureWithScopeKind.scopeKind, it))
             }
         }
@@ -188,12 +184,11 @@ internal open class FirCallableCompletionContributor(
             val callablesFromExtensions = getResolveExtensionScopeWithTopLevelDeclarations().getCallableSymbols(scopeNameFilter)
 
             (callablesFromIndex + callablesFromExtensions)
-                .filter { it !in extensionMembers && visibilityChecker.isVisible(it) }
+                .filterNot { it.isExtension } // extensions should be collected and checked with `collectTopLevelExtensionsFromIndices`
                 .forEach { yield(createCallableWithMetadata(it.asSignature())) }
         }
 
-        collectTopLevelExtensionsFromIndices(implicitReceiversTypes, extensionChecker, visibilityChecker)
-            .filter { it.symbol !in extensionMembers }
+        collectTopLevelExtensionsFromIndexAndResolveExtensionScope(implicitReceiversTypes, extensionChecker, visibilityChecker)
             .forEach { yield(createCallableWithMetadata(it)) }
     }
 
@@ -309,23 +304,19 @@ internal open class FirCallableCompletionContributor(
             yield(createCallableWithMetadata(it.signature, it.scopeKind, explicitReceiverTypeHint = explicitReceiverTypeHint))
         }
 
-        // Here we can't rely on deduplication in LookupElementSink because extension members can have types substituted, which won't be
-        // equal to the same symbols from top level without substitution.
-        val extensionMembers = mutableSetOf<CallableId>()
         extensionNonMembers.forEach { (signatureWithScopeKind, applicabilityResult) ->
             val signature = signatureWithScopeKind.signature
             getExtensionOptions(signature, applicabilityResult)?.let {
-                signature.callableIdIfNonLocal?.let(extensionMembers::add)
                 yield(createCallableWithMetadata(signature, signatureWithScopeKind.scopeKind, it, explicitReceiverTypeHint))
             }
         }
 
-        collectTopLevelExtensionsFromIndices(listOf(typeOfPossibleReceiver), extensionChecker, visibilityChecker)
-            .filter { it.callableIdIfNonLocal !in extensionMembers && filter(it.symbol) }
+        collectTopLevelExtensionsFromIndexAndResolveExtensionScope(listOf(typeOfPossibleReceiver), extensionChecker, visibilityChecker)
+            .filter { filter(it.symbol) }
             .forEach { yield(createCallableWithMetadata(it, explicitReceiverTypeHint = explicitReceiverTypeHint)) }
     }
 
-    private fun KtAnalysisSession.collectTopLevelExtensionsFromIndices(
+    private fun KtAnalysisSession.collectTopLevelExtensionsFromIndexAndResolveExtensionScope(
         receiverTypes: List<KtType>,
         extensionChecker: ExtensionApplicabilityChecker,
         visibilityChecker: CompletionVisibilityChecker,
@@ -333,12 +324,15 @@ internal open class FirCallableCompletionContributor(
         if (receiverTypes.isEmpty()) return emptySequence()
 
         val implicitReceiverNames = findAllNamesOfTypes(receiverTypes)
-        val topLevelExtensions = indexHelper.getTopLevelExtensions(scopeNameFilter, implicitReceiverNames)
-
-        return topLevelExtensions.asSequence()
+        val topLevelExtensionsFromIndex = indexHelper.getTopLevelExtensions(scopeNameFilter, implicitReceiverNames)
             .filterNot { it.canDefinitelyNotBeSeenFromOtherFile() }
             .filter { it.canBeAnalysed() }
             .map { it.getSymbol() as KtCallableSymbol }
+
+        val resolveExtensionScope = getResolveExtensionScopeWithTopLevelDeclarations()
+        val topLevelExtensionsFromResolveExtension = resolveExtensionScope.getCallableSymbols(scopeNameFilter).filter { it.isExtension }
+
+        return (topLevelExtensionsFromIndex + topLevelExtensionsFromResolveExtension).asSequence()
             .filter { filter(it) }
             .filter { visibilityChecker.isVisible(it) }
             .mapNotNull { checkApplicabilityAndSubstitute(it, extensionChecker)?.first }
