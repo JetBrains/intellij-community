@@ -9,11 +9,11 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.server.utils.MavenServerParallelRunner;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 public class CustomMaven36ArtifactResolver implements ArtifactResolver {
   private final ArtifactResolver myWrapee;
@@ -23,35 +23,32 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
     myWrapee = wrapee;
   }
 
-  private static <T> T rethrow(Supplier<T> supplier) throws ArtifactResolutionException {
+  private ArtifactResultData doResolveArtifactAndWrapException(RepositorySystemSession session, ArtifactRequest request) {
     try {
-      return supplier.get();
-    }
-    catch (RuntimeException e) {
-      Throwable cause = e.getCause();
-      if (cause instanceof ArtifactResolutionException) {
-        throw (ArtifactResolutionException)cause;
-      }
-      throw e;
-    }
-  }
-
-  private ArtifactResult doResolveArtifactAndWrapException(RepositorySystemSession session, ArtifactRequest request) {
-    try {
-      return myWrapee.resolveArtifact(session, request);
+      return getData(myWrapee.resolveArtifact(session, request), null);
     }
     catch (ArtifactResolutionException e) {
-      throw new RuntimeException(e);
+      return getData(e.getResult(), e);
     }
   }
 
-  private ArtifactResult doResolveArtifact(RepositorySystemSession session, ArtifactRequest request) {
+  private ArtifactResult doResolveArtifact(RepositorySystemSession session, ArtifactRequest request) throws ArtifactResolutionException {
     if (null == request) return null;
 
     ArtifactRequestData requestData = getData(request);
 
-    ArtifactResultData resultData = artifactCache.computeIfAbsent(requestData, rd -> getData(doResolveArtifactAndWrapException(session, request)));
+    ArtifactResultData resultData = artifactCache.computeIfAbsent(requestData, rd -> doResolveArtifactAndWrapException(session, request));
 
+    if (null != resultData.getResolutionException()) {
+      throw resultData.getResolutionException();
+    }
+
+    ArtifactResult result = getResult(request, resultData);
+    return result;
+  }
+
+  @NotNull
+  private static ArtifactResult getResult(ArtifactRequest request, ArtifactResultData resultData) {
     ArtifactResult result = new ArtifactResult(request);
     result.setArtifact(resultData.getArtifact());
     result.setRepository(resultData.getRepository());
@@ -64,27 +61,38 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
     return result;
   }
 
-  private List<ArtifactResult> doResolveArtifacts(RepositorySystemSession session, Collection<? extends ArtifactRequest> requests) {
-    if (null == requests) return null;
-
-    Collection<ArtifactResult> results = MavenServerParallelRunner.execute(
-      true,
-      requests,
-      request -> doResolveArtifact(session, request)
-    );
-
-    return new ArrayList<>(results);
-  }
-
   @Override
   public ArtifactResult resolveArtifact(RepositorySystemSession session, ArtifactRequest request) throws ArtifactResolutionException {
-    return rethrow(() -> doResolveArtifact(session, request));
+    return doResolveArtifact(session, request);
   }
 
   @Override
   public List<ArtifactResult> resolveArtifacts(RepositorySystemSession session, Collection<? extends ArtifactRequest> requests)
     throws ArtifactResolutionException {
-    return rethrow(() -> doResolveArtifacts(session, requests));
+    if (null == requests) return null;
+
+    List<ArtifactRequest> requestList = new ArrayList<>(requests);
+
+    List<ArtifactResultData> resultDataList = MavenServerParallelRunner.execute(
+      true,
+      requests,
+      request -> doResolveArtifactAndWrapException(session, request)
+    );
+
+    List<ArtifactResult> results = new ArrayList<>(requests.size());
+    boolean error = false;
+    for (int i = 0; i < requests.size(); i++) {
+      ArtifactResultData resultData = resultDataList.get(i);
+      if (null != resultData.getResolutionException()) {
+        error = true;
+      }
+      results.add(getResult(requestList.get(i), resultData));
+    }
+
+    if (error) {
+      throw new ArtifactResolutionException(results);
+    }
+    return results;
   }
 
   public void reset() {
@@ -117,8 +125,8 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
     return new RepositoryData(repository.getId(), repository.getUrl());
   }
 
-  private static ArtifactResultData getData(ArtifactResult result) {
-    return new ArtifactResultData(result.getArtifact(), result.getRepository(), result.getExceptions());
+  private static ArtifactResultData getData(ArtifactResult result, ArtifactResolutionException resolutionException) {
+    return new ArtifactResultData(result.getArtifact(), result.getRepository(), result.getExceptions(), resolutionException);
   }
 
   private static class ArtifactRequestData {
@@ -223,11 +231,16 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
     private final Artifact artifact;
     private final ArtifactRepository repository;
     private final List<Exception> exceptions;
+    private final ArtifactResolutionException resolutionException;
 
-    private ArtifactResultData(Artifact artifact, ArtifactRepository repository, List<Exception> exceptions) {
+    private ArtifactResultData(Artifact artifact,
+                               ArtifactRepository repository,
+                               List<Exception> exceptions,
+                               ArtifactResolutionException resolutionException) {
       this.artifact = artifact;
       this.repository = repository;
       this.exceptions = exceptions;
+      this.resolutionException = resolutionException;
     }
 
     private Artifact getArtifact() {
@@ -240,6 +253,10 @@ public class CustomMaven36ArtifactResolver implements ArtifactResolver {
 
     private List<Exception> getExceptions() {
       return exceptions;
+    }
+
+    private ArtifactResolutionException getResolutionException() {
+      return resolutionException;
     }
 
     @Override
