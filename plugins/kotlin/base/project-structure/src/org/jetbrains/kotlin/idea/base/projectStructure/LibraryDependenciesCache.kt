@@ -26,7 +26,19 @@ interface LibraryDependenciesCache {
 
     fun getLibraryDependencies(library: LibraryInfo): LibraryDependencies
 
-    class LibraryDependencies(val library: LibraryInfo, val libraries: List<LibraryInfo>, val sdk: List<SdkInfo>) {
+    class LibraryDependencies(
+        val library: LibraryInfo,
+        val libraries: List<LibraryInfo>,
+        val sdk: List<SdkInfo>,
+        val sourcesOnlyDependencies: List<LibraryInfo>,
+    ) {
         val librariesWithoutSelf: List<LibraryInfo> by lazy { libraries - library }
+
+        fun checkValidity() {
+            library.checkValidity()
+            libraries.forEach { it.checkValidity() }
+            sdk.forEach { it.checkValidity() }
+            sourcesOnlyDependencies.forEach { it.checkValidity() }
+        }
     }
 }
