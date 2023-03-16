@@ -100,10 +100,7 @@ class FilenameToolbarWidgetAction: DumbAwareAction(), CustomComponentAction {
       return FileStatusManager.getInstance(project).getStatus(value).color
     }
 
-    override fun getTextFor(value: VirtualFile?): String {
-      if (value == null) return ""
-      return VfsPresentationUtil.getUniquePresentableNameForUI(project, value)
-    }
+    override fun getTextFor(value: VirtualFile?) = value?.presentableName ?: ""
 
     override fun onChosen(selectedValue: VirtualFile?, finalChoice: Boolean): PopupStep<*>? {
       if (selectedValue != null && finalChoice) FileEditorManager.getInstance(project).openFile(selectedValue, true)
