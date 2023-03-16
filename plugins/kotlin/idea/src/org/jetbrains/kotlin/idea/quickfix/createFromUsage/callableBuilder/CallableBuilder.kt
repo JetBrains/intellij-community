@@ -586,7 +586,7 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             buildString {
                                 append("\nget() {}")
                                 if (isVar) {
-                                    append("\nset() {}")
+                                    append("\nset(value) {}")
                                 }
                             }
                         } else ""
