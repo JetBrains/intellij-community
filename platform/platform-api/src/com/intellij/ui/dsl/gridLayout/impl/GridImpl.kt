@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.gridLayout.impl
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.checkTrue
 import com.intellij.ui.dsl.gridLayout.*
+import com.intellij.ui.scale.JBUIScale
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Insets
@@ -19,8 +20,8 @@ internal class GridImpl : Grid {
   override val resizableColumns = mutableSetOf<Int>()
   override val resizableRows = mutableSetOf<Int>()
 
-  override val columnsGaps = mutableListOf<HorizontalGaps>()
-  override val rowsGaps = mutableListOf<VerticalGaps>()
+  override val columnsGaps = mutableListOf<UnscaledGapsX>()
+  override val rowsGaps = mutableListOf<UnscaledGapsY>()
 
   val visible: Boolean
     get() = cells.any { it.visible }
@@ -198,11 +199,11 @@ internal class GridImpl : Grid {
         layoutCellData = LayoutCellData(cell = cell,
           preferredSize = preferredSize,
           columnGaps = HorizontalGaps(
-            left = columnsGaps.getOrNull(x)?.left ?: 0,
-            right = columnsGaps.getOrNull(x + width - 1)?.right ?: 0),
+            left = JBUIScale.scale(columnsGaps.getOrNull(x)?.left ?: 0),
+            right = JBUIScale.scale(columnsGaps.getOrNull(x + width - 1)?.right ?: 0)),
           rowGaps = VerticalGaps(
-            top = rowsGaps.getOrNull(y)?.top ?: 0,
-            bottom = rowsGaps.getOrNull(y + height - 1)?.bottom ?: 0)
+            top = JBUIScale.scale(rowsGaps.getOrNull(y)?.top ?: 0),
+            bottom = JBUIScale.scale(rowsGaps.getOrNull(y + height - 1)?.bottom ?: 0))
         )
 
         columnsCount = max(columnsCount, x + width)

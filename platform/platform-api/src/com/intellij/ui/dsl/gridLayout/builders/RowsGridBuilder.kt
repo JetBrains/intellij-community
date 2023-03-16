@@ -30,7 +30,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
   private var x = 0
   private var y = GRID_EMPTY
 
-  fun columnsGaps(value: List<HorizontalGaps>): RowsGridBuilder {
+  fun columnsGaps(value: List<UnscaledGapsX>): RowsGridBuilder {
     grid.columnsGaps.clear()
     grid.columnsGaps.addAll(value)
     return this
@@ -39,7 +39,7 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
   /**
    * Starts new row. Can be omitted for the first and after last rows
    */
-  fun row(rowGaps: VerticalGaps = VerticalGaps.EMPTY, resizable: Boolean = false): RowsGridBuilder {
+  fun row(rowGaps: UnscaledGapsY = UnscaledGapsY.EMPTY, resizable: Boolean = false): RowsGridBuilder {
     x = 0
     y++
 
@@ -228,11 +228,11 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     return this
   }
 
-  fun setRowGaps(rowGaps: VerticalGaps) {
+  fun setRowGaps(rowGaps: UnscaledGapsY) {
     startFirstRow()
 
     while (grid.rowsGaps.size <= y) {
-      grid.rowsGaps.add(VerticalGaps.EMPTY)
+      grid.rowsGaps.add(UnscaledGapsY.EMPTY)
     }
     grid.rowsGaps[y] = rowGaps
   }

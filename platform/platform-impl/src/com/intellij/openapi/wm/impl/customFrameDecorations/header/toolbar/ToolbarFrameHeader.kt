@@ -18,7 +18,7 @@ import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.gridLayout.GridLayout
-import com.intellij.ui.dsl.gridLayout.HorizontalGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -69,7 +69,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : FrameHea
       .row(resizable = true)
       .cell(component = myMenuBar, resizableColumn = true)
       .cell(menuBarHeaderTitle, resizableColumn = true)
-      .columnsGaps(listOf(HorizontalGaps.EMPTY, HorizontalGaps(44)))
+      .columnsGaps(listOf(UnscaledGapsX.EMPTY, UnscaledGapsX(44)))
     return panel
   }
 

@@ -20,6 +20,7 @@ import com.intellij.ui.components.*
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.dsl.gridLayout.Grid
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.Function
@@ -391,5 +392,12 @@ interface Row {
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases
    */
+  @Deprecated("Use overloaded customize(...) with UnscaledGapsY")
+  @ApiStatus.ScheduledForRemoval
   fun customize(customRowGaps: VerticalGaps): Row
+
+  /**
+   * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases
+   */
+  fun customize(customRowGaps: UnscaledGapsY): Row
 }
