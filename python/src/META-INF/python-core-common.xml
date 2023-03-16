@@ -465,7 +465,7 @@
     <!-- Poetry -->
     <editorFactoryListener implementation="com.jetbrains.python.sdk.poetry.PyProjectTomlWatcher"/>
     <projectService serviceImplementation="com.jetbrains.python.sdk.poetry.PoetryConfigService"/>
-    <postStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryConfigLoader" order="last"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.poetry.PoetryConfigLoader" order="last"/>
 
     <!-- Targets API -->
     <registryKey key="python.use.targets.api" defaultValue="true" description="Switches Python support to Targets API."/>
