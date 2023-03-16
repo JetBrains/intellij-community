@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.list.search
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
@@ -219,7 +220,7 @@ object ChooserPopupUtil {
   }
 }
 
-class SimpleSelectablePopupItemRenderer<T>(private val reviewerPresenter: (T) -> ChooserPopupUtil.SelectablePopupItemPresentation) : ListCellRenderer<T> {
+class SimpleSelectablePopupItemRenderer<T> private constructor(private val reviewerPresenter: (T) -> ChooserPopupUtil.SelectablePopupItemPresentation) : ListCellRenderer<T> {
   private val checkBox: JBCheckBox = JBCheckBox().apply {
     isOpaque = false
   }
@@ -227,7 +228,7 @@ class SimpleSelectablePopupItemRenderer<T>(private val reviewerPresenter: (T) ->
   private val panel = BorderLayoutPanel(10, 5).apply {
     addToLeft(checkBox)
     addToCenter(label)
-    border = JBUI.Borders.empty(5)
+    border = JBUI.Borders.empty(TOP_BOTTOM_GAP, LEFT_RIGHT_GAP)
   }
 
   override fun getListCellRendererComponent(list: JList<out T>,
@@ -253,5 +254,19 @@ class SimpleSelectablePopupItemRenderer<T>(private val reviewerPresenter: (T) ->
     UIUtil.setBackgroundRecursively(panel, ListUiUtil.WithTallRow.background(list, isSelected, true))
 
     return panel
+  }
+
+  companion object {
+    fun <T> create(presenter: (T) -> ChooserPopupUtil.SelectablePopupItemPresentation): ListCellRenderer<T> {
+      val simplePopupItemRenderer = SimpleSelectablePopupItemRenderer(presenter)
+      if (!ExperimentalUI.isNewUI())
+        return simplePopupItemRenderer
+
+      return RoundedCellRenderer(simplePopupItemRenderer, false)
+    }
+
+    private const val TOP_BOTTOM_GAP = 5
+    private val LEFT_RIGHT_GAP: Int
+      get() = CollaborationToolsUIUtil.getSize(oldUI = 5, newUI = 0) // in case of the newUI gap handled by SelectablePanel
   }
 }

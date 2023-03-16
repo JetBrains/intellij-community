@@ -44,7 +44,7 @@ internal class GitLabMergeRequestRequestReviewAction(
         popupState,
         users,
         filteringMapper = { user -> user.username },
-        renderer = SimpleSelectablePopupItemRenderer { reviewer ->
+        renderer = SimpleSelectablePopupItemRenderer.create { reviewer ->
           ChooserPopupUtil.SelectablePopupItemPresentation.Simple(
             reviewer.username,
             avatarIconsProvider.getIcon(reviewer, Avatar.Sizes.BASE),
