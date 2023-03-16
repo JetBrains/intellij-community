@@ -169,7 +169,6 @@
       "maven.svg": "icons/repositoryLibraryLogo.svg",
       "modified.svg": "general/modified.svg",
       "patch.svg": "vcs/patch_file.svg",
-      "php.svg": "icons/php-icon.svg",
       "properties.svg": "fileTypes/properties.svg",
       "protobuf.svg": "protoFile.png",
       "python.svg": "icons/com/jetbrains/python/pythonFile.svg",
@@ -515,15 +514,6 @@
       "unloadedModule.svg": "modules/unloadedModule.svg",
       "variable.svg": "nodes/variable.svg",
       "warningIntroduction.svg": "nodes/warningIntroduction.svg"
-    },
-    "php": {
-      "phpHttpRequest.svg": "icons/run_http_request.svg",
-      "phpLocal.svg": "icons/php-local.svg",
-      "phpRemote.svg": [
-        "icons/php-remote.svg",
-        "icons/run_remote_debug.svg"
-      ],
-      "phpWeb.svg": "icons/run_web_app.svg"
     },
     "profiler": {
       "collapseNode.svg": "profiler/collapseNode.svg",
