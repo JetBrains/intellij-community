@@ -24,8 +24,8 @@ publishing {
     maven {
       url = uri("https://packages.jetbrains.team/maven/p/ide-accessibility-assistant/codegen-test")
       credentials {
-        username = System.getenv("intellij.workspace.codegen.repository.user")
-        password = System.getenv("intellij.workspace.codegen.repository.password")
+        username = System.getProperty("intellij.workspace.codegen.repository.user")
+        password = System.getProperty("intellij.workspace.codegen.repository.password")
       }
     }
   }
