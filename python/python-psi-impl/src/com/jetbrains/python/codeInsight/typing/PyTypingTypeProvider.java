@@ -38,7 +38,6 @@ import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -614,90 +613,41 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     if (!isGeneric(cls, context.myContext)) {
       return Collections.emptyMap();
     }
-    final Map<PyType, PyType> results = new HashMap<>();
-
-    for (Map.Entry<PyClass, PySubscriptionExpression> e : getResolvedSuperClassesAndTypeParameters(cls, context.myContext).entrySet()) {
-      final PySubscriptionExpression subscriptionExpr = e.getValue();
-      final PyClass superClass = e.getKey();
-      final Map<PyType, PyType> superSubstitutions =
-        doPreventingRecursion(superClass, false, () -> getGenericSubstitutions(superClass, context));
+    Map<PyType, PyType> results = new HashMap<>();
+    for (PyClassType superClassType : evaluateSuperClassesAsTypeHints(cls, context.myContext)) {
+      Map<PyType, PyType> superSubstitutions =
+        doPreventingRecursion(superClassType.getPyClass(), false, () -> getGenericSubstitutions(superClassType.getPyClass(), context));
       if (superSubstitutions != null) {
         results.putAll(superSubstitutions);
       }
-      final List<PyType> superGenerics = collectGenericTypes(superClass, context);
-      final List<PyExpression> indices = subscriptionExpr != null ? getSubscriptionIndices(subscriptionExpr) : Collections.emptyList();
-      for (int i = 0; i < superGenerics.size(); i++) {
-        final PyExpression expr = ContainerUtil.getOrElse(indices, i, null);
-        final PyType superGeneric = superGenerics.get(i);
-        final Ref<PyType> typeRef = expr != null ? getType(expr, context) : null;
-        final PyType actualType = typeRef != null ? typeRef.get() : null;
-        if (!superGeneric.equals(actualType)) {
-          results.put(superGeneric, actualType);
+      // TODO Share this logic with PyTypeChecker.collectTypeSubstitutions
+      List<PyType> superTypeParameters = collectGenericTypes(superClassType.getPyClass(), context);
+      List<PyType> superTypeArguments = superClassType instanceof PyCollectionType parameterized ?
+                                        parameterized.getElementTypes() : Collections.emptyList();
+      for (int i = 0; i < superTypeParameters.size(); i++) {
+        PyType superTypeParameter = superTypeParameters.get(i);
+        PyType superTypeArgument = ContainerUtil.getOrElse(superTypeArguments, i, null);
+        if (!superTypeParameter.equals(superTypeArgument)) {
+          results.put(superTypeParameter, superTypeArgument);
         }
       }
     }
     return results;
   }
 
-  @NotNull
-  private static Map<PyClass, PySubscriptionExpression> getResolvedSuperClassesAndTypeParameters(@NotNull PyClass pyClass,
-                                                                                                 @NotNull TypeEvalContext context) {
-    final Map<PyClass, PySubscriptionExpression> results = new LinkedHashMap<>();
-    final PyClassStub classStub = pyClass.getStub();
-
-    if (context.maySwitchToAST(pyClass)) {
-      for (PyExpression e : pyClass.getSuperClassExpressions()) {
-        final PySubscriptionExpression subscriptionExpr = as(e, PySubscriptionExpression.class);
-        final PyExpression superExpr = subscriptionExpr != null ? subscriptionExpr.getOperand() : e;
-        final PyType superType = context.getType(superExpr);
-        final PyClassType superClassType = as(superType, PyClassType.class);
-        final PyClass superClass = superClassType != null ? superClassType.getPyClass() : null;
-        if (superClass != null) {
-          results.put(superClass, subscriptionExpr);
-        }
-      }
-      return results;
-    }
-
-    final Iterable<QualifiedName> allBaseClassesQNames;
-    final List<PySubscriptionExpression> subscriptedBaseClasses = PyClassElementType.getSubscriptedSuperClassesStubLike(pyClass);
-    for (PySubscriptionExpression subscrExpr : subscriptedBaseClasses) {
-      PsiFile containingFile = subscrExpr.getContainingFile();
+  private static @NotNull List<PyClassType> evaluateSuperClassesAsTypeHints(@NotNull PyClass pyClass, @NotNull TypeEvalContext context) {
+    List<PyClassType> results = new ArrayList<>();
+    for (PyExpression superClassExpression : PyClassElementType.getSuperClassExpressions(pyClass)) {
+      PsiFile containingFile = superClassExpression.getContainingFile();
       if (containingFile instanceof PyExpressionCodeFragment) {
         containingFile.putUserData(FRAGMENT_OWNER, pyClass);
       }
-    }
-    final Map<QualifiedName, PySubscriptionExpression> baseClassQNameToExpr = new HashMap<>();
-    if (classStub == null) {
-      allBaseClassesQNames = PyClassElementType.getSuperClassQNames(pyClass).keySet();
-    }
-    else {
-      allBaseClassesQNames = classStub.getSuperClasses().keySet();
-    }
-    for (PySubscriptionExpression subscriptedBase : subscriptedBaseClasses) {
-      final PyExpression operand = subscriptedBase.getOperand();
-      if (operand instanceof PyReferenceExpression) {
-        final QualifiedName className = PyPsiUtils.asQualifiedName(operand);
-        baseClassQNameToExpr.put(className, subscriptedBase);
-      }
-    }
-    for (QualifiedName qName : allBaseClassesQNames) {
-      if (qName == null) continue;
-      final List<PsiElement> classes = PyResolveUtil.resolveQualifiedNameInScope(qName, (PyFile)pyClass.getContainingFile(), context);
-      // Better way to handle results of the multiresove
-      final PyClass firstFound = ContainerUtil.findInstance(classes, PyClass.class);
-      if (firstFound != null) {
-        results.put(firstFound, baseClassQNameToExpr.get(qName));
+      PyType type = Ref.deref(getType(superClassExpression, context));
+      if (type instanceof PyClassType classType) {
+        results.add(classType);
       }
     }
     return results;
-  }
-
-  @NotNull
-  private static List<PyExpression> getSubscriptionIndices(@NotNull PySubscriptionExpression expr) {
-    final PyExpression indexExpr = expr.getIndexExpression();
-    final PyTupleExpression tupleExpr = as(indexExpr, PyTupleExpression.class);
-    return tupleExpr != null ? Arrays.asList(tupleExpr.getElements()) : Collections.singletonList(indexExpr);
   }
 
   @NotNull
@@ -706,7 +656,8 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
       return Collections.emptyList();
     }
     // See https://mypy.readthedocs.io/en/stable/generics.html#defining-sub-classes-of-generic-classes
-    List<PySubscriptionExpression> parameterizedSuperClassExpressions = PyClassElementType.getSubscriptedSuperClassesStubLike(cls);
+    List<PySubscriptionExpression> parameterizedSuperClassExpressions =
+      ContainerUtil.filterIsInstance(PyClassElementType.getSuperClassExpressions(cls), PySubscriptionExpression.class);
     PySubscriptionExpression genericAsSuperClass = ContainerUtil.find(parameterizedSuperClassExpressions, s -> {
       return resolveToQualifiedNames(s.getOperand(), context.myContext).contains(GENERIC);
     });
