@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
+import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -99,10 +101,21 @@ internal object Weighers {
         with(PreferGetSetMethodsToPropertyWeigher) { addWeight(lookupElement, symbol) }
         with(NotImportedWeigher) { addWeight(context, lookupElement, symbol, availableWithoutImport = scopeKind != null) }
         with(KindWeigher) { addWeight(lookupElement, symbol) }
-        with(CallableWeigher) { addWeight(context, lookupElement, symbol, substitutor, scopeKind) }
         with(ClassifierWeigher) { addWeight(lookupElement, symbol, scopeKind) }
         with(VariableOrFunctionWeigher) { addWeight(lookupElement, symbol) }
         with(K2SoftDeprecationWeigher) { addWeight(lookupElement, symbol, context.languageVersionSettings) }
+    }
+
+    context(KtAnalysisSession)
+    fun applyWeighsToLookupElementForCallable(
+        context: WeighingContext,
+        lookupElement: LookupElement,
+        signature: KtCallableSignature<*>,
+        scopeKind: KtScopeKind?,
+    ) {
+        with(CallableWeigher) { addWeight(context, lookupElement, signature, scopeKind) }
+
+        applyWeighsToLookupElement(context, lookupElement, signature.symbol, scopeKind)
     }
 
     fun addWeighersToCompletionSorter(sorter: CompletionSorter): CompletionSorter =

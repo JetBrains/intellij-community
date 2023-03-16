@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
@@ -25,34 +26,35 @@ import org.jetbrains.kotlin.types.Variance
 
 internal class VariableLookupElementFactory {
     fun KtAnalysisSession.createLookup(
-        symbol: KtVariableLikeSymbol,
+        signature: KtVariableLikeSignature<*>,
         options: CallableInsertionOptions,
         substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
     ): LookupElementBuilder {
-        val rendered = renderVariable(symbol, substitutor)
-        var builder = createLookupElementBuilder(options, symbol, rendered, substitutor)
+        val rendered = renderVariable(signature)
+        var builder = createLookupElementBuilder(options, signature, rendered)
 
+        val symbol = signature.symbol
         if (symbol is KtPropertySymbol) {
             builder = builder.withLookupString(symbol.javaGetterName.asString())
             symbol.javaSetterName?.let { builder = builder.withLookupString(it.asString()) }
         }
 
-        return withSymbolInfo(symbol, builder, substitutor)
+        return withCallableSignatureInfo(signature, builder)
     }
 
     private fun KtAnalysisSession.createLookupElementBuilder(
         options: CallableInsertionOptions,
-        symbol: KtVariableLikeSymbol,
+        signature: KtVariableLikeSignature<*>,
         rendered: String,
-        substitutor: KtSubstitutor,
         insertionStrategy: CallableInsertionStrategy = options.insertionStrategy
     ): LookupElementBuilder {
-        val symbolType = substitutor.substitute(symbol.returnType)
+        val name = signature.symbol.name
+
         return when (insertionStrategy) {
             CallableInsertionStrategy.AsCall -> {
-                val functionalType = symbolType as KtFunctionalType
+                val functionalType = signature.returnType as KtFunctionalType
                 val lookupObject = FunctionCallLookupObject(
-                    symbol.name,
+                    name,
                     options,
                     rendered,
                     inputValueArgumentsAreRequired = functionalType.parameterTypes.isNotEmpty(),
@@ -61,22 +63,24 @@ internal class VariableLookupElementFactory {
                 )
 
                 val tailText = functionalType.parameterTypes.joinToString(prefix = "(", postfix = ")") {
-                    substitutor.substitute(it).render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT)
+                    it.render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT)
                 }
 
-                LookupElementBuilder.create(lookupObject, symbol.name.asString())
+                LookupElementBuilder.create(lookupObject, name.asString())
                     .withTailText(tailText, true)
                     .withInsertHandler(FunctionInsertionHandler)
             }
+
             is CallableInsertionStrategy.WithSuperDisambiguation -> {
-                val builder = createLookupElementBuilder(options, symbol, rendered, substitutor, insertionStrategy.subStrategy)
+                val builder = createLookupElementBuilder(options, signature, rendered, insertionStrategy.subStrategy)
                 updateLookupElementBuilderToInsertTypeQualifierOnSuper(builder, insertionStrategy)
             }
+
             else -> {
-                val lookupObject = VariableLookupObject(symbol.name, options, rendered)
+                val lookupObject = VariableLookupObject(name, options, rendered)
                 markIfSyntheticJavaProperty(
-                    LookupElementBuilder.create(lookupObject, symbol.name.asString())
-                        .withTailText(getTailText(symbol, substitutor), true), symbol
+                    LookupElementBuilder.create(lookupObject, name.asString())
+                        .withTailText(getTailText(signature), true), signature.symbol
                 ).withInsertHandler(VariableInsertionHandler)
             }
         }

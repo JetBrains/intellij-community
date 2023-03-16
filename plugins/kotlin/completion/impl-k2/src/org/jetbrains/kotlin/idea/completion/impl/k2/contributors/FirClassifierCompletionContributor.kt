@@ -65,7 +65,9 @@ internal open class FirClassifierCompletionContributor(
             visibilityChecker
         )
             .filter { filterClassifiers(it.symbol) }
-            .forEach { (classifierSymbol, scopeKind) ->
+            .forEach { symbolWithScopeKind ->
+                val classifierSymbol = symbolWithScopeKind.symbol
+                val scopeKind = symbolWithScopeKind.scopeKind
                 availableFromScope += classifierSymbol
                 addClassifierSymbolToCompletion(classifierSymbol, context, scopeKind, getImportingStrategy(classifierSymbol))
             }

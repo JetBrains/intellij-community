@@ -9,8 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider.getCallableMetadata
 import org.jetbrains.kotlin.psi.UserDataProperty
@@ -66,11 +65,10 @@ internal object CallableWeigher {
     fun KtAnalysisSession.addWeight(
         context: WeighingContext,
         lookupElement: LookupElement,
-        symbol: KtSymbol,
-        substitutor: KtSubstitutor,
+        signature: KtCallableSignature<*>,
         scopeKind: KtScopeKind?
     ) {
-        lookupElement.callableWeight = getCallableMetadata(context, symbol, substitutor, scopeKind)
+        lookupElement.callableWeight = getCallableMetadata(context, signature, scopeKind)
     }
 
     internal var LookupElement.callableWeight: CallableMetadataProvider.CallableMetadata? by UserDataProperty(

@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.completion.lookups
 
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.idea.completion.impl.k2.KotlinCompletionImplK2Bundle
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderFunctionParameters
 import org.jetbrains.kotlin.name.FqName
@@ -17,21 +17,22 @@ import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 
 internal object TailTextProvider {
-    fun KtAnalysisSession.getTailText(symbol: KtCallableSymbol, substitutor: KtSubstitutor): String = buildString {
-        if (symbol is KtFunctionLikeSymbol) {
-            if (insertLambdaBraces(symbol)) {
+    fun KtAnalysisSession.getTailText(signature: KtCallableSignature<*>): String = buildString {
+        if (signature is KtFunctionLikeSignature<*>) {
+            if (insertLambdaBraces(signature)) {
                 append(" {...}")
             } else {
-                append(renderFunctionParameters(symbol, substitutor))
+                append(renderFunctionParameters(signature))
             }
         }
 
-        symbol.receiverType?.let { receiverType ->
+        // use unsubstituted type when rendering receiver type of extension
+        signature.symbol.receiverType?.let { receiverType ->
             val renderedType = receiverType.render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT)
             append(KotlinCompletionImplK2Bundle.message("presentation.tail.for.0", renderedType))
         }
 
-        symbol.getContainerPresentation()?.let { append(it) }
+        signature.symbol.getContainerPresentation()?.let { append(it) }
     }
 
     fun KtAnalysisSession.getTailText(
@@ -73,9 +74,9 @@ internal object TailTextProvider {
     private fun FqName.asStringForTailText(): String =
         if (isRoot) "<root>" else asString()
 
-    fun KtAnalysisSession.insertLambdaBraces(symbol: KtFunctionLikeSymbol): Boolean {
+    fun KtAnalysisSession.insertLambdaBraces(symbol: KtFunctionLikeSignature<*>): Boolean {
         val singleParam = symbol.valueParameters.singleOrNull()
-        return singleParam != null && !singleParam.hasDefaultValue && singleParam.returnType is KtFunctionalType
+        return singleParam != null && !singleParam.symbol.hasDefaultValue && singleParam.returnType is KtFunctionalType
     }
 
     fun KtAnalysisSession.insertLambdaBraces(symbol: KtFunctionalType): Boolean {

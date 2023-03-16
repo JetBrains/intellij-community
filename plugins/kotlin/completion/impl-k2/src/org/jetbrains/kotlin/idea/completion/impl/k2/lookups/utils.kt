@@ -11,29 +11,37 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
+import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KtTypeParameterType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
-import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeText
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeTextForCallable
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.TypeTextProvider.getTypeTextForClassifier
 import org.jetbrains.kotlin.idea.completion.lookups.factories.FunctionCallLookupObject
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtSuperExpression
 
-internal fun KtAnalysisSession.withSymbolInfo(
-    symbol: KtSymbol,
-    elementBuilder: LookupElementBuilder,
-    substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
+internal fun KtAnalysisSession.withClassifierSymbolInfo(
+    symbol: KtClassifierSymbol,
+    elementBuilder: LookupElementBuilder
 ): LookupElementBuilder = elementBuilder
     .withPsiElement(symbol.psi) // TODO check if it is a heavy operation and should be postponed
     .withIcon(getIconFor(symbol))
-    .withTypeText(getTypeText(symbol, treatAsFunctionCall = elementBuilder.`object` is FunctionCallLookupObject, substitutor))
+    .withTypeText(getTypeTextForClassifier(symbol))
+
+internal fun KtAnalysisSession.withCallableSignatureInfo(
+    signature: KtCallableSignature<*>,
+    elementBuilder: LookupElementBuilder
+): LookupElementBuilder = elementBuilder
+    .withPsiElement(signature.symbol.psi)
+    .withIcon(getIconFor(signature.symbol))
+    .withTypeText(getTypeTextForCallable(signature, treatAsFunctionCall = elementBuilder.`object` is FunctionCallLookupObject))
 
 
 // FIXME: This is a hack, we should think how we can get rid of it

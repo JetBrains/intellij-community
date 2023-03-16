@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.scopes.KtScopeNameFilter
+import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.fir.codeInsight.HLIndexHelper
@@ -97,19 +97,19 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
             }
         } ?: return
 
-        applyWeighers(context, lookup, symbol, scopeKind, KtSubstitutor.Empty(token))
+        Weighers.applyWeighsToLookupElement(context, lookup, symbol, scopeKind)
         sink.addElement(lookup)
     }
 
     protected fun KtAnalysisSession.addCallableSymbolToCompletion(
         context: WeighingContext,
-        symbol: KtCallableSymbol,
+        signature: KtCallableSignature<*>,
         options: CallableInsertionOptions,
         scopeKind: KtScopeKind?,
-        substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
         priority: ItemPriority? = null,
         explicitReceiverTypeHint: KtType? = null,
     ) {
+        val symbol = signature.symbol
         val name = when (symbol) {
             is KtNamedSymbol -> symbol.name
             is KtConstructorSymbol -> (symbol.getContainingSymbol() as? KtNamedClassOrObjectSymbol)?.name
@@ -119,11 +119,11 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         // Don't offer any deprecated items that could leads to compile errors.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return
         val lookup = with(lookupElementFactory) {
-            createCallableLookupElement(name, symbol, options, substitutor, context.expectedType)
+            createCallableLookupElement(name, signature, options, context.expectedType)
         }
         priority?.let { lookup.priority = it }
 
-        applyWeighers(context, lookup, symbol, scopeKind, substitutor)
+        Weighers.applyWeighsToLookupElementForCallable(context, lookup, signature, scopeKind)
         sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT)))
     }
 
@@ -175,16 +175,6 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     protected fun KtExpression.reference() = when (this) {
         is KtDotQualifiedExpression -> selectorExpression?.mainReference
         else -> mainReference
-    }
-
-    private fun KtAnalysisSession.applyWeighers(
-        context: WeighingContext,
-        lookupElement: LookupElement,
-        symbol: KtSymbol,
-        scopeKind: KtScopeKind?,
-        substitutor: KtSubstitutor,
-    ): LookupElement = lookupElement.apply {
-        with(Weighers) { applyWeighsToLookupElement(context, lookupElement, symbol, scopeKind, substitutor) }
     }
 }
 

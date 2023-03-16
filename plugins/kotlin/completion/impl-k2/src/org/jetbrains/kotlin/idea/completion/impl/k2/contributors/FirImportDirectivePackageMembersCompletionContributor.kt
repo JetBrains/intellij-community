@@ -30,7 +30,7 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
             .forEach {
                 addCallableSymbolToCompletion(
                     weighingContext,
-                    it,
+                    it.asSignature(),
                     CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
                     scopeKind = null,
                 )
