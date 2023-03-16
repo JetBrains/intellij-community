@@ -112,11 +112,12 @@ internal class GitLabFiltersPanelFactory(
     point: RelativePoint,
     popupState: PopupState<JBPopup>,
     participantsLoader: suspend () -> List<GitLabUserDTO>
-  ): GitLabUserDTO? {
-    return ChooserPopupUtil.showAsyncChooserPopup(point, popupState, itemsLoader = { participantsLoader() }) { user ->
+  ): GitLabUserDTO? = ChooserPopupUtil.showAsyncChooserPopup(
+    point, popupState,
+    itemsLoader = { participantsLoader() },
+    presenter = { user ->
       ChooserPopupUtil.PopupItemPresentation.Simple(shortText = user.name, icon = vm.avatarIconsProvider.getIcon(user, Avatar.Sizes.BASE))
-    }
-  }
+    })
 
   companion object {
     private fun getShortText(stateFilterValue: MergeRequestStateFilterValue): @Nls String = when (stateFilterValue) {

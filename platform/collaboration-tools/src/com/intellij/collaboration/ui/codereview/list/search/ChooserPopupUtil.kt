@@ -2,9 +2,11 @@
 package com.intellij.collaboration.ui.codereview.list.search
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.execution.ui.FragmentedSettingsUtil
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBCheckBox
@@ -28,14 +30,16 @@ object ChooserPopupUtil {
   suspend fun <T> showChooserPopup(point: RelativePoint,
                                    popupState: PopupState<JBPopup>,
                                    items: List<T>,
-                                   presenter: (T) -> PopupItemPresentation): T? =
-    showChooserPopup(point, popupState, items, { presenter(it as T).shortText }, createSimpleItemRenderer(presenter))
+                                   presenter: (T) -> PopupItemPresentation,
+                                   popupConfig: PopupConfig = PopupConfig.DEFAULT): T? =
+    showChooserPopup(point, popupState, items, { presenter(it as T).shortText }, createSimpleItemRenderer(presenter), popupConfig)
 
   suspend fun <T> showChooserPopup(point: RelativePoint,
                                    popupState: PopupState<JBPopup>,
                                    items: List<T>,
                                    filteringMapper: (T) -> String,
-                                   renderer: ListCellRenderer<T>): T? {
+                                   renderer: ListCellRenderer<T>,
+                                   popupConfig: PopupConfig = PopupConfig.DEFAULT): T? {
     val listModel = CollectionListModel(items)
     val list = createList(listModel, renderer)
 
@@ -44,10 +48,11 @@ object ChooserPopupUtil {
       .setFilteringEnabled { filteringMapper(it as T) }
       .setResizable(true)
       .setMovable(true)
-      .setFilterAlwaysVisible(true)
+      .setFilterAlwaysVisible(popupConfig.alwaysShowSearchField)
       .createPopup()
 
-    tuneSearchField(popup)
+    configureSearchField(popup, popupConfig)
+
     popupState.prepareToShow(popup)
     return popup.showAndAwaitSubmission(list, point)
   }
@@ -55,7 +60,8 @@ object ChooserPopupUtil {
   suspend fun <T> showAsyncChooserPopup(point: RelativePoint,
                                         popupState: PopupState<JBPopup>,
                                         itemsLoader: suspend () -> List<T>,
-                                        presenter: (T) -> PopupItemPresentation): T? {
+                                        presenter: (T) -> PopupItemPresentation,
+                                        popupConfig: PopupConfig = PopupConfig.DEFAULT): T? {
     val listModel = CollectionListModel<T>()
     val list = createList(listModel, createSimpleItemRenderer(presenter))
     val loadingListener = ListLoadingListener(listModel, itemsLoader, list)
@@ -65,14 +71,17 @@ object ChooserPopupUtil {
       .setFilteringEnabled { presenter(it as T).shortText }
       .setResizable(true)
       .setMovable(true)
-      .setFilterAlwaysVisible(true)
+      .setFilterAlwaysVisible(popupConfig.alwaysShowSearchField)
       .addListener(loadingListener)
       .createPopup()
 
-    tuneSearchField(popup)
+    configureSearchField(popup, popupConfig)
+
     popupState.prepareToShow(popup)
     return popup.showAndAwaitSubmission(list, point)
   }
+
+
 
   suspend fun <T> JBPopup.showAndAwaitListSubmission(point: RelativePoint): T? {
     @Suppress("UNCHECKED_CAST")
@@ -213,10 +222,32 @@ object ChooserPopupUtil {
     }
   }
 
-  private fun tuneSearchField(popup: JBPopup) {
+  private fun configureSearchField(popup: JBPopup, popupConfig: PopupConfig) {
+    val searchTextField = UIUtil.findComponentOfType(popup.content, SearchTextField::class.java)
+    if (searchTextField != null) {
+      tuneSearchFieldForNewUI(searchTextField)
+      setSearchFieldPlaceholder(searchTextField, popupConfig.searchTextPlaceHolder)
+    }
+  }
+
+  private fun tuneSearchFieldForNewUI(searchTextField: SearchTextField) {
     if (!ExperimentalUI.isNewUI()) return
-    val searchTextField = UIUtil.findComponentOfType(popup.content, SearchTextField::class.java) ?: return
     AbstractPopup.customizeSearchFieldLook(searchTextField, true)
+  }
+
+  private fun setSearchFieldPlaceholder(searchTextField: SearchTextField, placeholderText: @NlsContexts.StatusText String?) {
+    placeholderText ?: return
+    searchTextField.textEditor.emptyText.text = placeholderText
+    FragmentedSettingsUtil.setupPlaceholderVisibility(searchTextField.textEditor)
+  }
+}
+
+data class PopupConfig(
+  val alwaysShowSearchField: Boolean = true,
+  val searchTextPlaceHolder: @NlsContexts.StatusText String? = null
+) {
+  companion object {
+    val DEFAULT = PopupConfig()
   }
 }
 

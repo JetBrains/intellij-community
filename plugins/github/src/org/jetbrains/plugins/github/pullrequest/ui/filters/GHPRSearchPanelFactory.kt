@@ -36,21 +36,27 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
               valuePresenter = Companion::getShortText),
     DropDownComponentFactory(vm.authorFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.author")) { point, popupState ->
-        showAsyncChooserPopup(point, popupState, { vm.getAuthors() }) {
-          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE), it.name)
-        }?.login
+        showAsyncChooserPopup(
+          point, popupState,
+          itemsLoader = { vm.getAuthors() },
+          presenter = { PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE), it.name) }
+        )?.login
       },
     DropDownComponentFactory(vm.labelFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.label")) { point, popupState ->
-        showAsyncChooserPopup(point, popupState, { vm.getLabels() }) {
-          PopupItemPresentation.Simple(it.name)
-        }?.name
+        showAsyncChooserPopup(
+          point, popupState,
+          itemsLoader = { vm.getLabels() },
+          presenter = { PopupItemPresentation.Simple(it.name) }
+        )?.name
       },
     DropDownComponentFactory(vm.assigneeFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.assignee")) { point, popupState ->
-        showAsyncChooserPopup(point, popupState, { vm.getAssignees() }) {
-          PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE), it.name)
-        }?.login
+        showAsyncChooserPopup(
+          point, popupState,
+          itemsLoader = { vm.getAssignees() },
+          presenter = { PopupItemPresentation.Simple(it.shortName, avatarIconsProvider.getIcon(it.avatarUrl, Avatar.Sizes.BASE), it.name) }
+        )?.login
       },
     DropDownComponentFactory(vm.reviewFilterState)
       .create(viewScope,

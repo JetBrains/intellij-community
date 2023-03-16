@@ -5,6 +5,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
+import com.intellij.collaboration.ui.codereview.list.search.PopupConfig
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
@@ -116,7 +117,10 @@ object CodeReviewDetailsCommitsComponentFactory {
           },
           renderer = CommitRenderer.createCommitRenderer { commit: T? ->
             SelectableWrapper(commitPresenter(commit), commit == selectedCommit)
-          }
+          },
+          popupConfig = PopupConfig(
+            searchTextPlaceHolder = CollaborationToolsBundle.message("review.details.commits.search.placeholder")
+          )
         )
 
         if (chosenCommit == null) changesVm.selectAllCommits() else changesVm.selectCommit(chosenCommit)

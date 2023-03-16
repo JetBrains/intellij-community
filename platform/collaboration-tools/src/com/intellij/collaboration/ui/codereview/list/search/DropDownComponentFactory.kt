@@ -75,9 +75,9 @@ class DropDownComponentFactory<T : Any>(private val state: MutableStateFlow<T?>)
              onSelect: () -> Unit,
              valuePresenter: (T) -> @Nls String = Any::toString): JComponent =
     create(vmScope, filterName, valuePresenter) { point, popupState ->
-      val selectedItem = ChooserPopupUtil.showChooserPopup(point, popupState, items) { popupItem ->
+      val selectedItem = ChooserPopupUtil.showChooserPopup(point, popupState, items, presenter = { popupItem ->
         ChooserPopupUtil.PopupItemPresentation.Simple(valuePresenter(popupItem))
-      }
+      })
       if (selectedItem != null) {
         onSelect()
       }
