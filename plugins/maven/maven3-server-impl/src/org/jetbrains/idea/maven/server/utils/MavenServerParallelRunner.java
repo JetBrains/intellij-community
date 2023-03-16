@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.utils;
 
+import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -46,18 +47,20 @@ public final class MavenServerParallelRunner {
     Set<E> checkedExceptions = ConcurrentHashMap.newKeySet();
 
     List<R> result = collection.parallelStream().map(item -> {
-      try {
-        return method.apply(item);
-      }
-      catch (RuntimeException ex) {
-        runtimeExceptions.add(ex);
-        throw ex;
-      }
-      catch (Exception ex) {
-        checkedExceptions.add((E)ex);
-        throw new RuntimeException(ex);
-      }
-    }).collect(Collectors.toList());
+        try {
+          return new Pair<>(true, method.apply(item));
+        }
+        catch (RuntimeException ex) {
+          runtimeExceptions.add(ex);
+        }
+        catch (Exception ex) {
+          checkedExceptions.add((E)ex);
+        }
+        return new Pair<Boolean, R>(false, null);
+      })
+      .filter(pair -> pair.getFirst())
+      .map(pair -> pair.second)
+      .collect(Collectors.toList());
 
     if (!runtimeExceptions.isEmpty()) {
       throw runtimeExceptions.stream().reduce((ex1, ex2) -> {
