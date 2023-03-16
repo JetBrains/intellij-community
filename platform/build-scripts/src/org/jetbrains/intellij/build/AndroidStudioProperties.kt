@@ -52,6 +52,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.ant",
       "intellij.eclipse",
       "intellij.featuresTrainer",
+      "intellij.gradle.analysis",
       "intellij.gradle.dependencyUpdater",
       "intellij.gradle.java.maven",
       "intellij.grazie",
