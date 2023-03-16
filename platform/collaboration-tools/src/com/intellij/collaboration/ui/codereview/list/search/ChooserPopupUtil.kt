@@ -13,6 +13,7 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.PopupState
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
@@ -207,6 +208,10 @@ object ChooserPopupUtil {
   }
 
   class SimplePopupItemRenderer<T>(private val presenter: (T) -> PopupItemPresentation) : ColoredListCellRenderer<T>() {
+    init {
+      iconTextGap = JBUIScale.scale(4)
+    }
+
     override fun customizeCellRenderer(list: JList<out T>, value: T, index: Int, selected: Boolean, hasFocus: Boolean) {
       val presentation = presenter(value)
       icon = presentation.icon
@@ -255,8 +260,10 @@ class SimpleSelectablePopupItemRenderer<T> private constructor(private val revie
   private val checkBox: JBCheckBox = JBCheckBox().apply {
     isOpaque = false
   }
-  private val label: SimpleColoredComponent = SimpleColoredComponent()
-  private val panel = BorderLayoutPanel(10, 5).apply {
+  private val label: SimpleColoredComponent = SimpleColoredComponent().apply {
+    iconTextGap = JBUIScale.scale(4)
+  }
+  private val panel = BorderLayoutPanel(6, 5).apply {
     addToLeft(checkBox)
     addToCenter(label)
     border = JBUI.Borders.empty(TOP_BOTTOM_GAP, LEFT_RIGHT_GAP)
@@ -296,7 +303,7 @@ class SimpleSelectablePopupItemRenderer<T> private constructor(private val revie
       return RoundedCellRenderer(simplePopupItemRenderer, false)
     }
 
-    private const val TOP_BOTTOM_GAP = 5
+    private const val TOP_BOTTOM_GAP = 1
     private val LEFT_RIGHT_GAP: Int
       get() = CollaborationToolsUIUtil.getSize(oldUI = 5, newUI = 0) // in case of the newUI gap handled by SelectablePanel
   }
