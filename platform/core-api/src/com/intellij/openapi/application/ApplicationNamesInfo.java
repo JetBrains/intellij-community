@@ -89,8 +89,9 @@ public final class ApplicationNamesInfo {
     }
   }
 
-  private static String getAppInfoData() {
-    // not easy to inject byte array using ASM - it is not constant value
+  @ApiStatus.Internal
+  public static String getAppInfoData() {
+    // not easy to inject a byte array using ASM - it is not constant value
     return "";
   }
 

@@ -5,17 +5,17 @@ package com.intellij.ui
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.ProjectSelfieUtil.readImage
-import com.intellij.platform.ProjectSelfieUtil.writeImage
+import com.intellij.ui.icons.readImage
+import com.intellij.ui.icons.writeImage
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.JBHiDPIScaledImage
-import com.intellij.util.io.DigestUtil
 import com.intellij.util.loadImageForStartUp
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBInsets
@@ -24,14 +24,10 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import org.jetbrains.xxh3.Xxh3
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 import java.awt.image.BufferedImage
-import java.math.BigInteger
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -39,7 +35,7 @@ import java.nio.file.Path
  * the tag attributes in ApplicationInfo.xsd file.
  */
 class Splash(private val image: BufferedImage) : Dialog(null as Frame?,
-                                               "splash" /* not visible, but available through window properties on Linux */) {
+                                                        "splash" /* not visible, but available through window properties on Linux */) {
   init {
     isUndecorated = true
     background = Gray.TRANSPARENT
@@ -86,7 +82,7 @@ internal fun loadSplashImage(appInfo: ApplicationInfoEx): BufferedImage {
     GlobalScope.launch(Dispatchers.IO) {
       try {
         val rawImage = (if (result is JBHiDPIScaledImage) result.delegate else result) as BufferedImage
-        writeImage(file = file, image = rawImage, sysScale = scale)
+        writeImage(file = file, image = rawImage, scale = scale)
       }
       catch (e: Throwable) {
         logger<Splash>().warn("Cannot save splash image", e)
@@ -125,7 +121,7 @@ private fun setLocationInTheCenterOfScreen(window: Window) {
 
 private fun loadImageFromCache(file: Path): BufferedImage? {
   try {
-    return readImage(file, ScaleContext::create)
+    return readImage(file = file, scaleContextProvider = ScaleContext::create)
   }
   catch (e: Throwable) {
     // don't use `error`, because it can crash application
@@ -137,33 +133,39 @@ private fun loadImageFromCache(file: Path): BufferedImage? {
 private fun getCacheFile(scale: Float, appInfo: ApplicationInfoEx): Path {
   val path = appInfo.splashImageUrl
 
-  val d = DigestUtil.sha256()
-  d.update(path.toByteArray(StandardCharsets.UTF_8))
-  val buffer = ByteBuffer.allocate(java.lang.Long.SIZE + 1).order(ByteOrder.LITTLE_ENDIAN)
-  // the path for EAP and release builds is the same, but content maybe different
-  buffer.put((if (appInfo.isEAP) 1 else 0).toByte())
-
   // for dev run build data is equal to run time
-  if (appInfo.build.isSnapshot) {
-    var size: Long = 0
-    try {
-      val pathToSplash = if (path.startsWith('/')) path.substring(1) else path
-      val resource = Splash::class.java.classLoader.getResource(pathToSplash)
-      if (resource != null) {
-        size = Files.size(Path.of(resource.toURI()))
+  val key: Long = if (appInfo.build.isSnapshot) {
+    val appInfoData = ApplicationNamesInfo.getAppInfoData()
+    if (appInfoData.isEmpty()) {
+      try {
+        val pathToSplash = if (path.startsWith('/')) path.substring(1) else path
+        Splash::class.java.classLoader.getResourceAsStream(pathToSplash)?.use { it.available() }?.toLong() ?: 0L
+      }
+      catch (e: Throwable) {
+        logger<Splash>().warn("Failed to read splash image", e)
+        0L
       }
     }
-    catch (e: Throwable) {
-      logger<Splash>().warn("Failed to read splash image", e)
+    else {
+      Xxh3.hashUnencodedChars(appInfoData)
     }
-    buffer.putLong(size)
   }
   else {
-    buffer.putLong(appInfo.buildDate.timeInMillis)
+    appInfo.buildDate.timeInMillis
   }
-  buffer.flip()
-  d.update(buffer)
-  val encodedDigest = BigInteger(1, d.digest()).toString(Character.MAX_RADIX)
-  return Path.of(PathManager.getSystemPath(), "splash", "$encodedDigest.$scale.ij")
+
+  // the path for EAP and release builds is the same, but content maybe different
+  val hashSource = longArrayOf(
+    Xxh3.hashUnencodedChars(path),
+    Xxh3.hashUnencodedChars(appInfo.build.asString()),
+    if (appInfo.isEAP) 1 else 0,
+    scale.toBits().toLong(),
+    key,
+  )
+  val fileName = java.lang.Long.toUnsignedString(Xxh3.hashLongs(hashSource), Character.MAX_RADIX) +
+                 "-" +
+                 java.lang.Long.toUnsignedString(Xxh3.hashLongs(hashSource, 4355994828026564186), Character.MAX_RADIX) +
+                 ".ij"
+  return Path.of(PathManager.getSystemPath(), "splash", fileName)
 }
 

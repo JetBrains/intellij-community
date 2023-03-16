@@ -1,4 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.ui.icons
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -10,23 +11,26 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.ImageLoader
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
+import com.intellij.util.lang.ByteBufferCleaner
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus.Internal
+import sun.awt.image.SunWritableRaster
 import java.awt.Component
 import java.awt.Image
+import java.awt.Point
 import java.awt.Toolkit
-import java.awt.image.BufferedImage
-import java.awt.image.FilteredImageSource
-import java.awt.image.ImageFilter
+import java.awt.image.*
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.URI
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.channels.FileChannel
+import java.nio.file.*
+import java.util.*
 import javax.imageio.ImageIO
 import javax.imageio.stream.MemoryCacheImageInputStream
 import javax.swing.Icon
@@ -171,4 +175,85 @@ fun loadPng(stream: InputStream, scale: Float, originalUserSize: ImageLoader.Dim
     IconLoadMeasurer.pngDecoding.end(start)
   }
   return image
+}
+
+@Internal
+fun readImage(file: Path, scaleContextProvider: () -> ScaleContext): BufferedImage? {
+  val buffer = try {
+    FileChannel.open(file).use { channel ->
+      channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size()).order(ByteOrder.LITTLE_ENDIAN)
+    }
+  }
+  catch (ignore: NoSuchFileException) {
+    return null
+  }
+
+  try {
+    val intBuffer = buffer.asIntBuffer()
+    val w = intBuffer.get()
+    val h = intBuffer.get()
+
+    val scaleContext = scaleContextProvider()
+
+    val currentSysScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+    val imageScale = java.lang.Float.intBitsToFloat(intBuffer.get())
+    if (currentSysScale != imageScale) {
+      LOG.warn("Image cache is not used as scale differs (current=$currentSysScale, image=$imageScale, file=$file)")
+      return null
+    }
+
+    val dataBuffer = DataBufferInt(w * h)
+    intBuffer.get(SunWritableRaster.stealData(dataBuffer, 0))
+    SunWritableRaster.makeTrackable(dataBuffer)
+    val colorModel = ColorModel.getRGBdefault() as DirectColorModel
+    val raster = Raster.createPackedRaster(dataBuffer, w, h, w, colorModel.masks, Point(0, 0))
+
+    @Suppress("UndesirableClassUsage")
+    val rawImage = BufferedImage(colorModel, raster, false, null)
+    return ImageUtil.ensureHiDPI(rawImage, scaleContext) as BufferedImage
+  }
+  finally {
+    ByteBufferCleaner.unmapBuffer(buffer)
+  }
+}
+
+@Internal
+fun writeImage(file: Path, image: BufferedImage, scale: Float) {
+  val parent = file.parent
+  Files.createDirectories(parent)
+  val tempFile = Files.createTempFile(parent, file.fileName.toString(), ".ij")
+  FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE)).use { channel ->
+    val imageData = (image.raster.dataBuffer as DataBufferInt).data
+
+    val buffer = ByteBuffer.allocateDirect(imageData.size * Int.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN)
+    try {
+      buffer.putInt(image.width)
+      buffer.putInt(image.height)
+      buffer.putInt(scale.toBits())
+      buffer.flip()
+      do {
+        channel.write(buffer)
+      }
+      while (buffer.hasRemaining())
+
+      buffer.clear()
+
+      buffer.asIntBuffer().put(imageData)
+      buffer.position(0)
+      do {
+        channel.write(buffer)
+      }
+      while (buffer.hasRemaining())
+    }
+    finally {
+      ByteBufferCleaner.unmapBuffer(buffer)
+    }
+  }
+
+  try {
+    Files.move(tempFile, file, StandardCopyOption.ATOMIC_MOVE)
+  }
+  catch (e: AtomicMoveNotSupportedException) {
+    Files.move(tempFile, file)
+  }
 }
