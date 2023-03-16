@@ -142,7 +142,7 @@ public class PsiSnippetAttributeValueImpl extends LeafPsiElement implements PsiS
 
     @Override
     public boolean isReferenceTo(@NotNull PsiElement element) {
-      if (!(element instanceof PsiClass) && !(element instanceof PsiJavaFile)) return false;
+      if (!(element instanceof PsiFile)) return false;
       return getElement().getManager().areElementsEquivalent(resolve(), element);
     }
 
