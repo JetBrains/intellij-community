@@ -111,9 +111,9 @@ interface UastCodeGenerationPlugin {
    * ```
    * @param returnExpression the initial return expression
    * @param context new context in which return is used (label is calculated due to this context)
-   * @return new return expression with changed label if return is explicit, otherwise null if return is implicit 
+   * @return new return expression with changed label if return is explicit, otherwise same expression if return is implicit 
    */
-  fun changeLabel(returnExpression: UReturnExpression, context: PsiElement) : UReturnExpression?
+  fun changeLabel(returnExpression: UReturnExpression, context: PsiElement) : UReturnExpression
 }
 
 /**

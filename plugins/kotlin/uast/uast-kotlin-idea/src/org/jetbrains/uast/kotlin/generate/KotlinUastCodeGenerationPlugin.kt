@@ -143,11 +143,11 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
         return assignmentExpression.toUElementOfType()
     }
 
-    override fun changeLabel(returnExpression: UReturnExpression, context: PsiElement): UReturnExpression? {
-        if (returnExpression is KotlinUImplicitReturnExpression) return null
+    override fun changeLabel(returnExpression: UReturnExpression, context: PsiElement): UReturnExpression {
+        if (returnExpression is KotlinUImplicitReturnExpression) return returnExpression
         val factory = getElementFactory(context.project)
 
-        return factory.createReturnExpression(expression = returnExpression.returnExpression, inLambda = true, context)
+        return factory.createReturnExpression(expression = returnExpression.returnExpression, inLambda = true, context) ?: returnExpression
     }
 }
 
