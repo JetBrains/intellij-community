@@ -256,6 +256,12 @@ public abstract class PsiAnchor {
     }
 
     @Override
+    public @NotNull PsiElement retrieveOrThrow() {
+      PsiUtilCore.ensureValid(myElement);
+      return super.retrieveOrThrow();
+    }
+
+    @Override
     public PsiFile getFile() {
       return myElement.getContainingFile();
     }
