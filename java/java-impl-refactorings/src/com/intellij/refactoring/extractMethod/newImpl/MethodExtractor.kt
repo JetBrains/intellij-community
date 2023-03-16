@@ -200,12 +200,6 @@ class MethodExtractor {
         inputParameters = options.inputParameters.filterIndexed { index, _ -> index !in disabledParameters }
       )
     }
-    if (visibility != null) {
-      options = options.copy(visibility = visibility)
-    }
-    if (options.targetClass.isInterface) {
-      options = ExtractMethodPipeline.adjustModifiersForInterface(options.copy(visibility = PsiModifier.PRIVATE))
-    }
     if (doRefactor) {
       extractMethod(options)
     }

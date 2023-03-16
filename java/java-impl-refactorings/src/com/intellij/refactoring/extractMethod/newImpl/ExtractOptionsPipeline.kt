@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.search.LocalSearchScope
@@ -44,11 +43,7 @@ object ExtractMethodPipeline {
       options = withForcedStatic(analyzer, options) ?: options
     }
     options = withMappedParametersInput(options, extractDialog.chosenParameters.toList())
-    options = if (extractOptions.targetClass.isInterface) {
-      adjustModifiersForInterface(options.copy(visibility = PsiModifier.PRIVATE))
-    } else {
-      options.copy(visibility = extractDialog.visibility)
-    }
+    options = options.copy(visibility = extractDialog.visibility)
 
     if (extractDialog.isChainedConstructor) {
       options = asConstructor(analyzer, options) ?: options
@@ -59,13 +54,13 @@ object ExtractMethodPipeline {
   }
 
   fun withTargetClass(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions, targetClass: PsiClass): ExtractOptions? {
+    if (targetClass.isInterface && !PsiUtil.isLanguageLevel8OrHigher(targetClass)) return null
+    if (extractOptions.targetClass == targetClass) return extractOptions
     val sourceMember = PsiTreeUtil.getContextOfType(extractOptions.elements.first(), PsiMember::class.java)
     val targetMember = PsiTreeUtil.getChildOfType(targetClass, PsiMember::class.java)
     if (sourceMember == null || targetMember == null) return null
-    if (extractOptions.targetClass == targetClass) return extractOptions
 
     val typeParameters = findAllTypeLists(sourceMember, targetClass).flatMap { findUsedTypeParameters(it, extractOptions.elements) }
-
 
     val additionalReferences = analyzer.findOuterLocals(sourceMember, targetMember) ?: return null
     val additionalParameters = additionalReferences.map { inputParameterOf(it) }
@@ -129,15 +124,6 @@ object ExtractMethodPipeline {
       inputParameters = mappedParameters,
       disabledParameters = disabledParameters
     )
-  }
-
-  fun adjustModifiersForInterface(options: ExtractOptions): ExtractOptions {
-    if (!options.targetClass.isInterface) return options
-    val isJava8 = PsiUtil.getLanguageLevel(options.targetClass) == LanguageLevel.JDK_1_8
-    val visibility = if (options.visibility == PsiModifier.PRIVATE && isJava8) null else options.visibility
-    val holder = findClassMember(options.elements.first())
-    val isStatic = holder is PsiField || options.isStatic
-    return options.copy(visibility = visibility, isStatic = isStatic)
   }
 
   private fun withMappedName(extractOptions: ExtractOptions, methodName: String) = if (extractOptions.isConstructor) extractOptions else extractOptions.copy(methodName = methodName)
