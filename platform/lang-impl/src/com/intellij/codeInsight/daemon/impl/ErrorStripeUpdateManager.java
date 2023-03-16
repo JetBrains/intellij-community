@@ -67,7 +67,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
 
   void setOrRefreshErrorStripeRenderer(@NotNull EditorMarkupModel editorMarkupModel, @NotNull PsiFile file) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!editorMarkupModel.isErrorStripeVisible() || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
+    if (!editorMarkupModel.isErrorStripeVisible()) {
       return;
     }
     ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
@@ -82,7 +82,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
     ModalityState modality = ModalityState.defaultModalityState();
     ProjectUtilKt.executeOnPooledThread(myProject, () -> {
       Editor editor = editorMarkupModel.getEditor();
-      if (editor.isDisposed()) {
+      if (editor.isDisposed() || !file.isValid() || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
         return;
       }
 
