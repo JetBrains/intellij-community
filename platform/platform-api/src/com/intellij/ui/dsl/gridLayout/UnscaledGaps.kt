@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Insets
@@ -38,3 +39,7 @@ fun Insets.toUnscaledGaps(): UnscaledGaps =
 
 @Internal
 fun Int.unscale(): Int = (this / JBUIScale.scale(1f)).roundToInt()
+
+fun UnscaledGaps.toJBEmptyBorder(): JBEmptyBorder {
+  return JBEmptyBorder(top, left, bottom, right)
+}

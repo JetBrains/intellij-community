@@ -3,7 +3,6 @@ package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBEmptyBorder
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Insets
 
@@ -31,10 +30,6 @@ data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val ri
 
 fun JBGaps(top: Int = 0, left: Int = 0, bottom: Int = 0, right: Int = 0): Gaps {
   return Gaps(JBUIScale.scale(top), JBUIScale.scale(left), JBUIScale.scale(bottom), JBUIScale.scale(right))
-}
-
-fun Gaps.toJBEmptyBorder(): JBEmptyBorder {
-  return JBEmptyBorder(top, left, bottom, right)
 }
 
 fun Insets.toGaps(): Gaps {

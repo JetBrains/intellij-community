@@ -183,11 +183,5 @@ interface Panel : CellBase<Panel> {
   /**
    * Overrides default spacing configuration. Should be used for very specific cases
    */
-  @Deprecated("Use overloaded function with UnscaledSpacingConfiguration as a parameter")
   fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit)
-
-  /**
-   * Overrides default spacing configuration. Should be used for very specific cases
-   */
-  fun customizeSpacingConfiguration(spacingConfiguration: UnscaledSpacingConfiguration, init: Panel.() -> Unit)
 }

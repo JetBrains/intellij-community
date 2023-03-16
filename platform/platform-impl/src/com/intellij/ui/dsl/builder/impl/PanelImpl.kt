@@ -19,7 +19,7 @@ import javax.swing.JLabel
 
 @ApiStatus.Internal
 internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
-                         var spacingConfiguration: UnscaledSpacingConfiguration,
+                         var spacingConfiguration: SpacingConfiguration,
                          private val parent: RowImpl?) : CellBaseImpl<Panel>(), Panel {
 
   val rows: List<RowImpl>
@@ -294,10 +294,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit) {
-    customizeSpacingConfiguration(spacingConfiguration.toUnscaled(), init)
-  }
-
-  override fun customizeSpacingConfiguration(spacingConfiguration: UnscaledSpacingConfiguration, init: Panel.() -> Unit) {
     this.spacingConfiguration = spacingConfiguration
     this.init()
   }
