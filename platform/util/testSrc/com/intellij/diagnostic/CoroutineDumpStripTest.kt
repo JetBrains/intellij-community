@@ -29,7 +29,7 @@ class CoroutineDumpStripTest {
     val jobTree = scenarioData.parseAsJobTree()
 
     val expected = jobTree.transformTraces { it.filter { !it.omitMark }.map { it.element } }
-    val stripped = jobTree.transformTraces { stripTrace(it.map { it.element }) }
+    val stripped = jobTree.transformTraces { stripCoroutineTrace(it.map { it.element }) }
 
     assertEquals(expected.dump(), stripped.dump())
   }
