@@ -17,7 +17,7 @@ import java.util.regex.Matcher
 fun createMainInitScript(isBuildSrcProject: Boolean, toolingExtensionClasses: Set<Class<*>>): File {
   val jarPaths = GradleExecutionHelper.getToolingExtensionsJarPaths(toolingExtensionClasses)
   return createInitScript("ijInit", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/Init.gradle", mapOf(
-    "EXTENSIONS_JARS_PATH" to jarPaths.toGroovyList { "mapPath(" + toGroovyString() + ")" },
+    "EXTENSIONS_JARS_PATH" to jarPaths.toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" },
     "IS_BUILD_SCR_PROJECT" to isBuildSrcProject.toString()
   )))
 }
@@ -31,9 +31,9 @@ fun loadTaskInitScript(
 ): String {
   val jarPaths = GradleExecutionHelper.getToolingExtensionsJarPaths(toolingExtensionClasses)
   return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TaskInit.gradle", mapOf(
-    "EXTENSIONS_JARS_PATH" to jarPaths.toGroovyList { "mapPath(" + toGroovyString() + ")" },
-    "PROJECT_PATH" to projectPath.toGroovyString(),
-    "TASK_NAME" to taskName.toGroovyString(),
+    "EXTENSIONS_JARS_PATH" to jarPaths.toGroovyListLiteral { "mapPath(" + toGroovyStringLiteral() + ")" },
+    "PROJECT_PATH" to projectPath.toGroovyStringLiteral(),
+    "TASK_NAME" to taskName.toGroovyStringLiteral(),
     "TASK_TYPE" to taskType,
     "TASK_CONFIGURATION" to (taskConfiguration ?: "")
   ))
@@ -46,10 +46,10 @@ fun createWrapperInitScript(
   fileWithPathToProperties: File
 ): File {
   return createInitScript("ijWrapper", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/WrapperInit.gradle", mapOf(
-    "GRADLE_VERSION" to (gradleVersion?.version?.toGroovyString() ?: "null"),
-    "JAR_FILE" to jarFile.path.toGroovyString(),
-    "SCRIPT_FILE" to scriptFile.path.toGroovyString(),
-    "FILE_WITH_PATH_TO_PROPERTIES" to fileWithPathToProperties.path.toGroovyString()
+    "GRADLE_VERSION" to (gradleVersion?.version?.toGroovyStringLiteral() ?: "null"),
+    "JAR_FILE" to jarFile.path.toGroovyStringLiteral(),
+    "SCRIPT_FILE" to scriptFile.path.toGroovyStringLiteral(),
+    "FILE_WITH_PATH_TO_PROPERTIES" to fileWithPathToProperties.path.toGroovyStringLiteral()
   )))
 }
 
@@ -57,7 +57,7 @@ fun createTestInitScript(tasks: List<GradleCommandLineTask>, forceExecution: Boo
   return createInitScript("ijTestInit", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/TestInit.gradle", mapOf(
     "IMPORT_GRADLE_TASKS_UTIL" to loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
     "TEST_TASKS_WITH_PATTERNS" to tasks.associate { it.name to it.getTestPatterns() }
-      .toGroovyMap({ toGroovyString() }, { toGroovyList { toGroovyString() } }),
+      .toGroovyMapLiteral({ toGroovyStringLiteral() }, { toGroovyListLiteral { toGroovyStringLiteral() } }),
     "FORCE_TEST_EXECUTION" to forceExecution.toString()
   )))
 }
@@ -68,8 +68,8 @@ fun loadJvmDebugInitScript(
 ): String {
   return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle", java.util.Map.of(
     "IMPORT_GRADLE_TASKS_UTIL", loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle"),
-    "DEBUGGER_ID", debuggerId.toGroovyString(),
-    "PROCESS_PARAMETERS", parameters.toGroovyString()
+    "DEBUGGER_ID", debuggerId.toGroovyStringLiteral(),
+    "PROCESS_PARAMETERS", parameters.toGroovyStringLiteral()
   ))
 }
 

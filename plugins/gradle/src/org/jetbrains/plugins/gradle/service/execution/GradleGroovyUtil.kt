@@ -3,18 +3,18 @@
 
 package org.jetbrains.plugins.gradle.service.execution
 
-fun <K, V> Map<K, V>.toGroovyMap(mapKey: K.() -> String, mapValue: V.() -> String): String {
+fun <K, V> Map<K, V>.toGroovyMapLiteral(mapKey: K.() -> String, mapValue: V.() -> String): String {
   if (isEmpty()) {
     return "[:]"
   }
   return "[" + entries.joinToString(",") { it.key.mapKey() + ":" + it.value.mapValue() } + "]"
 }
 
-fun <T> Collection<T>.toGroovyList(map: T.() -> String): String {
+fun <T> Collection<T>.toGroovyListLiteral(map: T.() -> String): String {
   return "[" + joinToString(",", transform = map) + "]"
 }
 
-fun String.toGroovyString(): String {
+fun String.toGroovyStringLiteral(): String {
   val stringBuilder = StringBuilder()
   for (ch in toCharArray()) {
     when (ch) {
