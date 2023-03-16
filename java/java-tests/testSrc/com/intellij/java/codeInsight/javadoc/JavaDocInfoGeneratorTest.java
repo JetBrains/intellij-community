@@ -39,46 +39,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * See <a href="#info">Info</a>.
- * <p>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- * </p>
- * <a name="info"></a>Info!!!
- * <p>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- *   Filler<br>
- * </p>
- */
 public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   private static final String TEST_DATA_FOLDER = "/codeInsight/javadocIG/";
 
