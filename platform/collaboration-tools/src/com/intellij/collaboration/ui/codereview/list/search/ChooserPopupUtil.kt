@@ -6,13 +6,17 @@ import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.RoundedCellRenderer
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
+import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JList
 import javax.swing.ListCellRenderer
@@ -170,6 +174,18 @@ object ChooserPopupUtil {
     }
   }
 
+  interface SelectablePopupItemPresentation {
+    val icon: Icon?
+    val shortText: @Nls String
+    val fullText: @Nls String?
+    val isSelected: Boolean
+
+    data class Simple(override val shortText: String,
+                      override val icon: Icon? = null,
+                      override val fullText: String? = null,
+                      override val isSelected: Boolean = false) : SelectablePopupItemPresentation
+  }
+
   fun <T> createSimpleItemRenderer(presenter: (T) -> PopupItemPresentation): ListCellRenderer<T> {
     val simplePopupItemRenderer = SimplePopupItemRenderer(presenter)
     if (!ExperimentalUI.isNewUI())
@@ -200,5 +216,42 @@ object ChooserPopupUtil {
     if (!ExperimentalUI.isNewUI()) return
     val searchTextField = UIUtil.findComponentOfType(popup.content, SearchTextField::class.java) ?: return
     AbstractPopup.customizeSearchFieldLook(searchTextField, true)
+  }
+}
+
+class SimpleSelectablePopupItemRenderer<T>(private val reviewerPresenter: (T) -> ChooserPopupUtil.SelectablePopupItemPresentation) : ListCellRenderer<T> {
+  private val checkBox: JBCheckBox = JBCheckBox().apply {
+    isOpaque = false
+  }
+  private val label: SimpleColoredComponent = SimpleColoredComponent()
+  private val panel = BorderLayoutPanel(10, 5).apply {
+    addToLeft(checkBox)
+    addToCenter(label)
+    border = JBUI.Borders.empty(5)
+  }
+
+  override fun getListCellRendererComponent(list: JList<out T>,
+                                            value: T,
+                                            index: Int,
+                                            isSelected: Boolean,
+                                            cellHasFocus: Boolean): Component {
+    val presentation = reviewerPresenter(value)
+
+    checkBox.apply {
+      this.isSelected = presentation.isSelected
+      this.isFocusPainted = cellHasFocus
+      this.isFocusable = cellHasFocus
+    }
+
+    label.apply {
+      clear()
+      append(presentation.shortText)
+      icon = presentation.icon
+      foreground = ListUiUtil.WithTallRow.foreground(isSelected, list.hasFocus())
+    }
+
+    UIUtil.setBackgroundRecursively(panel, ListUiUtil.WithTallRow.background(list, isSelected, true))
+
+    return panel
   }
 }
