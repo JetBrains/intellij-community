@@ -23,7 +23,6 @@ import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ParametersFolder
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.areSame
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.hasExplicitModifier
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.normalizedAnchor
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
@@ -59,15 +58,19 @@ object ExtractMethodPipeline {
   }
 
   fun withTargetClass(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions, targetClass: PsiClass): ExtractOptions? {
+    val sourceMember = PsiTreeUtil.getContextOfType(extractOptions.elements.first(), PsiMember::class.java)
+    val targetMember = PsiTreeUtil.getChildOfType(targetClass, PsiMember::class.java)
+    if (sourceMember == null || targetMember == null) return null
     val anchor = extractOptions.anchor
     if (extractOptions.targetClass == targetClass) return extractOptions
 
     val newAnchor = targetClass.children.find { child -> anchor.textRange in child.textRange } as? PsiMember
     if (newAnchor == null) return null
 
-    val typeParameters = findAllTypeLists(anchor, targetClass).flatMap { findUsedTypeParameters(it, extractOptions.elements) }
+    val typeParameters = findAllTypeLists(sourceMember, targetClass).flatMap { findUsedTypeParameters(it, extractOptions.elements) }
 
-    val additionalReferences = analyzer.findOuterLocals(anchor, newAnchor) ?: return null
+
+    val additionalReferences = analyzer.findOuterLocals(sourceMember, targetMember) ?: return null
     val additionalParameters = additionalReferences.map { inputParameterOf(it) }
     val options = extractOptions.copy(
       targetClass = targetClass,
@@ -131,7 +134,7 @@ object ExtractMethodPipeline {
     if (statement != null && JavaHighlightUtil.isSuperOrThisCall(statement, true, true)) {
       return extractOptions.copy(isStatic = true)
     }
-    val shouldBeStatic = extractOptions.anchor.hasExplicitModifier(PsiModifier.STATIC)
+    val shouldBeStatic = PsiUtil.getEnclosingStaticElement(extractOptions.elements.first(), null) != null
     return extractOptions.copy(isStatic = shouldBeStatic)
   }
 

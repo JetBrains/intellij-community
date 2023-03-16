@@ -15,7 +15,7 @@ class SignatureBuilder(private val project: Project) {
   private val factory: PsiElementFactory = PsiElementFactory.getInstance(project)
 
   fun build(
-    context: PsiElement?,
+    targetClass: PsiClass,
     scope: List<PsiElement>,
     isStatic: Boolean = false,
     visibility: String?,
@@ -24,23 +24,21 @@ class SignatureBuilder(private val project: Project) {
     methodName: String = "extracted",
     inputParameters: List<InputParameter> = emptyList(),
     annotations: List<PsiAnnotation> = emptyList(),
-    thrownExceptions: List<PsiClassType> = emptyList(),
-    anchor: PsiMember
+    thrownExceptions: List<PsiClassType> = emptyList()
   ): PsiMethod {
 
     val parameterList = createParameterList(inputParameters, scope)
 
     val method = if (returnType != null) {
-      factory.createMethod(methodName, returnType, context)
+      factory.createMethod(methodName, returnType, targetClass)
     } else {
-      factory.createConstructor("methodName", context)
+      factory.createConstructor("methodName", targetClass)
     }
 
     copyNotPresentAnnotations(annotations, method)
 
-    val isInInterface = anchor.containingClass?.isInterface == true
-    val isJava8 = PsiUtil.getLanguageLevel(anchor) == LanguageLevel.JDK_1_8
-    val shouldHaveDefaultModifier = isJava8 && ! isStatic && isInInterface
+    val isJava8 = PsiUtil.getLanguageLevel(targetClass) == LanguageLevel.JDK_1_8
+    val shouldHaveDefaultModifier = isJava8 && !isStatic && targetClass.isInterface
 
     val typeParameterList = factory.createTypeParameterList()
     typeParameters.forEach { typeParameterList.add(it) }

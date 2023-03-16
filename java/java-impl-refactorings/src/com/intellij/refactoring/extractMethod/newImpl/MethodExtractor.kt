@@ -239,8 +239,7 @@ class MethodExtractor {
         dependencies.methodName,
         dependencies.inputParameters,
         dependencies.dataOutput.annotations,
-        dependencies.thrownExceptions,
-        dependencies.anchor
+        dependencies.thrownExceptions
       )
     method.body?.replace(codeBlock)
 

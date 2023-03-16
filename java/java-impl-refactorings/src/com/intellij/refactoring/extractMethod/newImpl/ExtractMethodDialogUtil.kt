@@ -61,7 +61,7 @@ object ExtractMethodDialogUtil {
 
       override fun findOccurrences(): Array<PsiExpression> {
         return when (val dataOutput = extractOptions.dataOutput) {
-          is DataOutput.VariableOutput -> CodeInsightUtil.findReferenceExpressions(extractOptions.anchor, dataOutput.variable)
+          is DataOutput.VariableOutput -> CodeInsightUtil.findReferenceExpressions(dataOutput.variable.parent, dataOutput.variable)
           is DataOutput.ExpressionOutput -> dataOutput.returnExpressions.toTypedArray()
           else -> emptyArray()
         }
