@@ -13,6 +13,24 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Sometimes we need to know if we can silently change the file, without user's explicit permission.
+ * By convention, permission is required for:<pre>
+ * - never touched files,
+ * - files under explicit write permission version control (such as Perforce, which asks "do you want to edit this file"),
+ * - files in the middle of cut-n-paste operation.
+ * </pre>
+ * <p/>
+ * To determine this, we need to compute several things, in two stages.
+ * Some things require EDT for computation, e.g. {@link CanISilentlyChange#thisFile(PsiFileSystemItem)}, to query this file "undo" status.
+ * Some things, on the other hand, are quite expensive to compute in EDT and thus require BGT, e.g. {@link SilentChangeVetoer#extensionsAllowToChangeFileSilently(Project, VirtualFile)}
+ * The complete algorithm is the following:<pre>
+ * (in BGT) {@code val extensionsAllowToChangeFileSilently = SilentChangeVetoer.extensionsAllowToChangeFileSilently(project, virtualFile);}
+ * (in BGT) {@code val isFileInContent = ModuleUtilCore.projectContainsFile(project, virtualFile, false);}
+ * (in EDT) {@code val result = CanISilentlyChange.thisFile(psiFile);}
+ * (in any thread) {@code boolean canSilentlyChange = result.canIReally(isFileInContent, extensionsAllowToChangeFileSilently);}
+ * </pre>
+ */
 final class CanISilentlyChange {
   private static boolean canUndo(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
