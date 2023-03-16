@@ -351,6 +351,10 @@ private suspend fun checkThatExeInstallerAndZipWithJbrAreTheSame(zipPath: Path,
         NioFiles.deleteRecursively(tempExe.resolve("\$PLUGINSDIR"))
         // TODO: Remove this workaround once IDEA-297735 fixed
         NioFiles.deleteRecursively(tempExe.resolve("bin/Uninstall.exe.nsis"))
+        /**
+         * bin/Uninstall.exe is optional, see [PatchBuilderBuildTarget.buildPatch]
+         */
+        NioFiles.deleteRecursively(tempExe.resolve("bin/Uninstall.exe"))
 
         runProcess(args = listOf("diff", "-q", "-r", tempZip.toString(), tempExe.toString()))
       }
