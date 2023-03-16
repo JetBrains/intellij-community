@@ -673,10 +673,10 @@ public class GradleExecutionHelper {
   public static Map<String, String> getConfigurationInitScripts(@NonNls GradleRunConfiguration configuration) {
     final String initScript = configuration.getUserData(GradleTaskManager.INIT_SCRIPT_KEY);
     if (StringUtil.isNotEmpty(initScript)) {
-      String prefix = configuration.getUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY);
-      if (prefix == null) {
-        throw new NullPointerException("init script file prefix is required");
-      }
+      String prefix = Objects.requireNonNull(
+        configuration.getUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY),
+        "init script file prefix is required"
+      );
       Map<String, String> map = new LinkedHashMap<>();
       map.put(prefix, initScript);
       return map;
