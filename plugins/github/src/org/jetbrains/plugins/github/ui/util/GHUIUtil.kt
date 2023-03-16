@@ -102,6 +102,7 @@ object GHUIUtil {
       visibleRowCount = 7
       isFocusable = false
       selectionMode = ListSelectionModel.SINGLE_SELECTION
+      background = JBUI.CurrentTheme.Popup.BACKGROUND
     }
 
     list.cellRenderer = SimpleSelectablePopupItemRenderer.create(presenter)
