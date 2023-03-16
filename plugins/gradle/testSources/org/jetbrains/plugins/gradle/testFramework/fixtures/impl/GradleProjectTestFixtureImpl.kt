@@ -7,7 +7,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
-import com.intellij.openapi.observable.operation.core.getOperationPromise
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
@@ -16,8 +15,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.runAll
-import com.intellij.testFramework.concurrency.waitForPromise
 import com.intellij.testFramework.fixtures.SdkTestFixture
+import com.intellij.testFramework.observable.operation.core.waitForOperationCompletionAndPumpEdt
 import com.intellij.testFramework.openProjectAsync
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
@@ -76,7 +75,7 @@ internal class GradleProjectTestFixtureImpl private constructor(
   override fun tearDown() {
     runAll(
       { runBlocking { fileFixture.root.refreshAndWait() } },
-      { projectOperations.getOperationPromise(testDisposable).waitForPromise(1.minutes) },
+      { projectOperations.waitForOperationCompletionAndPumpEdt(1.minutes) },
       { if (_project.isInitialized) runBlocking { _project.closeProjectAsync() } },
       { Disposer.dispose(testDisposable) },
       { fileFixture.tearDown() },

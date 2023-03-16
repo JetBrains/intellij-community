@@ -32,7 +32,7 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
-import com.intellij.testFramework.observable.operation.core.waitForOperation
+import com.intellij.testFramework.observable.operation.core.waitForOperationAndPumpEdt
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJUnit5
@@ -244,7 +244,7 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
   private fun waitForExecution(executorId: String, environment: ExecutionEnvironment, action: () -> Unit) {
     Disposer.newDisposable().use { parentDisposable ->
       getExecutionOperation(executorId, environment, parentDisposable)
-        .waitForOperation(10.seconds, 2.minutes, action)
+        .waitForOperationAndPumpEdt(10.seconds, 2.minutes, action)
     }
   }
 
