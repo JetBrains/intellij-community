@@ -169,6 +169,8 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString(SystemInfo.isMac ? "meta BACK_SPACE" : "control BACK_SPACE"), myComponent);
 
+    new MySearchAction().registerCustomShortcutSet(CommonShortcuts.getFind(), myComponent);
+
     installSupplyTo(myComponent);
   }
 
@@ -925,6 +927,23 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     @Override
     public void add(Object o) {
       throw new UnsupportedOperationException("Not implemented in: " + getClass().getCanonicalName());
+    }
+  }
+
+  private class MySearchAction extends DumbAwareAction {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      showPopup();
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(!isPopupActive());
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 }
