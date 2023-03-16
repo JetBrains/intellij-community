@@ -207,6 +207,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/win/x64"))
           .includeAll()
           .copyToDir(Path.of(targetDirectory, "plugins/c-clangd/bin/clang/win/x64"))
+
+        GameTools(context, OsFamily.WINDOWS, JvmArchitecture.x64).copyAdditionalFiles(Path.of(targetDirectory).resolve("bin"))
       }
     }
   }
@@ -226,6 +228,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         FileSet(context.paths.communityHomeDir.resolve("../../prebuilts/tools/clion/bin/clang/linux/x64"))
           .includeAll()
           .copyToDir(targetDir.resolve("plugins/c-clangd/bin/clang/linux/x64"))
+
+        GameTools(context, OsFamily.LINUX, arch).copyAdditionalFiles(targetDir.resolve("bin"))
       }
     }
   }
