@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
@@ -46,7 +47,7 @@ class DumbServiceImplTest {
   val edt: EdtRule = EdtRule()
 
   private lateinit var project: Project
-  private lateinit var testDisposable: Disposable
+  private lateinit var testDisposable: CheckedDisposable
 
   companion object {
     @ClassRule
@@ -78,10 +79,10 @@ class DumbServiceImplTest {
 
   @Before
   fun setUp() {
-    testDisposable = Disposer.newDisposable("DumbServiceImplTest")
+    testDisposable = Disposer.newCheckedDisposable("DumbServiceImplTest")
     project = p.project
     if (!application.isReadAccessAllowed) {
-      dumbService.waitForSmartMode()
+      waitForSmartModeFiveSecondsOrThrow()
     }
   }
 
@@ -92,19 +93,32 @@ class DumbServiceImplTest {
 
   @Test
   fun `test no task leak on dispose`() {
-    val dumbService = DumbServiceImpl(project)
+    // pass empty publisher to make sure that shared SmartModeScheduler is not affected
+    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {})
+    val exception = AtomicReference<Throwable?>()
 
     val disposes = CountDownLatch(2)
     val task1 = object : DumbModeTask() {
       override fun performInDumbMode(indicator: ProgressIndicator) {
-        while (!indicator.isCanceled) {
-          Thread.sleep(50)
+        try {
+          while (!indicator.isCanceled) {
+            Thread.sleep(50)
+            assertFalse(testDisposable.isDisposed)
+          }
+        }
+        catch (t: Throwable) {
+          exception.set(t)
         }
       }
 
       override fun dispose() {
-        assertTrue(disposes.count > 0)
-        disposes.countDown()
+        try {
+          assertTrue(disposes.count > 0)
+          disposes.countDown()
+        }
+        catch (t: Throwable) {
+          exception.set(t)
+        }
       }
     }
 
@@ -112,8 +126,13 @@ class DumbServiceImplTest {
       override fun performInDumbMode(indicator: ProgressIndicator) = Unit
 
       override fun dispose() {
-        assertTrue(disposes.count > 0)
-        disposes.countDown()
+        try {
+          assertTrue(disposes.count > 0)
+          disposes.countDown()
+        }
+        catch (t: Throwable) {
+          exception.set(t)
+        }
       }
     }
 
@@ -122,9 +141,10 @@ class DumbServiceImplTest {
     dumbService.queueTask(task2)
     Disposer.dispose(dumbService)
 
-    assertTrue(disposes.await(5, TimeUnit.SECONDS))
+    disposes.awaitOrThrow(5, "Some tasks were not disposed after 5 seconds")
     assertTrue(Disposer.isDisposed(task1))
     assertTrue(Disposer.isDisposed(task2))
+    assertNull(exception.get())
   }
 
   @Test
@@ -244,7 +264,7 @@ class DumbServiceImplTest {
             waiting.countDown()
             dumbService.waitForSmartMode()
           }
-          waiting.await()
+          waiting.awaitOrThrow(1, "Should have completed quickly")
         }
       }
       val start = System.currentTimeMillis()
@@ -354,15 +374,15 @@ class DumbServiceImplTest {
       dumbService.cancelAllTasksAndWait()
     }
 
-    dumbTaskFinished.await(5, TimeUnit.SECONDS)
-
-    assertEquals("DumbModeTask didn't complete in 5 seconds", 0, dumbTaskFinished.count)
+    dumbTaskFinished.awaitOrThrow(5, "DumbModeTask didn't complete in 5 seconds")
     assertFalse(queuedTaskInvoked.get())
   }
 
   @Test
   fun `test dispose cancels all the tasks submitted via queueTask from other threads with no race`() {
-    val dumbService = DumbServiceImpl(project)
+    // pass empty publisher to make sure that shared SmartModeScheduler is not affected
+    val dumbService = DumbServiceImpl(project, object : DumbService.DumbModeListener {})
+
     val queuedTaskInvoked = AtomicBoolean(false)
     val dumbTaskFinished = CountDownLatch(1)
 
@@ -390,9 +410,8 @@ class DumbServiceImplTest {
       Disposer.dispose(dumbService)
     }
 
-    dumbTaskFinished.await(5, TimeUnit.SECONDS)
+    dumbTaskFinished.awaitOrThrow(5, "DumbModeTask didn't dispose in 5 seconds")
 
-    assertEquals("DumbModeTask didn't dispose in 5 seconds", 0, dumbTaskFinished.count)
     assertFalse(queuedTaskInvoked.get())
   }
 
@@ -423,7 +442,7 @@ class DumbServiceImplTest {
       assertFalse(dumbService.isDumb)
     }
 
-    assertTrue("DumbTask should start immediately after read action finished", taskFinished.await(2, TimeUnit.SECONDS))
+    taskFinished.awaitOrThrow(2, "DumbTask should start immediately after read action finished")
   }
 
   @Test
@@ -435,7 +454,7 @@ class DumbServiceImplTest {
     dumbService.queueTask(object : DumbModeTask() {
       override fun performInDumbMode(indicator: ProgressIndicator) {
         taskStarted.countDown()
-        finishTask.await(5, TimeUnit.SECONDS)
+        finishTask.awaitOrThrow(5, "Task should have finished")
         taskFinished.countDown()
       }
     })
@@ -450,11 +469,7 @@ class DumbServiceImplTest {
       assertTrue(dumbService.isDumb)
     }
 
-    for (i in 0..10) {
-      if (dumbService.isDumb) Thread.sleep(50)
-      else break;
-    }
-    assertFalse("DumbTask should become smart after read action finished", dumbService.isDumb)
+    waitForSmartModeFiveSecondsOrThrow()
   }
 
   @Test
@@ -466,7 +481,7 @@ class DumbServiceImplTest {
     runInEdt /*Async*/ {
       try {
         // occupy EDT to postpone dumb task execution
-        assertTrue(startEdtTask.await(5, TimeUnit.SECONDS))
+        startEdtTask.awaitOrThrow(5, "Task should have start in 5 seconds")
         assertFalse("DumbTask should not start until EDT is freed", taskFinished.await(500, TimeUnit.MILLISECONDS))
       }
       catch (t: Throwable) {
@@ -480,7 +495,20 @@ class DumbServiceImplTest {
     })
 
     startEdtTask.countDown()
-    assertTrue("DumbTask should start immediately after EDT is freed", taskFinished.await(2, TimeUnit.SECONDS))
+    taskFinished.awaitOrThrow(2, "DumbTask should start immediately after EDT is freed")
     assertNull(exception.get())
+  }
+
+  private fun waitForSmartModeFiveSecondsOrThrow() {
+    if (!dumbService.waitForSmartMode(5_000)) {
+      dumbService.waitForSmartMode(5_000)
+      fail("Could not reach smart mode after 5 seconds")
+    }
+  }
+
+  private fun CountDownLatch.awaitOrThrow(seconds: Long, message: String) {
+    if (!await(seconds, TimeUnit.SECONDS)) {
+      fail(message)
+    }
   }
 }

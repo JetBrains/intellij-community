@@ -24,6 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
@@ -99,13 +100,19 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   public DumbServiceImpl(@NotNull Project project) {
+    this(project, project.getMessageBus().syncPublisher(DUMB_MODE));
+  }
+
+  @NonInjectable
+  @VisibleForTesting
+  DumbServiceImpl(@NotNull Project project, @NotNull DumbModeListener publisher) {
     myProject = project;
     myTrackedEdtActivityService = new TrackedEdtActivityService(project);
     myTaskQueue = new DumbServiceMergingTaskQueue();
     myGuiDumbTaskRunner = new DumbServiceGuiExecutor(myProject, myTaskQueue, new DumbTaskListener());
     mySyncDumbTaskRunner = new DumbServiceSyncTaskQueue(myTaskQueue);
 
-    myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
+    myPublisher = publisher;
 
     if (Registry.is("scanning.should.pause.dumb.queue", false)) {
       myProject.getMessageBus().connect(this).subscribe(FilesScanningListener.TOPIC, new DumbServiceScanningListener(myProject));
@@ -356,7 +363,11 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void waitForSmartMode() {
-    if (ALWAYS_SMART) return;
+    waitForSmartMode(Long.MAX_VALUE);
+  }
+
+  public boolean waitForSmartMode(long milliseconds) {
+    if (ALWAYS_SMART) return true;
     Application application = ApplicationManager.getApplication();
     if (application.isReadAccessAllowed()) {
       throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");
@@ -369,6 +380,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     smartModeScheduler.runWhenSmart(switched::countDown);
 
     // we check getCurrentMode here because of tests which may hang because runWhenSmart needs EDT for scheduling
+    long startTime = System.currentTimeMillis();
     while (!myProject.isDisposed() && smartModeScheduler.getCurrentMode() != 0) {
       // it is fine to unblock the caller when myProject.isDisposed, even if didn't reach smart mode: we are on background thread
       // without read action. Dumb mode may start immediately after the caller is unblocked, so caller is prepared for this situation.
@@ -378,7 +390,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       }
       catch (InterruptedException ignored) { }
       ProgressManager.checkCanceled();
+      if (startTime + milliseconds < System.currentTimeMillis()) return false;
     }
+    return true;
   }
 
   @Override
