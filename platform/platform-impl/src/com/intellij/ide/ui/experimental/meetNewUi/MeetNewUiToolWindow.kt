@@ -12,7 +12,6 @@ import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.experimental.ExperimentalUiCollector
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
@@ -78,7 +77,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
       }
       panel {
         row {
-          label(IdeBundle.message("meetnewui.toolwindow.title", ApplicationNamesInfo.getInstance().fullProductName))
+          label(IdeBundle.message("meetnewui.toolwindow.title"))
             .applyToComponent {
               font = JBFont.regular().biggerOn(7f).deriveFont(Font.PLAIN)
             }
