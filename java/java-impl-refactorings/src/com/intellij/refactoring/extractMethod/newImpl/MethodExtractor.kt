@@ -111,9 +111,6 @@ class MethodExtractor {
     }
   }
 
-  val ExtractOptions.targetClass: PsiClass
-    get() = anchor.containingClass ?: throw IllegalStateException()
-
   private fun suggestSafeMethodNames(options: ExtractOptions): List<String> {
     val unsafeNames = guessMethodName(options)
     val safeNames = unsafeNames.filterNot { name -> hasConflicts(options.copy(methodName = name)) }
@@ -127,7 +124,7 @@ class MethodExtractor {
   private fun hasConflicts(options: ExtractOptions): Boolean {
     val (_, method) = prepareRefactoringElements(options)
     val conflicts = MultiMap<PsiElement, String>()
-    ConflictsUtil.checkMethodConflicts(options.anchor.containingClass, null, method, conflicts)
+    ConflictsUtil.checkMethodConflicts(options.targetClass, null, method, conflicts)
     return ! conflicts.isEmpty
   }
 
@@ -183,8 +180,8 @@ class MethodExtractor {
     if (elements.isEmpty()) throw ExtractException("Nothing to extract", file)
     val analyzer = CodeFragmentAnalyzer(elements)
     val allOptionsToExtract = findAllOptionsToExtract(elements)
-    var options = allOptionsToExtract.takeIf { targetClass != null }?.find { option -> option.anchor.containingClass == targetClass }
-                  ?: allOptionsToExtract.find { option -> option.anchor.containingClass !is PsiAnonymousClass }
+    var options = allOptionsToExtract.takeIf { targetClass != null }?.find { option -> option.targetClass == targetClass }
+                  ?: allOptionsToExtract.find { option -> option.targetClass !is PsiAnonymousClass }
                   ?: allOptionsToExtract.first()
     options = options.copy(methodName = "newMethod")
     if (isConstructor != options.isConstructor){
@@ -210,7 +207,7 @@ class MethodExtractor {
     if (visibility != null) {
       options = options.copy(visibility = visibility)
     }
-    if (options.anchor.containingClass?.isInterface == true) {
+    if (options.targetClass.isInterface) {
       options = ExtractMethodPipeline.adjustModifiersForInterface(options.copy(visibility = PsiModifier.PRIVATE))
     }
     if (doRefactor) {
@@ -233,7 +230,7 @@ class MethodExtractor {
       )
     val method = SignatureBuilder(dependencies.project)
       .build(
-        dependencies.anchor.context,
+        dependencies.targetClass,
         dependencies.elements,
         dependencies.isStatic,
         dependencies.visibility,

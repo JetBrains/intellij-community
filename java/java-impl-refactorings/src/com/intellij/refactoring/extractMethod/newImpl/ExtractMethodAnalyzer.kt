@@ -62,7 +62,7 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
   val anchor = findClassMember(elements.first())
                         ?: throw ExtractException(JavaRefactoringBundle.message("extract.method.error.class.not.found"), elements.first().containingFile)
 
-  var extractOptions = ExtractOptions(anchor, elements, flowOutput, dataOutput)
+  var extractOptions = ExtractOptions(anchor, anchor.containingClass!!, elements, flowOutput, dataOutput)
 
   val inputParameters = analyzer.findExternalReferences()
     .map { externalReference -> inputParameterOf(externalReference) }

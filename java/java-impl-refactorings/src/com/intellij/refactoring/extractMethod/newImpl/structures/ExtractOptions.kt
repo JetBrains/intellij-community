@@ -6,6 +6,7 @@ import com.intellij.psi.*
 
 data class ExtractOptions(
   val anchor: PsiMember,
+  val targetClass: PsiClass,
   val elements: List<PsiElement>,
   val flowOutput: FlowOutput,
   val dataOutput: DataOutput,
@@ -19,5 +20,5 @@ data class ExtractOptions(
   val exposedLocalVariables: List<PsiVariable> = emptyList(),
   val disabledParameters: List<InputParameter> = emptyList(),
   val isConstructor: Boolean = false,
-  val project: Project = anchor.project
+  val project: Project = targetClass.project
 )

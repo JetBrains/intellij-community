@@ -44,8 +44,7 @@ object ExtractMethodPipeline {
       options = withForcedStatic(analyzer, options) ?: options
     }
     options = withMappedParametersInput(options, extractDialog.chosenParameters.toList())
-    val targetClass = extractOptions.anchor.containingClass!!
-    options = if (targetClass.isInterface) {
+    options = if (extractOptions.targetClass.isInterface) {
       adjustModifiersForInterface(options.copy(visibility = PsiModifier.PRIVATE))
     } else {
       options.copy(visibility = extractDialog.visibility)
@@ -61,7 +60,7 @@ object ExtractMethodPipeline {
 
   fun withTargetClass(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions, targetClass: PsiClass): ExtractOptions? {
     val anchor = extractOptions.anchor
-    if (anchor.parent == targetClass) return extractOptions
+    if (extractOptions.targetClass == targetClass) return extractOptions
 
     val newAnchor = targetClass.children.find { child -> anchor.textRange in child.textRange } as? PsiMember
     if (newAnchor == null) return null
@@ -71,6 +70,7 @@ object ExtractMethodPipeline {
     val additionalReferences = analyzer.findOuterLocals(anchor, newAnchor) ?: return null
     val additionalParameters = additionalReferences.map { inputParameterOf(it) }
     val options = extractOptions.copy(
+      targetClass = targetClass,
       anchor = normalizedAnchor(newAnchor),
       inputParameters = extractOptions.inputParameters + additionalParameters,
       typeParameters = typeParameters
@@ -115,9 +115,8 @@ object ExtractMethodPipeline {
   }
 
   fun adjustModifiersForInterface(options: ExtractOptions): ExtractOptions {
-    val targetClass = options.anchor.containingClass!!
-    if (! targetClass.isInterface) return options
-    val isJava8 = PsiUtil.getLanguageLevel(targetClass) == LanguageLevel.JDK_1_8
+    if (!options.targetClass.isInterface) return options
+    val isJava8 = PsiUtil.getLanguageLevel(options.targetClass) == LanguageLevel.JDK_1_8
     val visibility = if (options.visibility == PsiModifier.PRIVATE && isJava8) null else options.visibility
     val holder = findClassMember(options.elements.first())
     val isStatic = holder is PsiField || options.isStatic
@@ -143,7 +142,7 @@ object ExtractMethodPipeline {
   fun findAllOptionsToExtract(elements: List<PsiElement>): List<ExtractOptions> {
     val extractOptions = findExtractOptions(elements)
     val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
-    return generateSequence (extractOptions.anchor as PsiElement) { it.parent }
+    return generateSequence (extractOptions.targetClass as PsiElement) { it.parent }
       .takeWhile { it !is PsiFile }
       .filterIsInstance<PsiClass>()
       .mapNotNull { targetClass -> withTargetClass(analyzer, extractOptions, targetClass) }
@@ -155,11 +154,7 @@ object ExtractMethodPipeline {
     if (options.size == 1) {
       return CompletableFuture.completedFuture(options.first())
     }
-
-    fun bindClassWithOption(option: ExtractOptions): Pair<PsiClass, ExtractOptions>? {
-      return option.anchor.containingClass?.let { psiClass -> Pair(psiClass, option) }
-    }
-    val classToOptionMap: Map<PsiClass, ExtractOptions> = options.mapNotNull(::bindClassWithOption).toMap()
+    val classToOptionMap: Map<PsiClass, ExtractOptions> = options.associateBy { option -> option.targetClass }
     val selectedOption: CompletableFuture<ExtractOptions> = CompletableFuture()
     val processor = PsiElementProcessor<PsiClass> { selected ->
       selectedOption.complete(classToOptionMap[selected])
@@ -222,7 +217,7 @@ object ExtractMethodPipeline {
   }
 
   fun withForcedStatic(analyzer: CodeFragmentAnalyzer, extractOptions: ExtractOptions): ExtractOptions? {
-    val targetClass = PsiTreeUtil.getParentOfType(extractOptions.anchor, PsiClass::class.java)!!
+    val targetClass = extractOptions.targetClass
     val isInnerClass = PsiUtil.isLocalOrAnonymousClass(targetClass) || PsiUtil.isInnerClass(targetClass)
     if (isInnerClass && !HighlightingFeature.INNER_STATICS.isAvailable(targetClass)) return null
     val memberUsages = analyzer.findInstanceMemberUsages(targetClass, extractOptions.elements)
@@ -301,9 +296,9 @@ object ExtractMethodPipeline {
 
   fun withFilteredAnnotations(extractOptions: ExtractOptions): ExtractOptions {
     return extractOptions.copy(
-      inputParameters = extractOptions.inputParameters.map { withFilteredAnnotations(it, extractOptions.anchor.context) },
-      disabledParameters = extractOptions.disabledParameters.map { withFilteredAnnotations(it, extractOptions.anchor.context) },
-      dataOutput = withFilteredAnnotation(extractOptions.dataOutput, extractOptions.anchor.context)
+      inputParameters = extractOptions.inputParameters.map { withFilteredAnnotations(it, extractOptions.targetClass) },
+      disabledParameters = extractOptions.disabledParameters.map { withFilteredAnnotations(it, extractOptions.targetClass) },
+      dataOutput = withFilteredAnnotation(extractOptions.dataOutput, extractOptions.targetClass)
     )
   }
 }
