@@ -26,7 +26,7 @@ import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.ui.popup.PopupState
@@ -416,7 +416,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     textArea.columns = COLUMNS_SHORT
     textArea.font = JBFont.regular()
     textArea.emptyText.setFont(JBFont.regular())
-    textArea.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+    textArea.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
     return scrollCell(textArea)
   }
 

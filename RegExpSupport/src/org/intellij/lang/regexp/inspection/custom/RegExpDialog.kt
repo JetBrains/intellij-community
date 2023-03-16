@@ -29,8 +29,8 @@ import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.util.ui.JBUI
 import org.intellij.lang.regexp.RegExpBundle
@@ -123,7 +123,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
         filterButton = actionButton(MyFilterAction())
           .component
       }
-    }.customize(Gaps(0, intelliJSpacingConfiguration.horizontalIndent, 0, intelliJSpacingConfiguration.horizontalIndent))
+    }.customize(UnscaledGaps(0, intelliJSpacingConfiguration.horizontalIndent, 0, intelliJSpacingConfiguration.horizontalIndent))
 
     row {
       searchEditor = cell(createEditor(true))
@@ -148,7 +148,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
           replace = !replace
         }.component
       }
-    }.customize(Gaps(10, intelliJSpacingConfiguration.horizontalIndent, 0, intelliJSpacingConfiguration.horizontalIndent))
+    }.customize(UnscaledGaps(10, intelliJSpacingConfiguration.horizontalIndent, 0, intelliJSpacingConfiguration.horizontalIndent))
 
     replaceRow = row {
       replaceEditor = cell(createEditor(false))

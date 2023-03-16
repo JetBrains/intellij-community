@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -115,7 +115,7 @@ class ProductivityFeedbackDialog(
 
       row {
         label(ProductivityFeedbackBundle.message("dialog.combobox.label", applicationName))
-          .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+          .customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
           .bold()
       }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
       row {

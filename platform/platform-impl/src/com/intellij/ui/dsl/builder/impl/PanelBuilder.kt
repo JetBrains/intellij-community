@@ -43,7 +43,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
           val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount,
             horizontalAlign = HorizontalAlign.FILL,
             verticalAlign = subRowVerticalAlign,
-            gaps = Gaps(left = row.getIndent()))
+            gaps = UnscaledGaps(left = row.getIndent()))
           val cells = row.cells
 
           buildLabelRow(cells, 0, cells.size, row.rowLayout, subGridBuilder)
@@ -96,7 +96,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       }
 
       row.rowComment?.let {
-        val gaps = Gaps(left = row.getIndent(), bottom = spacingConfiguration.verticalComponentGap)
+        val gaps = UnscaledGaps(left = row.getIndent(), bottom = spacingConfiguration.verticalComponentGap)
         val horizontalAlign = if (it.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) HorizontalAlign.FILL else HorizontalAlign.LEFT
         rowsGridBuilder.cell(it, maxColumnsCount, gaps = gaps, horizontalAlign = horizontalAlign)
         rowsGridBuilder.row()
@@ -271,7 +271,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       }
       else {
         val left = if (index == 0) firstCellIndent else 0
-        GeneratedComponentData(label, Gaps(top = spacingConfiguration.verticalComponentGap, left = left), HorizontalAlign.LEFT, index)
+        GeneratedComponentData(label, UnscaledGaps(top = spacingConfiguration.verticalComponentGap, left = left), HorizontalAlign.LEFT, index)
       }
     }
 
@@ -295,7 +295,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
       else {
         val left = getAdditionalHorizontalIndent(cell) + (if (index == 0) firstCellIndent else 0)
         val horizontalAlign = if (comment.maxLineLength == MAX_LINE_LENGTH_WORD_WRAP) HorizontalAlign.FILL else HorizontalAlign.LEFT
-        GeneratedComponentData(comment, Gaps(left = left, bottom = spacingConfiguration.verticalComponentGap), horizontalAlign, index)
+        GeneratedComponentData(comment, UnscaledGaps(left = left, bottom = spacingConfiguration.verticalComponentGap), horizontalAlign, index)
       }
     }
 
@@ -388,4 +388,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, private val dialogPanelConf
   }
 }
 
-private data class GeneratedComponentData(val component: JComponent, val gaps: Gaps, val horizontalAlign: HorizontalAlign, val column: Int)
+private data class GeneratedComponentData(val component: JComponent,
+                                          val gaps: UnscaledGaps,
+                                          val horizontalAlign: HorizontalAlign,
+                                          val column: Int)

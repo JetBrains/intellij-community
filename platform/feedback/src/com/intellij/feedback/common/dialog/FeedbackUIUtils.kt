@@ -7,7 +7,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -40,7 +40,7 @@ fun <T> Panel.createSegmentedButtonWithBottomLabels(@NlsContexts.Label mainLabel
     if (mainLabel != null) {
       row {
         label(mainLabel)
-          .customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+          .customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
           .bold()
       }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
     }
@@ -48,7 +48,7 @@ fun <T> Panel.createSegmentedButtonWithBottomLabels(@NlsContexts.Label mainLabel
       segmentedButton(items, renderer)
         .apply {
           maxButtonsCount(size)
-        }.customize(Gaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
+        }.customize(UnscaledGaps(top = IntelliJSpacingConfiguration().verticalComponentGap))
         .whenItemSelected { bindProperty.set(it) }
         .align(Align.FILL)
         .validation {

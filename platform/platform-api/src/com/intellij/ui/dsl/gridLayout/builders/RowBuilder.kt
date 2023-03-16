@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.gridLayout.builders
 
-import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
@@ -53,7 +53,7 @@ class RowBuilder(private val panel: JPanel) {
   }
 
   private fun add(component: JComponent, resizable: Boolean) {
-    val gaps = if (panel.componentCount == 0 || gap == 0) Gaps.EMPTY else Gaps(left = gap)
+    val gaps = if (panel.componentCount == 0 || gap == 0) UnscaledGaps.EMPTY else UnscaledGaps(left = gap)
     builder.cell(component, gaps = gaps, verticalAlign = verticalAlign, resizableColumn = resizable,
                  horizontalAlign = if (resizable) HorizontalAlign.FILL else HorizontalAlign.LEFT)
   }
