@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyType
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleIR
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.MppModuleConfigurator.getTestFramework
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.isPresent
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetType
@@ -59,12 +61,17 @@ object SimpleJsClientTemplate : JsClientTemplate() {
                 if (!hasKtorServNeighbourTarget) {
                     +(FileTemplateDescriptor("jsClient/index.html.vm") asResourceOf SourcesetType.main)
                 }
+                val hasTestingFramework = getTestFramework(module.originalModule).isPresent
                 if (useKotlinxHtml.reference.settingValue()) {
                     +(FileTemplateDescriptor("$id/client.kt.vm", clientFileToCreate.asPath()) asSrcOf SourcesetType.main)
-                    +(FileTemplateDescriptor("$id/TestClient.kt.vm", "TestClient.kt".asPath()) asSrcOf SourcesetType.test)
+                    if (hasTestingFramework) {
+                        +(FileTemplateDescriptor("$id/TestClient.kt.vm", "TestClient.kt".asPath()) asSrcOf SourcesetType.test)
+                    }
                 } else {
                     +(FileTemplateDescriptor("$id/simple.kt.vm", "Simple.kt".asPath()) asSrcOf SourcesetType.main)
-                    +(FileTemplateDescriptor("$id/SimpleTest.kt.vm", "SimpleTest.kt".asPath()) asSrcOf SourcesetType.test)
+                    if (hasTestingFramework) {
+                        +(FileTemplateDescriptor("$id/SimpleTest.kt.vm", "SimpleTest.kt".asPath()) asSrcOf SourcesetType.test)
+                    }
                 }
             }
         }

@@ -10,7 +10,9 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.TemplateSet
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.library.MavenArtifact
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.JsNodeTargetConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.MppModuleConfigurator.getTestFramework
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.NodeJsSinglePlatformModuleConfigurator
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.isPresent
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.moduleType
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleType
@@ -69,7 +71,10 @@ object SimpleNodeJsTemplate : Template() {
         withSettingsOf(module.originalModule) {
             buildList {
                 +(FileTemplateDescriptor("$id/main.kt.vm", mainFile.asPath()) asSrcOf SourcesetType.main)
-                +(FileTemplateDescriptor("$id/GreetingTest.kt.vm") asSrcOf SourcesetType.test)
+
+                if (getTestFramework(module.originalModule).isPresent) {
+                    +(FileTemplateDescriptor("$id/GreetingTest.kt.vm") asSrcOf SourcesetType.test)
+                }
             }
         }
 }
