@@ -103,6 +103,7 @@ private val libraryStackframeJudge: StackframeJudge = { stackframe: StackTraceEl
     "kotlinx.coroutines.flow.FlowKt__DelayKt\$debounceInternal\$1.invokeSuspend" -> OMIT
     "kotlinx.coroutines.flow.FlowKt__DelayKt\$debounceInternal\$1\$values\$1.invokeSuspend" -> OMIT
     "kotlinx.coroutines.flow.FlowKt__ReduceKt.first" -> OMIT
+    "kotlinx.coroutines.flow.FlowKt__ShareKt\$launchSharing\$1.invokeSuspend" -> OMIT
     "kotlinx.coroutines.flow.CallbackFlowBuilder.collectTo" -> OMIT
     "kotlinx.coroutines.flow.StateFlowImpl.collect" -> SHRINK
 
