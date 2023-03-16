@@ -170,20 +170,8 @@ abstract class NonModalCommitPanel(
         }
       })
       .createPopup()
-      .apply { clickSource = getClickSourceFromLastMouseEvent() }
 
     showCommitOptions(commitOptionsPopup, isFromToolbar, dataContext)
-  }
-
-  private fun getClickSourceFromLastMouseEvent(): JComponent? {
-    val me = IdeEventQueue.getInstance().trueCurrentEvent
-    if (me is MouseEvent) {
-      val comp = SwingUtilities.getDeepestComponentAt(me.component, me.x, me.y)
-      if (comp is JComponent) {
-        return comp
-      }
-    }
-    return null
   }
 
   protected open fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) =

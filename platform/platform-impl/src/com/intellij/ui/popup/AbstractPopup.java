@@ -39,6 +39,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.mac.touchbar.TouchbarSupport;
+import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.SpeedSearch;
@@ -137,7 +138,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private final List<Runnable> myResizeListeners = new ArrayList<>();
 
   private static final WeakList<JBPopup> all = new WeakList<>();
-  private @Nullable JComponent myClickSource;
 
   private boolean mySpeedSearchAlwaysShown;
   protected final SpeedSearch mySpeedSearch = new SpeedSearch() {
@@ -2350,15 +2350,5 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private void forHorizontalScrollBar(@NotNull Consumer<? super JScrollBar> consumer) {
     JScrollBar bar = findHorizontalScrollBar();
     if (bar != null) consumer.consume(bar);
-  }
-
-  @Override
-  public void setClickSource(@Nullable JComponent component) {
-    myClickSource = component;
-  }
-
-  @Override
-  public @Nullable JComponent getClickSource() {
-    return myClickSource;
   }
 }

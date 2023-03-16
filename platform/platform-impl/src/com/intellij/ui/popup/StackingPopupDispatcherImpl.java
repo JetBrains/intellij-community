@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
@@ -131,11 +132,6 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
           needStopFurtherEventProcessing = true;
         }
         popup.cancel(mouseEvent);
-        JComponent clickSource = popup.getClickSource();
-        Component target = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-        if (clickSource != null && SwingUtilities.isDescendingFrom(target, clickSource)) {
-          needStopFurtherEventProcessing = true;
-        }
       }
 
       if (myStack.isEmpty()) {
