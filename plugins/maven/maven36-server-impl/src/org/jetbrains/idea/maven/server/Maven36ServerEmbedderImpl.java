@@ -47,7 +47,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
     super.customizeComponents(workspaceMap, failOnUnresolvedDependency);
 
     //TODO: registry key to turn off
-    //customizeArtifactResolver();
+    customizeArtifactResolver();
   }
 
   @Override
