@@ -8,6 +8,7 @@ import com.github.weisj.jsvg.attributes.paint.DefaultPaintParser
 import com.github.weisj.jsvg.nodes.SVG
 import com.github.weisj.jsvg.nodes.Style
 import com.github.weisj.jsvg.parser.*
+import com.github.weisj.jsvg.util.ResourceUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xml.dom.createXmlStreamReader
@@ -90,9 +91,20 @@ private fun buildDocument(reader: XMLStreamReader2, attributeMutator: AttributeM
 }
 
 private object JSvgLoadHelper : LoadHelper {
-  private val resourceLoader: ResourceLoader by lazy { SynchronousResourceLoader() }
+  private val resourceLoader: ResourceLoader by lazy {
+    ResourceLoader { uri ->
+      if (uri.scheme == "data") {
+        ValueUIFuture(ResourceUtil.loadImage(uri))
+      }
+      else {
+        LOG.warn("Only data URI is allowed (uri=$uri)")
+        null
+      }
+    }
+  }
 
   private val attributeParser = AttributeParser(DefaultPaintParser())
+
   override fun attributeParser(): AttributeParser = attributeParser
 
   override fun resourceLoader(): ResourceLoader = resourceLoader
@@ -107,7 +119,7 @@ private fun processElementFragment(reader: XMLStreamReader2,
                                    root: ParsedElement,
                                    namedElements: MutableMap<String, ParsedElement>,
                                    attributeMutator: AttributeMutator?) {
-  val classSelectors = HashMap<String, Map<String, ValueWithPriority>>()
+  var classSelectors: MutableMap<String, Map<String, ValueWithPriority>>? = null
 
   val queue = ArrayList<ParsedElement>()
   queue.add(root)
@@ -128,6 +140,8 @@ private fun processElementFragment(reader: XMLStreamReader2,
             continue
           }
 
+          classSelectors = HashMap()
+
           parseStylesheet(reader = reader, classSelectors = classSelectors)
           while (reader.next() != XMLStreamConstants.END_ELEMENT) {
             // skip the rest
@@ -146,8 +160,8 @@ private fun processElementFragment(reader: XMLStreamReader2,
         parent.addChild(parsedElement)
 
         val id = parsedElement.id()
-        if (id != null && !namedElements.containsKey(id)) {
-          namedElements.put(id, parsedElement)
+        if (id != null) {
+          namedElements.putIfAbsent(id, parsedElement)
         }
 
         queue.add(parsedElement)
@@ -169,6 +183,8 @@ private fun processElementFragment(reader: XMLStreamReader2,
 }
 
 private fun parseStylesheet(reader: XMLStreamReader2, classSelectors: MutableMap<String, Map<String, ValueWithPriority>>) {
+  val priorityCache = ConcurrentHashMap<String, Priority>()
+
   val rules = reader.text
     // remove newlines
     .replace("\n", "")
@@ -190,9 +206,7 @@ private fun parseStylesheet(reader: XMLStreamReader2, classSelectors: MutableMap
 
       val className = selector.substring(1)
 
-      classSelectors.merge(className, parseCssRule(getPriority(selector), properties), BiFunction { old, new ->
-        mergeStyle(old, new)
-      })
+      classSelectors.merge(className, parseCssRule(getPriority(selector, priorityCache), properties), BiFunction(::mergeStyle))
     }
   }
 }
@@ -231,16 +245,14 @@ private fun getQualifiedName(prefix: String?, localName: String): String {
   return if (prefix.isNullOrEmpty()) localName else "$prefix:$localName"
 }
 
-private val PRIORITY_CACHE = ConcurrentHashMap<String, Priority>()
-
-private fun getPriority(selector: String): Priority {
-  return PRIORITY_CACHE.computeIfAbsent(selector, Function {
+private fun getPriority(selector: String, priorityCache: MutableMap<String, Priority>): Priority {
+  return priorityCache.computeIfAbsent(selector, Function {
     var b = 0
     var c = 0
     var d = 0
     val pieces = selector.splitToSequence(' ').map(String::trim).filter { !it.isEmpty() }
     for (pc in pieces) {
-      if (pc.startsWith("#")) {
+      if (pc.startsWith('#')) {
         b++
         continue
       }
