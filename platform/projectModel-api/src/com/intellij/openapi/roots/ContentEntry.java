@@ -212,13 +212,14 @@ public interface ContentEntry extends Synthetic {
                                                                @NotNull ProjectModelExternalSource externalSource);
 
   /**
-   * This method accepts useSourceOfContentRoot, what means that if the content root is "externally imported" (e.g. using maven or gradle),
-   * the source root will get the {@link com.intellij.workspaceModel.storage.EntitySource} of the content entity and will
-   * also be marked as "externally imported".
+   * @param isAutomaticallyImported true if the source root is "detected" or "imported" by IDE, false if it explicitly defined by user.
+   *                                This means that if the content root is "externally imported" (e.g. using maven or gradle),
+   *                                the source root will get the {@link com.intellij.workspaceModel.storage.EntitySource} of the content
+   *                                entity and will also be marked as "externally imported".
    */
   @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
                                                                @NotNull JpsModuleSourceRootType<P> type,
-                                                               boolean useSourceOfContentRoot);
+                                                               boolean isAutomaticallyImported);
 
   /**
    * Adds a source root of the given type with given properties. This method may be called only on an instance obtained from
@@ -234,6 +235,17 @@ public interface ContentEntry extends Synthetic {
   @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
                                                                @NotNull JpsModuleSourceRootType<P> type,
                                                                @NotNull P properties);
+
+  /**
+   * @param isAutomaticallyImported true if the source root is "detected" or "imported" by IDE, false if it explicitly defined by user.
+   *                                This means that if the content root is "externally imported" (e.g. using maven or gradle),
+   *                                the source root will get the {@link com.intellij.workspaceModel.storage.EntitySource} of the content
+   *                                entity and will also be marked as "externally imported".
+   */
+  @NotNull <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                               @NotNull JpsModuleSourceRootType<P> type,
+                                                               @NotNull P properties,
+                                                               boolean isAutomaticallyImported);
 
   /**
    * Adds a source root of the given type with given properties. This method may be called only on an instance obtained from
