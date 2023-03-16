@@ -170,7 +170,7 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
     finally {
       referenceElement.putUserData(JOB, null);
     }
-    if (changed.get()) {
+    if (changed.get() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       VirtualFile virtualFile = file.getVirtualFile();
       boolean isInContent = ModuleUtilCore.projectContainsFile(myProject, virtualFile, false);
       // have to restart ShowAutoImportPass manually because the highlighting session might very well be over by now
