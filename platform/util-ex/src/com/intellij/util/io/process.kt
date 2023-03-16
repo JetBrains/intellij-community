@@ -4,6 +4,7 @@ package com.intellij.util.io
 import com.intellij.openapi.util.IntellijInternalApi
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.BufferedReader
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
@@ -54,5 +55,16 @@ suspend fun <T> computeDetached(action: suspend CoroutineScope.() -> T): T {
   catch (ce: CancellationException) {
     deferred.cancel(ce)
     throw ce
+  }
+}
+
+/**
+ * Reads line in suspendable manner.
+ * Might be slow, for high performance consider using separate thread and blocking call
+ */
+@OptIn(DelicateCoroutinesApi::class)
+suspend fun BufferedReader.readLineAsync(): String? = computeDetached {
+  runInterruptible(processWaiter) {
+    readLine()
   }
 }
