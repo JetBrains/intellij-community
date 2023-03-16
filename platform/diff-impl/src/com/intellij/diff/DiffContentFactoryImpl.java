@@ -441,12 +441,13 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     LightVirtualFile file = new MyLightVirtualFile(lightFilePath, fileType, content);
     file.setWritable(!readOnly);
 
-    Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
-    if (document == null) return null;
-
-    ReadAction.run(() -> PsiDocumentManager.getInstance(project).getPsiFile(document));
-
-    return document;
+    return ReadAction.compute(() -> {
+      Document document = ProjectLocator.computeWithPreferredProject(file, project, () ->
+        FileDocumentManager.getInstance().getDocument(file));
+      if (document == null) return null;
+      PsiDocumentManager.getInstance(project).getPsiFile(document);
+      return document;
+    });
   }
 
   private static boolean isBinaryContent(byte @NotNull [] content, @NotNull FileType fileType) {
