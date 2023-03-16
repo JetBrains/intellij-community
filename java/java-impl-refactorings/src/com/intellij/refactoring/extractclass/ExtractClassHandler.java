@@ -111,6 +111,7 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
                                           ActionsBundle.message("action.ExtractClass.description"), getHelpID());
       return;
     }
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, containingClass)) return;
 
     final Set<PsiElement> selectedMembers = new HashSet<>();
     Collections.addAll(selectedMembers, elements);
