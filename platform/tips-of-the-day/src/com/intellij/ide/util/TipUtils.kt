@@ -18,12 +18,12 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Trinity
+import com.intellij.ui.icons.loadImageByClassLoader
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil.scale
 import com.intellij.util.ImageLoader.loadFromUrl
 import com.intellij.util.ResourceUtil
-import com.intellij.util.loadImageByClassLoader
 import com.intellij.util.ui.JBImageIcon
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly

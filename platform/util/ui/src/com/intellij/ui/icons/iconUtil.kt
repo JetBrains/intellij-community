@@ -8,13 +8,18 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.svg.SvgCacheClassifier
+import com.intellij.ui.svg.loadSvg
+import com.intellij.ui.svg.renderSvg
 import com.intellij.util.ImageLoader
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
 import com.intellij.util.lang.ByteBufferCleaner
+import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.StartupUiUtil
+import org.imgscalr.Scalr
 import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.image.SunWritableRaster
 import java.awt.Component
@@ -26,6 +31,7 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 import java.net.URI
+import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
@@ -34,6 +40,7 @@ import java.util.*
 import javax.imageio.ImageIO
 import javax.imageio.stream.MemoryCacheImageInputStream
 import javax.swing.Icon
+import kotlin.math.roundToInt
 
 private val LOG: Logger
   get() = logger<ImageUtil>()
@@ -255,5 +262,106 @@ fun writeImage(file: Path, image: BufferedImage, scale: Float) {
   }
   catch (e: AtomicMoveNotSupportedException) {
     Files.move(tempFile, file)
+  }
+}
+
+fun loadCustomIcon(url: URL): Image? {
+  val path = url.toString()
+  val scaleContext = ScaleContext.create()
+  // probably, need it implements naming conventions: filename ends with @2x => HiDPI (scale=2)
+  val scale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+  val imageDescriptor = ImageDescriptor(pathTransform = { p, e -> "$p.$e" }, scale = scale,
+                                        isSvg = path.endsWith(".svg", ignoreCase = true),
+                                        isDark = path.contains("_dark."),
+                                        isStroke = path.contains("_stroke."))
+
+  val lastDotIndex = path.lastIndexOf('.')
+  val rawPathWithoutExt: String
+  val ext: String
+  if (lastDotIndex == -1) {
+    rawPathWithoutExt = path
+    ext = "png"
+  }
+  else {
+    rawPathWithoutExt = path.substring(0, lastDotIndex)
+    ext = path.substring(lastDotIndex + 1)
+  }
+  val icon = ImageUtil.ensureHiDPI(loadByDescriptor(rawPathWithoutExt = rawPathWithoutExt, ext = ext, descriptor = imageDescriptor),
+                                   scaleContext) ?: return null
+  val w = icon.getWidth(null)
+  val h = icon.getHeight(null)
+  if (w <= 0 || h <= 0) {
+    LOG.error("negative image size: w=$w, h=$h, path=$path")
+    return null
+  }
+
+  if (w > EmptyIcon.ICON_18.iconWidth || h > EmptyIcon.ICON_18.iconHeight) {
+    val s = EmptyIcon.ICON_18.iconWidth / w.coerceAtLeast(h).toDouble()
+    return ImageLoader.scaleImage(icon, s)
+  }
+  return icon
+}
+
+@Internal
+fun loadImageForStartUp(requestedPath: String, scale: Float, classLoader: ClassLoader): BufferedImage? {
+  val descriptors = createImageDescriptorList(path = requestedPath, isDark = false, pixScale = scale)
+  for (descriptor in descriptors) {
+    try {
+      val dotIndex = requestedPath.lastIndexOf('.')
+      val pathWithoutExt = requestedPath.substring(0, dotIndex)
+      val data = getResourceData(path = descriptor.pathTransform(pathWithoutExt, requestedPath.substring(dotIndex + 1)),
+                                 resourceClass = null,
+                                 classLoader = classLoader) ?: continue
+      if (descriptor.isSvg) {
+        return renderSvg(data = data, scale = descriptor.scale)
+      }
+      else {
+        val image = loadPng(stream = ByteArrayInputStream(data), scale = descriptor.scale, originalUserSize = null)
+        // compensate the image original scale
+        val effectiveScale = if (descriptor.scale > 1) scale / descriptor.scale else scale
+        return doScaleImage(image, effectiveScale.toDouble()) as BufferedImage
+      }
+    }
+    catch (ignore: IOException) {
+    }
+  }
+  return null
+}
+
+internal fun doScaleImage(image: Image, scale: Double): Image {
+  if (scale == 1.0) {
+    return image
+  }
+  if (image is JBHiDPIScaledImage) {
+    return image.scale(scale)
+  }
+  val w = image.getWidth(null)
+  val h = image.getHeight(null)
+  if (w <= 0 || h <= 0) {
+    return image
+  }
+  val width = (scale * w).roundToInt()
+  val height = (scale * h).roundToInt()
+  // Using "QUALITY" instead of "ULTRA_QUALITY" results in images that are less blurry
+  // because ultra quality performs a few more passes when scaling, which introduces blurriness
+  // when the scaling factor is relatively small (i.e. <= 3.0f) -- which is the case here.
+  return Scalr.resize(ImageUtil.toBufferedImage(image, false), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, width, height, null)
+}
+
+@Internal
+fun loadImageFromStream(stream: InputStream,
+                        path: String?,
+                        scale: Float,
+                        originalUserSize: ImageLoader.Dimension2DDouble? = null,
+                        isDark: Boolean,
+                        useSvg: Boolean): Image {
+  stream.use {
+    if (useSvg) {
+      val compoundCacheKey = SvgCacheClassifier(scale = scale, isDark = isDark, isStroke = false)
+      return loadSvg(path = path, stream = stream, scale = scale, compoundCacheKey = compoundCacheKey, colorPatcherProvider = null)
+    }
+    else {
+      return loadPng(stream = stream, scale = scale, originalUserSize = originalUserSize)
+    }
   }
 }

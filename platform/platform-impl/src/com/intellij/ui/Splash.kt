@@ -10,13 +10,13 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.ui.icons.loadImageForStartUp
 import com.intellij.ui.icons.readImage
 import com.intellij.ui.icons.writeImage
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.JBHiDPIScaledImage
-import com.intellij.util.loadImageForStartUp
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.StartupUiUtil

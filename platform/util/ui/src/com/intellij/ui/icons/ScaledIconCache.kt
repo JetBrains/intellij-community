@@ -10,7 +10,6 @@ import com.intellij.reference.SoftReference
 import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
-import com.intellij.util.CACHED_IMAGE_MAX_SIZE
 import com.intellij.util.ui.JBImageIcon
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap
 import org.jetbrains.annotations.ApiStatus

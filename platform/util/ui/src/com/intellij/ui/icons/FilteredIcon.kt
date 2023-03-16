@@ -5,7 +5,6 @@ import com.intellij.openapi.util.IconLoader.getScaleToRenderIcon
 import com.intellij.openapi.util.IconLoader.renderFilteredIcon
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.fakeComponent
-import com.intellij.ui.UpdatableIcon
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.image.RGBImageFilter

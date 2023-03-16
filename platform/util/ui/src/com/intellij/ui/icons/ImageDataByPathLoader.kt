@@ -4,7 +4,6 @@ package com.intellij.ui.icons
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.loadImage
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Image

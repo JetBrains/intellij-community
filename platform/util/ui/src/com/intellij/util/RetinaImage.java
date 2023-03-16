@@ -3,6 +3,7 @@ package com.intellij.util;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -14,6 +15,9 @@ import java.awt.image.ImageObserver;
  * @author Konstantin Bulenkov
  */
 public final class RetinaImage { // [tav] todo: create HiDPIImage class
+  private static final SynchronizedClearableLazy<Component> component = new SynchronizedClearableLazy<>(() -> new Component() {
+  });
+
   /**
    * Creates a Retina-aware wrapper over a raw image.
    * The raw image should be provided on the scale of the Retina default scale factor (2x).
@@ -23,7 +27,7 @@ public final class RetinaImage { // [tav] todo: create HiDPIImage class
    * @return the Retina-aware wrapper
    */
   public static Image createFrom(@NotNull Image image) {
-    Component component = ImageLoader.INSTANCE.getOurComponent();
+    Component component = RetinaImage.component.get();
     int w = image.getWidth(component);
     int h = image.getHeight(component);
     return new JBHiDPIScaledImage(image, w / (double)2, h / (double)2, BufferedImage.TYPE_INT_ARGB);

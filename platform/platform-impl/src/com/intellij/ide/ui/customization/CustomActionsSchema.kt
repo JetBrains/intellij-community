@@ -4,7 +4,6 @@
 package com.intellij.ide.ui.customization
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider.CustomizableActionGroupRegistrar
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -21,7 +20,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.ExperimentalUI
-import com.intellij.util.ImageLoader.loadCustomIcon
+import com.intellij.ui.icons.loadCustomIcon
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBImageIcon
 import kotlinx.collections.immutable.PersistentMap
