@@ -13,8 +13,7 @@ final class JavaCommandProvider implements CommandProvider {
     return Map.of(
       FindUsagesJavaCommand.PREFIX, FindUsagesJavaCommand::new,
       BuildCommand.PREFIX, BuildCommand::new,
-      SyncJpsLibrariesCommand.PREFIX, SyncJpsLibrariesCommand::new,
-      SetBreakpointCommand.PREFIX, SetBreakpointCommand::new
+      SyncJpsLibrariesCommand.PREFIX, SyncJpsLibrariesCommand::new
     );
   }
 }
