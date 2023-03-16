@@ -3,6 +3,9 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 
+/**
+ * List of all configurable spacings for building Kotlin UI DSL panels. All returned values are unscaled
+ */
 interface SpacingConfiguration {
 
   /**

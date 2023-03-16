@@ -25,6 +25,7 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -294,8 +295,8 @@ private class SegmentedButton<T>(
 
   override fun getPreferredSize(): Dimension {
     val preferredSize = super.getPreferredSize()
-    return Dimension(preferredSize.width + spacing.segmentedButtonHorizontalGap * 2,
-                     preferredSize.height + spacing.segmentedButtonVerticalGap * 2)
+    return Dimension(preferredSize.width + JBUIScale.scale(spacing.segmentedButtonHorizontalGap) * 2,
+                     preferredSize.height + JBUIScale.scale(spacing.segmentedButtonVerticalGap) * 2)
   }
 
   override fun actionPerformed(event: AnActionEvent) {

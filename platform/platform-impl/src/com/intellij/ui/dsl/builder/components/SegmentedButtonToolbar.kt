@@ -17,6 +17,7 @@ import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -182,8 +183,8 @@ private class DeprecatedSegmentedButton(
 
   override fun getPreferredSize(): Dimension {
     val preferredSize = super.getPreferredSize()
-    return Dimension(preferredSize.width + spacingConfiguration.segmentedButtonHorizontalGap * 2,
-                     preferredSize.height + spacingConfiguration.segmentedButtonVerticalGap * 2)
+    return Dimension(preferredSize.width + JBUIScale.scale(spacingConfiguration.segmentedButtonHorizontalGap) * 2,
+                     preferredSize.height + JBUIScale.scale(spacingConfiguration.segmentedButtonVerticalGap) * 2)
   }
 
   fun setSelected(selected: Boolean) {
