@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.memberPullUp;
 
@@ -16,10 +16,8 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
-import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
-import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -28,12 +26,16 @@ import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog.Callback, ElementsHandler, ContextAwareActionHandler, JavaPullUpHandlerBase {
+public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler, ContextAwareActionHandler, JavaPullUpHandlerBase {
   private PsiClass mySubclass;
   private Project myProject;
 
@@ -88,19 +90,29 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
   }
 
   @Override
-  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     myProject = project;
-    PsiClass aClass = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(elements), PsiClass.class, false);
-    invoke(project, dataContext, aClass, elements);
+    PsiElement parent = PsiTreeUtil.findCommonParent(elements);
+    PsiClass aClass = parent instanceof PsiClass parentClass
+                 ? parentClass
+                 : PsiTreeUtil.getParentOfType(parent, PsiClass.class, false);
+    if (aClass == null) {
+      String message = RefactoringBundle.message("error.select.class.to.be.refactored");
+      CommonRefactoringUtil.showErrorHint(project, null, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
+      return;
+    }
+    final Set<PsiElement> selectedMembers = new HashSet<>();
+    Collections.addAll(selectedMembers, elements);
+    invoke(dataContext, aClass, selectedMembers);
   }
 
-  private void invoke(Project project, DataContext dataContext, PsiClass aClass, PsiElement... selectedMembers) {
+  private void invoke(DataContext dataContext, PsiClass aClass, Set<PsiElement> selectedMembers) {
     final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass == null) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context",
                                                                              getRefactoringName()));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
+      CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
       return;
     }
 
@@ -108,30 +120,27 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
     if (bases.isEmpty()) {
       final PsiClass containingClass = aClass.getContainingClass();
       if (containingClass != null) {
-        invoke(project, dataContext, containingClass, aClass);
+        invoke(dataContext, containingClass, Set.of(aClass));
         return;
       }
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("class.does.not.have.base.classes.interfaces.in.current.project", aClass.getQualifiedName()));
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
+      CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
       return;
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, aClass)) return;
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, aClass)) return;
     mySubclass = aClass;
     MemberInfoStorage memberInfoStorage = new MemberInfoStorage(mySubclass, element -> true);
     List<MemberInfo> members = memberInfoStorage.getClassMemberInfos(mySubclass);
 
-    for (MemberInfoBase<PsiMember> member : members) {
-      for (PsiElement aMember : selectedMembers) {
-        if (PsiTreeUtil.isAncestor(member.getMember(), aMember, false)) {
-          member.setChecked(true);
-          break;
-        }
+    for (MemberInfo memberInfo : members) {
+      if (selectedMembers.contains(memberInfo.getMember())) {
+        memberInfo.setChecked(true);
       }
     }
 
-    new PullUpDialog(project, aClass, bases, memberInfoStorage, this).show();
+    new PullUpDialog(myProject, aClass, bases, memberInfoStorage, this).show();
   }
 
   @Override
@@ -169,8 +178,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
 
   @Override
   public boolean isEnabledOnElements(PsiElement[] elements) {
-    // todo: multiple selection etc
-    return elements.length == 1 && elements[0] instanceof PsiClass;
+    return ContainerUtil.exists(elements, element -> element instanceof PsiMember);
   }
 
   public static @NlsContexts.DialogTitle String getRefactoringName() {
