@@ -18,7 +18,6 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.Processor;
-import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -41,7 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class TransferToEDTQueue<T> {
   /**
    * This is a default threshold used to join units of work.
-   * It allows to generate more that 30 frames per second.
+   * It allows us to generate more than 30 frames per second.
    * It is not recommended to block EDT longer,
    * because people feel that UI is laggy.
    *
@@ -82,10 +81,6 @@ public class TransferToEDTQueue<T> {
     }
   };
 
-  public TransferToEDTQueue(@NotNull @NonNls String name, @NotNull Processor<? super T> processor, @NotNull Condition<?> shutUpCondition) {
-    this(name, processor, shutUpCondition, DEFAULT_THRESHOLD);
-  }
-
   public TransferToEDTQueue(@NotNull @NonNls String name,
                             @NotNull Processor<? super T> processor,
                             @NotNull Condition<?> shutUpCondition,
@@ -96,10 +91,12 @@ public class TransferToEDTQueue<T> {
     myMaxUnitOfWorkThresholdMs = maxUnitOfWorkThresholdMs;
   }
 
+  @NotNull
   public static TransferToEDTQueue<Runnable> createRunnableMerger(@NotNull @NonNls String name) {
     return createRunnableMerger(name, DEFAULT_THRESHOLD);
   }
 
+  @NotNull
   public static TransferToEDTQueue<Runnable> createRunnableMerger(@NotNull @NonNls String name, int maxUnitOfWorkThresholdMs) {
     return new TransferToEDTQueue<>(name, runnable -> {
       runnable.run();
@@ -186,13 +183,5 @@ public class TransferToEDTQueue<T> {
     while (processNext()) {
       processed++;
     }
-  }
-
-  // blocks until all elements in the queue are processed
-  public void waitFor() {
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    schedule(semaphore::up);
-    semaphore.waitFor();
   }
 }

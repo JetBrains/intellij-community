@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 final class CanISilentlyChange {
   private static boolean canUndo(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
     if (editors.length == 0) {
       return false;
@@ -31,11 +32,12 @@ final class CanISilentlyChange {
 
   enum Result {
     UH_HUH, UH_UH, ONLY_WHEN_IN_CONTENT;
-    boolean canIReally(boolean isInContent) {
+    // can call from any thread
+    boolean canIReally(boolean isInContent, @NotNull ThreeState extensionsAllowToChangeFileSilently) {
       return switch (this) {
-        case UH_HUH -> true;
+        case UH_HUH -> extensionsAllowToChangeFileSilently != ThreeState.NO;
         case UH_UH -> false;
-        case ONLY_WHEN_IN_CONTENT -> isInContent;
+        case ONLY_WHEN_IN_CONTENT -> extensionsAllowToChangeFileSilently != ThreeState.NO && isInContent;
       };
     }
   }
@@ -54,16 +56,6 @@ final class CanISilentlyChange {
     if (ScratchUtil.isScratch(virtualFile)) {
       return canUndo(virtualFile, project) ? Result.UH_HUH : Result.UH_UH;
     }
-    for (SilentChangeVetoer extension : SilentChangeVetoer.EP_NAME.getExtensionList()) {
-      ThreeState result = extension.canChangeFileSilently(project, virtualFile);
-      if (result == ThreeState.YES) {
-        return Result.ONLY_WHEN_IN_CONTENT;
-      }
-      if (result == ThreeState.NO) {
-        return Result.UH_UH;
-      }
-    }
-
     return canUndo(virtualFile, project) ? Result.ONLY_WHEN_IN_CONTENT : Result.UH_UH;
   }
 }

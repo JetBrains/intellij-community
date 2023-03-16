@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonListeners
+import com.intellij.codeInsight.daemon.impl.SilentChangeVetoer
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.*
 import com.intellij.lang.annotation.HighlightSeverity
@@ -24,6 +25,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.DocumentUtil
+import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -137,10 +139,11 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         val project = file.project
         val modificationCount = PsiModificationTracker.getInstance(project).modificationCount
 
+        val extensionsAllowToChangeFileSilently = SilentChangeVetoer.extensionsAllowToChangeFileSilently(project, file.virtualFile)
         scheduleOptimizeOnDaemonFinished(file) {
             val editor = PsiEditorUtil.findEditor(file)
             val currentModificationCount = PsiModificationTracker.getInstance(project).modificationCount
-            if (editor != null && currentModificationCount == modificationCount && timeToOptimizeImportsOnTheFly(file, editor, project)) {
+            if (editor != null && currentModificationCount == modificationCount && timeToOptimizeImportsOnTheFly(file, editor, extensionsAllowToChangeFileSilently)) {
               optimizeImportsOnTheFly(file, optimizedImports, editor, project)
             }
         }
@@ -170,7 +173,8 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
                 })
     }
 
-    private fun timeToOptimizeImportsOnTheFly(file: KtFile, editor: Editor, project: Project): Boolean {
+    private fun timeToOptimizeImportsOnTheFly(file: KtFile, editor: Editor, extensionsAllowToChangeFileSilently: ThreeState): Boolean {
+        val project = file.project
         if (project.isDisposed || !file.isValid || editor.isDisposed || !file.isWritable) return false
 
         // do not optimize imports on the fly during undo/redo
@@ -202,7 +206,8 @@ class KotlinUnusedImportInspection : AbstractKotlinInspection() {
         }
         if (hasErrors) return false
 
-        return DaemonListeners.canChangeFileSilently(file, true/* assume inspections are run on files in content only */)
+        return DaemonListeners.canChangeFileSilently(file, true/* assume inspections are run on files in content only */,
+                                                     extensionsAllowToChangeFileSilently)
     }
 
     private fun optimizeImportsOnTheFly(file: KtFile, optimizedImports: List<ImportPath>, editor: Editor, project: Project) {

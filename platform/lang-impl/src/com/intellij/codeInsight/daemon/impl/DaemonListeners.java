@@ -74,6 +74,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.ThreeState;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
@@ -498,7 +499,8 @@ public final class DaemonListeners implements Disposable {
    * - files under explicit write permission version control (such as Perforce, which asks "do you want to edit this file"),
    * - files in the middle of cut-n-paste operation.
    */
-  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent) {
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent,
+                                              @NotNull ThreeState extensionsAllowToChangeFileSilently) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Project project = file.getProject();
     DaemonListeners listeners = getInstance(project);
@@ -509,16 +511,21 @@ public final class DaemonListeners implements Disposable {
     if (listeners.cutOperationJustHappened) {
       return false;
     }
-    return CanISilentlyChange.thisFile(file).canIReally(isInContent);
+    return CanISilentlyChange.thisFile(file).canIReally(isInContent, extensionsAllowToChangeFileSilently);
   }
 
   /**
-   * @deprecated use {@link #canChangeFileSilently(PsiFileSystemItem, boolean)} instead
+   * @deprecated use {@link #canChangeFileSilently(PsiFileSystemItem, boolean, ThreeState)} instead
    */
   @Deprecated
   public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file) {
     PluginException.reportDeprecatedUsage("this method", "");
-    return canChangeFileSilently(file, true);
+    return canChangeFileSilently(file, true, ThreeState.UNSURE);
+  }
+  @Deprecated
+  public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent) {
+    PluginException.reportDeprecatedUsage("this method", "");
+    return canChangeFileSilently(file, isInContent, ThreeState.UNSURE);
   }
 
   private class MyApplicationListener implements ApplicationListener {
