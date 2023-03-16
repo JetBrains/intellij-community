@@ -154,7 +154,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
     Content contentToDelete = null;
     int indexToAdd = -1;
     if (!toOpenInNewTab && reusable) {
-      List<Content> contents = ContainerUtil.newArrayList(myFindContentManager.getContents());
+      List<Content> contents = Arrays.asList(myFindContentManager.getContents());
       if (selectedContent != null) {
         contents = ContainerUtil.append(contents, selectedContent);
         // Selected content has to be the last (and the best) candidate to be deleted
