@@ -16,7 +16,7 @@ class ExternalEventLogSettingsTest : BasePlatformTestCase() {
     override fun isSendAllowedOverride(): Boolean = true
     override fun isCollectAllowedOverride(): Boolean = true
     override fun forceDisableCollectionConsent(): Boolean = true
-    override fun forceCollectionWithoutRecord(): Boolean = true
+    override fun forceLoggingAlwaysEnabled(): Boolean = true
     override fun getExtraLogUploadHeaders(): Map<String, String> = emptyMap()
   }
 

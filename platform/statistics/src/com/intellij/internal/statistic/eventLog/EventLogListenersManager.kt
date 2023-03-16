@@ -41,7 +41,7 @@ class EventLogListenersManager {
   }
 
   private fun addListenersFromEP() {
-    StatisticsEventLogProviderUtil.getEventLogProviders().filter { it.isForceCollectionEnabled() }
+    StatisticsEventLogProviderUtil.getEventLogProviders().filter { it.isLoggingAlwaysActive() }
       .map { it.recorderId }.forEach { addListenerFromEP(it) }
   }
 

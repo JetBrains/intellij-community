@@ -41,13 +41,13 @@ public final class StatisticsUploadAssistant {
     }
 
     UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
-    return !isDisableCollectStatistics() && !getForceDisableCollectionOverride() &&
+    return !isDisableCollectStatistics() && !isCollectionForceDisabled() &&
            ((settings != null && settings.isAllowed()) || isLocalStatisticsWithoutReport());
   }
 
   private static boolean isForceCollectEnabled() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
-    return externalEventLogSettings != null && externalEventLogSettings.forceCollectionWithoutRecord();
+    return externalEventLogSettings != null && externalEventLogSettings.forceLoggingAlwaysEnabled();
   }
 
   public static boolean isCollectAllowedOrForced() {
@@ -75,7 +75,7 @@ public final class StatisticsUploadAssistant {
     return externalEventLogSettings != null && externalEventLogSettings.isCollectAllowedOverride();
   }
 
-  private static boolean getForceDisableCollectionOverride() {
+  private static boolean isCollectionForceDisabled() {
     ExternalEventLogSettings externalEventLogSettings = StatisticsEventLogProviderUtil.getExternalEventLogSettings();
     return externalEventLogSettings != null && externalEventLogSettings.forceDisableCollectionConsent();
   }
