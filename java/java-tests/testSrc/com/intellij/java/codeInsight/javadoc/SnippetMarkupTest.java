@@ -81,6 +81,9 @@ public class SnippetMarkupTest {
             System.out.println("Hello"); // @link type=pfff
             doubleReplace // @replace substring="Hello" regex="Hello" replacement="Hello"
             malformed // @replace regex="???" replacement="xyz"
+            // @replace region="test region"
+            startRegion
+            // @end
           }
           // @end test
         }
@@ -109,13 +112,18 @@ public class SnippetMarkupTest {
         ^]
         PlainText[range=(296,310), content=    malformed\s
         ]
-        PlainText[range=(352,356), content=  }
+        ErrorMarkup[range=(359,388), message=@replace: missing 'replacement' attribute]
+        StartRegion[range=(359,388), region=test region]
+        PlainText[range=(389,405), content=    startRegion
         ]
-        ErrorMarkup[range=(366,370), message=@end: unsupported attribute: 'test']
-        EndRegion[range=(361,370), region=null]
-        PlainText[range=(371,373), content=}
+        EndRegion[range=(412,416), region=null]
+        PlainText[range=(417,421), content=  }
         ]
-        PlainText[range=(373,373), content=]""");
+        ErrorMarkup[range=(431,435), message=@end: unsupported attribute: 'test']
+        EndRegion[range=(426,435), region=null]
+        PlainText[range=(436,438), content=}
+        ]
+        PlainText[range=(438,438), content=]""");
   }
 
   @Test

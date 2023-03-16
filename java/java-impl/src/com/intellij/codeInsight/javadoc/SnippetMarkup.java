@@ -448,27 +448,34 @@ public class SnippetMarkup {
                                         @NotNull String tagName,
                                         @NotNull Map<String, Attribute> attrs,
                                         @NotNull TextRange range) {
+    String region = getRegion(attrs);
     switch (tagName) {
       case "start" -> {
-        String region = getRequiredString(markupNodes, attrs, tagName, range, "region");
+        region = getRequiredString(markupNodes, attrs, tagName, range, "region");
         if (region != null) {
           markupNodes.add(new StartRegion(range, region));
         }
       }
-      case "end" -> markupNodes.add(new EndRegion(range, getRegion(attrs)));
+      case "end" -> markupNodes.add(new EndRegion(range, region));
       case "highlight" -> {
         Attribute typeAttr = attrs.get("type");
         HighlightType type = getEnumValue(markupNodes, "highlight", typeAttr, HighlightType.class, HighlightType.HIGHLIGHTED);
         Selector selector = getSelector(markupNodes, attrs, tagName);
         if (selector != null) {
-          markupNodes.add(new Highlight(range, selector, getRegion(attrs), type));
+          markupNodes.add(new Highlight(range, selector, region, type));
+        }
+        else if (region != null) {
+          markupNodes.add(new StartRegion(range, region));
         }
       }
       case "replace" -> {
         String replacement = getRequiredString(markupNodes, attrs, tagName, range, "replacement");
         Selector selector = getSelector(markupNodes, attrs, tagName);
         if (replacement != null && selector != null) {
-          markupNodes.add(new Replace(range, selector, getRegion(attrs), replacement));
+          markupNodes.add(new Replace(range, selector, region, replacement));
+        }
+        else if (region != null) {
+          markupNodes.add(new StartRegion(range, region));
         }
       }
       case "link" -> {
@@ -477,7 +484,10 @@ public class SnippetMarkup {
         LinkType type = getEnumValue(markupNodes, "link", typeAttr, LinkType.class, LinkType.LINK);
         Selector selector = getSelector(markupNodes, attrs, tagName);
         if (target != null && selector != null) {
-          markupNodes.add(new Link(range, selector, getRegion(attrs), target, type));
+          markupNodes.add(new Link(range, selector, region, target, type));
+        }
+        else if (region != null) {
+          markupNodes.add(new StartRegion(range, region));
         }
       }
       default -> throw new AssertionError("Unexpected tag: " + tagName);
