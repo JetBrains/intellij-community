@@ -164,7 +164,6 @@
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.impl.NotificationsManagerImpl$MyNotificationListener"
               topic="com.intellij.notification.Notifications"/>
-    <listener class="com.intellij.notification.EventLog$MyNotificationListener" topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.impl.NotificationsConfigurationImpl$MyNotificationListener"
               topic="com.intellij.notification.Notifications"/>
 

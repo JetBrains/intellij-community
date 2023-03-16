@@ -2,9 +2,10 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.ClipboardSynchronizer;
-import com.intellij.notification.EventLog;
-import com.intellij.notification.LogModel;
+import com.intellij.notification.ActionCenter;
 import com.intellij.notification.Notification;
+import com.intellij.notification.impl.NotificationsToolWindowFactory;
+import com.intellij.notification.impl.StatusMessage;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -77,7 +78,7 @@ final class StatusPanel extends JPanel {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (myCurrentNotification != null || myAfterClick) {
-          EventLog.toggleLog(getActiveProject(), myCurrentNotification);
+          ActionCenter.toggleLog(getActiveProject());
           myAfterClick = true;
           myTextPanel.setExplicitSize(myTextPanel.getSize());
           UIUtil.setCursor(myTextPanel, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -166,7 +167,7 @@ final class StatusPanel extends JPanel {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     Project project = getActiveProject();
-    LogModel.@Nullable StatusMessage statusMessage = EventLog.getStatusMessage(project);
+    StatusMessage statusMessage = NotificationsToolWindowFactory.Companion.getStatusMessage(project);
     Alarm alarm = getAlarm();
     myCurrentNotification = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null ? statusMessage.notification() : null;
 

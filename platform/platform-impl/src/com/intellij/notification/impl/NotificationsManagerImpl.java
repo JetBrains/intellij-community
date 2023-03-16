@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.notification.*;
@@ -99,29 +98,19 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   @Override
   public void expire(@NotNull Notification notification) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      if (ActionCenter.isEnabled()) {
-        NotificationsToolWindowFactory.Companion.expire(notification);
-      }
-      else {
-        EventLog.expireNotification(notification);
-      }
+      NotificationsToolWindowFactory.Companion.expire(notification);
     });
   }
 
   public void expireAll() {
-    if (ActionCenter.isEnabled()) {
-      NotificationsToolWindowFactory.Companion.expireAll();
-    }
-    else {
-      EventLog.expireNotifications();
-    }
+    NotificationsToolWindowFactory.Companion.expireAll();
   }
 
   @Override
   public <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable Project project) {
     List<T> result = new ArrayList<>();
     if (project == null || !project.isDefault() && !project.isDisposed()) {
-      for (Notification notification : ActionCenter.getNotifications(project, true)) {
+      for (Notification notification : ActionCenter.getNotifications(project)) {
         if (klass.isInstance(notification)) {
           @SuppressWarnings("unchecked") T t = (T)notification;
           result.add(t);
@@ -342,14 +331,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (balloon instanceof BalloonImpl) {
-      if (displayType == NotificationDisplayType.BALLOON || ProjectUtil.getOpenProjects().length == 0 || ActionCenter.isEnabled()) {
-        frameActivateBalloonListener(balloon, () -> {
-          if (!balloon.isDisposed()) {
-            int delay = ActionCenter.isEnabled() && displayType == NotificationDisplayType.STICKY_BALLOON ? 300000 : 10000;
-            ((BalloonImpl)balloon).startSmartFadeoutTimer(delay);
-          }
-        });
-      }
+      frameActivateBalloonListener(balloon, () -> {
+        if (!balloon.isDisposed()) {
+          int delay = displayType == NotificationDisplayType.STICKY_BALLOON ? 300000 : 10000;
+          ((BalloonImpl)balloon).startSmartFadeoutTimer(delay);
+        }
+      });
     }
 
     NotificationCollector.getInstance().logBalloonShown(project, displayType, notification, layoutData != null && layoutData.isExpandable);
@@ -714,12 +701,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       balloonImpl.getContent().addMouseListener(new MouseAdapter() {
       });
       balloon.setAnimationEnabled(false);
-      if (ActionCenter.isEnabled()) {
-        balloonImpl.setShadowBorderProvider(new NotificationBalloonRoundShadowBorderProvider(layoutData.fillColor, layoutData.borderColor));
-      }
-      else {
-        balloonImpl.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider(layoutData.fillColor, layoutData.borderColor));
-      }
+      balloonImpl.setShadowBorderProvider(new NotificationBalloonRoundShadowBorderProvider(layoutData.fillColor, layoutData.borderColor));
 
       if (!layoutData.welcomeScreen) {
         balloonImpl.setActionProvider(new NotificationBalloonActionProvider(balloonImpl, centerPanel.getTitle(), layoutData, notification));
@@ -830,7 +812,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     List<AnAction> actions = notification.getActions();
     int actionsSize = actions.size();
 
-    if (ActionCenter.isEnabled() && notification.isSuggestionType()) {
+    if (notification.isSuggestionType()) {
       if (actionsSize > 0) {
         AnAction action = actions.get(0);
         JButton button = new JButton(action.getTemplateText());
@@ -1064,8 +1046,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     @SuppressWarnings("removal") String shortTitle = NotificationParentGroup.getShortTitle(layoutData.groupId);
     String title = shortTitle != null ? IdeBundle.message("notification.manager.merge.n.more.from", layoutData.mergeData.count, shortTitle)
                                       : IdeBundle.message("notification.manager.merge.n.more", layoutData.mergeData.count);
-    LinkListener<BalloonLayoutData> listener =
-      (link, _layoutData) -> EventLog.showNotification(_layoutData.project, _layoutData.groupId, _layoutData.getMergeIds());
+    LinkListener<BalloonLayoutData> listener = (link, _layoutData) -> ActionCenter.showNotification(_layoutData.project);
     LinkLabel<BalloonLayoutData> action = new LinkLabel<>(title, null, listener, layoutData) {
       @Override
       protected boolean isInClickableArea(Point pt) {

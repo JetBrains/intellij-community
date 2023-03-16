@@ -3,16 +3,15 @@ package com.intellij.ui
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.notification.ActionCenter
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.NotificationsManagerImpl
-import com.intellij.notification.impl.NotificationsToolWindowFactory
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -233,7 +232,7 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
         val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(titleLabel))
         if (project != null) {
           closeAll()
-          ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)?.show()
+          ActionCenter.getToolWindow(project)?.show()
         }
       }, null)
 

@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.notification.EventLog;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.MainMenuPresentationAware;
 import com.intellij.openapi.keymap.Keymap;
@@ -51,7 +49,7 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
     AnAction action = actionManager.getAction(actionId);
     if (action == null) {
       ActivateToolWindowAction newAction = new ActivateToolWindowAction(toolWindow.getId());
-      newAction.updatePresentation(newAction.getTemplatePresentation(), toolWindow);
+      updatePresentation(newAction.getTemplatePresentation(), toolWindow);
       actionManager.registerAction(actionId, newAction);
     }
   }
@@ -67,7 +65,7 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
   public static void updateToolWindowActionPresentation(@NotNull ToolWindow toolWindow) {
     AnAction action = ActionManager.getInstance().getAction(getActionIdForToolWindow(toolWindow.getId()));
     if (action instanceof ActivateToolWindowAction) {
-      ((ActivateToolWindowAction)action).updatePresentation(action.getTemplatePresentation(), toolWindow);
+      updatePresentation(action.getTemplatePresentation(), toolWindow);
     }
   }
 
@@ -106,14 +104,11 @@ public class ActivateToolWindowAction extends DumbAwareAction implements MainMen
     return false;
   }
 
-  private void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
+  private static void updatePresentation(@NotNull Presentation presentation, @NotNull ToolWindow toolWindow) {
     String title = toolWindow.getStripeTitle();
     presentation.setText(title);
     presentation.setDescription(IdeBundle.messagePointer("action.activate.tool.window", title));
     Icon icon = toolWindow.getIcon();
-    if (EventLog.LOG_TOOL_WINDOW_ID.equals(myToolWindowId)) {
-      icon = AllIcons.Ide.Notification.InfoEvents;
-    }
     if (icon instanceof ScalableIcon && ExperimentalUI.isNewUI()) {
       icon = ((ScalableIcon)icon).scale(JBUIScale.scale(16f) / icon.getIconWidth());
       presentation.setIcon(icon);

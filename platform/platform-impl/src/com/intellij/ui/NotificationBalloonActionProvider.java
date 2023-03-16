@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.notification.ActionCenter;
 import com.intellij.notification.Notification;
 import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.notification.impl.NotificationsConfigurable;
@@ -115,7 +114,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
             NotificationCollector.getInstance()
               .logNotificationBalloonClosedByUser(myLayoutData.project, myNotification.id, myNotification.getDisplayId(),
                                                   myNotification.getGroupId());
-            myBalloon.hide(ActionCenter.isEnabled());
+            myBalloon.hide(true);
           }
         });
       }) {

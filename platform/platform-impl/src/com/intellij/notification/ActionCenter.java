@@ -3,58 +3,75 @@ package com.intellij.notification;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.impl.NotificationsToolWindowFactory;
+import com.intellij.notification.impl.StatusMessage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public final class ActionCenter {
-  public static @NotNull List<Notification> getNotifications(@Nullable Project project, boolean createService) {
-    if (isEnabled()) {
-      return NotificationsToolWindowFactory.Companion.getNotifications(project);
-    }
-    if (project == null && !createService) {
-      return Collections.emptyList();
-    }
-    return createService ? EventLog.getLogModel(project).getNotifications() : EventLog.getNotifications(project);
+  public static final String TOOL_WINDOW_ID = NotificationsToolWindowFactory.ID;
+
+  public static final String EVENT_REQUESTOR = "Internal notification event requestor";
+
+  public static final Topic<EventListener> MODEL_CHANGED =
+    Topic.create("NOTIFICATION_MODEL_CHANGED", EventListener.class, Topic.BroadcastDirection.NONE);
+
+  public static void fireModelChanged() {
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(MODEL_CHANGED).modelChanged();
   }
 
-  public static void showNotification(@NotNull Project project, @NotNull String groupId, @NotNull List<String> ids) {
-    if (isEnabled()) {
-      // XXX
-    }
-    else {
-      EventLog.showNotification(project, groupId, ids);
+  public static @Nullable StatusMessage getStatusMessage(@Nullable Project project) {
+    return NotificationsToolWindowFactory.Companion.getStatusMessage(project);
+  }
+
+  public static @NotNull List<Notification> getNotifications(@Nullable Project project) {
+    return NotificationsToolWindowFactory.Companion.getNotifications(project);
+  }
+
+  public static void showNotification(@NotNull Project project) {
+    ToolWindow window = getToolWindow(project);
+    if (window != null) {
+      window.show();
     }
   }
 
   public static void expireNotifications(@NotNull Project project) {
-    for (Notification notification : getNotifications(project, true)) {
+    for (Notification notification : getNotifications(project)) {
       notification.expire();
     }
   }
 
-  public static @Nullable ToolWindow getToolwindow(@Nullable Project project) {
-    if (isEnabled()) {
-      return project == null ? null : ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID);
-    }
-    return EventLog.getEventLog(project);
+  public static @Nullable ToolWindow getToolWindow(@Nullable Project project) {
+    return project == null ? null : ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID);
   }
 
   public static @NotNull @Nls String getToolwindowName() {
-    return IdeBundle.message(isEnabled() ? "toolwindow.stripe.Notifications" : "toolwindow.stripe.Event_Log");
+    return IdeBundle.message("toolwindow.stripe.Notifications");
   }
 
-  public static boolean isEnabled() {
-    return Registry.is("ide.notification.action.center", true);
+  public static void toggleLog(@Nullable Project project) {
+    ToolWindow toolWindow = getToolWindow(project);
+    if (toolWindow != null) {
+      if (toolWindow.isVisible()) {
+        toolWindow.hide();
+      }
+      else {
+        toolWindow.activate(null);
+      }
+    }
+  }
+
+  public interface EventListener {
+    void modelChanged();
   }
 }

@@ -2,7 +2,6 @@
 package com.intellij.notification.impl.ui
 
 import com.intellij.ide.IdeBundle
-import com.intellij.notification.ActionCenter
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationDisplayType.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
@@ -15,7 +14,7 @@ import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toNullableProperty
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.JBUI
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JCheckBox
@@ -43,8 +42,7 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper, priv
         }
       }
       row {
-        log = checkBox(IdeBundle.message(
-          if (ActionCenter.isEnabled()) "notifications.configurable.column.toolwindow" else "notifications.configurable.column.log"))
+        log = checkBox(IdeBundle.message("notifications.configurable.column.toolwindow"))
           .bindSelected(notification::isShouldLog)
           .component
         log.addActionListener {

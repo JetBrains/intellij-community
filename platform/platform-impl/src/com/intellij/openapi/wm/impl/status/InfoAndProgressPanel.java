@@ -9,7 +9,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
-import com.intellij.notification.EventLog;
+import com.intellij.notification.ActionCenter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -435,12 +435,12 @@ public final class InfoAndProgressPanel implements CustomStatusBarWidget, UISett
   public @Nullable @NlsContexts.StatusBarText String setText(@Nullable @NlsContexts.StatusBarText String text, @Nullable String requestor) {
     if (myShowNavBar) return text;
 
-    if (Strings.isEmpty(text) &&!Objects.equals(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
+    if (Strings.isEmpty(text) &&!Objects.equals(requestor, myCurrentRequestor) && !ActionCenter.EVENT_REQUESTOR.equals(requestor)) {
       return myStatusPanel.get().getText();
     }
 
-    boolean logMode = myStatusPanel.get().updateText(EventLog.LOG_REQUESTOR.equals(requestor) ? "" : text);
-    myCurrentRequestor = logMode ? EventLog.LOG_REQUESTOR : requestor;
+    boolean logMode = myStatusPanel.get().updateText(ActionCenter.EVENT_REQUESTOR.equals(requestor) ? "" : text);
+    myCurrentRequestor = logMode ? ActionCenter.EVENT_REQUESTOR : requestor;
     return text;
   }
 

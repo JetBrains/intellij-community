@@ -132,8 +132,6 @@
     <applicationService serviceInterface="com.intellij.codeWithMe.ClientIdService"
                         serviceImplementation="com.intellij.codeWithMe.ClientIdServiceImpl" />
 
-    <projectService serviceImplementation="com.intellij.notification.EventLog$ProjectTracker" preload="notHeadless"/>
-
     <experimentalFeature id="wsl.p9.support" percentOfUsers="100">
       <description>Allow IDE to use the \\wsl$\ paths to access the WSL filesystem using 9P protocol (available since Windows 10 update 1903).</description>
     </experimentalFeature>
@@ -872,10 +870,6 @@
     <virtualFileSystem key="http" implementationClass="com.intellij.openapi.vfs.impl.http.HttpFileSystemImpl"/>
     <virtualFileSystem key="https" implementationClass="com.intellij.openapi.vfs.impl.http.HttpsFileSystem"/>
 
-    <toolWindow id="Event Log" anchor="bottom" secondary="true"
-                icon="AllIcons.Toolwindows.NoEvents"
-                factoryClass="com.intellij.notification.EventLogToolWindowFactory"/>
-
     <toolWindow id="Notifications" anchor="right" secondary="true"
                 icon="AllIcons.Toolwindows.Notifications"
                 factoryClass="com.intellij.notification.impl.NotificationsToolWindowFactory"/>
@@ -1472,12 +1466,6 @@
               topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.openapi.vcs.FileStatusFactoryImpl$PluginListener"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
-    <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" activeInHeadlessMode="false" activeInTestMode="false"
-              topic="com.intellij.ide.ui.UISettingsListener"/>
-    <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" activeInHeadlessMode="false" activeInTestMode="false"
-              topic="com.intellij.notification.EventLogListener"/>
-    <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" activeInHeadlessMode="false" activeInTestMode="false"
-              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     <listener class="com.intellij.codeInsight.hints.InlayUnloadingListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.openapi.fileTypes.StdFileTypes$StdFileTypesUpdater" activeInHeadlessMode="true" activeInTestMode="false"
@@ -1517,10 +1505,6 @@
   </applicationListeners>
 
   <projectListeners>
-    <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener"
-              activeInHeadlessMode="false"
-              activeInTestMode="false"
-              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     <listener class="com.intellij.notification.impl.NotificationsManagerImpl$MyNotificationListener"
               activeInHeadlessMode="false"
               activeInTestMode="false"

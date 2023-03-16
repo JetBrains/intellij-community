@@ -11,7 +11,6 @@ import com.intellij.ide.actions.ToolwindowFusEventFields
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.notification.EventLog
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -453,7 +452,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   internal fun doSetIcon(newIcon: Icon) {
     val oldIcon = icon
-    if (EventLog.LOG_TOOL_WINDOW_ID != id && oldIcon !== newIcon &&
+    if (oldIcon !== newIcon &&
         newIcon !is LayeredIcon &&
         !toolWindowManager.isNewUi &&
         (abs(newIcon.iconHeight - JBUIScale.scale(13f)) >= 1 || abs(newIcon.iconWidth - JBUIScale.scale(13f)) >= 1)) {

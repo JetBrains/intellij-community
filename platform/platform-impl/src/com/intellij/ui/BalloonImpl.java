@@ -12,7 +12,6 @@ import com.intellij.ide.ui.PopupLocationTracker;
 import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.internal.statistic.collectors.fus.ui.BalloonUsageCollector;
-import com.intellij.notification.ActionCenter;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -995,7 +994,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
         if (mySmartFadeout) {
           setAnimationEnabled(true);
         }
-        hide(ActionCenter.isEnabled());
+        hide(true);
       }, fadeoutDelay, null);
     }
   }

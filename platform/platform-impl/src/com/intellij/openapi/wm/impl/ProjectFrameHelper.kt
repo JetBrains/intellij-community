@@ -4,7 +4,6 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.ide.RecentProjectsManager
-import com.intellij.notification.ActionCenter
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -122,12 +121,7 @@ open class ProjectFrameHelper internal constructor(
     frame.background = JBColor.PanelBackground
     rootPane.preInit(isInFullScreen = { isInFullScreen })
 
-    balloonLayout = if (ActionCenter.isEnabled()) {
-      ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
-    }
-    else {
-      BalloonLayoutImpl(rootPane, JBUI.insets(8))
-    }
+    balloonLayout = ActionCenterBalloonLayout(rootPane, JBUI.insets(8))
   }
 
   companion object {

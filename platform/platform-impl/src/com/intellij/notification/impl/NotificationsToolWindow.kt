@@ -9,8 +9,6 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.ActionCenter
-import com.intellij.notification.EventLog
-import com.intellij.notification.LogModel
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.notification.impl.widget.IdeNotificationArea
@@ -33,6 +31,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.*
@@ -71,8 +70,7 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     internal val myModel = ApplicationNotificationModel()
 
     fun addNotification(project: Project?, notification: Notification) {
-      if (ActionCenter.isEnabled() && notification.canShowFor(project) && NotificationsConfigurationImpl.getSettings(
-          notification.groupId).isShouldLog) {
+      if (notification.canShowFor(project) && NotificationsConfigurationImpl.getSettings(notification.groupId).isShouldLog) {
         myModel.addNotification(project, notification)
       }
     }
@@ -92,15 +90,22 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     fun getStateNotifications(project: Project): List<Notification> = myModel.getStateNotifications(project)
 
     fun getNotifications(project: Project?): List<Notification> = myModel.getNotifications(project)
-  }
 
-  override fun isApplicable(project: Project) = ActionCenter.isEnabled()
+    fun getStatusMessage(project: Project?): StatusMessage? = project?.let { myModel.getStatusMessage(it) }
+
+    fun setStatusMessage(project: Project, notification: Notification?) {
+      myModel.setStatusMessage(project, notification)
+    }
+  }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.setContentUiType(ToolWindowContentUiType.TABBED, null)
     NotificationContent(project, toolWindow)
   }
 }
+
+@JvmRecord
+data class StatusMessage(val notification: Notification, val text: @NlsContexts.StatusBarText String, val stamp: Long)
 
 internal class NotificationContent(val project: Project,
                                    private val toolWindow: ToolWindow) : Disposable, ToolWindowManagerListener {
@@ -373,7 +378,7 @@ internal class NotificationContent(val project: Project,
 
   private fun updateIcon() {
     toolWindow.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(myIconNotifications))
-    LogModel.fireModelChanged()
+    ActionCenter.fireModelChanged()
   }
 
   private fun setStatusMessage() {
@@ -381,7 +386,7 @@ internal class NotificationContent(val project: Project,
   }
 
   private fun setStatusMessage(notification: Notification?) {
-    EventLog.getLogModel(project).setStatusMessage(notification)
+    NotificationsToolWindowFactory.setStatusMessage(project, notification)
   }
 
   override fun dispose() {
@@ -1066,7 +1071,7 @@ private class NotificationComponent(val project: Project,
     }
   }
 
-  private class MyActionGroup: DefaultActionGroup(), TooltipDescriptionProvider {
+  private class MyActionGroup : DefaultActionGroup(), TooltipDescriptionProvider {
     init {
       isPopup = true
     }
@@ -1078,6 +1083,7 @@ private class NotificationComponent(val project: Project,
       init {
         Notification.setDataProvider(myNotificationWrapper.notification!!, this)
       }
+
       override fun getTextColor() = JBUI.CurrentTheme.Link.Foreground.ENABLED
     }
   }
@@ -1658,11 +1664,24 @@ internal class ApplicationNotificationModel {
       }
     }
   }
+
+  fun getStatusMessage(project: Project): StatusMessage? {
+    synchronized(myLock) {
+      return myProjectToModel[project]?.getStatusMessage()
+    }
+  }
+
+  fun setStatusMessage(project: Project, notification: Notification?) {
+    synchronized(myLock) {
+      myProjectToModel[project]?.setStatusMessage(project, notification)
+    }
+  }
 }
 
 private class ProjectNotificationModel {
   private val myNotifications = ArrayList<Notification>()
   private var myContent: NotificationContent? = null
+  private var myStatusMessage: StatusMessage? = null
 
   fun registerAndGetInitNotifications(content: NotificationContent, notifications: MutableList<Notification>) {
     notifications.addAll(myNotifications)
@@ -1751,15 +1770,32 @@ private class ProjectNotificationModel {
         return@invokeLaterIfNeeded
       }
 
-      EventLog.getLogModel(project).setStatusMessage(stateNotification)
+      setStatusMessage(project, stateNotification)
 
       if (closeBalloons) {
         project.closeAllBalloons()
       }
 
-      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
+      val toolWindow = ActionCenter.getToolWindow(project)
       toolWindow?.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications))
     }
+  }
+
+  fun getStatusMessage(): StatusMessage? {
+    return myStatusMessage
+  }
+
+  fun setStatusMessage(project: Project, notification: Notification?) {
+    if ((myStatusMessage == null && notification == null) || (myStatusMessage != null && myStatusMessage!!.notification === notification)) {
+      return
+    }
+    myStatusMessage = if (notification == null) {
+      null
+    }
+    else {
+      StatusMessage(notification, NotificationsUtil.buildStatusMessage(notification), notification.timestamp)
+    }
+    StatusBar.Info.set("", project, ActionCenter.EVENT_REQUESTOR)
   }
 }
 

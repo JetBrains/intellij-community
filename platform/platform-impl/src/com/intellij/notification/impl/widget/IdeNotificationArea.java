@@ -61,14 +61,14 @@ public class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCusto
         @Override
         public boolean onClick(@NotNull MouseEvent e, int clickCount) {
           if (!project.isDisposed()) {
-            EventLog.toggleLog(project, null);
+            ActionCenter.toggleLog(project);
           }
           return true;
         }
       }.installOn(myComponent.get(), true);
 
       Application app = ApplicationManager.getApplication();
-      app.getMessageBus().connect(this).subscribe(LogModel.LOG_MODEL_CHANGED, () -> app.invokeLater(() -> updateStatus(project)));
+      app.getMessageBus().connect(this).subscribe(ActionCenter.MODEL_CHANGED, () -> app.invokeLater(() -> updateStatus(project)));
       updateStatus(project);
     }
   }
@@ -82,13 +82,7 @@ public class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCusto
     if (project == null || project.isDisposed()) {
       return;
     }
-    List<Notification> notifications;
-    if (ActionCenter.isEnabled()) {
-      notifications = NotificationsToolWindowFactory.Companion.getStateNotifications(project);
-    }
-    else {
-      notifications = EventLog.getLogModel(project).getNotifications();
-    }
+    List<Notification> notifications = NotificationsToolWindowFactory.Companion.getStateNotifications(project);
     updateIconOnStatusBar(notifications);
 
     int count = notifications.size();
@@ -97,13 +91,7 @@ public class IdeNotificationArea implements CustomStatusBarWidget, IconLikeCusto
   }
 
   private void updateIconOnStatusBar(List<? extends Notification> notifications) {
-    JLabel c = myComponent.get();
-    if (ActionCenter.isEnabled()) {
-      c.setIcon(getActionCenterNotificationIcon(notifications));
-    }
-    else {
-      c.setIcon(createIconWithNotificationCount(c, NotificationType.getDominatingType(notifications), notifications.size(), false));
-    }
+    myComponent.get().setIcon(getActionCenterNotificationIcon(notifications));
   }
 
   public static @NotNull Icon getActionCenterNotificationIcon(List<? extends Notification> notifications) {

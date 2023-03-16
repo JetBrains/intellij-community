@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationCollector;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsSafe;
@@ -25,6 +26,7 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
+import java.util.List;
 
 public final class NotificationsUtil {
   private static final Logger LOG = Logger.getInstance(NotificationsUtil.class);
@@ -62,6 +64,47 @@ public final class NotificationsUtil {
   public static @NotNull @Nls String buildFullContent(@NotNull Notification notification) {
     String content = StringUtil.replace(notification.getContent(), P_TAG, BR_TAG);
     return buildHtml(null, null, content, null, null, null, null);
+  }
+
+  public static @NotNull @Nls String buildStatusMessage(@NotNull Notification notification) {
+    String title = notification.getTitle();
+    String subtitle = notification.getSubtitle();
+    if (StringUtil.isNotEmpty(title) && StringUtil.isNotEmpty(subtitle)) {
+      title += " (" + subtitle + ")";
+    }
+    title = StringUtil.first(title, TITLE_LIMIT, true);
+
+    String content = StringUtil.first(notification.getContent(), TITLE_LIMIT, true);
+
+    @NlsSafe String message;
+    if (StringUtil.isNotEmpty(title)) {
+      message = title;
+      if (StringUtil.isNotEmpty(content)) {
+        message += ": ";
+        message += content;
+      }
+    }
+    else {
+      message = content;
+    }
+
+    List<AnAction> actions = notification.getActions();
+    if (!actions.isEmpty()) {
+      message += " // ";
+      message += StringUtil.join(actions, action -> action.getTemplateText(), " // ");
+    }
+
+    message = StringUtil.replace(message, "<a href=", " // <a href=");
+    message = StringUtil.stripHtml(message, " ");
+    message = StringUtil.replace(message, "\n", " ");
+    message = StringUtil.replace(message, "&nbsp;", " ");
+    message = StringUtil.replace(message, "&raquo;", ">>");
+    message = StringUtil.replace(message, "&laquo;", "<<");
+    message = StringUtil.replace(message, "&hellip;", "...");
+    message = StringUtil.unescapeXmlEntities(message);
+    message = StringUtil.collapseWhiteSpace(message);
+
+    return message;
   }
 
   public static @NotNull @Nls String buildHtml(@Nullable @Nls String title,
