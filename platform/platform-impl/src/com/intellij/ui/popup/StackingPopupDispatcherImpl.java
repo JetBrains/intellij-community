@@ -263,7 +263,11 @@ public final class StackingPopupDispatcherImpl extends StackingPopupDispatcher i
     if (popup.isDisposed()) {
       return false;
     }
-    if (mouseEvent.getButton() != MouseEvent.BUTTON1) { // on right mouse in most cases we can customize corresponding toolbar
+    int modifiers = mouseEvent.getModifiersEx() & (InputEvent.SHIFT_DOWN_MASK |
+                                                   InputEvent.CTRL_DOWN_MASK |
+                                                   InputEvent.ALT_DOWN_MASK |
+                                                   InputEvent.META_DOWN_MASK);
+    if (mouseEvent.getButton() != MouseEvent.BUTTON1 || modifiers != 0) { // on right mouse in most cases we can customize corresponding toolbar
       return false;
     }
     Component toggleButton = PopupImplUtil.getPopupToggleButton(popup);
