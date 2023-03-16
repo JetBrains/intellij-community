@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -122,11 +123,21 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
     if (!Registry.is("java.completion.methods.use.tags")) {
       return;
     }
-    PsiElement parent = position.getParent();
-    if (!(parent instanceof PsiReferenceExpression)) {
+    if (!(JavaKeywordCompletion.AFTER_DOT.accepts(position))) {
+      return;
+    }
+    if (!(position.getParent() instanceof PsiReferenceExpression psiReferenceExpression)) {
+      return;
+    }
+    PsiExpression qualifierExpression = psiReferenceExpression.getQualifierExpression();
+    if (!(qualifierExpression != null && PsiUtil.resolveClassInClassTypeOnly(qualifierExpression.getType()) != null)) {
       return;
     }
     PrefixMatcher prefixMatcher = result.getPrefixMatcher();
+    if (!(prefixMatcher instanceof CamelHumpMatcher camelHumpMatcher) || camelHumpMatcher.isTypoTolerant()) {
+      //there is no reason to check it one more time
+      return;
+    }
     TagMatcher tagMatcher = new TagMatcher(prefixMatcher);
     CompletionResultSet tagResultSet = result.withPrefixMatcher(tagMatcher);
     tagResultSet.runRemainingContributors(parameters, new Consumer<>() {
@@ -156,7 +167,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor implements Du
         PsiClass psiClass = psiMember.getContainingClass();
         Set<String> tags = MethodTags.tags(lookupString).stream()
           .filter(t -> matcher.prefixMatches(t.getName()) && t.getMatcher().test(psiClass))
-          .map(t->t.getName())
+          .map(t -> t.getName())
           .collect(Collectors.toSet());
         if (tags.isEmpty()) {
           return null;
