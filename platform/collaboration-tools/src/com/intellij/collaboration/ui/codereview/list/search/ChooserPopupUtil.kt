@@ -278,8 +278,8 @@ class SimpleSelectablePopupItemRenderer<T> private constructor(private val revie
 
     checkBox.apply {
       this.isSelected = presentation.isSelected
-      this.isFocusPainted = cellHasFocus
-      this.isFocusable = cellHasFocus
+      isFocusPainted = cellHasFocus
+      isFocusable = cellHasFocus
     }
 
     label.apply {
