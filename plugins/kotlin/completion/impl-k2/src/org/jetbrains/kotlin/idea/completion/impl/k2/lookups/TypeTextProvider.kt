@@ -48,5 +48,5 @@ internal object TypeTextProvider {
         }
     }
 
-    private val renderer = CompletionShortNamesRenderer.renderer
+    private val renderer = CompletionShortNamesRenderer.rendererVerbose
 }

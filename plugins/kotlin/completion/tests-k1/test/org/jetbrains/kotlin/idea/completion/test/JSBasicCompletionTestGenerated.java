@@ -618,6 +618,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             public void testSmartCast() throws Exception {
                 runTest("../testData/basic/common/extensionFunctionTypeValues/SmartCast.kt");
             }
+
+            @TestMetadata("TypeAliasParameter.kt")
+            public void testTypeAliasParameter() throws Exception {
+                runTest("../testData/basic/common/extensionFunctionTypeValues/TypeAliasParameter.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -1391,6 +1396,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("ParamsFromSingleUnapplicableOverload.kt")
             public void testParamsFromSingleUnapplicableOverload() throws Exception {
                 runTest("../testData/basic/common/namedArguments/ParamsFromSingleUnapplicableOverload.kt");
+            }
+
+            @TestMetadata("TypeAliasParameter.kt")
+            public void testTypeAliasParameter() throws Exception {
+                runTest("../testData/basic/common/namedArguments/TypeAliasParameter.kt");
             }
 
             @TestMetadata("WithParameterExpression.kt")
@@ -2267,6 +2277,24 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("SuperMethod.kt")
             public void testSuperMethod() throws Exception {
                 runTest("../testData/basic/common/super/SuperMethod.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/typeAliasTypes")
+        public static class TypeAliasTypes extends AbstractJSBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("TypeAliasParameter.kt")
+            public void testTypeAliasParameter() throws Exception {
+                runTest("../testData/basic/common/typeAliasTypes/TypeAliasParameter.kt");
+            }
+
+            @TestMetadata("TypeAliasThis.kt")
+            public void testTypeAliasThis() throws Exception {
+                runTest("../testData/basic/common/typeAliasTypes/TypeAliasThis.kt");
             }
         }
 

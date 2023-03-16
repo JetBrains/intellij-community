@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion.lookups
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KtUsualClassTypeRenderer
 import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -20,13 +21,16 @@ internal object CompletionShortNamesRenderer {
 
     private fun KtAnalysisSession.renderReceiver(variable: KtVariableLikeSignature<*>): String {
         val receiverType = variable.receiverType ?: return ""
-        return receiverType.render(renderer, position = Variance.INVARIANT) + "."
+        return receiverType.render(rendererVerbose, position = Variance.INVARIANT) + "."
     }
 
-    private fun KtAnalysisSession.renderFunctionParameter(param: KtVariableLikeSignature<KtValueParameterSymbol>): String =
-        "${if (param.symbol.isVararg) "vararg " else ""}${param.name.asString()}: ${
-            param.returnType.render(renderer, position = Variance.INVARIANT)
+    private fun KtAnalysisSession.renderFunctionParameter(parameter: KtVariableLikeSignature<KtValueParameterSymbol>): String =
+        "${if (parameter.symbol.isVararg) "vararg " else ""}${parameter.name.asString()}: ${
+            parameter.returnType.render(rendererVerbose, position = Variance.INVARIANT)
         }"
 
     val renderer = KtTypeRendererForSource.WITH_SHORT_NAMES
+    val rendererVerbose = renderer.with {
+        usualClassTypeRenderer = KtUsualClassTypeRenderer.AS_CLASS_TYPE_WITH_TYPE_ARGUMENTS_VERBOSE
+    }
 }

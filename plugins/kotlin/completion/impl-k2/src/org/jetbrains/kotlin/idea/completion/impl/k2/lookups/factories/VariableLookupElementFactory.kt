@@ -63,7 +63,7 @@ internal class VariableLookupElementFactory {
                 )
 
                 val tailText = functionalType.parameterTypes.joinToString(prefix = "(", postfix = ")") {
-                    it.render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT)
+                    it.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT)
                 }
 
                 LookupElementBuilder.create(lookupObject, name.asString())

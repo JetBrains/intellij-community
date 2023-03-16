@@ -28,7 +28,7 @@ internal object TailTextProvider {
 
         // use unsubstituted type when rendering receiver type of extension
         signature.symbol.receiverType?.let { receiverType ->
-            val renderedType = receiverType.render(CompletionShortNamesRenderer.renderer, position = Variance.INVARIANT)
+            val renderedType = receiverType.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT)
             append(KotlinCompletionImplK2Bundle.message("presentation.tail.for.0", renderedType))
         }
 
