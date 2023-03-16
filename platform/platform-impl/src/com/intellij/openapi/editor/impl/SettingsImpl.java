@@ -6,10 +6,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorCoreUtil;
-import com.intellij.openapi.editor.EditorKind;
-import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -21,7 +18,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -267,16 +263,16 @@ public class SettingsImpl implements EditorSettings {
   @NotNull
   @Override
   public List<Integer> getSoftMargins() {
+    if (myEditor == null) return Collections.emptyList();
     if (mySoftMargins != null) return mySoftMargins;
     if (myCachedSoftMargins != null) return myCachedSoftMargins;
-    return computeSoftMargins();
+    return computeSoftMargins(myEditor);
   }
 
-  private List<Integer> computeSoftMargins() {
+  private List<Integer> computeSoftMargins(@NotNull Editor editor) {
     Application application = ApplicationManager.getApplication();
     Callable<List<Integer>> softMarginsCallable = () -> {
-      CodeStyleSettings settings = myEditor != null ? CodeStyle.getSettings(myEditor) : CodeStyle.getDefaultSettings();
-      return settings.getSoftMargins(getLanguage());
+      return CodeStyle.getSettings(editor).getSoftMargins(getLanguage());
     };
     if (application.isUnitTestMode()) {
       try {
@@ -295,7 +291,7 @@ public class SettingsImpl implements EditorSettings {
             mySoftMarginComputation = null;
             myCachedSoftMargins = softMargins;
           }
-        );
+        ).expireWhen(()->editor.isDisposed());
         readAction.submit(AppExecutorUtil.getAppExecutorService());
         mySoftMarginComputation = readAction;
       }
@@ -397,9 +393,9 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void reinitSettings() {
+    myCachedSoftMargins = null;
     synchronized (myTabSizeLock) {
       myCachedTabSize = null;
-      myCachedSoftMargins = null;
       reinitDocumentIndentOptions();
     }
   }
