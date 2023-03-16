@@ -1450,6 +1450,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/smartStepIntoMethodReference.kt");
         }
 
+        @TestMetadata("smartStepIntoMultiplyInlinedLambdas.kt")
+        public void testSmartStepIntoMultiplyInlinedLambdas() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoMultiplyInlinedLambdas.kt");
+        }
+
         @TestMetadata("smartStepIntoNullSafeFunctionCalls.kt")
         public void testSmartStepIntoNullSafeFunctionCalls() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoNullSafeFunctionCalls.kt");
