@@ -1,7 +1,7 @@
 <!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.smartUpdate.IdeRestartedActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.smartUpdate.IdeRestartedActivity"/>
   </extensions>
 
   <actions resource-bundle="messages.SmartUpdateBundle">
