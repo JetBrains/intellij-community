@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 
 data class ExtractOptions(
-  val anchor: PsiMember,
   val targetClass: PsiClass,
   val elements: List<PsiElement>,
   val flowOutput: FlowOutput,

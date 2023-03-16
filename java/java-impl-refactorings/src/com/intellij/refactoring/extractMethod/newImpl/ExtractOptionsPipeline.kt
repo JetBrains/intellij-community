@@ -12,6 +12,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
+import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -21,10 +22,10 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ParametersFolder
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.areSame
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.normalizedAnchor
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
@@ -61,11 +62,7 @@ object ExtractMethodPipeline {
     val sourceMember = PsiTreeUtil.getContextOfType(extractOptions.elements.first(), PsiMember::class.java)
     val targetMember = PsiTreeUtil.getChildOfType(targetClass, PsiMember::class.java)
     if (sourceMember == null || targetMember == null) return null
-    val anchor = extractOptions.anchor
     if (extractOptions.targetClass == targetClass) return extractOptions
-
-    val newAnchor = targetClass.children.find { child -> anchor.textRange in child.textRange } as? PsiMember
-    if (newAnchor == null) return null
 
     val typeParameters = findAllTypeLists(sourceMember, targetClass).flatMap { findUsedTypeParameters(it, extractOptions.elements) }
 
@@ -74,11 +71,28 @@ object ExtractMethodPipeline {
     val additionalParameters = additionalReferences.map { inputParameterOf(it) }
     val options = extractOptions.copy(
       targetClass = targetClass,
-      anchor = normalizedAnchor(newAnchor),
       inputParameters = extractOptions.inputParameters + additionalParameters,
       typeParameters = typeParameters
     )
     return withDefaultStatic(options)
+  }
+
+  fun addMethodInBestPlace(targetClass: PsiClass, place: PsiElement, method: PsiMethod): PsiMethod {
+    val anchorElement = findPlaceToPutMethod(targetClass, place)
+    val element = anchorElement?.addSiblingAfter(method) ?: targetClass.add(method)
+    return element as PsiMethod
+  }
+
+  private fun findPlaceToPutMethod(targetClass: PsiClass, place: PsiElement): PsiMember? {
+    fun getMemberContext(element: PsiElement) = PsiTreeUtil.getContextOfType(element, PsiMember::class.java)
+    val anchorElement = generateSequence (getMemberContext(place), ::getMemberContext)
+      .takeWhile { context -> context != targetClass }
+      .lastOrNull()
+    if (anchorElement is PsiField) {
+      val lastFieldInGroup = MultipleFieldDeclarationHelper.findLastFieldInGroup(anchorElement.node).psi
+      return lastFieldInGroup as? PsiField ?: anchorElement
+    }
+    return anchorElement
   }
 
   private fun findAllTypeLists(element: PsiElement, stopper: PsiElement): List<PsiTypeParameterList> {

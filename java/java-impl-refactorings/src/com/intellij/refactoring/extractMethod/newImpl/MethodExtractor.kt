@@ -24,9 +24,9 @@ import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessMethodName
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replacePsiRange
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.addMethodInBestPlace
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.findAllOptionsToExtract
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectOptionWithTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
@@ -149,17 +149,13 @@ class MethodExtractor {
     CommandProcessor.getInstance().executeCommand(project, command, ExtractMethodHandler.getRefactoringName(), null)
   }
 
-  fun replaceElements(sourceElements: List<PsiElement>, callElements: List<PsiElement>, anchor: PsiMember, method: PsiMethod): ExtractedElements {
-    return WriteAction.compute<ExtractedElements, Throwable> {
-      val addedMethod = anchor.addSiblingAfter(method) as PsiMethod
-      val replacedCallElements = replacePsiRange(sourceElements, callElements)
-      ExtractedElements(replacedCallElements, addedMethod)
-    }
-  }
-
   fun extractMethod(extractOptions: ExtractOptions): ExtractedElements {
-    val elementsToExtract = prepareRefactoringElements(extractOptions)
-    return replaceElements(extractOptions.elements, elementsToExtract.callElements, extractOptions.anchor, elementsToExtract.method)
+    val preparedElements = prepareRefactoringElements(extractOptions)
+    return WriteAction.compute<ExtractedElements, Throwable> {
+      val method = addMethodInBestPlace(extractOptions.targetClass, extractOptions.elements.first(), preparedElements.method)
+      val callElements = replacePsiRange(extractOptions.elements, preparedElements.callElements)
+      ExtractedElements(callElements, method)
+    }
   }
 
   fun doTestExtract(
