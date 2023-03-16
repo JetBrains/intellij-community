@@ -31,7 +31,7 @@ public class TextMateScope {
     this.dotsCount = (scopeName != null ? Strings.countChars(scopeName, '.') : 0) +
                      (parentScope != null ? parentScope.dotsCount : 0);
     this.hashCode = Objects.hash(scopeName, parentScope);
-    this.empty = (parentScope == null || parentScope.isEmpty()) && (scopeName == null || scopeName.length() == 0);
+    this.empty = (parentScope == null || parentScope.isEmpty()) && (scopeName == null || scopeName.isEmpty());
     this.level = parentScope != null ? parentScope.level + 1 : 0;
   }
 
@@ -77,7 +77,7 @@ public class TextMateScope {
     while (parent != null) {
       CharSequence parentScopeName = parent.scopeName;
       if (parentScopeName != null) {
-        if (builder.length() > 0) {
+        if (!builder.isEmpty()) {
           builder.insert(0, " ");
         }
         builder.insert(0, parentScopeName);
