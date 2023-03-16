@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -365,8 +366,8 @@ public final class CodeStyle {
 
   @ApiStatus.Internal
   public static void updateDocumentIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull Document document) {
-    CommonCodeStyleSettings.IndentOptions indentOptions =
-      getSettings(project, virtualFile).getIndentOptionsByFile(project, virtualFile, null, true, null);
+    CommonCodeStyleSettings.IndentOptions indentOptions = ProjectLocator.computeWithPreferredProject(virtualFile, project, () ->
+      getSettings(project, virtualFile).getIndentOptionsByFile(project, virtualFile, null, true, null));
     indentOptions.associateWithDocument(document);
   }
 
