@@ -30,6 +30,7 @@ import com.intellij.util.indexing.contentQueue.IndexUpdateRunner
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.messages.Topic
+import com.intellij.util.ui.UIUtil
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -498,6 +499,59 @@ class DumbServiceImplTest {
     taskFinished.awaitOrThrow(2, "DumbTask should start immediately after EDT is freed")
     assertNull(exception.get())
   }
+
+  @Test
+  fun `test dumb mode continues after new tasks submitted on EDT`() {
+    // this test checks the following situation: dumb queue executor finished, but cannot invoke `updateFinished` because EDT is busy
+    // meanwhile new tasks placed by the EDT thread, and this should continue dumb mode until after new tasks are completed.
+    val dumbTaskStarted1 = CountDownLatch(1)
+    val dumbTaskStarted2 = CountDownLatch(1)
+    val finishDumbTask1 = CountDownLatch(1)
+    val finishDumbTask2 = CountDownLatch(1)
+    val exception = AtomicReference<Throwable?>()
+
+    dumbService.queueTask(object : DumbModeTask() {
+      override fun performInDumbMode(indicator: ProgressIndicator) {
+        try {
+          dumbTaskStarted1.countDown()
+          finishDumbTask1.awaitOrThrow(5, "No command to finish dumb task1 after 5 seconds")
+        }
+        catch (t: Throwable) {
+          exception.set(t)
+        }
+      }
+    })
+
+    dumbTaskStarted1.awaitOrThrow(5, "Dumb task1 didn't start in 5 seconds")
+    runInEdtAndWait {
+      assertTrue("Dumb service should be dumb because first task has not completed yet", dumbService.isDumb)
+      finishDumbTask1.countDown() // finish task while EDT is busy
+
+      dumbService.queueTask(object : DumbModeTask() {
+        override fun performInDumbMode(indicator: ProgressIndicator) {
+          try {
+            dumbTaskStarted2.countDown()
+            finishDumbTask2.awaitOrThrow(5, "No command to finish dumb task2 after 5 seconds")
+          }
+          catch (t: Throwable) {
+            exception.set(t)
+          }
+        }
+      })
+
+      UIUtil.dispatchAllInvocationEvents() // pump events and make sure that dumb mode hasn't ended
+      assertTrue("Dumb service should be dumb because the second task is already queued and it was queued on EDT", dumbService.isDumb)
+    }
+
+    dumbTaskStarted2.awaitOrThrow(5, "Dumb task2 didn't start in 5 seconds")
+    assertTrue("Dumb service should be dumb because second task has not completed yet", dumbService.isDumb)
+    finishDumbTask2.countDown()
+
+    waitForSmartModeFiveSecondsOrThrow()
+
+    assertNull(exception.get())
+  }
+
 
   private fun waitForSmartModeFiveSecondsOrThrow() {
     if (!dumbService.waitForSmartMode(5_000)) {
