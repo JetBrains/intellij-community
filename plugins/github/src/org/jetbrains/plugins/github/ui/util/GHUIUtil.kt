@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
+import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.ColorIcon
 import com.intellij.util.ui.JBDimension
@@ -115,6 +116,8 @@ object GHUIUtil {
       UIUtil.setBackgroundRecursively(this, UIUtil.getListBackground())
       textEditor.border = JBUI.Borders.empty()
     }
+    AbstractPopup.customizeSearchFieldLook(searchField, true)
+
     CollaborationToolsUIUtil.attachSearch(list, searchField) {
       presenter(it).shortText
     }
