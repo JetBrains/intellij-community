@@ -9,10 +9,13 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode.CONSTANT_EXPRESSION_EVALUATION
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsiSafe
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
@@ -33,15 +36,9 @@ class RedundantValueArgumentInspection : AbstractKotlinInspection() {
 
         analyze(argument, action = fun KtAnalysisSession.() {
             val argumentConstantValue = argumentExpression.evaluate(CONSTANT_EXPRESSION_EVALUATION) ?: return
-
             val call = callElement.resolveCall().successfulFunctionCallOrNull() ?: return
-            val parameterSymbol = call.argumentMapping[argumentExpression]?.symbol?.let { parameterSymbol ->
-                val overriddenSymbols = call.partiallyAppliedSymbol.symbol.getAllOverriddenSymbols()
-                val baseFunctionSymbol = overriddenSymbols.firstNotNullOfOrNull { overriddenSymbol ->
-                    overriddenSymbol.asSignature().symbol.safeAs<KtFunctionSymbol>()?.takeIf { !it.isOverride }
-                }
-                baseFunctionSymbol?.valueParameters?.firstOrNull { it.name == parameterSymbol.name } ?: parameterSymbol
-            } ?: return
+            val parameterSymbol = findTargetParameter(argumentExpression, call) ?: return
+
             if (parameterSymbol.hasDefaultValue) {
                 val parameter = (parameterSymbol).sourcePsiSafe<KtParameter>() ?: return
                 if (parameter.isVarArg) {
@@ -74,6 +71,23 @@ class RedundantValueArgumentInspection : AbstractKotlinInspection() {
             }
         })
     })
+
+    private fun KtAnalysisSession.findTargetParameter(argumentExpression: KtExpression, call: KtFunctionCall<*>): KtValueParameterSymbol? {
+        val targetParameterSymbol = call.argumentMapping[argumentExpression]?.symbol ?: return null
+
+        val targetFunctionSymbol = call.partiallyAppliedSymbol.symbol
+        if (targetFunctionSymbol is KtFunctionSymbol && targetFunctionSymbol.isOverride) {
+            for (baseFunctionSymbol in targetFunctionSymbol.getAllOverriddenSymbols()) {
+                if (baseFunctionSymbol is KtFunctionSymbol && !baseFunctionSymbol.isOverride) {
+                    return baseFunctionSymbol.valueParameters.singleOrNull { it.name == targetParameterSymbol.name }
+                }
+            }
+
+            return null
+        }
+
+        return targetParameterSymbol
+    }
 
     private class RemoveArgumentFix(@SafeFieldForPreview private val followingArgumentMapping: Map<Int, Name>) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("fix.remove.argument.text")
