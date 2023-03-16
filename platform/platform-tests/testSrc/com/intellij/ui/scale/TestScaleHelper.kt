@@ -6,6 +6,7 @@ package com.intellij.ui.scale
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.icons.loadPng
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.setSystemScaleFactor
 import com.intellij.ui.scale.JBUIScale.setUserScaleFactor
@@ -13,7 +14,6 @@ import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.svg.renderSvg
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.inputStream
-import com.intellij.util.loadPng
 import org.junit.AfterClass
 import org.junit.Assume
 import org.junit.BeforeClass

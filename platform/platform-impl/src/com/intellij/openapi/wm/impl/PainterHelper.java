@@ -13,9 +13,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ImageLoader;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -573,16 +573,14 @@ final class PainterHelper implements Painter.Listener {
       try {
         boolean flipV = imageLoadSettings.flipV();
         boolean flipH = imageLoadSettings.flipH();
-        boolean isSvg = imageLoadSettings.isSvg();
         BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
-        return ImageLoader.INSTANCE.convertImage(
+        return IconUtilKt.convertImage(
           image,
           flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
           ScaleContext.create(),
           false, // we scale and handle HiDPI later
           false,
-          1,
-          isSvg);
+          1);
       }
       catch (Exception e) {
         LOG.warn(e);

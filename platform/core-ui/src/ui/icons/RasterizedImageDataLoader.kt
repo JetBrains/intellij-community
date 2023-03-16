@@ -9,7 +9,6 @@ import com.intellij.ui.scale.DerivedScaleType
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.svg.SvgCacheClassifier
 import com.intellij.ui.svg.loadSvgFromClassResource
-import com.intellij.util.ImageLoader
 import org.intellij.lang.annotations.MagicConstant
 import java.awt.Image
 import java.io.IOException
@@ -178,15 +177,14 @@ private fun loadRasterized(path: String,
     )
   }
   else {
-    ImageLoader.loadPngFromClassResource(path = effectivePath, classLoader = classLoader, scale = nonSvgScale)
+    loadPngFromClassResource(path = effectivePath, classLoader = classLoader, scale = nonSvgScale)
   }
 
-  return ImageLoader.convertImage(image = image ?: return null,
-                                  filters = parameters.filters,
-                                  scaleContext = scaleContext,
-                                  isUpScaleNeeded = !isSvg,
-                                  imageScale = nonSvgScale,
-                                  isSvg = isSvg)
+  return convertImage(image = image ?: return null,
+                      filters = parameters.filters,
+                      scaleContext = scaleContext,
+                      isUpScaleNeeded = !isSvg,
+                      imageScale = nonSvgScale)
 }
 
 private class PatchedIconDescriptor(@JvmField val name: String, @JvmField val scale: Float)
@@ -225,17 +223,15 @@ private fun loadPatched(name: String,
                                colorPatcherProvider = parameters.colorPatcher)
     }
     else {
-      ImageLoader.loadPngFromClassResource(path = descriptor.name, classLoader = classLoader, scale = descriptor.scale)
+      loadPngFromClassResource(path = descriptor.name, classLoader = classLoader, scale = descriptor.scale)
     }
 
     if (image != null) {
-      val isUpScaleNeeded = !isSvg && (descriptor === plain || descriptor === dark)
-      return ImageLoader.convertImage(image = image,
-                                      filters = parameters.filters,
-                                      scaleContext = scaleContext,
-                                      isUpScaleNeeded = isUpScaleNeeded,
-                                      imageScale = descriptor.scale,
-                                      isSvg = isSvg)
+      return convertImage(image = image,
+                          filters = parameters.filters,
+                          scaleContext = scaleContext,
+                          isUpScaleNeeded = !isSvg && (descriptor === plain || descriptor === dark),
+                          imageScale = descriptor.scale)
     }
   }
   return null

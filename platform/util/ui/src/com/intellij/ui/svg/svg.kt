@@ -7,8 +7,8 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.icons.IconLoadMeasurer
+import com.intellij.ui.icons.getResourceData
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ImageLoader
 import com.intellij.util.SVGLoader
 import com.intellij.util.text.CharSequenceReader
 import com.intellij.util.xml.dom.createXmlStreamReader
@@ -59,7 +59,7 @@ fun loadSvgFromClassResource(classLoader: ClassLoader?,
                                   scale = scale,
                                   compoundCacheKey = compoundCacheKey,
                                   colorPatcherProvider = colorPatcherProvider) {
-    ImageLoader.getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader)
+    getResourceData(path = path, resourceClass = resourceClass, classLoader = classLoader)
   }
 }
 

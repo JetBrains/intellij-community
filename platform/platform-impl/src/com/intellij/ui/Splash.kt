@@ -11,11 +11,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.ProjectSelfieUtil.readImage
 import com.intellij.platform.ProjectSelfieUtil.writeImage
+import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.ImageLoader.loadImageForStartUp
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.io.DigestUtil
+import com.intellij.util.loadImageForStartUp
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.StartupUiUtil
@@ -64,9 +65,9 @@ class Splash(private val image: BufferedImage) : Dialog(null as Frame?,
 
 @OptIn(DelicateCoroutinesApi::class)
 internal fun loadSplashImage(appInfo: ApplicationInfoEx): BufferedImage {
-  val sysScale = sysScale()
+  val scale = if (JreHiDpiUtil.isJreHiDPIEnabled()) sysScale() * scale(1f) else scale(1f)
   val file = try {
-    getCacheFile(scale = sysScale, appInfo = appInfo)
+    getCacheFile(scale = scale, appInfo = appInfo)
   }
   catch (e: Throwable) {
     logger<Splash>().warn(e)
@@ -80,12 +81,12 @@ internal fun loadSplashImage(appInfo: ApplicationInfoEx): BufferedImage {
   }
 
   val path = appInfo.splashImageUrl
-  val result = doLoadImage(path, sysScale) ?: throw IllegalStateException("Cannot find image: $path")
+  val result = doLoadImage(path, scale) ?: throw IllegalStateException("Cannot find image: $path")
   if (file != null) {
     GlobalScope.launch(Dispatchers.IO) {
       try {
         val rawImage = (if (result is JBHiDPIScaledImage) result.delegate else result) as BufferedImage
-        writeImage(file = file, image = rawImage, sysScale = sysScale)
+        writeImage(file = file, image = rawImage, sysScale = scale)
       }
       catch (e: Throwable) {
         logger<Splash>().warn("Cannot save splash image", e)
@@ -95,8 +96,8 @@ internal fun loadSplashImage(appInfo: ApplicationInfoEx): BufferedImage {
   return result
 }
 
-private fun doLoadImage(path: String, sysScale: Float): BufferedImage? {
-  val originalImage = loadImageForStartUp(path, Splash::class.java.classLoader) ?: return null
+private fun doLoadImage(path: String, scale: Float): BufferedImage? {
+  val originalImage = loadImageForStartUp(requestedPath = path, scale = scale, classLoader = Splash::class.java.classLoader) ?: return null
   val w = originalImage.width
   val h = originalImage.height
   val resultImage = BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB)
@@ -105,7 +106,7 @@ private fun doLoadImage(path: String, sysScale: Float): BufferedImage? {
   ImageUtil.applyQualityRenderingHints(g2)
   @Suppress("UseJBColor")
   g2.color = Color.WHITE
-  val cornerRadius = 8 * sysScale
+  val cornerRadius = 8 * scale
   g2.fill(RoundRectangle2D.Float(0f, 0f, w.toFloat(), h.toFloat(), cornerRadius, cornerRadius))
   g2.composite = AlphaComposite.SrcIn
   g2.drawImage(originalImage, 0, 0, null)

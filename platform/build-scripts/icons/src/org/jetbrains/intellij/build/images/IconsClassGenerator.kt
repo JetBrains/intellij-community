@@ -4,13 +4,12 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.icons.loadPng
 import com.intellij.ui.svg.getSvgDocumentSize
 import com.intellij.util.LineSeparator
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.diff.Diff
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.loadPng
 import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -25,6 +24,7 @@ import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import javax.xml.stream.XMLStreamException
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal data class ModifiedClass(@JvmField val module: JpsModule,
                                   @JvmField val file: Path,
@@ -485,7 +485,7 @@ internal open class IconsClassGenerator(private val projectHome: Path,
     }
 
     val method = if (customLoad) "load" else "$ICON_MANAGER_CODE.getIcon"
-    val relativePath = rootPrefix + rootDir.relativize(imageFile).systemIndependentPath
+    val relativePath = rootPrefix + rootDir.relativize(imageFile).invariantSeparatorsPathString
     assert(relativePath.startsWith("/"))
     append(result, "${javaDoc}public static final @NotNull Icon $iconName = " +
                    "$method(\"${relativePath.removePrefix("/")}\", $key, ${image.getFlags()});", level)
