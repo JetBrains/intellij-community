@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -236,7 +237,8 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   }
 
   private static EditorImpl createEditor(@NotNull Project project, @NotNull VirtualFile file) {
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    Document document = ProjectLocator.computeWithPreferredProject(file, project, () ->
+      FileDocumentManager.getInstance().getDocument(file));
     LOG.assertTrue(document != null);
     EditorFactoryImpl factory = ((EditorFactoryImpl)EditorFactory.getInstance());
     return factory.createMainEditor(document, project, file);
