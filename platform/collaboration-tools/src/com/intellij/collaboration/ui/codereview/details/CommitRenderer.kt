@@ -110,5 +110,3 @@ sealed interface CommitPresenter {
     val title: @NlsSafe String
   ) : CommitPresenter
 }
-
-data class SelectableWrapper<T>(val value: T, var isSelected: Boolean = false)

@@ -129,7 +129,7 @@ internal class GHPRReviewFlowViewModelImpl(
     val reviewers = (reviewerReviews.value.keys + metadataModel.reviewers).toList()
     GHUIUtil.showChooserPopup(
       parentComponent,
-      GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
+      GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider),
       reviewers,
       metadataModel.loadPotentialReviewers()
     ).thenAccept { selectedReviewers ->
