@@ -56,7 +56,7 @@ private suspend fun runValidationRulesUpdate() {
   while (true) {
     val providers = getEventLogProviders()
     for (provider in providers) {
-      if (provider.isCollectionEnabled()) {
+      if (provider.isLoggingEnabled()) {
         IntellijSensitiveDataValidator.getInstance(provider.recorderId).update()
       }
     }

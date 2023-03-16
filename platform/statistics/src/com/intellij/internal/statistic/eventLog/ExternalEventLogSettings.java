@@ -58,7 +58,7 @@ public interface ExternalEventLogSettings {
    *
    * @return true if statistics collection must be force-enabled
    * @deprecated overriding setting to enable collection and recording is no longer possible -
-   * only force collection not connected with recording to file is supported, see {@link ExternalEventLogSettings#forceCollectionWithoutRecord()}
+   * only force collection not connected with recording to file is supported, see {@link ExternalEventLogSettings#forceLoggingAlwaysEnabled()}
    */
   @Deprecated(since = "2023.1")
   default boolean isCollectAllowedOverride() {
@@ -68,7 +68,7 @@ public interface ExternalEventLogSettings {
   /**
    * Override global setting that enables collection of statistics by any logger, see {@link StatisticsUploadAssistant#isCollectAllowed()}
    * <br/>
-   * Does not affect {@link ExternalEventLogSettings#forceCollectionWithoutRecord()}
+   * Does not affect {@link ExternalEventLogSettings#forceLoggingAlwaysEnabled()}
    *
    * @return true if log collection must be force-disabled even with accepted user consent
    * */
@@ -77,7 +77,8 @@ public interface ExternalEventLogSettings {
   }
 
   /**
-   * Enables statistics logs collection independently of recording to file ({@link StatisticsEventLoggerProvider#isRecordEnabled()}) for <b>supported</b> loggers.
+   * Enables statistics logging ({@link StatisticsEventLoggerProviderExt#isLoggingAlwaysActive()}) independently of
+   * recording to file ({@link StatisticsEventLoggerProvider#isRecordEnabled()}) for <b>supported</b> loggers.
    * <br/>
    * Logger must implement {@link StatisticsEventLoggerProviderExt}.
    * <br/>
@@ -85,7 +86,7 @@ public interface ExternalEventLogSettings {
    *
    * @return true if statistics collection must be force-enabled by supported logger
    */
-  default boolean forceCollectionWithoutRecord() {
+  default boolean forceLoggingAlwaysEnabled() {
     return false;
   }
 
