@@ -23,17 +23,17 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
       put("PACKAGE_NAME", aPackage)
       if (generateOnboardingTips) {
         //@formatter:off
-          put("SearchEverywhereComment1", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.1", if (SystemInfo.isMac) "⇧" else "Shift"))
-          put("SearchEverywhereComment2", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.2"))
+        put("SearchEverywhereComment1", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.1", "Shift"))
+        put("SearchEverywhereComment2", JavaStartersBundle.message("onboarding.search.everywhere.tip.comment.2"))
 
-          put("ShowIntentionComment1", JavaStartersBundle.message("onboarding.show.intention.tip.comment.1", KeymapUtil.getShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
-          put("ShowIntentionComment2", JavaStartersBundle.message("onboarding.show.intention.tip.comment.2", ApplicationNamesInfo.getInstance().fullProductName))
+        put("ShowIntentionComment1", JavaStartersBundle.message("onboarding.show.intention.tip.comment.1", KeymapUtil.getShortcutText(IdeActions.ACTION_SHOW_INTENTION_ACTIONS)))
+        put("ShowIntentionComment2", JavaStartersBundle.message("onboarding.show.intention.tip.comment.2", ApplicationNamesInfo.getInstance().fullProductName))
 
-          put("RunComment", JavaStartersBundle.message("onboarding.run.comment", KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER)))
+        put("RunComment", JavaStartersBundle.message("onboarding.run.comment", KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_RUNNER)))
 
-          put("DebugComment1", JavaStartersBundle.message("onboarding.debug.comment.1", KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER)))
-          put("DebugComment2", JavaStartersBundle.message("onboarding.debug.comment.2", KeymapUtil.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
-          //@formatter:on
+        put("DebugComment1", JavaStartersBundle.message("onboarding.debug.comment.1", KeymapUtil.getShortcutText(IdeActions.ACTION_DEFAULT_DEBUGGER)))
+        put("DebugComment2", JavaStartersBundle.message("onboarding.debug.comment.2", KeymapUtil.getShortcutText(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)))
+        //@formatter:on
       }
     })
     addFilesToOpen(sourcePath)
