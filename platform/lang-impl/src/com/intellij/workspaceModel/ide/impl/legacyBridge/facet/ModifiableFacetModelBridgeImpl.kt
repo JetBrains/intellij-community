@@ -168,8 +168,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
   }
 
   /**
-   * This method returns an updates entity source to have the sam external source as [facetExternalSource]
-   * I'll return null if no update required
+   * This method returns an updated entity source to have the same external source as [facetExternalSource]
+   * It'll return null if no update is required
    */
   private fun getUpdatedEntitySource(facetExternalSource: ProjectModelExternalSource?,
                                      facetEntity: FacetEntity): EntitySource? {
@@ -182,8 +182,8 @@ class ModifiableFacetModelBridgeImpl(private val initialStorage: EntityStorage,
     }
     else {
       if (entitySource !is JpsImportedEntitySource) {
-        if (entitySource is JpsProjectFileEntitySource.FileInDirectory) JpsImportedEntitySource(entitySource, facetExternalSource.id,
-                                                                                                moduleBridge.project.isExternalStorageEnabled)
+        if (entitySource is JpsProjectFileEntitySource) JpsImportedEntitySource(entitySource, facetExternalSource.id,
+                                                                                moduleBridge.project.isExternalStorageEnabled)
         else null
       }
       else {
