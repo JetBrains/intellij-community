@@ -1048,8 +1048,6 @@ public class PythonDebuggerSteppingTest extends PyEnvTestCase {
         waitForPause();
         stepOver();
         waitForPause();
-        stepOver();
-        waitForPause();
         eval("result").hasValue("3");
         stepOver();
         waitForPause();
