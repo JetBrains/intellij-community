@@ -55,8 +55,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicHTML;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -362,6 +362,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myKeyEventHandler = keyEventHandler;
     debugState("popup initialized", State.NEW);
     myState = State.INIT;
+
+    Component clickSource = PopupImplUtil.getClickSourceFromLastInputEvent();
+    if (!(clickSource instanceof JList<?> || clickSource instanceof JTree)) {
+      PopupImplUtil.setPopupToggleButton(this, clickSource);
+    }
     return this;
   }
 

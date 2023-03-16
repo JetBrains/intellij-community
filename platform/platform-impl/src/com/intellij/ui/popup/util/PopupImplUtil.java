@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.util;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.AccessToken;
@@ -16,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.lang.ref.WeakReference;
 
@@ -81,5 +84,16 @@ public final class PopupImplUtil {
   @Nullable
   public static Component getPopupToggleButton(@NotNull JBPopup jbPopup) {
     return (Component)SoftReference.dereference((WeakReference<?>)jbPopup.getContent().getClientProperty(POPUP_TOGGLE_BUTTON));
+  }
+
+  public static @Nullable Component getClickSourceFromLastInputEvent() {
+    var event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    if (event instanceof MouseEvent mouseEvent) {
+      return SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+    }
+    if (event instanceof KeyEvent keyEvent) {
+      return keyEvent.getComponent();
+    }
+    return null;
   }
 }
