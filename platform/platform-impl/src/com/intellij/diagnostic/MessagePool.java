@@ -50,10 +50,10 @@ public final class MessagePool {
     }
     else return;
     if (Registry.is("ide.error.reporter.group.reports", false)) {
-      doAddMessage(message);
+      myGrouper.addToGroup(message);
     }
     else {
-      myGrouper.addToGroup(message);
+      doAddMessage(message);
     }
   }
 
