@@ -145,6 +145,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt S",         "ShowProjectStructureSettings", "GoShareInPlaygroundAction"},
       {"shift ctrl alt RIGHT",     "MoveElementRight", "ResizeToolWindowRight"},
       {"shift ctrl alt UP",        "ResizeToolWindowUp", "VcsShowPrevChangeMarker"},
+      {"shift ctrl alt M",         "Console.TableResult.MaximizeEditingCell", "org.jetbrains.completion.full.line.markers.actions.GenerateMarkerAction"},
       {"ctrl alt N",               "Console.TableResult.SetNull", "Git.New.Branch.In.Log", "GitNewBranchAction", "Inline"},
     }),
     Map.entry("Mac OS X 10.5+", new String[][]{
