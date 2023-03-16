@@ -1,8 +1,8 @@
 // IGNORE_BACKEND: JVM_WITH_OLD_EVALUATOR, JVM_IR_WITH_OLD_EVALUATOR
-LineBreakpoint created at nestedContextClassReceivers.kt:56
+LineBreakpoint created at nestedContextClassReceivers.kt:57
 Run Java
 Connected to the target VM
-nestedContextClassReceivers.kt:56
+nestedContextClassReceivers.kt:57
 Compile bytecode for name1
 Compile bytecode for name2
 Compile bytecode for name3
@@ -23,7 +23,7 @@ Compile bytecode for this@Ctx1.bar()
 Compile bytecode for this@Ctx2.bar()
 Compile bytecode for this@Ctx3.bar()
 Compile bytecode for this@Ctx4.bar()
-KotlinStackFrame (nestedContextClassReceivers.kt:56)
+KotlinStackFrame (nestedContextClassReceivers.kt:57)
     JavaValue[this] this: Test$Test1$Test2@uniqueID = nestedContextClassReceivers.Test$Test1$Test2@hashCode
         JavaValue[field] contextReceiverField0: forTests.Ctx3 = forTests.Ctx3@hashCode
             JavaValue[field] name3: java.lang.String = ctx3 (contexts.kt:20)

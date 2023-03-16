@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.idea.base.projectStructure.withLanguageVersionSettings
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analyzer.AnalysisResult
@@ -26,7 +27,6 @@ import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.projectStructure.withLanguageVersionSettings
 import org.jetbrains.kotlin.idea.codegen.CodegenTestUtil
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
@@ -128,7 +128,8 @@ open class DebuggerTestCompilerFacility(
         jvmSrcDir: File,
         commonSrcDir: File,
         classesDir: File,
-        libClassesDir: File
+        libClassesDir: File,
+        languageVersionSettings: LanguageVersionSettings? = null
     ): String = with(mainFiles) {
         resources.copy(jvmSrcDir)
         resources.copy(classesDir) // sic!
@@ -156,22 +157,16 @@ open class DebuggerTestCompilerFacility(
         lateinit var mainClassName: String
 
         fun compileKotlinFiles() {
-            if (kotlinCommon.isNotEmpty()) {
+            mainClassName = if (kotlinCommon.isNotEmpty()) {
                 compileKotlinFilesWithCliCompiler(jvmSrcDir, commonSrcDir, classesDir)
-                mainClassName = analyzeAndFindMainClass(project, jvmKtFiles)
+                analyzeAndFindMainClass(project, jvmKtFiles)
             } else {
-                mainClassName = compileKotlinFilesInIdeAndFindMainClass(project, allKtFiles, classesDir)
+                compileKotlinFilesInIdeAndFindMainClass(project, allKtFiles, classesDir)
             }
         }
 
         doWriteAction {
-            if (useIrBackend) {
-                // TODO: Remove custom language version settings when context receivers are defaulted
-                val languageVersionSettings = LanguageVersionSettingsImpl(
-                    LanguageVersion.LATEST_STABLE,
-                    ApiVersion.LATEST_STABLE,
-                    specificFeatures = mapOf(LanguageFeature.ContextReceivers to LanguageFeature.State.ENABLED)
-                )
+            if (languageVersionSettings != null) {
                 module.withLanguageVersionSettings(languageVersionSettings, ::compileKotlinFiles)
             } else {
                 compileKotlinFiles()

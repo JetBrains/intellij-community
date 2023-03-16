@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinCodeFragmentFactory.Com
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter.*
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.core.stackFrame.getThisName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
@@ -256,12 +257,13 @@ class CodeFragmentParameterAnalyzer(
                 && codeFragment.getCopyableUserData(KtCodeFragment.FAKE_CONTEXT_FOR_JAVA_FILE) != null
     }
 
+
     private fun processContextReceiver(descriptor: CallableDescriptor, receiverType: KotlinType): Smart? {
         val receiverParameter = descriptor.contextReceiverParameters.find { it.type == receiverType } ?: return null
 
         return parameters.getOrPut(receiverParameter) {
             val name = receiverParameter.name.asString()
-            val label = "${AsmUtil.THIS}@${receiverType.fqName?.shortName()}"
+            val label = getThisName("${receiverType.fqName?.shortName()}")
             Smart(Dumb(Kind.CONTEXT_RECEIVER, name, label), receiverType, receiverParameter)
         }
     }

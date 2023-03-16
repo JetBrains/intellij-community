@@ -199,8 +199,26 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         }
 
         compilerFacility.compileLibrary(librarySrcDirectory, libraryOutputDirectory)
+
+        val enabledLanguageFeatures = mutableMapOf<LanguageFeature, LanguageFeature.State>()
+        for (param in preferences[DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE]) {
+            val languageFeature = LanguageFeature.fromString(param) ?: continue
+            enabledLanguageFeatures[languageFeature] = LanguageFeature.State.ENABLED
+        }
+
+        val languageVersionSettings = LanguageVersionSettingsImpl(
+            module.languageVersionSettings.languageVersion,
+            module.languageVersionSettings.apiVersion,
+            specificFeatures = enabledLanguageFeatures
+        )
+
         mainClassName = compilerFacility.compileTestSources(
-            myModule, jvmSourcesOutputDirectory, commonSourcesOutputDirectory, File(appOutputPath), libraryOutputDirectory
+            myModule,
+            jvmSourcesOutputDirectory,
+            commonSourcesOutputDirectory,
+            File(appOutputPath),
+            libraryOutputDirectory,
+            languageVersionSettings
         )
 
         breakpointCreator = BreakpointCreator(

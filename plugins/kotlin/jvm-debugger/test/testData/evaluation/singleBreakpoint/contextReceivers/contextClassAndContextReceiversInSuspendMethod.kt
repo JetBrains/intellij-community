@@ -1,4 +1,6 @@
 // ATTACH_LIBRARY: contexts
+// ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2)
+// ENABLED_LANGUAGE_FEATURE: ContextReceivers
 
 package contextClassAndContextReceiversInSuspendMethod
 

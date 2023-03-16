@@ -109,4 +109,4 @@ fun Method.sortedVariablesWithLocation(): List<VariableWithLocation> {
 // For Java, this kind of filtering is done in [StackFrame.visibleVariables], but for
 // Kotlin this needs to be done separately for every (inline) stack frame.
 fun filterRepeatedVariables(sortedVariables: List<LocalVariable>): List<LocalVariable> =
-    sortedVariables.associateBy { "${it.name()}#${it.typeName()}" }.values.toList()
+    sortedVariables.associateBy { it.name() }.values.toList()

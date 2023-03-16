@@ -1,4 +1,5 @@
 // ATTACH_LIBRARY: contexts
+// ENABLED_LANGUAGE_FEATURE: ContextReceivers
 
 package contextClassReceiversInMethod
 
@@ -42,4 +43,3 @@ fun main() {
 
 // PRINT_FRAME
 // SHOW_KOTLIN_VARIABLES
-// IGNORE_OLD_BACKEND

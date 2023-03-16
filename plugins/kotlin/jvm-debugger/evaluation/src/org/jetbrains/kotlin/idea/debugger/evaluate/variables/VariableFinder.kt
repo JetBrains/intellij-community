@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.codegen.inline.INLINE_TRANSFORMATION_SUFFIX
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
-import org.jetbrains.kotlin.idea.debugger.core.CONTEXT_RECEIVER_THIS_NAME
+import org.jetbrains.kotlin.idea.debugger.core.CONTEXT_RECEIVER_PREFIX
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentParameter
@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import kotlin.coroutines.Continuation
 import com.sun.jdi.Type as JdiType
 import org.jetbrains.org.objectweb.asm.Type as AsmType
+
 
 class VariableFinder(val context: ExecutionContext) {
     private val frameProxy = context.frameProxy
@@ -90,7 +91,7 @@ class VariableFinder(val context: ExecutionContext) {
 
         class ContextReceiver(asmType: AsmType) : VariableKind(asmType) {
             override fun capturedNameMatches(name: String) =
-                name.startsWith(AsmUtil.THIS_IN_DEFAULT_IMPLS)
+                name.startsWith(CONTEXT_RECEIVER_PREFIX) || name.startsWith(AsmUtil.CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX)
         }
     }
 
@@ -130,7 +131,7 @@ class VariableFinder(val context: ExecutionContext) {
             Kind.DELEGATED -> findOrdinary(VariableKind.Ordinary(parameter.name, asmType, isDelegated = true))
             Kind.FAKE_JAVA_OUTER_CLASS -> thisObject()?.let { Result(it) }
             Kind.EXTENSION_RECEIVER -> findExtensionThis(VariableKind.ExtensionThis(parameter.name, asmType))
-            Kind.CONTEXT_RECEIVER -> findContextReceiverThis(VariableKind.ContextReceiver(asmType))
+            Kind.CONTEXT_RECEIVER -> findContextReceiver(VariableKind.ContextReceiver(asmType))
             Kind.LOCAL_FUNCTION -> findLocalFunction(VariableKind.LocalFunction(parameter.name, asmType))
             Kind.DISPATCH_RECEIVER -> findDispatchThis(VariableKind.OuterClassThis(asmType))
             Kind.COROUTINE_CONTEXT -> findCoroutineContext()
@@ -215,24 +216,11 @@ class VariableFinder(val context: ExecutionContext) {
         return null
     }
 
-    private fun findContextReceiverThis(kind: VariableKind.ContextReceiver): Result? {
-        // Here we must fetch variables from a method manually to get all existing context receivers.
-        // In this example:
-        //   context(Context1, Context2)
-        //   fun foo() {
-        //      ...
-        //   }
-        // there are two context receivers with name '<this>' in the LVT of the `foo` function.
-        // However, calling `frameProxy.visibleVariables()` will return us only one `<this>` variable,
-        // because inside the JDI implementation only unique entries of variables by name are preserved.
-        val variables = frameProxy.safeLocation()?.safeMethod()?.safeVariables() ?: return null
-        val variableProxies = variables.map { LocalVariableProxyImpl(frameProxy, it) }
-
+    private fun findContextReceiver(kind: VariableKind.ContextReceiver): Result? {
+        val variableProxies = frameProxy.visibleVariables().map { LocalVariableProxyImpl(frameProxy, it.variable) }
         findLocalVariable(variableProxies, kind) {
-            it == CONTEXT_RECEIVER_THIS_NAME ||
-                    it.startsWith(AsmUtil.THIS_IN_DEFAULT_IMPLS)
+            kind.capturedNameMatches(it) || it.startsWith(AsmUtil.THIS_IN_DEFAULT_IMPLS)
         }?.let { return it }
-
         return findCapturedVariableInContainingThis(kind)
     }
 
@@ -302,7 +290,7 @@ class VariableFinder(val context: ExecutionContext) {
     ): Result? {
         val inlineDepth =
             frameProxy.safeAs<InlineStackFrameProxyImpl>()?.inlineDepth
-            ?: getInlineDepth(variables)
+                ?: getInlineDepth(variables)
 
         findLocalVariable(variables, kind, inlineDepth, namePredicate)?.let { return it }
 
@@ -364,7 +352,7 @@ class VariableFinder(val context: ExecutionContext) {
     }
 
     private fun getCoroutineStackFrameNamedEntities() =
-         if (frameProxy is CoroutineStackFrameProxyImpl) {
+        if (frameProxy is CoroutineStackFrameProxyImpl) {
             frameProxy.spilledVariables.namedEntitySequence(context.evaluationContext)
         } else {
             emptySequence()
@@ -383,7 +371,8 @@ class VariableFinder(val context: ExecutionContext) {
 
     private fun findCoroutineContextForLambda(method: Method): ObjectReference? {
         if (method.name() != "invokeSuspend" || method.signature() != "(Ljava/lang/Object;)Ljava/lang/Object;" ||
-            frameProxy !is CoroutineStackFrameProxyImpl) {
+            frameProxy !is CoroutineStackFrameProxyImpl
+        ) {
             return null
         }
 

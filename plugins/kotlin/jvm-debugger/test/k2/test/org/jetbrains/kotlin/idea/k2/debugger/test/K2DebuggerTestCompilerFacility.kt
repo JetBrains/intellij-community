@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.codegen.ClassBuilderFactory
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
 import org.jetbrains.kotlin.idea.debugger.test.TestFileWithModule
 import java.io.File
@@ -28,9 +29,16 @@ internal class K2DebuggerTestCompilerFacility(
         }
     }
 
-    override fun compileTestSources(module: Module, jvmSrcDir: File, commonSrcDir: File, classesDir: File, libClassesDir: File): String {
+    override fun compileTestSources(
+        module: Module,
+        jvmSrcDir: File,
+        commonSrcDir: File,
+        classesDir: File,
+        libClassesDir: File,
+        languageVersionSettings: LanguageVersionSettings?
+    ): String {
         return withTestServicesNeededForCodeCompilation(project) {
-            super.compileTestSources(module, jvmSrcDir, commonSrcDir, classesDir, libClassesDir)
+            super.compileTestSources(module, jvmSrcDir, commonSrcDir, classesDir, libClassesDir, languageVersionSettings)
         }
     }
 }

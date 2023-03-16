@@ -1,8 +1,8 @@
-/ IGNORE_BACKEND: JVM_WITH_OLD_EVALUATOR, JVM_IR_WITH_OLD_EVALUATOR
-LineBreakpoint created at functionCallWithImplicitContextClassReceiverCapturing.kt:37
+// IGNORE_BACKEND: JVM_WITH_OLD_EVALUATOR, JVM_IR_WITH_OLD_EVALUATOR
+LineBreakpoint created at functionCallWithImplicitContextClassReceiverCapturing.kt:38
 Run Java
 Connected to the target VM
-functionCallWithImplicitContextClassReceiverCapturing.kt:37
+functionCallWithImplicitContextClassReceiverCapturing.kt:38
 Compile bytecode for useWithCtx1()
 Compile bytecode for useWithCtx2()
 Compile bytecode for useWithCtx1Ctx2()

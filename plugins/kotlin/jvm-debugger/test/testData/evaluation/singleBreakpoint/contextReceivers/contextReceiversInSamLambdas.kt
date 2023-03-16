@@ -1,4 +1,5 @@
 // ATTACH_LIBRARY: contexts
+// ENABLED_LANGUAGE_FEATURE: ContextReceivers
 
 package contextReceiversInSamLambdas
 
