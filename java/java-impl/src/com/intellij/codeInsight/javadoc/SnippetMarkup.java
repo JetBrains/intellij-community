@@ -190,24 +190,57 @@ public class SnippetMarkup {
    * An interface that specifies to which part of text content the {@link LocationMarkupNode} is applied
    */
   public sealed interface Selector {
+    /**
+     * @param string string to find the ranges
+     * @return non-overlapping sorted ranges inside the string matched by this selector
+     */
+    @NotNull List<TextRange> ranges(String string);
   }
 
   /**
    * Substring-selector; applicable to a specific substring
    * @param substring substring to apply to
    */
-  public record Substring(@NotNull String substring) implements Selector {}
+  public record Substring(@NotNull String substring) implements Selector {
+    @Override
+    public @NotNull List<TextRange> ranges(String string) {
+      int pos = 0;
+      List<TextRange> ranges = new ArrayList<>();
+      while (true) {
+        int nextPos = string.indexOf(substring, pos);
+        if (nextPos == -1) break;
+        ranges.add(TextRange.from(nextPos, substring.length()));
+        pos = nextPos + substring.length() + 1;
+      }
+      return ranges;
+    }
+  }
 
   /**
    * Regex-selector; applicable to a specific regex
    * @param pattern pattern to apply to
    */
-  public record Regex(@NotNull Pattern pattern) implements Selector {}
+  public record Regex(@NotNull Pattern pattern) implements Selector {
+    @Override
+    public @NotNull List<TextRange> ranges(String string) {
+      Matcher matcher = pattern.matcher(string);
+      List<TextRange> ranges = new ArrayList<>();
+      while (matcher.find()) {
+        ranges.add(TextRange.create(matcher.start(), matcher.end()));
+      }
+      return ranges;
+    }
+  }
 
   /**
    * Selector which is applicable to the whole line
    */
-  public record WholeLine() implements Selector {}
+  public record WholeLine() implements Selector {
+    @Override
+    public @NotNull List<TextRange> ranges(String string) {
+      return List.of(TextRange.create(0, string.length()));
+    }
+  }
 
   /**
    * A markup tag applicable to a particular part of original text
@@ -316,12 +349,25 @@ public class SnippetMarkup {
       return new CachedValueProvider.Result<>(markup, element);
     });
   }
-  
+
+  /**
+   * @param snippet snippet to create a markup for
+   * @return a markup from snippet. For hybrid snippet, markup is created from the body.
+   * Returns null if there's no snippet body and no external snippet resolved
+   */
   public static @Nullable SnippetMarkup fromSnippet(@NotNull PsiSnippetDocTagValue snippet) {
     PsiSnippetDocTagBody body = snippet.getBody();
     if (body != null) {
       return fromElement(body);
     }
+    return fromExternalSnippet(snippet);
+  }
+  
+  /**
+   * @param snippet snippet to create a markup for
+   * @return markup from external snippet (ignoring body), null if there's no external snippet resolved.
+   */
+  public static @Nullable SnippetMarkup fromExternalSnippet(@NotNull PsiSnippetDocTagValue snippet) {
     PsiSnippetAttributeList list = snippet.getAttributeList();
     PsiSnippetAttribute refAttribute = list.getAttribute(PsiSnippetAttribute.CLASS_ATTRIBUTE);
     if (refAttribute == null) {
@@ -567,7 +613,18 @@ public class SnippetMarkup {
    * @param region region to visit
    * @param visitor visitor to use
    */
-  public void visitSnippet(@Nullable String region, SnippetVisitor visitor) {
+  public void visitSnippet(@Nullable String region, @NotNull SnippetVisitor visitor) {
+    visitSnippet(region, false, visitor);
+  }
+
+  /**
+   * Visit elements of the snippet within given region
+   *
+   * @param region              region to visit
+   * @param processReplacements if true, {@code @replace} tags will be processed automatically and not passed to the visitor
+   * @param visitor             visitor to use
+   */
+  public void visitSnippet(@Nullable String region, boolean processReplacements, @NotNull SnippetVisitor visitor) {
     Stack<String> regions = new Stack<>();
     Map<String, List<LocationMarkupNode>> active = new LinkedHashMap<>();
     for (MarkupNode node : myNodes) {
@@ -594,7 +651,12 @@ public class SnippetMarkup {
       }
       else if (node instanceof PlainText plainText) {
         if (region == null || regions.contains(region)) {
-          visitor.visitPlainText(plainText, StreamEx.ofValues(active).toFlatList(Function.identity()));
+          List<LocationMarkupNode> flatActive = StreamEx.ofValues(active).toFlatList(Function.identity());
+          if (processReplacements) {
+            processReplacements(visitor, plainText, flatActive);
+          } else {
+            visitor.visitPlainText(plainText, flatActive);
+          }
         }
         active.values().forEach(
           list -> list.replaceAll(
@@ -607,6 +669,34 @@ public class SnippetMarkup {
         }
       }
     }
+  }
+
+  private static void processReplacements(@NotNull SnippetVisitor visitor, @NotNull PlainText plainText, @NotNull List<LocationMarkupNode> flatActive) {
+    Map<Boolean, List<LocationMarkupNode>> map = StreamEx.of(flatActive).partitioningBy(n -> n instanceof Replace);
+    flatActive = map.get(false);
+    String content = plainText.content();
+    for (LocationMarkupNode markupNode : map.get(true)) {
+      Replace replace = (Replace)markupNode;
+      Selector selector = replace.selector();
+      String replacement = replace.replacement();
+      if (selector instanceof Regex regex) {
+        try {
+          content = regex.pattern().matcher(content).replaceAll(replacement);
+        }
+        catch (IllegalArgumentException | IndexOutOfBoundsException e) {
+          ErrorMarkup replacementError = new ErrorMarkup(
+            replace.range(), JavaBundle.message("javadoc.snippet.error.malformed.replacement", "replace", replacement, e.getMessage()));
+          visitor.visitError(replacementError);
+        }
+      }
+      else if (selector instanceof Substring substring) {
+        content = content.replace(substring.substring(), replacement);
+      }
+      else {
+        content = replacement;
+      }
+    }
+    visitor.visitPlainText(new PlainText(plainText.range(), content), flatActive);
   }
 
   @Override

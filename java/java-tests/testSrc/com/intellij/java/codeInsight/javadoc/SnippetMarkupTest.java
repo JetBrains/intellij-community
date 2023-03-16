@@ -177,7 +177,7 @@ public class SnippetMarkupTest {
       PlainText[range=(161,163), content=}
       ]
       PlainText[range=(163,163), content=]""");
-    testVisitor(text, null, """
+    testVisitor(text, null, false, """
       public class Hello {
       // [Replace[range=(26,68), selector=Substring[substring=xyz], region=null, replacement=xxx], Link[range=(69,119), selector=Substring[substring=System], region=null, target=java.lang.System, linkType=LINK], Highlight[range=(120,130), selector=WholeLine[], region=null, type=HIGHLIGHTED]]
         System.out.println("xyz");
@@ -230,7 +230,7 @@ public class SnippetMarkupTest {
       PlainText[range=(360,362), content=}
       ]
       PlainText[range=(362,362), content=]""");
-    testVisitor(text, null, """
+    testVisitor(text, null, false, """
       public class Hello {
         public static void main(String[] args) {
       // [Replace[range=(101,138), selector=Regex[pattern=code:], region=null, replacement=]]
@@ -246,10 +246,23 @@ public class SnippetMarkupTest {
         }
       }
       """);
-    testVisitor(text, "main", """
+    testVisitor(text, "main", false, """
         public static void main(String[] args) {
       // [Replace[range=(101,138), selector=Regex[pattern=code:], region=null, replacement=]]
           code:\s
+      // [Highlight[range=(146,180), selector=Substring[substring=Hello World], region=null, type=HIGHLIGHTED]]
+          System.out.println("Hello World");
+      // [Highlight[range=(227,260), selector=Substring[substring=idx], region=, type=HIGHLIGHTED]]
+          for(int idx=0; idx<10; idx++) {
+      // [Highlight[range=(227,260), selector=Substring[substring=idx], region=, type=HIGHLIGHTED]]
+            System.out.println(idx);
+      // [Highlight[range=(227,260), selector=Substring[substring=idx], region=, type=HIGHLIGHTED]]
+          }
+        }
+      """);
+    testVisitor(text, "main", true, """
+        public static void main(String[] args) {
+          \s
       // [Highlight[range=(146,180), selector=Substring[substring=Hello World], region=null, type=HIGHLIGHTED]]
           System.out.println("Hello World");
       // [Highlight[range=(227,260), selector=Substring[substring=idx], region=, type=HIGHLIGHTED]]
@@ -306,7 +319,7 @@ public class SnippetMarkupTest {
       ]
       EndRegion[range=(261,277), region=r2]
       PlainText[range=(278,278), content=]""");
-    testVisitor(text, null, """
+    testVisitor(text, null, false, """
       // [Highlight[range=(3,51), selector=Substring[substring=xxx], region=r1, type=BOLD]]
       r1 start xxx
       // [Highlight[range=(3,51), selector=Substring[substring=xxx], region=r1, type=BOLD], Highlight[range=(68,118), selector=Substring[substring=yyy], region=r2, type=ITALIC]]
@@ -318,7 +331,7 @@ public class SnippetMarkupTest {
       // [Highlight[range=(68,118), selector=Substring[substring=yyy], region=r2, type=ITALIC]]
       r2 continues yyy
       """);
-    testVisitor(text, "r1", """
+    testVisitor(text, "r1", false, """
       // [Highlight[range=(3,51), selector=Substring[substring=xxx], region=r1, type=BOLD]]
       r1 start xxx
       // [Highlight[range=(3,51), selector=Substring[substring=xxx], region=r1, type=BOLD], Highlight[range=(68,118), selector=Substring[substring=yyy], region=r2, type=ITALIC]]
@@ -328,7 +341,7 @@ public class SnippetMarkupTest {
       // [Highlight[range=(3,51), selector=Substring[substring=xxx], region=r1, type=BOLD], Highlight[range=(68,118), selector=Substring[substring=yyy], region=r2, type=ITALIC]]
       r1+r2 xxx
       """);
-    testVisitor(text, "r2", """
+    testVisitor(text, "r2", false, """
       // [Highlight[range=(3,51), selector=Substring[substring=xxx], region=r1, type=BOLD], Highlight[range=(68,118), selector=Substring[substring=yyy], region=r2, type=ITALIC]]
       r2 start yyy
       // [Highlight[range=(3,51), selector=Substring[substring=xxx], region=r1, type=BOLD], Highlight[range=(68,118), selector=Substring[substring=yyy], region=r2, type=ITALIC], Highlight[range=(135,178), selector=Substring[substring=zzz], region=null, type=HIGHLIGHTED]]
@@ -344,7 +357,7 @@ public class SnippetMarkupTest {
     assertEquals(expected, SnippetMarkup.parse(input).toString());
   }
 
-  private static void testVisitor(@NotNull String input, @Nullable String region, @NotNull String expected) {
+  private static void testVisitor(@NotNull String input, @Nullable String region, boolean processReplacements, @NotNull String expected) {
     var visitor = new SnippetMarkup.SnippetVisitor() {
       final StringBuilder sb = new StringBuilder();
       
@@ -363,7 +376,7 @@ public class SnippetMarkupTest {
       }
     };
     
-    SnippetMarkup.parse(input).visitSnippet(region, visitor);
+    SnippetMarkup.parse(input).visitSnippet(region, processReplacements, visitor);
     assertEquals(expected, visitor.sb.toString());
   }
 }
