@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
+import com.intellij.util.messages.Topic
 import java.util.*
 
 /**
@@ -13,7 +14,7 @@ import java.util.*
  * Invalid pointer returns null.
  */
 interface NotebookIntervalPointer {
-  /** should be called in read-action */
+  /** thread-safe */
   fun get(): NotebookCellLines.Interval?
 }
 
@@ -35,8 +36,16 @@ interface NotebookIntervalPointerFactory {
    */
   interface ChangeListener : EventListener {
     fun onUpdated(event: NotebookIntervalPointersEvent)
+
+    companion object {
+      val TOPIC: Topic<ChangeListener> =
+        Topic.create("NotebookIntervalPointerFactory.ChangeListener", ChangeListener::class.java)
+    }
   }
 
+  /**
+   * listen events for only one document
+   */
   val changeListeners: EventDispatcher<ChangeListener>
 
   companion object {
