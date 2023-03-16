@@ -2,6 +2,7 @@
 @file:JvmName("GradleProjectImportUtil")
 package org.jetbrains.plugins.gradle.service.project.open
 
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.util.io.toCanonicalPath
@@ -34,9 +35,11 @@ fun canLinkAndRefreshGradleProject(projectFilePath: String, project: Project, sh
   val validationInfo = validateGradleProject(projectFilePath, project) ?: return true
   if (showValidationDialog) {
     val title = ExternalSystemBundle.message("error.project.import.error.title")
-    when (validationInfo.warning) {
-      true -> Messages.showWarningDialog(project, validationInfo.message, title)
-      else -> Messages.showErrorDialog(project, validationInfo.message, title)
+    invokeAndWaitIfNeeded {
+      when (validationInfo.warning) {
+        true -> Messages.showWarningDialog(project, validationInfo.message, title)
+        else -> Messages.showErrorDialog(project, validationInfo.message, title)
+      }
     }
   }
   return false
