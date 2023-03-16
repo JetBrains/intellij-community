@@ -208,6 +208,12 @@ public class SwitchBlockHighlightingModel {
       if (labelElementList == null) {
         continue;
       }
+      if (labelElementList.getElementCount() == 1 &&
+          labelElementList.getElements()[0] instanceof PsiDefaultCaseLabelElement defaultElement) {
+        HighlightInfo.Builder info = createError(defaultElement, JavaErrorBundle.message("default.label.must.not.contains.case.keyword"));
+        holder.add(info.create());
+        continue;
+      }
       for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
         PsiExpression expr = ObjectUtils.tryCast(labelElement, PsiExpression.class);
         // ignore patterns/case defaults. If they appear here, insufficient language level will be reported

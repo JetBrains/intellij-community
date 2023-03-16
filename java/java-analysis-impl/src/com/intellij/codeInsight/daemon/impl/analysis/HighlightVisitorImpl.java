@@ -1930,6 +1930,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitDefaultCaseLabelElement(@NotNull PsiDefaultCaseLabelElement element) {
     super.visitDefaultCaseLabelElement(element);
+    if (element.getParent() instanceof PsiCaseLabelElementList labelElementList && labelElementList.getElementCount() == 1) return;
     add(checkFeature(element, HighlightingFeature.PATTERNS_IN_SWITCH));
   }
 
