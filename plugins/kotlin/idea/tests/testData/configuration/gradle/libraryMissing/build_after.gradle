@@ -26,7 +26,7 @@ repositories {
 }
 kotlin {
     jvmToolchain {
-        languageVersion = JavaLanguageVersion.of(8)
+        languageVersion = JavaLanguageVersion.of(11)
     }
 }
 
