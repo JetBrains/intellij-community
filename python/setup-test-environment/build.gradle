@@ -107,11 +107,11 @@ envs {
      return
    }
 
-  createPython("py27_django11_full",
+  createPython("py27",
                python27version,
-               ["django==1.11", "tox>=3.8.3", "nose", "pytest", "Twisted", "behave",  "teamcity-messages", "django-nose",
+               ["tox>=3.8.3", "nose", "pytest", "Twisted", "behave",  "teamcity-messages",
                 "untangle"] + ( isWindows ? ['pypiwin32'] : []  ), //win32api is required for pypiwin32
-               "python2.7\ndjango\nnose\npytest\nbehave\npackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
+               "python2.7\nnose\npytest\nbehave\npackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
                true)
 
   createPython("py38_django22_full",
