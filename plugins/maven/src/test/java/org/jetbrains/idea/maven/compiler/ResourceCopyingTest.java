@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.idea.Bombed;
 import com.intellij.maven.testFramework.MavenCompilingTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -30,7 +29,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Calendar;
 
 public class ResourceCopyingTest extends MavenCompilingTestCase {
 
@@ -614,8 +612,6 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     });
   }
 
-  @Bombed(year = 2021, month = Calendar.JULY, day = 16, user = "gmyasoedov",
-    description = "addResourceFilePattern(\"!*.xxx\") not worked https://youtrack.jetbrains.com/issue/IDEA-273879")
   @Test
   public void testCopingNonMavenResources() throws Exception {
     if (ignore()) return;
