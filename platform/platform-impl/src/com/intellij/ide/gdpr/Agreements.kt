@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Agreements")
 
 package com.intellij.ide.gdpr
@@ -67,7 +67,7 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
         isEnabled = false,
         action = { dialogWrapper ->
           EndUserAgreement.setAccepted(agreement)
-          if (true) {
+          if (ConsentOptions.needToShowUsageStatsConsent()) {
             configureDataSharing(bundle)
           }
           else {
