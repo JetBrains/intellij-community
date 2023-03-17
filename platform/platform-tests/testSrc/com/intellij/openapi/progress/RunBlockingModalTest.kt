@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
+import com.intellij.concurrency.checkUninitializedThreadContext
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -30,6 +31,7 @@ class RunBlockingModalTest : ModalCoroutineTest() {
     val testElement = TestElement("xx")
     withContext(testElement) {
       runBlockingModalContext {
+        checkUninitializedThreadContext()
         assertSame(testElement, coroutineContext[TestElementKey])
         assertSame(currentThreadContext(), EmptyCoroutineContext)
         withContext(Dispatchers.EDT) {
@@ -45,7 +47,9 @@ class RunBlockingModalTest : ModalCoroutineTest() {
     withContext(Dispatchers.EDT) {
       assertFalse(LaterInvocator.isInModalContext())
       runBlockingModal {
+        checkUninitializedThreadContext()
         withContext(Dispatchers.EDT) {
+          checkUninitializedThreadContext()
           assertTrue(LaterInvocator.isInModalContext())
           val contextModality = coroutineContext.contextModality()
           assertNotEquals(ModalityState.any(), contextModality)
