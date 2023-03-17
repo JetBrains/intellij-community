@@ -185,12 +185,12 @@ public final class CommentByBlockCommentHandler extends MultiCaretCodeInsightAct
   }
 
   private boolean testSelectionForNonComments() {
-    if (!myCaret.hasSelection()) {
+    TextRange selection = myCaret.getSelectionRange();
+    if (selection.isEmpty()) {
       return true;
     }
     PsiDocumentManager.getInstance(myFile.getProject()).commitDocument(myDocument);
-    TextRange range
-      = new TextRange(myCaret.getSelectionStart(), myCaret.getSelectionEnd() - 1);
+    TextRange range = selection.grown(-1);
     for (PsiElement element = myFile.findElementAt(range.getStartOffset()); element != null && range.intersects(element.getTextRange());
          element = element.getNextSibling()) {
       if (element instanceof OuterLanguageElement) {
