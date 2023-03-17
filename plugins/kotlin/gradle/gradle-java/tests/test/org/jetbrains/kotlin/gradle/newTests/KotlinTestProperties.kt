@@ -19,13 +19,13 @@ class KotlinTestProperties private constructor(
     private val simplePropertiesValuesById: Map<String, String>,
 ) {
     val kotlinGradlePluginVersion: KotlinToolingVersion
-        get() = devModeTweaks?.overrideKgpVersion?.version?.let { KotlinToolingVersion(it) } ?: kotlinGradlePluginVersionFromEnv
+        get() = devModeTweaks?.overrideKgpVersion?.let { KotlinToolingVersion(it) } ?: kotlinGradlePluginVersionFromEnv
 
     val gradleVersion: GradleVersion
-        get() = devModeTweaks?.overrideGradleVersion?.version?.let { GradleVersion.version(it) } ?: gradleVersionFromEnv
+        get() = devModeTweaks?.overrideGradleVersion?.let { GradleVersion.version(it) } ?: gradleVersionFromEnv
 
     val agpVersion: String
-        get() = devModeTweaks?.overrideAgpVersion?.version ?: agpVersionFromEnv
+        get() = devModeTweaks?.overrideAgpVersion ?: agpVersionFromEnv
 
     fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String {
         // Important! Collect final properties exactly here to get versions with devModeTweaks applied
