@@ -10,8 +10,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.popup.PopupState
 
 internal class ChooseBookmarkTypeAction : DumbAwareAction(BookmarkBundle.messagePointer("mnemonic.chooser.mnemonic.toggle.action.text")) {
-  private val popupState = PopupState.forPopup()
-
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
@@ -21,7 +19,7 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction(BookmarkBundle.message
     val type = bookmark?.let { manager?.getType(it) }
     event.presentation.apply {
       isVisible = bookmark != null
-      isEnabled = bookmark != null && popupState.isHidden
+      isEnabled = bookmark != null
       text = when (type) {
         BookmarkType.DEFAULT -> BookmarkBundle.message("mnemonic.chooser.mnemonic.assign.action.text")
         null -> BookmarkBundle.message("mnemonic.chooser.bookmark.create.action.text")
@@ -31,12 +29,10 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction(BookmarkBundle.message
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    if (popupState.isRecentlyHidden) return
     val manager = event.bookmarksManager ?: return
     val bookmark = event.contextBookmark ?: return
     val type = manager.getType(bookmark)
     val chooser = BookmarkTypeChooser(type, manager.assignedTypes, bookmark.firstGroupWithDescription?.getDescription(bookmark)) { chosenType, description ->
-      popupState.hidePopup()
       if (manager.getType(bookmark) == null) {
         manager.toggle(bookmark, chosenType)
       } else {
@@ -55,7 +51,6 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction(BookmarkBundle.message
       .setFocusable(true).setRequestFocus(true)
       .setMovable(false).setResizable(false)
       .setTitle(title).createPopup()
-      .also { popupState.prepareToShow(it) }
       .showInBestPositionFor(event.dataContext)
   }
 

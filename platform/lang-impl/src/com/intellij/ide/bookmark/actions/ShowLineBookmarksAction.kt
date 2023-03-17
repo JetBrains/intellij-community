@@ -13,8 +13,6 @@ import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.JBUI
 
 internal class ShowLineBookmarksAction : DumbAwareAction(BookmarkBundle.messagePointer("show.bookmarks.action.text")) {
-  private val popupState = PopupState.forPopup()
-
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabled = event.project != null
     event.presentation.text = when (AdvancedSettings.getBoolean("show.line.bookmarks.in.popup")) {
@@ -28,9 +26,6 @@ internal class ShowLineBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    if (popupState.isRecentlyHidden) return
-    if (popupState.isShowing) return popupState.hidePopup()
-
     val project = event.project ?: return
     val panel = BookmarksView(project, null)
     panel.preferredSize = JBUI.size(640, 240)
@@ -51,7 +46,6 @@ internal class ShowLineBookmarksAction : DumbAwareAction(BookmarkBundle.messageP
     panel.addEditSourceListener { popup.closeOk(null) }
 
     Disposer.register(popup, panel)
-    popupState.prepareToShow(popup)
     popup.showCenteredInCurrentWindow(project)
   }
 }
