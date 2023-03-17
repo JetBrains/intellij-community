@@ -187,10 +187,10 @@ class NastradamusClientTest {
                                     .setBody(response)
                                     .addHeader("Content-Type", "application/json"))
 
-    val sortedCases = nastradamus.sendSortingRequest(sortRequestEntity = sortEntity, bucketsCount = 2, currentBucketIndex = 0)
+    val sortedCases = nastradamus.sendSortingRequest(sortRequestEntity = sortEntity, bucketsCount = 2, currentBucketIndex = 0, wasNastradamusDataUsed = true)
     val request = nastradamusMockServer.takeRequest()
 
-    Assert.assertEquals("Requested path should be equal", "/sort/?buckets=2", request.path)
+    Assert.assertEquals("Requested path should be equal", "/sort/?buckets=2&was_nastradamus_data_used=true", request.path)
     Assert.assertEquals("POST request should be sent", "POST", request.method)
 
     Assert.assertEquals("Payload is in wrong format", jacksonMapper.writeValueAsString(sortEntity), request.body.readUtf8())
