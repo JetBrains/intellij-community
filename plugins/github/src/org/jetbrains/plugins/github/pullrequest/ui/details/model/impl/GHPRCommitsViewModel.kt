@@ -12,15 +12,31 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.getResultFlow
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 
 internal class GHPRCommitsViewModel(
   scope: CoroutineScope,
   commitsLoadingModel: GHSimpleLoadingModel<List<GHCommit>>,
-  securityService: GHPRSecurityService
+  securityService: GHPRSecurityService,
+  private val diffBridge: GHPRDiffController
 ) : CodeReviewChangesViewModelBase<GHCommit>() {
   val ghostUser: GHUser = securityService.ghostUser
 
   override val reviewCommits: StateFlow<List<GHCommit>> = commitsLoadingModel.getResultFlow()
     .map { commits -> commits?.asReversed() ?: listOf() }
     .stateIn(scope, SharingStarted.Eagerly, listOf())
+
+  override fun commitHash(commit: GHCommit): String {
+    return commit.abbreviatedOid
+  }
+
+  override fun selectCommit(commit: GHCommit?) {
+    diffBridge.activeTree = GHPRDiffController.ActiveTree.COMMITS
+    super.selectCommit(commit)
+  }
+
+  override fun selectAllCommits() {
+    diffBridge.activeTree = GHPRDiffController.ActiveTree.FILES
+    super.selectAllCommits()
+  }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
@@ -78,7 +79,9 @@ internal object GitLabMergeRequestDetailsComponentFactory {
 
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
-      add(GitLabMergeRequestDetailsCommitsComponentFactory.create(cs, changesVm))
+      add(CodeReviewDetailsCommitsComponentFactory.create(cs, changesVm) { commit: GitLabCommitDTO? ->
+        createCommitsPopupPresenter(commit, changesVm.reviewCommits.value.size)
+      })
       add(GitLabMergeRequestDetailsBranchComponentFactory.create(project, cs, detailsInfoVm, repository))
     }
     val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Requests.Details.Popup") as ActionGroup
@@ -105,7 +108,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       add(commitsAndBranches,
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(CodeReviewDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit,
-                                                             commitPresenter = { commit -> commitPresenter(commit) },
+                                                             commitPresenter = { commit -> createCommitInfoPresenter(commit) },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS).maxHeight("${ReviewDetailsUIUtil.COMMIT_INFO_MAX_HEIGHT}"))
       add(GitLabMergeRequestDetailsChangesComponentFactory(project).create(cs, changesVm),
@@ -117,7 +120,16 @@ internal object GitLabMergeRequestDetailsComponentFactory {
     }
   }
 
-  private fun commitPresenter(commit: GitLabCommitDTO): CommitPresenter {
+  private fun createCommitsPopupPresenter(commit: GitLabCommitDTO?, commitsCount: Int): CommitPresenter {
+    return if (commit == null) {
+      CommitPresenter.AllCommits(title = CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount))
+    }
+    else {
+      createCommitInfoPresenter(commit)
+    }
+  }
+
+  private fun createCommitInfoPresenter(commit: GitLabCommitDTO): CommitPresenter {
     return CommitPresenter.SingleCommit(
       title = commit.title.orEmpty(),
       author = commit.author.name,

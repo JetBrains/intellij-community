@@ -18,6 +18,8 @@ interface CodeReviewChangesViewModel<T> {
   fun selectNextCommit()
 
   fun selectPreviousCommit()
+
+  fun commitHash(commit: T): String
 }
 
 abstract class CodeReviewChangesViewModelBase<T> : CodeReviewChangesViewModel<T> {

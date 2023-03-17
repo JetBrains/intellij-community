@@ -50,6 +50,10 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   private val _showDiffRequests = MutableSharedFlow<Unit>()
   val showDiffRequests = _showDiffRequests.asSharedFlow()
 
+  override fun commitHash(commit: GitLabCommitDTO): String {
+    return commit.shortId
+  }
+
   override fun updateSelectedChanges(changes: ListSelection<Change>) {
     cs.launch {
       _selectedChangesEvents.emit(changes)
