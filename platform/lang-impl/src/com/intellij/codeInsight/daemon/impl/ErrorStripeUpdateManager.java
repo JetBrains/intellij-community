@@ -8,6 +8,7 @@ import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
@@ -82,7 +83,7 @@ public final class ErrorStripeUpdateManager implements Disposable {
     ModalityState modality = ModalityState.defaultModalityState();
     ProjectUtilKt.executeOnPooledThread(myProject, () -> {
       Editor editor = editorMarkupModel.getEditor();
-      if (editor.isDisposed() || !file.isValid() || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file)) {
+      if (ReadAction.compute(() -> editor.isDisposed() || !file.isValid() || !DaemonCodeAnalyzer.getInstance(myProject).isHighlightingAvailable(file))) {
         return;
       }
 
