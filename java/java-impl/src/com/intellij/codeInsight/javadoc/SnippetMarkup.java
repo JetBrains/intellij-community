@@ -351,15 +351,16 @@ public class SnippetMarkup {
 
   /**
    * @param snippet snippet to create a markup for
-   * @return a markup from snippet. For hybrid snippet, markup is created from the body.
+   * @return a markup from snippet. For hybrid snippet, markup is created from the external snippet.
    * Returns null if there's no snippet body and no external snippet resolved
    */
   public static @Nullable SnippetMarkup fromSnippet(@NotNull PsiSnippetDocTagValue snippet) {
-    PsiSnippetDocTagBody body = snippet.getBody();
-    if (body != null) {
-      return fromElement(body);
+    SnippetMarkup markup = fromExternalSnippet(snippet);
+    if (markup != null) {
+      return markup;
     }
-    return fromExternalSnippet(snippet);
+    PsiSnippetDocTagBody body = snippet.getBody();
+    return body != null ? fromElement(body) : null;
   }
   
   /**
@@ -399,7 +400,9 @@ public class SnippetMarkup {
 
   private static @NotNull List<@NotNull PlainText> preparse(@NotNull PsiSnippetDocTagBody body) {
     List<PlainText> output = new ArrayList<>();
-    for (PsiElement element : body.getChildren()) {
+    PsiElement[] children = body.getChildren();
+    boolean first = true;
+    for (PsiElement element : children) {
       if (element instanceof PsiDocToken token) {
         IElementType tokenType = token.getTokenType();
         if (tokenType.equals(JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) continue;
@@ -413,7 +416,11 @@ public class SnippetMarkup {
           int idx = output.size() - 1;
           if (idx >= 0 && !output.get(idx).content().endsWith("\n")) {
             output.set(idx, new PlainText(output.get(idx).range(), output.get(idx).content() + "\n"));
-          } else {
+          }
+          else if (first) {
+            first = false;
+          }
+          else {
             output.add(new PlainText(element.getTextRange(), "\n"));
           }
         }
@@ -491,17 +498,14 @@ public class SnippetMarkup {
       start += attrPos;
       markupSpec = markupSpec.substring(attrPos);
     }
+    if (prev.content().isBlank() && !prev.content().isEmpty()) {
+      prev = new PlainText(TextRange.from(text.range().getEndOffset(), 0), "");
+    }
     if (hasColon) {
-      if (!prev.content().isBlank()) {
-        markupNodes.add(0, prev);
-      }
+      markupNodes.add(0, prev);
     }
-    else if (!prev.content().isBlank()) {
+    else {
       markupNodes.add(prev);
-    }
-    else if (ContainerUtil.exists(markupNodes, e -> e instanceof LocationMarkupNode lmn && lmn.region() == null)) {
-      // No colon and no previous content: still create node, as markup should apply to it
-      markupNodes.add(new PlainText(TextRange.create(prev.range().getStartOffset(), prev.range().getStartOffset()), ""));
     }
     return markupNodes.stream();
   }

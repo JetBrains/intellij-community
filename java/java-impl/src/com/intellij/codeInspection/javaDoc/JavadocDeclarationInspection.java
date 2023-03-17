@@ -2,10 +2,13 @@
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInsight.daemon.impl.analysis.IncreaseLanguageLevelFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -19,13 +22,12 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -445,8 +447,8 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
 
   private static void checkSnippetTag(@NotNull ProblemsHolder holder, PsiElement element, PsiInlineDocTag tag) {
     if (element instanceof PsiSnippetDocTag snippet) {
+      PsiElement nameElement = tag.getNameElement();
       if (!PsiUtil.getLanguageLevel(snippet).isAtLeast(LanguageLevel.JDK_18)) {
-        PsiElement nameElement = tag.getNameElement();
         if (nameElement != null) {
           String message = JavaBundle.message("inspection.javadoc.problem.snippet.tag.is.not.available");
           holder.registerProblem(nameElement, message, new IncreaseLanguageLevelFix(LanguageLevel.JDK_18));
@@ -454,7 +456,7 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
         return;
       }
       PsiSnippetDocTagValue valueElement = snippet.getValueElement();
-      if (valueElement != null) {
+      if (valueElement != null && nameElement != null) {
         PsiSnippetDocTagBody body = valueElement.getBody();
         if (body != null) {
           SnippetMarkup markup = SnippetMarkup.fromElement(body);
@@ -464,9 +466,45 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
               holder.registerProblem(body, errorMarkup.range(), errorMarkup.message());
             }
           });
+          SnippetMarkup externalMarkup = SnippetMarkup.fromExternalSnippet(valueElement);
+          if (externalMarkup != null) {
+            PsiSnippetAttribute regionAttr = valueElement.getAttributeList().getAttribute("region");
+            String region = regionAttr != null && regionAttr.getValue() != null ? regionAttr.getValue().getValue() : null;
+            String externalRendered = renderText(externalMarkup, region);
+            String inlineRegion = region != null && markup.getRegionStart(region) == null ? null : region;
+            String inlineRendered = renderText(markup, inlineRegion);
+            if (!externalRendered.equals(inlineRendered)) {
+              holder.registerProblem(nameElement, 
+                                     JavaBundle.message("inspection.message.external.snippet.differs.from.inline.snippet"),
+                                     new SynchronizeInlineMarkupFix(externalRendered),
+                                     new DeleteElementFix(body));
+            }
+          }
         }
       }
     }
+  }
+
+  static @NotNull String renderText(@NotNull SnippetMarkup snippet, @Nullable String region) {
+    StringBuilder content = new StringBuilder();
+    snippet.visitSnippet(region, true, new SnippetMarkup.SnippetVisitor() {
+      @Override
+      public void visitPlainText(SnippetMarkup.@NotNull PlainText plainText,
+                                 @NotNull List<SnippetMarkup.@NotNull LocationMarkupNode> activeNodes) {
+        if (plainText.content().isEmpty()) {
+          // Empty content = tag was on a given line. In most of the cases, javadoc tool considers such a line as content
+          content.append("\n");
+        }
+        else {
+          content.append(plainText.content());
+        }
+      }
+
+      @Override
+      public void visitError(SnippetMarkup.@NotNull ErrorMarkup errorMarkup) {
+      }
+    });
+    return content.toString().stripTrailing().replaceAll("[ \t]+\n", "\n");
   }
 
   private static boolean isEmptyTag(PsiDocTag tag) {
@@ -496,5 +534,38 @@ public class JavadocDeclarationInspection extends LocalInspectionTool {
 
   private static <T> Set<T> set(Set<T> set) {
     return set != null ? set : new HashSet<>();
+  }
+
+  private static class SynchronizeInlineMarkupFix implements LocalQuickFix, HighPriorityAction {
+    private final String myText;
+
+    public SynchronizeInlineMarkupFix(@NotNull String text) {
+      myText = text;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return JavaBundle.message("intention.family.name.synchronize.inline.snippet");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiSnippetDocTag snippetTag = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiSnippetDocTag.class);
+      if (snippetTag == null) return;
+      PsiSnippetDocTagValue valueElement = snippetTag.getValueElement();
+      if (valueElement == null) return;
+      PsiSnippetDocTagBody body = valueElement.getBody();
+      if (body == null) return;
+      PsiDocComment comment =
+        JavaPsiFacade.getElementFactory(project).createDocCommentFromText(StringUtil.join(
+          "/**\n* {@snippet :\n" + StreamEx.split(myText, '\n', false)
+            .map(line -> "* " + line).joining("\n") + "}*/"
+        ));
+      PsiSnippetDocTag newSnippet = PsiTreeUtil.getChildOfType(comment, PsiSnippetDocTag.class);
+      if (newSnippet == null) return;
+      PsiSnippetDocTagValue newValueElement = Objects.requireNonNull(newSnippet.getValueElement());
+      newValueElement.getAttributeList().replace(valueElement.getAttributeList());
+      snippetTag.replace(newSnippet);
+    }
   }
 }
