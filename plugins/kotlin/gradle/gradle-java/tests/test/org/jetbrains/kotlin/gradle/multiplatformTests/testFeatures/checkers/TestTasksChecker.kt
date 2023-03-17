@@ -4,24 +4,22 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.ModuleReportData
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.PrinterContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.WorkspaceModelChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.indented
 import org.jetbrains.kotlin.idea.base.facet.externalSystemTestRunTasks
 
-object TestTasksChecker : WorkspaceModelChecker<Unit>() {
+object TestTasksChecker : WorkspaceModelChecker<Unit>(respectOrder = false) {
     override fun createDefaultConfiguration() = Unit
 
     override val classifier: String = "test-tasks"
 
     override fun renderTestConfigurationDescription(testConfiguration: TestConfiguration): List<String> = emptyList()
 
-    override fun PrinterContext.process(module: Module) = with(printer) {
+    override fun PrinterContext.buildReportDataForModule(module: Module): List<ModuleReportData> {
         val tasks = runReadAction { module.externalSystemTestRunTasks() }
-        if (tasks.isEmpty()) return
+        if (tasks.isEmpty()) return emptyList()
 
-        indented {
-            tasks.forEach { println(it.toStringRepresentation()) }
-        }
+        return tasks.map { ModuleReportData(it.toStringRepresentation()) }
     }
 }

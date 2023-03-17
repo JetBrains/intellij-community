@@ -15,13 +15,13 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.CheckerContentRootType.*
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.CheckerContentRootType.RegularRoot.Java
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.CheckerContentRootType.RegularRoot.Kotlin
+import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.ModuleReportData
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.PrinterContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.WorkspaceModelChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.indented
 import java.io.File
 import kotlin.io.path.name
 
-object ContentRootsChecker : WorkspaceModelChecker<ContentRootsChecksConfiguration>() {
+object ContentRootsChecker : WorkspaceModelChecker<ContentRootsChecksConfiguration>(respectOrder = false) {
     override fun createDefaultConfiguration(): ContentRootsChecksConfiguration = ContentRootsChecksConfiguration()
 
     override val classifier: String = "source-roots"
@@ -29,7 +29,7 @@ object ContentRootsChecker : WorkspaceModelChecker<ContentRootsChecksConfigurati
     /**
      * Only source folders are supported at the moment
      */
-    override fun PrinterContext.process(module: Module) {
+    override fun PrinterContext.buildReportDataForModule(module: Module): List<ModuleReportData> {
         val sourceFolders = runReadAction { ModuleRootManager.getInstance(module).contentEntries }
             .flatMap { it.sourceFolders.asList() }
             .mapNotNull { it.toCheckerEntity(projectRoot) }
@@ -45,13 +45,9 @@ object ContentRootsChecker : WorkspaceModelChecker<ContentRootsChecksConfigurati
             }
             .toList()
 
-        if (filteredSourceFolders.isEmpty()) return
+        if (filteredSourceFolders.isEmpty()) return emptyList()
 
-        printer.indented {
-            filteredSourceFolders.map { it.toString() }.sorted().forEach {
-                printer.println(it)
-            }
-        }
+        return filteredSourceFolders.map { ModuleReportData(it.toString()) }
     }
 
     override fun renderTestConfigurationDescription(testConfiguration: TestConfiguration): List<String> {
