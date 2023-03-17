@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.gradle.newTests
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.DevModeTweaksImpl
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.DevModeTestFeature
+import org.jetbrains.kotlin.gradle.newTests.testFeatures.DevModeTweaks
 import org.jetbrains.kotlin.gradle.newTests.testProperties.AndroidGradlePluginVersionTestsProperty
 import org.jetbrains.kotlin.gradle.newTests.testProperties.GradleVersionTestsProperty
 import org.jetbrains.kotlin.gradle.newTests.testProperties.KotlinGradlePluginVersionTestsProperty
@@ -11,28 +12,39 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import java.io.File
 
 class KotlinTestProperties private constructor(
-    val kotlinGradlePluginVersion: KotlinToolingVersion,
-    val gradleVersion: GradleVersion,
-    val agpVersion: String,
-    propertiesValuesById: Map<String, String>,
+    private val kotlinGradlePluginVersionFromEnv: KotlinToolingVersion,
+    private val gradleVersionFromEnv: GradleVersion,
+    private val agpVersionFromEnv: String,
+    private val devModeTweaks: DevModeTweaks?,
+    private val simplePropertiesValuesById: Map<String, String>,
 ) {
-    private val allPropertiesValuesById = propertiesValuesById.toMutableMap().apply {
-        put(KotlinGradlePluginVersionTestsProperty.id, kotlinGradlePluginVersion.toString())
-        put(GradleVersionTestsProperty.id, gradleVersion.version)
-        put(AndroidGradlePluginVersionTestsProperty.id, agpVersion)
-    }
+    val kotlinGradlePluginVersion: KotlinToolingVersion
+        get() = devModeTweaks?.overrideKgpVersion?.version?.let { KotlinToolingVersion(it) } ?: kotlinGradlePluginVersionFromEnv
+
+    val gradleVersion: GradleVersion
+        get() = devModeTweaks?.overrideGradleVersion?.version?.let { GradleVersion.version(it) } ?: gradleVersionFromEnv
+
+    val agpVersion: String
+        get() = devModeTweaks?.overrideAgpVersion?.version ?: agpVersionFromEnv
 
     fun substituteKotlinTestPropertiesInText(text: String, sourceFile: File): String {
+        // Important! Collect final properties exactly here to get versions with devModeTweaks applied
+        val allPropertiesValuesById = simplePropertiesValuesById.toMutableMap().apply {
+            put(KotlinGradlePluginVersionTestsProperty.id, kotlinGradlePluginVersion.toString())
+            put(GradleVersionTestsProperty.id, gradleVersion.version)
+            put(AndroidGradlePluginVersionTestsProperty.id, agpVersion)
+        }
+
         var result = text
         allPropertiesValuesById.forEach { (key, value) ->
             result = result.replace(Regex("""\{\s*\{\s*${key}\s*}\s*}""", RegexOption.IGNORE_CASE), value)
         }
 
-        assertNoPatternsLeftUnsubstituted(result, sourceFile)
+        assertNoPatternsLeftUnsubstituted(result, sourceFile, allPropertiesValuesById.keys)
         return result
     }
 
-    private fun assertNoPatternsLeftUnsubstituted(text: String, sourceFile: File) {
+    private fun assertNoPatternsLeftUnsubstituted(text: String, sourceFile: File, knownProperties: Collection<String>) {
         if (!ANY_TEMPLATE_REGEX.containsMatchIn(text)) return
 
         // expected testdump files have txt-extension and use `{{ ... }}`-patterns for
@@ -45,7 +57,7 @@ class KotlinTestProperties private constructor(
             """
                 |Not all '{{ ... }}' patterns were substituted in testdata.
                 |
-                |Available patterns: ${allPropertiesValuesById.keys}
+                |Available patterns: $knownProperties
                 |
                 |If you've introduced a new TestProperty, check that it is passed to KotlinTestPropertiesService
                 |(simple way to ensure that is to register it in the SimpleProperties)
@@ -60,23 +72,24 @@ class KotlinTestProperties private constructor(
     companion object {
         val ANY_TEMPLATE_REGEX = Regex("""\{\s*\{\s*.*\s*}\s*}""")
 
-        fun constructFromEnvironment(): KotlinTestProperties {
-            val devModeTweaks = DevModeTweaksImpl()
+        fun construct(testConfiguration: TestConfiguration? = null): KotlinTestProperties {
+            val agpVersion = AndroidGradlePluginVersionTestsProperty.resolveFromEnvironment()
 
-            val agpVersion = devModeTweaks.overrideAgpVersion?.version
-                ?: AndroidGradlePluginVersionTestsProperty.resolveFromEnvironment()
-
-            val gradleVersionRaw = devModeTweaks.overrideGradleVersion?.version
-                ?: GradleVersionTestsProperty.resolveFromEnvironment()
+            val gradleVersionRaw = GradleVersionTestsProperty.resolveFromEnvironment()
             val gradleVersion = GradleVersion.version(gradleVersionRaw)
 
-            val kgpVersionRaw = devModeTweaks.overrideKgpVersion?.version
-                ?: KotlinGradlePluginVersionTestsProperty.resolveFromEnvironment()
+            val kgpVersionRaw = KotlinGradlePluginVersionTestsProperty.resolveFromEnvironment()
             val kgpVersion = KotlinToolingVersion(kgpVersionRaw)
 
             val simpleProperties = SimpleProperties(gradleVersion, kgpVersion)
 
-            return KotlinTestProperties(kgpVersion, gradleVersion, agpVersion, simpleProperties)
+            return KotlinTestProperties(
+                kgpVersion,
+                gradleVersion,
+                agpVersion,
+                testConfiguration?.getConfiguration(DevModeTestFeature),
+                simpleProperties
+            )
         }
     }
 }
