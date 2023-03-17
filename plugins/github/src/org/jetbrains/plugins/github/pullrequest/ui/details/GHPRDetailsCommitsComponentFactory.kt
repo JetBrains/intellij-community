@@ -5,6 +5,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.CommitPresenter
 import com.intellij.collaboration.ui.codereview.details.CommitRenderer
+import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindText
@@ -20,10 +21,11 @@ import com.intellij.util.ui.JBFont
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRCommitsViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRCommitsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRDiffController
 import java.awt.FontMetrics
 import java.awt.event.ActionListener
@@ -103,10 +105,11 @@ internal object GHPRDetailsCommitsComponentFactory {
     val point = RelativePoint.getSouthWestOf(parentComponent)
     scope.launch {
       val commits = commitsVm.reviewCommits.value
+      val selectedCommit = commitsVm.selectedCommit.stateIn(this).value
       val popupItems: List<GHCommit?> = mutableListOf<GHCommit?>(null).apply {
         addAll(commits)
       }
-      val selectedCommit = ChooserPopupUtil.showChooserPopup(
+      val chosenCommit = ChooserPopupUtil.showChooserPopup(
         point,
         popupState,
         popupItems,
@@ -114,17 +117,17 @@ internal object GHPRDetailsCommitsComponentFactory {
           commit?.messageHeadline ?: CollaborationToolsBundle.message("review.details.commits.popup.all", commits.size)
         },
         renderer = CommitRenderer { commit: GHCommit? ->
-          createCommitPresenter(commit, commitsVm.selectedCommit.value, commitsVm.reviewCommits.value.size, commitsVm.ghostUser)
+          createCommitPresenter(commit, selectedCommit, commitsVm.reviewCommits.value.size, commitsVm.ghostUser)
         }
       )
 
-      if (selectedCommit == null) {
+      if (chosenCommit == null) {
         diffBridge.activeTree = GHPRDiffController.ActiveTree.FILES
         commitsVm.selectAllCommits()
       }
       else {
         diffBridge.activeTree = GHPRDiffController.ActiveTree.COMMITS
-        commitsVm.selectCommit(selectedCommit)
+        commitsVm.selectCommit(chosenCommit)
       }
     }
   }
@@ -135,22 +138,25 @@ internal object GHPRDetailsCommitsComponentFactory {
     return longestCommitHash + AllIcons.General.LinkDropTriangle.iconWidth + COMMIT_HASH_OFFSET
   }
 
-  private fun createCommitPresenter(commit: GHCommit?, selectedCommit: GHCommit?, commitsCount: Int, ghostUser: GHUser): CommitPresenter {
+  private fun createCommitPresenter(
+    commit: GHCommit?,
+    selectedCommit: GHCommit?,
+    commitsCount: Int,
+    ghostUser: GHUser
+  ): SelectableWrapper<CommitPresenter> {
     val isSelected = commit == selectedCommit
-    return if (commit == null) {
-      CommitPresenter.AllCommits(
-        title = CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount),
-        isSelected = isSelected
-      )
+    val commitPresenter = if (commit == null) {
+      CommitPresenter.AllCommits(title = CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount))
     }
     else {
       val author = commit.author?.user ?: ghostUser
       CommitPresenter.SingleCommit(
-        title = commit.messageHeadline,
-        isSelected = isSelected,
+        title = commit.messageHeadlineHTML,
         author = author.getPresentableName(),
-        date = commit.committedDate
+        committedDate = commit.committedDate
       )
     }
+
+    return SelectableWrapper(commitPresenter, isSelected)
   }
 }

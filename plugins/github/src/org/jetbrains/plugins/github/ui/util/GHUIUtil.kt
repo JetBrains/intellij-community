@@ -5,6 +5,7 @@ import com.intellij.UtilBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
+import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
 import com.intellij.collaboration.util.CollectionDelta
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -79,7 +80,7 @@ object GHUIUtil {
   }.andOpaque()
 
   fun formatActionDate(date: Date): String {
-    val prettyDate = DateFormatUtil.formatPrettyDate(date).toLowerCase()
+    val prettyDate = DateFormatUtil.formatPrettyDate(date).lowercase(Locale.getDefault())
     val datePrefix = if (prettyDate.equals(UtilBundle.message("date.format.today"), true) ||
                          prettyDate.equals(UtilBundle.message("date.format.yesterday"), true)) ""
     else "on "
@@ -122,7 +123,7 @@ object GHUIUtil {
 
     fun toggleSelection() {
       for (item in list.selectedValuesList) {
-        item.selected = !item.selected
+        item.isSelected = !item.isSelected
       }
       list.repaint()
     }
@@ -152,7 +153,7 @@ object GHUIUtil {
           availableListFuture
             .thenApplyAsync { available ->
               available.map { SelectableWrapper(it, originalSelection.contains(it)) }
-                .sortedWith(Comparator.comparing<SelectableWrapper<T>, Boolean> { !it.selected }
+                .sortedWith(Comparator.comparing<SelectableWrapper<T>, Boolean> { !it.isSelected }
                               .thenComparing({ cellRenderer.getText(it.value) }) { a, b -> StringUtil.compare(a, b, true) })
             }.successOnEdt {
               listModel.replaceAll(it)
@@ -169,7 +170,7 @@ object GHUIUtil {
         }
 
         override fun onClosed(event: LightweightWindowEvent) {
-          val selected = listModel.items.filter { it.selected }.map { it.value }
+          val selected = listModel.items.filter { it.isSelected }.map { it.value }
           result.complete(CollectionDelta(originalSelection, selected))
         }
       })
@@ -177,8 +178,6 @@ object GHUIUtil {
       .showUnderneathOf(parentComponent)
     return result
   }
-
-  data class SelectableWrapper<T>(val value: T, var selected: Boolean = false)
 
   sealed class SelectionListCellRenderer<T> : ListCellRenderer<SelectableWrapper<T>> {
     private val checkBox: JBCheckBox = JBCheckBox().apply {
@@ -197,7 +196,7 @@ object GHUIUtil {
                                               isSelected: Boolean,
                                               cellHasFocus: Boolean): Component {
       checkBox.apply {
-        this.isSelected = value.selected
+        this.isSelected = value.isSelected
         this.isFocusPainted = cellHasFocus
         this.isFocusable = cellHasFocus
       }

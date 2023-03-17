@@ -4,9 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
-import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsDescriptionComponentFactory
-import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsTitleComponentFactory
-import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
+import com.intellij.collaboration.ui.codereview.details.*
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.ui.util.bindContent
 import com.intellij.collaboration.ui.util.emptyBorders
@@ -23,6 +21,7 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.GitLabMergeRequestsActionKeys
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
@@ -105,7 +104,9 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
       add(commitsAndBranches,
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
-      add(GitLabMergeRequestDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit),
+      add(CodeReviewDetailsCommitInfoComponentFactory.create(cs, changesVm.selectedCommit,
+                                                             commitPresenter = { commit -> commitPresenter(commit) },
+                                                             htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS).maxHeight("${ReviewDetailsUIUtil.COMMIT_INFO_MAX_HEIGHT}"))
       add(GitLabMergeRequestDetailsChangesComponentFactory(project).create(cs, changesVm),
           CC().grow().push())
@@ -114,5 +115,13 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       add(GitLabMergeRequestDetailsActionsComponentFactory.create(cs, detailsReviewFlowVm, avatarIconsProvider),
           CC().growX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS))
     }
+  }
+
+  private fun commitPresenter(commit: GitLabCommitDTO): CommitPresenter {
+    return CommitPresenter.SingleCommit(
+      title = commit.title.orEmpty(),
+      author = commit.author.name,
+      committedDate = commit.authoredDate
+    )
   }
 }

@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
 import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModelBase
 import com.intellij.openapi.ListSelection
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vcs.changes.Change
@@ -12,21 +14,9 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 
-internal interface GitLabMergeRequestChangesViewModel {
-  val reviewCommits: StateFlow<List<GitLabCommitDTO>>
-  val selectedCommit: StateFlow<GitLabCommitDTO?>
-  val selectedCommitIndex: StateFlow<Int>
-
+internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitDTO> {
   val changesResult: Flow<Result<Collection<Change>>>
   val selectedChanges: StateFlow<ListSelection<Change>>
-
-  fun selectCommit(commit: GitLabCommitDTO?)
-
-  fun selectAllCommits()
-
-  fun selectNextCommit()
-
-  fun selectPreviousCommit()
 
   fun updateSelectedChanges(changes: ListSelection<Change>)
 
@@ -36,18 +26,13 @@ internal interface GitLabMergeRequestChangesViewModel {
 internal class GitLabMergeRequestChangesViewModelImpl(
   parentCs: CoroutineScope,
   changes: Flow<GitLabMergeRequestChanges>
-) : GitLabMergeRequestChangesViewModel {
+) : GitLabMergeRequestChangesViewModel,
+    CodeReviewChangesViewModelBase<GitLabCommitDTO>() {
   private val cs = parentCs.childScope()
 
   override val reviewCommits: StateFlow<List<GitLabCommitDTO>> =
     changes.map { it.commits }
       .stateIn(cs, SharingStarted.Lazily, listOf())
-
-  private val _selectedCommit: MutableStateFlow<GitLabCommitDTO?> = MutableStateFlow(null)
-  override val selectedCommit: StateFlow<GitLabCommitDTO?> = _selectedCommit.asStateFlow()
-
-  private val _selectedCommitIndex: MutableStateFlow<Int> = MutableStateFlow(0)
-  override val selectedCommitIndex: StateFlow<Int> = _selectedCommitIndex.asStateFlow()
 
   override val changesResult: Flow<Result<Collection<Change>>> =
     combine(changes.map { runCatching { it.getParsedChanges() } }, selectedCommit) { changesResult, commit ->
@@ -64,26 +49,6 @@ internal class GitLabMergeRequestChangesViewModelImpl(
 
   private val _showDiffRequests = MutableSharedFlow<Unit>()
   val showDiffRequests = _showDiffRequests.asSharedFlow()
-
-  override fun selectCommit(commit: GitLabCommitDTO?) {
-    _selectedCommit.value = commit
-    _selectedCommitIndex.value = reviewCommits.value.indexOf(commit)
-  }
-
-  override fun selectAllCommits() {
-    _selectedCommit.value = null
-    _selectedCommitIndex.value = 0
-  }
-
-  override fun selectNextCommit() {
-    _selectedCommitIndex.value++
-    _selectedCommit.value = reviewCommits.value[_selectedCommitIndex.value]
-  }
-
-  override fun selectPreviousCommit() {
-    _selectedCommitIndex.value--
-    _selectedCommit.value = reviewCommits.value[_selectedCommitIndex.value]
-  }
 
   override fun updateSelectedChanges(changes: ListSelection<Change>) {
     cs.launch {

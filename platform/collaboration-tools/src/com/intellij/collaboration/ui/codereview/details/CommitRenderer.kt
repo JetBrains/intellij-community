@@ -16,7 +16,7 @@ import javax.swing.JList
 import javax.swing.ListCellRenderer
 import javax.swing.SwingConstants
 
-class CommitRenderer<T>(private val presenter: (T?) -> CommitPresenter) : ListCellRenderer<T> {
+class CommitRenderer<T>(private val presenter: (T?) -> SelectableWrapper<CommitPresenter>) : ListCellRenderer<T> {
   private val iconLabel = JLabel().apply {
     horizontalAlignment = SwingConstants.CENTER
     verticalAlignment = SwingConstants.TOP
@@ -38,28 +38,29 @@ class CommitRenderer<T>(private val presenter: (T?) -> CommitPresenter) : ListCe
   override fun getListCellRendererComponent(list: JList<out T>,
                                             value: T?,
                                             index: Int,
-                                            isSelected: Boolean,
+                                            cellSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
     cleanupComponents()
 
     val presentation = presenter(value)
+    val commit = presentation.value
     iconLabel.icon = if (presentation.isSelected) AllIcons.Actions.Checked_selected else emptyIcon
 
-    when (presentation) {
+    when (commit) {
       is CommitPresenter.SingleCommit -> {
-        commitMessage.text = presentation.title
-        authorAndDate.text = "${presentation.author}, ${DateFormatUtil.formatPrettyDateTime(presentation.date)}"
+        commitMessage.text = commit.title
+        authorAndDate.text = "${commit.author}, ${DateFormatUtil.formatPrettyDateTime(commit.committedDate)}"
         textPanel.addToCenter(commitMessage).addToBottom(authorAndDate)
       }
       is CommitPresenter.AllCommits -> {
-        allCommitsMessage.text = presentation.title
+        allCommitsMessage.text = commit.title
         textPanel.addToCenter(allCommitsMessage)
       }
     }
 
     return commitPanel.addToLeft(iconLabel).addToCenter(textPanel).apply {
-      border = if (presentation is CommitPresenter.AllCommits) IdeBorderFactory.createBorder(SideBorder.BOTTOM) else null
-      UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, isSelected, list.hasFocus()))
+      border = if (commit is CommitPresenter.AllCommits) IdeBorderFactory.createBorder(SideBorder.BOTTOM) else null
+      UIUtil.setBackgroundRecursively(this, ListUiUtil.WithTallRow.background(list, cellSelected, list.hasFocus()))
     }
   }
 
@@ -78,18 +79,15 @@ class CommitRenderer<T>(private val presenter: (T?) -> CommitPresenter) : ListCe
 }
 
 sealed interface CommitPresenter {
-  val title: @NlsSafe String
-  val isSelected: Boolean
-
   class SingleCommit(
-    override val title: @NlsSafe String,
-    override val isSelected: Boolean,
+    val title: @NlsSafe String,
     val author: @NlsSafe String,
-    val date: Date
+    val committedDate: Date
   ) : CommitPresenter
 
   class AllCommits(
-    override val title: @NlsSafe String,
-    override val isSelected: Boolean
+    val title: @NlsSafe String
   ) : CommitPresenter
 }
+
+data class SelectableWrapper<T>(val value: T, var isSelected: Boolean = false)

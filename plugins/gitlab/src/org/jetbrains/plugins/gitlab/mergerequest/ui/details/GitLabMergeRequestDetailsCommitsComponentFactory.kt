@@ -5,6 +5,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.CommitPresenter
 import com.intellij.collaboration.ui.codereview.details.CommitRenderer
+import com.intellij.collaboration.ui.codereview.details.SelectableWrapper
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.util.bindDisabled
 import com.intellij.collaboration.ui.util.bindText
@@ -19,6 +20,7 @@ import com.intellij.util.ui.JBFont
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
@@ -76,11 +78,12 @@ internal object GitLabMergeRequestDetailsCommitsComponentFactory {
         val point = RelativePoint.getSouthWestOf(parentComponent)
         scope.launch {
           val commits = commitsVm.reviewCommits.value
+          val selectedCommit = commitsVm.selectedCommit.stateIn(this).value
           val popupItems: List<GitLabCommitDTO?> = mutableListOf<GitLabCommitDTO?>(null).apply {
             addAll(commits)
           }
 
-          val selectedCommit = ChooserPopupUtil.showChooserPopup(
+          val chosenCommit = ChooserPopupUtil.showChooserPopup(
             point,
             popupState,
             popupItems,
@@ -88,31 +91,33 @@ internal object GitLabMergeRequestDetailsCommitsComponentFactory {
               commit?.title ?: CollaborationToolsBundle.message("review.details.commits.popup.all", commits.size)
             },
             renderer = CommitRenderer { commit: GitLabCommitDTO? ->
-              createCommitPresenter(commit, commitsVm.selectedCommit.value, commitsVm.reviewCommits.value.size)
+              createCommitPresenter(commit, selectedCommit, commits.size)
             }
           )
 
-          commitsVm.selectCommit(selectedCommit)
+          commitsVm.selectCommit(chosenCommit)
         }
       }
     }
   }
 
-  private fun createCommitPresenter(commit: GitLabCommitDTO?, selectedCommit: GitLabCommitDTO?, commitsCount: Int): CommitPresenter {
+  private fun createCommitPresenter(
+    commit: GitLabCommitDTO?,
+    selectedCommit: GitLabCommitDTO?,
+    commitsCount: Int
+  ): SelectableWrapper<CommitPresenter> {
     val isSelected = commit == selectedCommit
-    return if (commit == null) {
-      CommitPresenter.AllCommits(
-        title = CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount),
-        isSelected = isSelected
-      )
+    val commitPresenter = if (commit == null) {
+      CommitPresenter.AllCommits(title = CollaborationToolsBundle.message("review.details.commits.popup.all", commitsCount))
     }
     else {
       CommitPresenter.SingleCommit(
         title = commit.title.orEmpty(),
-        isSelected = isSelected,
         author = commit.author.name,
-        date = commit.authoredDate
+        committedDate = commit.authoredDate
       )
     }
+
+    return SelectableWrapper(commitPresenter, isSelected)
   }
 }
