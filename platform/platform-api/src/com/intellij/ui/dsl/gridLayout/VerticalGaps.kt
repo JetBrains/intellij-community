@@ -15,9 +15,6 @@ data class VerticalGaps(val top: Int = 0, val bottom: Int = 0) {
     checkNonNegative("top", top)
     checkNonNegative("bottom", bottom)
   }
-
-  val height: Int
-    get() = top + bottom
 }
 
 @Deprecated("Use UnscaledGapsY instead")

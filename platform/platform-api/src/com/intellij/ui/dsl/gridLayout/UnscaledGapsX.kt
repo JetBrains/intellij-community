@@ -3,6 +3,9 @@ package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
 
+/**
+ * Defines left and right gaps. Values must be provided unscaled
+ */
 data class UnscaledGapsX(val left: Int = 0, val right: Int = 0) {
   companion object {
     @JvmField

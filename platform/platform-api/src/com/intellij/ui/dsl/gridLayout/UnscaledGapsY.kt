@@ -3,6 +3,9 @@ package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
 
+/**
+ * Defines top and bottom gaps. Values must be provided unscaled
+ */
 data class UnscaledGapsY(val top: Int = 0, val bottom: Int = 0) {
   companion object {
     @JvmField

@@ -550,10 +550,10 @@ private data class LayoutCellData(val cell: Cell, val preferredSize: Dimension,
   var baseline: Int? = null
 
   val gapWidth: Int
-    get() = scaledGaps.width + columnGaps.width
+    get() = scaledGaps.width + columnGaps.left + columnGaps.right
 
   val gapHeight: Int
-    get() = scaledGaps.height + rowGaps.height
+    get() = scaledGaps.height + rowGaps.top + rowGaps.bottom
 
   /**
    * Cell width including gaps and excluding visualPaddings
