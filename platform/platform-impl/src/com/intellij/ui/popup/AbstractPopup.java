@@ -1787,7 +1787,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       switch (event.getID()) {
         case WINDOW_ACTIVATED, WINDOW_GAINED_FOCUS -> {
           if (myCancelOnWindow && myPopup != null && isCancelNeeded((WindowEvent)event, myPopup.getWindow())) {
-            cancel();
+            ApplicationManager.getApplication().invokeLater(() ->cancel());
           }
         }
         case MOUSE_ENTERED -> {
