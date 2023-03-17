@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Consumer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -48,6 +47,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.EventObject;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public abstract class AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(AbstractValueHint.class);
@@ -281,9 +281,9 @@ public abstract class AbstractValueHint {
         if (SwingUtilities.isLeftMouseButton(e)) {
           Object tag = ((SimpleColoredComponent)e.getSource()).getFragmentTagAt(e.getX());
           if (tag != null) {
-            if (tag instanceof Consumer) {
+            if (tag instanceof Consumer consumer) {
               //noinspection unchecked
-              ((Consumer<MouseEvent>)tag).consume(e);
+              consumer.accept(e);
             }
             else {
               ((Runnable)tag).run();

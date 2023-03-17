@@ -17,7 +17,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -38,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class XBreakpointManagerImpl implements XBreakpointManager {
@@ -302,9 +302,9 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       if (dispatcher != null) {
         //noinspection unchecked
         XBreakpointListener<XBreakpoint<?>> multicaster = dispatcher.getMulticaster();
-        event.consume(multicaster);
+        event.accept(multicaster);
       }
-      event.consume(getBreakpointDispatcherMulticaster());
+      event.accept(getBreakpointDispatcherMulticaster());
     }
   }
 

@@ -30,7 +30,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -57,6 +56,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public class DebugProcessEvents extends DebugProcessImpl {
   private static final Logger LOG = Logger.getInstance(DebugProcessEvents.class);
@@ -157,7 +157,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                   }
                   Consumer<? super Event> handler = getEventRequestHandler(event);
                   if (handler != null) {
-                    handler.consume(event);
+                    handler.accept(event);
                     processed++;
                   }
                 }
@@ -312,9 +312,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
   private static Consumer<? super Event> getEventRequestHandler(Event event) {
     EventRequest request = event.request();
     Object property = request != null ? request.getProperty(REQUEST_HANDLER) : null;
-    if (property instanceof Consumer) {
+    if (property instanceof Consumer consumer) {
       //noinspection unchecked
-      return ((Consumer<? super Event>)property);
+      return consumer;
     }
     return null;
   }
