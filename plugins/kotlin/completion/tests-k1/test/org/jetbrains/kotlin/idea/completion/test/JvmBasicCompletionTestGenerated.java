@@ -765,6 +765,11 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/extensions/ExtensionOnNestedClassObject.kt");
             }
 
+            @TestMetadata("ExtensionWithUninferredType.kt")
+            public void testExtensionWithUninferredType() throws Exception {
+                runTest("../testData/basic/common/extensions/ExtensionWithUninferredType.kt");
+            }
+
             @TestMetadata("Extensions.kt")
             public void testExtensions() throws Exception {
                 runTest("../testData/basic/common/extensions/Extensions.kt");

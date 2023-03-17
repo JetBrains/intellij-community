@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
+import org.jetbrains.kotlin.idea.completion.lookups.renderNonErrorOrUnsubstituted
 import org.jetbrains.kotlin.types.Variance
 
 internal object TypeTextProvider {
@@ -35,7 +36,7 @@ internal object TypeTextProvider {
         signature: KtCallableSignature<*>,
         treatAsFunctionCall: Boolean
     ): String? = when (signature) {
-        is KtFunctionLikeSignature<*> -> signature.returnType.render(renderer, position = Variance.INVARIANT)
+        is KtFunctionLikeSignature<*> -> signature.returnType.renderNonErrorOrUnsubstituted(signature.symbol.returnType)
 
         is KtVariableLikeSignature<*> -> {
             val type = signature.returnType
