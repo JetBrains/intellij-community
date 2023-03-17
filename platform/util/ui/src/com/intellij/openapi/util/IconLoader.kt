@@ -18,7 +18,9 @@ import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleContextSupport
 import com.intellij.ui.scale.ScaleType
-import com.intellij.util.*
+import com.intellij.util.JBHiDPIScaledImage
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.RetinaImage
 import com.intellij.util.SVGLoader.SvgElementColorPatcherProvider
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.ui.*
@@ -276,7 +278,7 @@ object IconLoader {
       effectiveIcon = getOriginIcon(effectiveIcon)
     }
     if (effectiveIcon is com.intellij.ui.icons.CachedImageIcon) {
-      effectiveIcon = effectiveIcon.getRealIcon(effectiveScaleContext)
+      effectiveIcon = effectiveIcon.resolveActualIcon(effectiveScaleContext?.getScale(ScaleType.SYS_SCALE) ?: -1.0)
     }
     if (effectiveIcon is ImageIcon) {
       return effectiveIcon.image
@@ -540,12 +542,12 @@ object IconLoader {
 
   @Deprecated("Do not use")
   open class CachedImageIcon private constructor(
-     originalPath: String?,
-      resolver: ImageDataLoader?,
-     isDarkOverridden: Boolean?,
-     localFilterSupplier: (() -> RGBImageFilter)? = null,
-     colorPatcher: SvgElementColorPatcherProvider? = null,
-     useStroke: Boolean = false
+    originalPath: String?,
+    resolver: ImageDataLoader?,
+    isDarkOverridden: Boolean?,
+    localFilterSupplier: (() -> RGBImageFilter)? = null,
+    colorPatcher: SvgElementColorPatcherProvider? = null,
+    useStroke: Boolean = false
   ) : com.intellij.ui.icons.CachedImageIcon(
     originalPath = originalPath,
     resolver = resolver,
