@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.*
-import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.indented
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.konan.isNative
@@ -17,46 +16,46 @@ import kotlin.reflect.KProperty1
 
 internal typealias FacetField = KProperty1<KotlinFacetSettings, *>
 
-object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChecksConfiguration>() {
+object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChecksConfiguration>(respectOrder = true) {
     override fun createDefaultConfiguration(): KotlinFacetSettingsChecksConfiguration = KotlinFacetSettingsChecksConfiguration()
 
     override val classifier: String = "facets"
 
-    override fun PrinterContext.process(module: Module) = with(printer) {
+    override fun PrinterContext.buildReportDataForModule(module: Module): List<ModuleReportData> {
         val facetSettings = runReadAction {
             KotlinFacetSettingsProvider.getInstance(module.project)
                 ?.getSettings(module)
-        } ?: return
+        } ?: return emptyList()
 
         val configuration = testConfiguration.getConfiguration(KotlinFacetSettingsChecker)
 
         val fieldsToPrint = configuration.computeFieldsToPrint()
 
-        indented {
-            for (field in fieldsToPrint) {
-                val fieldValue = field.get(facetSettings)
-                if (fieldValue == null || fieldValue is Collection<*> && fieldValue.isEmpty()) continue
+        return fieldsToPrint.mapNotNull {
+            renderFacetField(it, it.get(facetSettings), module)?.let { ModuleReportData(it) }
+        }
+    }
 
-                when (fieldValue) {
-                    is TargetPlatform ->
-                        println(field.name + " = " + fieldValue.componentPlatforms.joinToStringWithSorting(separator = "/"))
+    private fun PrinterContext.renderFacetField(field: FacetField, fieldValue: Any?, module: Module): String? {
+        if (fieldValue == null || fieldValue is Collection<*> && fieldValue.isEmpty()) return null
 
-                    is LanguageVersion -> {
-                        val valueSanitized = languageVersionSanitized(fieldValue, field, module)
-                        println("${field.name} = $valueSanitized")
-                    }
+        return when (fieldValue) {
+            is TargetPlatform ->
+                field.name + " = " + fieldValue.componentPlatforms.joinToStringWithSorting(separator = "/")
 
-                    is Collection<*> ->
-                        println(field.name + " = " + fieldValue.joinToStringWithSorting())
-
-                    is CompilerSettings ->
-                        fieldValue.additionalArguments.filterOutInternalArguments().let {
-                            if (it.isNotEmpty()) println(field.name + " = " + it)
-                        }
-
-                    else -> println(field.name + " = " + fieldValue)
-                }
+            is LanguageVersion -> {
+                val valueSanitized = languageVersionSanitized(fieldValue, field, module)
+                "${field.name} = $valueSanitized"
             }
+
+            is Collection<*> -> field.name + " = " + fieldValue.joinToStringWithSorting()
+
+            is CompilerSettings ->
+                fieldValue.additionalArguments.filterOutInternalArguments().let {
+                    if (it.isNotEmpty()) field.name + " = " + it else null
+                }
+
+            else -> field.name + " = " + fieldValue
         }
     }
 

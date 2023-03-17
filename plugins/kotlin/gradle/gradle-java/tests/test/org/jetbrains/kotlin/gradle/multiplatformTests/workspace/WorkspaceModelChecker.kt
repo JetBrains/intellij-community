@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.work
 import org.jetbrains.kotlin.idea.base.facet.isTestModule
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
-import org.jetbrains.kotlin.utils.Printer
 import java.io.File
 
 /**
@@ -22,10 +21,15 @@ import java.io.File
  *
  * [check] is the entry point for external clients
  *
- * [classifier], [process] and [renderTestConfigurationDescription] are the abstract methods
+ * [classifier], [buildReportDataForModule] and [renderTestConfigurationDescription] are the abstract methods
  * to implement for inheritors
+ *
+ * [respectOrder] == true will tell infrastructure to respect order of [buildModulesReport] entries.
+ * Note that in such case, a specific implementation should take care of making this order stable enough so
+ * that tests do not fail with flaky reorderings of individual reportData's.
+ * If [respectOrder] == false, then test infrastructure will sort data by [ModuleReportData.presentation]
  */
-abstract class WorkspaceModelChecker<V : Any> : AbstractTestChecker<V>() {
+abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean) : AbstractTestChecker<V>() {
     /**
      * Name of the file, without extension, with the expected testdata
      *
@@ -35,10 +39,10 @@ abstract class WorkspaceModelChecker<V : Any> : AbstractTestChecker<V>() {
     abstract val classifier: String
 
     /**
-     * Invoked for each [Module] in the project. Checker is expected to print
-     * the string-representation of expected data in passed [PrinterContext.printer]
+     * Invoked for each [Module] in the project. Checker is expected to return [ModuleReportData],
+     * representing test data for a given [Module], one per line of final rendered testdata
      */
-    abstract fun PrinterContext.process(module: Module)
+    abstract fun PrinterContext.buildReportDataForModule(module: Module): List<ModuleReportData>
 
     /**
      * Renders human-readable description of test feature' configuration. It will be
@@ -98,35 +102,24 @@ abstract class WorkspaceModelChecker<V : Any> : AbstractTestChecker<V>() {
         testConfiguration: TestConfiguration,
         kotlinGradlePluginVersion: KotlinToolingVersion
     ): String {
-        val printer = Printer(StringBuilder())
-        val context = PrinterContext(printer, project, projectRoot, testConfiguration, kotlinGradlePluginVersion)
+        val context = PrinterContext(project, projectRoot, testConfiguration, kotlinGradlePluginVersion)
 
-        context.printModules()
+        val moduleReports = context.buildModulesReport()
+        val projectReport = ProjectReport(
+            moduleReports,
+            renderModuleFilteringConfiguration(testConfiguration) + renderTestConfigurationDescription(testConfiguration)
+        )
 
-        context.printTestConfiguration()
-
-        return printer.toString()
+        return projectReport.render(respectOrder)
     }
 
-    private fun PrinterContext.printTestConfiguration() {
-        val testConfigurationDescription = renderTestConfigurationDescription(testConfiguration)
-        if (testConfigurationDescription.isNotEmpty()) {
-            printer.println()
-            printer.println("Test configuration:")
-            renderModuleFilteringConfiguration()
-            printer.println(testConfigurationDescription.joinToString(separator = "\n") { "- $it" })
-        }
-    }
-
-    private fun PrinterContext.printModules() {
-        printer.println("MODULES")
+    private fun PrinterContext.buildModulesReport(): List<ModuleReport> {
         val modules = runReadAction { ModuleManager.getInstance(project).modules }.toList()
         val modulesFiltered = filterModules(modules)
 
-        for (module in modulesFiltered.sortedBy { it.name }) {
-            printer.println(module.name)
-            process(module)
-            printer.println()
+        return modulesFiltered.map {
+            val reportData = buildReportDataForModule(it)
+            ModuleReport(it.name, reportData)
         }
     }
 
@@ -143,7 +136,7 @@ abstract class WorkspaceModelChecker<V : Any> : AbstractTestChecker<V>() {
         return modules.filterNot { it.shouldRemoveModule() }
     }
 
-    private fun PrinterContext.renderModuleFilteringConfiguration() {
+    private fun renderModuleFilteringConfiguration(testConfiguration: TestConfiguration): List<String>  {
         val configuration = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
 
         val hidden = buildList {
@@ -153,8 +146,12 @@ abstract class WorkspaceModelChecker<V : Any> : AbstractTestChecker<V>() {
             if (configuration.excludedModuleNames != null) add("source modules matching ${configuration.excludedModuleNames!!}")
         }
 
-        if (hidden.isNotEmpty()) printer.println("- hiding ${hidden.joinToString()}")
+        val result = mutableListOf<String>()
+
+        if (hidden.isNotEmpty()) result += "hiding ${hidden.joinToString()}"
         if (configuration.includedModuleNames != null)
-            printer.println("- showing only modules matching ${configuration.includedModuleNames!!}")
+            result += "showing only modules matching ${configuration.includedModuleNames!!}"
+
+        return result
     }
 }

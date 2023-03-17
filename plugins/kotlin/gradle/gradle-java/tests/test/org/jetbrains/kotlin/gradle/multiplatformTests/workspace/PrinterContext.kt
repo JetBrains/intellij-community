@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.utils.Printer
 import java.io.File
 
 data class PrinterContext(
-  val printer: Printer,
   val project: Project,
   val projectRoot: File,
   val testConfiguration: TestConfiguration,
