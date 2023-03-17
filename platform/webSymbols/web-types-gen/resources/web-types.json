@@ -715,7 +715,6 @@
         },
         "name-variants": {
           "description": "Override global rules, by which referenced symbol names should be proposed in auto completion. When only rule names are specified, they applies to the symbols of the same kind as the last segment of the referenced path. Otherwise format of the property names is '{namespace}/{symbol kind}'. Supported by JetBrains IDEs since 2022.1.",
-          "type": "object",
           "oneOf": [
             {
               "$ref": "#/definitions/name-converters"
