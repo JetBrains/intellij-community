@@ -56,7 +56,7 @@ internal object GHPRDetailsComponentFactory {
       add(GHPRDetailsBranchesComponentFactory.create(project, dataProvider, repositoryDataService, branchesModel))
     }
     val statusChecks = GHPRStatusChecksComponentFactory.create(scope, reviewStatusVm, reviewFlowVm, securityService, avatarIconsProvider)
-    val state = GHPRStatePanel(scope, reviewDetailsVm, reviewFlowVm, dataProvider)
+    val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, reviewDetailsVm.requestState, reviewFlowVm, dataProvider)
     val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
 
     return JPanel(MigLayout(
@@ -83,7 +83,7 @@ internal object GHPRDetailsComponentFactory {
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS).maxHeight("${ReviewDetailsUIUtil.COMMIT_INFO_MAX_HEIGHT}"))
       add(commitFilesBrowserComponent, CC().grow().push())
       add(statusChecks, CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
-      add(state, CC().growX().pushX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
+      add(actionsComponent, CC().growX().pushX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS).minHeight("pref"))
 
       PopupHandler.installPopupMenu(this, actionGroup, "GHPRDetailsPopup")
     }
