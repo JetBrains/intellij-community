@@ -57,7 +57,7 @@ public class JavaPushDownHandler implements ElementsHandler, ContextAwareActionH
           break;
         }
 
-        if (element instanceof PsiClass || element instanceof PsiField || element instanceof PsiMethod) {
+        if (element instanceof PsiMember) {
           elements.add(element);
           break;
         }

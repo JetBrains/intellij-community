@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class PullUpTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/pullUp/";
 
-  private static final String IGNORE_CONFLICTS = "IGNORE"; 
+  private static final String IGNORE_CONFLICTS = "IGNORE";
 
   public void testQualifiedThis() {
     doTest(new RefactoringTestUtil.MemberDescriptor("Inner", PsiClass.class));
@@ -224,6 +224,10 @@ public class PullUpTest extends LightRefactoringTestCase {
            new RefactoringTestUtil.MemberDescriptor("bar", PsiMethod.class));
   }
 
+  public void testClassInitializer() {
+    doTest();
+  }
+
   public void testRenameConflictingTypeParameters() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, false));
   }
@@ -281,7 +285,9 @@ public class PullUpTest extends LightRefactoringTestCase {
       assertTrue(interfaces[0].isWritable());
       targetClass = interfaces[0];
     }
-    final MemberInfo[] infos = RefactoringTestUtil.findMembers(sourceClass, membersToFind);
+    final MemberInfo[] infos = membersToFind.length == 0
+                               ? new MemberInfo[]{new MemberInfo(PsiTreeUtil.getParentOfType(elementAt, PsiMember.class))}
+                               : RefactoringTestUtil.findMembers(sourceClass, membersToFind);
 
     final int[] countMoved = {0};
     final MoveMemberListener listener = (aClass, member) -> {
@@ -316,7 +322,7 @@ public class PullUpTest extends LightRefactoringTestCase {
     }
 
     if (checkMembersMovedCount) {
-      assertEquals(countMoved[0], membersToFind.length);
+      assertEquals(membersToFind.length == 0 ? 1 : membersToFind.length, countMoved[0]);
     }
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
