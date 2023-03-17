@@ -6,7 +6,7 @@ import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.ID
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
-import org.jetbrains.kotlin.idea.base.indices.names.readBuiltInDefinition
+import org.jetbrains.kotlin.idea.base.indices.names.readKotlinMetadataDefinition
 import org.jetbrains.kotlin.name.FqName
 
 class KotlinBuiltInsMetadataIndex : KotlinFileIndexBase() {
@@ -25,7 +25,7 @@ class KotlinBuiltInsMetadataIndex : KotlinFileIndexBase() {
     private val VERSION = 2
 
     private val INDEXER = indexer { fileContent ->
-        val builtins = readBuiltInDefinition(fileContent) as? BuiltInDefinitionFile
+        val builtins = readKotlinMetadataDefinition(fileContent) as? BuiltInDefinitionFile
         builtins?.packageFqName
     }
 }

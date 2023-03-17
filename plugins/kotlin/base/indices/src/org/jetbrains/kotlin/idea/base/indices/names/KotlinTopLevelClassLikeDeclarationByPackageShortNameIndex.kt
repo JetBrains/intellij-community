@@ -53,7 +53,7 @@ class KotlinTopLevelClassLikeDeclarationByPackageShortNameIndex : NameByPackageS
     }
 
     override fun getPackageAndNamesFromBuiltIns(fileContent: FileContent): Map<FqName, List<Name>> {
-        val builtins = readBuiltInDefinition(fileContent) as? BuiltInDefinitionFile
+        val builtins = readKotlinMetadataDefinition(fileContent) as? BuiltInDefinitionFile
             ?: return emptyMap()
        
         val names = buildList {

@@ -9,15 +9,21 @@ import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmNameResolver
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
+import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragment
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder.FileWithMetadata.Compatible as CompatibleMetadata
 
-internal fun readBuiltInDefinition(fileContent: FileContent): CompatibleMetadata? {
+private val ALLOWED_METADATA_EXTENSIONS = listOf(
+    JvmBuiltInsPackageFragmentProvider.DOT_BUILTINS_METADATA_FILE_EXTENSION,
+    MetadataPackageFragment.DOT_METADATA_FILE_EXTENSION
+)
+
+internal fun readKotlinMetadataDefinition(fileContent: FileContent): CompatibleMetadata? {
     if (fileContent.fileType != KotlinBuiltInFileType) {
         return null
     }
 
     val fileName = fileContent.fileName
-    if (!fileName.endsWith(JvmBuiltInsPackageFragmentProvider.DOT_BUILTINS_METADATA_FILE_EXTENSION)) {
+    if (ALLOWED_METADATA_EXTENSIONS.none { fileName.endsWith(it) }) {
         return null
     }
 

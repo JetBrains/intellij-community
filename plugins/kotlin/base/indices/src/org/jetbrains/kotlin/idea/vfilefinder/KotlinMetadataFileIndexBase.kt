@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.vfilefinder
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
-import org.jetbrains.kotlin.idea.base.indices.names.readBuiltInDefinition
+import org.jetbrains.kotlin.idea.base.indices.names.readKotlinMetadataDefinition
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -19,7 +19,7 @@ abstract class KotlinMetadataFileIndexBase(indexFunction: (ClassId) -> FqName) :
     override fun getVersion() = 2
 
     private val INDEXER = indexer { fileContent ->
-        val builtIns = readBuiltInDefinition(fileContent) as? BuiltInDefinitionFile ?: return@indexer null
+        val builtIns = readKotlinMetadataDefinition(fileContent) as? BuiltInDefinitionFile ?: return@indexer null
 
         val singleClass = builtIns.proto.class_List.singleOrNull()
         if (singleClass != null) {
