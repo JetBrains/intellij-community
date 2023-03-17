@@ -4328,7 +4328,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     setMouseSelectionState(MOUSE_SELECTION_STATE_WORD_SELECTED);
     mySavedSelectionStart = caret.getSelectionStart();
     mySavedSelectionEnd = caret.getSelectionEnd();
-    caret.moveToOffset(mySavedSelectionEnd);
+    getCaretModel().moveToOffset(mySavedSelectionEnd);
   }
 
   /**
