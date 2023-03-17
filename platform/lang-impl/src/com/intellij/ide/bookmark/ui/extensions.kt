@@ -75,8 +75,8 @@ internal val AbstractTreeNode<*>.location: Location<*>?
       return PsiLocation.fromPsiElement(psiFile)
     }
 
-    var offset = doc.getLineStartOffset(lineNum - 1)
-    val endOffset = doc.getLineEndOffset(lineNum - 1)
+    var offset = doc.getLineStartOffset(lineNum)
+    val endOffset = doc.getLineEndOffset(lineNum)
 
     var elementAtLine: PsiElement? = null
     var nextElement: PsiElement? = psiFile.findElementAt(offset)
