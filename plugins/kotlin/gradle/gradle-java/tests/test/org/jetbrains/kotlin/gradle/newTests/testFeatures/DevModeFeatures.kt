@@ -40,9 +40,9 @@ interface DevModeTweaks {
      * Note that overwriting default values **will fail CI-runs** because of irreconcilable incompatibilities
      * with how test runs are organized on the CI
      */
-    var overrideGradleVersion: GradleVersionTestsProperty.Value?
-    var overrideAgpVersion: AndroidGradlePluginVersionTestsProperty.Value?
-    var overrideKgpVersion: KotlinGradlePluginVersionTestsProperty.Value?
+    var overrideGradleVersion: String?
+    var overrideAgpVersion: String?
+    var overrideKgpVersion: String?
 
     /**
      * Launches Gradle Daemon with suspend option, listening for debugger connection on [port]
@@ -59,13 +59,16 @@ object DevModeTestFeature : TestFeature<DevModeTweaksImpl> {
 }
 
 class DevModeTweaksImpl : DevModeTweaks {
-    override var overrideGradleVersion: GradleVersionTestsProperty.Value? = null
+    /** See [GradleVersionTestsProperty] for some well-known values */
+    override var overrideGradleVersion: String? = null
         get() = field.checkNotOverriddenOnTeamcity()
 
-    override var overrideAgpVersion: AndroidGradlePluginVersionTestsProperty.Value? = null
+    /** See [AndroidGradlePluginVersionTestsProperty] for some well-known values */
+    override var overrideAgpVersion: String? = null
         get() = field.checkNotOverriddenOnTeamcity()
 
-    override var overrideKgpVersion: KotlinGradlePluginVersionTestsProperty.Value? = null
+    /** See [KotlinGradlePluginVersionTestsProperty] for some well-known values */
+    override var overrideKgpVersion: String? = null
         get() = field.checkNotOverriddenOnTeamcity()
 
     var writeTestProjectTo: File? = null
