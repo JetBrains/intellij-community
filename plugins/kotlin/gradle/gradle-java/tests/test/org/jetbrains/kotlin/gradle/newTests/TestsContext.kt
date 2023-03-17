@@ -32,10 +32,10 @@ interface KotlinMppTestsContext {
 }
 
 class KotlinMppTestsContextImpl : KotlinMppTestsContext {
-    internal val testProperties: KotlinTestProperties = KotlinTestProperties.constructFromEnvironment()
+    override val testConfiguration: TestConfiguration = TestConfiguration()
+    internal val testProperties: KotlinTestProperties = KotlinTestProperties.construct(testConfiguration)
 
     override lateinit var description: Description
-    override lateinit var testConfiguration: TestConfiguration
     override lateinit var testProjectRoot: File
     override lateinit var testProject: Project
     override lateinit var gradleJdkPath: File
