@@ -221,7 +221,11 @@ object ExtractMethodPipeline {
       .map { (member: PsiMember, usages: List<MemberUsage>) ->
         createInputParameter(member, usages.map(MemberUsage::reference)) ?: return null
       }
-    return extractOptions.copy(inputParameters = extractOptions.inputParameters + addedParameters, isStatic = true)
+    return extractOptions.copy(
+      inputParameters = extractOptions.inputParameters + addedParameters,
+      isStatic = true,
+      typeParameters = findRequiredTypeParameters(null, extractOptions.elements)
+    )
   }
 
   private fun isNotExtractableUsage(usage: MemberUsage): Boolean {
