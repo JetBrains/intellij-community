@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner
 
-import com.intellij.execution.ExecutionListener
-import com.intellij.execution.ExecutionManager
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunManager
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -21,18 +19,13 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
-import com.intellij.openapi.observable.operation.OperationExecutionStatus
-import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
-import com.intellij.openapi.observable.operation.core.ObservableOperationTrace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.NaturalComparator
-import com.intellij.openapi.util.use
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
-import com.intellij.testFramework.observable.operation.core.waitForOperationAndPumpEdt
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJUnit5
@@ -40,17 +33,19 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigur
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.testFramework.GradleProjectTestCase
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.waitForTaskExecution
 import org.junit.jupiter.api.AssertionFailureBuilder
 import org.junit.jupiter.api.Assertions
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
 
   private lateinit var testDisposable: Disposable
-  lateinit var testExecutionEnvironment: ExecutionEnvironment
-  lateinit var testExecutionConsole: GradleTestsExecutionConsole
+  private var _testExecutionEnvironment: ExecutionEnvironment? = null
+  private var _testExecutionConsole: GradleTestsExecutionConsole? = null
   private lateinit var buildViewTestFixture: BuildViewTestFixture
+
+  val testExecutionEnvironment get() = _testExecutionEnvironment!!
+  val testExecutionConsole get() = _testExecutionConsole!!
 
   override fun setUp() {
     super.setUp()
@@ -67,7 +62,7 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
     runAll(
       { buildViewTestFixture.tearDown() },
       { Disposer.dispose(testDisposable) },
-      { super.tearDown() }
+      { super.tearDown() },
     )
   }
 
@@ -103,20 +98,22 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
         env: ExecutionEnvironment?,
         processHandler: ProcessHandler?
       ) = super.attachExecutionConsole(project, task, env, processHandler)
-        .also { testExecutionEnvironment = env!! }
-        .also { testExecutionConsole = it!! }
+        .also { _testExecutionEnvironment = env!! }
+        .also { _testExecutionConsole = it!! }
     }
     ExtensionTestUtil.maskExtensions(ExternalSystemExecutionConsoleManager.EP_NAME, listOf(consoleManager), testDisposable)
   }
 
   private fun getTestExecutionTreeString(): String {
-    val tree = testExecutionConsole.resultsViewer.treeView!!
-    TestConsoleProperties.HIDE_PASSED_TESTS.set(testExecutionConsole.properties, false)
     val treeString = invokeAndWaitIfNeeded {
+      val tree = testExecutionConsole.resultsViewer.treeView!!
+        .also { PlatformTestUtil.waitWhileBusy(it) }
+      TestConsoleProperties.HIDE_PASSED_TESTS.set(testExecutionConsole.properties, false)
+        .also { PlatformTestUtil.waitWhileBusy(tree) }
       PlatformTestUtil.expandAll(tree)
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-      PlatformTestUtil.waitWhileBusy(tree)
+        .also { PlatformTestUtil.waitWhileBusy(tree) }
       PlatformTestUtil.print(tree, false)
+        .also { PlatformTestUtil.waitWhileBusy(tree) }
     }
     val flattenTree = treeString.split("\n").toMutableList()
     for (range in partitionLeaves(flattenTree)) {
@@ -144,14 +141,18 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
   }
 
   private fun getTestExecutionConsoleString(): String {
-    val console = testExecutionConsole.console as ConsoleViewImpl
-    val tree = testExecutionConsole.resultsViewer.treeView!!
     return invokeAndWaitIfNeeded {
+      val tree = testExecutionConsole.resultsViewer.treeView!!
+        .also { PlatformTestUtil.waitWhileBusy(it) }
+      TestConsoleProperties.HIDE_PASSED_TESTS.set(testExecutionConsole.properties, false)
+        .also { PlatformTestUtil.waitWhileBusy(tree) }
+      PlatformTestUtil.expandAll(tree)
+        .also { PlatformTestUtil.waitWhileBusy(tree) }
       TreeUtil.selectFirstNode(tree)
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-      PlatformTestUtil.waitWhileBusy(tree)
+        .also { PlatformTestUtil.waitWhileBusy(tree) }
+      val console = testExecutionConsole.console as ConsoleViewImpl
       console.flushDeferredText()
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+        .also { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() }
       console.text
     }
   }
@@ -170,7 +171,7 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
     val runner = ProgramRunner.getRunner(executorId, runConfiguration)!!
     Assertions.assertEquals(ExternalSystemConstants.RUNNER_ID, runner.runnerId)
     val environment = ExecutionEnvironment(executor, runner, runnerSettings, project)
-    waitForExecution(executorId, environment) {
+    waitForTaskExecution {
       runWriteActionAndWait {
         runner.execute(environment)
       }
@@ -239,58 +240,5 @@ abstract class GradleTestExecutionTestCase : GradleProjectTestCase() {
       else ->
         Assertions.assertEquals(junit4, actual)
     }
-  }
-
-  private fun waitForExecution(executorId: String, environment: ExecutionEnvironment, action: () -> Unit) {
-    Disposer.newDisposable().use { parentDisposable ->
-      getExecutionOperation(executorId, environment, parentDisposable)
-        .waitForOperationAndPumpEdt(10.seconds, 2.minutes, action)
-    }
-  }
-
-  private fun getExecutionOperation(
-    executorId: String,
-    environment: ExecutionEnvironment,
-    parentDisposable: Disposable
-  ): ObservableOperationTrace {
-    val operation = AtomicOperationTrace()
-    val listener = object : ExecutionListener {
-
-      override fun processStartScheduled(
-        executorIdLocal: String,
-        environmentLocal: ExecutionEnvironment
-      ) {
-        if (executorId == executorIdLocal && environment == environmentLocal) {
-          operation.traceStart()
-        }
-      }
-
-      override fun processNotStarted(
-        executorIdLocal: String,
-        environmentLocal: ExecutionEnvironment
-      ) {
-        if (executorId == executorIdLocal && environment == environmentLocal) {
-          operation.traceFinish(status = OperationExecutionStatus.Cancel)
-        }
-      }
-
-      override fun processTerminated(
-        executorIdLocal: String,
-        environmentLocal: ExecutionEnvironment,
-        handler: ProcessHandler,
-        exitCode: Int
-      ) {
-        if (executorId == executorIdLocal && environment == environmentLocal) {
-          val executionStatus = when (exitCode) {
-            0 -> OperationExecutionStatus.Success
-            else -> OperationExecutionStatus.Failure(exitCode.toString())
-          }
-          operation.traceFinish(status = executionStatus)
-        }
-      }
-    }
-    project.messageBus.connect(parentDisposable)
-      .subscribe(ExecutionManager.EXECUTION_TOPIC, listener)
-    return operation
   }
 }
