@@ -204,10 +204,10 @@ private class StateDependantValueBuilder<TData : Any, TState : Any>(private val 
   }
 }
 
-fun scaleByFont(sizeFor12: Int, fontSize: Float) = (JBUIScale.getFontScale(fontSize) * sizeFor12).roundToInt()
+fun scaleByFont(sizeFor12: Int, fontSize: Float): Int = (JBUIScale.getFontScale(fontSize) * sizeFor12).roundToInt()
 
-private fun scaleByFont(paddingFor12: InlayPresentationFactory.Padding?, fontSize: Float) =
-  paddingFor12?.let { (left, right, top, bottom) ->
+private fun scaleByFont(paddingFor12: InlayPresentationFactory.Padding?, fontSize: Float): InlayPresentationFactory.Padding? {
+  return paddingFor12?.let { (left, right, top, bottom) ->
     InlayPresentationFactory.Padding(
       left = scaleByFont(left, fontSize),
       right = scaleByFont(right, fontSize),
@@ -215,11 +215,13 @@ private fun scaleByFont(paddingFor12: InlayPresentationFactory.Padding?, fontSiz
       bottom = scaleByFont(bottom, fontSize)
     )
   }
+}
 
-private fun scaleByFont(roundedCornersFor12: InlayPresentationFactory.RoundedCorners?, fontSize: Float) =
-  roundedCornersFor12?.let { (arcWidth, arcHeight) ->
+private fun scaleByFont(roundedCornersFor12: InlayPresentationFactory.RoundedCorners?, fontSize: Float): InlayPresentationFactory.RoundedCorners? {
+  return roundedCornersFor12?.let { (arcWidth, arcHeight) ->
     InlayPresentationFactory.RoundedCorners(
       arcWidth = scaleByFont(arcWidth, fontSize),
       arcHeight = scaleByFont(arcHeight, fontSize)
     )
   }
+}

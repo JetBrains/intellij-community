@@ -132,18 +132,22 @@ open class CachedImageIcon protected constructor(
       return EMPTY_ICON
     }
 
-    val realIcon = if (pathTransformGlobalModCount.get() == pathTransformModCount) realIcon else checkPathTransform()
+    val cachedIcon = if (pathTransformGlobalModCount.get() == pathTransformModCount) realIcon else checkPathTransform()
+    if (cachedIcon != null && sysScale != -1.0 && sysScale == scaleContext.getScale(ScaleType.SYS_SCALE)) {
+      return cachedIcon
+    }
+
     synchronized(lock) {
       val updated = if (sysScale == -1.0) {
-        scaleContext.update(scaleContext)
+        scaleContext.update()
       }
       else {
         scaleContext.setScale(ScaleType.SYS_SCALE.of(sysScale))
       }
 
       // try returning the current icon as the context is up-to-date
-      if (!updated && realIcon != null) {
-        return realIcon
+      if (!updated && cachedIcon != null) {
+        return cachedIcon
       }
 
       val icon = scaledIconCache.getOrScaleIcon(scale = 1.0f, host = this, scaleContext = this.scaleContext)
