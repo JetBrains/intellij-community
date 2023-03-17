@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ThreadContext")
 @file:Experimental
 
@@ -82,15 +82,45 @@ fun withThreadContext(coroutineContext: CoroutineContext): AccessToken {
 private fun updateThreadContext(
   update: (CoroutineContext?) -> CoroutineContext?
 ): AccessToken {
-  val previousContext = tlCoroutineContext.get()
-  val newContext = update(previousContext)
-  tlCoroutineContext.set(newContext)
+  return withThreadLocal(tlCoroutineContext, update)
+}
+
+/**
+ * Updates given [variable] with a new value obtained by applying [update] to the current value.
+ * Returns a token which must be [closed][AccessToken.close] to revert the [variable] to the previous value.
+ * The token implementation ensures that nested updates and reverts are mirrored:
+ * [update0, update1, ... updateN, revertN, ... revert1, revert0].
+ * Unordered updates, such as [update0, update1, revert0, revert1] will result in [IllegalStateException].
+ *
+ * Example usage:
+ * ```
+ * withThreadLocal(ourCounter) { value ->
+ *   value + 1
+ * }.use {
+ *   ...
+ * }
+ *
+ * // or, if the new value does not depend on the current one
+ * withThreadLocal(ourCounter) { _ ->
+ *   42
+ * }.use {
+ *   ...
+ * }
+ * ```
+ *
+ * TODO ? move to more appropriate package before removing `@Internal`
+ */
+@Internal
+fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): AccessToken {
+  val previousValue = variable.get()
+  val newValue = update(previousValue)
+  variable.set(newValue)
   return object : AccessToken() {
     override fun finish() {
-      val currentContext = tlCoroutineContext.get()
-      tlCoroutineContext.set(previousContext)
-      check(currentContext === newContext) {
-        "Context was not reset correctly"
+      val currentValue = variable.get()
+      variable.set(previousValue)
+      check(currentValue === newValue) {
+        "Value was not reset correctly. Expected: $newValue, actual: $currentValue"
       }
     }
   }
