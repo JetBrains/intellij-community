@@ -61,7 +61,7 @@ public final class FileTemplateUtil {
   private static String @NotNull [] calculateAttributes(@NotNull String templateContent, @NotNull Set<String> propertiesNames, boolean includeDummies, @NotNull Project project) throws ParseException {
     final Set<String> unsetAttributes = new LinkedHashSet<>();
     final Set<String> definedAttributes = new HashSet<>();
-    SimpleNode template = VelocityTemplateContext.withContext(project, ()->VelocityWrapper.parse(new StringReader(templateContent), "MyTemplate"));
+    SimpleNode template = VelocityTemplateContext.withContext(project, ()->VelocityWrapper.parse(new StringReader(templateContent)));
     collectAttributes(unsetAttributes, definedAttributes, template, propertiesNames, includeDummies, new HashSet<>(), project);
     for (String definedAttribute : definedAttributes) {
       unsetAttributes.remove(definedAttribute);
@@ -106,7 +106,7 @@ public final class FileTemplateUtil {
               includedTemplate = templateManager.getPattern(s);
             }
             if (includedTemplate != null && visitedIncludes.add(s)) {
-              SimpleNode template = VelocityWrapper.parse(new StringReader(includedTemplate.getText()), "MyTemplate");
+              SimpleNode template = VelocityWrapper.parse(new StringReader(includedTemplate.getText()));
               collectAttributes(referenced, defined, template, propertiesNames, includeDummies, visitedIncludes, project);
             }
           }

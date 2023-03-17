@@ -17,7 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="library" scope="TEST" name="Velocity" level="project" />
+    <orderEntry type="library" scope="TEST" name="commons-lang" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage.testEntities" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />

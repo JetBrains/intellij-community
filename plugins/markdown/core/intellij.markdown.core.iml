@@ -31,7 +31,7 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
-    <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="module" module-name="intellij.platform.collaborationTools.auth" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="library" name="miglayout-swing" level="project" />

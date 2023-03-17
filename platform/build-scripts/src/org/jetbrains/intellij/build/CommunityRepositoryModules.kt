@@ -570,7 +570,6 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("moshi", "intellij.android.core", "")
       //prebuilts/tools/common/m2:eclipse-layout-kernel <= not recognized
       spec.withModuleLibrary("juniversalchardet", "android.sdktools.db-compiler", "")
-      spec.withModuleLibrary("commons-lang", "android.sdktools.db-compiler", "")
       spec.withModuleLibrary("javapoet", "android.sdktools.db-compiler", "")
       spec.withModuleLibrary("auto-common", "android.sdktools.db-compiler", "")
       spec.withModuleLibrary("jetifier-core", "android.sdktools.db-compilerCommon", "")
@@ -582,6 +581,7 @@ object CommunityRepositoryModules {
       spec.withProjectLibrary("android-test-plugin-host-device-info-proto")
       spec.withProjectLibrary("asm-tools")
       spec.withProjectLibrary("baksmali")
+      spec.withProjectLibrary("commons-lang")
       spec.withProjectLibrary("dexlib2")
       spec.withProjectLibrary("emulator-proto")
       //tools/adt/idea/.idea/libraries:ffmpeg <= FIXME
