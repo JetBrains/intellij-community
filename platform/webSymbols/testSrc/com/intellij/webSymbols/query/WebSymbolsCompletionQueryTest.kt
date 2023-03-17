@@ -80,8 +80,11 @@ class WebSymbolsCompletionQueryTest : WebSymbolsMockQueryExecutorTestBase() {
   fun testComplexPatternRepeat1() {
     doTest("html/attributes/v-on:click.stop.prevent", 23, "vue", "vue-on", "events")
     doTest("html/attributes/v-on:click.stop.prevent.foo", 23, "vue")
-    doTest("html/attributes/v-on:click.stop.prevent.foo", 24, "vue")
     doTest("html/attributes/v-on:click.stop.prevent.capture", 23, "vue")
+  }
+
+  fun testComplexPatternRepeat1b() {
+    doTest("html/attributes/v-on:click.stop.prevent.foo", 24, "vue", "vue-on", "events")
     doTest("html/attributes/v-on:click.stop.prevent.capture", 24, "vue")
   }
 
