@@ -28,7 +28,7 @@ class FacetTypeUnloadingTest : HeavyPlatformTestCase() {
     assertTrue(addedFacet.isDisposed)
     val invalidFacet = InvalidFacetManager.getInstance(myProject).invalidFacets.single()
     assertEquals("mock", invalidFacet.name)
-    assertEquals("<configuration data=\"my data\" />", JDOMUtil.write(invalidFacet.configuration.facetState.configuration))
+    assertEquals("<configuration data=\"my data\" />", JDOMUtil.write(invalidFacet.configuration.facetState.configuration!!))
 
     registerFacetType(MockFacetType(), testRootDisposable)
     assertTrue(InvalidFacetManager.getInstance(myProject).invalidFacets.isEmpty())

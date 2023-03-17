@@ -71,8 +71,7 @@ public class FacetUtil {
     }
   }
 
-  @NotNull
-  public static Element saveFacetConfiguration(@NotNull FacetConfiguration configuration) {
+  public static @Nullable Element saveFacetConfiguration(@NotNull FacetConfiguration configuration) {
     if (configuration instanceof PersistentStateComponent) {
       Object state = ((PersistentStateComponent<?>)configuration).getState();
       if (state instanceof Element) {

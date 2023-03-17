@@ -87,7 +87,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
       FacetUtil.loadFacetConfiguration(configuration, config)
       val name = state.name
       val facet: F = createFacet(module, type, name, configuration, underlyingFacet)
-      if (facet is JDOMExternalizable) {
+      if (facet is JDOMExternalizable && config != null) {
         //todo[nik] remove
         facet.readExternal(config)
       }
