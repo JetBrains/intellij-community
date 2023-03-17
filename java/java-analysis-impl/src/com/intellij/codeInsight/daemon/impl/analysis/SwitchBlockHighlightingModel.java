@@ -208,41 +208,43 @@ public class SwitchBlockHighlightingModel {
       if (labelElementList == null) {
         continue;
       }
-      if (labelElementList.getElementCount() == 1 &&
-          labelElementList.getElements()[0] instanceof PsiDefaultCaseLabelElement defaultElement) {
-        HighlightInfo.Builder info = createError(defaultElement, JavaErrorBundle.message("default.label.must.not.contains.case.keyword"));
-        holder.add(info.create());
-        continue;
-      }
       for (PsiCaseLabelElement labelElement : labelElementList.getElements()) {
-        PsiExpression expr = ObjectUtils.tryCast(labelElement, PsiExpression.class);
-        // ignore patterns/case defaults. If they appear here, insufficient language level will be reported
-        if (expr == null) continue;
-        HighlightInfo.Builder result = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
-        if (result != null) {
-          holder.add(result.create());
-          continue;
-        }
-        Object value = null;
-        if (expr instanceof PsiReferenceExpression ref) {
-          String enumConstName = evaluateEnumConstantName(ref);
-          if (enumConstName != null) {
-            value = enumConstName;
-            HighlightInfo.Builder info = createQualifiedEnumConstantInfo(ref);
-            if (info != null) {
-              holder.add(info.create());
-              continue;
+        if (labelElement instanceof PsiExpression expr) {
+          HighlightInfo.Builder result = HighlightUtil.checkAssignability(mySelectorType, expr.getType(), expr, expr);
+          if (result != null) {
+            holder.add(result.create());
+            continue;
+          }
+          Object value = null;
+          if (expr instanceof PsiReferenceExpression ref) {
+            String enumConstName = evaluateEnumConstantName(ref);
+            if (enumConstName != null) {
+              value = enumConstName;
+              HighlightInfo.Builder info = createQualifiedEnumConstantInfo(ref);
+              if (info != null) {
+                holder.add(info.create());
+                continue;
+              }
             }
           }
+          if (value == null) {
+            value = ConstantExpressionUtil.computeCastTo(expr, mySelectorType);
+          }
+          if (value == null) {
+            holder.add(createError(expr, JavaErrorBundle.message("constant.expression.required")).create());
+            continue;
+          }
+          fillElementsToCheckDuplicates(values, expr);
         }
-        if (value == null) {
-          value = ConstantExpressionUtil.computeCastTo(expr, mySelectorType);
+        else if (labelElement instanceof PsiDefaultCaseLabelElement defaultElement && labelElementList.getElementCount() == 1) {
+          // if default is not the only case in the label, insufficient language level will be reported
+          // see HighlightVisitorImpl#visitDefaultCaseLabelElement
+          HighlightInfo.Builder info = createError(defaultElement, JavaErrorBundle.message("default.label.must.not.contains.case.keyword"));
+          holder.add(info.create());
         }
-        if (value == null) {
-          holder.add(createError(expr, JavaErrorBundle.message("constant.expression.required")).create());
-          continue;
+        else if (labelElement instanceof PsiPattern || labelElement instanceof PsiPatternGuard) {
+          // ignore patterns/guarded patterns. If they appear here, insufficient language level will be reported
         }
-        fillElementsToCheckDuplicates(values, expr);
       }
     }
 
