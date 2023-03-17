@@ -28,7 +28,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
-import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyParameterTypeList;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
@@ -595,11 +594,8 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   @Nullable
   @Override
   public PyType getGenericType(@NotNull PyClass cls, @NotNull Context context) {
-    final var genericTypes = collectGenericTypes(cls, context);
-    if (genericTypes.isEmpty()) {
-      return null;
-    }
-    return new PyCollectionTypeImpl(cls, false, genericTypes);
+    List<PyTypeParameterType> typeParameters = collectTypeParameters(cls, context);
+    return typeParameters.isEmpty() ? null : new PyCollectionTypeImpl(cls, false, typeParameters);
   }
 
   @NotNull
@@ -621,11 +617,11 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
         results.putAll(superSubstitutions);
       }
       // TODO Share this logic with PyTypeChecker.collectTypeSubstitutions
-      List<PyType> superTypeParameters = collectGenericTypes(superClassType.getPyClass(), context);
+      List<PyTypeParameterType> superTypeParameters = collectTypeParameters(superClassType.getPyClass(), context);
       List<PyType> superTypeArguments = superClassType instanceof PyCollectionType parameterized ?
                                         parameterized.getElementTypes() : Collections.emptyList();
       for (int i = 0; i < superTypeParameters.size(); i++) {
-        PyType superTypeParameter = superTypeParameters.get(i);
+        PyTypeParameterType superTypeParameter = superTypeParameters.get(i);
         PyType superTypeArgument = ContainerUtil.getOrElse(superTypeArguments, i, null);
         if (!superTypeParameter.equals(superTypeArgument)) {
           results.put(superTypeParameter, superTypeArgument);
@@ -651,7 +647,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   }
 
   @NotNull
-  private static List<PyType> collectGenericTypes(@NotNull PyClass cls, @NotNull Context context) {
+  private static List<PyTypeParameterType> collectTypeParameters(@NotNull PyClass cls, @NotNull Context context) {
     if (!isGeneric(cls, context.getTypeContext())) {
       return Collections.emptyList();
     }
@@ -680,7 +676,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
         PyTypeChecker.Generics typeParams = PyTypeChecker.collectGenerics(type, context.myContext);
         return StreamEx.<PyType>of(typeParams.getTypeVars()).append(StreamEx.of(typeParams.getParamSpecs()));
       })
-      .filter(type -> type instanceof PyGenericType || type instanceof PyParamSpecType)
+      .select(PyTypeParameterType.class)
       .distinct()
       .toList();
   }
@@ -1509,8 +1505,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
     PyTargetExpression typeVarDeclaration = context.getTypeAliasStack().pop();
     try {
       if (owner instanceof PyClass) {
-        return StreamEx.of(collectGenericTypes((PyClass)owner, context))
-          .select(PyTypeParameterType.class)
+        return StreamEx.of(collectTypeParameters((PyClass)owner, context))
           .findFirst(type -> name.equals(type.getName()))
           .orElse(null);
       }
