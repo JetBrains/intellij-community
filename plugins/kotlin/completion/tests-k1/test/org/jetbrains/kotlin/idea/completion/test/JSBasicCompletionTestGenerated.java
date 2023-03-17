@@ -765,6 +765,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/extensions/ExtensionOnNestedClassObject.kt");
             }
 
+            @TestMetadata("ExtensionWithStubType.kt")
+            public void testExtensionWithStubType() throws Exception {
+                runTest("../testData/basic/common/extensions/ExtensionWithStubType.kt");
+            }
+
             @TestMetadata("ExtensionWithUninferredType.kt")
             public void testExtensionWithUninferredType() throws Exception {
                 runTest("../testData/basic/common/extensions/ExtensionWithUninferredType.kt");

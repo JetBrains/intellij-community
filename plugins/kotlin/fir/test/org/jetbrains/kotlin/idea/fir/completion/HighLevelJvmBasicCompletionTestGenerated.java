@@ -765,6 +765,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("../completion/testData/basic/common/extensions/ExtensionOnNestedClassObject.kt");
             }
 
+            @TestMetadata("ExtensionWithStubType.kt")
+            public void testExtensionWithStubType() throws Exception {
+                runTest("../completion/testData/basic/common/extensions/ExtensionWithStubType.kt");
+            }
+
             @TestMetadata("ExtensionWithUninferredType.kt")
             public void testExtensionWithUninferredType() throws Exception {
                 runTest("../completion/testData/basic/common/extensions/ExtensionWithUninferredType.kt");
