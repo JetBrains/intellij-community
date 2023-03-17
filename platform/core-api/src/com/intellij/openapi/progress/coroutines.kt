@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Experimental
 
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.replaceThreadContext
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
@@ -15,7 +16,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.progress")
@@ -124,7 +124,7 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
     val context = currentThreadContext() +
                   currentJob +
                   CoroutineName("job run blocking")
-    replaceThreadContext(EmptyCoroutineContext).use {
+    resetThreadContext().use {
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking(context, action)
     }
@@ -158,7 +158,7 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
                   currentJob +
                   CoroutineName("indicator run blocking") +
                   IndicatorRawProgressReporter(indicator).asContextElement()
-    replaceThreadContext(EmptyCoroutineContext).use {
+    resetThreadContext().use {
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking(context, action)
     }
