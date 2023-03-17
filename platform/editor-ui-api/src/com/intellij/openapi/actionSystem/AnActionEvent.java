@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.PlaceProvider;
 import org.intellij.lang.annotations.JdkConstants;
@@ -11,6 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 
 /**
  * Container for the information necessary to execute or update an {@link AnAction}.
@@ -128,8 +131,23 @@ public class AnActionEvent implements PlaceProvider {
   }
 
   /**
-   * Returns the {@code InputEvent} which causes invocation of the action. It might be
-   * {@code KeyEvent}, {@code MouseEvent} or null if the action event is not initiated by user interaction.
+   * Returns {@code InputEvent} which causes invocation of the action. It might be
+   * {@link KeyEvent} or {@link MouseEvent} in the following user interactions:
+   * <ul>
+   * <li> Shortcut event, see {@link com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher IdeKeyEventDispatcher}
+   * <li> Menu event, see {@link com.intellij.openapi.actionSystem.impl.ActionMenuItem ActionMenuItem}
+   * <li> Standard button in toolbar, see {@link com.intellij.openapi.actionSystem.impl.ActionButton ActionButton}
+   * </ul>
+   *
+   * In other cases the value is null, for example:
+   * <ul>
+   * <li> Search everywhere and find actions
+   * <li> Customized toolbar components, see {@link CustomComponentAction}
+   * <li> Actions from notifications
+   * <li> Actions that invoked programmatically
+   * <li> Macros replay
+   * <li> Tests
+   * </ul>
    */
   public @Nullable InputEvent getInputEvent() {
     return myInputEvent;
