@@ -15,6 +15,7 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.extractMethod.SignatureSuggesterPreviewDialog
 import com.intellij.refactoring.extractMethod.newImpl.*
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
@@ -274,6 +275,10 @@ fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodNam
   dialog.selectStaticFlag(makeStatic)
   if (!dialog.showAndGet()) return
   val dialogOptions = ExtractMethodPipeline.withDialogParameters(extractor.extractOptions, dialog)
+  val passFieldsAsParameters = extractor.extractOptions.inputParameters.size != dialogOptions.inputParameters.size
+  if (!passFieldsAsParameters) {
+    JavaRefactoringSettings.getInstance().EXTRACT_STATIC_METHOD = dialogOptions.isStatic
+  }
   val mappedExtractor = DuplicatesMethodExtractor(dialogOptions, targetClass, extractor.elements)
   MethodExtractor().executeRefactoringCommand(targetClass.project) {
     MethodExtractor.sendRefactoringStartedEvent(elements.toTypedArray())
