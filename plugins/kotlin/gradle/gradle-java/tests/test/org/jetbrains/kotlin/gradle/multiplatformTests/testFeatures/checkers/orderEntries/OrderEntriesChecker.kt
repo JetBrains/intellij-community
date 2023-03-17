@@ -6,16 +6,17 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.*
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.ModuleReportData
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.PrinterContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.WorkspaceModelChecker
-import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.indented
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleInfos
 
-object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfiguration>() {
+// Sorting is configured in TestConfiguration
+object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfiguration>(respectOrder = true) {
     override fun createDefaultConfiguration(): OrderEntriesChecksConfiguration = OrderEntriesChecksConfiguration()
 
     override val classifier: String = "dependencies"
@@ -49,10 +50,10 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
         }
     }
 
-    override fun PrinterContext.process(module: Module) = with(printer) {
+    override fun PrinterContext.buildReportDataForModule(module: Module): List<ModuleReportData> {
         val orderEntries = runReadAction { ModuleRootManager.getInstance(module).orderEntries }
         val filteredEntries = orderEntries.filterNot { shouldRemoveOrderEntry(it) }
-        if (filteredEntries.isEmpty()) return
+        if (filteredEntries.isEmpty()) return emptyList()
 
         val testConfig = testConfiguration.getConfiguration(OrderEntriesChecker)
 
@@ -87,9 +88,7 @@ object OrderEntriesChecker : WorkspaceModelChecker<OrderEntriesChecksConfigurati
         else
             orderEntriesFoldedIfNecessary.sorted()
 
-        indented {
-            orderEntriesSortedIfNecessary.forEach { println(it) }
-        }
+        return orderEntriesSortedIfNecessary.map { ModuleReportData(it) }
     }
 
     private fun PrinterContext.render(orderEntry: OrderEntry, isDependsOn: Boolean, isFriend: Boolean): String {
