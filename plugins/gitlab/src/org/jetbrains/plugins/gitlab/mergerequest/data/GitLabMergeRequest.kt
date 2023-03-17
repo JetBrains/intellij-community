@@ -38,7 +38,7 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   val approvedBy: Flow<List<GitLabUserDTO>>
   val reviewers: Flow<List<GitLabUserDTO>>
   val pipeline: Flow<GitLabPipelineDTO?>
-
+  val userPermissions: Flow<GitLabMergeRequestPermissionsDTO>
   val changes: Flow<GitLabMergeRequestChanges>
 
   fun refreshData()
@@ -111,7 +111,7 @@ internal class LoadedGitLabMergeRequest(
   override val approvedBy: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.approvedBy }
   override val reviewers: Flow<List<GitLabUserDTO>> = mergeRequestDetailsState.map { it.reviewers }
   override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequestDetailsState.map { it.headPipeline }
-
+  override val userPermissions: Flow<GitLabMergeRequestPermissionsDTO> = mergeRequestDetailsState.map { it.userPermissions }
   override val changes: Flow<GitLabMergeRequestChanges> = mergeRequestDetailsState.map {
     GitLabMergeRequestChangesImpl(project, cs, api, projectMapping, it)
   }.modelFlow(cs, LOG)

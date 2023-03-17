@@ -16,9 +16,12 @@ internal class GitLabMergeRequestSquashAndMergeAction(
 ) : AbstractAction(CollaborationToolsBundle.message("review.details.action.squash.and.merge")) {
   init {
     scope.launch {
-      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.requestState) { isBusy, requestState ->
-        // TODO: add additional conditions
-        isEnabled = !isBusy && requestState == RequestState.OPENED
+      combineAndCollect(
+        reviewFlowVm.isBusy,
+        reviewFlowVm.requestState,
+        reviewFlowVm.userCanMergeReviewer
+      ) { isBusy, requestState, userCanMergeReviewer ->
+        isEnabled = !isBusy && requestState == RequestState.OPENED && userCanMergeReviewer
       }
     }
   }

@@ -40,6 +40,10 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
   val pipeline: Flow<GitLabPipelineDTO?>
   val targetProject: StateFlow<GitLabProjectDTO>
 
+  val userCanApproveReviewer: Flow<Boolean>
+  val userCanManageReview: Flow<Boolean>
+  val userCanMergeReviewer: Flow<Boolean>
+
   fun merge()
 
   fun squashAndMerge()
@@ -109,6 +113,10 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequest.pipeline
 
   override val targetProject: StateFlow<GitLabProjectDTO> = mergeRequest.targetProject
+
+  override val userCanApproveReviewer: Flow<Boolean> = mergeRequest.userPermissions.map { it.canApprove }
+  override val userCanManageReview: Flow<Boolean> = mergeRequest.userPermissions.map { it.updateMergeRequest }
+  override val userCanMergeReviewer: Flow<Boolean> = mergeRequest.userPermissions.map { it.canMerge }
 
   override fun merge() = runAction {
     val title = mergeRequest.title.stateIn(scope).value

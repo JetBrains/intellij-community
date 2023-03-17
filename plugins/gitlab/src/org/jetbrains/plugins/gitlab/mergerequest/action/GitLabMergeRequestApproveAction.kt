@@ -15,8 +15,12 @@ internal class GitLabMergeRequestApproveAction(
 ) : AbstractAction(GitLabBundle.message("merge.request.details.action.review.approve.text")) {
   init {
     scope.launch {
-      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.isApproved) { isBusy, isApproved ->
-        isEnabled = !isBusy && !isApproved
+      combineAndCollect(
+        reviewFlowVm.isBusy,
+        reviewFlowVm.isApproved,
+        reviewFlowVm.userCanApproveReviewer
+      ) { isBusy, isApproved, userCanApproveReviewer ->
+        isEnabled = !isBusy && !isApproved && userCanApproveReviewer
       }
     }
   }

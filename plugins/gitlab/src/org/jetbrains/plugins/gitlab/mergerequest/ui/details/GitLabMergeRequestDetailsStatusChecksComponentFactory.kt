@@ -14,7 +14,6 @@ import com.intellij.collaboration.ui.util.toAnAction
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.ui.ClientProperty
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
@@ -115,7 +114,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
       detailsReviewFlowVm.reviewerAndReviewState.collect { reviewerAndReview ->
         panel.removeAll()
         reviewerAndReview.forEach { (reviewer, reviewState) ->
-          panel.add(createReviewerReviewStatus(detailsReviewFlowVm, reviewer, reviewState, avatarIconsProvider))
+          panel.add(createReviewerReviewStatus(scope, detailsReviewFlowVm, reviewer, reviewState, avatarIconsProvider))
         }
         panel.revalidate()
         panel.repaint()
@@ -126,6 +125,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
   }
 
   private fun createReviewerReviewStatus(
+    scope: CoroutineScope,
     detailsReviewFlowVm: GitLabMergeRequestReviewFlowViewModel,
     reviewer: GitLabUserDTO,
     reviewState: ReviewState,
@@ -146,7 +146,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
       add(reviewerLabel)
 
       if (reviewState != ReviewState.ACCEPTED) {
-        val actionGroup = DefaultActionGroup(GitLabMergeRequestRemoveReviewerAction(detailsReviewFlowVm, reviewer).toAnAction())
+        val actionGroup = DefaultActionGroup(GitLabMergeRequestRemoveReviewerAction(scope, detailsReviewFlowVm, reviewer).toAnAction())
         PopupHandler.installPopupMenu(this, actionGroup, "GitLabMergeRequestReviewerStatus")
       }
     }

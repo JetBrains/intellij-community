@@ -73,6 +73,6 @@ fragment mergeRequest on MergeRequest {
     }
   }
   userPermissions {
-    createNote
+    ...mergeRequestPermissions
   }
 }

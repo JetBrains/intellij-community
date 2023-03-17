@@ -26,7 +26,8 @@ data class GitLabMergeRequestFullDetails(
   val conflicts: Boolean,
   val commits: List<GitLabCommitDTO>,
   val diffRefs: GitLabDiffRefs,
-  val headPipeline: GitLabPipelineDTO?
+  val headPipeline: GitLabPipelineDTO?,
+  val userPermissions: GitLabMergeRequestPermissionsDTO
 ) : GitLabMergeRequestDetails(iid, title, createdAt, author, mergeStatus, state, draft, assignees, reviewers, webUrl) {
 
   companion object {
@@ -50,7 +51,8 @@ data class GitLabMergeRequestFullDetails(
       conflicts = dto.conflicts,
       commits = dto.commits,
       diffRefs = dto.diffRefs,
-      headPipeline = dto.headPipeline
+      headPipeline = dto.headPipeline,
+      userPermissions = dto.userPermissions
     )
   }
 }

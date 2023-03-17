@@ -16,8 +16,12 @@ internal class GitLabMergeRequestCloseAction(
 ) : AbstractAction(GitLabBundle.message("merge.request.details.action.review.close.text")) {
   init {
     scope.launch {
-      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.requestState) { isBusy, requestState ->
-        isEnabled = !isBusy && requestState == RequestState.OPENED
+      combineAndCollect(
+        reviewFlowVm.isBusy,
+        reviewFlowVm.requestState,
+        reviewFlowVm.userCanManageReview
+      ) { isBusy, requestState, userCanManageReview ->
+        isEnabled = !isBusy && requestState == RequestState.OPENED && userCanManageReview
       }
     }
   }

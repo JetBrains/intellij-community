@@ -16,8 +16,12 @@ internal class GitLabMergeRequestPostReviewAction(
 ) : AbstractAction(GitLabBundle.message("merge.request.details.action.review.post.text")) {
   init {
     scope.launch {
-      combine(reviewFlowVm.isBusy, reviewFlowVm.requestState) { isBusy, requestState ->
-        isEnabled = !isBusy && requestState == RequestState.DRAFT
+      combine(
+        reviewFlowVm.isBusy,
+        reviewFlowVm.requestState,
+        reviewFlowVm.userCanManageReview
+      ) { isBusy, requestState, userCanManageReview ->
+        isEnabled = !isBusy && requestState == RequestState.DRAFT && userCanManageReview
       }
     }
   }

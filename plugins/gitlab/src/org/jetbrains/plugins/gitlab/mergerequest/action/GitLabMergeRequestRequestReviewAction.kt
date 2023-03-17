@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.action
 
+import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -32,8 +33,8 @@ internal class GitLabMergeRequestRequestReviewAction(
 ) : AbstractAction(CollaborationToolsBundle.message("review.details.action.request")) {
   init {
     scope.launch {
-      reviewFlowVm.isBusy.collect { isBusy ->
-        isEnabled = !isBusy
+      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.userCanManageReview) { isBusy, userCanManageReview ->
+        isEnabled = !isBusy && userCanManageReview
       }
     }
   }
@@ -49,9 +50,7 @@ internal class GitLabMergeRequestRequestReviewAction(
         point,
         popupState,
         users,
-        filteringMapper = { user ->
-          user.username
-        },
+        filteringMapper = { user -> user.username },
         renderer = ReviewerRenderer(reviewFlowVm, avatarIconsProvider)
       )
 
