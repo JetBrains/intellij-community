@@ -1930,6 +1930,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitDefaultCaseLabelElement(@NotNull PsiDefaultCaseLabelElement element) {
     super.visitDefaultCaseLabelElement(element);
+    // "case default:" will be highlighted as "The label for the default case must only use the 'default' keyword, without 'case'".
+    // see SwitchBlockHighlightingModel#checkSwitchLabelValues
+    // The "case default:" syntax was only allowed in outdated preview versions of Java (from Java 17 Preview to Java 19 Preview).
+    // And even if the "case default" syntax was allowed not only in outdated preview versions of Java, using "case default:"
+    // instead of "default:" looks weird. Therefore, for this case, we do not check the feature availability and do not
+    // suggest increasing the language level.
     if (element.getParent() instanceof PsiCaseLabelElementList labelElementList && labelElementList.getElementCount() == 1) return;
     add(checkFeature(element, HighlightingFeature.PATTERNS_IN_SWITCH));
   }
