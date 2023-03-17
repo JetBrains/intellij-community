@@ -272,15 +272,16 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           return@processExtensions
         }
         else if (!isProjectLightEditCompatible) {
-          if (edtActivity.get() == null) {
-            edtActivity.set(StartUpMeasurer.startActivity("project post-startup edt activities"))
-          }
-
           // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
           counter.incrementAndGet()
           blockingContext {
             dumbService.runWhenSmart {
               traceContext.makeCurrent()
+
+              if (edtActivity.get() == null) {
+                edtActivity.set(StartUpMeasurer.startActivity("project post-startup edt activities"))
+              }
+
               val duration = runActivityAndMeasureDuration(activity as StartupActivity, pluginDescriptor.pluginId)
               if (duration > EDT_WARN_THRESHOLD_IN_NANO) {
                 reportUiFreeze(uiFreezeWarned)
