@@ -20,6 +20,7 @@ class ShellCommandManager(terminal: Terminal) {
       when (it.getOrNull(0)) {
         "command_started" -> processCommandStartedEvent(it)
         "command_finished" -> processCommandFinishedEvent(it)
+        "command_history" -> processCommandHistoryEvent(it)
       }
     })
   }
@@ -58,6 +59,13 @@ class ShellCommandManager(terminal: Terminal) {
     }
   }
 
+  private fun processCommandHistoryEvent(event: List<String>) {
+    val history = event.getOrNull(1)
+    if (history != null && history.startsWith("history_string=")) {
+      fireCommandHistoryReceived(history.removePrefix("history_string="))
+    }
+  }
+
   private fun fireCommandStarted(commandRun: CommandRun) {
     for (listener in listeners) {
       listener.commandStarted(commandRun.command)
@@ -85,10 +93,18 @@ class ShellCommandManager(terminal: Terminal) {
     }
   }
 
-  fun addListener(listener: ShellCommandListener, parentDisposable: Disposable) {
+  private fun fireCommandHistoryReceived(history: String) {
+    for (listener in listeners) {
+      listener.commandHistoryReceived(history)
+    }
+  }
+
+  fun addListener(listener: ShellCommandListener, parentDisposable: Disposable? = null) {
     listeners.add(listener)
-    Disposer.register(parentDisposable) {
-      listeners.remove(listener)
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable) {
+        listeners.remove(listener)
+      }
     }
   }
 
@@ -103,6 +119,8 @@ interface ShellCommandListener {
   fun commandFinished(command: String, exitCode: Int, duration: Long) {}
 
   fun directoryChanged(newDirectory: String) {}
+
+  fun commandHistoryReceived(history: String) {}
 }
 
 private class CommandRun(val commandStartedNano: Long, val workingDirectory: String, val command: String) {

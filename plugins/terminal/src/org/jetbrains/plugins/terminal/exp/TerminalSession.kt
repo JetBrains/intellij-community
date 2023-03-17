@@ -25,6 +25,7 @@ class TerminalSession(private val project: Project,
   val model: TerminalModel
   lateinit var terminalStarter: TerminalStarter
   val completionManager: TerminalCompletionManager
+  val commandHistoryManager: CommandHistoryManager
 
   private val terminalExecutor: ExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Terminal-${sessionIndex++}")
 
@@ -42,6 +43,7 @@ class TerminalSession(private val project: Project,
 
     commandManager = ShellCommandManager(controller)
     completionManager = TerminalCompletionManager(model) { terminalStarter }
+    commandHistoryManager = CommandHistoryManager(commandManager)
 
     val typeAheadTerminalModel = JediTermTypeAheadModel(controller, textBuffer, settings)
     typeAheadManager = TerminalTypeAheadManager(typeAheadTerminalModel)

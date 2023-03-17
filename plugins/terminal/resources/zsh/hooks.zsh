@@ -34,3 +34,7 @@ __intellij_command_terminated() {
 
 add-zsh-hook preexec __intellij_cmd_preexec
 add-zsh-hook precmd __intellij_command_terminated
+
+# Get all commands from history from the first command
+builtin local hist="$(builtin history 1)"
+builtin printf '\e]1341;command_history;history_string=%s\a' "$(__intellij_encode "${hist}")"

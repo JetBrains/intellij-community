@@ -26,7 +26,7 @@ import javax.swing.*
 
 class TerminalPromptPanel(private val project: Project,
                           private val settings: JBTerminalSystemSettingsProviderBase,
-                          session: TerminalSession,
+                          private val session: TerminalSession,
                           private val commandExecutor: TerminalCommandExecutor) : JPanel(), ComponentContainer, ShellCommandListener {
   private val editorTextField: LanguageTextField
   private val editor: EditorImpl
@@ -36,6 +36,8 @@ class TerminalPromptPanel(private val project: Project,
 
   private val promptLabel: JLabel
 
+  private val commandHistoryPresenter: CommandHistoryPresenter
+
   val charSize: Dimension
     get() = Dimension(editor.charHeight, editor.lineHeight)
 
@@ -44,6 +46,8 @@ class TerminalPromptPanel(private val project: Project,
 
     promptLabel = createPromptLabel()
     promptLabel.text = computePromptText(TerminalProjectOptionsProvider.getInstance(project).startingDirectory ?: "")
+
+    commandHistoryPresenter = CommandHistoryPresenter(project, editor)
 
     editor.putUserData(SESSION_KEY, session)
 
@@ -112,6 +116,17 @@ class TerminalPromptPanel(private val project: Project,
 
   fun handleEnterPressed() {
     commandExecutor.startCommandExecution(document.text)
+  }
+
+  fun showCommandHistory() {
+    val history = session.commandHistoryManager.history
+    if (history.isNotEmpty()) {
+      commandHistoryPresenter.showCommandHistory(history)
+    }
+  }
+
+  fun onCommandHistoryClosed() {
+    commandHistoryPresenter.onCommandHistoryClosed()
   }
 
   fun isFocused(): Boolean {
