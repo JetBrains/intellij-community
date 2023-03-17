@@ -52,18 +52,6 @@ fun replaceThreadContext(coroutineContext: CoroutineContext): AccessToken {
 }
 
 /**
- * Updates the current thread context with [coroutineContext] as per [CoroutineContext.plus],
- * and runs the [action].
- *
- * @return result of [action] invocation
- */
-fun <X> withThreadContext(coroutineContext: CoroutineContext, action: () -> X): X {
-  return withThreadContext(coroutineContext).use {
-    action()
-  }
-}
-
-/**
  * Updates the current thread context with [coroutineContext] as per [CoroutineContext.plus].
  *
  * @return handle to restore the previous thread context
