@@ -114,6 +114,9 @@ private fun updateThreadContext(
 fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): AccessToken {
   val previousValue = variable.get()
   val newValue = update(previousValue)
+  if (newValue === previousValue) {
+    return AccessToken.EMPTY_ACCESS_TOKEN;
+  }
   variable.set(newValue)
   return object : AccessToken() {
     override fun finish() {

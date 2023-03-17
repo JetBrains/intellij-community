@@ -1,10 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency
 
+import com.intellij.openapi.application.AccessToken
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertNotEquals
+import kotlin.test.assertSame
 
 class WithThreadLocalTest {
 
@@ -59,5 +62,15 @@ class WithThreadLocalTest {
       revert2.close()
     }
     assertEquals(43, testThreadLocal.get()) // reverted to state before revert2
+  }
+
+  @Test
+  fun `same value`() {
+    val v = Any()
+    val revert1 = withThreadLocal(testThreadLocal) { v }
+    assertNotEquals(AccessToken.EMPTY_ACCESS_TOKEN, revert1)
+    val revert2 = withThreadLocal(testThreadLocal) { v }
+    assertSame(AccessToken.EMPTY_ACCESS_TOKEN, revert2)
+    revert1.close() // no exception
   }
 }
