@@ -59,8 +59,9 @@ class NastradamusClient(
     return TestResultRequestEntity(buildInfo = getBuildInfo(), testRunResults = testResultEntities)
   }
 
-  fun sendTestRunResults(testResultRequestEntity: TestResultRequestEntity) {
+  fun sendTestRunResults(testResultRequestEntity: TestResultRequestEntity, wasNastradamusDataUsed: Boolean) {
     val uri = URIBuilder(baseUrl.resolve("/result/").normalize())
+      .addParameter("was_nastradamus_data_used", wasNastradamusDataUsed.toString())
       .build()
 
     val stringJson = jacksonMapper.writeValueAsString(testResultRequestEntity)
