@@ -14,7 +14,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 internal interface GitLabMergeRequestDetailsInfoViewModel : CodeReviewDetailsViewModel {
   val mergeRequest: GitLabMergeRequest
 
-  val description: Flow<String>
   val targetBranch: Flow<String>
   val sourceBranch: Flow<String>
   val hasConflicts: Flow<Boolean>

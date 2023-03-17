@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 
 internal interface GHPRDetailsViewModel : CodeReviewDetailsViewModel {
-  val description: Flow<String>
   val viewerDidAuthor: Boolean
   val isDraft: Flow<Boolean>
 

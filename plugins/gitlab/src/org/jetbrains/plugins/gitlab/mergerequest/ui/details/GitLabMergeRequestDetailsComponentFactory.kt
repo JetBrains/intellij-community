@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
+import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsDescriptionComponentFactory
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsTitleComponentFactory
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
@@ -98,7 +99,9 @@ internal object GitLabMergeRequestDetailsComponentFactory {
       add(CodeReviewDetailsTitleComponentFactory.create(cs, detailsInfoVm, GitLabBundle.message("open.on.gitlab.tooltip"), actionGroup,
                                                         htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
-      add(GitLabMergeRequestDetailsDescriptionComponentFactory.create(cs, detailsInfoVm),
+      add(CodeReviewDetailsDescriptionComponentFactory.create(cs, detailsInfoVm, actionGroup,
+                                                              showTimelineAction = { _ -> detailsInfoVm.showTimeline() },
+                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
       add(commitsAndBranches,
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))

@@ -1,12 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsDescriptionComponentFactory
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsTitleComponentFactory
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +47,6 @@ internal object GHPRDetailsComponentFactory {
     commitFilesBrowserComponent: JComponent,
     diffBridge: GHPRDiffController
   ): JComponent {
-    val description = GHPRDetailsDescriptionComponentFactory.create(scope, reviewDetailsVm)
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
       add(GHPRDetailsCommitsComponentFactory.create(scope, commitsVm, diffBridge))
@@ -67,7 +69,9 @@ internal object GHPRDetailsComponentFactory {
       add(CodeReviewDetailsTitleComponentFactory.create(scope, reviewDetailsVm, GithubBundle.message("open.on.github.action"), actionGroup,
                                                         htmlPaneFactory = { HtmlEditorPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
-      add(description, CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
+      add(CodeReviewDetailsDescriptionComponentFactory.create(scope, reviewDetailsVm, actionGroup, ::showTimelineAction,
+                                                              htmlPaneFactory = { HtmlEditorPane() }),
+          CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
       add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
       add(commitInfo, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS).maxHeight("${ReviewDetailsUIUtil.COMMIT_INFO_MAX_HEIGHT}"))
       add(commitFilesBrowserComponent, CC().grow().push())
@@ -76,5 +80,10 @@ internal object GHPRDetailsComponentFactory {
 
       PopupHandler.installPopupMenu(this, actionGroup, "GHPRDetailsPopup")
     }
+  }
+
+  private fun showTimelineAction(parentComponent: JComponent) {
+    val action = ActionManager.getInstance().getAction("Github.PullRequest.Timeline.Show") ?: return
+    ActionUtil.invokeAction(action, parentComponent, ActionPlaces.UNKNOWN, null, null)
   }
 }
