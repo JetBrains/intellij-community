@@ -35,7 +35,6 @@ import org.junit.runner.RunWith
 import java.io.File
 import java.io.PrintStream
 import java.util.TreeSet
-import java.util.*
 import kotlin.Comparator
 
 /**
@@ -108,10 +107,9 @@ abstract class AbstractKotlinMppGradleImportingTest :
 
     open fun TestConfigurationDslScope.defaultTestConfiguration() {}
 
-    protected fun doTest(runImport: Boolean = true, configuration: TestConfigurationDslScope.() -> Unit = { }) {
-        val defaultConfig = TestConfiguration().apply { defaultTestConfiguration() }
-        val testConfig = defaultConfig.copy().apply { configuration() }
-        context.testConfiguration = testConfig
+    protected fun doTest(runImport: Boolean = true, testSpecificConfiguration: TestConfigurationDslScope.() -> Unit = { }) {
+        context.testConfiguration.defaultTestConfiguration()
+        context.testConfiguration.testSpecificConfiguration()
         context.doTest(runImport)
     }
 
