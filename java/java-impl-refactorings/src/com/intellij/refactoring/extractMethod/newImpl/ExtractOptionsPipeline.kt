@@ -23,7 +23,7 @@ import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ParametersFolder
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.areSame
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findRequiredTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
@@ -60,7 +60,7 @@ object ExtractMethodPipeline {
     val targetMember = PsiTreeUtil.getChildOfType(targetClass, PsiMember::class.java)
     if (sourceMember == null || targetMember == null) return null
 
-    val typeParameters = findAllTypeLists(sourceMember, targetClass).flatMap { findUsedTypeParameters(it, extractOptions.elements) }
+    val typeParameters = findRequiredTypeParameters(targetClass, extractOptions.elements)
 
     val additionalReferences = analyzer.findOuterLocals(sourceMember, targetMember) ?: return null
     val additionalParameters = additionalReferences.map { inputParameterOf(it) }
@@ -88,14 +88,6 @@ object ExtractMethodPipeline {
       return lastFieldInGroup as? PsiField ?: anchorElement
     }
     return anchorElement
-  }
-
-  private fun findAllTypeLists(element: PsiElement, stopper: PsiElement): List<PsiTypeParameterList> {
-    return generateSequence (element) { it.parent }
-      .takeWhile { it != stopper && it !is PsiFile }
-      .filterIsInstance<PsiTypeParameterListOwner>()
-      .mapNotNull { it.typeParameterList }
-      .toList()
   }
 
   private fun findCommonCastParameter(inputParameter: InputParameter): InputParameter? {

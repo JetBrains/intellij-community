@@ -246,8 +246,8 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     fun inferNullability(place: PsiElement, probeExpression: String?): Nullability {
       if (probeExpression == null) return Nullability.UNKNOWN
       val factory = PsiElementFactory.getInstance(place.project)
-      val sourceClass = findClassMember(place)?.containingClass ?: return Nullability.UNKNOWN
-      val copyFile = sourceClass.containingFile.copy() as PsiFile
+      val context = PsiTreeUtil.getContextOfType(place, PsiClass::class.java) ?: return Nullability.UNKNOWN
+      val copyFile = context.containingFile.copy() as PsiFile
       val copyPlace = PsiTreeUtil.findSameElementInCopy(place, copyFile)
       val probeStatement = factory.createStatementFromText("return $probeExpression;", null)
 

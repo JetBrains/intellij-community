@@ -7,11 +7,11 @@ import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.codeInsight.generation.GenerateMembersUtil
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
-import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
@@ -63,10 +63,21 @@ object ExtractMethodHelper {
     }
   }
 
-  fun findUsedTypeParameters(source: PsiTypeParameterList?, searchScope: List<PsiElement>): List<PsiTypeParameter> {
-    val typeParameterList = CommonJavaRefactoringUtil.createTypeParameterListWithUsedTypeParameters(
-      source, *searchScope.toTypedArray())
-    return typeParameterList?.typeParameters.orEmpty().toList()
+  fun findRequiredTypeParameters(targetContext: PsiClass?, searchScope: List<PsiElement>): List<PsiTypeParameter> {
+    fun findElementWithTypeParameter(element: PsiElement) = PsiTreeUtil.getContextOfType(element, PsiTypeParameterListOwner::class.java)
+    val availableTypeParameters = generateSequence (targetContext, ::findElementWithTypeParameter)
+      .flatMap { typeListOwner -> typeListOwner.typeParameterList?.typeParameters.orEmpty().toList() }
+      .toSet()
+    return findUsedTypeParameters(searchScope).filter { parameter -> parameter !in availableTypeParameters }
+  }
+
+  private fun findUsedTypeParameters(searchScope: List<PsiElement>): List<PsiTypeParameter> {
+    val usedTypeParameters = mutableSetOf<PsiTypeParameter>()
+    searchScope.forEach { element ->
+      CommonJavaRefactoringUtil.collectTypeParameters(usedTypeParameters, element)
+    }
+    CommonJavaRefactoringUtil.collectTypeParametersInDependencies(Conditions.alwaysTrue(), usedTypeParameters)
+    return usedTypeParameters.sortedBy { parameter -> parameter.textRange.startOffset }
   }
 
   fun inputParameterOf(externalReference: ExternalReference): InputParameter {
@@ -91,14 +102,6 @@ object ExtractMethodHelper {
       else -> parent
     }
     return physicalParent ?: throw IllegalArgumentException()
-  }
-
-  fun normalizedAnchor(anchor: PsiMember): PsiMember {
-    return if (anchor is PsiField) {
-      MultipleFieldDeclarationHelper.findLastFieldInGroup(anchor.node).psi as? PsiField ?: anchor
-    } else {
-      anchor
-    }
   }
 
   fun addNullabilityAnnotation(owner: PsiModifierListOwner, nullability: Nullability) {

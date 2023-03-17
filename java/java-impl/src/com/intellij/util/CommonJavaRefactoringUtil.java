@@ -682,7 +682,7 @@ public final class CommonJavaRefactoringUtil {
     }
   }
 
-  private static void collectTypeParametersInDependencies(Condition<? super PsiTypeParameter> filter, Set<PsiTypeParameter> used) {
+  public static void collectTypeParametersInDependencies(Condition<? super PsiTypeParameter> filter, Set<PsiTypeParameter> used) {
     Stack<PsiTypeParameter> toProcess = new com.intellij.util.containers.Stack<>();
     toProcess.addAll(used);
     while (!toProcess.isEmpty()) {
