@@ -14,7 +14,7 @@ import java.nio.channels.Channels
 import java.nio.channels.Pipe
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.seconds
+
 
 class DiscardingInputStreamTest {
 
@@ -38,7 +38,7 @@ class DiscardingInputStreamTest {
       val producedData = producedDataD.await()
       val consumedData = consumedDataD.await()
 
-      input.discardAndClose()
+      input.close()
 
       Assertions.assertEquals(producedData, consumedData)
     }
@@ -56,7 +56,7 @@ class DiscardingInputStreamTest {
       val producedData = producedDataD.await()
 
       output.close()
-      input.discardAndClose()
+      input.close()
 
       val consumedData = consumedDataD.await()
 
@@ -78,7 +78,7 @@ class DiscardingInputStreamTest {
       val producedData = producedDataD.await()
 
       output.close()
-      input.discardAndClose()
+      input.close()
 
       Assertions.assertTrue(producedData.isNotEmpty()) { "Data isn't produced" }
     }
@@ -92,8 +92,7 @@ class DiscardingInputStreamTest {
           runBlocking {
             withContext(Dispatchers.IO) {
               val pipe = Pipe.open()
-              val anInput = BufferedInputStream(Channels.newInputStream(pipe.source()))
-              val input = DiscardingInputStream(anInput, 1.seconds)
+              val input = DiscardingInputStream(BufferedInputStream(Channels.newInputStream(pipe.source())))
               val output = BufferedOutputStream(Channels.newOutputStream(pipe.sink()))
               action(input, output)
             }

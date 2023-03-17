@@ -16,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.channels.Pipe;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Vladislav.Soroka
@@ -47,8 +46,7 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
     myExecutionName = executionName;
     try {
       Pipe pipe = Pipe.open();
-      var input = new BufferedInputStream(Channels.newInputStream(pipe.source()));
-      myProcessInputReader = new DiscardingInputStream(input, 1, TimeUnit.SECONDS);
+      myProcessInputReader = new DiscardingInputStream(new BufferedInputStream(Channels.newInputStream(pipe.source())));
       myProcessInputWriter = new BufferedOutputStream(Channels.newOutputStream(pipe.sink()));
     }
     catch (IOException e) {
@@ -146,12 +144,7 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   private static void closeStream(@Nullable Closeable stream) {
     if (stream != null) {
       try {
-        if (stream instanceof DiscardingInputStream deferred) {
-          deferred.discardAndClose();
-        }
-        else {
-          stream.close();
-        }
+        stream.close();
       }
       catch (IOException e) {
         LOG.error(e);
