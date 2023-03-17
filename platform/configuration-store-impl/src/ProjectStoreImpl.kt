@@ -6,10 +6,8 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
@@ -63,13 +61,6 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
       return storedName
     }
 
-    for (projectNameProvider in ProjectNameProvider.EP_NAME.lazySequence()) {
-      runCatching {
-        projectNameProvider.getDefaultName(project)
-      }
-        .getOrLogException(LOG)
-        ?.let { return it }
-    }
     return JpsPathUtil.getDefaultProjectName(projectDir)
   }
 
