@@ -11,7 +11,7 @@ use anyhow::Result;
 };
 
 #[cfg(target_os = "linux")] use {
-    anyhow::{bail, Context},
+    anyhow::Context,
     log::{debug, info},
     std::path::PathBuf,
     utils::read_file_to_end

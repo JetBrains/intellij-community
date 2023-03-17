@@ -4,6 +4,7 @@ use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
+use std::os::unix::fs::PermissionsExt;
 use anyhow::{bail, Result};
 use log::debug;
 
@@ -20,6 +21,18 @@ pub fn canonical_non_unc(path: &Path) -> Result<String> {
     let canonical = path.canonicalize()?;
     let os_str = canonical.as_os_str().to_string_lossy().to_string();
     Ok(os_str)
+}
+
+#[cfg(any(target_os = "macos", target_os = "linux"))]
+pub fn is_executable(path: &Path) -> Result<bool>{
+    let permissions = path.metadata()?.permissions();
+    let is_executable = permissions.mode() & 0o111 != 0;
+    Ok(path.is_file() && is_executable)
+}
+
+#[cfg(any(target_os = "windows"))]
+pub fn is_executable(path: &Path) -> Result<bool>{
+    Ok(true)
 }
 
 pub fn get_readable_file_from_env_var<S:AsRef<OsStr>>(env_var_name: S) -> Result<PathBuf> {

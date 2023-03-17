@@ -6,7 +6,6 @@ mod tests {
     use std::fs;
     use std::path::Path;
     use std::process::ExitStatus;
-    use is_executable::IsExecutable;
     use rstest::*;
     use crate::utils::*;
 
@@ -14,6 +13,7 @@ mod tests {
     use {
         std::os::unix::process::ExitStatusExt
     };
+    use utils::is_executable;
 
     #[rstest]
     #[case::main_bin(& LayoutSpec {launcher_location: LauncherLocation::MainBin, java_type: JavaType::JBR})]
@@ -155,14 +155,14 @@ mod tests {
         let idea_jdk = get_custom_user_file_with_java_path().unwrap().join("idea.jdk");
         let idea_jdk_content = fs::read_to_string(&idea_jdk).unwrap();
         let resolved_jdk_path = Path::new(&idea_jdk_content);
-        let resolved_jdk = get_bin_java_path(resolved_jdk_path);
+        let java_executable = get_bin_java_path(resolved_jdk_path);
         let metadata = idea_jdk.metadata().unwrap();
 
         assert!(idea_jdk.exists(), "Config file is not exists");
         assert_ne!(0, metadata.len(), "Config file is empty");
         assert!(resolved_jdk_path.exists(), "JDK from idea.jdk is not exists");
-        assert!(resolved_jdk.exists(), "JDK from idea.jdk is not exists");
-        assert!(resolved_jdk.is_executable(), "Java executable from JDK is not executable");
+        assert!(java_executable.exists(), "Java executable idea.jdk is not exists");
+        assert!(is_executable(&java_executable).expect("Failed to check java executable"), "Java executable from JDK is not executable");
         assert_eq!(
             &dump.systemProperties["java.home"],
             &idea_jdk_content.to_string(),
@@ -199,7 +199,7 @@ mod tests {
         assert!(jbr_dir.exists(), "JBR dir is not exists");
         assert!(jbr_dir.is_dir(), "Resolved JBR dir is not a directory");
         assert!(java_executable.exists(), "Resolved java executable is not exists");
-        assert!(java_executable.is_executable(), "Resolved java executable is not executable");
+        assert!(is_executable(&java_executable).expect("Failed to check java executable"), "Resolved java executable is not executable");
         // todo: turn on after wrapper with https://github.com/mfilippov/gradle-jvm-wrapper/pull/31
         // assert_eq!(
         //     &dump.systemProperties["java.vendor"],
@@ -241,9 +241,9 @@ mod tests {
                 .exists(),
             "Java executable from JDK does not exists"
         );
+        let java_executable = get_bin_java_path(&Path::new(&dump.environmentVariables["JDK_HOME"]));
         assert!(
-            get_bin_java_path(&Path::new(&dump.environmentVariables["JDK_HOME"]))
-                .is_executable(),
+            is_executable(&java_executable).expect("Failed to check java executable"),
             "Java executable from JDK is not executable"
         );
         assert!(

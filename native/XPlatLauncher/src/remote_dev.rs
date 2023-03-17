@@ -4,7 +4,6 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 use log::{debug, info};
-use path_absolutize::Absolutize;
 use anyhow::{bail, Context, Result};
 use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, read_file_to_end};
 use crate::{DefaultLaunchConfiguration, get_cache_home, get_config_home, get_known_intellij_commands, get_logs_home, get_remote_dev_env_vars, IjStarterCommand, LaunchConfiguration};
@@ -48,21 +47,11 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         self.default.get_class_path()
     }
 
-    #[cfg(any(target_os = "macos", target_os = "windows"))]
     fn prepare_for_launch(&self) -> Result<PathBuf> {
         init_env_vars()?;
         let project_trust_file = self.init_project_trust_file_if_needed()?;
         debug!("Project trust file is: {:?}", project_trust_file);
 
-        self.default.prepare_for_launch()
-    }
-
-    #[cfg(target_os = "linux")]
-    fn prepare_for_launch(&self) -> Result<PathBuf> {
-        init_env_vars()?;
-        self.init_project_trust_file_if_needed()?;
-
-        // TODO: ld patching
         self.default.prepare_for_launch()
     }
 }
@@ -234,16 +223,7 @@ impl RemoteDevLaunchConfiguration {
             bail!("Project path does not exist: {project_path_string}");
         }
 
-        // if [ -d "$PROJECT_PATH" ]; then
-        // PROJECT_PATH="$(cd "$PROJECT_PATH" && pwd)"
-        // else
-        // PROJECT_PATH="$(cd "$(dirname "$PROJECT_PATH")" && pwd)/$(basename "$PROJECT_PATH")"
-        // fi
-
-        // taking parent dir in the bash launcher was added by @mfillipov for macos, let's ignore it
-        let absolute_project_path = project_path.absolutize()?.to_path_buf();
-
-        return Ok(absolute_project_path);
+        return Ok(project_path);
     }
 
     pub fn new(project_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {

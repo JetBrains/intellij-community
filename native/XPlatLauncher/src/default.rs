@@ -5,7 +5,7 @@ use std::io::BufReader;
 use std::path::{Path, PathBuf};
 use log::{debug, warn};
 use anyhow::{bail, Context, Result};
-use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, get_readable_file_from_env_var, is_readable, PathExt, read_file_to_end};
+use utils::{canonical_non_unc, get_current_exe, get_path_from_env_var, get_readable_file_from_env_var, is_executable, is_readable, PathExt, read_file_to_end};
 
 use crate::{get_config_home, LaunchConfiguration, ProductInfo};
 
@@ -255,7 +255,7 @@ impl DefaultLaunchConfiguration {
         // TODO: non-mac
         let java_executable = get_bin_java_path(&jbr_dir);
 
-        match is_executable::is_executable(&java_executable) {
+        match is_executable(&java_executable)? {
             true => Ok(java_executable),
             // TODO: check if exists, separate method
             false => bail!("{java_executable:?} is not an executable")
@@ -294,7 +294,7 @@ impl DefaultLaunchConfiguration {
 
         let java_executable = get_bin_java_path(&user_jre_path);
 
-        match is_executable::is_executable(&java_executable) {
+        match is_executable(&java_executable)? {
             true => { Ok(java_executable) }
             false => {
                 bail!("{java_executable:?} specified in {jre_path_file:?} is not a valid executable");
@@ -320,7 +320,7 @@ impl DefaultLaunchConfiguration {
         }
 
         // TODO: write the same code ourselves instead of using is_executable crate?
-        if !is_executable::is_executable(&java_executable) {
+        if !is_executable(&java_executable)? {
             bail!("{java_executable:?} is not an executable file");
         }
 
