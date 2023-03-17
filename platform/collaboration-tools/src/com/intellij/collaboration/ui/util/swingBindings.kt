@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
+import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -184,6 +185,14 @@ fun <D> Wrapper.bindContent(scope: CoroutineScope, dataFlow: Flow<D>,
           repaint()
         }
       }
+    }
+  }
+}
+
+fun ProgressStripe.bindProgress(scope: CoroutineScope, loadingFlow: Flow<Boolean>) {
+  scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    loadingFlow.collect {
+      if (it) startLoadingImmediately() else stopLoading()
     }
   }
 }

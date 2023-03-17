@@ -20,6 +20,8 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 private val LOG = logger<GitLabMergeRequest>()
 
 interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
+  val isLoading: Flow<Boolean>
+
   val number: String
   val url: String
   val author: GitLabUserDTO
@@ -77,6 +79,9 @@ internal class LoadedGitLabMergeRequest(
 
   private val glProject = projectMapping.repository
 
+  private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
+  override val isLoading: Flow<Boolean> = _isLoading.asSharedFlow()
+
   override val number: String = mergeRequest.iid
   override val url: String = mergeRequest.webUrl
   override val author: GitLabUserDTO = mergeRequest.author
@@ -126,8 +131,14 @@ internal class LoadedGitLabMergeRequest(
   init {
     cs.launch(cs.coroutineContext + Dispatchers.IO) {
       mergeRequestRefreshRequest.collectLatest {
-        val updatedMergeRequest = api.loadMergeRequest(glProject, mergeRequestDetailsState.value).body()!!
-        mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+        try {
+          _isLoading.value = true
+          val updatedMergeRequest = api.loadMergeRequest(glProject, mergeRequestDetailsState.value).body()!!
+          mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
+        }
+        finally {
+          _isLoading.value = false
+        }
       }
     }
   }

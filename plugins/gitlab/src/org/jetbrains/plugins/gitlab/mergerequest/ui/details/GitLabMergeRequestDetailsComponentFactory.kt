@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details
 
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.LoadingLabel
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.details.ReviewDetailsUIUtil
@@ -44,7 +45,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Error -> SimpleHtmlPane(loadingState.exception.localizedMessage)
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> {
             val detailsVm = loadingState.detailsVm
-            createDetailsComponent(project, contentCs, detailsVm, avatarIconsProvider).apply {
+            val detailsPanel = createDetailsComponent(project, contentCs, detailsVm, avatarIconsProvider).apply {
               val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Requests.Details.Popup") as ActionGroup
               PopupHandler.installPopupMenu(this, actionGroup, "GitLabMergeRequestDetailsPanelPopup")
               DataManager.registerDataProvider(this) { dataId ->
@@ -54,6 +55,8 @@ internal object GitLabMergeRequestDetailsComponentFactory {
                 }
               }
             }
+
+            return@bindContent CollaborationToolsUIUtil.wrapWithProgressStripe(scope, detailsVm.isLoading, detailsPanel)
           }
         }
       }

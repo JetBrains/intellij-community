@@ -5,11 +5,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 
 internal interface GitLabMergeRequestDetailsViewModel {
+  val isLoading: Flow<Boolean>
+
   val detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel
   val detailsReviewFlowVm: GitLabMergeRequestReviewFlowViewModel
   val changesVm: GitLabMergeRequestChangesViewModel
@@ -27,8 +30,11 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
 
   private val cs = parentCs.childScope()
 
-  override val repository = projectData.projectMapping.remote.repository
+  override val isLoading: Flow<Boolean> = mergeRequest.isLoading
+
   override val detailsInfoVm = GitLabMergeRequestDetailsInfoViewModelImpl(cs, mergeRequest)
   override val detailsReviewFlowVm = GitLabMergeRequestReviewFlowViewModelImpl(project, cs, currentUser, projectData, mergeRequest)
   override val changesVm = GitLabMergeRequestChangesViewModelImpl(cs, mergeRequest.changes)
+
+  override val repository = projectData.projectMapping.remote.repository
 }
