@@ -118,7 +118,9 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   @Internal
   @JvmField
-  val isDispatchingOnMainThread: Boolean = Thread.currentThread().name.contains("AppKit")
+  val isDispatchingOnMainThread: Boolean = Thread.currentThread().name.contains("AppKit").also {
+    if (it) System.setProperty("jb.dispatching.on.main.thread", "true")
+  }
 
   private var idleTracker: () -> Unit = {}
 

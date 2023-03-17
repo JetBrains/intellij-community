@@ -92,7 +92,8 @@ public final class ThreadDumper {
   }
 
   public static boolean isEDT(@Nullable String threadName) {
-    return threadName != null && threadName.startsWith("AWT-EventQueue");
+    return threadName != null && (Boolean.getBoolean("jb.dispatching.on.main.thread")? threadName.contains("AppKit")
+                                                                                     : threadName.startsWith("AWT-EventQueue"));
   }
 
   private static StackTraceElement [] dumpThreadInfos(ThreadInfo @NotNull [] threadInfo, @NotNull Writer f) {
