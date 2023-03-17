@@ -6,11 +6,10 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.javadoc.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -400,8 +399,25 @@ public class SnippetMarkup {
 
   private static @NotNull List<@NotNull PlainText> preparse(@NotNull PsiSnippetDocTagBody body) {
     List<PlainText> output = new ArrayList<>();
-    for (PsiElement element : body.getContent()) {
-      output.add(new PlainText(element.getTextRangeInParent().grown(1), element.getText() + "\n"));
+    for (PsiElement element : body.getChildren()) {
+      if (element instanceof PsiDocToken token) {
+        IElementType tokenType = token.getTokenType();
+        if (tokenType.equals(JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)) continue;
+        if (tokenType.equals(JavaDocTokenType.DOC_COMMENT_DATA)) {
+          output.add(new PlainText(element.getTextRangeInParent(), element.getText()));
+        }
+      }
+      else if (element instanceof PsiWhiteSpace) {
+        String text = element.getText();
+        if (text.contains("\n")) {
+          int idx = output.size() - 1;
+          if (idx >= 0 && !output.get(idx).content().endsWith("\n")) {
+            output.set(idx, new PlainText(output.get(idx).range(), output.get(idx).content() + "\n"));
+          } else {
+            output.add(new PlainText(element.getTextRange(), "\n"));
+          }
+        }
+      }
     }
     return output;
   }
