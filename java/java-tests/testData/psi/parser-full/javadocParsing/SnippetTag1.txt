@@ -13,15 +13,15 @@ PsiJavaFile:SnippetTag1.java
       PsiSnippetDocTag
         PsiDocToken:DOC_INLINE_TAG_START('{')
         PsiDocToken:DOC_TAG_NAME('@snippet')
-        PsiWhiteSpace(' ')
         PsiSnippetDocTagValue
+          PsiWhiteSpace(' ')
           PsiSnippetAttributeList
             PsiSnippetAttribute:class
               PsiDocToken:DOC_TAG_ATTRIBUTE_NAME('class')
               PsiDocToken:DOC_TAG_VALUE_TOKEN('=')
               PsiSnippetAttributeValue:ClassName('ClassName')
-          PsiWhiteSpace(' ')
           PsiSnippetDocTagBody
+            PsiWhiteSpace(' ')
             PsiDocToken:DOC_TAG_VALUE_COLON(':')
             PsiWhiteSpace('\n ')
             PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('*')

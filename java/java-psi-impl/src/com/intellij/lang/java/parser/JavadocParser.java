@@ -2,6 +2,7 @@
 package com.intellij.lang.java.parser;
 
 import com.intellij.lang.PsiBuilder;
+import com.intellij.lang.WhitespacesBinders;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
@@ -161,6 +162,7 @@ public final class JavadocParser {
   private static void parseSnippetTagValue(PsiBuilder builder) {
     // we are right after @snippet
     PsiBuilder.Marker snippetValue = builder.mark();
+    snippetValue.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, WhitespacesBinders.GREEDY_RIGHT_BINDER);
 
     // recovery, when "foo" goes right after @snippet
     while (true) {
@@ -193,6 +195,7 @@ public final class JavadocParser {
 
   private static void parseSnippetTagBody(PsiBuilder builder) {
     PsiBuilder.Marker body = builder.mark();
+    body.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, WhitespacesBinders.GREEDY_RIGHT_BINDER);
     assert getTokenType(builder) == JavaDocTokenType.DOC_TAG_VALUE_COLON;
     builder.advanceLexer();
     while (true) {
