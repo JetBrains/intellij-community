@@ -650,7 +650,7 @@ public class JavaDocInfoGenerator {
     }
 
     if (docURLs != null) {
-      if (buffer.length() > 0 && elementHasSourceCode()) {
+      if (!buffer.isEmpty() && elementHasSourceCode()) {
         LOG.debug("Documentation for " + myElement + " was generated from source code, it wasn't found at following URLs: ", docURLs);
       }
       else {
@@ -1873,20 +1873,11 @@ public class JavaDocInfoGenerator {
       }
       return;
     }
-    int indent = markup.getCommonIndent(region);
     markup.visitSnippet(region, true, new SnippetVisitor() {
       @Override
       public void visitPlainText(@NotNull PlainText plainText,
                                  @NotNull List<@NotNull LocationMarkupNode> activeNodes) {
         String content = plainText.content();
-        int curIndent = 0;
-        while (curIndent < indent &&
-               curIndent < content.length() &&
-               content.charAt(curIndent) != '\n' &&
-               Character.isWhitespace(content.charAt(curIndent))) {
-          curIndent++;
-        }
-        content = content.substring(curIndent);
         for (LocationMarkupNode node : activeNodes) {
           UnaryOperator<String> replacement;
           if (node instanceof Highlight highlight) {
@@ -2957,7 +2948,7 @@ public class JavaDocInfoGenerator {
     for (; cls != null; cls = cls.getContainingClass()) {
       String name = cls.getName();
       if (name == null) break;
-      if (result.length() > 0) result.insert(0, '.');
+      if (!result.isEmpty()) result.insert(0, '.');
       result.insert(0, name);
     }
     return result.toString();

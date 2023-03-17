@@ -401,7 +401,7 @@ public class SnippetMarkup {
   private static @NotNull List<@NotNull PlainText> preparse(@NotNull PsiSnippetDocTagBody body) {
     List<PlainText> output = new ArrayList<>();
     for (PsiElement element : body.getContent()) {
-      output.add(new PlainText(element.getTextRangeInParent(), element.getText()));
+      output.add(new PlainText(element.getTextRangeInParent().grown(1), element.getText() + "\n"));
     }
     return output;
   }
@@ -620,13 +620,17 @@ public class SnippetMarkup {
   /**
    * Visit elements of the snippet within given region
    *
-   * @param region              region to visit
-   * @param processReplacements if true, {@code @replace} tags will be processed automatically and not passed to the visitor
-   * @param visitor             visitor to use
+   * @param region     region to visit
+   * @param preprocess if true, {@code @replace} tags will be processed automatically and not passed to the visitor;
+   *                   also common indent will be stripped automatically from {@link PlainText} nodes. This option
+   *                   is useful if you want to actually render markup. In this case, you only have to process
+   *                   {@link Highlight} and {@link Link} tags.
+   * @param visitor    visitor to use
    */
-  public void visitSnippet(@Nullable String region, boolean processReplacements, @NotNull SnippetVisitor visitor) {
+  public void visitSnippet(@Nullable String region, boolean preprocess, @NotNull SnippetVisitor visitor) {
     Stack<String> regions = new Stack<>();
     Map<String, List<LocationMarkupNode>> active = new LinkedHashMap<>();
+    int commonIndent = preprocess ? getCommonIndent(region) : 0;
     for (MarkupNode node : myNodes) {
       if (node instanceof StartRegion start) {
         regions.push(start.region());
@@ -651,10 +655,12 @@ public class SnippetMarkup {
       }
       else if (node instanceof PlainText plainText) {
         if (region == null || regions.contains(region)) {
+          plainText = stripIndent(plainText, commonIndent);
           List<LocationMarkupNode> flatActive = StreamEx.ofValues(active).toFlatList(Function.identity());
-          if (processReplacements) {
+          if (preprocess) {
             processReplacements(visitor, plainText, flatActive);
-          } else {
+          }
+          else {
             visitor.visitPlainText(plainText, flatActive);
           }
         }
@@ -669,6 +675,21 @@ public class SnippetMarkup {
         }
       }
     }
+  }
+
+  private static PlainText stripIndent(PlainText plainText, int commonIndent) {
+    if (commonIndent <= 0) return plainText;
+    String content = plainText.content();
+    int curIndent = 0;
+    while (curIndent < commonIndent &&
+           curIndent < content.length() &&
+           content.charAt(curIndent) != '\n' &&
+           Character.isWhitespace(content.charAt(curIndent))) {
+      curIndent++;
+    }
+    if (curIndent == 0) return plainText;
+    content = content.substring(curIndent);
+    return new PlainText(TextRange.create(plainText.range().getStartOffset() + curIndent, plainText.range().getEndOffset()), content);
   }
 
   private static void processReplacements(@NotNull SnippetVisitor visitor, @NotNull PlainText plainText, @NotNull List<LocationMarkupNode> flatActive) {
