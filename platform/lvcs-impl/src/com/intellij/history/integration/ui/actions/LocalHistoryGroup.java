@@ -22,7 +22,7 @@ public class LocalHistoryGroup extends NonTrivialActionGroup implements DumbAwar
     PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
     if (project == null ||
         ActionPlaces.isPopupPlace(e.getPlace()) && (
-          file != null && !(file.isInLocalFileSystem() || VersionManagingFileSystem.isFsSupported(file)) || file == null && element != null)) {
+          file != null && !(file.isInLocalFileSystem() || VersionManagingFileSystem.isEnforcedNonLocal(file)) || file == null && element != null)) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {

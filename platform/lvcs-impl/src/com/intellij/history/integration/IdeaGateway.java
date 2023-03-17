@@ -55,7 +55,7 @@ public class IdeaGateway {
       return false;
     }
     if (!f.isInLocalFileSystem()) {
-      return VersionManagingFileSystem.isFsSupported(f);
+      return VersionManagingFileSystem.isEnforcedNonLocal(f);
     }
 
     if (!f.isDirectory()) {
@@ -272,7 +272,7 @@ public class IdeaGateway {
     List<VirtualFile> roots = new SmartList<>();
 
     for (VirtualFile root : ManagingFS.getInstance().getRoots()) {
-      if ((root.isInLocalFileSystem() || VersionManagingFileSystem.isFsSupported(root)) && !(root.getFileSystem() instanceof TempFileSystem)) {
+      if ((root.isInLocalFileSystem() || VersionManagingFileSystem.isEnforcedNonLocal(root)) && !(root.getFileSystem() instanceof TempFileSystem)) {
         roots.add(root);
       }
     }

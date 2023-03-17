@@ -8,41 +8,41 @@ import org.jetbrains.annotations.NotNull;
  * VirtualFileSystem interface to control file appearance in a local history.
  */
 public interface VersionManagingFileSystem {
-  enum Type {
+  enum VersioningType {
     /**
      * File is excluded from local history. Used to explicitly suppress file history collection.
      */
     DISABLED,
 
     /**
-     * File's history by the IDE's own local history manager.
+     * File's history is managed by the IDE's local history manager if it's a local source file.
      */
     LOCAL,
 
     /**
-     * File's history is managed by the virtual file system.
+     * File's history is managed by the IDE's local history manager even if it's a non-local file.
      *
      */
-    FILE_SYSTEM
+    ENFORCED_NON_LOCAL
   }
 
   /**
-   * Determines a versioning type of the given virtual file.
+   * Determines a local history type of the given virtual file.
    *
    * @param file The file to check.
-   * @return File versioning {@link Type}
+   * @return File versioning {@link VersioningType}
    */
-  Type getVersioningType(@NotNull VirtualFile file);
+  VersioningType getVersioningType(@NotNull VirtualFile file);
 
   /**
-   * A helper method to check if file's history is managed by the virtual file system extending {@code VersionManagingFileSystem} interface.
+   * A helper method to check if file's history is enforced for the file from a non-local file system.
    *
    * @param file The file to check.
-   * @return True if file's history is managed by the file system.
+   * @return True if file's history is managed by the local history manager.
    */
-  static boolean isFsSupported(@NotNull VirtualFile file) {
+  static boolean isEnforcedNonLocal(@NotNull VirtualFile file) {
     return ObjectUtils.doIfCast(file.getFileSystem(), VersionManagingFileSystem.class,
-                                fs -> fs.getVersioningType(file)) == Type.FILE_SYSTEM;
+                                fs -> fs.getVersioningType(file)) == VersioningType.ENFORCED_NON_LOCAL;
   }
 
   /**
@@ -53,6 +53,6 @@ public interface VersionManagingFileSystem {
    */
   static boolean isDisabled(@NotNull VirtualFile file) {
     return ObjectUtils.doIfCast(file.getFileSystem(), VersionManagingFileSystem.class,
-                                fs -> fs.getVersioningType(file)) == Type.DISABLED;
+                                fs -> fs.getVersioningType(file)) == VersioningType.DISABLED;
   }
 }

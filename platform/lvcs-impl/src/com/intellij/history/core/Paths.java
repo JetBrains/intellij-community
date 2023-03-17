@@ -123,7 +123,7 @@ public final class Paths {
 
   @NotNull
   public static FilePath createDvcsFilePath(@NotNull VirtualFile file) {
-    if (VersionManagingFileSystem.isFsSupported(file)) {
+    if (VersionManagingFileSystem.isEnforcedNonLocal(file)) {
       return new UrlFilePath(file.getUrl(), file.isDirectory());
     }
     else {
