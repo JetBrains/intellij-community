@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
-import com.google.common.collect.HashBiMap
 import com.intellij.facet.*
 import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
@@ -200,15 +199,6 @@ open class FacetModelBridge(private val moduleBridge: ModuleBridge) : FacetModel
       facet.readExternal(loadedConfiguration)
     }
     return facet
-  }
-
-  fun populateFrom(mapping: HashBiMap<FacetEntity, Facet<*>>) {
-    updateDiffOrStorage {
-      for ((entity, facet) in mapping) {
-        this.addMapping(entity, facet)
-      }
-    }
-    facetsChanged()
   }
 
   public override fun facetsChanged() {

@@ -317,7 +317,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
 
   @RequiresWriteLock
   fun dropMappings(selector: (ArtifactEntity) -> Boolean) {
-    // XXX @RequiresReadLock annotation doesn't work for kt now
+    // XXX @RequiresWriteLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     (project.workspaceModel as WorkspaceModelImpl).updateProjectModelSilent("Drop artifact mappings") {
       val map = it.mutableArtifactsMap

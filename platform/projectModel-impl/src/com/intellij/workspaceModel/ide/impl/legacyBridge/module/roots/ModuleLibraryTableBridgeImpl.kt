@@ -8,8 +8,6 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
@@ -28,7 +26,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
     Disposer.register(moduleBridge, this)
   }
 
-  fun registerModuleLibraryInstances(builder: MutableEntityStorage?) {
+  fun registerModuleLibraryInstances(builder: MutableEntityStorage) {
     libraryEntities().forEach { addLibrary(it, builder) }
   }
 
@@ -55,7 +53,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
     return false
   }
 
-  fun addLibrary(entity: LibraryEntity, storageBuilder: MutableEntityStorage?): LibraryBridgeImpl {
+  fun addLibrary(entity: LibraryEntity, storageBuilder: MutableEntityStorage): LibraryBridgeImpl {
     val library = LibraryBridgeImpl(
       libraryTable = this,
       project = module.project,
@@ -63,14 +61,7 @@ class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : Mod
       initialEntityStorage = moduleBridge.entityStorage,
       targetBuilder = storageBuilder
     )
-    if (storageBuilder != null) {
-      storageBuilder.mutableLibraryMap.addMapping(entity, library)
-    }
-    else {
-      (WorkspaceModel.getInstance(moduleBridge.project) as WorkspaceModelImpl).updateProjectModelSilent("Add module library mapping") {
-        it.mutableLibraryMap.addMapping(entity, library)
-      }
-    }
+    storageBuilder.mutableLibraryMap.addMapping(entity, library)
     return library
   }
 
