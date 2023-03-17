@@ -15,6 +15,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.PingProgress;
+import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
@@ -92,7 +93,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
 
     @Override
-    public void afterLastTask() {
+    public void afterLastTask(SubmissionReceipt latestReceipt) {
       boolean changed = myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.WAITING_FOR_FINISH);
       LOG.assertTrue(changed, "Failed to change state: SCHEDULED_TASKS>WAITING_FOR_FINISH. Current state: " + myState.get());
       myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(DumbServiceImpl.this::updateFinished);

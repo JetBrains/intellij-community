@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
+import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -20,9 +21,9 @@ final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask>
   }
 
   @Override
-  protected void processTasksWithProgress(@NotNull ProgressSuspender suspender,
-                                          @NotNull ProgressIndicator visibleIndicator,
-                                          @Nullable StructuredIdeActivity parentActivity) {
+  protected SubmissionReceipt processTasksWithProgress(@NotNull ProgressSuspender suspender,
+                                                       @NotNull ProgressIndicator visibleIndicator,
+                                                       @Nullable StructuredIdeActivity parentActivity) {
     Project project = getProject();
     StructuredIdeActivity childActivity = createChildActivity(parentActivity);
 
@@ -30,7 +31,7 @@ final class DumbServiceGuiExecutor extends MergingQueueGuiExecutor<DumbModeTask>
       DumbServiceAppIconProgress.registerForProgress(project, (ProgressIndicatorEx)visibleIndicator);
       DumbModeProgressTitle.getInstance(project).attachDumbModeProgress(visibleIndicator);
 
-      super.processTasksWithProgress(suspender, visibleIndicator, childActivity);
+      return super.processTasksWithProgress(suspender, visibleIndicator, childActivity);
     }
     finally {
       DumbModeStatisticsCollector.logProcessFinished(childActivity, suspender.isClosed()

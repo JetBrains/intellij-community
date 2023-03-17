@@ -3,6 +3,7 @@ package com.intellij.openapi.project
 
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.MergingQueueGuiExecutor.ExecutorStateListener
+import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.project.MergingTaskQueueTest.LoggingTask
 import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SystemProperties
@@ -22,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.random.Random
+import kotlin.test.assertNotNull
 
 
 private fun Phaser.arriveAndAwaitAdvanceWithTimeout() {
@@ -32,6 +34,7 @@ private open class ValidatingListener(private val exceptionRef: AtomicReference<
   val isRunning = AtomicBoolean(false)
   var beforeCount: Int = 0
   var afterCount: Int = 0
+  var lastProcessedReceipt: SubmissionReceipt? = null
   override fun beforeFirstTask(): Boolean {
     try {
       beforeCount++
@@ -45,11 +48,16 @@ private open class ValidatingListener(private val exceptionRef: AtomicReference<
     }
   }
 
-  override fun afterLastTask() {
+  override fun afterLastTask(latestReceipt: SubmissionReceipt?) {
     try {
       afterCount++
       val wasRunning = isRunning.getAndSet(false)
       TestCase.assertTrue(wasRunning)
+      assertNotNull(latestReceipt)
+      lastProcessedReceipt?.let {
+        TestCase.assertTrue("Receipts should increase", latestReceipt.isAfter(it))
+      }
+      lastProcessedReceipt = latestReceipt
     }
     catch (t: Throwable) {
       exceptionRef.set(t)
@@ -72,9 +80,9 @@ private class PhasedListener(private val exceptionRef: AtomicReference<Throwable
     }
   }
 
-  override fun afterLastTask() {
+  override fun afterLastTask(latestReceipt: SubmissionReceipt?) {
     try {
-      super.afterLastTask()
+      super.afterLastTask(latestReceipt)
       phaser.arriveAndDeregister()
     }
     catch (t: Throwable) {

@@ -109,9 +109,16 @@ public final class ShutDownTracker implements Runnable {
   }
 
   public void executeWithStopperThread(@NotNull Thread thread, @NotNull Runnable runnable) {
+    computeWithStopperThread(thread, () -> {
+      runnable.run();
+      return null;
+    });
+  }
+
+  public <T, E extends Throwable> T computeWithStopperThread(@NotNull Thread thread, @NotNull ThrowableComputable<T, E> runnable) throws E {
     myThreads.add(thread);
     try {
-      runnable.run();
+      return runnable.compute();
     }
     finally {
       myThreads.remove(thread);

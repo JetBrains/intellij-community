@@ -9,8 +9,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -42,7 +42,7 @@ public final class UnindexedFilesScannerExecutor extends MergingQueueGuiExecutor
     }
 
     @Override
-    public void afterLastTask() {
+    public void afterLastTask(SubmissionReceipt latestReceipt) {
       projectLevelEventPublisher.filesScanningFinished();
     }
   }

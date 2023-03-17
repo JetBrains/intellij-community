@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
+import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.UserDataHolder;
@@ -24,13 +25,13 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * Single-threaded executor for {@link MergingTaskQueue}.
  */
 @ApiStatus.Experimental
 public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
-
   private static final Logger LOG = Logger.getInstance(MergingQueueGuiExecutor.class);
 
   @ApiStatus.Experimental
@@ -44,8 +45,15 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
      * beforeFirstTask and afterLastTask always follow one after another. Receiving several beforeFirstTask or afterLastTask in row is
      * always a failure of DumbServiceGuiTaskQueue (except the situation when beforeFirstTask returns false - in this case afterLastTask
      * will NOT be invoked)
+     *
+     * @param latestReceipt latest submission receipt as returned by {@linkplain MergingTaskQueue#getLatestSubmissionReceipt()} before
+     *                      the queue reported that it is empty.
+     *                      <p>
+     *                      {@code null} when executor has terminated before the queue is empty (e.g. because the
+     *                      executor was paused, or unexpected internal error has happened in the executor preventing it from
+     *                      further queue processing)
      */
-    void afterLastTask();
+    void afterLastTask(@Nullable SubmissionReceipt latestReceipt);
   }
 
   private static class SafeExecutorStateListenerWrapper implements ExecutorStateListener {
@@ -70,9 +78,9 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     }
 
     @Override
-    public void afterLastTask() {
+    public void afterLastTask(SubmissionReceipt latestReceipt) {
       try {
-        delegate.afterLastTask();
+        delegate.afterLastTask(latestReceipt);
       }
       catch (ProcessCanceledException pce) {
         throw pce;
@@ -109,17 +117,20 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     });
   }
 
-  protected void processTasksWithProgress(@NotNull ProgressSuspender suspender,
-                                          @NotNull ProgressIndicator visibleIndicator,
-                                          @Nullable StructuredIdeActivity activity) {
-    myGuiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender, () -> {
+  protected @Nullable SubmissionReceipt processTasksWithProgress(@NotNull ProgressSuspender suspender,
+                                                                 @NotNull ProgressIndicator visibleIndicator,
+                                                                 @Nullable StructuredIdeActivity activity) {
+    return myGuiSuspender.setCurrentSuspenderAndSuspendIfRequested(suspender, () -> {
       while (true) {
-        if (myProject.isDisposed()) break;
-        if (mySuspended.get()) break;
+        if (myProject.isDisposed()) return null;
+        if (mySuspended.get()) return null;
 
+        // There is no race: we either observe correct latestSubmittedReceipt and no next task, either non-null next task
+        // (latestSubmittedReceipt might be stale then, but it is not used in this case anyway)
+        SubmissionReceipt submittedTaskCount = myTaskQueue.getLatestSubmissionReceipt();
         mySingleTaskExecutor.clearScheduledFlag(); // reset the flag before peeking the following task
         try (MergingTaskQueue.@Nullable QueuedTask<T> task = myTaskQueue.extractNextTask()) {
-          if (task == null) break;
+          if (task == null) return submittedTaskCount;
 
           AbstractProgressIndicatorExBase taskIndicator = (AbstractProgressIndicatorExBase)task.getIndicator();
           ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(visibleIndicator);
@@ -185,19 +196,20 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     return mySingleTaskExecutor.tryStartProcess(processRunner);
   }
 
-  private void runWithCallbacks(Runnable runnable) {
+  private void runWithCallbacks(Supplier<@Nullable SubmissionReceipt> runnable) {
     boolean shouldProcessQueue = myListener.beforeFirstTask();
     if (shouldProcessQueue) {
+      SubmissionReceipt receipt = null;
       try {
-        runnable.run();
+        receipt = runnable.get();
       }
       finally {
-        myListener.afterLastTask();
+        myListener.afterLastTask(receipt);
       }
     }
   }
 
-  private void runBackgroundProcessWithSuspender(@NotNull ProgressIndicator visibleIndicator) {
+  private @Nullable SubmissionReceipt runBackgroundProcessWithSuspender(@NotNull ProgressIndicator visibleIndicator) {
     // Only one thread can execute this method at the same time at this point.
 
     try {
@@ -209,8 +221,8 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
     }
 
     try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, mySuspendedText)) {
-      ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread(), ()-> {
-        processTasksWithProgress(suspender, visibleIndicator, null);
+      return ShutDownTracker.getInstance().computeWithStopperThread(Thread.currentThread(), () -> {
+        return processTasksWithProgress(suspender, visibleIndicator, null);
       });
     }
   }

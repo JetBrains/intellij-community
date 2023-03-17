@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 class MergingQueueGuiSuspender {
   private static final Logger LOG = Logger.getInstance(MergingQueueGuiSuspender.class);
@@ -49,12 +50,12 @@ class MergingQueueGuiSuspender {
     }
   }
 
-  void setCurrentSuspenderAndSuspendIfRequested(@Nullable ProgressSuspender suspender, @NotNull Runnable runnable) {
+  <T> T setCurrentSuspenderAndSuspendIfRequested(@Nullable ProgressSuspender suspender, @NotNull Supplier<T> runnable) {
     LOG.assertTrue(myCurrentSuspender == null, "Already suspended in another thread, or recursive invocation.");
     try {
       myCurrentSuspender = suspender;
       suspendIfRequested(suspender);
-      runnable.run();
+      return runnable.get();
     }
     finally {
       LOG.assertTrue(myCurrentSuspender == suspender, "Suspender has changed unexpectedly");
