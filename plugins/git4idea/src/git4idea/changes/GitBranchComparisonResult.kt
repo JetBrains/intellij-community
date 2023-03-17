@@ -38,10 +38,14 @@ interface GitBranchComparisonResult {
   }
 }
 
-fun Map<Change, GitTextFilePatchWithHistory>.findCumulativeChange(commitSha: String, filePath: String): Change? =
-  entries.find {
-    it.value.isCumulative && it.value.contains(commitSha, filePath)
-  }?.key
+fun GitBranchComparisonResult.findCumulativeChange(commitSha: String, filePath: String): Change? {
+  for (change in changes) {
+    if (patchesByChange[change]?.contains(commitSha, filePath) == true) {
+      return change
+    }
+  }
+  return null
+}
 
 fun GitTextFilePatchWithHistory.getDiffComputer(): DiffUserDataKeysEx.DiffComputer {
   val diffRanges = patch.hunks.map(PatchHunkUtil::getChangeOnlyRanges).flatten()
