@@ -20,15 +20,52 @@ import java.awt.Dimension
 import javax.swing.*
 import javax.swing.border.CompoundBorder
 
+/**
+ * A renderer for combo boxes with separators.
+ * Instead of using a [ComboBox]<[Any]> (model with [T] and the separator) with a custom renderer,
+ * this renderer makes it possible to use [ComboBox]<[T]> and specify which items should be preceded
+ * by a separator. (see [GroupedComboBoxRenderer.separatorFor])
+ */
 abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedElementsRenderer(), ListCellRenderer<T> {
 
+  /**
+   * @return The item title displayed in the combo
+   */
   open fun getText(item: T): @NlsContexts.ListItem String = ""
+
+  /**
+   * @return A grayed text displayed after the item title, null if none
+   */
   open fun getSecondaryText(item: T): @Nls String? = null
+
+  /**
+   * @return An icon for the combo item, null if none
+   */
   open fun getIcon(item: T): Icon? = null
 
   private lateinit var coloredComponent: SimpleColoredComponent
 
   open val maxWidth: Int = -1
+
+  /**
+   * Appends text fragments to the item [SimpleColoredComponent].
+   */
+  open fun customize(item: SimpleColoredComponent, value: T, index: Int) {
+    val text = getText(value)
+    item.append(text)
+
+    val secondaryText = getSecondaryText(value)
+    if (secondaryText != null) {
+      item.append(" $secondaryText", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    }
+
+    item.icon = getIcon(value)
+  }
+
+  /**
+   * @return The separator on top of [value], null if none.
+   */
+  abstract fun separatorFor(value: T): ListSeparator?
 
   override fun layout() {
     myRendererComponent.add(mySeparatorComponent, BorderLayout.NORTH)
@@ -46,18 +83,6 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
       }
     }
     myRendererComponent.add(centerComponent, BorderLayout.CENTER)
-  }
-
-  open fun customize(item: SimpleColoredComponent, value: T, index: Int) {
-    val text = getText(value)
-    item.append(text)
-
-    val secondaryText = getSecondaryText(value)
-    if (secondaryText != null) {
-      item.append(" $secondaryText", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-    }
-
-    item.icon = getIcon(value)
   }
 
   override fun createSeparator(): SeparatorWithText = when {
@@ -88,8 +113,6 @@ abstract class GroupedComboBoxRenderer<T>(val combo: ComboBox<T>) : GroupedEleme
   override fun getForeground(): Color = if (enabled) UIUtil.getListForeground(false, false) else UIUtil.getComboBoxDisabledForeground()
   override fun getSelectionBackground(): Color = UIUtil.getListSelectionBackground(true)
   override fun getSelectionForeground(): Color = UIUtil.getListSelectionForeground(true)
-
-  abstract fun separatorFor(value: T): ListSeparator?
 
   override fun getListCellRendererComponent(list: JList<out T>?,
                                             value: T,
