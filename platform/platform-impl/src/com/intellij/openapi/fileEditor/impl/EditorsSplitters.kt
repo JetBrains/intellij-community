@@ -679,8 +679,8 @@ open class EditorsSplitters internal constructor(
   }
 
   /**
-   * sets the window passed as a current ('focused') window among all splitters. All file openings will be done inside this
-   * current window
+   * Sets the window passed as a current ('focused') window among all splitters.
+   * All file openings will be done inside this current window.
    * @param window a window to be set as current
    * @param requestFocus whether to request focus to the editor, currently selected in this window
    */
@@ -728,7 +728,7 @@ open class EditorsSplitters internal constructor(
   }
 
   @RequiresEdt
-  fun getAllComposites(file: VirtualFile): List<EditorComposite> = windows.mapNotNull { it.getComposite(file) }
+  fun getAllComposites(file: VirtualFile): List<EditorComposite> = getWindowSequence().mapNotNull { it.getComposite(file) }.toList()
 
   private fun findWindows(file: VirtualFile): List<EditorWindow> = windows.filter { it.getComposite(file) != null }
 

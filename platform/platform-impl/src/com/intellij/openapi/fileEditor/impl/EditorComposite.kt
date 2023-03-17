@@ -176,7 +176,10 @@ open class EditorComposite internal constructor(
     get() = allProviders.toTypedArray()
 
   override val allProviders: List<FileEditorProvider>
-    get() = allEditorsWithProviders.map { it.provider }
+    get() = providerSequence.toList()
+
+  internal val providerSequence: Sequence<FileEditorProvider>
+    get() = editorsWithProviders.asSequence().map { it.provider }
 
   private fun createTabbedPaneWrapper(component: EditorCompositePanel?): TabbedPaneWrapper {
     val descriptor = PrevNextActionsDescriptor(IdeActions.ACTION_NEXT_EDITOR_TAB, IdeActions.ACTION_PREVIOUS_EDITOR_TAB)
@@ -278,7 +281,7 @@ open class EditorComposite internal constructor(
     get() = allEditors.toTypedArray()
 
   override val allEditors: List<FileEditor>
-    get() = allEditorsWithProviders.map { it.fileEditor }
+    get() = editorsWithProviders.map { it.fileEditor }
 
   val allEditorsWithProviders: List<FileEditorWithProvider>
     get() = java.util.List.copyOf(editorsWithProviders)

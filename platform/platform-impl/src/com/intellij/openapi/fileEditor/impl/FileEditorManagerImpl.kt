@@ -78,7 +78,7 @@ import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.tabs.impl.JBTabsImpl
-import com.intellij.util.*
+import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.flow.zipWithNext
@@ -103,7 +103,6 @@ import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.lang.Runnable
-import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
@@ -237,7 +236,9 @@ open class FileEditorManagerImpl(
     project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       override fun exitDumbMode() {
         // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
-        ApplicationManager.getApplication().invokeLater({ dumbModeFinished(project) }, project.disposed)
+        coroutineScope.launch {
+          dumbModeFinished(project)
+        }
       }
     })
     closeFilesOnFileEditorRemoval()
@@ -245,7 +246,7 @@ open class FileEditorManagerImpl(
     if (ApplicationManager.getApplication().isUnitTestMode || forceUseUiInHeadlessMode()) {
       isInitialized.set(true)
       mainSplitters = EditorsSplitters(manager = this, coroutineScope = coroutineScope)
-      check(splitterFlow.tryEmit (mainSplitters))
+      check(splitterFlow.tryEmit(mainSplitters))
     }
   }
 
@@ -443,20 +444,37 @@ open class FileEditorManagerImpl(
     }
   }
 
-  private fun dumbModeFinished(project: Project) {
-    for (file in openedFiles) {
-      val composites = getAllComposites(file)
-      val existingProviders = composites.flatMap(EditorComposite::allProviders)
-      val existingIds = existingProviders.mapTo(HashSet()) { it.editorTypeId }
-      val newProviders = FileEditorProviderManager.getInstance().getProviderList(project, file)
-      val toOpen = newProviders.filter { !existingIds.contains(it.editorTypeId) }
-      // need to open additional non-dumb-aware editors
-      for (composite in composites) {
-        for (provider in toOpen) {
-          composite.addEditor(provider.createEditor(project, file), provider)
+  // need to open additional non-dumb-aware editors
+  private suspend fun dumbModeFinished(project: Project) {
+    val allSplitters = withContext(Dispatchers.EDT) {
+      getAllSplitters() to openedFiles
+    }
+
+    val providerManager = FileEditorProviderManager.getInstance()
+    // predictable order of iteration
+    val fileToNewProviders = openedComposites.groupByTo(LinkedHashMap()) { it.file }.entries.mapNotNull { entry ->
+      val composites = entry.value
+      val existingIds = composites.asSequence().flatMap(EditorComposite::providerSequence).mapTo(HashSet()) { it.editorTypeId }
+      val file = entry.key
+      val newProviders = providerManager.getProvidersAsync(project, file).filter { !existingIds.contains(it.editorTypeId) }
+      if (newProviders.isEmpty()) {
+        null
+      }
+      else {
+        file to composites.map { composite -> composite to newProviders.map { it to readAction { it.createEditor(project, file) } } }
+      }
+    }
+    for ((file, toOpen) in fileToNewProviders) {
+      withContext(Dispatchers.EDT) {
+        for ((composite, providerAndEditors) in toOpen) {
+          for ((provider, editor) in providerAndEditors) {
+            composite.addEditor(editor = editor, provider = provider)
+          }
+        }
+        for (each in allSplitters.first) {
+          each.updateFileBackgroundColorAsync(file)
         }
       }
-      updateFileBackgroundColor(file)
     }
 
     // update for non-dumb-aware EditorTabTitleProviders
