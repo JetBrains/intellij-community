@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginInfoProvider
 import com.intellij.ide.plugins.PluginNode
@@ -11,7 +12,9 @@ import com.intellij.ide.plugins.newui.Tags
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -171,9 +174,11 @@ class MarketplaceRequests : PluginInfoProvider {
           if (eTag != null) {
             connection.setRequestProperty("If-None-Match", eTag)
           }
-          serviceIfCreated<PluginRepositoryAuthService>()
-            ?.connectionTuner
-            ?.tune(connection)
+          if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+            serviceOrNull<PluginRepositoryAuthService>()
+              ?.connectionTuner
+              ?.tune(connection)
+          }
         }
         .productNameAsUserAgent()
         .connect { request ->
@@ -643,11 +648,14 @@ class MarketplaceRequests : PluginInfoProvider {
  * NB!: any previous tuners set by {@link RequestBuilder#tuner} will be overwritten by this call
  */
 fun RequestBuilder.setHeadersViaTuner(): RequestBuilder {
-  return ApplicationManager.getApplication()
-           ?.getServiceIfCreated(PluginRepositoryAuthService::class.java)
-           ?.connectionTuner
-           ?.let(::tuner)
-         ?: this
+  return if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+    serviceOrNull<PluginRepositoryAuthService>()
+      ?.connectionTuner
+      ?.let(::tuner) ?: this
+  }
+  else {
+    this
+  }
 }
 
 private fun loadETagForFile(file: Path): String {
