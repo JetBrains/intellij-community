@@ -272,7 +272,18 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
     // drain the queue synchronously under modal progress
-    myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(myGuiDumbTaskRunner::startBackgroundProcess);
+    myTrackedEdtActivityService.invokeLaterIfProjectNotDisposed(() -> {
+      try {
+        myGuiDumbTaskRunner.startBackgroundProcess();
+      }
+      catch (Throwable t) {
+        // There are no evidences that returning to smart mode is a good strategy. Let it be like this until the opposite is needed.
+        LOG.error("Failed to start background queue processing. Return to smart mode even though some tasks are still in the queue", t);
+        if (myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.WAITING_FOR_FINISH)) {
+          updateFinished();
+        }
+      }
+    });
   }
 
   private void enterDumbModeIfSmart(@NotNull ModalityState modality, @NotNull Throwable trace) {

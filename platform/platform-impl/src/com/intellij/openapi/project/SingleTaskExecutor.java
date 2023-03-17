@@ -66,24 +66,25 @@ class SingleTaskExecutor {
   }
 
   private void runWithStateHandling(Runnable runnable) {
-    int counter = 0;
-    do {
-      try {
-        RUN_STATE oldState = runState.getAndSet(RUN_STATE.RUNNING);
-        LOG.assertTrue(oldState == RUN_STATE.STARTING, "Old state should be STARTING, but was " + oldState);
-        // shouldContinueBackgroundProcessing is normally cleared before reading next item from the queue.
-        // Here we clear the flag just in case, if runnable fail to clear the flag (e.g. during cancellation)
-        shouldContinueBackgroundProcessing.set(false);
-        runnable.run();
+    try {
+      do {
+        try {
+          RUN_STATE oldState = runState.getAndSet(RUN_STATE.RUNNING);
+          LOG.assertTrue(oldState == RUN_STATE.STARTING, "Old state should be STARTING, but was " + oldState);
+          // shouldContinueBackgroundProcessing is normally cleared before reading next item from the queue.
+          // Here we clear the flag just in case, if runnable fail to clear the flag (e.g. during cancellation)
+          shouldContinueBackgroundProcessing.set(false);
+          runnable.run();
+        }
+        finally {
+          RUN_STATE oldState = runState.getAndSet(RUN_STATE.STOPPING);
+          LOG.assertTrue(oldState == RUN_STATE.RUNNING, "Old state should be RUNNING, but was " + oldState);
+        }
       }
-      finally {
-        RUN_STATE oldState = runState.getAndSet(RUN_STATE.STOPPING);
-        LOG.assertTrue(oldState == RUN_STATE.RUNNING, "Old state should be RUNNING, but was " + oldState);
-      }
-      counter++;
+      while (shouldContinueBackgroundProcessing.get() && runState.compareAndSet(RUN_STATE.STOPPING, RUN_STATE.STARTING));
+    } finally {
+      runState.compareAndSet(RUN_STATE.STOPPING, RUN_STATE.STOPPED);
     }
-    while (shouldContinueBackgroundProcessing.get() && runState.compareAndSet(RUN_STATE.STOPPING, RUN_STATE.STARTING));
-    runState.compareAndSet(RUN_STATE.STOPPING, RUN_STATE.STOPPED);
   }
 
   /**

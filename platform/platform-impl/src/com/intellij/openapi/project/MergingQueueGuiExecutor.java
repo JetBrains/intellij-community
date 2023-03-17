@@ -154,6 +154,12 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
             try (task) {
               task.run(visibleIndicator);
             }
+            catch (ProcessCanceledException pce) {
+              throw pce;
+            }
+            catch (Throwable t) {
+              LOG.error("Failed to execute background index update task", t);
+            }
           }
         });
       }
@@ -161,12 +167,11 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
         task.close();
         throw pce;
       }
-      catch (Throwable e) {
-        try (task) {
-          LOG.error("Failed to start background index update task", e);
-          // simulate empty queue
-          runWithCallbacks(mySingleTaskExecutor::clearScheduledFlag);
-        }
+      catch (Throwable t) {
+        task.close();
+        mySingleTaskExecutor.clearScheduledFlag();
+        LOG.error("Failed to start background index update task");
+        throw t;
       }
     });
   }
@@ -205,15 +210,7 @@ public class MergingQueueGuiExecutor<T extends MergeableQueueTask<T>> {
 
     try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, mySuspendedText)) {
       ShutDownTracker.getInstance().executeWithStopperThread(Thread.currentThread(), ()-> {
-        try {
-          processTasksWithProgress(suspender, visibleIndicator, null);
-        }
-        catch (ProcessCanceledException pce) {
-          throw pce;
-        }
-        catch (Throwable unexpected) {
-          LOG.error(unexpected);
-        }
+        processTasksWithProgress(suspender, visibleIndicator, null);
       });
     }
   }
