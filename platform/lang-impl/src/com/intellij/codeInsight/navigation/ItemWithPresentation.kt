@@ -12,6 +12,10 @@ class ItemWithPresentation(val item: Any, var presentation: TargetPresentation) 
   override fun dereference(): PsiElement? {
     return if (item is Pointer<*>) item.dereference() as PsiElement? else null
   }
+
+  override fun toString(): String {
+    return presentation.presentableText
+  }
 }
 
 fun <T: PsiElement> createItem(psiElement: T, presentationProvider: Function<T, TargetPresentation>): ItemWithPresentation {
