@@ -84,19 +84,28 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     val mainModule = options.mainModule ?: defaultMainModule!!
     checkOptions(mainModule)
 
-    val compilationTasks = create(context)
-    options.beforeRunProjectArtifacts?.splitToSequence(';')?.filterNotTo(HashSet(), String::isEmpty)?.let {
-      compilationTasks.buildProjectArtifacts(it)
-    }
-
     val runConfigurations = loadTestRunConfigurations()
-    if (runConfigurations != null) {
-      compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
-                                      listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
-      compilationTasks.buildProjectArtifacts(runConfigurations.flatMapTo(LinkedHashSet()) { it.requiredArtifacts })
+
+    try {
+      val compilationTasks = create(context)
+      options.beforeRunProjectArtifacts?.splitToSequence(';')?.filterNotTo(HashSet(), String::isEmpty)?.let {
+        compilationTasks.buildProjectArtifacts(it)
+      }
+
+      if (runConfigurations != null) {
+        compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
+                                        listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
+        compilationTasks.buildProjectArtifacts(runConfigurations.flatMapTo(LinkedHashSet()) { it.requiredArtifacts })
+      }
+      else {
+        compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"), listOf(mainModule, "intellij.platform.buildScripts"))
+      }
     }
-    else {
-      compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"), listOf(mainModule, "intellij.platform.buildScripts"))
+    catch (e: Exception) {
+      if (options.isCancelBuildOnTestPreparationFailure) {
+        throw BuildCancellationException(e)
+      }
+      throw e
     }
 
     val remoteDebugJvmOptions = System.getProperty("teamcity.remote-debug.jvm.options")
@@ -303,7 +312,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
     val testClasspath: List<String>
     val modulePath : List<String>?
-    
+
     val moduleInfoFile = JpsJavaExtensionService.getInstance().getJavaModuleIndex(context.project).getModuleInfoFile(mainJpsModule, true)
     val toStringConverter: (File) -> String? = { if (it.exists()) it.absolutePath else null }
     if (moduleInfoFile != null) {
