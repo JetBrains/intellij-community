@@ -5,9 +5,11 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.execution.wsl.AbstractWslDistribution
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.io.*
+import com.intellij.util.system.CpuArch
 import net.jpountz.xxhash.XXHashFactory
 import java.io.IOException
 import java.nio.channels.FileChannel
@@ -76,7 +78,10 @@ class WindowsFileStorage(dir: Path,
 
   override fun getHashesAndLinks(skipHashCalculation: Boolean): Pair<List<WslHashRecord>, Map<FilePathRelativeToDir, FilePathRelativeToDir>> {
     val result = ArrayList<WslHashRecord>(AVG_NUM_FILES)
-    val hashTool = XXHashFactory.nativeInstance().hash64() // Native hash can access direct (mapped) buffer a little-bit faster
+    val arch = System.getProperty("os.arch")
+    val useNativeHash = CpuArch.CURRENT == CpuArch.X86_64
+    thisLogger().info("Arch $arch, using native hash: $useNativeHash")
+    val hashTool = if (useNativeHash) XXHashFactory.nativeInstance().hash64() else XXHashFactory.safeInstance().hash64() // Native hash can access direct (mapped) buffer a little-bit faster
     val visitor = MyFileVisitor(filters, dir) { relativeToDir: FilePathRelativeToDir, file: Path, attrs: BasicFileAttributes ->
       if (skipHashCalculation || attrs.size() == 0L) { // Empty file's hash is 0, see wslhash.c
         result.add(WslHashRecord(relativeToDir, 0))
