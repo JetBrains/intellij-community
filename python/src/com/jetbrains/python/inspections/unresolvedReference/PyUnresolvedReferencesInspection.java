@@ -87,7 +87,10 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
                                                                @NotNull PsiReference reference,
                                                                String refName) {
       if (reference instanceof PyImportReference) {
-        // TODO: Ignore references in the second part of the 'from ... import ...' expression
+        final PyFromImportStatement parent = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
+        if (parent != null && !node.equals(parent.getImportSource())) {
+          return Collections.emptyList();
+        }
         final QualifiedName qname = QualifiedName.fromDottedString(refName);
         final List<String> components = qname.getComponents();
         if (!components.isEmpty()) {
