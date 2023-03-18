@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties
+import com.intellij.util.application
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel
 import com.intellij.util.ui.UIUtil
@@ -490,10 +491,13 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     val isSynchronousTaskExecution: Boolean
       get() {
         val application = ApplicationManager.getApplication()
-        return (application.isUnitTestMode || application.isHeadlessEnvironment) &&
+        return (application.isUnitTestMode || isSynchronousHeadlessApplication) &&
                !java.lang.Boolean.parseBoolean(System.getProperty(IDEA_FORCE_DUMB_QUEUE_TASKS, "false"))
       }
 
     const val IDEA_FORCE_DUMB_QUEUE_TASKS = "idea.force.dumb.queue.tasks"
+
+    private val isSynchronousHeadlessApplication: Boolean
+      get() = application.isHeadlessEnvironment && !java.lang.Boolean.getBoolean("ide.async.headless.mode")
   }
 }

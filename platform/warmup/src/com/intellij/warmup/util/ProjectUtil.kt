@@ -16,6 +16,9 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.asSafely
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.warmup.impl.WarmupConfiguratorOfCLIConfigurator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -75,6 +78,7 @@ private suspend fun importOrOpenProjectImpl(args: OpenProjectArgs): Project {
   callProjectConfigurators(args) {
     this.runWarmup(project)
 
+    FileBasedIndex.getInstance().asSafely<FileBasedIndexImpl>()?.changedFilesCollector?.ensureUpToDate()
     //the configuration may add more dumb tasks to complete
     //we flush the queue to avoid a deadlock between a modal progress & invokeLater
     yieldAndWaitForDumbModeEnd(project)
