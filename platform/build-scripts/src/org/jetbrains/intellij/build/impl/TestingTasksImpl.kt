@@ -66,6 +66,15 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
   }
 
+  private fun loadTestRunConfigurations(): List<JUnitRunConfigurationProperties>? {
+    val testConfigurationsOption = options.testConfigurations ?: return null
+    return testConfigurationsOption
+      .splitToSequence(';')
+      .filter(String::isNotEmpty)
+      .flatMap(::loadRunConfigurations)
+      .toList()
+  }
+
   override fun runTests(additionalJvmOptions: List<String>, defaultMainModule: String?, rootExcludeCondition: ((Path) -> Boolean)?) {
     if (options.isTestDiscoveryEnabled && options.isPerformanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
@@ -80,11 +89,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       compilationTasks.buildProjectArtifacts(it)
     }
 
-    val runConfigurations = options.testConfigurations
-      ?.splitToSequence(';')
-      ?.filter(String::isNotEmpty)
-      ?.flatMap(::loadRunConfigurations)
-      ?.toList()
+    val runConfigurations = loadTestRunConfigurations()
     if (runConfigurations != null) {
       compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"),
                                       listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName })
