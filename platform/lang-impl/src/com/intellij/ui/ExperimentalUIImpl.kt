@@ -101,6 +101,7 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
       return
     }
 
+    newValue = true
     NewUIInfoService.getInstance().updateEnableNewUIDate()
 
     setRegistryKeyIfNecessary("ide.experimental.ui", true)
@@ -125,6 +126,7 @@ class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
   override fun onExpUIDisabled(suggestRestart: Boolean) {
     if (ApplicationManager.getApplication().isHeadlessEnvironment) return
 
+    newValue = false
     NewUIInfoService.getInstance().updateDisableNewUIDate()
 
     setRegistryKeyIfNecessary("ide.experimental.ui", false)
