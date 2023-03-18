@@ -42,6 +42,7 @@ import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
+import com.intellij.xdebugger.impl.XDebuggerExecutionPointManager;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.XValueCompactPresentation;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
@@ -56,8 +57,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.editor.colors.EditorColors.REFERENCE_HYPERLINK_COLOR;
 
@@ -97,8 +98,7 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
   }
 
   private boolean isInExecutionPointHighlight() {
-    XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(mySession.getProject());
-    return debuggerManager.getExecutionPointManager().isFullLineHighlighterAt(myPosition);
+    return LinePainter.isFullLineHighlighter(mySession, myPosition.getFile(), myPosition.getLine(), false);
   }
 
   private static Font getFont(@NotNull Editor editor) {
@@ -413,12 +413,17 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
       return oldValues;
     }
 
-    @NotNull
-    public static TextAttributes getAttributes(int lineNumber, @NotNull VirtualFile file, XDebugSession session) {
-      boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
-      XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(session.getProject());
-      return isTopFrame && debuggerManager.getExecutionPointManager().isFullLineHighlighterAt(file, lineNumber)
+    static @NotNull TextAttributes getAttributes(int lineNumber, @NotNull VirtualFile file, XDebugSession session) {
+      return isFullLineHighlighter(session, file, lineNumber, true)
              ? getTopFrameSelectedAttributes() : getNormalAttributes();
+    }
+
+    static boolean isFullLineHighlighter(@NotNull XDebugSession session, @NotNull VirtualFile file, int lineNumber,
+                                         boolean isToCheckTopFrameOnly) {
+      Project project = session.getProject();
+      XDebuggerManagerImpl debuggerManager = (XDebuggerManagerImpl)XDebuggerManager.getInstance(project);
+      XDebuggerExecutionPointManager executionPointManager = debuggerManager.getExecutionPointManager();
+      return executionPointManager.isFullLineHighlighterAt(file, lineNumber, project, isToCheckTopFrameOnly);
     }
 
     @Nullable

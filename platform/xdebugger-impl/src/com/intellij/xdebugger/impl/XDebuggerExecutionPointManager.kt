@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorMouseHoverPopupControl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -31,7 +32,7 @@ import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter
 import com.intellij.xdebugger.ui.DebuggerColors
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow.*
+import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -57,13 +58,10 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   private val gutterIconRendererState: StateFlow<GutterIconRenderer?> = _gutterIconRendererState.asStateFlow()
   var gutterIconRenderer: GutterIconRenderer? by _gutterIconRendererState::value
 
-  private val mainPresentationState = presentationFlowFor(XSourceKind.MAIN)
-    .stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
-
-  private val alternativePresentationState = presentationFlowFor(XSourceKind.ALTERNATIVE)
-    .stateIn(coroutineScope, SharingStarted.Eagerly, initialValue = null)
-
   init {
+    presentationFlowFor(XSourceKind.MAIN).launchIn(coroutineScope)
+    presentationFlowFor(XSourceKind.ALTERNATIVE).launchIn(coroutineScope)
+
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       executionPointState
         .map { it != null }.distinctUntilChanged()
@@ -126,19 +124,8 @@ internal class XDebuggerExecutionPointManager(private val project: Project,
   }
 
   @RequiresEdt
-  fun isFullLineHighlighterAt(position: XSourcePosition): Boolean {
-    return isFullLineHighlighterAt(position.file, position.line)
-  }
-
-  @RequiresEdt
-  fun isFullLineHighlighterAt(file: VirtualFile, line: Int): Boolean {
-    return isFullLineHighlighter(mainPresentationState.value, file, line) ||
-           isFullLineHighlighter(alternativePresentationState.value, file, line)
-  }
-
-  private fun isFullLineHighlighter(presentation: PositionPresentation?, file: VirtualFile, line: Int): Boolean {
-    val highlight = presentation?.highlight ?: return false
-    return highlight.isFullLineHighlighterAt(file, line)
+  fun isFullLineHighlighterAt(file: VirtualFile, line: Int, project: Project, isToCheckTopFrameOnly: Boolean): Boolean {
+    return isCurrentFile(file) && PositionHighlight.isFullLineHighlighterAt(file, line, project, isToCheckTopFrameOnly)
   }
 
   private fun isCurrentFile(file: VirtualFile): Boolean {
@@ -235,13 +222,6 @@ private class PositionHighlight private constructor(
       field = value
     }
 
-  fun isFullLineHighlighterAt(file: VirtualFile, line: Int): Boolean {
-    return rangeHighlighter.isValid &&
-           rangeHighlighter.targetArea == HighlighterTargetArea.LINES_IN_RANGE &&
-           FileDocumentManager.getInstance().getFile(rangeHighlighter.document) == file &&
-           rangeHighlighter.document.getLineNumber(rangeHighlighter.startOffset) == line
-  }
-
   fun hideAndDispose() {
     rangeHighlighter.dispose()
   }
@@ -271,6 +251,36 @@ private class PositionHighlight private constructor(
         }
       }
       return markupModel.addLineHighlighter(null, line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER)
+    }
+
+    @RequiresEdt
+    fun isFullLineHighlighterAt(file: VirtualFile, line: Int, project: Project, isToCheckTopFrameOnly: Boolean = false): Boolean {
+      val rangeHighlighter = findPositionHighlighterAt(file, line, project) ?: return false
+      return isFullLineHighlighter(rangeHighlighter, isToCheckTopFrameOnly)
+    }
+
+    private fun findPositionHighlighterAt(file: VirtualFile, line: Int, project: Project): RangeHighlighter? {
+      val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+      if (line < 0 || line >= document.lineCount) return null
+      val lineStartOffset = document.getLineStartOffset(line)
+      val lineEndOffset = document.getLineEndOffset(line)
+      val markupModel = DocumentMarkupModel.forDocument(document, project, false) as? MarkupModelEx ?: return null
+      var result: RangeHighlighter? = null
+      markupModel.processRangeHighlightersOverlappingWith(lineStartOffset, lineEndOffset) { rangeHighlighter ->
+        val foundIt = rangeHighlighter.getUserData(ExecutionPointHighlighter.EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY) != null
+        if (foundIt) {
+          result = rangeHighlighter
+        }
+        !foundIt
+      }
+      return result
+    }
+
+    private fun isFullLineHighlighter(rangeHighlighter: RangeHighlighter, isToCheckTopFrameOnly: Boolean): Boolean {
+      val isTopFrame = rangeHighlighter.getUserData(ExecutionPointHighlighter.EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY) ?: return false
+      return rangeHighlighter.isValid &&
+             rangeHighlighter.targetArea == HighlighterTargetArea.LINES_IN_RANGE &&
+             (isTopFrame || !isToCheckTopFrameOnly)
     }
   }
 }
