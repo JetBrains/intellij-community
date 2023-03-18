@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.junit
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiElement
+import com.intellij.testIntegration.JvmTestFramework
 import com.intellij.testIntegration.TestFramework
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -17,16 +19,20 @@ import javax.swing.Icon
 
 abstract class AbstractKotlinTestFrameworkAdapter(
     private val kotlinDelegateClass: Class<out KotlinTestFramework>,
-    private val javaDelegateClass: Class<out TestFramework>
-) : TestFramework {
+    private val javaDelegateClass: Class<out JvmTestFramework>
+) : JvmTestFramework {
     private val kotlinDelegate: KotlinTestFramework by lazy { KotlinTestFramework.EXTENSION_NAME.extensionList.first { it.javaClass == kotlinDelegateClass } }
-    private val javaDelegate: TestFramework by lazy { TestFramework.EXTENSION_NAME.extensionList.first { it.javaClass == javaDelegateClass } }
+    private val javaDelegate: JvmTestFramework by lazy {
+        TestFramework.EXTENSION_NAME.extensionList.first { it.javaClass == javaDelegateClass } as JvmTestFramework
+    }
 
     override fun getName(): String = javaDelegate.name
 
     override fun getIcon(): Icon = javaDelegate.icon
 
     override fun isLibraryAttached(module: Module): Boolean = javaDelegate.isLibraryAttached(module)
+
+    override fun getFrameworkLibraryDescriptor(): ExternalLibraryDescriptor = javaDelegate.frameworkLibraryDescriptor
 
     override fun getLibraryPath(): String? = javaDelegate.libraryPath
 
