@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.impl.PackageDirectoryCacheImpl
 import com.intellij.openapi.roots.impl.RootFileSupplier
+import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -68,6 +69,9 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
                            includeExternalSets: Boolean,
                            includeExternalSourceSets: Boolean): WorkspaceFileInternalInfo {
     if (!file.isValid) return WorkspaceFileInternalInfo.NonWorkspace.INVALID
+    if (file.fileSystem is NonPhysicalFileSystem && file.parent == null) {
+      return WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
+    }
     ensureIsUpToDate()
 
     val originalAcceptedKindMask = 
