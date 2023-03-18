@@ -1,12 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressManager;
@@ -25,15 +23,11 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.classMembers.MemberInfoStorage;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler, ContextAwareActionHandler, JavaPullUpHandlerBase {
   private PsiClass mySubclass;
@@ -41,7 +35,8 @@ public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    List<PsiElement> elements = getElements(editor, file, true);
+    List<PsiElement> elements =
+      CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, PsiCodeBlock.class, PsiMember.class);
     if (elements.isEmpty()) return false;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false);
     if (psiClass == null) return false;
@@ -52,7 +47,7 @@ public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
-    List<PsiElement> elements = getElements(editor, file, false);
+    List<PsiElement> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, PsiMember.class);
     if (elements.isEmpty()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
@@ -67,26 +62,6 @@ public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler
                           PsiClass targetSuperClass,
                           MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy) {
     new PullUpProcessor(sourceClass, targetSuperClass, membersToMove, javaDocPolicy).run();
-  }
-
-  private static List<PsiElement> getElements(Editor editor, PsiFile file, boolean stopAtCodeBlock) {
-    List<PsiElement> elements = new SmartList<>();
-    for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      int offset = caret.getOffset();
-      PsiElement element = file.findElementAt(offset);
-      while (element != null && !(element instanceof PsiFile)) {
-        if (stopAtCodeBlock && element instanceof PsiCodeBlock) {
-          break;
-        }
-
-        if (element instanceof PsiMember) {
-          elements.add(element);
-          break;
-        }
-        element = element.getParent();
-      }
-    }
-    return elements;
   }
 
   @Override
