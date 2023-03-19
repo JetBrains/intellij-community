@@ -1441,6 +1441,7 @@
     <notificationGroup id="Run Anything" displayType="BALLOON" bundle="messages.IdeBundle" key="run.anything.custom.activity.notification.group.id"/>
     <notificationGroup id="Show control flow group" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Power Save Mode" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.power.save.mode"/>
+    <notificationGroup id="Essential Highlighting Mode" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.essential-highlighting.mode"/>
     <notificationGroup id="IDE Caches" displayType="BALLOON" bundle="messages.IndexingBundle" key="notification.group.ide.caches"/>
     <notificationGroup id="Cache Recovery" displayType="STICKY_BALLOON" bundle="messages.IdeBundle" key="notification.group.cache.recovery"/>
     <notificationGroup id="Framework Detection" displayType="BALLOON" bundle="messages.ProjectBundle" key="notification.group.framework.detection"/>
