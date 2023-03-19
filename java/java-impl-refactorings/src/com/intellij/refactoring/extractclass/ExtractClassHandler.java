@@ -6,7 +6,6 @@ import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
@@ -39,9 +38,8 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    final ScrollingModel scrollingModel = editor.getScrollingModel();
-    scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
-    List<PsiMember> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, PsiMember.class);
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    List<PsiMember> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, e -> e instanceof PsiMember);
 
     PsiElement parent = PsiTreeUtil.findCommonParent(elements);
     PsiClass containingClass = parent instanceof PsiClass parentClass
@@ -53,7 +51,6 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           RefactorJBundle.message("cannot.perform.the.refactoring") + cannotRefactorMessage,
                                           getRefactoringName(), HelpID.ExtractClass);
-      return;
     }
     new ExtractClassDialog(containingClass, new HashSet<>(elements)).show();
   }

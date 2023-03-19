@@ -31,7 +31,7 @@ public class JavaPushDownHandler implements ElementsHandler, ContextAwareActionH
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     final List<PsiElement> elements =
-      CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, PsiCodeBlock.class, PsiMember.class);
+      CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, PsiCodeBlock.class, e -> e instanceof PsiMember);
     if (elements.isEmpty()) return false;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false);
     if (psiClass == null) return false;
@@ -42,7 +42,7 @@ public class JavaPushDownHandler implements ElementsHandler, ContextAwareActionH
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
-    List<PsiElement> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, PsiMember.class);
+    List<PsiElement> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, e ->  e instanceof PsiMember);
     invoke(project, elements.toArray(PsiElement.EMPTY_ARRAY), dataContext);
   }
 

@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
@@ -281,7 +282,7 @@ public final class CommonRefactoringUtil {
    * @return a list of found elements.
    */
   public static <T extends PsiElement> List<T> findElementsFromCaretsAndSelections(
-    @NotNull Editor editor, @NotNull PsiFile file, @Nullable Class<?> stopAt, @NotNull Class<? extends T> @NotNull ... types) {
+    @NotNull Editor editor, @NotNull PsiFile file, @Nullable Class<?> stopAt, @NotNull Predicate<? super PsiElement> accept) {
     List<PsiElement> elements = new SmartList<>();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       TextRange selectionRange = caret.getSelectionRange();
@@ -293,18 +294,19 @@ public final class CommonRefactoringUtil {
       PsiElement element = PsiTreeUtil.findCommonParent(start, end);
       if (element == null) continue;
 
+      int size = elements.size();
       // first, go down into the psi tree
-      Collection<PsiElement> children = PsiTreeUtil.findChildrenOfAnyType(element, true, types);
-      if (!children.isEmpty()) {
-        for (PsiElement child : children) {
-          TextRange range = child.getTextRange();
+      PsiTreeUtil.processElements(element, e -> {
+        if (accept.test(e)) {
+          TextRange range = e.getTextRange();
           if (selectionRange.intersects(range) || selectionRange.intersects(range)) {
-            elements.add(child);
+            elements.add(e);
           }
         }
-        // we have found something, continue on the next caret
-        if (!elements.isEmpty()) continue;
-      }
+        return true;
+      });
+      // we have found something, continue with the next caret
+      if (size < elements.size()) continue;
 
       // second, climb up into the psi tree
       while (element != null && !(element instanceof PsiFile)) {
@@ -312,7 +314,7 @@ public final class CommonRefactoringUtil {
           break;
         }
 
-        if (PsiTreeUtil.instanceOf(element, types)) {
+        if (accept.test(element)) {
           elements.add(element);
           break;
         }

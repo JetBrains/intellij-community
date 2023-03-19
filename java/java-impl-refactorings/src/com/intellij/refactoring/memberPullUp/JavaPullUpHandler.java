@@ -36,7 +36,7 @@ public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     List<PsiElement> elements =
-      CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, PsiCodeBlock.class, PsiMember.class);
+      CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, PsiCodeBlock.class, e -> e instanceof PsiMember);
     if (elements.isEmpty()) return false;
     PsiClass psiClass = PsiTreeUtil.getParentOfType(elements.get(0), PsiClass.class, false);
     if (psiClass == null) return false;
@@ -47,7 +47,7 @@ public class JavaPullUpHandler implements PullUpDialog.Callback, ElementsHandler
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
-    List<PsiElement> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, PsiMember.class);
+    List<PsiElement> elements = CommonRefactoringUtil.findElementsFromCaretsAndSelections(editor, file, null, e -> e instanceof PsiMember);
     if (elements.isEmpty()) {
       String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.pull.members.from"));
       CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.MEMBERS_PULL_UP);
