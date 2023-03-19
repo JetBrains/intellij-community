@@ -340,6 +340,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     if (myBreakpointListenerDisposable == null) {
       myBreakpointListenerDisposable = Disposer.newDisposable();
+      Disposer.register(myProject, myBreakpointListenerDisposable);
       MessageBusConnection busConnection = myProject.getMessageBus().connect(myBreakpointListenerDisposable);
       busConnection.subscribe(XBreakpointListener.TOPIC, new MyBreakpointListener());
       busConnection.subscribe(XDependentBreakpointListener.TOPIC, new MyDependentBreakpointListener());
