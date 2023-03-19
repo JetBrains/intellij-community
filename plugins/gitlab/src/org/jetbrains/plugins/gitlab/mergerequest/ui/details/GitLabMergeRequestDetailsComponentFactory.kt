@@ -74,6 +74,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
   ): JComponent {
     val detailsInfoVm = detailsVm.detailsInfoVm
     val detailsReviewFlowVm = detailsVm.detailsReviewFlowVm
+    val statusVm = detailsVm.statusVm
     val changesVm = detailsVm.changesVm
     val repository = detailsVm.repository
 
@@ -113,7 +114,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS).maxHeight("${ReviewDetailsUIUtil.COMMIT_INFO_MAX_HEIGHT}"))
       add(GitLabMergeRequestDetailsChangesComponentFactory(project).create(cs, changesVm),
           CC().grow().push())
-      add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, detailsInfoVm, detailsReviewFlowVm, avatarIconsProvider),
+      add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, statusVm, detailsReviewFlowVm, avatarIconsProvider),
           CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
       add(GitLabMergeRequestDetailsActionsComponentFactory.create(cs, detailsReviewFlowVm, avatarIconsProvider),
           CC().growX().gap(ReviewDetailsUIUtil.ACTIONS_GAPS))

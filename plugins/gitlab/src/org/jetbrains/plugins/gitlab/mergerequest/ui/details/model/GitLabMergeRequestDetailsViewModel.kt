@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewStatusViewModel
 import com.intellij.openapi.project.Project
 import com.intellij.util.childScope
 import git4idea.repo.GitRepository
@@ -15,6 +16,7 @@ internal interface GitLabMergeRequestDetailsViewModel {
 
   val detailsInfoVm: GitLabMergeRequestDetailsInfoViewModel
   val detailsReviewFlowVm: GitLabMergeRequestReviewFlowViewModel
+  val statusVm: CodeReviewStatusViewModel
   val changesVm: GitLabMergeRequestChangesViewModel
 
   val repository: GitRepository
@@ -34,6 +36,7 @@ internal class GitLabMergeRequestDetailsViewModelImpl(
 
   override val detailsInfoVm = GitLabMergeRequestDetailsInfoViewModelImpl(cs, mergeRequest)
   override val detailsReviewFlowVm = GitLabMergeRequestReviewFlowViewModelImpl(project, cs, currentUser, projectData, mergeRequest)
+  override val statusVm = GitLabMergeRequestStatusViewModel(mergeRequest)
   override val changesVm = GitLabMergeRequestChangesViewModelImpl(cs, mergeRequest.changes)
 
   override val repository = projectData.projectMapping.remote.repository

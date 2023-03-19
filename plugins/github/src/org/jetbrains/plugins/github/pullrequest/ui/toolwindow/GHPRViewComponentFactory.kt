@@ -49,6 +49,7 @@ import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSu
 import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRViewedStateDiffSupportImpl
 import org.jetbrains.plugins.github.pullrequest.ui.changes.showPullRequestProgress
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentFactory
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.*
 import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 import javax.swing.JComponent
@@ -186,6 +187,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
       val scope = DisposingScope(disposable, SupervisorJob() + Dispatchers.Main.immediate)
       val reviewDetailsVm = GHPRDetailsViewModelImpl(detailsModel, stateModel)
+      val reviewStatusVm = GHPRStatusViewModelImpl(detailsModel, stateModel)
       val reviewFlowVm = GHPRReviewFlowViewModelImpl(scope,
                                                      metadataModel,
                                                      stateModel,
@@ -198,7 +200,7 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
 
       GHPRDetailsComponentFactory.create(project,
                                          scope,
-                                         reviewDetailsVm, reviewFlowVm, commitsVm,
+                                         reviewDetailsVm, reviewStatusVm, reviewFlowVm, commitsVm,
                                          dataProvider,
                                          dataContext.repositoryDataService, dataContext.securityService, dataContext.avatarIconsProvider,
                                          branchesModel,

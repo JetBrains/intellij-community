@@ -16,7 +16,6 @@ internal interface GitLabMergeRequestDetailsInfoViewModel : CodeReviewDetailsVie
 
   val targetBranch: Flow<String>
   val sourceBranch: Flow<String>
-  val hasConflicts: Flow<Boolean>
 
   val showTimelineRequests: Flow<Unit>
 
@@ -37,7 +36,6 @@ internal class GitLabMergeRequestDetailsInfoViewModelImpl(
   override val description: Flow<String> = mergeRequest.description
   override val targetBranch: Flow<String> = mergeRequest.targetBranch
   override val sourceBranch: Flow<String> = mergeRequest.sourceBranch
-  override val hasConflicts: Flow<Boolean> = mergeRequest.hasConflicts
   override val requestState: Flow<RequestState> = mergeRequest.requestState
 
   private val _showTimelineRequests = MutableSharedFlow<Unit>()

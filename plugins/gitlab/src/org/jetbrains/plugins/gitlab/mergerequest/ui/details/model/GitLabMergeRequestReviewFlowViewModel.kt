@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.codereview.action.ReviewMergeCommitMessageD
 import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.ReviewState
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewFlowViewModel
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -16,15 +17,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
-import org.jetbrains.plugins.gitlab.api.dto.GitLabPipelineDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import org.jetbrains.plugins.gitlab.util.SingleCoroutineLauncher
 
-internal interface GitLabMergeRequestReviewFlowViewModel {
+internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabUserDTO> {
   val isBusy: StateFlow<Boolean>
 
   val currentUser: GitLabUserDTO
@@ -36,9 +35,6 @@ internal interface GitLabMergeRequestReviewFlowViewModel {
   val requestState: Flow<RequestState>
   val isApproved: StateFlow<Boolean>
   val reviewState: Flow<ReviewState>
-  val reviewerAndReviewState: Flow<Map<GitLabUserDTO, ReviewState>>
-  val pipeline: Flow<GitLabPipelineDTO?>
-  val targetProject: StateFlow<GitLabProjectDTO>
 
   val userCanApproveReviewer: Flow<Boolean>
   val userCanManageReview: Flow<Boolean>
@@ -102,17 +98,13 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
     if (isApproved) ReviewState.ACCEPTED else ReviewState.NEED_REVIEW
   }
 
-  override val reviewerAndReviewState: Flow<Map<GitLabUserDTO, ReviewState>> = combine(reviewers, approvedBy) { reviewers, approvedBy ->
+  override val reviewerReviews: Flow<Map<GitLabUserDTO, ReviewState>> = combine(reviewers, approvedBy) { reviewers, approvedBy ->
     mutableMapOf<GitLabUserDTO, ReviewState>().apply {
       reviewers.forEach { reviewer -> put(reviewer, ReviewState.NEED_REVIEW) }
       approvedBy.forEach { reviewer -> put(reviewer, ReviewState.ACCEPTED) }
       // TODO: implement ReviewState.WAIT_FOR_UPDATES
     }
   }
-
-  override val pipeline: Flow<GitLabPipelineDTO?> = mergeRequest.pipeline
-
-  override val targetProject: StateFlow<GitLabProjectDTO> = mergeRequest.targetProject
 
   override val userCanApproveReviewer: Flow<Boolean> = mergeRequest.userPermissions.map { it.canApprove }
   override val userCanManageReview: Flow<Boolean> = mergeRequest.userPermissions.map { it.updateMergeRequest }
@@ -208,7 +200,6 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
         action()
       }
       catch (e: Exception) {
-        println(e.localizedMessage)
         if (e is CancellationException) throw e
         //TODO: handle???
       }

@@ -51,7 +51,7 @@ internal class GHPRReviewFlowViewModelImpl(
     metadataModel.reviews.associate { (it.author as? GHUser ?: ghostUser) to it.state } // Collect latest review state by reviewer
   )
 
-  override val reviewerAndReviewState: StateFlow<Map<GHPullRequestRequestedReviewer, ReviewState>> =
+  override val reviewerReviews: StateFlow<Map<GHPullRequestRequestedReviewer, ReviewState>> =
     combineState(scope, pullRequestReviewState, _requestedReviewersState) { reviews, requestedReviewers ->
       mutableMapOf<GHPullRequestRequestedReviewer, ReviewState>().apply {
         reviews
@@ -76,10 +76,10 @@ internal class GHPRReviewFlowViewModelImpl(
     }
   }
 
-  override val role: Flow<ReviewRole> = reviewerAndReviewState.map {
+  override val role: Flow<ReviewRole> = reviewerReviews.map { reviewerAndReview ->
     when {
       currentUser == metadataModel.getAuthor() -> ReviewRole.AUTHOR
-      reviewerAndReviewState.value.containsKey(currentUser) -> ReviewRole.REVIEWER
+      reviewerAndReview.containsKey(currentUser) -> ReviewRole.REVIEWER
       else -> ReviewRole.GUEST
     }
   }
@@ -126,7 +126,7 @@ internal class GHPRReviewFlowViewModelImpl(
   }
 
   override fun requestReview(parentComponent: JComponent) = stateModel.submitTask {
-    val reviewers = (reviewerAndReviewState.value.keys + metadataModel.reviewers).toList()
+    val reviewers = (reviewerReviews.value.keys + metadataModel.reviewers).toList()
     GHUIUtil.showChooserPopup(
       parentComponent,
       GHUIUtil.SelectionListCellRenderer.PRReviewers(avatarIconsProvider),
@@ -138,7 +138,7 @@ internal class GHPRReviewFlowViewModelImpl(
   }
 
   override fun reRequestReview() = stateModel.submitTask {
-    val delta = CollectionDelta(metadataModel.reviewers, reviewerAndReviewState.value.keys)
+    val delta = CollectionDelta(metadataModel.reviewers, reviewerReviews.value.keys)
     metadataModel.adjustReviewers(EmptyProgressIndicator(), delta)
   }
 

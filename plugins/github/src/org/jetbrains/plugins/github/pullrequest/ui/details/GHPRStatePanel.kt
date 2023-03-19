@@ -6,6 +6,7 @@ import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.RequestState
 import com.intellij.collaboration.ui.codereview.details.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.ReviewState
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.collaboration.ui.util.bindText
 import com.intellij.collaboration.ui.util.bindVisibility
 import com.intellij.collaboration.ui.util.toAnAction
@@ -30,7 +31,6 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.*
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import java.awt.event.ActionListener
 import javax.swing.Action
@@ -39,7 +39,7 @@ import javax.swing.JComponent
 
 internal class GHPRStatePanel(
   parentScope: CoroutineScope,
-  private val reviewDetailsVm: GHPRDetailsViewModel,
+  private val reviewDetailsVm: CodeReviewDetailsViewModel,
   private val reviewFlowVm: GHPRReviewFlowViewModel,
   private val dataProvider: GHPRDataProvider
 ) : CardLayoutPanel<ReviewRole, GHPRStatePanel.StateUI, JComponent>() {
@@ -65,7 +65,7 @@ internal class GHPRStatePanel(
 
   internal sealed class StateUI(
     protected val scope: CoroutineScope,
-    private val reviewDetailsVm: GHPRDetailsViewModel,
+    private val reviewDetailsVm: CodeReviewDetailsViewModel,
     protected val reviewFlowVm: GHPRReviewFlowViewModel
   ) {
     abstract fun createReviewActionsForOpenReview(): JComponent
@@ -124,7 +124,7 @@ internal class GHPRStatePanel(
 
     class Author(
       scope: CoroutineScope,
-      reviewDetailsVm: GHPRDetailsViewModel,
+      reviewDetailsVm: CodeReviewDetailsViewModel,
       reviewFlowVm: GHPRReviewFlowViewModel
     ) : StateUI(scope, reviewDetailsVm, reviewFlowVm) {
       override fun createReviewActionsForOpenReview(): JComponent {
@@ -177,7 +177,7 @@ internal class GHPRStatePanel(
 
     class Reviewer(
       scope: CoroutineScope,
-      reviewDetailsVm: GHPRDetailsViewModel,
+      reviewDetailsVm: CodeReviewDetailsViewModel,
       reviewFlowVm: GHPRReviewFlowViewModel,
       private val dataProvider: GHPRDataProvider
     ) : StateUI(scope, reviewDetailsVm, reviewFlowVm) {
@@ -241,7 +241,7 @@ internal class GHPRStatePanel(
 
     class Guest(
       scope: CoroutineScope,
-      reviewDetailsVm: GHPRDetailsViewModel,
+      reviewDetailsVm: CodeReviewDetailsViewModel,
       reviewFlowVm: GHPRReviewFlowViewModel
     ) : StateUI(scope, reviewDetailsVm, reviewFlowVm) {
       override fun createReviewActionsForOpenReview(): JComponent {

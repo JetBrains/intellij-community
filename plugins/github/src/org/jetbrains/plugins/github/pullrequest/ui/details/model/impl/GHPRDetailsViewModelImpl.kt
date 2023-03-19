@@ -2,17 +2,19 @@
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
 import com.intellij.collaboration.ui.codereview.details.RequestState
-import kotlinx.coroutines.flow.*
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
-import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStateModel
 
 internal class GHPRDetailsViewModelImpl(
   detailsModel: GHPRDetailsModel,
   stateModel: GHPRStateModel
-) : GHPRDetailsViewModel {
+) : CodeReviewDetailsViewModel {
   private val _titleState: MutableStateFlow<String> = MutableStateFlow(detailsModel.title)
   override val title: Flow<String> = _titleState.asSharedFlow()
 
@@ -22,7 +24,6 @@ internal class GHPRDetailsViewModelImpl(
   private val _reviewMergeState: MutableStateFlow<GHPullRequestState> = MutableStateFlow(detailsModel.state)
 
   private val _isDraftState: MutableStateFlow<Boolean> = MutableStateFlow(stateModel.isDraft)
-  override val isDraft: Flow<Boolean> = _isDraftState.asSharedFlow()
 
   override val requestState: Flow<RequestState> = combine(_reviewMergeState, _isDraftState) { reviewMergeState, isDraft ->
     if (isDraft) return@combine RequestState.DRAFT
@@ -35,26 +36,6 @@ internal class GHPRDetailsViewModelImpl(
 
   override val number: String = "#${detailsModel.number}"
   override val url: String = detailsModel.url
-  override val viewerDidAuthor: Boolean = stateModel.viewerDidAuthor
-
-  private val _mergeabilityState: MutableStateFlow<GHPRMergeabilityState?> = MutableStateFlow(stateModel.mergeabilityState)
-  override val mergeabilityState: Flow<GHPRMergeabilityState?> = _mergeabilityState.asSharedFlow()
-
-  override val hasConflicts: Flow<Boolean?> = _mergeabilityState.map { mergeability ->
-    mergeability?.hasConflicts ?: false
-  }
-
-  override val isRestricted: Flow<Boolean> = _mergeabilityState.map { mergeability ->
-    mergeability?.isRestricted ?: false
-  }
-
-  override val checksState: Flow<GHPRMergeabilityState.ChecksState> = _mergeabilityState.map { mergeability ->
-    mergeability?.checksState ?: GHPRMergeabilityState.ChecksState.NONE
-  }
-
-  override val requiredApprovingReviewsCount: Flow<Int> = _mergeabilityState.map { mergeability ->
-    mergeability?.requiredApprovingReviewsCount ?: 0
-  }
 
   init {
     detailsModel.addAndInvokeDetailsChangedListener {
@@ -65,10 +46,6 @@ internal class GHPRDetailsViewModelImpl(
 
     stateModel.addAndInvokeDraftStateListener {
       _isDraftState.value = stateModel.isDraft
-    }
-
-    stateModel.addAndInvokeMergeabilityStateLoadingResultListener {
-      _mergeabilityState.value = stateModel.mergeabilityState
     }
   }
 }
