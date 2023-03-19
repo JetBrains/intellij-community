@@ -2,4 +2,8 @@
     <dependencies>
         <plugin id="tanvd.grazi"/>
     </dependencies>
+
+    <extensions defaultExtensionNs="com.intellij.grazie">
+        <textExtractor language="TOML" implementationClass="com.intellij.toml.grazie.TomlTextExtractor"/>
+    </extensions>
 </idea-plugin>
