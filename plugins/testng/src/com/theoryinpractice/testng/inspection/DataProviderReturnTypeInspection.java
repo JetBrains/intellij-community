@@ -55,7 +55,7 @@ public class DataProviderReturnTypeInspection extends AbstractBaseJavaLocalInspe
                                                                        message,
                                                                        isOnTheFly,
                                                                        createFixes(supportOneDimensional, method),
-                                                                       ProblemHighlightType.ERROR)};
+                                                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
       }
     }
     return null;
