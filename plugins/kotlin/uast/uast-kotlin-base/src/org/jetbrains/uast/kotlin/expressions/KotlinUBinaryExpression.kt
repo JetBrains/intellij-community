@@ -52,31 +52,33 @@ class KotlinUBinaryExpression(
         getResolveResultVariants(baseResolveProviderService, sourcePsi)
 
     override fun hasOperator(expectedOperator: UastBinaryOperator): Boolean {
-        return when (sourcePsi.operationToken) {
-            KtTokens.EQ -> expectedOperator == UastBinaryOperator.ASSIGN
-            KtTokens.PLUS -> expectedOperator == UastBinaryOperator.PLUS
-            KtTokens.MINUS -> expectedOperator == UastBinaryOperator.MINUS
-            KtTokens.MUL -> expectedOperator == UastBinaryOperator.MULTIPLY
-            KtTokens.DIV -> expectedOperator == UastBinaryOperator.DIV
-            KtTokens.PERC -> expectedOperator == UastBinaryOperator.MOD
-            KtTokens.OROR -> expectedOperator == UastBinaryOperator.LOGICAL_OR
-            KtTokens.ANDAND -> expectedOperator == UastBinaryOperator.LOGICAL_AND
-            KtTokens.EQEQ -> expectedOperator == UastBinaryOperator.EQUALS
-            KtTokens.EXCLEQ -> expectedOperator == UastBinaryOperator.NOT_EQUALS
-            KtTokens.EQEQEQ -> expectedOperator == UastBinaryOperator.IDENTITY_EQUALS
-            KtTokens.EXCLEQEQEQ -> expectedOperator == UastBinaryOperator.IDENTITY_NOT_EQUALS
-            KtTokens.GT -> expectedOperator == UastBinaryOperator.GREATER
-            KtTokens.GTEQ -> expectedOperator == UastBinaryOperator.GREATER_OR_EQUALS
-            KtTokens.LT -> expectedOperator == UastBinaryOperator.LESS
-            KtTokens.LTEQ -> expectedOperator == UastBinaryOperator.LESS_OR_EQUALS
-            KtTokens.PLUSEQ -> expectedOperator == UastBinaryOperator.PLUS_ASSIGN
-            KtTokens.MINUSEQ -> expectedOperator == UastBinaryOperator.MINUS_ASSIGN
-            KtTokens.MULTEQ -> expectedOperator == UastBinaryOperator.MULTIPLY_ASSIGN
-            KtTokens.DIVEQ -> expectedOperator == UastBinaryOperator.DIVIDE_ASSIGN
-            KtTokens.PERCEQ -> expectedOperator == UastBinaryOperator.REMAINDER_ASSIGN
-            KtTokens.IN_KEYWORD -> expectedOperator == KotlinBinaryOperators.IN
-            KtTokens.NOT_IN -> expectedOperator == KotlinBinaryOperators.NOT_IN
-            KtTokens.RANGE -> expectedOperator == KotlinBinaryOperators.RANGE_TO
+        val operationToken = sourcePsi.operationToken
+
+        return when (expectedOperator) {
+            UastBinaryOperator.ASSIGN -> operationToken == KtTokens.EQ
+            UastBinaryOperator.PLUS -> operationToken == KtTokens.PLUS
+            UastBinaryOperator.MINUS -> operationToken == KtTokens.MINUS
+            UastBinaryOperator.MULTIPLY -> operationToken == KtTokens.MUL
+            UastBinaryOperator.DIV  -> operationToken == KtTokens.DIV
+            UastBinaryOperator.MOD -> operationToken == KtTokens.PERC
+            UastBinaryOperator.LOGICAL_OR -> operationToken == KtTokens.OROR
+            UastBinaryOperator.LOGICAL_AND -> operationToken == KtTokens.ANDAND
+            UastBinaryOperator.EQUALS -> operationToken == KtTokens.EQEQ
+            UastBinaryOperator.NOT_EQUALS  -> operationToken == KtTokens.EXCLEQ
+            UastBinaryOperator.IDENTITY_EQUALS -> operationToken == KtTokens.EQEQEQ
+            UastBinaryOperator.IDENTITY_NOT_EQUALS -> operationToken == KtTokens.EXCLEQEQEQ
+            UastBinaryOperator.GREATER  -> operationToken == KtTokens.GT
+            UastBinaryOperator.GREATER_OR_EQUALS -> operationToken == KtTokens.GTEQ
+            UastBinaryOperator.LESS -> operationToken == KtTokens.LT
+            UastBinaryOperator.LESS_OR_EQUALS -> operationToken == KtTokens.LTEQ
+            UastBinaryOperator.PLUS_ASSIGN -> operationToken == KtTokens.PLUSEQ
+            UastBinaryOperator.MINUS_ASSIGN -> operationToken == KtTokens.MINUSEQ
+            UastBinaryOperator.MULTIPLY_ASSIGN -> operationToken == KtTokens.MULTEQ
+            UastBinaryOperator.DIVIDE_ASSIGN -> operationToken == KtTokens.DIVEQ
+            UastBinaryOperator.REMAINDER_ASSIGN -> operationToken == KtTokens.PERCEQ
+            KotlinBinaryOperators.IN -> operationToken == KtTokens.IN_KEYWORD
+            KotlinBinaryOperators.NOT_IN -> operationToken == KtTokens.NOT_IN
+            KotlinBinaryOperators.RANGE_TO -> operationToken == KtTokens.RANGE
             else -> expectedOperator == baseResolveProviderService.resolveBitwiseOperators(sourcePsi)
         }
     }
