@@ -77,6 +77,17 @@ public interface ExternalEventLogSettings {
   }
 
   /**
+   * Should be implemented in case {@link ExternalEventLogSettings#forceDisableCollectionConsent()} method is implemented and returns true.
+   * Allows to provide custom warning message under Data Sharing consent to explain why it is disabled.
+   * If not implemented default warning text will be used.
+   *
+   *  @return Warning text that will be shown under Data Sharing consent in UI or {@code null}
+  * */
+  default @Nullable String getConsentWarning() {
+    return null;
+  }
+
+  /**
    * Enables statistics logging ({@link StatisticsEventLoggerProviderExt#isLoggingAlwaysActive()}) independently of
    * recording to file ({@link StatisticsEventLoggerProvider#isRecordEnabled()}) for <b>supported</b> loggers.
    * <br/>
