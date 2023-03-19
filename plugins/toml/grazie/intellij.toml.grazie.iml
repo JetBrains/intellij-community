@@ -8,10 +8,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.platform.langInjection" />
-    <orderEntry type="module" module-name="intellij.markdown.core" />
-    <orderEntry type="module" module-name="intellij.toml.core" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.localIde" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.toml.core" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.grazie.core" />
   </component>
 </module>
