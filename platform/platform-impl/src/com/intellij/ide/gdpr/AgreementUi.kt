@@ -178,9 +178,7 @@ class AgreementUiBuilder internal constructor() {
         action(ui)
       })
 
-      if (!acceptButtonEnabled) {
-        acceptButton.isEnabled = false
-      }
+      acceptButton.isEnabled = acceptButtonEnabled
     }
   }
 }
