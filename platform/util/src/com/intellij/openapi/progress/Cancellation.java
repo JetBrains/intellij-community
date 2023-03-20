@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.util.ThrowableComputable;
-import kotlin.coroutines.CoroutineContext;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +21,7 @@ public final class Cancellation {
 
   @VisibleForTesting
   public static @Nullable Job currentJob() {
-    return contextJob(ThreadContext.currentThreadContext());
-  }
-
-  public static @Nullable Job contextJob(@NotNull CoroutineContext context) {
-    return context.get(Job.Key);
+    return ThreadContext.currentThreadContext().get(Job.Key);
   }
 
   public static boolean isCancelled() {
