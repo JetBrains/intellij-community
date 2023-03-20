@@ -2099,8 +2099,8 @@ public final class UIUtil {
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    *
    * @param runnable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
+  @ApiStatus.Obsolete
   public static void invokeAndWaitIfNeeded(@NotNull Runnable runnable) {
     EdtInvocationManager.invokeAndWaitIfNeeded(runnable);
   }
@@ -2115,41 +2115,12 @@ public final class UIUtil {
    * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
    *
    * @param computable a runnable to invoke
-   * @see #invokeAndWaitIfNeeded(ThrowableRunnable)
    */
-  public static <T> T invokeAndWaitIfNeeded(final @NotNull Computable<T> computable) {
+  @ApiStatus.Obsolete
+  public static <T> T invokeAndWaitIfNeeded(@NotNull Computable<T> computable) {
     final Ref<T> result = Ref.create();
-    invokeAndWaitIfNeeded((Runnable)() -> result.set(computable.compute()));
+    EdtInvocationManager.invokeAndWaitIfNeeded(() -> result.set(computable.compute()));
     return result.get();
-  }
-
-  /**
-   * Please use Application.invokeAndWait() with a modality state (or ModalityUiUtil, or TransactionGuard methods), unless you work with Swings internals
-   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
-   *
-   * Invoke and wait in the event dispatch thread
-   * or in the current thread if the current thread
-   * is event queue thread.
-   * DO NOT INVOKE THIS METHOD FROM UNDER READ ACTION.
-   *
-   * @param runnable a runnable to invoke
-   */
-  public static void invokeAndWaitIfNeeded(final @NotNull ThrowableRunnable<?> runnable) throws Throwable {
-    if (EDT.isCurrentThreadEdt()) {
-      runnable.run();
-    }
-    else {
-      final Ref<Throwable> ref = Ref.create();
-      EdtInvocationManager.getInstance().invokeAndWait(() -> {
-        try {
-          runnable.run();
-        }
-        catch (Throwable throwable) {
-          ref.set(throwable);
-        }
-      });
-      if (!ref.isNull()) throw ref.get();
-    }
   }
 
   public static void maybeInstall(@NotNull InputMap map, String action, KeyStroke stroke) {
@@ -2203,40 +2174,12 @@ public final class UIUtil {
     return g instanceof PrintGraphics || g instanceof PrinterGraphics;
   }
 
-  public static int getSelectedButton(@NotNull ButtonGroup group) {
-    Enumeration<AbstractButton> enumeration = group.getElements();
-    int i = 0;
-    while (enumeration.hasMoreElements()) {
-      AbstractButton button = enumeration.nextElement();
-      if (group.isSelected(button.getModel())) {
-        return i;
-      }
-      i++;
-    }
-    return -1;
-  }
-
-  public static void setSelectedButton(@NotNull ButtonGroup group, int index) {
-    Enumeration<AbstractButton> enumeration = group.getElements();
-    int i = 0;
-    while (enumeration.hasMoreElements()) {
-      AbstractButton button = enumeration.nextElement();
-      group.setSelected(button.getModel(), index == i);
-      i++;
-    }
-  }
-
   public static boolean isSelectionButtonDown(@NotNull MouseEvent e) {
     return e.isShiftDown() || e.isControlDown() || e.isMetaDown();
   }
 
   public static boolean isToggleListSelectionEvent(@NotNull MouseEvent e) {
     return SwingUtilities.isLeftMouseButton(e) && (SystemInfoRt.isMac ? e.isMetaDown() : e.isControlDown()) && !e.isPopupTrigger();
-  }
-
-  @SuppressWarnings("deprecation")
-  public static void setComboBoxEditorBounds(int x, int y, int width, int height, @NotNull JComponent editor) {
-    editor.reshape(x, y, width, height);
   }
 
   /**
@@ -2608,22 +2551,6 @@ public final class UIUtil {
     addInsets(component, insets.top, insets.left, insets.bottom, insets.right);
   }
 
-  public static void adjustWindowToMinimumSize(final Window window) {
-    if (window == null) return;
-    final Dimension minSize = window.getMinimumSize();
-    final Dimension size = window.getSize();
-    final Dimension newSize = new Dimension(Math.max(size.width, minSize.width), Math.max(size.height, minSize.height));
-
-    if (!newSize.equals(size)) {
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> {
-        if (window.isShowing()) {
-          window.setSize(newSize);
-        }
-      });
-    }
-  }
-
   public static int getLcdContrastValue() {
     int lcdContrastValue = LoadingState.APP_STARTED.isOccurred() ? Registry.intValue("lcd.contrast.value", 0) : 0;
     if (lcdContrastValue == 0) {
@@ -2720,7 +2647,9 @@ public final class UIUtil {
     if (component instanceof AbstractButton) candidate = ((AbstractButton)component).getText();
     if (StringUtil.isNotEmpty(candidate)) {
       candidate = candidate.replaceAll("<a href=\"#inspection/[^)]+\\)", "");
-      if (builder.length() > 0) builder.append(' ');
+      if (!builder.isEmpty()) {
+        builder.append(' ');
+      }
       builder.append(StringUtil.removeHtmlTags(candidate).trim());
     }
     if (component instanceof Container) {
