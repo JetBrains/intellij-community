@@ -140,7 +140,7 @@ class DumbServiceImplTest {
     runInEdtAndWait { dumbService.isDumb = false }
     dumbService.queueTask(task1)
     dumbService.queueTask(task2)
-    Disposer.dispose(dumbService)
+    runInEdtAndWait { Disposer.dispose(dumbService) }
 
     disposes.awaitOrThrow(5, "Some tasks were not disposed after 5 seconds")
     assertTrue(Disposer.isDisposed(task1))
