@@ -21,7 +21,10 @@ import java.util.function.BiConsumer;
 
 /**
  * <p>QueueProcessor processes elements which are being added to a queue via {@link #add(Object)} and {@link #addFirst(Object)} methods.</p>
- * <p>Elements are processed one by one in a special single thread.
+ * <p>Elements are processed one by one in a special single thread (AWT or pooled thread).
+ * The thread is occupied only when the queue is not empty.
+ * Once all items are processed, the thread is released.
+ * In case of pooled thread, once new items are added, a new thread is requested for processing.
  * The processor itself is passed in the constructor and is called from that thread.
  * By default processing starts when the first element is added to the queue, though there is an 'autostart' option which holds
  * the processor until {@link #start()} is called.</p>
