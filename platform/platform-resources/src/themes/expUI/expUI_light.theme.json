@@ -368,10 +368,7 @@
         "foreground": "Grey7",
         "background": "Grey13",
         "borderColor": "Grey13",
-        "fontSizeOffset": {
-          "os.default": -1,
-          "os.windows": 0
-        }
+        "fontSizeOffset": -1
       },
       "Header": {
         "activeBackground": "Grey14",
