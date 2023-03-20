@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -97,6 +97,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
       }
     }
     PsiLocalVariable[] ctorParameters = ctorHelper.declareParameters();
+    ctorHelper.substituteTypes(ctorParameters);
     InlineTransformer ctorTransformer = InlineTransformer.getSuitableTransformer(myMethod).apply(myReference);
     ctorTransformer.transformBody(ctorCopy, myReference, PsiTypes.voidType());
     PsiCodeBlock ctorBody = Objects.requireNonNull(ctorCopy.getBody());
@@ -105,6 +106,7 @@ public final class InlineObjectProcessor extends BaseRefactoringProcessor {
     ctorParameters = addRange(target, ctorBody, ctorParameters);
 
     PsiLocalVariable[] nextParameters = nextHelper.declareParameters();
+    nextHelper.substituteTypes(nextParameters);
     InlineTransformer nextTransformer = InlineTransformer.getSuitableTransformer(myNextMethod).apply(myNextCall.getMethodExpression());
     PsiLocalVariable result = nextTransformer.transformBody(nextCopy, myNextCall.getMethodExpression(), myNextCall.getType());
     PsiCodeBlock nextBody = Objects.requireNonNull(nextCopy.getBody());

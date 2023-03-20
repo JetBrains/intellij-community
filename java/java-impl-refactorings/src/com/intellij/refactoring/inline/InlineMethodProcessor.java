@@ -651,6 +651,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     InlineMethodHelper helper = new InlineMethodHelper(myProject, myMethod, myMethodCopy, methodCall);
     BlockData blockData = prepareBlock(ref, helper);
     ChangeContextUtil.encodeContextInfo(blockData.block, false);
+    helper.substituteTypes(blockData.parmVars);
     InlineUtil.solveVariableNameConflicts(blockData.block, ref, myMethodCopy.getBody());
     helper.initializeParameters(blockData.parmVars);
     addThisInitializer(methodCall, blockData.thisVar);
