@@ -25,6 +25,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -43,6 +44,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Comparator;
+import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
@@ -947,6 +950,13 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.EDT;
+    }
+  }
+
+  static class SpeedSearchActionPromoter implements ActionPromoter {
+    @Override
+    public @Nullable List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
+      return ContainerUtil.sorted(actions, Comparator.comparing(it -> it instanceof SpeedSearchBase<?>.MySearchAction ? 1 : 0));
     }
   }
 }
