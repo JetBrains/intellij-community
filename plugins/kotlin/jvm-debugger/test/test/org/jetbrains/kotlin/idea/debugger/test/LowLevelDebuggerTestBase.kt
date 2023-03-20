@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.debugger.impl.OutputChecker
 import com.intellij.execution.ExecutionTestCase
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.util.PathUtil
@@ -17,10 +16,8 @@ import com.sun.jdi.VirtualMachine
 import org.jetbrains.kotlin.backend.common.output.OutputFile
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.addRoot
 import org.jetbrains.kotlin.incremental.isClassFile
@@ -85,10 +82,6 @@ abstract class LowLevelDebuggerTestBase : ExecutionTestCase() {
 
     fun doTest(testFilePath: String) {
         val wholeFile = File(testFilePath)
-        if (InTextDirectivesUtils.isIgnoredForK2Code(compileWithK2, wholeFile)) {
-            println("Test is skipped for K2 code")
-            return
-        }
         val expectedText = KotlinTestUtils.doLoadFile(wholeFile)
         val testFiles = createTestFiles(wholeFile, expectedText)
 

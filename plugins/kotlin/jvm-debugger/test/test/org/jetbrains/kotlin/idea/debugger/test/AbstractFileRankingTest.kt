@@ -16,6 +16,8 @@ import java.io.File
 // We can't determine which .kt file transformed into which .class files,
 // so we have to manually specify it in test files.
 private const val PRODUCED_CLASS_NAMES_DIRECTIVE = "// PRODUCED_CLASS_NAMES:"
+// For anonymous classes, which may not exist if INDY lambdas used
+private const val PRODUCED_CLASS_NAME_OPTIONAL_SUFFIX = "(optional)"
 
 abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
     override fun doTest(
@@ -132,8 +134,14 @@ private fun collectClassNamesToKtFiles(
                 if (classNames.isEmpty()) {
                     error("Expected at least one $PRODUCED_CLASS_NAMES_DIRECTIVE directive in file ${sourceFile.name}")
                 }
-                for (className in classNames) {
-                    assert(outputFiles.any { it.qualifiedName == className }) { "Class name $className not found in output files" }
+                for (classNameWithSuffix in classNames) {
+                    val isOptional = classNameWithSuffix.endsWith(PRODUCED_CLASS_NAME_OPTIONAL_SUFFIX)
+                    val className = if (isOptional) {
+                        classNameWithSuffix.substringBefore(PRODUCED_CLASS_NAME_OPTIONAL_SUFFIX)
+                    } else {
+                        classNameWithSuffix
+                    }
+                    assert(isOptional || outputFiles.any { it.qualifiedName == className}) { "Class name $className not found in output files"}
                     val file = get(className)
                     if (file != null) {
                         error("Same class name \"$className\" specified twice: in ${file.name} and ${sourceFile.name}")
