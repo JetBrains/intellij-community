@@ -478,7 +478,7 @@ public final class StructuralSearchDialog extends DialogWrapper implements Docum
       initValidation();
     });
     myFileTypeChooser.setUserActionFileTypeInfoConsumer(info -> {
-      myExistingTemplatesComponent.selectFileType(info.getText());
+      myExistingTemplatesComponent.selectFileType(info.getFileType());
     });
 
     // Existing templates action

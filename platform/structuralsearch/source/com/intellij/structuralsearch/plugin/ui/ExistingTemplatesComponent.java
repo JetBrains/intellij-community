@@ -10,6 +10,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -250,13 +251,13 @@ public final class ExistingTemplatesComponent {
     ConfigurationManager.getInstance(project).removeConfiguration(configuration);
   }
 
-  public void selectFileType(String name) {
+  public void selectFileType(LanguageFileType fileType) {
     final var root = (DefaultMutableTreeNode) patternTreeModel.getRoot();
     final Enumeration<TreeNode> children = root.children();
     while (children.hasMoreElements()) {
       final var node = (DefaultMutableTreeNode) children.nextElement();
       for (String lang : node.toString().split("/")) {
-        if (lang.equals(name)) {
+        if (lang.equalsIgnoreCase(fileType.getName())) {
           TreeUtil.selectInTree(node, false, patternTree, true);
           return;
         }
