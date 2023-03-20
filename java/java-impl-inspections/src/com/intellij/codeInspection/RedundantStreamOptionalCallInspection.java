@@ -45,7 +45,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
   private static final Map<String, String> CALLS_MAKING_SORT_USELESS_PARALLEL = Map.of("findAny", "findFirst",
                                                                                        "forEach", "forEachOrdered");
   private static final Set<String> CALLS_KEEPING_SORT_ORDER =
-    Set.of("filter", "distinct", "boxed", "asLongStream", "asDoubleStream", "takeWhile", "dropWhile");
+    Set.of("filter", "distinct", "boxed", "asLongStream", "asDoubleStream");
   private static final Set<String> CALLS_KEEPING_ELEMENTS_DISTINCT =
     Set.of("filter", "boxed", "asLongStream", "limit", "skip", "sorted", "takeWhile", "dropWhile");
   private static final Set<String> CALLS_AFFECTING_PARALLELIZATION = Set.of("sequential", "parallel");
