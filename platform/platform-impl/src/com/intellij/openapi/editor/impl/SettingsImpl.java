@@ -4,7 +4,10 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -18,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -28,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 public class SettingsImpl implements EditorSettings {
@@ -60,7 +64,7 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myIsCaretBlinking;
   private Integer myCaretBlinkingPeriod;
   private Boolean myIsRightMarginShown;
-  private Integer myRightMargin;
+
   private Boolean myAreLineNumbersShown;
   private Boolean myGutterIconsShown;
   private Boolean myIsFoldingOutlineShown;
@@ -89,9 +93,22 @@ public class SettingsImpl implements EditorSettings {
   private Boolean myShowIntentionBulb;
   private Boolean myShowingSpecialCharacters;
 
-  private List<Integer> mySoftMargins;
-  private List<Integer> myCachedSoftMargins;
-  private NonBlockingReadAction<List<Integer>> mySoftMarginComputation;
+  private final CacheableBackgroundComputable<List<Integer>> mySoftMargins = new CacheableBackgroundComputable<>() {
+    @Override
+    protected List<Integer> computeValue(@Nullable Project project, @Nullable Editor editor) {
+      if (editor == null) return Collections.emptyList();
+      return CodeStyle.getSettings(editor).getSoftMargins(getLanguage());
+    }
+  };
+
+  private final CacheableBackgroundComputable<Integer> myRightMargin = new CacheableBackgroundComputable<>() {
+    @Override
+    protected Integer computeValue(@Nullable Project project, @Nullable Editor editor) {
+      return editor != null
+             ? CodeStyle.getSettings(editor).getRightMargin(getLanguage())
+             : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(getLanguage());
+    }
+  };
 
   public SettingsImpl() {
     this(null, null);
@@ -233,10 +250,7 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public int getRightMargin(Project project) {
-    if (myRightMargin != null) return myRightMargin.intValue();
-    return myEditor != null
-           ? CodeStyle.getSettings(myEditor).getRightMargin(getLanguage())
-           : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(getLanguage());
+    return myRightMargin.getValue(project, CodeStyleSettings.getDefaults().RIGHT_MARGIN).intValue();
   }
 
   @Override
@@ -254,56 +268,18 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public void setRightMargin(int rightMargin) {
-    final Integer newValue = Integer.valueOf(rightMargin);
-    if (newValue.equals(myRightMargin)) return;
-    myRightMargin = newValue;
-    fireEditorRefresh();
+    myRightMargin.setValue(rightMargin);
   }
 
   @NotNull
   @Override
   public List<Integer> getSoftMargins() {
-    if (myEditor == null) return Collections.emptyList();
-    if (mySoftMargins != null) return mySoftMargins;
-    if (myCachedSoftMargins != null) return myCachedSoftMargins;
-    return computeSoftMargins(myEditor);
-  }
-
-  private List<Integer> computeSoftMargins(@NotNull Editor editor) {
-    Application application = ApplicationManager.getApplication();
-    Callable<List<Integer>> softMarginsCallable = () -> {
-      return CodeStyle.getSettings(editor).getSoftMargins(getLanguage());
-    };
-    if (application.isUnitTestMode()) {
-      try {
-        return softMarginsCallable.call();
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
-    else {
-      application.assertIsDispatchThread();
-      if (mySoftMarginComputation == null) {
-        NonBlockingReadAction<List<Integer>> readAction = ReadAction.nonBlocking(softMarginsCallable).finishOnUiThread(
-          ModalityState.any(),
-          softMargins -> {
-            mySoftMarginComputation = null;
-            myCachedSoftMargins = softMargins;
-          }
-        ).expireWhen(()->editor.isDisposed());
-        readAction.submit(AppExecutorUtil.getAppExecutorService());
-        mySoftMarginComputation = readAction;
-      }
-    }
-    return Collections.emptyList();
+    return mySoftMargins.getValue(null, Collections.emptyList());
   }
 
   @Override
   public void setSoftMargins(@Nullable List<Integer> softMargins) {
-    if (Objects.equals(mySoftMargins, softMargins)) return;
-    mySoftMargins = softMargins != null ? new ArrayList<>(softMargins) : null;
-    fireEditorRefresh();
+    mySoftMargins.setValue(softMargins != null ? new ArrayList<>(softMargins) : null);
   }
 
   @Override
@@ -393,7 +369,8 @@ public class SettingsImpl implements EditorSettings {
   }
 
   public void reinitSettings() {
-    myCachedSoftMargins = null;
+    mySoftMargins.resetCache();
+    myRightMargin.resetCache();
     synchronized (myTabSizeLock) {
       myCachedTabSize = null;
       reinitDocumentIndentOptions();
@@ -834,5 +811,72 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public boolean isInsertParenthesesAutomatically() {
     return EditorSettingsExternalizable.getInstance().isInsertParenthesesAutomatically();
+  }
+
+  private abstract class CacheableBackgroundComputable<T> {
+
+    private @Nullable       T myOverwrittenValue;
+    private @Nullable       T myCachedValue;
+
+
+    private final AtomicReference<NonBlockingReadAction<T>> myCurrentReadActionRef = new AtomicReference<>();
+
+    private final static Object VALUE_LOCK = new Object();
+
+    private void setValue(@Nullable T overwrittenValue) {
+      synchronized (VALUE_LOCK) {
+        if (Objects.equals(myOverwrittenValue, overwrittenValue)) return;
+        myOverwrittenValue = overwrittenValue;
+      }
+      fireEditorRefresh();
+    }
+
+    private @NotNull T getValue(@Nullable Project project, @NotNull T defaultValue) {
+      synchronized (VALUE_LOCK) {
+        if (myOverwrittenValue != null) return myOverwrittenValue;
+        if (myCachedValue != null) return myCachedValue;
+        return getDefaultAndCompute(project, defaultValue);
+      }
+    }
+
+    private void resetCache() {
+      synchronized (VALUE_LOCK) {
+        myCachedValue = null;
+      }
+    }
+
+    protected abstract T computeValue(@Nullable Project project, @Nullable Editor editor);
+
+    private @NotNull T getDefaultAndCompute(@Nullable Project project, @NotNull T defaultValue) {
+      Editor editor = myEditor;
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        try {
+          return computeValue(project, editor);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+      else {
+        if (myCurrentReadActionRef.get() == null) {
+          NonBlockingReadAction<T> readAction = ReadAction
+            .nonBlocking(() -> computeValue(project, editor))
+            .finishOnUiThread(
+              ModalityState.any(),
+              result -> {
+                myCurrentReadActionRef.set(null);
+                synchronized (VALUE_LOCK) {
+                  myCachedValue = result;
+                }
+              }
+            )
+            .expireWhen(() -> editor != null && editor.isDisposed() || project != null && project.isDisposed());
+          if (myCurrentReadActionRef.compareAndSet(null, readAction)) {
+            readAction.submit(AppExecutorUtil.getAppExecutorService());
+          }
+        }
+      }
+      return defaultValue;
+    }
   }
 }
