@@ -193,6 +193,7 @@ public class ConvertSwitchToIfIntention implements IntentionActionWithFixAllOpti
     JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
     if (hadSideEffects) {
       if (declarationString == null) {
+        sideEffectExpressions.forEach(commentTracker::markUnchanged);
         PsiStatement[] statements = StatementExtractor.generateStatements(sideEffectExpressions, switchExpression);
         for (PsiStatement statement : statements) {
           javaCodeStyleManager.shortenClassReferences(parent.addBefore(statement, switchStatement));
