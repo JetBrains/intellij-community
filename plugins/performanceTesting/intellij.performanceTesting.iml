@@ -41,7 +41,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
@@ -51,5 +50,6 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>
