@@ -2,6 +2,8 @@ package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
 import com.intellij.openapi.util.ActionCallback;
@@ -26,7 +28,10 @@ public class StartPowerSave extends AbstractCommand implements Disposable {
     final MessageBusConnection busConnection = context.getProject().getMessageBus().connect();
     busConnection.subscribe(PowerSaveMode.TOPIC, () -> actionCallback.setDone());
 
-    PowerSaveMode.setEnabled(true);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      PowerSaveMode.setEnabled(true);
+    });
+
 
     return Promises.toPromise(actionCallback);
   }
