@@ -17,6 +17,7 @@ import com.intellij.util.ForcefulReparseModificationTracker;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * Use this modification tracker for {@link com.intellij.psi.util.CachedValue} which may contain {@link com.intellij.psi.PsiElement}
@@ -57,11 +58,21 @@ public final class JavaLibraryModificationTracker implements ModificationTracker
            + myOnContentReloadModificationTracker.getModificationCount();
   }
 
+  @TestOnly
+  public void incModificationCount() {
+    myOnContentReloadModificationTracker.incModificationCount();
+  }
+
   @Override
   public void dispose() {
   }
 
   public static ModificationTracker getInstance(Project project) {
     return project.getService(JavaLibraryModificationTracker.class);
+  }
+
+  @TestOnly
+  public static void incModificationCount(Project project) {
+    project.getService(JavaLibraryModificationTracker.class).incModificationCount();
   }
 }

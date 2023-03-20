@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.codeInsight.JavaLibraryModificationTracker
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -17,7 +18,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryDependenciesCache
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker
 import org.jetbrains.kotlin.idea.caches.project.getModuleInfosFromIdeaModel
 import org.jetbrains.kotlin.idea.caches.trackers.ModuleModificationTracker
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus.checkCanceled
@@ -53,7 +53,7 @@ class ResolutionAnchorCacheServiceImpl(
                 CachedValueProvider.Result.create(
                     mapResolutionAnchorForLibraries(),
                     ModuleModificationTracker.getInstance(project),
-                    LibraryModificationTracker.getInstance(project)
+                    JavaLibraryModificationTracker.getInstance(project)
                 )
             }
 
@@ -63,7 +63,7 @@ class ResolutionAnchorCacheServiceImpl(
                 CachedValueProvider.Result.create(
                     ContainerUtil.createConcurrentWeakMap(),
                     ModuleModificationTracker.getInstance(project),
-                    LibraryModificationTracker.getInstance(project)
+                    JavaLibraryModificationTracker.getInstance(project)
                 )
             }
 

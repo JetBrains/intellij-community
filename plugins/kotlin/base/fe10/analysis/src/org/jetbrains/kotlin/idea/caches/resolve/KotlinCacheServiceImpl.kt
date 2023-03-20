@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.codeInsight.JavaLibraryModificationTracker
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -211,7 +212,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         val settings = createPlatformAnalysisSettings(project, platform, sdk)
 
         val dependenciesForScriptDependencies = listOf(
-            LibraryModificationTracker.getInstance(project),
+            JavaLibraryModificationTracker.getInstance(project),
             ScriptDependenciesModificationTracker.getInstance(project)
         )
 
@@ -246,7 +247,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             project, sdkContext, settings,
             moduleFilter = moduleFilters::sdkFacadeFilter,
             dependencies = listOf(
-                LibraryModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project),
                 ProjectRootModificationTracker.getInstance(project)
             ),
             invalidateOnOOCB = false,
@@ -261,7 +262,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             moduleFilter = moduleFilters::libraryFacadeFilter,
             invalidateOnOOCB = false,
             dependencies = listOf(
-                LibraryModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project),
                 ProjectRootModificationTracker.getInstance(project)
             )
         )
@@ -438,7 +439,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                         return annotated.annotationEntries.mapNotNull { context.get(BindingContext.ANNOTATION, it) }
                     }
                 },
-                LibraryModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project),
                 UastModificationTracker.getInstance(project)
             )
         },
@@ -453,7 +454,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                 override fun createValue(filesAndSettings: Pair<Set<KtFile>, PlatformAnalysisSettings>) =
                     createFacadeForFilesWithSpecialModuleInfo(filesAndSettings.first, filesAndSettings.second)
             },
-            LibraryModificationTracker.getInstance(project),
+            JavaLibraryModificationTracker.getInstance(project),
             ProjectRootModificationTracker.getInstance(project)
         )
     }
@@ -473,7 +474,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             object : SLRUCache<Set<KtFile>, ProjectResolutionFacade>(10, 5) {
                 override fun createValue(files: Set<KtFile>) = createFacadeForFilesWithSpecialModuleInfo(files)
             },
-            LibraryModificationTracker.getInstance(project),
+            JavaLibraryModificationTracker.getInstance(project),
             ProjectRootModificationTracker.getInstance(project),
             ScriptDependenciesModificationTracker.getInstance(project)
         )

@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" />
+    <orderEntry type="module" module-name="intellij.java" />
   </component>
 </module>
