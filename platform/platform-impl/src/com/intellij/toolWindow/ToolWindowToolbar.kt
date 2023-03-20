@@ -137,6 +137,21 @@ internal abstract class ToolWindowToolbar : JPanel() {
 
     override fun containsPoint(screenPoint: Point): Boolean {
       if (anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT) {
+        if (!toolBar.isShowing) {
+          val bounds = Rectangle(rootPane.locationOnScreen, rootPane.size)
+          bounds.height /= 2
+
+          val toolWindowWidth = getFirstVisibleToolWindowSize(true)
+
+          if (anchor == ToolWindowAnchor.RIGHT) {
+            bounds.x = bounds.x + bounds.width - toolWindowWidth
+          }
+
+          bounds.width = toolWindowWidth
+
+          return bounds.contains(screenPoint)
+        }
+
         val bounds = Rectangle(toolBar.locationOnScreen, toolBar.size)
         bounds.height /= 2
 
