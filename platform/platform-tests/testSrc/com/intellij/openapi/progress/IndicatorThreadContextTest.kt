@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.ensureActive
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -35,19 +33,7 @@ class IndicatorThreadContextTest : CancellationTest() {
           testNoExceptions()
           indicator.cancel()
           currentJob.timeoutJoinBlocking() // not immediate because watch job polls indicator every 10ms
-          val ce = assertThrows<CancellationException> {
-            currentJob.ensureActive()
-          }
-          assertInstanceOf<ProcessCanceledException>(ce.cause)
-
-          val jce = assertThrows<JobCanceledException> {
-            Cancellation.checkCancelled()
-          }
-          assertInstanceOf<ProcessCanceledException>(jce.cause.cause)
-
-          throw assertThrows<JobCanceledException> {
-            ProgressManager.checkCanceled()
-          }
+          testExceptionsAndNonCancellableSection()
         }
       }
       assertFalse(pce is JobCanceledException)
