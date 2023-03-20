@@ -131,7 +131,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       lineWrap = true
     }.also {
       CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
-        font = StartupUiUtil.getLabelFont()
+        font = StartupUiUtil.labelFont
       }
       CollaborationToolsUIUtil.registerFocusActions(it)
     }
@@ -143,7 +143,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       lineWrap = true
     }.also {
       CollaborationToolsUIUtil.overrideUIDependentProperty(it) {
-        font = StartupUiUtil.getLabelFont()
+        font = StartupUiUtil.labelFont
       }
       CollaborationToolsUIUtil.registerFocusActions(it)
     }

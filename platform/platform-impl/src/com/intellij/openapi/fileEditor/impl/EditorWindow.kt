@@ -1103,7 +1103,7 @@ private class MySplitPainter(
     val switchShortcuts = IdeBundle.message("split.with.chooser.switch.tab", getShortcut("SplitChooser.NextWindow"))
 
     // Adjust default width to an info text
-    val font = StartupUiUtil.getLabelFont()
+    val font = StartupUiUtil.labelFont
     val fontMetrics = g.getFontMetrics(font)
     val openShortcutsWidth = fontMetrics.stringWidth(openShortcuts)
     val switchShortcutsWidth = fontMetrics.stringWidth(switchShortcuts)

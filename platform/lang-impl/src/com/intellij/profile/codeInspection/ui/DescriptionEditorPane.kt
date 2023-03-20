@@ -52,6 +52,6 @@ fun JEditorPane.readHTML(text: String) {
 @Deprecated(message = "HTMl conversion is handled in JEditorPane.readHTML")
 fun JEditorPane.toHTML(text: @Nls String?, miniFontSize: Boolean): String {
   val hintHint = HintHint(this, Point(0, 0))
-  hintHint.setFont(if (miniFontSize) UIUtil.getLabelFont(UIUtil.FontSize.SMALL) else StartupUiUtil.getLabelFont())
+  hintHint.setFont(if (miniFontSize) UIUtil.getLabelFont(UIUtil.FontSize.SMALL) else StartupUiUtil.labelFont)
   return HintUtil.prepareHintText(text!!, hintHint)
 }

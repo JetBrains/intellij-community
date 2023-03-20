@@ -108,7 +108,7 @@ open class IdeRootPane internal constructor(frame: JFrame,
     }
 
   init {
-    if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
+    if (SystemInfoRt.isWindows && (StartupUiUtil.isUnderDarcula || UIUtil.isUnderIntelliJLaF())) {
       try {
         windowDecorationStyle = FRAME
       }

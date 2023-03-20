@@ -60,7 +60,7 @@ private object ImageCache {
 fun loadImageByClassLoader(path: String,
                            classLoader: ClassLoader,
                            scaleContext: ScaleContext,
-                           isDark: Boolean = StartupUiUtil.isUnderDarcula()): Image? {
+                           isDark: Boolean = StartupUiUtil.isUnderDarcula): Image? {
   return loadImage(path = path, isDark = isDark, scaleContext = scaleContext, classLoader = classLoader)
 }
 
@@ -75,7 +75,7 @@ internal fun loadImage(path: String,
                        resourceClass: Class<*>? = null,
                        classLoader: ClassLoader?,
                        scaleContext: ScaleContext = ScaleContext.create(),
-                       isDark: Boolean = StartupUiUtil.isUnderDarcula(),
+                       isDark: Boolean = StartupUiUtil.isUnderDarcula,
                        colorPatcherProvider: SVGLoader.SvgElementColorPatcherProvider? = null,
                        filters: List<ImageFilter> = emptyList(),
                        useCache: Boolean = true): Image? {

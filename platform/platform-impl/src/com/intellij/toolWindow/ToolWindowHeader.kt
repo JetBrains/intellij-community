@@ -313,7 +313,7 @@ abstract class ToolWindowHeader internal constructor(
     setupAntialiasing(graphics)
     super.paintChildren(graphics)
     val r = bounds
-    if (!isActive && !StartupUiUtil.isUnderDarcula()) {
+    if (!isActive && !StartupUiUtil.isUnderDarcula) {
       graphics.color = Color(255, 255, 255, 30)
       graphics.fill(r)
     }

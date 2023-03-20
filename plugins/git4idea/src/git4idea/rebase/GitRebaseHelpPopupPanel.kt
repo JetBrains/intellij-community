@@ -69,8 +69,8 @@ class GitRebaseHelpPopupPanel : JPanel() {
   }
 
   private fun chooseImage(imagePath: String): String {
-    val themePart = if (StartupUiUtil.isUnderDarcula()) DARK_POSTFIX else ""
-    val retinaPart = if (StartupUiUtil.isJreHiDPI()) HIDPI_POSTFIX else ""
+    val themePart = if (StartupUiUtil.isUnderDarcula) DARK_POSTFIX else ""
+    val retinaPart = if (StartupUiUtil.isJreHiDPI) HIDPI_POSTFIX else ""
 
     return "${imagePath}${themePart}${retinaPart}.png"
   }

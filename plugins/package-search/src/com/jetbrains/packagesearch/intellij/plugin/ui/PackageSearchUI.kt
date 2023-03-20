@@ -23,16 +23,38 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBEmptyBorder
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.components.BrowsableLinkLabel
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScalableUnits
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.CardLayout
+import java.awt.Color
+import java.awt.Component
+import java.awt.Dimension
+import java.awt.FlowLayout
+import java.awt.Rectangle
 import java.awt.event.ActionEvent
-import javax.swing.*
+import javax.swing.AbstractAction
+import javax.swing.BorderFactory
+import javax.swing.BoxLayout
+import javax.swing.Icon
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JMenuItem
+import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.JTextField
+import javax.swing.KeyStroke
+import javax.swing.Scrollable
 
 object PackageSearchUI {
 
@@ -328,13 +350,13 @@ object PackageSearchUI {
     }
 
     fun createLabel(@Nls text: String? = null, init: JLabel.() -> Unit = {}) = JLabel().apply {
-        font = StartupUiUtil.getLabelFont()
+        font = StartupUiUtil.labelFont
         if (text != null) this.text = text
         init()
     }
 
     internal fun createLabelWithLink(init: BrowsableLinkLabel.() -> Unit = {}) = BrowsableLinkLabel().apply {
-        font = StartupUiUtil.getLabelFont()
+        font = StartupUiUtil.labelFont
         init()
     }
 

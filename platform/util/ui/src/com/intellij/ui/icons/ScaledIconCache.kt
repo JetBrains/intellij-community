@@ -16,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.Image
+import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.ImageIcon
 
@@ -67,7 +68,7 @@ private class ScaledResultIcon(image: Image,
                                private val scale: Float) : ImageIcon(image), ReplaceableIcon {
   @Synchronized
   override fun paintIcon(c: Component?, g: Graphics?, x: Int, y: Int) {
-    StartupUiUtil.drawImage(g!!, image, x, y, imageObserver ?: c)
+    StartupUiUtil.drawImage(g!!, image, Rectangle(x, y, -1, -1), null, null, imageObserver ?: c)
   }
 
   override fun replaceBy(replacer: IconReplacer): Icon {

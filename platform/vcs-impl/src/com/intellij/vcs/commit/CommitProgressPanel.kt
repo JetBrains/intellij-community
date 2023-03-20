@@ -35,8 +35,11 @@ import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.util.ui.*
+import com.intellij.util.ui.HtmlPanel
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI.Borders.empty
+import com.intellij.util.ui.NamedColorUtil
+import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -45,7 +48,10 @@ import kotlinx.coroutines.flow.onEach
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Font
-import java.awt.event.*
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
+import java.awt.event.ContainerEvent
+import java.awt.event.ContainerListener
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.border.Border
@@ -345,7 +351,7 @@ private class FailuresDescriptionPanel : HtmlPanel() {
     return Dimension(size).apply { width = preferredSize.width }
   }
 
-  override fun getBodyFont(): Font = StartupUiUtil.getLabelFont()
+  override fun getBodyFont(): Font = StartupUiUtil.labelFont
   override fun getBody(): String = if (isInitialized) buildDescription().toString() else ""
   override fun hyperlinkUpdate(e: HyperlinkEvent) = showDetails(e)
 

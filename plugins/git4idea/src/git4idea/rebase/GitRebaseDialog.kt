@@ -654,7 +654,7 @@ internal class GitRebaseDialog(private val project: Project,
   companion object {
     private val LOG = logger<GitRebaseDialog>()
 
-    private val HELP_BUTTON_ICON_FOCUSED = if (StartupUiUtil.isUnderDarcula())
+    private val HELP_BUTTON_ICON_FOCUSED = if (StartupUiUtil.isUnderDarcula)
       IconUtil.brighter(AllIcons.General.ContextHelp, 3)
     else
       IconUtil.darker(AllIcons.General.ContextHelp, 3)

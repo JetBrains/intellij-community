@@ -126,7 +126,8 @@ abstract class BannerStartPagePromoter : StartPagePromoter {
 
   protected open fun createHeader(): JLabel {
     val result = JLabel(headerLabel)
-    result.font = StartupUiUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(StartupUiUtil.getLabelFont().size2D + JBUI.scale(2))
+    val labelFont = StartupUiUtil.labelFont
+    result.font = labelFont.deriveFont(Font.BOLD).deriveFont(labelFont.size2D + JBUI.scale(2))
     return result
   }
 }

@@ -68,7 +68,7 @@ internal class NewNavBarPanel(
   init {
     EDT.assertIsEdt()
     isOpaque = false
-    if (!ExperimentalUI.isNewUI() && StartupUiUtil.isUnderDarcula() && isFloating) {
+    if (!ExperimentalUI.isNewUI() && StartupUiUtil.isUnderDarcula && isFloating) {
       border = LineBorder(Gray._120, 1)
     }
     AccessibleContextUtil.setName(this, IdeBundle.message("navigation.bar"))

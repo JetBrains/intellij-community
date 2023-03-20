@@ -51,7 +51,7 @@ open class CachedImageIcon protected constructor(
 
     @JvmField
     internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
-      IconTransform(StartupUiUtil.isUnderDarcula(), arrayOf<IconPathPatcher>(DeprecatedDuplicatesIconPathPatcher()), null)
+      IconTransform(StartupUiUtil.isUnderDarcula, arrayOf<IconPathPatcher>(DeprecatedDuplicatesIconPathPatcher()), null)
     )
 
     @JvmField

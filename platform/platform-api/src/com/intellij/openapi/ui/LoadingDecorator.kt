@@ -22,7 +22,6 @@ import java.awt.*
 import java.awt.image.BufferedImage
 import javax.swing.*
 
-@OptIn(FlowPreview::class)
 open class LoadingDecorator @JvmOverloads constructor(
   content: JComponent?,
   parent: Disposable,
@@ -94,7 +93,7 @@ open class LoadingDecorator @JvmOverloads constructor(
 
   protected open fun customizeLoadingLayer(parent: JPanel, text: JLabel, icon: AsyncProcessIcon): NonOpaquePanel {
     parent.layout = GridBagLayout()
-    text.font = StartupUiUtil.getLabelFont()
+    text.font = StartupUiUtil.labelFont
     text.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
     icon.border = if ((text.text ?: "").endsWith("...")) JBUI.Borders.emptyRight(8) else JBUI.Borders.empty()
     val result = NonOpaquePanel(VerticalLayout(6))

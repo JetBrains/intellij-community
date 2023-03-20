@@ -33,7 +33,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 
 internal inline fun label(@NlsContexts.Label text: String, bold: Boolean = false, init: JBLabel.() -> Unit = {}) = JBLabel().apply {
-    font = StartupUiUtil.getLabelFont().deriveFont(if (bold) Font.BOLD else Font.PLAIN)
+    font = StartupUiUtil.labelFont.deriveFont(if (bold) Font.BOLD else Font.PLAIN)
     this.text = text
     init()
 }
@@ -41,7 +41,6 @@ internal inline fun label(@NlsContexts.Label text: String, bold: Boolean = false
 inline fun customPanel(layout: LayoutManager? = BorderLayout(), init: JPanel.() -> Unit = {}) = JPanel(layout).apply(init)
 
 inline fun borderPanel(init: BorderLayoutPanel.() -> Unit = {}) = BorderLayoutPanel().apply(init)
-
 
 fun textField(@Nls defaultValue: String?, onUpdated: (value: String) -> Unit) =
     JBTextField(defaultValue)
@@ -63,8 +62,8 @@ fun ValidationResult.ValidationError.asHtml() = when (messages.size) {
     0 -> ""
     1 -> messages.single()
     else -> {
-        val errorsList = messages.joinToString(separator = "") { "<li>${it}</li>" }
-        "<ul>$errorsList</ul>".asHtml()
+        val errorList = messages.joinToString(separator = "") { "<li>${it}</li>" }
+        "<ul>$errorList</ul>".asHtml()
     }
 }
 
@@ -136,7 +135,7 @@ fun <C : JComponent> C.addBorder(border: Border): C = apply {
 
 fun <T> runWithProgressBar(@Nls title: String, action: () -> T): T =
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        ThrowableComputable<T, Exception> { action() },
+        ThrowableComputable { action() },
         title,
         true,
         null

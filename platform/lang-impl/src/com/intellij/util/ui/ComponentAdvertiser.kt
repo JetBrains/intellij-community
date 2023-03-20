@@ -69,7 +69,7 @@ open class ComponentAdvertiser {
 
   companion object {
     fun adFont(): Font {
-      val font = StartupUiUtil.getLabelFont()
+      val font = StartupUiUtil.labelFont
       val relativeFont = RelativeFont.NORMAL.scale(JBUI.CurrentTheme.Advertiser.FONT_SIZE_OFFSET.get())
       return relativeFont.derive(font)
     }

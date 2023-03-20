@@ -37,22 +37,24 @@ import kotlin.math.roundToLong
 object StartupUiUtil {
   @ApiStatus.Internal
   @JvmField
-  val ourPatchableFontResources = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
-                                          "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font",
-                                          "MenuItem.font",
-                                          "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font",
-                                          "PopupMenu.font", "OptionPane.font",
-                                          "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font",
-                                          "Table.font", "TableHeader.font",
-                                          "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font",
-                                          "TextArea.font", "TextPane.font", "EditorPane.font",
-                                          "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font")
+  val patchableFontResources = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
+                                       "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font",
+                                       "MenuItem.font",
+                                       "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font",
+                                       "PopupMenu.font", "OptionPane.font",
+                                       "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font",
+                                       "Table.font", "TableHeader.font",
+                                       "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font",
+                                       "TextArea.font", "TextPane.font", "EditorPane.font",
+                                       "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font")
   const val ARIAL_FONT_NAME = "Arial"
 
+  @JvmStatic
   val isUnderDarcula: Boolean
     get() = UIManager.getLookAndFeel().name.contains("Darcula")
 
   @ApiStatus.Internal
+  @JvmStatic
   fun doGetLcdContrastValueForSplash(isUnderDarcula: Boolean): Int {
     if (SystemInfoRt.isMac) {
       return if (isUnderDarcula) 140 else 230
@@ -64,6 +66,7 @@ object StartupUiUtil {
     return normalizeLcdContrastValue(lcdContrastValue)
   }
 
+  @JvmStatic
   fun normalizeLcdContrastValue(lcdContrastValue: Int): Int {
     return if (lcdContrastValue < 100 || lcdContrastValue > 250) 140 else lcdContrastValue
   }
@@ -72,12 +75,14 @@ object StartupUiUtil {
    * Returns whether the JRE-managed HiDPI mode is enabled and the default monitor device is HiDPI.
    * (analogue of [UIUtil.isRetina] on macOS)
    */
+  @JvmStatic
   val isJreHiDPI: Boolean
     get() = JreHiDpiUtil.isJreHiDPI(sysScale())
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided component is tied to a HiDPI device.
    */
+  @JvmStatic
   fun isJreHiDPI(comp: Component?): Boolean {
     return JreHiDpiUtil.isJreHiDPI(comp?.graphicsConfiguration)
   }
@@ -85,14 +90,17 @@ object StartupUiUtil {
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided system scale context is HiDPI.
    */
+  @JvmStatic
   fun isJreHiDPI(ctx: ScaleContext?): Boolean {
     return JreHiDpiUtil.isJreHiDPIEnabled() && isHiDPI(sysScale(ctx))
   }
 
+  @JvmStatic
   fun getCenterPoint(container: Dimension, child: Dimension): Point {
     return getCenterPoint(Rectangle(container), child)
   }
 
+  @JvmStatic
   fun getCenterPoint(container: Rectangle, child: Dimension): Point {
     return Point(container.x + (container.width - child.width) / 2, container.y + (container.height - child.height) / 2)
   }
@@ -102,15 +110,18 @@ object StartupUiUtil {
    *
    * @see .drawImage
    */
+  @JvmStatic
   fun drawImage(g: Graphics, image: Image, x: Int, y: Int, observer: ImageObserver?) {
     drawImage(g = g, image = image, dstBounds = Rectangle(x, y, -1, -1), srcBounds = null, op = null, observer = observer)
   }
 
+  @JvmStatic
   fun drawImage(g: Graphics, image: Image, x: Int, y: Int, width: Int, height: Int, op: BufferedImageOp?) {
     val srcBounds = if (width >= 0 && height >= 0) Rectangle(x, y, width, height) else null
     drawImage(g = g, image = image, dstBounds = Rectangle(x, y, width, height), srcBounds = srcBounds, op = op, observer = null)
   }
 
+  @JvmStatic
   fun drawImage(g: Graphics, image: Image) {
     drawImage(g = g, image = image, x = 0, y = 0, width = -1, height = -1, op = null)
   }
@@ -120,6 +131,7 @@ object StartupUiUtil {
    *
    * @see .drawImage
    */
+  @JvmStatic
   fun drawImage(g: Graphics, image: Image, dstBounds: Rectangle?, observer: ImageObserver?) {
     drawImage(g = g, image = image, dstBounds = dstBounds, srcBounds = null, op = null, observer = observer)
   }
@@ -127,6 +139,7 @@ object StartupUiUtil {
   /**
    * @see .drawImage
    */
+  @JvmStatic
   fun drawImage(g: Graphics,
                 image: Image,
                 dstBounds: Rectangle?,
@@ -143,6 +156,7 @@ object StartupUiUtil {
    * If `dstBounds` is null or if its width/height is set to (-1) the image bounds or the image width/height is used.
    * If `srcBounds` is null or if its width/height is set to (-1) the image bounds or the image right/bottom area to the provided x/y is used.
    */
+  @JvmStatic
   fun drawImage(g: Graphics,
                 image: Image,
                 dstBounds: Rectangle?,
@@ -171,7 +185,7 @@ object StartupUiUtil {
       if (delegate != null) {
         image = delegate
       }
-      scale = image.scale
+      scale = (image as JBHiDPIScaledImage).scale
       var delta = 0.0
       if (java.lang.Boolean.parseBoolean(System.getProperty("ide.icon.scale.useAccuracyDelta", "true"))) {
         // Calculate the delta based on the image size. The bigger the size - the smaller the delta.
@@ -247,17 +261,19 @@ object StartupUiUtil {
   /**
    * @see .drawImage
    */
+  @JvmStatic
   fun drawImage(g: Graphics, image: BufferedImage, op: BufferedImageOp?, x: Int, y: Int) {
     drawImage(g = g, image = image, x = x, y = y, width = -1, height = -1, op = op)
   }
 
+  @JvmStatic
   val labelFont: Font
     get() = UIManager.getFont("Label.font")
 
-  fun isDialogFont(font: Font): Boolean {
-    return Font.DIALOG == font.getFamily(Locale.US)
-  }
+  @JvmStatic
+  fun isDialogFont(font: Font): Boolean = Font.DIALOG == font.getFamily(Locale.US)
 
+  @JvmStatic
   fun initInputMapDefaults(defaults: UIDefaults) {
     // Make ENTER work in JTrees
     val treeInputMap = defaults["Tree.focusInputMap"] as InputMap?
@@ -298,11 +314,12 @@ object StartupUiUtil {
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK), DefaultEditorKit.cutAction)
   }
 
+  @JvmStatic
   fun initFontDefaults(defaults: UIDefaults, uiFont: FontUIResource) {
     defaults["Tree.ancestorInputMap"] = null
     val textFont = FontUIResource(uiFont)
     val monoFont = FontUIResource("Monospaced", Font.PLAIN, uiFont.size)
-    for (fontResource in ourPatchableFontResources) {
+    for (fontResource in patchableFontResources) {
       defaults[fontResource] = uiFont
     }
     if (!SystemInfoRt.isMac) {
@@ -313,6 +330,7 @@ object StartupUiUtil {
     defaults["EditorPane.font"] = textFont
   }
 
+  @JvmStatic
   fun getFontWithFallback(familyName: String?, @JdkConstants.FontStyle style: Int, size: Float): FontUIResource {
     // On macOS font fallback is implemented in JDK by default
     // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
@@ -323,6 +341,7 @@ object StartupUiUtil {
     return if (fontWithFallback is FontUIResource) fontWithFallback else FontUIResource(fontWithFallback)
   }
 
+  @JvmStatic
   fun addAwtListener(listener: AWTEventListener, mask: Long, parent: Disposable) {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask)
     Disposer.register(parent) { Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }

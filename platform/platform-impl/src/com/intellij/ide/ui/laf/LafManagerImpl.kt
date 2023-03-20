@@ -252,7 +252,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       else {
         val laf = findLaf(currentLaf.className)
         if (laf != null) {
-          val needUninstall = StartupUiUtil.isUnderDarcula()
+          val needUninstall = StartupUiUtil.isUnderDarcula
           // setup default LAF or one specified by readExternal
           doSetLaF(lookAndFeelInfo = laf, installEditorScheme = false)
           updateWizardLAF(needUninstall)
@@ -305,7 +305,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       return
     }
 
-    val currentIsDark = StartupUiUtil.isUnderDarcula() ||
+    val currentIsDark = StartupUiUtil.isUnderDarcula ||
                         (myCurrentLaf is UIThemeBasedLookAndFeelInfo && (myCurrentLaf as UIThemeBasedLookAndFeelInfo).theme.isDark)
     var expectedLaf: LookAndFeelInfo?
     if (systemIsDark) {
@@ -336,7 +336,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       return
     }
 
-    if (StartupUiUtil.isUnderDarcula()) {
+    if (StartupUiUtil.isUnderDarcula) {
       DarculaInstaller.install()
     }
     else if (wasUnderDarcula) {
@@ -737,7 +737,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         return
       }
     }
-    val dark = StartupUiUtil.isUnderDarcula()
+    val dark = StartupUiUtil.isUnderDarcula
     val editorColorManager = EditorColorsManager.getInstance()
     val current = editorColorManager.globalScheme
     val wasUITheme = oldLaf is UIThemeBasedLookAndFeelInfo
@@ -854,7 +854,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     val laf = if (myCurrentLaf == null) null else lookAndFeelReference
     val lafDefaults = myStoredDefaults.get(laf)
     if (lafDefaults != null) {
-      for (resource in StartupUiUtil.ourPatchableFontResources) {
+      for (resource in StartupUiUtil.patchableFontResources) {
         defaults.put(resource, lafDefaults.get(resource))
       }
     }
@@ -866,7 +866,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     var lafDefaults = myStoredDefaults.get(laf)
     if (lafDefaults == null) {
       lafDefaults = HashMap()
-      for (resource in StartupUiUtil.ourPatchableFontResources) {
+      for (resource in StartupUiUtil.patchableFontResources) {
         lafDefaults.put(resource, defaults.get(resource))
       }
       myStoredDefaults.put(laf, lafDefaults)
