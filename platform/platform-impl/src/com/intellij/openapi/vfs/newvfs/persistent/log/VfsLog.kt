@@ -78,7 +78,7 @@ class VfsLog(
     }
   }
 
-  suspend fun <R> query(body: suspend VfsLogContext.() -> R): R = context.body()
+  fun <R> query(body: VfsLogContext.() -> R): R = context.body()
 
   fun dispose() {
     LOG.debug("VfsLog disposing")
