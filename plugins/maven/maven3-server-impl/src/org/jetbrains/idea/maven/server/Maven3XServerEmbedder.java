@@ -124,7 +124,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @NotNull private final Settings myMavenSettings;
 
   private final ArtifactRepository myLocalRepository;
-  private final Maven3ServerConsoleLogger myConsoleWrapper;
+  protected final Maven3ServerConsoleLogger myConsoleWrapper;
 
   private final Properties mySystemProperties;
 

@@ -5,12 +5,14 @@ import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.impl.ArtifactDescriptorReader;
 import org.eclipse.aether.impl.ArtifactResolver;
+import org.eclipse.aether.impl.DependencyCollector;
 import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven36ArtifactDescriptorReader;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven36ArtifactResolver;
 
+import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 
 public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
@@ -33,12 +35,33 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
 
       RepositorySystem repositorySystem = getComponent(RepositorySystem.class);
       if (repositorySystem instanceof DefaultRepositorySystem) {
-        enhancedArtifactDescriptorReader = new CustomMaven36ArtifactDescriptorReader(artifactDescriptorReader);
-        DefaultRepositorySystem defaultRepositorySystem = (DefaultRepositorySystem)repositorySystem;
-        defaultRepositorySystem.setArtifactResolver(enhancedArtifactResolver);
-        //defaultRepositorySystem.setArtifactDescriptorReader(enhancedArtifactDescriptorReader);
+        ((DefaultRepositorySystem)repositorySystem).setArtifactResolver(enhancedArtifactResolver);
+      }
+    }
+  }
+
+  private synchronized void customizeArtifactDescriptorReader() {
+    if (null == enhancedArtifactDescriptorReader) {
+      ArtifactDescriptorReader artifactDescriptorReader = getComponent(ArtifactDescriptorReader.class);
+      enhancedArtifactDescriptorReader = new CustomMaven36ArtifactDescriptorReader(artifactDescriptorReader);
+
+      RepositorySystem repositorySystem = getComponent(RepositorySystem.class);
+      if (repositorySystem instanceof DefaultRepositorySystem) {
+        ((DefaultRepositorySystem)repositorySystem).setArtifactDescriptorReader(enhancedArtifactDescriptorReader);
       }
 
+      // depth-first
+      DependencyCollector dependencyCollector = getComponent(DependencyCollector.class, "df");
+      if (null != dependencyCollector) {
+        // DependencyCollectorDelegate.setArtifactDescriptorReader
+        try {
+          Method method = dependencyCollector.getClass().getMethod("setArtifactDescriptorReader", ArtifactDescriptorReader.class);
+          method.invoke(dependencyCollector, enhancedArtifactDescriptorReader);
+        }
+        catch (Exception ex) {
+          myConsoleWrapper.info("Could not customize dependency collector", ex);
+        }
+      }
     }
   }
 
@@ -46,6 +69,9 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
     if (null != enhancedArtifactResolver) {
       enhancedArtifactResolver.reset();
     }
+  }
+
+  private synchronized void resetArtifactDescriptorReader() {
     if (null != enhancedArtifactDescriptorReader) {
       enhancedArtifactDescriptorReader.reset();
     }
@@ -57,6 +83,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
 
     //TODO: registry key to turn off
     customizeArtifactResolver();
+    //customizeArtifactDescriptorReader();
   }
 
   @Override
@@ -64,6 +91,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
     super.resetCustomizedComponents();
 
     resetArtifactResolver();
+    resetArtifactDescriptorReader();
   }
 
   @Override
