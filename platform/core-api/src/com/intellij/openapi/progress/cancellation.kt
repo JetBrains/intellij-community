@@ -54,7 +54,7 @@ fun <T> prepareThreadContextAllowingOrphan(action: (Job) -> T): T {
 internal fun <T> prepareThreadContext(allowOrphan: Boolean, action: (Job) -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
   if (indicator != null) {
-    return prepareThreadContext(indicator, action)
+    return prepareIndicatorThreadContext(indicator, action)
   }
   val currentJob = Cancellation.currentJob()
   if (currentJob != null) {
@@ -73,7 +73,7 @@ internal fun <T> prepareThreadContext(allowOrphan: Boolean, action: (Job) -> T):
  * @throws ProcessCanceledException if [indicator] is cancelled,
  * or a child coroutine is started and failed
  */
-internal fun <T> prepareThreadContext(indicator: ProgressIndicator, action: (currentJob: Job) -> T): T {
+internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, action: (currentJob: Job) -> T): T {
   val currentJob = Job(parent = null) // no job parent, the "parent" is the indicator
   val indicatorWatcher = cancelWithIndicator(currentJob, indicator)
   val progressModality = ProgressManager.getInstance().currentProgressModality?.asContextElement()

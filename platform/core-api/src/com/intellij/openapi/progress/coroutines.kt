@@ -153,7 +153,7 @@ fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
 @Internal
 fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   assertBackgroundThreadOrWriteAction()
-  return prepareThreadContext(indicator) { currentJob ->
+  return prepareIndicatorThreadContext(indicator) { currentJob ->
     val context = currentThreadContext() +
                   currentJob +
                   CoroutineName("indicator run blocking") +
