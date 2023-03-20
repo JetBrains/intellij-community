@@ -40,7 +40,9 @@ abstract class ToolbarComboWidget: JComponent() {
   }
 
   fun addPressListener(action: ActionListener) {
+    val listenersCountBefore = pressListeners.size
     pressListeners += action
+    firePropertyChange("pressListenersCount", listenersCountBefore, pressListeners.size)
   }
 
   private fun fireUpdateEvents(prop: KProperty<*>, oldValue: Any?, newValue: Any?) {
