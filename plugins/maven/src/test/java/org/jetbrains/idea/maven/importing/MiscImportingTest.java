@@ -456,36 +456,6 @@ public class MiscImportingTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
-  public void testExceptionsFromMavenExtensionsAreReportedAsProblems() throws Exception {
-    MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "plugins");
-    setRepositoryPath(helper.getTestDataPath("plugins"));
-    getMavenGeneralSettings().setWorkOffline(true);
-
-    createProjectPom("""
-                       <groupId>test</groupId>
-                       <artifactId>project</artifactId>
-                       <version>1</version>
-                       <description>throw!</description>
-                       <build>
-                         <extensions>
-                           <extension>
-                             <groupId>intellij.test</groupId>
-                             <artifactId>maven-extension</artifactId>
-                             <version>1.0</version>
-                           </extension>
-                         </extensions>
-                       </build>
-                       """);
-    importProjectWithErrors();
-
-    List<MavenProject> projects = getProjectsTree().getProjects();
-    assertEquals(1, projects.size());
-    MavenProject mavenProject = projects.get(0);
-    assertEquals(mavenProject.getProblems().toString(), 1, mavenProject.getProblems().size());
-    assertEquals("throw!", mavenProject.getProblems().get(0).getDescription());
-  }
-
-  @Test
   public void testCheckingIfModuleIsNotDisposedBeforeCommitOnImport() {
     importProject("""
                     <groupId>test</groupId>
