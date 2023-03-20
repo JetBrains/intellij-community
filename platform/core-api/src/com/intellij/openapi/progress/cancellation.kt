@@ -64,10 +64,7 @@ internal fun <T> prepareThreadContext(allowOrphan: Boolean, action: (CoroutineCo
   if (!allowOrphan) {
     LOG.error("There is no ProgressIndicator or Job in this thread, the current job is not cancellable.")
   }
-  val orphanJob = Job(parent = null)
-  return executeWithJobAndCompleteIt(orphanJob) {
-    action(orphanJob)
-  }
+  return action(EmptyCoroutineContext)
 }
 
 /**
