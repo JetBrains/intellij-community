@@ -50,7 +50,11 @@ object TomlParserUtil : GeneratedParserUtilBase() {
 
 private fun isNextAfterNewLine(b: PsiBuilder): Boolean {
     val prevToken = b.rawLookup(-1)
-    return prevToken == null || prevToken == TokenType.WHITE_SPACE && b.rawLookupText(-1).contains("\n")
+    return when (prevToken) {
+        null -> true
+        TokenType.WHITE_SPACE -> b.rawLookupText(-1).contains("\n") || b.rawLookup(-2) == null
+        else -> false
+    }
 }
 
 
