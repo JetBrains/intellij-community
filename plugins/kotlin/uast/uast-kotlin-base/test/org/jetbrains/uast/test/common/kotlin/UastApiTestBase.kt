@@ -4,7 +4,7 @@
  */
 package org.jetbrains.uast.test.common.kotlin
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.*
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
@@ -689,7 +689,7 @@ interface UastApiTestBase : UastPluginSelection {
         // type delegated from LC
         TestCase.assertEquals(PsiTypes.voidType(), m.returnType)
         // type through the base service
-        val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+        val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
         TestCase.assertEquals(PsiTypes.voidType(), service.getType(m.sourcePsi as KtDeclaration, m as UElement))
 
         val functionCall = m.findElementByText<UElement>("println").uastParent as KotlinUFunctionCallExpression

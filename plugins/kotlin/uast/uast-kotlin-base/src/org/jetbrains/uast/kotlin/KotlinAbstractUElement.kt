@@ -2,7 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastFacade
@@ -19,7 +19,7 @@ abstract class KotlinAbstractUElement(
     }
 
     val baseResolveProviderService: BaseKotlinUastResolveProviderService by lz {
-        ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+        ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
             ?: error("${BaseKotlinUastResolveProviderService::class.java.name} is not available for ${this::class.simpleName}")
     }
 
