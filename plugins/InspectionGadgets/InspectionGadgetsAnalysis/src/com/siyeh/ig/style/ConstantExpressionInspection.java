@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final int MAX_RESULT_LENGTH_TO_DISPLAY = 50;
+  private static final int MAX_RESULT_LENGTH_TO_DISPLAY = 40;
   private static final int MAX_EXPRESSION_LENGTH = 200;
 
   @NotNull
@@ -77,10 +77,10 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
     @NotNull
     @Override
     public String getName() {
-      if (myValueText.length() > MAX_RESULT_LENGTH_TO_DISPLAY) {
+      if (myValueText.length() < MAX_RESULT_LENGTH_TO_DISPLAY) {
         return InspectionGadgetsBundle.message("inspection.constant.expression.fix.name", myText);
       }
-      return InspectionGadgetsBundle.message("inspection.constant.expression.fix.name.with.value", myText, myValueText);
+      return InspectionGadgetsBundle.message("inspection.constant.expression.fix.name.short");
     }
 
     @Nls
