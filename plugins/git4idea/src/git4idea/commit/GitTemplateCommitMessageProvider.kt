@@ -12,7 +12,7 @@ import git4idea.repo.GitCommitTemplateTracker
 import git4idea.repo.GitRepository
 import org.jetbrains.concurrency.isPending
 
-internal class GitDelayedCommitTemplateMessageProvider : DelayedCommitMessageProvider {
+internal class GitTemplateCommitMessageProvider : DelayedCommitMessageProvider {
 
   override fun init(project: Project, commitUi: CommitWorkflowUi) {
     val commitMessageUpdater = CommitMessageUpdater(project, commitUi)

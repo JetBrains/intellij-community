@@ -732,7 +732,7 @@
 
     <postStartupActivity implementation="git4idea.repo.GitCommitTemplateTracker$GitCommitTemplateTrackerStartupActivity"/>
 
-    <vcs.delayedCommitMessageProvider implementation="git4idea.commit.GitDelayedCommitTemplateMessageProvider" order="first"/>
+    <vcs.delayedCommitMessageProvider implementation="git4idea.commit.GitTemplateCommitMessageProvider" order="first"/>
     <vcs.commitMessageProvider implementation="git4idea.commit.GitCommitTemplateMessageProvider" order="first"/>
     <jbProtocolRevisionResolver implementation="git4idea.GitNavigateRevisionResolver"/>
   </extensions>
