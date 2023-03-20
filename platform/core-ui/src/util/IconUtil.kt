@@ -85,14 +85,18 @@ object IconUtil {
     if (icon.iconHeight <= maxHeight && icon.iconWidth <= maxWidth) {
       return icon
     }
+
     var image = IconLoader.toImage(icon, null) ?: return icon
     var scale = 1.0
     if (image is JBHiDPIScaledImage) {
       val hdpi = image
       scale = hdpi.scale
-      if (hdpi.delegate != null) image = hdpi.delegate
+      hdpi.delegate?.let {
+        image = it
+      }
     }
-    val bi = ImageUtil.toBufferedImage(image!!)
+
+    val bi = ImageUtil.toBufferedImage(image)
     val g = bi.createGraphics()
     val imageWidth = ImageUtil.getRealWidth(image)
     val imageHeight = ImageUtil.getRealHeight(image)

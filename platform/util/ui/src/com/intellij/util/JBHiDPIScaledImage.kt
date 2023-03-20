@@ -1,37 +1,36 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util;
+@file:Suppress("UndesirableClassUsage")
 
-import com.intellij.ui.paint.PaintUtil.RoundingMode;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ui.ImageUtil;
-import org.imgscalr.Scalr;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.util
 
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.image.ImageObserver;
-
-import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
-import static java.lang.Math.round;
+import com.intellij.ui.paint.PaintUtil
+import com.intellij.ui.scale.JBUIScale.sysScale
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.ui.scale.ScaleType
+import com.intellij.util.ui.ImageUtil
+import org.imgscalr.Scalr
+import java.awt.Graphics2D
+import java.awt.GraphicsConfiguration
+import java.awt.Image
+import java.awt.image.BufferedImage
+import java.awt.image.ImageObserver
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 /**
-* @author Konstantin Bulenkov
-* @author tav
-*/
-public final class JBHiDPIScaledImage extends BufferedImage {
-  @Nullable private final Image myImage;
-  private final double myUserWidth;
-  private final double myUserHeight;
-  private final double myScale;
+ * @author Konstantin Bulenkov
+ * @author tav
+ */
+class JBHiDPIScaledImage : BufferedImage {
+  val delegate: Image?
+  private val myUserWidth: Double
+  private val myUserHeight: Double
+  val scale: Double
 
   /**
-   * @see #JBHiDPIScaledImage(double, double, int)
+   * @see .JBHiDPIScaledImage
    */
-  public JBHiDPIScaledImage(int width, int height, int type) {
-    this(width, (double)height, type);
-  }
+  constructor(width: Int, height: Int, type: Int) : this(width.toDouble(), height.toDouble(), type)
 
   /**
    * Creates a scaled HiDPI-aware BufferedImage, targeting the system default scale.
@@ -40,16 +39,19 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @param height the height in user coordinate space
    * @param type the type
    */
-  public JBHiDPIScaledImage(double width, double height, int type) {
-    this((GraphicsConfiguration)null, width, height, type);
-  }
+  constructor(width: Double, height: Double, type: Int) : this(gc = null as GraphicsConfiguration?,
+                                                               width = width,
+                                                               height = height,
+                                                               type = type)
 
   /**
-   * @see #JBHiDPIScaledImage(Graphics2D, double, double, int, RoundingMode rm)
+   * @see .JBHiDPIScaledImage
    */
-  public JBHiDPIScaledImage(@Nullable Graphics2D g, int width, int height, int type) {
-    this(g, width, height, type, RoundingMode.FLOOR);
-  }
+  constructor(g: Graphics2D?, width: Int, height: Int, type: Int) : this(g = g,
+                                                                         width = width.toDouble(),
+                                                                         height = height.toDouble(),
+                                                                         type = type,
+                                                                         rm = PaintUtil.RoundingMode.FLOOR)
 
   /**
    * Creates a scaled HiDPI-aware BufferedImage, targeting the graphics scale.
@@ -60,23 +62,30 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @param type the type
    * @param rm the rounding mode
    */
-  public JBHiDPIScaledImage(@Nullable Graphics2D g, double width, double height, int type, @NotNull RoundingMode rm) {
-    this(JBUIScale.sysScale(g), width, height, type, rm);
-  }
+  constructor(g: Graphics2D?, width: Double, height: Double, type: Int, rm: PaintUtil.RoundingMode) : this(
+    scale = sysScale(g = g).toDouble(),
+    width = width,
+    height = height,
+    type = type,
+    rm = rm)
 
   /**
-   * @see #JBHiDPIScaledImage(GraphicsConfiguration, double, double, int)
+   * @see .JBHiDPIScaledImage
    */
-  public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, int width, int height, int type) {
-    this(gc, width, (double)height, type);
-  }
+  constructor(gc: GraphicsConfiguration?, width: Int, height: Int, type: Int) : this(gc = gc,
+                                                                                     width = width.toDouble(),
+                                                                                     height = height.toDouble(),
+                                                                                     type = type)
 
   /**
-   * @see #JBHiDPIScaledImage(GraphicsConfiguration, double, double, int)
+   * @see .JBHiDPIScaledImage
    */
-  public JBHiDPIScaledImage(@Nullable ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
-    this(JBUIScale.sysScale(ctx), width, height, type, rm);
-  }
+  constructor(ctx: ScaleContext?, width: Double, height: Double, type: Int, rm: PaintUtil.RoundingMode) : this(
+    scale = sysScale(context = ctx),
+    width = width,
+    height = height,
+    type = type,
+    rm = rm)
 
   /**
    * Creates a scaled HiDPI-aware BufferedImage, targeting the graphics config.
@@ -86,37 +95,27 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @param height the height in user coordinate space
    * @param type the type
    */
-  public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, double width, double height, int type) {
-    this(gc, width, height, type, RoundingMode.FLOOR);
+  @JvmOverloads
+  constructor(gc: GraphicsConfiguration?,
+              width: Double,
+              height: Double,
+              type: Int,
+              rm: PaintUtil.RoundingMode = PaintUtil.RoundingMode.FLOOR) : this(
+    sysScale(gc).toDouble(), width, height, type, rm)
+
+  private constructor(scale: Double, width: Double, height: Double, type: Int, rm: PaintUtil.RoundingMode) : super(rm.round(width * scale),
+                                                                                                                   rm.round(height * scale),
+                                                                                                                   type) {
+    delegate = null
+    myUserWidth = width
+    myUserHeight = height
+    this.scale = scale
   }
 
   /**
-   * Creates a scaled HiDPI-aware BufferedImage, targeting the graphics config.
-   *
-   * @param gc the graphics config which provides the target scale
-   * @param width the width in user coordinate space
-   * @param height the height in user coordinate space
-   * @param rm the rounding mode to apply when converting width/height to the device space
-   * @param type the type
+   * @see .JBHiDPIScaledImage
    */
-  public JBHiDPIScaledImage(@Nullable GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
-    this(JBUIScale.sysScale(gc), width, height, type, rm);
-  }
-
-  private JBHiDPIScaledImage(double scale, double width, double height, int type, @NotNull RoundingMode rm) {
-    super(rm.round(width * scale), rm.round(height * scale), type);
-    myImage = null;
-    myUserWidth = width;
-    myUserHeight = height;
-    myScale = scale;
-  }
-
-  /**
-   * @see #JBHiDPIScaledImage(Image, double, double, int)
-   */
-  public JBHiDPIScaledImage(@NotNull Image image, int width, int height, int type) {
-    this(image, width, (double)height, type);
-  }
+  constructor(image: Image, width: Int, height: Int, type: Int) : this(image, width.toDouble(), height.toDouble(), type)
 
   /**
    * Creates a HiDPI-aware BufferedImage wrapper for the provided scaled raw image.
@@ -127,12 +126,12 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @param height the height in user coordinate space
    * @param type the type
    */
-  public JBHiDPIScaledImage(@NotNull Image image, double width, double height, int type) {
-    super(1, 1, type); // a dummy wrapper
-    myImage = image;
-    myUserWidth = width;
-    myUserHeight = height;
-    myScale = myUserWidth > 0 ? myImage.getWidth(null) / myUserWidth : 1f;
+  constructor(image: Image, width: Double, height: Double, type: Int) : super(1, 1, type) // a dummy wrapper
+  {
+    delegate = image
+    myUserWidth = width
+    myUserHeight = height
+    scale = if (myUserWidth > 0) delegate.getWidth(null) / myUserWidth else 1.0
   }
 
   /**
@@ -143,16 +142,12 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @param ctx the scaled context
    * @param type the type
    */
-  public JBHiDPIScaledImage(@NotNull Image image, @NotNull ScaleContext ctx, int type) {
-    super(1, 1, type); // a dummy wrapper
-    myImage = image;
-    myScale = ctx.getScale(SYS_SCALE);
-    myUserWidth = myImage.getWidth(null) / myScale;
-    myUserHeight = myImage.getHeight(null) / myScale;
-  }
-
-  public double getScale() {
-    return myScale;
+  constructor(image: Image, ctx: ScaleContext, type: Int) : super(1, 1, type) // a dummy wrapper
+  {
+    delegate = image
+    scale = ctx.getScale(ScaleType.SYS_SCALE)
+    myUserWidth = delegate.getWidth(null) / scale
+    myUserHeight = delegate.getHeight(null) / scale
   }
 
   /**
@@ -161,28 +156,23 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @param scaleFactor the scale factor
    * @return scaled instance
    */
-  @NotNull
-  public JBHiDPIScaledImage scale(double scaleFactor) {
-    Image img = myImage == null ? this: myImage;
-
-    int w = (int)(scaleFactor * getRealWidth(null));
-    int h = (int)(scaleFactor * getRealHeight(null));
-    if (w <= 0 || h <= 0) return this;
-
-    Image scaled = Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.QUALITY, w, h);
-
-    double newUserWidth = w / myScale;
-    double newUserHeight = h / myScale;
-
-    if (myImage != null) {
-      return new JBHiDPIScaledImage(scaled, newUserWidth, newUserHeight, getType());
+  fun scale(scaleFactor: Double): JBHiDPIScaledImage {
+    val img = delegate ?: this
+    val w = (scaleFactor * getRealWidth(null)).toInt()
+    val h = (scaleFactor * getRealHeight(null)).toInt()
+    if (w <= 0 || h <= 0) return this
+    val scaled: Image = Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.QUALITY, w, h)
+    val newUserWidth = w / scale
+    val newUserHeight = h / scale
+    if (delegate != null) {
+      return JBHiDPIScaledImage(scaled, newUserWidth, newUserHeight, type)
     }
-    JBHiDPIScaledImage newImg = new JBHiDPIScaledImage(myScale, newUserWidth, newUserHeight, getType(), RoundingMode.ROUND);
-    Graphics2D g = newImg.createGraphics();
-    g.drawImage(scaled, 0, 0, (int)round(newUserWidth), (int)round(newUserHeight),
-                0, 0, scaled.getWidth(null), scaled.getHeight(null), null);
-    g.dispose();
-    return newImg;
+    val newImg = JBHiDPIScaledImage(scale, newUserWidth, newUserHeight, type, PaintUtil.RoundingMode.ROUND)
+    val g = newImg.createGraphics()
+    g.drawImage(scaled, 0, 0, newUserWidth.roundToInt(), newUserHeight.roundToInt(),
+                0, 0, scaled.getWidth(null), scaled.getHeight(null), null)
+    g.dispose()
+    return newImg
   }
 
   /**
@@ -191,32 +181,23 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    *
    * @return scaled instance
    */
-  @NotNull
-  public JBHiDPIScaledImage scale(int targetUserWidth, int targetUserHeight) {
-    Image img = myImage == null ? this : myImage;
-
-    int w = getUserWidth(null);
-    int h = getUserHeight(null);
-    if (w <= 0 || h <= 0 || w == targetUserWidth && h == targetUserHeight) return this;
-
-    int targetWidth = (int)round(targetUserWidth * myScale);
-    int targetHeight = (int)round(targetUserHeight * myScale);
-
-    Image scaled = Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, targetWidth, targetHeight);
-
-    if (myImage != null) {
-      return new JBHiDPIScaledImage(scaled, targetUserWidth, targetUserHeight, getType());
+  fun scale(targetUserWidth: Int, targetUserHeight: Int): JBHiDPIScaledImage {
+    val img = delegate ?: this
+    val w = getUserWidth(null)
+    val h = getUserHeight(null)
+    if (w <= 0 || h <= 0 || w == targetUserWidth && h == targetUserHeight) return this
+    val targetWidth = (targetUserWidth * scale).roundToLong().toInt()
+    val targetHeight = (targetUserHeight * scale).roundToLong().toInt()
+    val scaled: Image = Scalr.resize(ImageUtil.toBufferedImage(img), Scalr.Method.QUALITY, Scalr.Mode.FIT_EXACT, targetWidth, targetHeight)
+    if (delegate != null) {
+      return JBHiDPIScaledImage(scaled, targetUserWidth, targetUserHeight, type)
     }
-    JBHiDPIScaledImage newImg = new JBHiDPIScaledImage(myScale, targetUserWidth, targetUserHeight, getType(), RoundingMode.ROUND);
-    Graphics2D g = newImg.createGraphics();
+    val newImg = JBHiDPIScaledImage(scale, targetUserWidth.toDouble(), targetUserHeight.toDouble(), type, PaintUtil.RoundingMode.ROUND)
+    val g = newImg.createGraphics()
     g.drawImage(scaled, 0, 0, targetUserWidth, targetUserHeight,
-                0, 0, scaled.getWidth(null), scaled.getHeight(null), null);
-    g.dispose();
-    return newImg;
-  }
-
-  public Image getDelegate() {
-    return myImage;
+                0, 0, scaled.getWidth(null), scaled.getHeight(null), null)
+    g.dispose()
+    return newImg
   }
 
   /**
@@ -225,9 +206,8 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    *
    * @return the width
    */
-  @Override
-  public int getWidth() {
-    return getWidth(null);
+  override fun getWidth(): Int {
+    return getWidth(null)
   }
 
   /**
@@ -236,9 +216,8 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    *
    * @return the height
    */
-  @Override
-  public int getHeight() {
-    return getHeight(null);
+  override fun getHeight(): Int {
+    return getHeight(null)
   }
 
   /**
@@ -247,9 +226,8 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    *
    * @return the width
    */
-  @Override
-  public int getWidth(ImageObserver observer) {
-    return myImage != null ? getUserWidth(observer) : getRealWidth(observer);
+  override fun getWidth(observer: ImageObserver?): Int {
+    return if (delegate != null) getUserWidth(observer) else getRealWidth(observer)
   }
 
   /**
@@ -258,9 +236,8 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    *
    * @return the height
    */
-  @Override
-  public int getHeight(ImageObserver observer) {
-    return myImage != null ? getUserHeight(observer) : getRealHeight(observer);
+  override fun getHeight(observer: ImageObserver?): Int {
+    return if (delegate != null) getUserHeight(observer) else getRealHeight(observer)
   }
 
   /**
@@ -269,8 +246,8 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @param observer the image observer
    * @return the width
    */
-  public int getUserWidth(ImageObserver observer) {
-    return myImage != null ? (int)round(myUserWidth) : (int)round(super.getWidth(observer) / myScale);
+  fun getUserWidth(observer: ImageObserver?): Int {
+    return if (delegate != null) myUserWidth.roundToInt() else (super.getWidth(observer) / scale).roundToLong().toInt()
   }
 
   /**
@@ -279,8 +256,8 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @param observer the image observer
    * @return the height
    */
-  public int getUserHeight(ImageObserver observer) {
-    return myImage != null ? (int)round(myUserHeight) : (int)round(super.getHeight(observer) / myScale);
+  fun getUserHeight(observer: ImageObserver?): Int {
+    return if (delegate != null) myUserHeight.roundToInt() else (super.getHeight(observer) / scale).roundToLong().toInt()
   }
 
   /**
@@ -289,8 +266,8 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @param observer the image observer
    * @return the width
    */
-  public int getRealWidth(ImageObserver observer) {
-    return myImage != null ? myImage.getWidth(observer) : super.getWidth(observer);
+  fun getRealWidth(observer: ImageObserver?): Int {
+    return delegate?.getWidth(observer) ?: super.getWidth(observer)
   }
 
   /**
@@ -299,17 +276,16 @@ public final class JBHiDPIScaledImage extends BufferedImage {
    * @param observer the image observer
    * @return the height
    */
-  public int getRealHeight(ImageObserver observer) {
-    return myImage != null ? myImage.getHeight(observer) : super.getHeight(observer);
+  private fun getRealHeight(observer: ImageObserver?): Int {
+    return delegate?.getHeight(observer) ?: super.getHeight(observer)
   }
 
-  @Override
-  public Graphics2D createGraphics() {
-    Graphics2D g = super.createGraphics();
-    if (myImage == null) {
-      g.scale(myScale, myScale);
-      return new HiDPIScaledGraphics(g);
+  override fun createGraphics(): Graphics2D {
+    val g = super.createGraphics()
+    if (delegate == null) {
+      g.scale(scale, scale)
+      return HiDPIScaledGraphics(g)
     }
-    return g;
+    return g
   }
 }
