@@ -722,6 +722,11 @@ public class SnippetMarkup {
       Selector selector = replace.selector();
       String replacement = replace.replacement();
       if (selector instanceof Regex regex) {
+        boolean addLineBreak = false;
+        if (content.endsWith("\n")) {
+          content = content.substring(0, content.length() - 1);
+          addLineBreak = true;
+        }
         try {
           content = regex.pattern().matcher(StringUtil.newBombedCharSequence(content, 1000)).replaceAll(replacement);
         }
@@ -734,6 +739,9 @@ public class SnippetMarkup {
           ErrorMarkup replacementError = new ErrorMarkup(
             replace.range(), JavaBundle.message("javadoc.snippet.error.malformed.replacement", "replace", replacement, e.getMessage()));
           visitor.visitError(replacementError);
+        }
+        if (addLineBreak) {
+          content += "\n";
         }
       }
       else if (selector instanceof Substring substring) {

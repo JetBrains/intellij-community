@@ -376,6 +376,15 @@ public class SnippetMarkupTest {
     testVisitor("// @replace regex=\"(a*)*b\" replacement='z':\n" + str, null, true,
                 "Error: @replace: too complex regular expression '(a*)*b'\n" + str);
   }
+  
+  @Test
+  public void visitorRegexpDotAsterisk() {
+    testVisitor("""
+                  // @start region=main
+                  aaaa // @replace regex=".*" replacement="."
+                  // @end region=main
+                  """, null, true, "..\n");
+  }
 
   private static void testParsing(@NotNull String input, @NotNull String expected) {
     assertEquals(expected, SnippetMarkup.parse(input).toString());
