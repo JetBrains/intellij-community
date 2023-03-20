@@ -166,7 +166,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   }
 
   private static boolean isApplicableTestLauncher(@NotNull GradleExecutionSettings settings) {
-    return Registry.is("gradle.testLauncherAPI.enabled", false)
+    var isEnabledTestLauncher = Registry.is("gradle.testLauncherAPI.enabled")
+                                || ApplicationManager.getApplication().isUnitTestMode();
+    return isEnabledTestLauncher
            && Boolean.TRUE.equals(settings.getUserData(GradleConstants.RUN_TASK_AS_TEST))
            && Optional.ofNullable(settings.getGradleHome())
              .map(GradleInstallationManager::getGradleVersion)
