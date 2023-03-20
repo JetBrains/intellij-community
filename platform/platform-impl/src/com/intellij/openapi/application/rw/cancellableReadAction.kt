@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.application.rw
 
+import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.Cancellation
@@ -15,7 +16,9 @@ import kotlin.coroutines.cancellation.CancellationException
 
 internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContext { ctx ->
   try {
-    cancellableReadActionInternal(ctx, action)
+    installThreadContext(ctx).use {
+      cancellableReadActionInternal(ctx, action)
+    }
   }
   catch (ce: CancellationException) {
     // One of two variants is thrown:

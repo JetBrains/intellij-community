@@ -1,25 +1,34 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.concurrency.currentThreadContextOrNull
+import com.intellij.openapi.application.contextModality
+import com.intellij.util.parent
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import org.junit.jupiter.api.Assertions.*
+import kotlinx.coroutines.job
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.test.*
 
 class IndicatorThreadContextTest : CancellationTest() {
 
   @Test
   fun context() {
     indicatorTest {
-      assertNull(Cancellation.currentJob())
-      assertNotNull(ProgressManager.getGlobalProgressIndicator())
+      assertNull(currentThreadContextOrNull())
+      val indicator = assertNotNull(ProgressManager.getGlobalProgressIndicator())
 
-      prepareThreadContextTest { currentJob ->
-        assertSame(currentJob, Cancellation.currentJob())
+      prepareThreadContext { ctx ->
+        assertNull(currentThreadContextOrNull())
         assertNull(ProgressManager.getGlobalProgressIndicator())
+        assertNull(ctx.job.parent())
+        assertSame(indicator.modalityState, ctx.contextModality())
+        assertEquals(2, ctx.fold(0) { acc, _ -> acc + 1 })
       }
 
-      assertNull(Cancellation.currentJob())
+      assertNull(currentThreadContextOrNull())
       assertNotNull(ProgressManager.getGlobalProgressIndicator())
     }
   }
@@ -28,7 +37,7 @@ class IndicatorThreadContextTest : CancellationTest() {
   fun cancellation() {
     val indicator = EmptyProgressIndicator()
     withIndicator(indicator) {
-      val pce = assertThrows<ProcessCanceledException> {
+      assertThrows<JobCanceledException> {
         prepareThreadContextTest { currentJob ->
           testNoExceptions()
           indicator.cancel()
@@ -36,7 +45,6 @@ class IndicatorThreadContextTest : CancellationTest() {
           testExceptionsAndNonCancellableSection()
         }
       }
-      assertFalse(pce is JobCanceledException)
     }
   }
 
@@ -82,9 +90,9 @@ class IndicatorThreadContextTest : CancellationTest() {
   fun `cancelled by child failure`() {
     val t = Throwable()
     val indicator = EmptyProgressIndicator()
-    val pce = assertThrows<ProcessCanceledException> {
+    val pce = assertThrows<JobCanceledException> {
       withIndicator(indicator) {
-        throw assertThrows<ProcessCanceledException> {
+        throw assertThrows<JobCanceledException> {
           prepareThreadContextTest { currentJob ->
             testNoExceptions()
             Job(parent = currentJob).completeExceptionally(t)
@@ -99,7 +107,7 @@ class IndicatorThreadContextTest : CancellationTest() {
         }
       }
     }
-    val ce = assertInstanceOf<CurrentJobCancellationException>(pce.cause)
-    assertSame(t, ce.originalCancellationException.cause)
+    val ce = assertInstanceOf<CancellationException>(pce.cause)
+    assertSame(t, ce.cause)
   }
 }

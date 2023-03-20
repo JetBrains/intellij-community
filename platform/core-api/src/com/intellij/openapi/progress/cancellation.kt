@@ -4,7 +4,7 @@
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
-import com.intellij.concurrency.withThreadContext
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.util.ConcurrencyUtil
@@ -12,6 +12,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.cancellation.CancellationException
 
 fun <X> withCurrentJob(job: Job, action: () -> X): X = Cancellation.withCurrentJob(job, ThrowableComputable(action))
 
@@ -47,7 +48,9 @@ fun <T> prepareThreadContext(action: (CoroutineContext) -> T): T {
     return prepareIndicatorThreadContext(indicator, action)
   }
   val currentContext = currentThreadContext()
-  return action(currentContext)
+  return resetThreadContext().use {
+    action(currentContext)
+  }
 }
 
 /**
@@ -59,20 +62,27 @@ internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, act
   val indicatorWatcher = cancelWithIndicator(currentJob, indicator)
   val progressModality = ProgressManager.getInstance().currentProgressModality?.asContextElement()
                          ?: EmptyCoroutineContext
+  val context = currentThreadContext() + currentJob + progressModality
   return try {
     ProgressManager.getInstance().silenceGlobalIndicator {
-      executeWithJobAndCompleteIt(currentJob) {
-        withThreadContext(progressModality).use {
-          action(currentThreadContext())
-        }
+      resetThreadContext().use {
+        action(context)
+      }.also {
+        currentJob.complete()
       }
     }
   }
   catch (ce: IndicatorCancellationException) {
+    currentJob.cancel(ce)
     throw ProcessCanceledException(ce)
   }
   catch (ce: CurrentJobCancellationException) {
+    currentJob.cancel(ce)
     throw ProcessCanceledException(ce)
+  }
+  catch (t: Throwable) {
+    currentJob.completeExceptionally(t)
+    throw t
   }
   finally {
     indicatorWatcher.cancel()

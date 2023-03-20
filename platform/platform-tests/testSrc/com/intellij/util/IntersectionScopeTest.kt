@@ -229,7 +229,7 @@ private fun CoroutineScope.parentJob(): Job? {
   return job().parent()
 }
 
-private fun Job.parent(): Job? {
+internal fun Job.parent(): Job? {
   @Suppress("DEPRECATION_ERROR", "INVISIBLE_MEMBER")
   @OptIn(InternalCoroutinesApi::class)
   return (this as JobSupport).parentHandle?.parent

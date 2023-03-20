@@ -5,7 +5,6 @@ package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.contextModality
@@ -126,10 +125,8 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
     }
     val context = ctx +
                   CoroutineName("job run blocking")
-    resetThreadContext().use {
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(context, action)
-    }
+    @Suppress("RAW_RUN_BLOCKING")
+    runBlocking(context, action)
   }
 }
 
@@ -159,10 +156,8 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
     val context = ctx +
                   CoroutineName("indicator run blocking") +
                   IndicatorRawProgressReporter(indicator).asContextElement()
-    resetThreadContext().use {
-      @Suppress("RAW_RUN_BLOCKING")
-      runBlocking(context, action)
-    }
+    @Suppress("RAW_RUN_BLOCKING")
+    runBlocking(context, action)
   }
 }
 

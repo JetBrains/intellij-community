@@ -1,28 +1,40 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.concurrency.TestElement
+import com.intellij.concurrency.currentThreadContextOrNull
+import com.intellij.concurrency.installThreadContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 
 class ExistingThreadContextTest : CancellationTest() {
 
   @Test
+  fun `without context`() {
+    prepareThreadContext { prepared ->
+      assertNull(currentThreadContextOrNull())
+      assertSame(prepared, EmptyCoroutineContext)
+    }
+  }
+
+  @Test
   fun context() {
-    currentJobTest { job ->
-      assertSame(job, Cancellation.currentJob())
-      assertNull(ProgressManager.getGlobalProgressIndicator())
-
-      prepareThreadContextTest { currentJob ->
-        assertSame(job, Cancellation.currentJob())
-        assertSame(job, currentJob)
-        assertNull(ProgressManager.getGlobalProgressIndicator())
+    val tc = Dispatchers.Default + TestElement("e")
+    installThreadContext(tc).use {
+      assertSame(tc, currentThreadContextOrNull())
+      prepareThreadContext { prepared ->
+        assertNull(currentThreadContextOrNull())
+        assertSame(tc, prepared)
       }
-
-      assertSame(job, Cancellation.currentJob())
-      assertNull(ProgressManager.getGlobalProgressIndicator())
+      assertSame(tc, currentThreadContextOrNull())
     }
   }
 
