@@ -71,7 +71,7 @@ object StartupUiUtil {
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the default monitor device is HiDPI.
-   * (analogue of [UIUtil.isRetina] on macOS)
+   * (Analogue of [UIUtil.isRetina] on macOS)
    */
   @JvmStatic
   val isJreHiDPI: Boolean
@@ -110,13 +110,13 @@ object StartupUiUtil {
    */
   @JvmStatic
   fun drawImage(g: Graphics, image: Image, x: Int, y: Int, observer: ImageObserver?) {
-    drawImage(g = g, image = image, dstBounds = Rectangle(x, y, -1, -1), srcBounds = null, op = null, observer = observer)
+    drawImage(g = g, image = image, destinationBounds = Rectangle(x, y, -1, -1), sourceBounds = null, op = null, observer = observer)
   }
 
   @JvmStatic
   fun drawImage(g: Graphics, image: Image, x: Int, y: Int, width: Int, height: Int, op: BufferedImageOp?) {
     val srcBounds = if (width >= 0 && height >= 0) Rectangle(x, y, width, height) else null
-    drawImage(g = g, image = image, dstBounds = Rectangle(x, y, width, height), srcBounds = srcBounds, op = op, observer = null)
+    drawImage(g = g, image = image, destinationBounds = Rectangle(x, y, width, height), sourceBounds = srcBounds, op = op, observer = null)
   }
 
   @JvmStatic
@@ -131,7 +131,7 @@ object StartupUiUtil {
    */
   @JvmStatic
   fun drawImage(g: Graphics, image: Image, dstBounds: Rectangle?, observer: ImageObserver?) {
-    drawImage(g = g, image = image, dstBounds = dstBounds, srcBounds = null, op = null, observer = observer)
+    drawImage(g = g, image = image, destinationBounds = dstBounds, sourceBounds = null, op = null, observer = observer)
   }
 
   /**
@@ -143,7 +143,7 @@ object StartupUiUtil {
                 dstBounds: Rectangle?,
                 srcBounds: Rectangle?,
                 observer: ImageObserver?) {
-    drawImage(g = g, image = image, dstBounds = dstBounds, srcBounds = srcBounds, op = null, observer = observer)
+    drawImage(g = g, image = image, destinationBounds = dstBounds, sourceBounds = srcBounds, op = null, observer = observer)
   }
 
   /**
@@ -223,7 +223,9 @@ object StartupUiUtil {
   }
 
   @JvmStatic
-  fun getFontWithFallback(familyName: String?, @Suppress("DEPRECATION") @org.intellij.lang.annotations.JdkConstants.FontStyle style: Int, size: Float): FontUIResource {
+  fun getFontWithFallback(familyName: String?,
+                          @Suppress("DEPRECATION") @org.intellij.lang.annotations.JdkConstants.FontStyle style: Int,
+                          size: Float): FontUIResource {
     // On macOS font fallback is implemented in JDK by default
     // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them, we don't have a solution now)
     // in headless mode just use fallback in order to avoid font loading
@@ -243,25 +245,27 @@ object StartupUiUtil {
 @Internal
 fun drawImage(g: Graphics,
               image: Image,
-              dstBounds: Rectangle?,
-              srcBounds: Rectangle?,
+              destinationBounds: Rectangle?,
+              sourceBounds: Rectangle?,
               op: BufferedImageOp?,
               observer: ImageObserver?) {
-  if (dstBounds == null) {
-    drawImage(g = g, image = image, srcBounds = srcBounds, op = op, observer = observer)
+  if (destinationBounds == null) {
+    drawImage(g = g, image = image, sourceBounds = sourceBounds, op = op, observer = observer)
   }
   else {
     drawImage(g = g,
               image = image,
-              dx = dstBounds.x,
-              dy = dstBounds.y,
-              dw = dstBounds.width,
-              dh = dstBounds.height,
-              srcBounds = srcBounds,
+              dx = destinationBounds.x,
+              dy = destinationBounds.y,
+              dw = destinationBounds.width,
+              dh = destinationBounds.height,
+              sourceBounds = sourceBounds,
               op = op,
               observer = observer)
   }
 }
+
+private val useAccuracyDelta = System.getProperty("ide.icon.scale.useAccuracyDelta", "true").toBoolean()
 
 /**
  * A hidpi-aware wrapper over [Graphics.drawImage].
@@ -271,104 +275,180 @@ fun drawImage(g: Graphics,
  * If `srcBounds` is null or if its width/height is set to (-1) the image bounds or the image right/bottom area to the provided x/y is used.
  */
 @Internal
-@Suppress("NAME_SHADOWING")
 fun drawImage(g: Graphics,
               image: Image,
               dx: Int = 0,
               dy: Int = 0,
               dw: Int = -1,
               dh: Int = -1,
-              srcBounds: Rectangle?,
+              sourceBounds: Rectangle?,
               op: BufferedImageOp?,
               observer: ImageObserver?) {
-  var g = g
-  var image = image
-  val userWidth = ImageUtil.getUserWidth(image)
-  val userHeight = ImageUtil.getUserHeight(image)
-  val hasDstSize = dw >= 0 && dh >= 0
-  var invG: Graphics2D? = null
-  var scale = 1.0
-
-  var dx = dx
-  var dy = dy
-  var dw = dw
-  var dh = dh
+  val hasDestinationSize = dw >= 0 && dh >= 0
   if (image is JBHiDPIScaledImage) {
-    val delegate = image.delegate
-    if (delegate != null) {
-      image = delegate
-    }
-    scale = (image as JBHiDPIScaledImage).scale
-    var delta = 0.0
-    if (java.lang.Boolean.parseBoolean(System.getProperty("ide.icon.scale.useAccuracyDelta", "true"))) {
-      // Calculate the delta based on the image size. The bigger the size - the smaller the delta.
-      val maxSize = max(userWidth, userHeight)
-      if (maxSize < Int.MAX_VALUE / 2) {
-        var dotAccuracy = 1
-        var pow: Double
-        while (maxSize > 10.0.pow(dotAccuracy.toDouble()).also { pow = it }) dotAccuracy++
-        delta = 1 / pow
-      }
-    }
-    val tx = (g as Graphics2D).transform
-    if (abs(scale - tx.scaleX) <= delta) {
-      scale = tx.scaleX
+    doDrawHiDpi(userWidth = image.getUserWidth(null),
+                userHeight = image.getUserHeight(null),
+                g = g,
+                scale = image.scale,
+                dx = dx,
+                dy = dy,
+                dw = dw,
+                dh = dh,
+                hasDestinationSize = hasDestinationSize,
+                op = op,
+                image = image.delegate ?: image,
+                srcBounds = sourceBounds,
+                observer = observer)
+  }
+  else {
+    doDraw(op = op,
+           image = image,
+           invG = null,
+           hasDestinationSize = hasDestinationSize,
+           dw = dw,
+           dh = dh,
+           sourceBounds = sourceBounds,
+           userWidth = image.getWidth(null),
+           userHeight = image.getHeight(null),
+           g = g,
+           dx = dx,
+           dy = dy,
+           observer = observer,
+           scale = 1.0)
+  }
+}
 
-      // The image has the same original scale as the graphics scale. However, the real image
-      // scale - userSize/realSize - can suffer from inaccuracy due to the image user size
-      // rounding to int (userSize = (int)realSize/originalImageScale). This may case quality
-      // loss if the image is drawn via Graphics.drawImage(image, <srcRect>, <dstRect>)
-      // due to scaling in Graphics. To avoid that, the image should be drawn directly via
-      // Graphics.drawImage(image, 0, 0) on the unscaled Graphics.
-      val gScaleX = tx.scaleX
-      val gScaleY = tx.scaleY
-      tx.scale(1 / gScaleX, 1 / gScaleY)
-      tx.translate(dx * gScaleX, dy * gScaleY)
-      dy = 0
-      dx = 0
-      invG = g.create() as Graphics2D
-      g = invG
-      invG.transform = tx
+@Suppress("NAME_SHADOWING")
+private fun doDrawHiDpi(userWidth: Int,
+                        userHeight: Int,
+                        g: Graphics,
+                        scale: Double,
+                        dx: Int,
+                        dy: Int,
+                        dw: Int,
+                        dh: Int,
+                        hasDestinationSize: Boolean,
+                        op: BufferedImageOp?,
+                        image: Image,
+                        srcBounds: Rectangle?,
+                        observer: ImageObserver?) {
+  var g1 = g
+  var scale1 = scale
+  var dx1 = dx
+  var dy1 = dy
+  var delta = 0.0
+  if (useAccuracyDelta) {
+    // Calculate the delta based on the image size. The bigger the size - the smaller the delta.
+    val maxSize = max(userWidth, userHeight)
+    if (maxSize < Int.MAX_VALUE / 2) {
+      var dotAccuracy = 1
+      var pow: Double
+      while (maxSize > 10.0.pow(dotAccuracy.toDouble()).also { pow = it }) {
+        dotAccuracy++
+      }
+      delta = 1 / pow
     }
   }
 
-  val size: (Int) -> Int = { (it * scale).roundToInt() }
-  try {
-    if (op != null && image is BufferedImage) {
-      image = op.filter(image, null)
-    }
-    if (invG != null && hasDstSize) {
-      dw = size(dw)
-      dh = size(dh)
-    }
+  val tx = (g1 as Graphics2D).transform
+  var invG: Graphics2D? = null
+  if (abs(scale1 - tx.scaleX) <= delta) {
+    scale1 = tx.scaleX
 
-    when {
-      srcBounds != null -> {
-        val sx = size(srcBounds.x)
-        val sy = size(srcBounds.y)
-        val sw = if (srcBounds.width >= 0) size(srcBounds.width) else size(userWidth) - sx
-        val sh = if (srcBounds.height >= 0) size(srcBounds.height) else size(userHeight) - sy
-        if (!hasDstSize) {
-          dw = size(userWidth)
-          dh = size(userHeight)
-        }
-        g.drawImage(/* img = */ image,
-                    /* dx1 = */ dx, /* dy1 = */ dy, /* dx2 = */ dx + dw, /* dy2 = */ dy + dh,
-                    /* sx1 = */ sx, /* sy1 = */ sy, /* sx2 = */ sx + sw, /* sy2 = */ sy + sh,
-                    /* observer = */ observer)
-      }
-      hasDstSize -> {
-        g.drawImage(image, dx, dy, dw, dh, observer)
-      }
-      invG == null -> {
-        g.drawImage(image, dx, dy, userWidth, userHeight, observer)
-      }
-      else -> {
-        g.drawImage(image, dx, dy, observer)
-      }
+    // The image has the same original scale as the graphics scale. However, the real image
+    // scale - userSize/realSize - can suffer from inaccuracy due to the image user size
+    // rounding to int (userSize = (int)realSize/originalImageScale). This may case quality
+    // loss if the image is drawn via Graphics.drawImage(image, <srcRect>, <dstRect>)
+    // due to scaling in Graphics. To avoid that, the image should be drawn directly via
+    // Graphics.drawImage(image, 0, 0) on the unscaled Graphics.
+    val gScaleX = tx.scaleX
+    val gScaleY = tx.scaleY
+    tx.scale(1 / gScaleX, 1 / gScaleY)
+    tx.translate(dx1 * gScaleX, dy1 * gScaleY)
+    dy1 = 0
+    dx1 = 0
+    invG = g1.create() as Graphics2D
+    g1 = invG
+    invG.transform = tx
+  }
+
+  try {
+    var dw = dw
+    var dh = dh
+    if (invG != null && hasDestinationSize) {
+      dw = scaleSize(dw, scale1)
+      dh = scaleSize(dh, scale1)
     }
+    doDraw(op = op,
+           image = image,
+           invG = invG,
+           hasDestinationSize = hasDestinationSize,
+           dw = dw,
+           dh = dh,
+           sourceBounds = srcBounds,
+           userWidth = userWidth,
+           userHeight = userHeight,
+           g = g1,
+           dx = dx1,
+           dy = dy1,
+           observer = observer,
+           scale = scale1)
   }
   finally {
     invG?.dispose()
+  }
+}
+
+private fun scaleSize(size: Int, scale: Double) = (size * scale).roundToInt()
+
+@Suppress("NAME_SHADOWING")
+private fun doDraw(op: BufferedImageOp?,
+                   image: Image,
+                   invG: Graphics2D?,
+                   hasDestinationSize: Boolean,
+                   dw: Int,
+                   dh: Int,
+                   sourceBounds: Rectangle?,
+                   userWidth: Int,
+                   userHeight: Int,
+                   g: Graphics,
+                   dx: Int,
+                   dy: Int,
+                   observer: ImageObserver?,
+                   scale: Double) {
+  var image = image
+  if (op != null && image is BufferedImage) {
+    image = op.filter(image, null)
+  }
+
+  when {
+    sourceBounds != null -> {
+      fun size(size: Int) = scaleSize(size, scale)
+
+      val sx = size(sourceBounds.x)
+      val sy = size(sourceBounds.y)
+      val sw = if (sourceBounds.width >= 0) size(sourceBounds.width) else size(userWidth) - sx
+      val sh = if (sourceBounds.height >= 0) size(sourceBounds.height) else size(userHeight) - sy
+
+      var dw = dw
+      var dh = dh
+      if (!hasDestinationSize) {
+        dw = size(userWidth)
+        dh = size(userHeight)
+      }
+      g.drawImage(/* img = */ image,
+                  /* dx1 = */ dx, /* dy1 = */ dy, /* dx2 = */ dx + dw, /* dy2 = */ dy + dh,
+                  /* sx1 = */ sx, /* sy1 = */ sy, /* sx2 = */ sx + sw, /* sy2 = */ sy + sh,
+                  /* observer = */ observer)
+    }
+    hasDestinationSize -> {
+      g.drawImage(image, dx, dy, dw, dh, observer)
+    }
+    invG == null -> {
+      g.drawImage(image, dx, dy, userWidth, userHeight, observer)
+    }
+    else -> {
+      g.drawImage(image, dx, dy, observer)
+    }
   }
 }
