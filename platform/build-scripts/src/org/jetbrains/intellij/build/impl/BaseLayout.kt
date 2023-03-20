@@ -7,9 +7,8 @@ import com.intellij.util.containers.MultiMap
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.TestOnly
-import java.lang.IllegalStateException
+import org.jetbrains.intellij.build.BuildContext
 import java.lang.StackWalker.Option
-import kotlin.collections.LinkedHashSet
 import kotlin.streams.asSequence
 
 const val APP_JAR: String = "app.jar"
@@ -48,6 +47,13 @@ sealed class BaseLayout {
   val excludedModuleLibraries: MultiMap<String, String> = MultiMap.createLinked()
 
   val modulesWithExcludedModuleLibraries: MutableList<String> = mutableListOf()
+
+  internal var patchers: PersistentList<suspend (ModuleOutputPatcher, BuildContext) -> Unit> = persistentListOf()
+    private set
+
+  fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
+    patchers = patchers.add(patcher)
+  }
 
   fun hasLibrary(name: String): Boolean = includedProjectLibraries.any { it.libraryName == name }
 

@@ -862,8 +862,8 @@ suspend fun layoutDistribution(layout: BaseLayout,
       }
 
       // patchers must be executed _before_ pack because patcher patches module output
-      if (layout is PluginLayout && !layout.patchers.isEmpty()) {
-        val patchers = layout.patchers
+      val patchers = layout.patchers
+      if (!patchers.isEmpty()) {
         spanBuilder("execute custom patchers").setAttribute("count", patchers.size.toLong()).useWithScope2 {
           for (patcher in patchers) {
             patcher(moduleOutputPatcher, context)

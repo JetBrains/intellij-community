@@ -18,7 +18,6 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
-import java.util.function.BiConsumer
 import java.util.function.UnaryOperator
 
 typealias ResourceGenerator = suspend (Path, BuildContext) -> Unit
@@ -66,9 +65,6 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
   var enableSymlinksAndExecutableResources: Boolean = false
 
   internal var resourceGenerators: PersistentList<ResourceGenerator> = persistentListOf()
-    private set
-
-  internal var patchers: PersistentList<suspend (ModuleOutputPatcher, BuildContext) -> Unit> = persistentListOf()
     private set
 
   fun getMainJarName(): String = mainJarName
@@ -160,10 +156,6 @@ class PluginLayout private constructor(val mainModule: String, mainJarNameWithou
      */
     fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
       layout.withResourceFromModule(moduleName, resourcePath, relativeOutputPath)
-    }
-
-    fun withPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
-      layout.patchers = layout.patchers.add(patcher::accept)
     }
   }
 

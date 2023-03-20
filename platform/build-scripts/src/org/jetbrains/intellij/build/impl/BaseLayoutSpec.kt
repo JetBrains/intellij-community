@@ -3,6 +3,10 @@
 
 package org.jetbrains.intellij.build.impl
 
+import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.intellij.build.BuildContext
+import java.util.function.BiConsumer
+
 sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   /**
    * Register an additional module to be included into the plugin distribution. Module-level libraries from
@@ -87,5 +91,14 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
    */
   fun withProjectLibraryUnpackedIntoJar(libraryName: String, jarName: String) {
     layout.withProjectLibrary(libraryName, jarName)
+  }
+
+  fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
+    layout.withPatch(patcher)
+  }
+
+  @Obsolete
+  fun withSyncPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
+    layout.withPatch(patcher::accept)
   }
 }
