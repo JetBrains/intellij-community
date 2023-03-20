@@ -26,20 +26,19 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
       ArtifactResolver defaultArtifactResolver = getComponent(ArtifactResolver.class);
       enhancedArtifactResolver = new CustomMaven36ArtifactResolver(defaultArtifactResolver);
 
-      ArtifactDescriptorReader defaultArtifactDescriptorReader = getComponent(ArtifactDescriptorReader.class);
-      enhancedArtifactDescriptorReader = new CustomMaven36ArtifactDescriptorReader(defaultArtifactDescriptorReader);
+      ArtifactDescriptorReader artifactDescriptorReader = getComponent(ArtifactDescriptorReader.class);
+      if (artifactDescriptorReader instanceof DefaultArtifactDescriptorReader) {
+        ((DefaultArtifactDescriptorReader)artifactDescriptorReader).setArtifactResolver(enhancedArtifactResolver);
+      }
 
       RepositorySystem repositorySystem = getComponent(RepositorySystem.class);
       if (repositorySystem instanceof DefaultRepositorySystem) {
+        enhancedArtifactDescriptorReader = new CustomMaven36ArtifactDescriptorReader(artifactDescriptorReader);
         DefaultRepositorySystem defaultRepositorySystem = (DefaultRepositorySystem)repositorySystem;
         defaultRepositorySystem.setArtifactResolver(enhancedArtifactResolver);
         //defaultRepositorySystem.setArtifactDescriptorReader(enhancedArtifactDescriptorReader);
       }
 
-      ArtifactDescriptorReader artifactDescriptorReader = getComponent(ArtifactDescriptorReader.class);
-      if (artifactDescriptorReader instanceof DefaultArtifactDescriptorReader) {
-        ((DefaultArtifactDescriptorReader)artifactDescriptorReader).setArtifactResolver(enhancedArtifactResolver);
-      }
     }
   }
 
