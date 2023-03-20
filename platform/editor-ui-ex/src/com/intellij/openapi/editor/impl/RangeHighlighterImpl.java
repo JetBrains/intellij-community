@@ -45,6 +45,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
   private CustomHighlighterRenderer myCustomRenderer;
   private LineSeparatorRenderer myLineSeparatorRenderer;
 
+  @Flags
   private byte myFlags;
 
   private static final byte AFTER_END_OF_LINE_MASK = 1;
@@ -60,8 +61,9 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_CHANGED_MASK, FOREGROUND_COLOR_CHANGED_MASK})
   private @interface FlagConstant {}
 
-  @MagicConstant(flags = {CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_CHANGED_MASK, FOREGROUND_COLOR_CHANGED_MASK})
-  private @interface ChangeStatus {}
+  @MagicConstant(flags = {AFTER_END_OF_LINE_MASK, ERROR_STRIPE_IS_THIN_MASK, TARGET_AREA_IS_EXACT_MASK, IN_BATCH_CHANGE_MASK,
+      CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_CHANGED_MASK, FOREGROUND_COLOR_CHANGED_MASK})
+  private @interface Flags {}
 
   RangeHighlighterImpl(@NotNull MarkupModelImpl model,
                        int start,
@@ -390,7 +392,7 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     };
   }
 
-  @ChangeStatus
+  @Flags
   byte changeAttributesNoEvents(@NotNull Consumer<? super RangeHighlighterEx> change) {
     assert !isFlagSet(IN_BATCH_CHANGE_MASK);
     assert !isFlagSet(CHANGED_MASK);
@@ -398,18 +400,13 @@ class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighlighterEx
     setFlag(RENDERERS_CHANGED_MASK, false);
     setFlag(FONT_STYLE_CHANGED_MASK, false);
     setFlag(FOREGROUND_COLOR_CHANGED_MASK, false);
-    byte result = 0;
+    byte result;
     try {
       change.consume(this);
     }
     finally {
+      result = myFlags;
       setFlag(IN_BATCH_CHANGE_MASK, false);
-      if (isFlagSet(CHANGED_MASK)) {
-        result |= CHANGED_MASK;
-        if (isFlagSet(RENDERERS_CHANGED_MASK)) result |= RENDERERS_CHANGED_MASK;
-        if (isFlagSet(FONT_STYLE_CHANGED_MASK)) result |= FONT_STYLE_CHANGED_MASK;
-        if (isFlagSet(FOREGROUND_COLOR_CHANGED_MASK)) result |= FOREGROUND_COLOR_CHANGED_MASK;
-      }
       setFlag(CHANGED_MASK, false);
       setFlag(RENDERERS_CHANGED_MASK, false);
       setFlag(FONT_STYLE_CHANGED_MASK, false);

@@ -284,8 +284,8 @@ public final class UpdateHighlightersUtil {
         RangeHighlighter highlighter = info.getHighlighter();
         int hiStart = highlighter.getStartOffset();
         int hiEnd = highlighter.getEndOffset();
-        boolean willBeRemoved = hiEnd == document.getTextLength() && range.getEndOffset() == document.getTextLength()
-                              /*|| range.intersectsStrict(hiStart, hiEnd)*/ || range.containsRange(hiStart, hiEnd) /*|| hiStart <= range.getStartOffset() && hiEnd >= range.getEndOffset()*/;
+        boolean willBeRemoved = range.containsRange(hiStart, hiEnd)
+                                || hiEnd == document.getTextLength() && range.getEndOffset() == hiEnd;
         if (willBeRemoved) {
           infosToRemove.recycleHighlighter(highlighter);
           info.setHighlighter(null);
@@ -300,7 +300,7 @@ public final class UpdateHighlightersUtil {
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     boolean[] changed = {false};
     SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
-    SweepProcessor.sweep(generator, (offset, info, atStart, overlappingIntervals) -> {
+    SweepProcessor.sweep(generator, (__, info, atStart, overlappingIntervals) -> {
       if (!atStart) {
         return true;
       }
