@@ -1049,7 +1049,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
           cmp.setHorizontalAlignment(SwingConstants.LEFT);
           Border border = cmp.getBorder();
-          JBEmptyBorder indent = JBUI.Borders.emptyLeft(8);
+          JBEmptyBorder indent = JBUI.Borders.empty(0, 8);
           border = JBUI.Borders.merge(border, indent, true);
           cmp.setBorder(border);
 
