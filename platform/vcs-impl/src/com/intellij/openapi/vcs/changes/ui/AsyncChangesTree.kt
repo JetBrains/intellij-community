@@ -70,47 +70,41 @@ abstract class AsyncChangesTree : ChangesTree {
   }
 
 
-  fun requestRefresh(): RequestId {
+  fun requestRefresh() {
     return requestRefreshImpl(treeStateStrategy = null,
                               onRefreshed = null)
   }
 
-  fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>): RequestId {
+  fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>) {
     return requestRefreshImpl(treeStateStrategy = treeStateStrategy,
                               onRefreshed = null)
   }
 
-  fun requestRefresh(onRefreshed: Runnable?): RequestId {
+  fun requestRefresh(onRefreshed: Runnable?) {
     return requestRefreshImpl(treeStateStrategy = null,
                               onRefreshed = onRefreshed)
   }
 
-  fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>, onRefreshed: Runnable?): RequestId {
+  fun requestRefresh(treeStateStrategy: TreeStateStrategy<*>, onRefreshed: Runnable?) {
     return requestRefreshImpl(treeStateStrategy = treeStateStrategy,
                               onRefreshed = onRefreshed)
   }
 
   private fun requestRefreshImpl(treeStateStrategy: TreeStateStrategy<*>?,
-                                 onRefreshed: Runnable?): RequestId {
+                                 onRefreshed: Runnable?) {
     val refreshGrouping = grouping
     val requestId = lastRequestId.incrementAndGet()
     scope.launch {
       _requests.emit(Request(requestId, refreshGrouping, treeStateStrategy))
     }
 
-    val id = RequestIdImpl(requestId)
     if (onRefreshed != null) {
-      invokeAfterRefresh(id, onRefreshed)
+      invokeAfterRefresh(requestId, onRefreshed)
     }
-    return id
   }
 
   fun invokeAfterRefresh(callback: Runnable) {
     invokeAfterRefresh(lastRequestId.get(), callback)
-  }
-
-  fun invokeAfterRefresh(requestId: RequestId, callback: Runnable) {
-    invokeAfterRefresh((requestId as RequestIdImpl).requestId, callback)
   }
 
   /**
@@ -224,9 +218,6 @@ abstract class AsyncChangesTree : ChangesTree {
     val requestId: Int,
     val task: java.lang.Runnable
   )
-
-  interface RequestId
-  private class RequestIdImpl(val requestId: Int) : RequestId
 }
 
 interface AsyncChangesTreeModel {
