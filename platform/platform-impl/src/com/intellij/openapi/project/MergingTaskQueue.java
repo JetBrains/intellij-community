@@ -39,6 +39,11 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     public int hashCode() {
       return Long.hashCode(submittedTaskCount);
     }
+
+    @Override
+    public String toString() {
+      return "SubmissionReceipt{" + submittedTaskCount + '}';
+    }
   }
 
   private static final Logger LOG = Logger.getInstance(MergingTaskQueue.class);

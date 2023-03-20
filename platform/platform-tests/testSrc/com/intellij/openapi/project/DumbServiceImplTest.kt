@@ -440,7 +440,7 @@ class DumbServiceImplTest {
 
       // Wait a bit for dumb task to start (it is expected that it does not start until the end of read action)
       assertFalse(taskFinished.await(200, TimeUnit.MILLISECONDS))
-      assertFalse(dumbService.isDumb)
+      assertFalse("Read action should prevent DumbService from entering into dumb mode", dumbService.isDumb)
     }
 
     taskFinished.awaitOrThrow(2, "DumbTask should start immediately after read action finished")
@@ -539,8 +539,11 @@ class DumbServiceImplTest {
         }
       })
 
-      UIUtil.dispatchAllInvocationEvents() // pump events and make sure that dumb mode hasn't ended
-      assertTrue("Dumb service should be dumb because the second task is already queued and it was queued on EDT", dumbService.isDumb)
+      repeat(5) {
+        UIUtil.dispatchAllInvocationEvents() // pump events and make sure that dumb mode hasn't ended
+        assertTrue("Dumb service should be dumb because the second task is already queued and it was queued on EDT", dumbService.isDumb)
+        Thread.sleep(50)
+      }
     }
 
     dumbTaskStarted2.awaitOrThrow(5, "Dumb task2 didn't start in 5 seconds")

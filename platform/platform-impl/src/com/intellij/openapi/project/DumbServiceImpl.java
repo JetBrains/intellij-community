@@ -80,6 +80,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   // See test for more details
   private final AtomicInteger myDumbEpoch = new AtomicInteger();
 
+  // should only be accessed from EDT to avoid races between `queueTaskOnEDT` and `updateFinished` (invoked from `afterLastTask`)
+  private SubmissionReceipt myLatestReceipt;
+
   private class DumbTaskListener implements MergingQueueGuiExecutor.ExecutorStateListener {
     /*
      * beforeFirstTask and afterLastTask always follow one after another. Receiving several beforeFirstTask or afterLastTask in row is
@@ -88,15 +91,22 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
      */
     @Override
     public boolean beforeFirstTask() {
-      // if a queue has already been emptied by modal dumb progress, the state can be SMART, not SCHEDULED_TASKS
-      return myState.get() == State.SCHEDULED_OR_RUNNING_TASKS;
+      // if a queue has already been emptied by modal dumb progress, DumbServiceGuiExecutor will not invoke processing on empty queue
+      LOG.assertTrue(myState.get() == State.SCHEDULED_OR_RUNNING_TASKS,
+                     "State should be SCHEDULED_OR_RUNNING_TASKS, but was " + myState.get());
+      return true;
     }
 
     @Override
-    public void afterLastTask(SubmissionReceipt latestReceipt) {
-      boolean changed = myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.WAITING_FOR_FINISH);
-      LOG.assertTrue(changed, "Failed to change state: SCHEDULED_TASKS>WAITING_FOR_FINISH. Current state: " + myState.get());
-      myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(DumbServiceImpl.this::updateFinished);
+    public void afterLastTask(@Nullable SubmissionReceipt latestReceipt) {
+      myTrackedEdtActivityService.invokeLaterAfterProjectInitialized(() -> {
+        // dumb service may already set to smart state by completeJustSubmittedTasks.
+        if (myLatestReceipt.equals(latestReceipt) && myState.compareAndSet(State.SCHEDULED_OR_RUNNING_TASKS, State.WAITING_FOR_FINISH)) {
+          updateFinished();
+        }
+        LOG.assertTrue(latestReceipt == null || !latestReceipt.isAfter(myLatestReceipt),
+                       "latestReceipt=" + latestReceipt + " must not be newer than the latest known myLatestReceipt=" + myLatestReceipt);
+      });
     }
   }
 
@@ -269,7 +279,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       return;
     }
 
-    myTaskQueue.addTask(task);
+    myLatestReceipt = myTaskQueue.addTask(task);
     enterDumbModeIfSmart(modality, trace);
 
     // we want to invoke LATER. I.e. right now one can invoke completeJustSubmittedTasks and
@@ -506,7 +516,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         });
       }
       finally {
-        updateFinished();
+        if (myTaskQueue.isEmpty()) {
+          myState.set(State.WAITING_FOR_FINISH);
+          updateFinished();
+        }
       }
     });
   }
