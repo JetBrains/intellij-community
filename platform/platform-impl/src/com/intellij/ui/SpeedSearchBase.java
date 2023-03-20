@@ -941,7 +941,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
     @Override
     public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(!isPopupActive());
+      e.getPresentation().setEnabled(isSpeedSearchEnabled() && !isPopupActive());
     }
 
     @Override
