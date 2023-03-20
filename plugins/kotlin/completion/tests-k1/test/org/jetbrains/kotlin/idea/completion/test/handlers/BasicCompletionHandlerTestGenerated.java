@@ -779,6 +779,24 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/handlers/basic/topLevelDeclarations")
+    public static class TopLevelDeclarations extends AbstractBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("TopLevelWithSameSignature.kt")
+        public void testTopLevelWithSameSignature() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelWithSameSignature.kt");
+        }
+
+        @TestMetadata("TopLevelWithSameSignature2.kt")
+        public void testTopLevelWithSameSignature2() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelWithSameSignature2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/handlers/basic/typeArgsForCall")
     public static class TypeArgsForCall extends AbstractBasicCompletionHandlerTest {
         private void runTest(String testDataFilePath) throws Exception {

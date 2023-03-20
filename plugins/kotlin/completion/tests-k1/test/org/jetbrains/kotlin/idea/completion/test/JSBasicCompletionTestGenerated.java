@@ -2052,6 +2052,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/shadowing/PreferCloserReceiverGeneric.kt");
             }
 
+            @TestMetadata("PreferExtensionFunctionToFunctionalVariable.kt")
+            public void testPreferExtensionFunctionToFunctionalVariable() throws Exception {
+                runTest("../testData/basic/common/shadowing/PreferExtensionFunctionToFunctionalVariable.kt");
+            }
+
+            @TestMetadata("PreferExtensionsForCloserReceiver.kt")
+            public void testPreferExtensionsForCloserReceiver() throws Exception {
+                runTest("../testData/basic/common/shadowing/PreferExtensionsForCloserReceiver.kt");
+            }
+
             @TestMetadata("PreferMemberExtension.kt")
             public void testPreferMemberExtension() throws Exception {
                 runTest("../testData/basic/common/shadowing/PreferMemberExtension.kt");
@@ -2077,6 +2087,11 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionGeneric.kt");
             }
 
+            @TestMetadata("PreferMoreSpecificExtensionGeneric2.kt")
+            public void testPreferMoreSpecificExtensionGeneric2() throws Exception {
+                runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionGeneric2.kt");
+            }
+
             @TestMetadata("PreferMoreSpecificExtensionGenericWithMultipleParam.kt")
             public void testPreferMoreSpecificExtensionGenericWithMultipleParam() throws Exception {
                 runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionGenericWithMultipleParam.kt");
@@ -2085,6 +2100,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
             @TestMetadata("PreferMoreSpecificExtensionGenericWithParam.kt")
             public void testPreferMoreSpecificExtensionGenericWithParam() throws Exception {
                 runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionGenericWithParam.kt");
+            }
+
+            @TestMetadata("PreferMoreSpecificExtensionLocalClass.kt")
+            public void testPreferMoreSpecificExtensionLocalClass() throws Exception {
+                runTest("../testData/basic/common/shadowing/PreferMoreSpecificExtensionLocalClass.kt");
+            }
+
+            @TestMetadata("VarargValueParameter.kt")
+            public void testVarargValueParameter() throws Exception {
+                runTest("../testData/basic/common/shadowing/VarargValueParameter.kt");
             }
         }
 
