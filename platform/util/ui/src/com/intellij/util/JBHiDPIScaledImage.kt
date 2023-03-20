@@ -9,6 +9,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.ui.ImageUtil
 import org.imgscalr.Scalr
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
 import java.awt.Image
@@ -21,10 +22,12 @@ import kotlin.math.roundToLong
  * @author Konstantin Bulenkov
  * @author tav
  */
-class JBHiDPIScaledImage : BufferedImage {
+@ApiStatus.Internal
+@ApiStatus.NonExtendable
+open class JBHiDPIScaledImage : BufferedImage {
   val delegate: Image?
-  private val myUserWidth: Double
-  private val myUserHeight: Double
+  private val userWidth: Double
+  private val userHeight: Double
   val scale: Double
 
   /**
@@ -103,12 +106,11 @@ class JBHiDPIScaledImage : BufferedImage {
               rm: PaintUtil.RoundingMode = PaintUtil.RoundingMode.FLOOR) : this(
     sysScale(gc).toDouble(), width, height, type, rm)
 
-  private constructor(scale: Double, width: Double, height: Double, type: Int, rm: PaintUtil.RoundingMode) : super(rm.round(width * scale),
-                                                                                                                   rm.round(height * scale),
-                                                                                                                   type) {
+  internal constructor(scale: Double, width: Double, height: Double, type: Int, rm: PaintUtil.RoundingMode) :
+    super(rm.round(width * scale), rm.round(height * scale), type) {
     delegate = null
-    myUserWidth = width
-    myUserHeight = height
+    userWidth = width
+    userHeight = height
     this.scale = scale
   }
 
@@ -129,9 +131,9 @@ class JBHiDPIScaledImage : BufferedImage {
   constructor(image: Image, width: Double, height: Double, type: Int) : super(1, 1, type) // a dummy wrapper
   {
     delegate = image
-    myUserWidth = width
-    myUserHeight = height
-    scale = if (myUserWidth > 0) delegate.getWidth(null) / myUserWidth else 1.0
+    userWidth = width
+    userHeight = height
+    scale = if (userWidth > 0) delegate.getWidth(null) / userWidth else 1.0
   }
 
   /**
@@ -146,8 +148,8 @@ class JBHiDPIScaledImage : BufferedImage {
   {
     delegate = image
     scale = ctx.getScale(ScaleType.SYS_SCALE)
-    myUserWidth = delegate.getWidth(null) / scale
-    myUserHeight = delegate.getHeight(null) / scale
+    userWidth = delegate.getWidth(null) / scale
+    userHeight = delegate.getHeight(null) / scale
   }
 
   /**
@@ -247,7 +249,7 @@ class JBHiDPIScaledImage : BufferedImage {
    * @return the width
    */
   fun getUserWidth(observer: ImageObserver?): Int {
-    return if (delegate != null) myUserWidth.roundToInt() else (super.getWidth(observer) / scale).roundToLong().toInt()
+    return if (delegate != null) userWidth.roundToInt() else (super.getWidth(observer) / scale).roundToLong().toInt()
   }
 
   /**
@@ -257,7 +259,7 @@ class JBHiDPIScaledImage : BufferedImage {
    * @return the height
    */
   fun getUserHeight(observer: ImageObserver?): Int {
-    return if (delegate != null) myUserHeight.roundToInt() else (super.getHeight(observer) / scale).roundToLong().toInt()
+    return if (delegate != null) userHeight.roundToInt() else (super.getHeight(observer) / scale).roundToLong().toInt()
   }
 
   /**

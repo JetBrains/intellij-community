@@ -2,6 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.ui.JreHiDpiUtil;
+import com.intellij.ui.icons.HiDPIImage;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.Scale;
 import com.intellij.ui.scale.ScaleContext;
@@ -101,7 +102,7 @@ public final class ImageUtil {
   public static BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull PaintUtil.RoundingMode rm) {
     if (g instanceof Graphics2D g2d) {
       if (JreHiDpiUtil.isJreHiDPI(g2d)) {
-        return RetinaImage.create(g2d, width, height, type, rm);
+        return new HiDPIImage(g2d, width, height, type, rm);
       }
       //noinspection UndesirableClassUsage
       return new BufferedImage(rm.round(width), rm.round(height), type);

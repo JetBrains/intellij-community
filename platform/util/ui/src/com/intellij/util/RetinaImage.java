@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
-import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,27 +56,7 @@ public final class RetinaImage { // [tav] todo: create HiDPIImage class
     return new JBHiDPIScaledImage(image, w / scale, h / scale, BufferedImage.TYPE_INT_ARGB);
   }
 
-  public static @NotNull BufferedImage create(int width, int height, int type) {
-    return new JBHiDPIScaledImage(width, height, type);
-  }
-
-  public static @NotNull BufferedImage create(Graphics2D g, int width, int height, int type) {
-    return new JBHiDPIScaledImage(g, width, height, type);
-  }
-
-  public static @NotNull BufferedImage create(Graphics2D g, double width, double height, int type, @NotNull RoundingMode rm) {
-    return new JBHiDPIScaledImage(g, width, height, type, rm);
-  }
-
-  public static @NotNull BufferedImage create(GraphicsConfiguration gc, int width, int height, int type) {
-    return new JBHiDPIScaledImage(gc, width, height, type);
-  }
-
   public static @NotNull BufferedImage create(GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
     return new JBHiDPIScaledImage(gc, width, height, type, rm);
-  }
-
-  public static @NotNull BufferedImage create(ScaleContext ctx, double width, double height, int type, @NotNull RoundingMode rm) {
-    return new JBHiDPIScaledImage(ctx, width, height, type, rm);
   }
 }

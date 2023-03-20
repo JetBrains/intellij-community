@@ -12,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.*;
+import com.intellij.ui.icons.HiDPIImage;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
@@ -1517,7 +1518,7 @@ public final class UIUtil {
    */
   public static @NotNull BufferedImage createImage(GraphicsConfiguration gc, double width, double height, int type, @NotNull RoundingMode rm) {
     if (JreHiDpiUtil.isJreHiDPI(gc)) {
-      return RetinaImage.create(gc, width, height, type, rm);
+      return new HiDPIImage(gc, width, height, type, rm);
     }
     //noinspection UndesirableClassUsage
     return new BufferedImage(rm.round(width), rm.round(height), type);
@@ -1784,7 +1785,11 @@ public final class UIUtil {
   /**
    * Provides all input event modifiers including deprecated, since they are still used in IntelliJ platform
    */
-  @MagicConstant(flags = {Event.SHIFT_MASK, Event.CTRL_MASK, Event.META_MASK, Event.ALT_MASK, InputEvent.SHIFT_DOWN_MASK, InputEvent.CTRL_DOWN_MASK, InputEvent.META_DOWN_MASK, InputEvent.ALT_DOWN_MASK, InputEvent.BUTTON1_DOWN_MASK, InputEvent.BUTTON2_DOWN_MASK, InputEvent.BUTTON3_DOWN_MASK, InputEvent.ALT_GRAPH_DOWN_MASK})
+  @MagicConstant(flags = {
+    Event.SHIFT_MASK, Event.CTRL_MASK, Event.META_MASK, Event.ALT_MASK, InputEvent.SHIFT_DOWN_MASK,
+    InputEvent.CTRL_DOWN_MASK, InputEvent.META_DOWN_MASK, InputEvent.ALT_DOWN_MASK, InputEvent.BUTTON1_DOWN_MASK,
+    InputEvent.BUTTON2_DOWN_MASK, InputEvent.BUTTON3_DOWN_MASK, InputEvent.ALT_GRAPH_DOWN_MASK,
+  })
   public static int getAllModifiers(@NotNull InputEvent event) {
     return event.getModifiers() | event.getModifiersEx();
   }
@@ -2072,31 +2077,6 @@ public final class UIUtil {
 
   public static @NotNull String addPadding(@NotNull String html, int hPadding) {
     return String.format("<p style=\"margin: 0 %dpx 0 %dpx;\">%s</p>", hPadding, hPadding, html);
-  }
-
-  public static @NotNull String convertSpace2Nbsp(@NotNull String html) {
-    @NonNls StringBuilder result = new StringBuilder();
-    int currentPos = 0;
-    int braces = 0;
-    while (currentPos < html.length()) {
-      String each = html.substring(currentPos, currentPos + 1);
-      if ("<".equals(each)) {
-        braces++;
-      }
-      else if (">".equals(each)) {
-        braces--;
-      }
-
-      if (" ".equals(each) && braces == 0) {
-        result.append("&nbsp;");
-      }
-      else {
-        result.append(each);
-      }
-      currentPos++;
-    }
-
-    return result.toString();
   }
 
   /**
