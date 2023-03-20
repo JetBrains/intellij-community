@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.junit.framework
 
 import com.intellij.execution.junit.JUnitUtil
+import com.intellij.lang.OuterModelsModificationTrackerManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.kotlin.idea.testIntegration.framework.AbstractKotlinTestFramework
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -25,7 +25,7 @@ class JUnit3KotlinTestFramework : AbstractKotlinTestFramework() {
 
     override fun isTestClass(declaration: KtClassOrObject): Boolean {
         return super.isTestClass(declaration) && CachedValuesManager.getCachedValue(declaration) {
-            CachedValueProvider.Result.create(isJUnit3TestClass(declaration, mutableSetOf()), PsiModificationTracker.MODIFICATION_COUNT)
+            CachedValueProvider.Result.create(isJUnit3TestClass(declaration, mutableSetOf()), OuterModelsModificationTrackerManager.getInstance(declaration.project).tracker)
         }
     }
 

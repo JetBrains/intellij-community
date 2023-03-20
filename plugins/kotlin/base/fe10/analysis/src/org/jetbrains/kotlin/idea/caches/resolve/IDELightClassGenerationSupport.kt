@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
+import com.intellij.lang.OuterModelsModificationTrackerManager
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -49,12 +50,15 @@ class IDELightClassGenerationSupport : LightClassGenerationSupport() {
         override fun possiblyHasAlias(file: KtFile, shortName: Name): Boolean =
             allAliases(file)[shortName.asString()] == true
 
-        private fun allAliases(file: KtFile): ConcurrentMap<String, Boolean> = CachedValuesManager.getCachedValue(file) {
-            val importAliases = file.importDirectives.mapNotNull { it.aliasName }.toSet()
-            val map = ConcurrentFactoryMap.createMap<String, Boolean> { s ->
-                s in importAliases || KotlinTypeAliasShortNameIndex.get(s, file.project, file.resolveScope).isNotEmpty()
+        private fun allAliases(file: KtFile): ConcurrentMap<String, Boolean> {
+            val project = file.project
+            return CachedValuesManager.getCachedValue(file) {
+                val importAliases = file.importDirectives.mapNotNull { it.aliasName }.toSet()
+                val map = ConcurrentFactoryMap.createMap<String, Boolean> { s ->
+                    s in importAliases || KotlinTypeAliasShortNameIndex.get(s, project, file.resolveScope).isNotEmpty()
+                }
+                CachedValueProvider.Result.create<ConcurrentMap<String, Boolean>>(map, OuterModelsModificationTrackerManager.getInstance(project).tracker)
             }
-            CachedValueProvider.Result.create<ConcurrentMap<String, Boolean>>(map, PsiModificationTracker.MODIFICATION_COUNT)
         }
 
         @OptIn(FrontendInternals::class)

@@ -14,7 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.uast.UastModificationTracker
 import com.intellij.util.containers.SLRUCache
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.analyzer.ResolverForProject.Companion.resolverForLibrariesName
@@ -48,7 +48,6 @@ import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.diagnostics.KotlinSuppressCache
@@ -84,7 +83,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
             val settings = file.moduleInfo.platformSettings(file.platform)
             CachedValueProvider.Result(
                 getFacadeToAnalyzeFile(file, settings),
-                PsiModificationTracker.MODIFICATION_COUNT,
+                UastModificationTracker.getInstance(project),
                 ProjectRootModificationTracker.getInstance(project),
             )
         }
@@ -440,7 +439,7 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
                     }
                 },
                 LibraryModificationTracker.getInstance(project),
-                PsiModificationTracker.MODIFICATION_COUNT
+                UastModificationTracker.getInstance(project)
             )
         },
         false
