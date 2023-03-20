@@ -124,8 +124,7 @@ private fun <T> runBlockingCancellable(allowOrphan: Boolean, action: suspend Cor
     if (!allowOrphan && ctx[Job] == null) {
       LOG.error(IllegalStateException("There is no ProgressIndicator or Job in this thread, the current job is not cancellable."))
     }
-    val context = currentThreadContext() +
-                  ctx +
+    val context = ctx +
                   CoroutineName("job run blocking")
     resetThreadContext().use {
       @Suppress("RAW_RUN_BLOCKING")
@@ -157,8 +156,7 @@ fun <T> runBlockingMaybeCancellable(action: suspend CoroutineScope.() -> T): T {
 fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: suspend CoroutineScope.() -> T): T {
   assertBackgroundThreadOrWriteAction()
   return prepareIndicatorThreadContext(indicator) { ctx ->
-    val context = currentThreadContext() +
-                  ctx +
+    val context = ctx +
                   CoroutineName("indicator run blocking") +
                   IndicatorRawProgressReporter(indicator).asContextElement()
     resetThreadContext().use {

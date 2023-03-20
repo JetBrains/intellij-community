@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.progress
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.withThreadContext
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.util.ThrowableComputable
@@ -45,11 +46,8 @@ fun <T> prepareThreadContext(action: (CoroutineContext) -> T): T {
   if (indicator != null) {
     return prepareIndicatorThreadContext(indicator, action)
   }
-  val currentJob = Cancellation.currentJob()
-  if (currentJob != null) {
-    return action(currentJob)
-  }
-  return action(EmptyCoroutineContext)
+  val currentContext = currentThreadContext()
+  return action(currentContext)
 }
 
 /**
@@ -65,7 +63,7 @@ internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, act
     ProgressManager.getInstance().silenceGlobalIndicator {
       executeWithJobAndCompleteIt(currentJob) {
         withThreadContext(progressModality).use {
-          action(currentJob)
+          action(currentThreadContext())
         }
       }
     }
