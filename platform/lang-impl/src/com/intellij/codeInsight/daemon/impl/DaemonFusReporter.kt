@@ -68,7 +68,7 @@ class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.Daemo
     val fileType = document?.let { FileDocumentManager.getInstance().getFile(it)?.fileType }
     val wasEntireFileHighlighted = TextRange.from(0, document?.textLength ?: 0) == dirtyRange
 
-    if (wasEntireFileHighlighted || !initialEntireFileHighlightingCompleted) {
+    if (wasEntireFileHighlighted && !initialEntireFileHighlightingCompleted) {
       initialEntireFileHighlightingActivity?.end()
       StartUpMeasurer.addInstantEvent("editor highlighting completed")
       initialEntireFileHighlightingCompleted = true
