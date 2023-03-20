@@ -27,7 +27,7 @@ import com.intellij.usages.UsageView
 import com.intellij.usages.impl.UsageViewImpl
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
 import com.intellij.usages.similarity.clustering.UsageCluster
-import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logMoreClustersLoaded
+import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logMoreSnippetsLoadedInClustersPreview
 import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logMostCommonUsagePatternsRefreshClicked
 import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logMostCommonUsagePatternsShown
 import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logShowSimilarUsagesLinkClicked
@@ -279,7 +279,7 @@ class MostCommonUsagePatternsComponent(
         _loadedSnippets.update {
           it + newBatch
         }
-        logMoreClustersLoaded(project, usageView, _loadedSnippets.value.size)
+        logMoreSnippetsLoadedInClustersPreview(project, usageView, _loadedSnippets.value.size)
       }
     }
   }
