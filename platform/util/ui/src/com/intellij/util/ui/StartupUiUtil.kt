@@ -1,200 +1,191 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.ui;
+@file:Suppress("ReplaceGetOrSet")
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.ui.JreHiDpiUtil;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.JBHiDPIScaledImage;
-import org.intellij.lang.annotations.JdkConstants;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.util.ui
 
-import javax.swing.*;
-import javax.swing.plaf.FontUIResource;
-import javax.swing.text.DefaultEditorKit;
-import javax.swing.text.StyleContext;
-import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
-import java.awt.image.ImageObserver;
-import java.util.Locale;
-import java.util.Map;
-import java.util.function.Function;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.ui.JreHiDpiUtil
+import com.intellij.ui.scale.JBUIScale.isHiDPI
+import com.intellij.ui.scale.JBUIScale.sysScale
+import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.JBHiDPIScaledImage
+import org.intellij.lang.annotations.JdkConstants
+import org.jetbrains.annotations.ApiStatus
+import java.awt.*
+import java.awt.event.AWTEventListener
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import java.awt.image.BufferedImage
+import java.awt.image.BufferedImageOp
+import java.awt.image.ImageObserver
+import java.util.*
+import java.util.function.Function
+import javax.swing.InputMap
+import javax.swing.KeyStroke
+import javax.swing.UIDefaults
+import javax.swing.UIManager
+import javax.swing.plaf.FontUIResource
+import javax.swing.text.DefaultEditorKit
+import javax.swing.text.StyleContext
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.pow
+import kotlin.math.roundToLong
 
-public final class StartupUiUtil {
+object StartupUiUtil {
   @ApiStatus.Internal
-  @NonNls public static final String[] ourPatchableFontResources = {"Button.font", "ToggleButton.font", "RadioButton.font",
-    "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font", "MenuItem.font",
-    "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font", "PopupMenu.font", "OptionPane.font",
-    "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font", "Table.font", "TableHeader.font",
-    "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font", "TextArea.font", "TextPane.font", "EditorPane.font",
-    "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font"};
+  @JvmField
+  val ourPatchableFontResources = arrayOf("Button.font", "ToggleButton.font", "RadioButton.font",
+                                          "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font",
+                                          "MenuItem.font",
+                                          "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font",
+                                          "PopupMenu.font", "OptionPane.font",
+                                          "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font",
+                                          "Table.font", "TableHeader.font",
+                                          "TextField.font", "FormattedTextField.font", "Spinner.font", "PasswordField.font",
+                                          "TextArea.font", "TextPane.font", "EditorPane.font",
+                                          "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font")
+  const val ARIAL_FONT_NAME = "Arial"
 
-  public static final String ARIAL_FONT_NAME = "Arial";
-
-  public static boolean isUnderDarcula() {
-    return UIManager.getLookAndFeel().getName().contains("Darcula");
-  }
+  val isUnderDarcula: Boolean
+    get() = UIManager.getLookAndFeel().name.contains("Darcula")
 
   @ApiStatus.Internal
-  public static int doGetLcdContrastValueForSplash(boolean isUnderDarcula) {
+  fun doGetLcdContrastValueForSplash(isUnderDarcula: Boolean): Int {
     if (SystemInfoRt.isMac) {
-      return isUnderDarcula ? 140 : 230;
+      return if (isUnderDarcula) 140 else 230
     }
-    else {
-      @SuppressWarnings({"unchecked", "SpellCheckingInspection"})
-      Map<Object, Object> map = (Map<Object, Object>)Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints");
-      if (map == null) {
-        return 140;
-      }
-      else {
-        Object o = map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
-        if (o == null) {
-          return 140;
-        }
-        else {
-          int lcdContrastValue = (Integer)o;
-          return normalizeLcdContrastValue(lcdContrastValue);
-        }
-      }
-    }
+
+    @Suppress("SpellCheckingInspection")
+    val lcdContrastValue = (Toolkit.getDefaultToolkit().getDesktopProperty("awt.font.desktophints") as? Map<*, *>)
+                             ?.get(RenderingHints.KEY_TEXT_LCD_CONTRAST) as Int? ?: return 140
+    return normalizeLcdContrastValue(lcdContrastValue)
   }
 
-  static int normalizeLcdContrastValue(int lcdContrastValue) {
-    return (lcdContrastValue < 100 || lcdContrastValue > 250) ? 140 : lcdContrastValue;
+  fun normalizeLcdContrastValue(lcdContrastValue: Int): Int {
+    return if (lcdContrastValue < 100 || lcdContrastValue > 250) 140 else lcdContrastValue
   }
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the default monitor device is HiDPI.
-   * (analogue of {@link UIUtil#isRetina()} on macOS)
+   * (analogue of [UIUtil.isRetina] on macOS)
    */
-  public static boolean isJreHiDPI() {
-    return JreHiDpiUtil.isJreHiDPI((GraphicsConfiguration)null);
-  }
+  val isJreHiDPI: Boolean
+    get() = JreHiDpiUtil.isJreHiDPI(sysScale())
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided component is tied to a HiDPI device.
    */
-  public static boolean isJreHiDPI(@Nullable Component comp) {
-    GraphicsConfiguration gc = comp != null ? comp.getGraphicsConfiguration() : null;
-    return JreHiDpiUtil.isJreHiDPI(gc);
+  fun isJreHiDPI(comp: Component?): Boolean {
+    return JreHiDpiUtil.isJreHiDPI(comp?.graphicsConfiguration)
   }
 
   /**
    * Returns whether the JRE-managed HiDPI mode is enabled and the provided system scale context is HiDPI.
    */
-  public static boolean isJreHiDPI(@Nullable ScaleContext ctx) {
-    return JreHiDpiUtil.isJreHiDPIEnabled() && JBUIScale.isHiDPI(JBUIScale.sysScale(ctx));
+  fun isJreHiDPI(ctx: ScaleContext?): Boolean {
+    return JreHiDpiUtil.isJreHiDPIEnabled() && isHiDPI(sysScale(ctx))
   }
 
-  public static @NotNull Point getCenterPoint(@NotNull Dimension container, @NotNull Dimension child) {
-    return getCenterPoint(new Rectangle(container), child);
+  fun getCenterPoint(container: Dimension, child: Dimension): Point {
+    return getCenterPoint(Rectangle(container), child)
   }
 
-  public static @NotNull Point getCenterPoint(@NotNull Rectangle container, @NotNull Dimension child) {
-    return new Point(
-      container.x + (container.width - child.width) / 2,
-      container.y + (container.height - child.height) / 2
-    );
+  fun getCenterPoint(container: Rectangle, child: Dimension): Point {
+    return Point(container.x + (container.width - child.width) / 2, container.y + (container.height - child.height) / 2)
   }
 
   /**
-   * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, ImageObserver)}.
+   * A hidpi-aware wrapper over [Graphics.drawImage].
    *
-   * @see #drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)
+   * @see .drawImage
    */
-  public static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, @Nullable ImageObserver observer) {
-    drawImage(g, image, new Rectangle(x, y, -1, -1), null, null, observer);
+  fun drawImage(g: Graphics, image: Image, x: Int, y: Int, observer: ImageObserver?) {
+    drawImage(g = g, image = image, dstBounds = Rectangle(x, y, -1, -1), srcBounds = null, op = null, observer = observer)
   }
 
-  static void drawImage(@NotNull Graphics g, @NotNull Image image, int x, int y, int width, int height, @Nullable BufferedImageOp op) {
-    Rectangle srcBounds = width >= 0 && height >= 0 ? new Rectangle(x, y, width, height) : null;
-    drawImage(g, image, new Rectangle(x, y, width, height), srcBounds, op, null);
+  fun drawImage(g: Graphics, image: Image, x: Int, y: Int, width: Int, height: Int, op: BufferedImageOp?) {
+    val srcBounds = if (width >= 0 && height >= 0) Rectangle(x, y, width, height) else null
+    drawImage(g = g, image = image, dstBounds = Rectangle(x, y, width, height), srcBounds = srcBounds, op = op, observer = null)
   }
 
-  public static void drawImage(@NotNull Graphics g, @NotNull Image image) {
-    drawImage(g, image, 0, 0, -1, -1, null);
+  fun drawImage(g: Graphics, image: Image) {
+    drawImage(g = g, image = image, x = 0, y = 0, width = -1, height = -1, op = null)
   }
 
   /**
-   * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, int, int, ImageObserver)}.
+   * A hidpi-aware wrapper over [Graphics.drawImage].
    *
-   * @see #drawImage(Graphics, Image, Rectangle, Rectangle, BufferedImageOp, ImageObserver)
+   * @see .drawImage
    */
-  public static void drawImage(@NotNull Graphics g, @NotNull Image image, @Nullable Rectangle dstBounds, @Nullable ImageObserver observer) {
-    drawImage(g, image, dstBounds, null, null, observer);
+  fun drawImage(g: Graphics, image: Image, dstBounds: Rectangle?, observer: ImageObserver?) {
+    drawImage(g = g, image = image, dstBounds = dstBounds, srcBounds = null, op = null, observer = observer)
   }
 
   /**
-   * @see #drawImage(Graphics, Image, Rectangle, Rectangle, BufferedImageOp, ImageObserver)
+   * @see .drawImage
    */
-  public static void drawImage(@NotNull Graphics g,
-                               @NotNull Image image,
-                               @Nullable Rectangle dstBounds,
-                               @Nullable Rectangle srcBounds,
-                               @Nullable ImageObserver observer) {
-    drawImage(g, image, dstBounds, srcBounds, null, observer);
+  fun drawImage(g: Graphics,
+                image: Image,
+                dstBounds: Rectangle?,
+                srcBounds: Rectangle?,
+                observer: ImageObserver?) {
+    drawImage(g = g, image = image, dstBounds = dstBounds, srcBounds = srcBounds, op = null, observer = observer)
   }
 
   /**
-   * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, int, int, int, int, int, int, ImageObserver)}.
-   * <p>
-   * The {@code dstBounds} and {@code srcBounds} are in the user space (just like the width/height of the image).
-   * If {@code dstBounds} is null or if its width/height is set to (-1) the image bounds or the image width/height is used.
-   * If {@code srcBounds} is null or if its width/height is set to (-1) the image bounds or the image right/bottom area to the provided x/y is used.
+   * A hidpi-aware wrapper over [Graphics.drawImage].
+   *
+   *
+   * The `dstBounds` and `srcBounds` are in the user space (just like the width/height of the image).
+   * If `dstBounds` is null or if its width/height is set to (-1) the image bounds or the image width/height is used.
+   * If `srcBounds` is null or if its width/height is set to (-1) the image bounds or the image right/bottom area to the provided x/y is used.
    */
-  public static void drawImage(@NotNull Graphics g,
-                               @NotNull Image image,
-                               @Nullable Rectangle dstBounds,
-                               @Nullable Rectangle srcBounds,
-                               @Nullable BufferedImageOp op,
-                               @Nullable ImageObserver observer) {
-    int userWidth = ImageUtil.getUserWidth(image);
-    int userHeight = ImageUtil.getUserHeight(image);
-
-    int dx = 0;
-    int dy = 0;
-    int dw = -1;
-    int dh = -1;
+  fun drawImage(g: Graphics,
+                image: Image,
+                dstBounds: Rectangle?,
+                srcBounds: Rectangle?,
+                op: BufferedImageOp?,
+                observer: ImageObserver?) {
+    var g = g
+    var image = image
+    val userWidth = ImageUtil.getUserWidth(image)
+    val userHeight = ImageUtil.getUserHeight(image)
+    var dx = 0
+    var dy = 0
+    var dw = -1
+    var dh = -1
     if (dstBounds != null) {
-      dx = dstBounds.x;
-      dy = dstBounds.y;
-      dw = dstBounds.width;
-      dh = dstBounds.height;
+      dx = dstBounds.x
+      dy = dstBounds.y
+      dw = dstBounds.width
+      dh = dstBounds.height
     }
-    boolean hasDstSize = dw >= 0 && dh >= 0;
-
-    Graphics2D invG = null;
-    double scale = 1;
-    if (image instanceof JBHiDPIScaledImage hidpiImage) {
-      Image delegate = hidpiImage.getDelegate();
-      if (delegate != null) image = delegate;
-      scale = hidpiImage.getScale();
-
-      double delta = 0;
-      if (Boolean.parseBoolean(System.getProperty("ide.icon.scale.useAccuracyDelta", "true"))) {
+    val hasDstSize = dw >= 0 && dh >= 0
+    var invG: Graphics2D? = null
+    var scale = 1.0
+    if (image is JBHiDPIScaledImage) {
+      val delegate = image.delegate
+      if (delegate != null) {
+        image = delegate
+      }
+      scale = image.scale
+      var delta = 0.0
+      if (java.lang.Boolean.parseBoolean(System.getProperty("ide.icon.scale.useAccuracyDelta", "true"))) {
         // Calculate the delta based on the image size. The bigger the size - the smaller the delta.
-        int maxSize = Math.max(userWidth, userHeight);
-        if (maxSize < Integer.MAX_VALUE / 2) { // sanity check
-          int dotAccuracy = 1;
-          double pow;
-          while (maxSize > (pow = Math.pow(10, dotAccuracy))) dotAccuracy++;
-          delta = 1 / pow;
+        val maxSize = max(userWidth, userHeight)
+        if (maxSize < Int.MAX_VALUE / 2) { // sanity check
+          var dotAccuracy = 1
+          var pow: Double
+          while (maxSize > 10.0.pow(dotAccuracy.toDouble()).also { pow = it }) dotAccuracy++
+          delta = 1 / pow
         }
       }
-
-      AffineTransform tx = ((Graphics2D)g).getTransform();
-      if (Math.abs(scale - tx.getScaleX()) <= delta) {
-        scale = tx.getScaleX();
+      val tx = (g as Graphics2D).transform
+      if (abs(scale - tx.scaleX) <= delta) {
+        scale = tx.scaleX
 
         // The image has the same original scale as the graphics scale. However, the real image
         // scale - userSize/realSize - can suffer from inaccuracy due to the image user size
@@ -202,138 +193,138 @@ public final class StartupUiUtil {
         // loss if the image is drawn via Graphics.drawImage(image, <srcRect>, <dstRect>)
         // due to scaling in Graphics. To avoid that, the image should be drawn directly via
         // Graphics.drawImage(image, 0, 0) on the unscaled Graphics.
-        double gScaleX = tx.getScaleX();
-        double gScaleY = tx.getScaleY();
-        tx.scale(1 / gScaleX, 1 / gScaleY);
-        tx.translate(dx * gScaleX, dy * gScaleY);
-        dx = dy = 0;
-        g = invG = (Graphics2D)g.create();
-        invG.setTransform(tx);
+        val gScaleX = tx.scaleX
+        val gScaleY = tx.scaleY
+        tx.scale(1 / gScaleX, 1 / gScaleY)
+        tx.translate(dx * gScaleX, dy * gScaleY)
+        dy = 0
+        dx = dy
+        invG = g.create() as Graphics2D
+        g = invG
+        invG!!.transform = tx
       }
     }
-    final double _scale = scale;
-    Function<Integer, Integer> size = size1 -> (int)Math.round(size1 * _scale);
+
+    val _scale = scale
+    val size = Function { size1: Int -> (size1 * _scale).roundToLong().toInt() }
     try {
-      if (op != null && image instanceof BufferedImage) {
-        image = op.filter((BufferedImage)image, null);
+      if (op != null && image is BufferedImage) {
+        image = op.filter(image, null)
       }
       if (invG != null && hasDstSize) {
-        dw = size.apply(dw);
-        dh = size.apply(dh);
+        dw = size.apply(dw)
+        dh = size.apply(dh)
       }
       if (srcBounds != null) {
-        int sx = size.apply(srcBounds.x);
-        int sy = size.apply(srcBounds.y);
-        int sw = srcBounds.width >= 0 ? size.apply(srcBounds.width) : size.apply(userWidth) - sx;
-        int sh = srcBounds.height >= 0 ? size.apply(srcBounds.height) : size.apply(userHeight) - sy;
+        val sx = size.apply(srcBounds.x)
+        val sy = size.apply(srcBounds.y)
+        val sw = if (srcBounds.width >= 0) size.apply(srcBounds.width) else size.apply(userWidth) - sx
+        val sh = if (srcBounds.height >= 0) size.apply(srcBounds.height) else size.apply(userHeight) - sy
         if (!hasDstSize) {
-          dw = size.apply(userWidth);
-          dh = size.apply(userHeight);
+          dw = size.apply(userWidth)
+          dh = size.apply(userHeight)
         }
         g.drawImage(image,
                     dx, dy, dx + dw, dy + dh,
                     sx, sy, sx + sw, sy + sh,
-                    observer);
+                    observer)
       }
       else if (hasDstSize) {
-        g.drawImage(image, dx, dy, dw, dh, observer);
+        g.drawImage(image, dx, dy, dw, dh, observer)
       }
       else if (invG == null) {
-        g.drawImage(image, dx, dy, userWidth, userHeight, observer);
+        g.drawImage(image, dx, dy, userWidth, userHeight, observer)
       }
       else {
-        g.drawImage(image, dx, dy, observer);
+        g.drawImage(image, dx, dy, observer)
       }
     }
     finally {
-      if (invG != null) invG.dispose();
+      invG?.dispose()
     }
   }
 
   /**
-   * @see #drawImage(Graphics, Image, int, int, ImageObserver)
+   * @see .drawImage
    */
-  public static void drawImage(@NotNull Graphics g, @NotNull BufferedImage image, @Nullable BufferedImageOp op, int x, int y) {
-    drawImage(g, image, x, y, -1, -1, op);
+  fun drawImage(g: Graphics, image: BufferedImage, op: BufferedImageOp?, x: Int, y: Int) {
+    drawImage(g = g, image = image, x = x, y = y, width = -1, height = -1, op = op)
   }
 
-  public static Font getLabelFont() {
-    return UIManager.getFont("Label.font");
+  val labelFont: Font
+    get() = UIManager.getFont("Label.font")
+
+  fun isDialogFont(font: Font): Boolean {
+    return Font.DIALOG == font.getFamily(Locale.US)
   }
 
-  public static boolean isDialogFont(@NotNull Font font) {
-    return Font.DIALOG.equals(font.getFamily(Locale.US));
-  }
-
-  public static void initInputMapDefaults(UIDefaults defaults) {
+  fun initInputMapDefaults(defaults: UIDefaults) {
     // Make ENTER work in JTrees
-    InputMap treeInputMap = (InputMap)defaults.get("Tree.focusInputMap");
-    if (treeInputMap != null) { // it's really possible. For example,  GTK+ doesn't have such map
-      treeInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "toggle");
-    }
+    val treeInputMap = defaults["Tree.focusInputMap"] as InputMap?
+    treeInputMap?.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "toggle")
     // Cut/Copy/Paste in JTextAreas
-    InputMap textAreaInputMap = (InputMap)defaults.get("TextArea.focusInputMap");
+    val textAreaInputMap = defaults["TextArea.focusInputMap"] as InputMap?
     if (textAreaInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
-      installCutCopyPasteShortcuts(textAreaInputMap, false);
+      installCutCopyPasteShortcuts(textAreaInputMap, false)
     }
     // Cut/Copy/Paste in JTextFields
-    InputMap textFieldInputMap = (InputMap)defaults.get("TextField.focusInputMap");
+    val textFieldInputMap = defaults["TextField.focusInputMap"] as InputMap?
     if (textFieldInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
-      installCutCopyPasteShortcuts(textFieldInputMap, false);
+      installCutCopyPasteShortcuts(textFieldInputMap, false)
     }
     // Cut/Copy/Paste in JPasswordField
-    InputMap passwordFieldInputMap = (InputMap)defaults.get("PasswordField.focusInputMap");
+    val passwordFieldInputMap = defaults["PasswordField.focusInputMap"] as InputMap?
     if (passwordFieldInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
-      installCutCopyPasteShortcuts(passwordFieldInputMap, false);
+      installCutCopyPasteShortcuts(passwordFieldInputMap, false)
     }
     // Cut/Copy/Paste in JTables
-    InputMap tableInputMap = (InputMap)defaults.get("Table.ancestorInputMap");
+    val tableInputMap = defaults["Table.ancestorInputMap"] as InputMap?
     if (tableInputMap != null) { // It really can be null, for example when LAF isn't properly initialized (Alloy license problem)
-      installCutCopyPasteShortcuts(tableInputMap, true);
+      installCutCopyPasteShortcuts(tableInputMap, true)
     }
   }
 
-  private static void installCutCopyPasteShortcuts(InputMap inputMap, boolean useSimpleActionKeys) {
-    String copyActionKey = useSimpleActionKeys ? "copy" : DefaultEditorKit.copyAction;
-    String pasteActionKey = useSimpleActionKeys ? "paste" : DefaultEditorKit.pasteAction;
-    String cutActionKey = useSimpleActionKeys ? "cut" : DefaultEditorKit.cutAction;
+  private fun installCutCopyPasteShortcuts(inputMap: InputMap, useSimpleActionKeys: Boolean) {
+    val copyActionKey = if (useSimpleActionKeys) "copy" else DefaultEditorKit.copyAction
+    val pasteActionKey = if (useSimpleActionKeys) "paste" else DefaultEditorKit.pasteAction
+    val cutActionKey = if (useSimpleActionKeys) "cut" else DefaultEditorKit.cutAction
     // Ctrl+Ins, Shift+Ins, Shift+Del
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK), copyActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.SHIFT_DOWN_MASK), pasteActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.SHIFT_DOWN_MASK), cutActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK), copyActionKey)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.SHIFT_DOWN_MASK), pasteActionKey)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.SHIFT_DOWN_MASK), cutActionKey)
     // Ctrl+C, Ctrl+V, Ctrl+X
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), copyActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), pasteActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK), DefaultEditorKit.cutAction);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), copyActionKey)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), pasteActionKey)
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK), DefaultEditorKit.cutAction)
   }
 
-  public static void initFontDefaults(@NotNull UIDefaults defaults, @NotNull FontUIResource uiFont) {
-    defaults.put("Tree.ancestorInputMap", null);
-    FontUIResource textFont = new FontUIResource(uiFont);
-    FontUIResource monoFont = new FontUIResource("Monospaced", Font.PLAIN, uiFont.getSize());
-
-    for (String fontResource : ourPatchableFontResources) {
-      defaults.put(fontResource, uiFont);
+  fun initFontDefaults(defaults: UIDefaults, uiFont: FontUIResource) {
+    defaults["Tree.ancestorInputMap"] = null
+    val textFont = FontUIResource(uiFont)
+    val monoFont = FontUIResource("Monospaced", Font.PLAIN, uiFont.size)
+    for (fontResource in ourPatchableFontResources) {
+      defaults[fontResource] = uiFont
     }
-
     if (!SystemInfoRt.isMac) {
-      defaults.put("PasswordField.font", monoFont);
+      defaults["PasswordField.font"] = monoFont
     }
-    defaults.put("TextArea.font", monoFont);
-    defaults.put("TextPane.font", textFont);
-    defaults.put("EditorPane.font", textFont);
+    defaults["TextArea.font"] = monoFont
+    defaults["TextPane.font"] = textFont
+    defaults["EditorPane.font"] = textFont
   }
 
-  public static @NotNull FontUIResource getFontWithFallback(@Nullable String familyName, @JdkConstants.FontStyle int style, float size) {
+  fun getFontWithFallback(familyName: String?, @JdkConstants.FontStyle style: Int, size: Float): FontUIResource {
     // On macOS font fallback is implemented in JDK by default
     // (except for explicitly registered fonts, e.g. the fonts we bundle with IDE, for them we don't have a solution now)
     // in headless mode just use fallback in order to avoid font loading
-    Font fontWithFallback = (SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) ? new Font(familyName, style, (int)size).deriveFont(size) : new StyleContext().getFont(familyName, style, (int)size).deriveFont(size);
-    return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
+    val fontWithFallback = if (SystemInfoRt.isMac || GraphicsEnvironment.isHeadless()) Font(familyName, style, size.toInt()).deriveFont(
+      size)
+    else StyleContext().getFont(familyName, style, size.toInt()).deriveFont(size)
+    return if (fontWithFallback is FontUIResource) fontWithFallback else FontUIResource(fontWithFallback)
   }
 
-  public static void addAwtListener(final @NotNull AWTEventListener listener, long mask, @NotNull Disposable parent) {
-    Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
-    Disposer.register(parent, () -> Toolkit.getDefaultToolkit().removeAWTEventListener(listener));
+  fun addAwtListener(listener: AWTEventListener, mask: Long, parent: Disposable) {
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask)
+    Disposer.register(parent) { Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }
   }
 }
