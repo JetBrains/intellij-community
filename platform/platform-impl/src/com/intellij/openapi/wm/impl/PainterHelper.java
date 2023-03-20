@@ -575,13 +575,8 @@ final class PainterHelper implements Painter.Listener {
         boolean flipV = imageLoadSettings.flipV();
         boolean flipH = imageLoadSettings.flipH();
         BufferedImageFilter flipFilter = flipV || flipH ? flipFilter(flipV, flipH) : null;
-        return IconUtilKt.convertImage(
-          image,
-          flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter),
-          ScaleContext.create(),
-          false, // we scale and handle HiDPI later
-          false,
-          1);
+        // we scale and handle HiDPI later
+        return IconUtilKt.filterImage(image, flipFilter == null ? Collections.emptyList() : Collections.singletonList(flipFilter));
       }
       catch (Exception e) {
         LOG.warn(e);

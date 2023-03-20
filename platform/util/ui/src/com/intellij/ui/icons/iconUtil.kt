@@ -100,7 +100,6 @@ fun convertImage(image: Image,
                  filters: List<ImageFilter>,
                  scaleContext: ScaleContext,
                  isUpScaleNeeded: Boolean,
-                 isHiDpiNeeded: Boolean = StartupUiUtil.isJreHiDPI(scaleContext),
                  imageScale: Float): Image {
   var result = image
   if (isUpScaleNeeded) {
@@ -111,13 +110,8 @@ fun convertImage(image: Image,
     }
     result = ImageLoader.scaleImage(result, scale.toDouble())
   }
-  if (!filters.isEmpty()) {
-    val toolkit = Toolkit.getDefaultToolkit()
-    for (filter in filters) {
-      result = toolkit.createImage(FilteredImageSource(ImageUtil.toBufferedImage(result, false).source, filter))
-    }
-  }
-  if (isHiDpiNeeded) {
+  result = filterImage(image = result, filters = filters)
+  if (StartupUiUtil.isJreHiDPI(scaleContext)) {
     // The {originalUserSize} can contain calculation inaccuracy. If we use it to derive the HiDPI image scale
     // in JBHiDPIScaledImage, the derived scale will also be inaccurate and this will cause distortions
     // when the image is painted on a scaled (hidpi) screen graphics, see
@@ -126,7 +120,21 @@ fun convertImage(image: Image,
     // To avoid that, we instead directly use the provided ScaleContext which contains correct ScaleContext.SYS_SCALE,
     // the image user space size will then be derived by JBHiDPIScaledImage (it is assumed the derived size is equal to
     // {originalUserSize} * DerivedScaleType.EFF_USR_SCALE, taking into account calculation accuracy).
-    result = JBHiDPIScaledImage(image = result, scaleContext = scaleContext, type = BufferedImage.TYPE_INT_ARGB)
+    return JBHiDPIScaledImage(image = result, scaleContext = scaleContext, type = BufferedImage.TYPE_INT_ARGB)
+  }
+  else {
+    return result
+  }
+}
+
+@Internal
+fun filterImage(image: Image, filters: List<ImageFilter>): Image {
+  var result = image
+  if (!filters.isEmpty()) {
+    val toolkit = Toolkit.getDefaultToolkit()
+    for (filter in filters) {
+      result = toolkit.createImage(FilteredImageSource(ImageUtil.toBufferedImage(result, false).source, filter))
+    }
   }
   return result
 }
