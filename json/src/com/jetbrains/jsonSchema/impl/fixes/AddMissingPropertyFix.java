@@ -11,10 +11,12 @@ import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInspection.*;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -73,7 +75,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
 
     PsiElement value = myQuickFixAdapter.getPropertyValue(newElement);
     FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
-    EditorEx editor = EditorUtil.getEditorEx(fileEditor);
+    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     assert editor != null;
     if (value == null) {
       WriteAction.run(() -> editor.getCaretModel().moveToOffset(newElement.getTextRange().getEndOffset()));
