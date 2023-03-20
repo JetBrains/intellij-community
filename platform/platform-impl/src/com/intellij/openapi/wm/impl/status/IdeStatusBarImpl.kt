@@ -46,7 +46,6 @@ import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.border.name
 import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.popup.NotificationPopup
-import com.intellij.ui.popup.PopupState
 import com.intellij.util.EventDispatcher
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -857,19 +856,11 @@ private class MultipleTextValues(private val presentation: MultipleTextValuesPre
     setTextAlignment(CENTER_ALIGNMENT)
     border = JBUI.CurrentTheme.StatusBar.Widget.border()
     object : ClickListener() {
-      val myPopupState = PopupState.forPopup()
-
       override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-        if (myPopupState.isRecentlyHidden) {
-          // do not show new popup
-          return false
-        }
-
         val popup = presentation.getPopup() ?: return false
         StatusBarPopupShown.log(presentation::class.java)
         val dimension = getSizeFor(popup)
         val at = Point(0, -dimension.height)
-        myPopupState.prepareToShow(popup)
         popup.show(RelativePoint(event.component, at))
         return true
       }

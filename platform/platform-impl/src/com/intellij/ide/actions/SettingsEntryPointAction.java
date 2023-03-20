@@ -25,7 +25,6 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.BadgeIconSupplier;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IconManager;
-import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Consumer;
@@ -50,7 +49,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
   private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
   private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
-  private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
   public SettingsEntryPointAction() {
     super(IdeBundle.messagePointer("settings.entry.point.tooltip"));
@@ -60,11 +58,8 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   public void actionPerformed(@NotNull AnActionEvent e) {
     resetActionIcon();
 
-    if (myPopupState.isHidden() && !myPopupState.isRecentlyHidden()) {
-      ListPopup popup = createMainPopup(e.getDataContext(), e.getInputEvent().getComponent());
-      myPopupState.prepareToShow(popup);
-      PopupUtil.showForActionButtonEvent(popup, e);
-    }
+    ListPopup popup = createMainPopup(e.getDataContext(), e.getInputEvent().getComponent());
+    PopupUtil.showForActionButtonEvent(popup, e);
   }
 
   @Override
@@ -322,7 +317,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static final class MyStatusBarWidget implements StatusBarWidget, StatusBarWidget.IconPresentation {
-    private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
     private StatusBar myStatusBar;
 
     @Override
@@ -351,13 +345,8 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
         resetActionIcon();
         myStatusBar.updateWidget(WIDGET_ID);
 
-        if (!myPopupState.isHidden() || myPopupState.isRecentlyHidden()) {
-          return;
-        }
-
         Component component = event.getComponent();
         ListPopup popup = createMainPopup(DataManager.getInstance().getDataContext(component), component);
-        myPopupState.prepareToShow(popup);
         popup.addListener(new JBPopupListener() {
           @Override
           public void beforeShown(@NotNull LightweightWindowEvent event) {

@@ -29,7 +29,6 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.NlsActions
@@ -41,7 +40,6 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.*
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.popup.PopupState
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -369,13 +367,9 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
 
   private inner class ShowHistoryAction : DumbAwareAction(FindBundle.message("find.search.history"), null,
                                                           AllIcons.Actions.SearchWithHistory) {
-    private val popupState: PopupState<JBPopup?> = PopupState.forPopup()
-
     override fun actionPerformed(e: AnActionEvent) {
-      if (popupState.isRecentlyHidden) return
-
       val historyList = JBList(getExpressionHistory())
-      showCompletionPopup(searchWrapper, historyList, searchTextField, popupState)
+      showCompletionPopup(searchWrapper, historyList, searchTextField)
     }
 
     init {
@@ -384,8 +378,7 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
 
     private fun showCompletionPopup(toolbarComponent: JComponent?,
                                     list: JList<String>,
-                                    textField: EditorTextField,
-                                    popupState: PopupState<JBPopup?>) {
+                                    textField: EditorTextField) {
       val builder: PopupChooserBuilder<*> = JBPopupFactory.getInstance().createListPopupBuilder(list)
       val popup = builder
         .setMovable(false)
@@ -400,7 +393,6 @@ internal abstract class JsonPathEvaluateView(protected val project: Project) : S
         })
         .createPopup()
 
-      popupState.prepareToShow(popup)
       if (toolbarComponent != null) {
         popup.showUnderneathOf(toolbarComponent)
       }

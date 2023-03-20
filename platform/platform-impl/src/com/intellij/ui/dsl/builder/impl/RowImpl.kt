@@ -488,9 +488,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 }
 
 private class PopupActionGroup(private val actions: Array<AnAction>): ActionGroup(), DumbAware {
-
-  private val popupState = PopupState.forPopup()
-
   init {
     isPopup = true
     templatePresentation.isPerformGroup = actions.isNotEmpty()
@@ -499,13 +496,8 @@ private class PopupActionGroup(private val actions: Array<AnAction>): ActionGrou
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions
 
   override fun actionPerformed(e: AnActionEvent) {
-    if (popupState.isRecentlyHidden) {
-      return
-    }
-
     val popup = JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.dataContext,
       JBPopupFactory.ActionSelectionAid.MNEMONICS, true)
-    popupState.prepareToShow(popup)
     PopupUtil.showForActionButtonEvent(popup, e)
   }
 }
