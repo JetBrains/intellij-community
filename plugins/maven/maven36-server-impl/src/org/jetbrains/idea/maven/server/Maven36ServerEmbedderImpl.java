@@ -40,7 +40,7 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
     }
   }
 
-  private synchronized void customizeArtifactDescriptorReader() {
+  private synchronized void customizeArtifactDescriptorReader() throws RemoteException {
     if (null == enhancedArtifactDescriptorReader) {
       ArtifactDescriptorReader artifactDescriptorReader = getComponent(ArtifactDescriptorReader.class);
       enhancedArtifactDescriptorReader = new CustomMaven36ArtifactDescriptorReader(artifactDescriptorReader);
@@ -58,8 +58,8 @@ public class Maven36ServerEmbedderImpl extends Maven3XServerEmbedder {
           Method method = dependencyCollector.getClass().getMethod("setArtifactDescriptorReader", ArtifactDescriptorReader.class);
           method.invoke(dependencyCollector, enhancedArtifactDescriptorReader);
         }
-        catch (Exception ex) {
-          myConsoleWrapper.info("Could not customize dependency collector", ex);
+        catch (Throwable e) {
+          Maven3ServerGlobals.getLogger().warn(e);
         }
       }
     }
