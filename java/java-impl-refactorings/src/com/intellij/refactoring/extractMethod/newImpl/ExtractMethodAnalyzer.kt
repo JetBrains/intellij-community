@@ -58,7 +58,7 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
     throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.exits"), flowOutput.statements + listOfNotNull(outputVariable))
   }
 
-  val targetClass = PsiTreeUtil.getParentOfType(ExtractMethodHelper.getValidParentOf(elements.first()), PsiClass::class.java)
+  val targetClass = PsiTreeUtil.getContextOfType(elements.first(), PsiClass::class.java)
                     ?: throw ExtractException(JavaRefactoringBundle.message("extract.method.error.class.not.found"), elements.first().containingFile)
 
   var extractOptions = ExtractOptions(targetClass, elements, flowOutput, dataOutput)

@@ -468,6 +468,14 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     doTest()
   }
 
+  fun testExtractVirtualExpressionFromPolyadic(){
+    doTest()
+  }
+
+  fun testExtractVirtualExpressionFromSubstring(){
+    doTest()
+  }
+
   fun testRefactoringListener(){
     templateTest {
       configureByFile("$BASE_PATH/${getTestName(false)}.java")
