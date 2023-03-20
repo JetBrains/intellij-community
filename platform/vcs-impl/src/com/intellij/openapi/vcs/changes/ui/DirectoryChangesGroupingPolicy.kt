@@ -21,7 +21,7 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
                                      pathBuilder: Function<StaticFilePath, ChangesBrowserNode<*>?>,
                                      grandParent: ChangesBrowserNode<*>,
                                      cachingRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
-    var chainParent = grandParent
+    var cachedParent: ChangesBrowserNode<*>? = null
     val nodes = mutableListOf<ChangesBrowserNode<*>>()
 
     // for(var parentPath = nodePath.parent; parentPath != null; parentPath = parentPath.parent)
@@ -29,9 +29,8 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
     while (true) {
       parentPath = parentPath.parent ?: break
 
-      val cachedParent = DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]
+      cachedParent = DIRECTORY_CACHE.getValue(cachingRoot)[parentPath.key]
       if (cachedParent != null) {
-        chainParent = cachedParent
         break
       }
 
@@ -43,7 +42,7 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
       }
     }
 
-    var node = chainParent
+    var node = cachedParent ?: grandParent
     for (nextNode in nodes.asReversed()) {
       model.insertNodeInto(nextNode, node, node.childCount)
       node = nextNode
