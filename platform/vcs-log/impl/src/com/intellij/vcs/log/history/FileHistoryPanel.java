@@ -95,6 +95,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     };
     myGraphTable.setBorder(myGraphTable.createTopBottomBorder(1, 0));
     mySpeedSearch = new FileHistorySpeedSearch(myProject, logData.getIndex(), logData.getStorage(), myGraphTable);
+    mySpeedSearch.setupListeners();
 
     myDetailsPanel = new CommitDetailsListPanel(myProject, this, () -> {
       return new CommitDetailsPanel(commit -> {

@@ -427,12 +427,13 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
                        @NotNull Disposable disposable) {
       super(logId, logData, uiProperties, colorManager, requestMore, disposable);
       myRefresh = refresh;
-      new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), myLogData.getStorage(), this) {
+      IndexSpeedSearch speedSearch = new IndexSpeedSearch(myLogData.getProject(), myLogData.getIndex(), myLogData.getStorage(), this) {
         @Override
         protected boolean isSpeedSearchEnabled() {
           return Registry.is("vcs.log.speedsearch") && super.isSpeedSearchEnabled();
         }
       };
+      speedSearch.setupListeners();
     }
 
     @Override
